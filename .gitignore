@@ -1,0 +1,19 @@
+# 機密設定 — 絕對不能上傳
+.env
+
+# 程式產出（每次跑都會重新產）
+output/
+
+# Python 暫存
+__pycache__/
+*.pyc
+*.pyo
+
+# Mac 系統檔
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# 注意：snapshots/ 不在這裡 — 要保留並 commit 回 repo，這樣才能週對週比對

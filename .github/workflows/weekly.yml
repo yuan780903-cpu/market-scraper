@@ -1,0 +1,49 @@
+name: 每週推送有機肥料市場週報
+
+on:
+  # 每週一台北時間 08:00 = UTC 週一 00:00
+  schedule:
+    - cron: '0 0 * * 1'
+  # 也可以在 GitHub Actions 頁面手動觸發
+  workflow_dispatch:
+
+jobs:
+  push-weekly-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write  # 允許 commit snapshot 回 repo
+
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安裝套件
+        run: pip install -r requirements.txt
+
+      - name: 跑爬蟲並推 LINE
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        run: python weekly_line_push.py
+
+      - name: 把 PDF 監控快照 commit 回 repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add snapshots/
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update snapshots $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "snapshot 無變動，跳過 commit"
+          fi
