@@ -15,6 +15,7 @@ import pandas as pd
 import scraper_gov
 import scraper_news
 import scraper_pdf
+import scraper_facebook
 import report
 import email_sender
 from config import OUTPUT_DIR
@@ -36,6 +37,10 @@ def main(send_mail: bool = True):
     rows = []
     rows.extend(scraper_gov.scrape_all())
     rows.extend(scraper_news.scrape_all())
+    try:
+        rows.extend(scraper_facebook.scrape_all())
+    except Exception as e:
+        print(f"[!] FB 流程失敗（已忽略）：{e}")
 
     if not rows and not pdf_result:
         print("\n沒有抓到任何資料。")
@@ -107,7 +112,8 @@ def main(send_mail: bool = True):
 
     if send_mail:
         try:
-            email_sender.send_report(html_body, attachment_path=xlsx_path)
+            # 不附 Excel；Excel 仍會存在 output/ 供本機查閱
+            email_sender.send_report(html_body)
         except Exception as e:
             print(f"\n[!] 寄信失敗：{e}")
             print("HTML 與 Excel 已產出在 output/，可手動寄送")

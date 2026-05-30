@@ -16,4 +16,6 @@ __pycache__/
 .vscode/
 .idea/
 
-# 注意：snapshots/ 不在這裡 — 要保留並 commit 回 repo，這樣才能週對週比對
+# 注意：snapshots/ 內只 commit latest_products.json 與 used_motivation.json
+# 歷史時間戳的快照（snapshot_*.json）不要 commit
+snapshots/snapshot_*.json

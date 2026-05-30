@@ -21,10 +21,12 @@ import json
 import scraper_gov
 import scraper_news
 import scraper_pdf
+import scraper_facebook
 import report
 import uploader
 import line_flex
 import line_sender
+import image_card
 from config import OUTPUT_DIR
 
 
@@ -47,6 +49,10 @@ def main(dry_run: bool = False) -> None:
     rows = []
     rows.extend(scraper_gov.scrape_all())
     rows.extend(scraper_news.scrape_all())
+    try:
+        rows.extend(scraper_facebook.scrape_all())
+    except Exception as e:
+        print(f"[!] FB 流程失敗（已忽略）：{e}")
 
     df = pd.DataFrame(rows) if rows else pd.DataFrame()
     if not df.empty:
@@ -73,6 +79,27 @@ def main(dry_run: bool = False) -> None:
         print(f"[!] 上傳失敗：{e}")
         report_url = ""
 
+    # 3.5 生成 3 張靜態圖片卡（節氣 + 區域作物 + 業務充電站）並上傳
+    print("\n[Image] 生成節氣 / 區域作物 / 業務充電站圖片卡 ...")
+    image_messages = []
+    try:
+        solar_img = image_card.make_solar_term_image()
+        crops_img = image_card.make_regional_crops_image()
+        # dry-run 不消耗金句池
+        motiv_img = image_card.make_motivation_image(mark_used=not dry_run)
+        print(f"[Image] 已生成：{solar_img.name}, {crops_img.name}, {motiv_img.name}")
+        solar_url = uploader.upload_image(solar_img)
+        crops_url = uploader.upload_image(crops_img)
+        motiv_url = uploader.upload_image(motiv_img)
+        print(f"[Image] 節氣卡 URL：{solar_url}")
+        print(f"[Image] 區域卡 URL：{crops_url}")
+        print(f"[Image] 充電站 URL：{motiv_url}")
+        image_messages.append(line_sender.image_message(solar_url))
+        image_messages.append(line_sender.image_message(crops_url))
+        image_messages.append(line_sender.image_message(motiv_url))
+    except Exception as e:
+        print(f"[!] 圖片卡產出/上傳失敗（已忽略）：{e}")
+
     # 4. 生成 LINE Flex Message
     flex_msg = line_flex.build_flex(rows, pdf_result, report_url)
     flex_json = json.dumps(flex_msg, ensure_ascii=False)
@@ -96,16 +123,18 @@ def main(dry_run: bool = False) -> None:
     print(f"按鈕連結：{report_url or '(無)'}")
     print("-" * 60)
 
-    # 5. 推 LINE
+    # 5. 推 LINE：圖片 + Flex 一次推（LINE 單次 broadcast 上限 5 則）
+    all_messages = image_messages + [flex_msg]
+    print(f"\n[LINE] 準備推送 {len(all_messages)} 則訊息（{len(image_messages)} 圖片 + 1 Flex）")
+
     if dry_run:
-        print("\n[Dry-run] 略過實際推送")
-        print("\n（要看完整 JSON 可看 output/last_flex.json）")
+        print("[Dry-run] 略過實際推送")
         with open(os.path.join(OUTPUT_DIR, "last_flex.json"), "w", encoding="utf-8") as f:
             f.write(json.dumps(flex_msg, ensure_ascii=False, indent=2))
         return
 
     try:
-        line_sender.broadcast_flex(flex_msg)
+        line_sender.broadcast_messages(all_messages)
     except Exception as e:
         print(f"\n[!] LINE 推播失敗：{e}")
         sys.exit(1)

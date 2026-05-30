@@ -139,10 +139,69 @@ def _fetch_generic(source: Dict) -> List[Dict]:
     return results
 
 
+def _fetch_dares_grid(source: Dict) -> List[Dict]:
+    """各區農改場通用結構：<a class='grids' title='...' href='theme_data.php?...'>
+    日期在 .headline .txt span，已是西元格式 YYYY-MM-DD"""
+    try:
+        r = _http_get(source["url"])
+        r.raise_for_status()
+        r.encoding = r.apparent_encoding or "utf-8"
+    except requests.RequestException as e:
+        print(f"  [!] 無法存取 {source['name']}: {e}")
+        return []
+
+    soup = BeautifulSoup(r.text, "lxml")
+    results = []
+    seen = set()
+    requires_keyword = source.get("requires_keyword", True)
+    base_url = source["url"].rsplit("/", 1)[0] + "/"
+
+    candidates = soup.select("a.grids") or soup.select('a[href*="theme_data"]')
+    for a in candidates:
+        title = (a.get("title") or "").strip()
+        if not title:
+            txt = a.select_one(".headline .txt")
+            title = txt.get_text(" ", strip=True) if txt else ""
+        if not title:
+            continue
+
+        matched = _match_keyword(title)
+        if requires_keyword and not matched:
+            continue
+        if not matched:
+            matched = "—"
+
+        href = urljoin(base_url, a.get("href", ""))
+        if href in seen:
+            continue
+        seen.add(href)
+
+        # 日期：.headline .txt span（西元 YYYY-MM-DD）
+        date_iso = ""
+        date_span = a.select_one(".headline .txt span")
+        if date_span:
+            m = re.search(r"(\d{4})-(\d{2})-(\d{2})", date_span.get_text(strip=True))
+            if m:
+                date_iso = m.group(0)
+
+        results.append({
+            "來源類型": "政府公告",
+            "來源網站": source["name"],
+            "標題": title,
+            "連結": href,
+            "命中關鍵字": matched,
+            "發布日期": date_iso,
+            "摘要": "",
+        })
+    return results
+
+
 def fetch_source(source: Dict) -> List[Dict]:
     structure = source.get("structure", "generic")
     if structure == "afa_card":
         return _fetch_afa_card(source)
+    if structure == "dares_grid":
+        return _fetch_dares_grid(source)
     return _fetch_generic(source)
 
 

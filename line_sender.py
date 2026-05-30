@@ -6,6 +6,8 @@ LINE Messaging API 推播
 """
 
 import os
+from typing import Optional
+
 import requests
 
 from email_sender import _load_env  # reuse 同一個 .env loader
@@ -66,6 +68,22 @@ def broadcast_text(text: str) -> None:
 def broadcast_flex(flex_message: dict) -> None:
     """推播 Flex Message 卡片。flex_message 須含 type/altText/contents。"""
     _post_broadcast([flex_message])
+
+
+def broadcast_messages(messages: list) -> None:
+    """推播多則訊息（一次最多 5 則）。messages 是 LINE message dict 的 list。"""
+    if len(messages) > 5:
+        raise ValueError(f"LINE 單次 broadcast 上限 5 則，收到 {len(messages)} 則")
+    _post_broadcast(messages)
+
+
+def image_message(image_url: str, preview_url: Optional[str] = None) -> dict:
+    """建立 LINE 圖片訊息物件"""
+    return {
+        "type": "image",
+        "originalContentUrl": image_url,
+        "previewImageUrl": preview_url or image_url,
+    }
 
 
 def push_text_to_user(user_id: str, text: str) -> None:

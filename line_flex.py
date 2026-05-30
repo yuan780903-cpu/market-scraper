@@ -7,10 +7,13 @@ LINE 限制：
 - 單張 bubble 元件數約 100 上限
 """
 
-from datetime import datetime, timedelta
+import re
+from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional
 
 from config import REPORT_RECENT_DAYS, REPORT_FALLBACK_MIN
+import solar_term
+import agri_kb
 
 # 每張卡片最多顯示的項目數（控制單卡高度與 component 數）
 ITEMS_PER_PAGE = 12
@@ -105,7 +108,9 @@ def _render_listing(a: Dict) -> Dict:
 
 def _render_news(r: Dict, link_color: str) -> Dict:
     title = _truncate(r.get("標題", ""), 56)
-    source = _truncate(r.get("來源網站", "").replace("Google News - ", ""), 16)
+    sources = r.get("_media_sources") or [r.get("來源網站", "")]
+    main_source = _truncate(sources[0].replace("Google News - ", ""), 16)
+    extra = f"  +{len(sources)-1} 家報導" if len(sources) > 1 else ""
     date = (r.get("發布日期", "") or "")[:10]
     link = r.get("連結", "")
     title_node = _text(title, size="sm", weight="bold", color=link_color)
@@ -118,7 +123,7 @@ def _render_news(r: Dict, link_color: str) -> Dict:
         "paddingBottom": "4px",
         "contents": [
             title_node,
-            _text(f"{source}  ·  {date}", size="xs", color="#888888"),
+            _text(f"{main_source}{extra}  ·  {date}", size="xs", color="#888888"),
         ],
     }
 
@@ -150,6 +155,51 @@ def _paginated_bubbles(
     return bubbles
 
 
+# ---------- 去重 + 短到長排序 ----------
+
+def _normalize_title(t: str) -> str:
+    """正規化標題用於去重：移除媒體後綴、空白、標點"""
+    t = t or ""
+    # 切掉「 - 媒體名」尾巴
+    if " - " in t:
+        t = t.rsplit(" - ", 1)[0]
+    # 切掉「｜ 來源」尾巴
+    if "｜" in t:
+        t = t.rsplit("｜", 1)[0]
+    # 去除所有空白與常見標點
+    t = re.sub(r"[\s\-\|｜:：「」『』《》【】（）()，,。．]", "", t)
+    return t.lower()
+
+
+def _dedupe_by_title(items: List[Dict]) -> List[Dict]:
+    """同標題不同媒體合併成 1 筆，記錄所有媒體來源到 _media_sources"""
+    groups: Dict[str, List[Dict]] = {}
+    for r in items:
+        key = _normalize_title(r.get("標題", ""))
+        if not key:
+            continue
+        groups.setdefault(key, []).append(r)
+
+    deduped = []
+    for items_in_group in groups.values():
+        # 用最新發布日期那則當代表
+        items_in_group.sort(key=lambda x: x.get("發布日期", ""), reverse=True)
+        rep = dict(items_in_group[0])
+        # 蒐集所有不重複的媒體來源
+        sources_seen = []
+        for r in items_in_group:
+            src = r.get("來源網站", "")
+            if src and src not in sources_seen:
+                sources_seen.append(src)
+        rep["_media_sources"] = sources_seen
+        deduped.append(rep)
+    return deduped
+
+
+def _sort_short_to_long(items: List[Dict]) -> List[Dict]:
+    return sorted(items, key=lambda x: len(x.get("標題", "")))
+
+
 # ---------- 過濾近 N 天 ----------
 
 def _filter_recent_news(items: List[Dict], days: int = REPORT_RECENT_DAYS) -> List[Dict]:
@@ -173,6 +223,69 @@ def _filter_recent_news(items: List[Dict], days: int = REPORT_RECENT_DAYS) -> Li
         sorted_items = sorted(items, key=lambda x: x.get("發布日期", ""), reverse=True)
         return sorted_items[:max(REPORT_FALLBACK_MIN, len(kept))]
     return kept
+
+
+# ---------- 節氣施肥重點卡 ----------
+
+def _build_solar_term_bubble() -> Dict:
+    today = date.today()
+    term, term_start, next_term, next_start = solar_term.current_and_next(today)
+    g = agri_kb.guide_for(term)
+    days_in = (today - term_start).days
+    days_to_next = (next_start - today).days
+
+    body = [
+        _text(f"今日 {today.isoformat()}（{term}已過 {days_in} 天｜距「{next_term}」{days_to_next} 天）",
+              size="xs", color="#888888"),
+        _text(g.get("climate", ""), size="sm", color="#555555", margin="sm"),
+        _separator(),
+        _text("各區當期作物", weight="bold", size="sm", color="#2d6a4f", margin="md"),
+    ]
+    for region, crops in g.get("regions", {}).items():
+        body.append({
+            "type": "box",
+            "layout": "baseline",
+            "spacing": "sm",
+            "contents": [
+                _text(region, flex=2, size="xs", color="#1864ab", weight="bold"),
+                _text(crops, flex=5, size="xs", color="#333333", wrap=True),
+            ],
+        })
+
+    body.append(_separator(margin="md"))
+    if g.get("focus"):
+        body.append(_text("施肥重點", weight="bold", size="sm", color="#6b3300", margin="md"))
+        body.append(_text(g["focus"], size="sm", color="#333333"))
+    if g.get("sales"):
+        body.append(_text("業務建議", weight="bold", size="sm", color="#c92a2a", margin="md"))
+        body.append(_text(g["sales"], size="sm", color="#333333"))
+
+    body.append(_separator(margin="md"))
+    body.append(_text("※ 業界常識參考，非即時銷售數據", size="xs", color="#aaaaaa", margin="sm"))
+
+    header = _header(f"節氣施肥重點 · {term}", today.isoformat(), "#6b3300")
+    return _bubble(header, body)
+
+
+# ---------- 區域作物 / 基肥對照卡 ----------
+
+def _build_regional_crops_bubble() -> Dict:
+    body = [_text("全台主要作物面積與常用基肥對照", size="xs", color="#888888")]
+
+    for r in agri_kb.REGIONAL_CROPS:
+        body.append(_separator(margin="md"))
+        body.append(_text(r["region"], weight="bold", size="sm", color="#2d6a4f", margin="md"))
+        for crop in r["crops"]:
+            body.append(_text(f"  · {crop}", size="xs", color="#333333"))
+        body.append(_text(f"常用基肥：{r['common_fertilizer']}",
+                          size="xs", color="#6b3300", wrap=True, margin="sm"))
+
+    body.append(_separator(margin="md"))
+    body.append(_text("※ 面積為農業統計年報概略值，年度更新",
+                      size="xs", color="#aaaaaa", margin="sm"))
+
+    header = _header("各區作物面積 / 基肥對照", "業務區域參考", "#1864ab")
+    return _bubble(header, body)
 
 
 # ---------- 主入口 ----------
@@ -207,6 +320,8 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "") -> Dict
     cover_header = _header("有機肥料市場週報", today, "#2d6a4f")
     bubbles.append(_bubble(cover_header, cover_body))
 
+    # 註：節氣施肥重點 + 區域作物 改用圖片訊息推送（見 weekly_line_push）
+
     # 2. 新違規卡（紅色 header）
     if pdf_result:
         viols = pdf_result.get("recent_violations", [])
@@ -221,19 +336,31 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "") -> Dict
             added, "新上架", "#2d6a4f", _render_listing,
         ))
 
-    # 4. 活動卡（藍色 header）
+    # 4. 活動卡（藍色 header）— 去重 + 短到長排序
     activities = [r for r in rows if r.get("來源類型") == "活動"]
     activities = _filter_recent_news(activities)
-    activities.sort(key=lambda x: x.get("發布日期", ""), reverse=True)
+    activities = _dedupe_by_title(activities)
+    activities = _sort_short_to_long(activities)
     bubbles.extend(_paginated_bubbles(
         activities, "觀摩會 / 推廣活動", "#1864ab",
         lambda x: _render_news(x, "#1864ab"),
     ))
 
-    # 5. 新聞卡（深藍 header）
+    # 4.5 FB 粉專貼文卡（FB 藍）— 限制最多 24 筆（2 張卡），其餘看完整報表
+    fb_items = [r for r in rows if r.get("來源類型") == "FB"]
+    fb_items = _filter_recent_news(fb_items)
+    fb_items.sort(key=lambda x: x.get("發布日期", ""), reverse=True)
+    fb_capped = fb_items[:24]
+    bubbles.extend(_paginated_bubbles(
+        fb_capped, "FB 粉專動態", "#1877f2",
+        lambda x: _render_news(x, "#1877f2"),
+    ))
+
+    # 5. 新聞卡（深藍 header）— 去重 + 短到長排序
     news = [r for r in rows if r.get("來源類型") == "新聞"]
     news = _filter_recent_news(news)
-    news.sort(key=lambda x: x.get("發布日期", ""), reverse=True)
+    news = _dedupe_by_title(news)
+    news = _sort_short_to_long(news)
     bubbles.extend(_paginated_bubbles(
         news, "其他新聞", "#1a5490",
         lambda x: _render_news(x, "#1a5490"),

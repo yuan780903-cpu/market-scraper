@@ -32,6 +32,39 @@ def _strip_html(text: str) -> str:
     return text
 
 
+def _normalize_title(t: str) -> str:
+    """去除媒體後綴與標點空白用於去重"""
+    t = t or ""
+    if " - " in t:
+        t = t.rsplit(" - ", 1)[0]
+    if "｜" in t:
+        t = t.rsplit("｜", 1)[0]
+    t = re.sub(r"[\s\-\|｜:：「」『』《》【】（）()，,。．]", "", t)
+    return t.lower()
+
+
+def _dedupe_news(items: List[Dict]) -> List[Dict]:
+    """同標題不同媒體合併、附加 _media_sources（最新一則當代表）"""
+    groups: Dict[str, List[Dict]] = {}
+    for r in items:
+        key = _normalize_title(r.get("標題", ""))
+        if not key:
+            continue
+        groups.setdefault(key, []).append(r)
+    deduped = []
+    for items_in_group in groups.values():
+        items_in_group.sort(key=lambda x: x.get("發布日期", ""), reverse=True)
+        rep = dict(items_in_group[0])
+        seen = []
+        for r in items_in_group:
+            src = r.get("來源網站", "")
+            if src and src not in seen:
+                seen.append(src)
+        rep["_media_sources"] = seen
+        deduped.append(rep)
+    return deduped
+
+
 def _filter_recent(rows: List[Dict], days: int):
     cutoff = datetime.now() - timedelta(days=days)
     kept = []
@@ -53,12 +86,14 @@ def _render_item(r: Dict) -> str:
     title = html.escape(r.get("標題", ""))
     link = html.escape(r.get("連結", ""))
     date = html.escape(r.get("發布日期", "") or "—")
-    source = html.escape(r.get("來源網站", ""))
+    sources = r.get("_media_sources") or [r.get("來源網站", "")]
+    main_source = html.escape(sources[0])
+    extra = f' <span class="media-extra">+{len(sources)-1} 家報導</span>' if len(sources) > 1 else ""
 
     return f"""
     <div class="item">
       <a href="{link}" class="title" target="_blank">{title}</a>
-      <div class="meta">{source} · {date}</div>
+      <div class="meta">{main_source}{extra} · {date}</div>
     </div>
     """
 
@@ -69,19 +104,34 @@ def _render_grouped(rows: List[Dict]) -> str:
         grouped[r.get("來源類型", "其他")][r.get("命中關鍵字", "其他")].append(r)
 
     sections_html = []
-    for source_type in ("活動", "政府公告", "新聞", "其他"):
+    for source_type in ("FB", "活動", "政府公告", "新聞", "其他"):
         if source_type not in grouped:
             continue
         kw_blocks = []
-        for kw, items in sorted(grouped[source_type].items(), key=lambda x: -len(x[1])):
-            items_sorted = _sort_by_date_desc(items)
-            items_html = "".join(_render_item(r) for r in items_sorted)
+        # 活動與新聞跨關鍵字合併後去重，避免不同關鍵字抓到同篇報導
+        if source_type in ("活動", "新聞"):
+            all_items = []
+            for items in grouped[source_type].values():
+                all_items.extend(items)
+            deduped = _dedupe_news(all_items)
+            deduped.sort(key=lambda x: len(x.get("標題", "")))
+            items_html = "".join(_render_item(r) for r in deduped)
             kw_blocks.append(f"""
             <div class="kw-block">
-              <h3>{html.escape(kw)} <span class="count">{len(items)}</span></h3>
+              <h3>已去重 · 短到長排序 <span class="count">{len(deduped)}</span></h3>
               {items_html}
             </div>
             """)
+        else:
+            for kw, items in sorted(grouped[source_type].items(), key=lambda x: -len(x[1])):
+                items_sorted = _sort_by_date_desc(items)
+                items_html = "".join(_render_item(r) for r in items_sorted)
+                kw_blocks.append(f"""
+                <div class="kw-block">
+                  <h3>{html.escape(kw)} <span class="count">{len(items)}</span></h3>
+                  {items_html}
+                </div>
+                """)
         sections_html.append(f"""
         <section>
           <h2>{html.escape(source_type)}</h2>
@@ -336,6 +386,10 @@ def generate_html(rows: List[Dict], pdf_result: Optional[Dict] = None) -> str:
     font-size: 12px;
     margin-top: 30px;
     padding-bottom: 20px;
+  }}
+  .media-extra {{
+    color: #c92a2a;
+    font-weight: 600;
   }}
   .pdf-section h2 {{ color: #6b3300; border-bottom-color: #f5b300; }}
   .pdf-summary {{
