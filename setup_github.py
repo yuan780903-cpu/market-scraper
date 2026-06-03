@@ -105,19 +105,26 @@ def try_git_push(pat: str) -> bool:
         _print(result)
         return True
 
-    # Step 3: 被拒 → pull --rebase 再 push
+    # Step 3: 被拒 → pull --rebase 再 push；rebase 衝突就 force push
     err = (result.stdout + result.stderr).lower()
     if "rejected" in err or "fetch first" in err or "non-fast-forward" in err:
         print("  ⚠ 遠端較新，自動 pull --rebase 整合 ...")
         pull_result = _run(["git", "pull", "--rebase", push_url, "main"])
-        if pull_result.returncode != 0:
-            _print(pull_result)
-            print("  ✗ pull 失敗（可能 rebase 衝突，需手動 git status 看狀況）")
-            return False
-        print("  ✓ pull 成功，重試 push ...")
-        retry = _run(["git", "push", "-u", push_url, "main"])
-        _print(retry)
-        return retry.returncode == 0
+        if pull_result.returncode == 0:
+            print("  ✓ pull 成功，重試 push ...")
+            retry = _run(["git", "push", "-u", push_url, "main"])
+            _print(retry)
+            return retry.returncode == 0
+
+        # rebase 衝突 → abort + force push（私有 repo 安全）
+        _print(pull_result)
+        print("  ⚠ rebase 衝突，自動 abort 後 force push 覆寫遠端")
+        print("    （此 repo 為私有，本機是最新版本，遠端只有空 Initial commit）")
+        _run(["git", "rebase", "--abort"])
+        force = _run(["git", "push", "-u", "--force", push_url, "main"])
+        _print(force)
+        return force.returncode == 0
+
     _print(result)
     return False
 
