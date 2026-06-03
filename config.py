@@ -180,6 +180,39 @@ FB_POSTS_PER_PAGE = 8
 # Apify 餘額低於此值時自動跳過 FB 抓取（避免重蹈覆轍）
 APIFY_MIN_REMAINING_USD = 0.5
 
+# ==========================================
+# 雨量監控（中央氣象署 OpenData API）
+# ==========================================
+# 4 區代表（按農業大縣 group，自動取該區涵蓋縣內最大雨量）
+# 可選 townships 欄位：指定後只看該縣內這些鄉鎮（更精準）
+# - 北/中/東部：counties 內全部納入比較
+# - 南部：聚焦台南山區（中央山脈西側迎風面，最容易下雨）
+RAINFALL_REGIONS = [
+    {"region": "北部", "counties": ["桃園市", "新竹縣", "苗栗縣"]},
+    {"region": "中部", "counties": ["彰化縣", "南投縣", "雲林縣"]},
+    {
+        "region": "南部",
+        "counties": ["臺南市"],
+        "townships": ["楠西區", "南化區", "玉井區", "左鎮區", "東山區",
+                       "白河區", "大內區", "龍崎區", "山上區"],
+    },
+    {"region": "東部", "counties": ["花蓮縣", "臺東縣", "宜蘭縣"]},
+]
+
+# 為相容舊程式碼，保留 list-of-stations 格式（給某些函式用）
+RAINFALL_STATIONS = [{"region": r["region"], "station_name": r["region"]}
+                      for r in RAINFALL_REGIONS]
+
+# 業務影響閾值（月累積 mm）
+RAINFALL_THRESHOLDS = {
+    "normal": 150,      # < 150 = 旺季
+    "watch": 300,       # 150-300 = 普通；> 300 = 留意
+    "warning": 500,     # > 500 = 警戒
+}
+
+# 季累積警戒值（mm）— Q1/Q2/Q3/Q4 分開設
+RAINFALL_QUARTERLY_WATCH = {1: 400, 2: 900, 3: 1500, 4: 400}
+
 # HTML 日報顯示天數（多少天內的新聞算「近期」）
 # 有機肥料新聞不是每天都有，建議 7~30 天
 REPORT_RECENT_DAYS = 14

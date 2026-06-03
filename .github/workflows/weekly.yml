@@ -39,11 +39,9 @@ jobs:
 
       - name: 跑爬蟲並推 LINE
         env:
-          GMAIL_USER: ${{ secrets.GMAIL_USER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
         run: python weekly_line_push.py
 
       - name: 把 PDF 快照與金句使用紀錄 commit 回 repo

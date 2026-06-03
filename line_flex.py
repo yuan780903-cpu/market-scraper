@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 from config import REPORT_RECENT_DAYS, REPORT_FALLBACK_MIN
 import solar_term
 import agri_kb
+import motivation_picker
 
 # 每張卡片最多顯示的項目數（控制單卡高度與 component 數）
 ITEMS_PER_PAGE = 12
@@ -288,9 +289,461 @@ def _build_regional_crops_bubble() -> Dict:
     return _bubble(header, body)
 
 
+# ---------- 節氣施肥重點 Flex bubble ----------
+
+REGION_CHIP_COLORS = {
+    "北部": ("#dfeefc", "#1864ab"),
+    "中部": ("#e6f4d7", "#3b6e0e"),
+    "南部": ("#fde0d0", "#a3370b"),
+    "東部": ("#f0e0fa", "#5e2c8f"),
+}
+
+
+def _build_solar_term_bubble(today: Optional[date] = None) -> Dict:
+    if today is None:
+        today = date.today()
+    term, term_start, next_term, next_start = solar_term.current_and_next(today)
+    g = agri_kb.guide_for(term)
+    days_in = (today - term_start).days
+    days_to_next = (next_start - today).days
+
+    body = [
+        _text(f"{today.isoformat()}　·　{term}已過 {days_in} 天　·　距「{next_term}」{days_to_next} 天",
+              size="xs", color="#888888"),
+    ]
+    # 氣候特徵
+    if g.get("climate"):
+        body.append(_separator(margin="md"))
+        body.append(_text("氣候特徵", weight="bold", size="sm", color="#6b3300"))
+        body.append(_text(g["climate"], size="sm", color="#1f2933", wrap=True))
+
+    # 各區當期作物（用 horizontal 而非 baseline，wrap 才會生效）
+    if g.get("regions"):
+        body.append(_separator(margin="md"))
+        body.append(_text("各區當期作物", weight="bold", size="sm", color="#2d6a4f"))
+        for region, crops in g["regions"].items():
+            bg, fg = REGION_CHIP_COLORS.get(region, ("#eeeeee", "#333333"))
+            row = {
+                "type": "box",
+                "layout": "horizontal",
+                "spacing": "sm",
+                "margin": "sm",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "backgroundColor": bg,
+                        "cornerRadius": "8px",
+                        "paddingAll": "4px",
+                        "width": "60px",
+                        "contents": [_text(region, size="xs", weight="bold",
+                                           color=fg, align="center")],
+                    },
+                    _text(crops, size="sm", color="#1f2933", wrap=True, flex=5),
+                ],
+            }
+            body.append(row)
+
+    # 施肥重點
+    if g.get("focus"):
+        body.append(_separator(margin="md"))
+        body.append(_text("施肥重點", weight="bold", size="sm", color="#6b3300"))
+        body.append(_text(g["focus"], size="sm", color="#1f2933", wrap=True))
+
+    # 業務建議
+    if g.get("sales"):
+        body.append(_separator(margin="md"))
+        body.append(_text("業務建議 · 本期主推", weight="bold", size="sm", color="#c92a2a"))
+        body.append(_text(g["sales"], size="sm", color="#1f2933", wrap=True))
+
+    body.append(_separator(margin="lg"))
+    body.append(_text("※ 業界常識參考，非即時銷售數據",
+                       size="xxs", color="#aaaaaa", margin="sm"))
+
+    header = _header(f"節氣施肥重點 · {term}", today.isoformat(), "#8a5a00")
+    return _bubble(header, body)
+
+
+# ---------- 各區作物 / 基肥對照 Flex bubble ----------
+
+def _build_regional_crops_bubble(today: Optional[date] = None) -> Dict:
+    if today is None:
+        today = date.today()
+    focus = agri_kb.monthly_focus(today.month)
+
+    body = []
+
+    # 本月焦點區 highlight
+    if focus:
+        focus_box = {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#fff6db",
+            "cornerRadius": "8px",
+            "paddingAll": "12px",
+            "spacing": "xs",
+            "contents": [
+                _text("★ 本月基肥焦點區", size="xs", weight="bold",
+                      color="#c92a2a"),
+                _text(focus.get("region", "—"), size="xl",
+                      weight="bold", color="#6b4800", margin="sm"),
+                _text(focus.get("crop", ""), size="sm",
+                      color="#1f2933", wrap=True),
+            ],
+        }
+        if focus.get("scale"):
+            focus_box["contents"].append(
+                _text(f"規模：{focus['scale']}", size="xs",
+                      color="#52616b", wrap=True)
+            )
+        if focus.get("products"):
+            focus_box["contents"].append(
+                _text(f"主推：{focus['products']}", size="xs",
+                      color="#52616b", wrap=True)
+            )
+        body.append(focus_box)
+        if focus.get("reason"):
+            body.append(_text(f"※ {focus['reason']}",
+                              size="xxs", color="#888888", wrap=True, margin="sm"))
+
+    # 四區
+    body.append(_separator(margin="lg"))
+    body.append(_text("四區作物面積與基肥對照",
+                       weight="bold", size="sm", color="#1864ab"))
+
+    for r in agri_kb.REGIONAL_CROPS:
+        short = r["region"].split(" ")[0]
+        bg, fg = REGION_CHIP_COLORS.get(short, ("#eeeeee", "#333333"))
+        region_block = {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "spacing": "xs",
+            "contents": [
+                {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "backgroundColor": bg,
+                            "cornerRadius": "8px",
+                            "paddingAll": "4px",
+                            "width": "60px",
+                            "contents": [_text(short, size="xs", weight="bold",
+                                               color=fg, align="center")],
+                        },
+                        _text(r["region"].split(" ", 1)[1] if " " in r["region"] else "",
+                              size="xs", color="#888888", flex=5, margin="sm",
+                              gravity="center"),
+                    ],
+                },
+            ],
+        }
+        for crop in r["crops"]:
+            region_block["contents"].append(
+                _text(f"· {crop}", size="xs", color="#1f2933", wrap=True)
+            )
+        region_block["contents"].append(
+            _text(f"常用基肥：{r['common_fertilizer']}",
+                  size="xs", color="#6b3300", wrap=True, margin="xs")
+        )
+        body.append(region_block)
+
+    body.append(_separator(margin="lg"))
+    body.append(_text("※ 面積為農業統計年報概略值",
+                       size="xxs", color="#aaaaaa", margin="sm"))
+
+    header = _header("各區作物 / 基肥對照",
+                      f"{today.year} 年 {today.month} 月　·　業務區域戰情",
+                      "#1864ab")
+    return _bubble(header, body)
+
+
+# ---------- 業務充電站 Flex bubble ----------
+
+def _build_motivation_bubble(today: Optional[date] = None,
+                              mark_used: bool = True,
+                              picked: Optional[Dict] = None) -> Dict:
+    if today is None:
+        today = date.today()
+    if picked is None:
+        picked = motivation_picker.pick_quote_and_tactic(mark_used=mark_used)
+    quote = picked["quote"]
+    tactic = picked["tactic"]
+
+    body = []
+
+    # 金句區（金黃 panel）
+    quote_box = {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#fff9ec",
+        "cornerRadius": "8px",
+        "paddingAll": "14px",
+        "spacing": "sm",
+        "contents": [
+            _text(f"本週金句　·　{quote['id']}",
+                  size="xxs", weight="bold", color="#a07a00"),
+            _text(f"「{quote['text']}」",
+                  size="md", weight="bold", color="#3d2800", wrap=True),
+            _text(f"— {quote['author']}",
+                  size="xs", color="#8a6500", align="end"),
+        ],
+    }
+    body.append(quote_box)
+
+    # 銷售手段區
+    body.append(_separator(margin="lg"))
+    body.append(_text(f"本週銷售手段　·　{tactic['id']}",
+                       size="xxs", weight="bold", color="#1864ab"))
+    body.append(_text(tactic["title"],
+                       size="md", weight="bold", color="#0e3a6b", margin="xs"))
+    body.append(_text(tactic["body"],
+                       size="sm", color="#1f2933", wrap=True, margin="sm"))
+
+    body.append(_separator(margin="lg"))
+    body.append(_text(
+        f"※ 金句池 {len(motivation_picker.motivation_kb.QUOTES)} 條／手段池 "
+        f"{len(motivation_picker.motivation_kb.TACTICS)} 條　·　自動輪播不重複",
+        size="xxs", color="#aaaaaa", margin="sm"))
+
+    header = _header("業務充電站", f"{today.isoformat()}　·　本週金句 + 銷售手段",
+                      "#7c4dcc")
+    return _bubble(header, body)
+
+
+# ---------- 雨量警示 Flex bubble ----------
+
+def _build_rainfall_bubble(rainfall_result: Dict) -> Optional[Dict]:
+    """雨量警示卡：4 區月/季累積 + 業務判讀"""
+    if not rainfall_result or rainfall_result.get("skipped"):
+        return None
+    regions = rainfall_result.get("regions", [])
+    if not regions:
+        return None
+
+    today = rainfall_result.get("today", date.today().isoformat())
+    q = rainfall_result.get("quarter", 1)
+
+    body = [
+        _text(f"{today}　·　Q{q} 至今累積",
+              size="xs", color="#888888"),
+        _separator(margin="md"),
+    ]
+
+    # 表頭
+    body.append({
+        "type": "box",
+        "layout": "horizontal",
+        "spacing": "sm",
+        "contents": [
+            _text("區域", size="xs", color="#888888", weight="bold", flex=2),
+            _text("近3日", size="xs", color="#888888", weight="bold", flex=2, align="end"),
+            _text("本月", size="xs", color="#888888", weight="bold", flex=2, align="end"),
+            _text("本季", size="xs", color="#888888", weight="bold", flex=2, align="end"),
+        ],
+    })
+
+    # 每區一列
+    for r in regions:
+        r3 = r.get("recent_3days_mm", 0)
+        r3_color = "#c92a2a" if r3 > 100 else ("#a05c00" if r3 > 50 else "#52616b")
+        body.append({
+            "type": "box",
+            "layout": "horizontal",
+            "spacing": "sm",
+            "margin": "sm",
+            "contents": [
+                _text(r["region"], size="sm", weight="bold", color="#1f2933", flex=2),
+                _text(f"{r3:g} mm", size="sm",
+                      color=r3_color, flex=2, align="end"),
+                _text(f"{r['monthly_mm']:g} mm", size="sm",
+                      color=r["monthly_color"], flex=2, align="end"),
+                _text(f"{r['quarterly_mm']:g} mm", size="sm",
+                      color="#c92a2a" if r["quarterly_alert"] else "#52616b",
+                      flex=2, align="end"),
+            ],
+        })
+
+    body.append(_separator(margin="md"))
+
+    # 業務判讀（針對警戒區）
+    warnings = [r for r in regions if r["monthly_level"] in ("留意", "警戒")]
+    if warnings:
+        body.append(_text("業務影響判讀", weight="bold", size="sm", color="#c92a2a"))
+        for r in warnings:
+            body.append(_text(
+                f"・{r['region']}（{r['station']}）月累積 {r['monthly_mm']:g} mm — {r['monthly_note']}",
+                size="xs", color="#1f2933", wrap=True, margin="sm"))
+    else:
+        body.append(_text("各區雨量正常，施肥/出貨皆可順行。",
+                          size="sm", color="#2d6a4f"))
+
+    # 影響閾值對照表（壓縮版）
+    body.append(_separator(margin="md"))
+    body.append(_text("雨量對肥料銷量影響", weight="bold", size="xs", color="#1864ab"))
+
+    # 精簡閾值表（每段最關鍵 3 條，總共 9 條控制 JSON 大小）
+    threshold_table = [
+        ("短期單日", [
+            ("<30 mm", "可施肥", "#2d6a4f"),
+            ("30-80", "養分流失，當日施肥白費", "#a05c00"),
+            (">80 mm", "禁施，農路積水", "#c92a2a"),
+        ]),
+        ("連續 3-5 天", [
+            ("<50 mm", "田面 OK，正常出貨", "#2d6a4f"),
+            ("50-150", "泥濘，影響出貨", "#a05c00"),
+            (">150 mm", "田面積水", "#c92a2a"),
+        ]),
+        ("月累積（銷量）", [
+            ("<150 mm", "施肥黃金期，銷量旺", "#2d6a4f"),
+            ("150-300", "普通，看空檔", "#52616b"),
+            ("300-500", "銷量下滑 20-30%", "#a05c00"),
+            (">500 mm", "銷量低谷", "#c92a2a"),
+        ]),
+    ]
+    for section_title, rows in threshold_table:
+        body.append(_text(section_title, size="xxs", weight="bold",
+                          color="#52616b", margin="sm"))
+        for rng, note, c in rows:
+            body.append({
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                    _text(rng, size="xxs", color=c, weight="bold", flex=3),
+                    _text(note, size="xxs", color="#1f2933", flex=5, wrap=True),
+                ],
+            })
+
+    # 資料來源 + 統計期間
+    body.append(_separator(margin="md"))
+    month_period = rainfall_result.get("month_period", "")
+    quarter_period = rainfall_result.get("quarter_period", "")
+    body.append(_text(f"月統計期間：{month_period}",
+                       size="xxs", color="#888888"))
+    body.append(_text(f"季統計期間：Q{q}　{quarter_period}",
+                       size="xxs", color="#888888"))
+    body.append(_text("資料來源：中央氣象署 OpenData",
+                       size="xxs", color="#888888"))
+    body.append(_text("※ 月/季累積為本程式逐日累積，依執行頻率而定",
+                       size="xxs", color="#aaaaaa"))
+
+    header = _header("雨量警示 · 區域出貨判讀",
+                      f"{today}　·　4 區代表站",
+                      "#1864ab")
+    return _bubble(header, body)
+
+
+# ---------- 全台縣市重災排名 Flex bubble ----------
+
+def _build_rainfall_ranking_bubble(rainfall_result: Dict) -> Optional[Dict]:
+    """全台雨量排名：縣市 + 鄉鎮 兩層"""
+    if not rainfall_result or rainfall_result.get("skipped"):
+        return None
+    top_24h = rainfall_result.get("top_24h", []) or []
+    top_3days = rainfall_result.get("top_3days", []) or []
+    top_24h_town = rainfall_result.get("top_24h_town", []) or []
+    top_3days_town = rainfall_result.get("top_3days_town", []) or []
+    if not (top_24h or top_24h_town):
+        return None
+
+    today = rainfall_result.get("today", date.today().isoformat())
+
+    def _level_label(mm, is_3days=False):
+        if is_3days:
+            if mm >= 150: return ("田面積水", "#c92a2a")
+            if mm >= 100: return ("全面影響", "#c25400")
+            if mm >= 50: return ("黏土泥濘", "#a05c00")
+            return ("正常", "#2d6a4f")
+        else:
+            if mm >= 80: return ("豪雨警戒", "#c92a2a")
+            if mm >= 50: return ("不宜施肥", "#c25400")
+            if mm >= 30: return ("養分流失", "#a05c00")
+            if mm >= 10: return ("輕雨", "#52616b")
+            return ("正常", "#2d6a4f")
+
+    def _county_row(i, r, is_3days):
+        level, color = _level_label(r["mm"], is_3days)
+        return {
+            "type": "box", "layout": "horizontal", "margin": "xs",
+            "contents": [
+                _text(f"{i}", size="sm", color="#1f2933", weight="bold", flex=1),
+                _text(r["county"], size="sm", color="#1f2933", flex=4, wrap=True),
+                _text(f"{r['mm']:g} mm", size="sm", color=color, flex=3, align="end", weight="bold"),
+                _text(level, size="xxs", color=color, flex=3, align="center"),
+            ],
+        }
+
+    def _town_row(i, r, is_3days):
+        level, color = _level_label(r["mm"], is_3days)
+        location = f"{r['county']} {r['town']}"
+        return {
+            "type": "box", "layout": "horizontal", "margin": "xs",
+            "contents": [
+                _text(f"{i}", size="sm", color="#1f2933", weight="bold", flex=1),
+                _text(location, size="xs", color="#1f2933", flex=5, wrap=True),
+                _text(f"{r['mm']:g} mm", size="sm", color=color, flex=3, align="end", weight="bold"),
+                _text(level, size="xxs", color=color, flex=3, align="center"),
+            ],
+        }
+
+    body = [
+        _text(f"{today}　·　即時排名（鄉鎮級，含縣市）",
+              size="xs", color="#888888"),
+    ]
+
+    # ===== 過去 24 小時 鄉鎮 TOP 5 =====
+    body.append(_separator(margin="md"))
+    body.append(_text("過去 24 小時　鄉鎮 TOP 5",
+                       weight="bold", size="sm", color="#c92a2a"))
+    body.append({
+        "type": "box", "layout": "horizontal",
+        "contents": [
+            _text("#", size="xxs", color="#888888", weight="bold", flex=1),
+            _text("縣市 / 鄉鎮", size="xxs", color="#888888", weight="bold", flex=5),
+            _text("雨量", size="xxs", color="#888888", weight="bold", flex=3, align="end"),
+            _text("狀態", size="xxs", color="#888888", weight="bold", flex=3, align="center"),
+        ],
+    })
+    for i, r in enumerate(top_24h_town, 1):
+        body.append(_town_row(i, r, False))
+
+    # ===== 過去 3 日 鄉鎮 TOP 5 =====
+    body.append(_separator(margin="md"))
+    body.append(_text("過去 3 日累積　鄉鎮 TOP 5",
+                       weight="bold", size="sm", color="#c92a2a"))
+    body.append({
+        "type": "box", "layout": "horizontal",
+        "contents": [
+            _text("#", size="xxs", color="#888888", weight="bold", flex=1),
+            _text("縣市 / 鄉鎮", size="xxs", color="#888888", weight="bold", flex=5),
+            _text("雨量", size="xxs", color="#888888", weight="bold", flex=3, align="end"),
+            _text("狀態", size="xxs", color="#888888", weight="bold", flex=3, align="center"),
+        ],
+    })
+    for i, r in enumerate(top_3days_town, 1):
+        body.append(_town_row(i, r, True))
+
+    body.append(_separator(margin="md"))
+    body.append(_text("資料來源：中央氣象署 OpenData（全國雨量站）",
+                       size="xxs", color="#888888"))
+    body.append(_text("※ 月/季鄉鎮累積排名需逐日資料，後續擴充",
+                       size="xxs", color="#aaaaaa"))
+
+    header = _header("全台鄉鎮重災排名",
+                      f"{today}　·　即時雨量熱區",
+                      "#c92a2a")
+    return _bubble(header, body)
+
+
 # ---------- 主入口 ----------
 
-def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "") -> Dict:
+def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "",
+                mark_motivation_used: bool = True,
+                rainfall_result: Optional[Dict] = None,
+                motivation_picked: Optional[Dict] = None) -> Dict:
     today = datetime.now().strftime("%Y-%m-%d")
     bubbles: List[Dict] = []
 
@@ -320,7 +773,25 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "") -> Dict
     cover_header = _header("有機肥料市場週報", today, "#2d6a4f")
     bubbles.append(_bubble(cover_header, cover_body))
 
-    # 註：節氣施肥重點 + 區域作物 改用圖片訊息推送（見 weekly_line_push）
+    # 1.2 節氣施肥重點 Flex 卡（取代之前的圖片）
+    bubbles.append(_build_solar_term_bubble())
+
+    # 1.4 各區作物 / 基肥對照 Flex 卡
+    bubbles.append(_build_regional_crops_bubble())
+
+    # 1.5 雨量警示卡（4 區）
+    rb = _build_rainfall_bubble(rainfall_result)
+    if rb:
+        bubbles.append(rb)
+
+    # 1.6 全台縣市重災排名卡
+    rrb = _build_rainfall_ranking_bubble(rainfall_result)
+    if rrb:
+        bubbles.append(rrb)
+
+    # 1.6 業務充電站 Flex 卡（金句 + 銷售手段，自動輪播不重複）
+    bubbles.append(_build_motivation_bubble(mark_used=mark_motivation_used,
+                                              picked=motivation_picked))
 
     # 2. 新違規卡（紅色 header）
     if pdf_result:

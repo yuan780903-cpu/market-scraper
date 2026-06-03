@@ -22,11 +22,16 @@ import scraper_gov
 import scraper_news
 import scraper_pdf
 import scraper_facebook
+import scraper_rainfall
+import motivation_picker
 import report
+import dashboard
+import email_sender
 import uploader
 import line_flex
 import line_sender
 import image_card
+import richmenu_deploy
 from config import OUTPUT_DIR
 
 
@@ -54,13 +59,25 @@ def main(dry_run: bool = False) -> None:
     except Exception as e:
         print(f"[!] FB 流程失敗（已忽略）：{e}")
 
+    # 雨量資料（沒設 CWA_API_KEY 會自動跳過）
+    rainfall_result = None
+    try:
+        rainfall_result = scraper_rainfall.scrape_all()
+    except Exception as e:
+        print(f"[!] 雨量流程失敗（已忽略）：{e}")
+
     df = pd.DataFrame(rows) if rows else pd.DataFrame()
     if not df.empty:
         df = df.drop_duplicates(subset=["連結"]).reset_index(drop=True)
     rows = df.to_dict(orient="records") if not df.empty else []
 
-    # 2. 產 HTML 報表 + 存檔備份
-    html_body = report.generate_html(rows, pdf_result=pdf_result)
+    # 1.9 挑選本期金句+銷售手段（dry-run 不消耗，傳給 dashboard 與 Flex 共用）
+    motivation_picked = motivation_picker.pick_quote_and_tactic(mark_used=not dry_run)
+
+    # 2. 產 Dashboard HTML（含 Taiwan 雨量泡泡圖 + 業務充電站）
+    html_body = dashboard.generate_dashboard(rows, pdf_result=pdf_result,
+                                              rainfall_result=rainfall_result,
+                                              motivation_picked=motivation_picked)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     html_path = os.path.join(OUTPUT_DIR, f"市場週報_{timestamp}.html")
@@ -68,8 +85,8 @@ def main(dry_run: bool = False) -> None:
         f.write(html_body)
     print(f"\n[HTML] 本機備份：{html_path}")
 
-    # 3. 上傳 HTML 取得公開 URL
-    print("[Upload] 上傳 HTML 到 catbox.moe ...")
+    # 3. 上傳 dashboard 取得公開 URL
+    print("[Upload] 上傳 dashboard 到 catbox.moe ...")
     try:
         report_url = uploader.upload_html(
             html_body, filename=f"market_weekly_{timestamp}.html"
@@ -79,29 +96,22 @@ def main(dry_run: bool = False) -> None:
         print(f"[!] 上傳失敗：{e}")
         report_url = ""
 
-    # 3.5 生成 3 張靜態圖片卡（節氣 + 區域作物 + 業務充電站）並上傳
-    print("\n[Image] 生成節氣 / 區域作物 / 業務充電站圖片卡 ...")
-    image_messages = []
+    # 3.5 只生成節氣圖片給 Rich Menu 用（推送的卡片改用 Flex bubble）
+    print("\n[Image] 生成節氣圖（供 Rich Menu 連結用）...")
+    image_messages = []  # 不再推圖片，全部走 Flex carousel
+    solar_url = ""
     try:
         solar_img = image_card.make_solar_term_image()
-        crops_img = image_card.make_regional_crops_image()
-        # dry-run 不消耗金句池
-        motiv_img = image_card.make_motivation_image(mark_used=not dry_run)
-        print(f"[Image] 已生成：{solar_img.name}, {crops_img.name}, {motiv_img.name}")
         solar_url = uploader.upload_image(solar_img)
-        crops_url = uploader.upload_image(crops_img)
-        motiv_url = uploader.upload_image(motiv_img)
         print(f"[Image] 節氣卡 URL：{solar_url}")
-        print(f"[Image] 區域卡 URL：{crops_url}")
-        print(f"[Image] 充電站 URL：{motiv_url}")
-        image_messages.append(line_sender.image_message(solar_url))
-        image_messages.append(line_sender.image_message(crops_url))
-        image_messages.append(line_sender.image_message(motiv_url))
     except Exception as e:
-        print(f"[!] 圖片卡產出/上傳失敗（已忽略）：{e}")
+        print(f"[!] 節氣圖產製失敗（已忽略）：{e}")
 
-    # 4. 生成 LINE Flex Message
-    flex_msg = line_flex.build_flex(rows, pdf_result, report_url)
+    # 4. 生成 LINE Flex Message Carousel（金句已挑、不會重複消耗）
+    flex_msg = line_flex.build_flex(rows, pdf_result, report_url,
+                                     mark_motivation_used=False,
+                                     rainfall_result=rainfall_result,
+                                     motivation_picked=motivation_picked)
     flex_json = json.dumps(flex_msg, ensure_ascii=False)
 
     print("\n" + "-" * 60)
@@ -138,6 +148,14 @@ def main(dry_run: bool = False) -> None:
     except Exception as e:
         print(f"\n[!] LINE 推播失敗：{e}")
         sys.exit(1)
+
+    # 6. 同步更新 Rich Menu 兩個動態按鈕的 URL（最新週報 / 節氣施肥）
+    if report_url or solar_url:
+        print("\n[RichMenu] 同步更新 Rich Menu 按鈕 URL ...")
+        try:
+            richmenu_deploy.deploy(report_url=report_url, solar_url=solar_url)
+        except Exception as e:
+            print(f"[!] Rich Menu 更新失敗（已忽略）：{e}")
 
 
 if __name__ == "__main__":
