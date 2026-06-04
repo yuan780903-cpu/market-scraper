@@ -51,7 +51,7 @@
   .notes .nt-title{ font-size:17px; font-weight:700; margin-bottom:6px; }
   .notes ol{ margin:0; padding-left:22px; font-size:13.5px; line-height:1.8; }
   .cardfoot{ margin-top:46px; text-align:left; }
-  .cardfoot img{ max-width:260px; width:auto; height:auto; border:1px solid #eee; }
+  .cardfoot img{ display:block; max-width:220px; width:auto; height:auto; margin:0; border:1px solid #eee; }
   .cardfoot .missing{ color:#c62828; font-size:13px; padding:20px; border:1px dashed #c62828; border-radius:8px; }
 
   @media print{
@@ -79,9 +79,9 @@
   <div class="controls">
     <div class="panel">
       <h1>碩成牌有機質肥料 · 報價單系統</h1>
-      <div class="hint">資料只存在本機瀏覽器（不上雲）。填完按「列印 / 存成 PDF」。</div>
+      <div class="hint">資料只存在本機瀏覽器（不上雲）。填完按「下載 PDF」即可存檔。</div>
       <div class="toolbar">
-        <button class="btn btn-primary" onclick="window.print()">列印 / 存成 PDF</button>
+        <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
         <button class="btn btn-ghost" onclick="saveDraft()">儲存草稿</button>
         <button class="btn btn-ghost" onclick="loadDraft()">讀取草稿</button>
         <button class="btn btn-ghost" onclick="clearCustomer()">清空客戶</button>
@@ -145,6 +145,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
 <script>
 /* ===== 9 項正式品名（依肥料登記證，記憶 line_bot_business_rules）===== */
 const PRODUCTS = [
@@ -297,6 +298,25 @@ function scaleSheet(){
   wrap.style.height=(sheet.offsetHeight*scale)+"px";
 }
 window.addEventListener("resize", scaleSheet);
+
+/* ----- 下載 PDF（手機/LINE 內建瀏覽器也能用，不靠 window.print）----- */
+function savePDF(){
+  const sheet=document.getElementById("sheet");
+  if(typeof html2pdf==="undefined"){ window.print(); return; }
+  const prev=sheet.style.transform;
+  sheet.style.transform="none";
+  const co=val("c_company")||"報價單";
+  html2pdf().set({
+    margin:[8,8,8,8],
+    filename:"報價單_"+co+".pdf",
+    image:{type:"jpeg",quality:0.96},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
+    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+    pagebreak:{mode:["css","legacy"]}
+  }).from(sheet).save()
+    .then(()=>{ sheet.style.transform=prev; scaleSheet(); })
+    .catch(()=>{ sheet.style.transform=prev; scaleSheet(); window.print(); });
+}
 
 /* ----- 草稿（整張單）----- */
 function saveDraft(){
