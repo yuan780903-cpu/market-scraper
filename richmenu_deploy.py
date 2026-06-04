@@ -40,6 +40,11 @@ LICENSE_INDEX_URL_FALLBACK = "https://files.catbox.moe/ioces5.html"
 OPERATION_INDEX_URL_FALLBACK = "https://files.catbox.moe/9mwuup.html"
 LICENSE_SNAPSHOT = Path("snapshots/license_index.json")
 
+# 報價系統（取代原「肥料登記證」按鈕）— 由 GitHub Pages 提供。
+# catbox 會把 HTML 當 text/plain 顯示原始碼，故改用 Pages（正確渲染、URL 固定）。
+# 內容更新：改 docs/quote_system.html 後 git push，Pages 自動重新發布，選單免重部署。
+QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html"
+
 
 def _load_license_urls() -> tuple:
     """從 snapshots/license_index.json 讀最新 URL；讀不到就用 fallback。"""
@@ -83,11 +88,11 @@ def delete_rich_menu(token: str, menu_id: str) -> None:
         print(f"  ⚠ 刪除 {menu_id[:12]}… 回 {r.status_code}: {r.text[:200]}")
 
 
-def build_richmenu_payload(target_url: str, price_url: str) -> dict:
+def build_richmenu_payload(target_url: str, price_url: str, quote_url: str) -> dict:
     """組合 Rich Menu 結構：8 個按鈕的位置與動作（2 列 × 4 欄）"""
     areas_geo = richmenu_designer.get_button_areas()
     license_url, operation_url = _load_license_urls()
-    print(f"  肥料登記證 URL: {license_url}")
+    print(f"  報價系統 URL: {quote_url}")
     print(f"  營運許可證 URL: {operation_url}")
 
     # 8 個按鈕對應動作（順序需與 richmenu_designer.BUTTONS 一致）
@@ -106,8 +111,8 @@ def build_richmenu_payload(target_url: str, price_url: str) -> dict:
          "label": "產品牌價"},
         {"type": "uri", "uri": AFA_FERT_LAW_URL,
          "label": "肥料法規"},
-        {"type": "uri", "uri": license_url,
-         "label": "肥料登記證"},
+        {"type": "uri", "uri": quote_url,
+         "label": "報價系統"},
         {"type": "uri", "uri": operation_url,
          "label": "營運許可證"},
     ]
@@ -180,6 +185,9 @@ def deploy(report_url: str = "", solar_url: str = "") -> None:
     except Exception as e:
         print(f"  [!] 牌價圖失敗（用 fallback）：{e}")
 
+    quote_url = QUOTE_URL
+    print(f"\n[2.5] 報價系統（GitHub Pages）URL：{quote_url}")
+
     print("\n[3/6] 刪除舊選單（避免累積）...")
     old_menus = list_rich_menus(token)
     print(f"  目前有 {len(old_menus)} 個舊選單")
@@ -187,7 +195,7 @@ def deploy(report_url: str = "", solar_url: str = "") -> None:
         delete_rich_menu(token, m["richMenuId"])
 
     print("\n[4/6] 建立新 Rich Menu 結構（8 格）...")
-    payload = build_richmenu_payload(target_url, price_url)
+    payload = build_richmenu_payload(target_url, price_url, quote_url)
     menu_id = create_rich_menu(token, payload)
     print(f"  ✓ menuId: {menu_id}")
 
