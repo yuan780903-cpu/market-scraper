@@ -45,7 +45,7 @@ LICENSE_SNAPSHOT = Path("snapshots/license_index.json")
 # 內容更新：改 docs/quote_system.html 後 git push，Pages 自動重新發布，選單免重部署。
 # 結尾 ?openExternalBrowser=1：強制 LINE 用手機「外部瀏覽器」(Safari/Chrome) 開，
 # 不要用 LINE 內建瀏覽器 — 因為內建瀏覽器無法下載檔案（PDF 存不下來）。
-QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html?openExternalBrowser=1&v=2026060405"
+QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html?openExternalBrowser=1&v=2026060406"
 
 
 def _load_license_urls() -> tuple:

@@ -298,11 +298,24 @@ function scaleSheet(){
   const vv=window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const avail=Math.min(wrap.clientWidth, document.documentElement.clientWidth, vv)-2;
   const scale=Math.min(1, avail/794);
-  // 用 zoom 而非 transform:scale —— zoom 會真正改變版面盒大小，
-  // 不會留下原尺寸空盒(iOS 不會裁切 transform 溢出，導致下方一大片空白+殘線)。
-  sheet.style.transform="none";
-  sheet.style.zoom=scale;
-  wrap.style.height="";
+  // iOS/LINE 的 WebKit：zoom 只是「視覺」縮放，版面盒仍停在原尺寸(794×670)，
+  // 外框量到的高度還是 670 → 報價單下方留一大片空白 + 一條殘邊線。Blink 不會，
+  // 所以桌機測不出來。解法：用 transform:scale 做視覺縮放，再「手動」把外框高度
+  // 設成『縮放後高度＋自身 padding/border』並 overflow:hidden 裁掉原尺寸空盒。
+  sheet.style.zoom="";
+  sheet.style.transformOrigin="top left";
+  if(scale<1){
+    sheet.style.transform="scale("+scale+")";
+    const cs=getComputedStyle(wrap);
+    const extra=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)
+               +parseFloat(cs.borderTopWidth)+parseFloat(cs.borderBottomWidth);
+    wrap.style.height=(sheet.offsetHeight*scale+extra)+"px";
+    wrap.style.overflow="hidden";
+  }else{
+    sheet.style.transform="none";
+    wrap.style.height="";
+    wrap.style.overflow="";
+  }
 }
 window.addEventListener("resize", scaleSheet);
 window.addEventListener("orientationchange", scaleSheet);
