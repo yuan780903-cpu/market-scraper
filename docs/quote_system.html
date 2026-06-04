@@ -79,7 +79,7 @@
   <div class="controls">
     <div class="panel">
       <h1>碩成牌有機質肥料 · 報價單系統</h1>
-      <div class="hint">資料只存在本機瀏覽器（不上雲）。填完按「下載 PDF」即可存檔。</div>
+      <div class="hint" id="pdfHint">資料只存在本機瀏覽器（不上雲）。填完按「下載 PDF」即可存檔。</div>
       <div class="toolbar">
         <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
         <button class="btn btn-ghost" onclick="saveDraft()">儲存草稿</button>
@@ -299,13 +299,25 @@ function scaleSheet(){
 }
 window.addEventListener("resize", scaleSheet);
 
-/* ----- 下載 PDF（手機/LINE 內建瀏覽器也能用，不靠 window.print）----- */
+/* ----- 下載 / 開啟 PDF -----
+   LINE 等 App 內建瀏覽器無法「下載」檔案(尤其 iPhone)，
+   所以在 App 內改成「開啟 PDF 檢視」→ 使用者再用 iOS 分享鈕存檔/傳送。
+   一般 Safari/Chrome 則直接下載。 */
+function isInApp(){
+  const ua=navigator.userAgent||"";
+  return /\bLine\//i.test(ua) || /FBAN|FBAV|Instagram|micromessenger/i.test(ua);
+}
 function savePDF(){
   const sheet=document.getElementById("sheet");
   if(typeof html2pdf==="undefined"){ window.print(); return; }
+  const inApp=isInApp();
+  // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
+  let win=null;
+  if(inApp){ win=window.open("","_blank"); }
   const prev=sheet.style.transform;
   sheet.style.transform="none";
   const co=val("c_company")||"報價單";
+  const restore=()=>{ sheet.style.transform=prev; scaleSheet(); };
   html2pdf().set({
     margin:[8,8,8,8],
     filename:"報價單_"+co+".pdf",
@@ -313,9 +325,15 @@ function savePDF(){
     html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
     jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
     pagebreak:{mode:["css","legacy"]}
-  }).from(sheet).save()
-    .then(()=>{ sheet.style.transform=prev; scaleSheet(); })
-    .catch(()=>{ sheet.style.transform=prev; scaleSheet(); window.print(); });
+  }).from(sheet).toPdf().get("pdf").then(function(pdf){
+    restore();
+    if(inApp){
+      const url=pdf.output("bloburl");
+      if(win){ win.location.href=url; } else { location.href=url; }
+    }else{
+      pdf.save("報價單_"+co+".pdf");
+    }
+  }).catch(function(){ restore(); if(win){ try{win.close();}catch(e){} } window.print(); });
 }
 
 /* ----- 草稿（整張單）----- */
@@ -347,6 +365,10 @@ function init(){
   document.getElementById("qdate").value=todayROC();
   document.getElementById("notes").value=DEFAULT_NOTES;
   addItem();          // 預設一列：碩成2號 粉狀 25kg
+  if(isInApp()){
+    document.getElementById("pdfHint").innerHTML=
+      "在 LINE 內：按「下載 PDF」會開啟 PDF 畫面，再點手機<b>分享鈕（方框向上箭頭）</b>→「儲存到檔案」或直接傳給客戶。";
+  }
 }
 init();
 </script>
