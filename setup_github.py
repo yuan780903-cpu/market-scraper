@@ -1,7 +1,7 @@
 """
 一鍵 GitHub 自動化設定
 - 自動 push 程式碼到 GitHub（如果還沒 push）
-- 設定 5 個 Secrets（GMAIL_*、MAIL_TO、LINE_*、APIFY_*）
+- 把 .env 裡的 token 同步成 GitHub Actions Secrets（LINE/Apify/CWA/CATBOX_USERHASH）
 - 觸發第一次 workflow 執行（手動排程）
 - 顯示 workflow 執行 URL 讓你監看
 
@@ -137,16 +137,21 @@ def main():
 
     print("\n請依序貼入下列資訊（之前已重置過的請貼新的）：\n")
 
-    # 從 .env 自動載入 3 個 token（你只需要提供 GitHub PAT）
+    # 從 .env 自動載入 token（你只需要提供 GitHub PAT）
     _load_env()
     line_token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
     apify_token = os.environ.get("APIFY_API_TOKEN", "").strip()
     cwa_token = os.environ.get("CWA_API_KEY", "").strip()
+    catbox_userhash = os.environ.get("CATBOX_USERHASH", "").strip()
 
     print("從 .env 自動載入：")
     print(f"  ✓ LINE_CHANNEL_ACCESS_TOKEN: {line_token[:8]}...{line_token[-6:] if len(line_token) > 14 else ''}")
     print(f"  ✓ APIFY_API_TOKEN:           {apify_token[:14]}...{apify_token[-4:] if len(apify_token) > 18 else ''}")
     print(f"  ✓ CWA_API_KEY:               {cwa_token[:12]}...{cwa_token[-6:] if len(cwa_token) > 18 else ''}")
+    if catbox_userhash:
+        print(f"  ✓ CATBOX_USERHASH:           {catbox_userhash[:8]}...{catbox_userhash[-4:]}")
+    else:
+        print(f"  · CATBOX_USERHASH:           (沒設,將匿名上傳 — 若想永久存檔請註冊 catbox.moe)")
     print()
 
     missing = [n for n, v in [("LINE", line_token), ("Apify", apify_token), ("CWA", cwa_token)] if not v]
@@ -164,6 +169,8 @@ def main():
         "APIFY_API_TOKEN": apify_token,
         "CWA_API_KEY": cwa_token,
     }
+    if catbox_userhash:
+        secrets["CATBOX_USERHASH"] = catbox_userhash
 
     # === 0. 驗證 PAT ===
     print("\n[1/4] 驗證 GitHub PAT ...")
@@ -183,7 +190,7 @@ def main():
         print("  ⚠ push 失敗（可能已是最新，繼續往下）")
 
     # === 2. 取得 repo public key ===
-    print("\n[3/4] 設定 5 個 Secrets")
+    print(f"\n[3/4] 設定 {len(secrets)} 個 Secrets")
     try:
         key_data = gh_get(f"{API}/repos/{REPO}/actions/secrets/public-key", pat)
     except Exception as e:
@@ -193,7 +200,7 @@ def main():
     public_key = key_data["key"]
     key_id = key_data["key_id"]
 
-    # === 3. 設 5 個 secrets ===
+    # === 3. 設定 secrets ===
     for name, value in secrets.items():
         if not value:
             print(f"  - {name}: 空值，跳過")
