@@ -326,20 +326,26 @@ function savePDF(){
   // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  // 暫時取消縮放與固定頁高，避免 PDF 右邊被切、尾端多一頁空白
+  // 暫時取消縮放與固定頁高，量出報價單實際像素尺寸
   const prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
   sheet.style.transform="none";
   sheet.style.minHeight="auto";
+  // 用報價單「實際寬高」當 PDF 頁面大小(單位 px)，讓畫面 1:1 對應頁面，
+  // 不再經過 A4 縮放那一步 → 右邊絕不會被切、也不會多一頁空白(與裝置 DPR 無關)。
+  const W=sheet.offsetWidth;
+  const H=sheet.offsetHeight+2;
+  // jsPDF 會依 orientation 強制長邊當高/寬而對調尺寸，導致頁面比內容窄、右邊被切。
+  // 依實際長寬決定方向，確保頁面剛好是 W×H、報價單 1:1 填滿、絕不裁切。
+  const orient = W>H ? "landscape" : "portrait";
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
   const restore=()=>{ sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
   html2pdf().set({
-    margin:10,
+    margin:0,
     filename:fname,
     image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:sheet.scrollWidth},
-    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
-    pagebreak:{mode:["css","legacy"]}
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0},
+    jsPDF:{unit:"px",format:[W,H],orientation:orient}
   }).from(sheet).toPdf().get("pdf").then(function(pdf){
     restore();
     if(inApp){
