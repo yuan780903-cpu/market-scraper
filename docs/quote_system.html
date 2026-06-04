@@ -294,14 +294,15 @@ function scaleSheet(){
   const wrap=document.querySelector(".preview-wrap");
   const sheet=document.getElementById("sheet");
   if(!wrap||!sheet) return;
-  sheet.style.transform="none";
   // 取最可靠的「最窄」可用寬度，避免 iOS/LINE 內建瀏覽器初次回報過寬導致不縮放
   const vv=window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const avail=Math.min(wrap.clientWidth, document.documentElement.clientWidth, vv)-2;
   const scale=Math.min(1, avail/794);
-  sheet.style.transformOrigin="top left";
-  sheet.style.transform="scale("+scale+")";
-  wrap.style.height=(sheet.offsetHeight*scale)+"px";
+  // 用 zoom 而非 transform:scale —— zoom 會真正改變版面盒大小，
+  // 不會留下原尺寸空盒(iOS 不會裁切 transform 溢出，導致下方一大片空白+殘線)。
+  sheet.style.transform="none";
+  sheet.style.zoom=scale;
+  wrap.style.height="";
 }
 window.addEventListener("resize", scaleSheet);
 window.addEventListener("orientationchange", scaleSheet);
@@ -326,8 +327,9 @@ function savePDF(){
   // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  // 暫時取消縮放與固定頁高，量出報價單實際像素尺寸
-  const prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
+  // 暫時取消縮放(zoom)與固定頁高，量出報價單實際 1:1 像素尺寸
+  const prevZ=sheet.style.zoom, prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
+  sheet.style.zoom="";
   sheet.style.transform="none";
   sheet.style.minHeight="auto";
   // 用報價單「實際寬高」當 PDF 頁面大小(單位 px)，讓畫面 1:1 對應頁面，
@@ -339,7 +341,7 @@ function savePDF(){
   const orient = W>H ? "landscape" : "portrait";
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
-  const restore=()=>{ sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
+  const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
   html2pdf().set({
     margin:0,
     filename:fname,
