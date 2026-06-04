@@ -7,6 +7,7 @@
 <style>
   :root{ --green:#2e7d32; --line:#222; --soft:#e8f0e9; }
   *{ box-sizing:border-box; }
+  html,body{ max-width:100%; overflow-x:hidden; }
   body{ margin:0; font-family:"PingFang TC","Microsoft JhengHei",sans-serif; background:#f4f4f0; color:#1a1a1a; }
   .app{ display:grid; grid-template-columns:420px 1fr; gap:18px; padding:18px; max-width:1400px; margin:0 auto; }
   h1{ font-size:18px; margin:0 0 4px; }
@@ -67,10 +68,11 @@
 
   /* ===== 手機版（窄螢幕）===== */
   @media (max-width:860px){
-    .app{ grid-template-columns:1fr; gap:12px; padding:10px; }
+    .app{ grid-template-columns:1fr; gap:12px; padding:10px; min-width:0; }
+    .controls, .preview-wrap{ min-width:0; }
     .controls .panel{ padding:12px; }
     .toolbar .btn{ flex:1 1 auto; }
-    .preview-wrap{ border:1px solid #ddd; border-radius:10px; background:#fafafa; padding:6px; }
+    .preview-wrap{ border:1px solid #ddd; border-radius:10px; background:#fafafa; padding:6px; overflow-x:auto; max-width:100%; }
     .sheet{ transform-origin:top left; }   /* 實際縮放比例由 JS 計算 */
   }
 </style>
@@ -293,13 +295,21 @@ function scaleSheet(){
   const sheet=document.getElementById("sheet");
   if(!wrap||!sheet) return;
   sheet.style.transform="none";
-  const avail=wrap.clientWidth-2;
+  // 取最可靠的「最窄」可用寬度，避免 iOS/LINE 內建瀏覽器初次回報過寬導致不縮放
+  const vv=window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const avail=Math.min(wrap.clientWidth, document.documentElement.clientWidth, vv)-2;
   const scale=Math.min(1, avail/794);
   sheet.style.transformOrigin="top left";
   sheet.style.transform="scale("+scale+")";
   wrap.style.height=(sheet.offsetHeight*scale)+"px";
 }
 window.addEventListener("resize", scaleSheet);
+window.addEventListener("orientationchange", scaleSheet);
+window.addEventListener("load", scaleSheet);
+if(window.visualViewport){ window.visualViewport.addEventListener("resize", scaleSheet); }
+if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(scaleSheet); }
+// 多跑幾次補正 iOS 初次 layout 還沒定案的情況
+[100,400,900].forEach(function(t){ setTimeout(scaleSheet, t); });
 
 /* ----- 下載 / 開啟 PDF -----
    LINE 等 App 內建瀏覽器無法「下載」檔案(尤其 iPhone)，
