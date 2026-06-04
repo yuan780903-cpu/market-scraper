@@ -10,9 +10,11 @@ LINE Rich Menu 自動部署
   python3 richmenu_deploy.py --report URL --solar URL         # 指定動態 URL
 """
 
+import json
 import os
 import sys
 import time
+from pathlib import Path
 
 import requests
 
@@ -33,6 +35,22 @@ AFA_PRODSALES_URL = "https://agrpmg.afa.gov.tw/agr-Sed/agrJsp/main.jsp?page=00"
 AFA_FERT_BRAND_URL = "https://fims.afa.gov.tw/WFR/PublicFun/QueryFertBrand.aspx"
 AFA_FERT_LAW_URL = "https://www.afa.gov.tw/cht/index.php?code=list&ids=353&mod_code=view&a_id=176"
 AFA_AGRI_REPORT_URL = "https://agr.afa.gov.tw/afa/afa_frame.jsp"
+# 自製 index 頁 fallback（若 snapshots/license_index.json 讀不到才會用到）
+LICENSE_INDEX_URL_FALLBACK = "https://files.catbox.moe/ioces5.html"
+OPERATION_INDEX_URL_FALLBACK = "https://files.catbox.moe/9mwuup.html"
+LICENSE_SNAPSHOT = Path("snapshots/license_index.json")
+
+
+def _load_license_urls() -> tuple:
+    """從 snapshots/license_index.json 讀最新 URL；讀不到就用 fallback。"""
+    try:
+        data = json.loads(LICENSE_SNAPSHOT.read_text(encoding="utf-8"))
+        lic = data.get("license_index_url") or LICENSE_INDEX_URL_FALLBACK
+        op = data.get("operation_index_url") or OPERATION_INDEX_URL_FALLBACK
+        return lic, op
+    except Exception as e:
+        print(f"  [!] 讀取 {LICENSE_SNAPSHOT} 失敗（用 fallback）：{e}")
+        return LICENSE_INDEX_URL_FALLBACK, OPERATION_INDEX_URL_FALLBACK
 
 
 def _get_token() -> str:
@@ -65,13 +83,16 @@ def delete_rich_menu(token: str, menu_id: str) -> None:
         print(f"  ⚠ 刪除 {menu_id[:12]}… 回 {r.status_code}: {r.text[:200]}")
 
 
-def build_richmenu_payload(report_url: str, solar_url: str,
-                             target_url: str, price_url: str, card_url: str) -> dict:
-    """組合 Rich Menu 結構：6 個按鈕的位置與動作"""
+def build_richmenu_payload(target_url: str, price_url: str) -> dict:
+    """組合 Rich Menu 結構：8 個按鈕的位置與動作（2 列 × 4 欄）"""
     areas_geo = richmenu_designer.get_button_areas()
+    license_url, operation_url = _load_license_urls()
+    print(f"  肥料登記證 URL: {license_url}")
+    print(f"  營運許可證 URL: {operation_url}")
 
-    # 6 個按鈕對應動作
+    # 8 個按鈕對應動作（順序需與 richmenu_designer.BUTTONS 一致）
     actions = [
+        # 第一列
         {"type": "uri", "uri": AFA_PRODSALES_URL,
          "label": "產銷班查詢"},
         {"type": "uri", "uri": AFA_FERT_BRAND_URL,
@@ -80,10 +101,15 @@ def build_richmenu_payload(report_url: str, solar_url: str,
          "label": "目標業績"},
         {"type": "uri", "uri": AFA_AGRI_REPORT_URL,
          "label": "農情報告網"},
+        # 第二列
         {"type": "uri", "uri": price_url or AFA_SUBSIDY_URL,
          "label": "產品牌價"},
         {"type": "uri", "uri": AFA_FERT_LAW_URL,
          "label": "肥料法規"},
+        {"type": "uri", "uri": license_url,
+         "label": "肥料登記證"},
+        {"type": "uri", "uri": operation_url,
+         "label": "營運許可證"},
     ]
 
     payload = {
@@ -130,21 +156,19 @@ def set_default(token: str, menu_id: str) -> None:
 
 
 def deploy(report_url: str = "", solar_url: str = "") -> None:
+    """部署 8 格 Rich Menu。
+    report_url / solar_url 參數保留只為向下相容 weekly_line_push.py 的呼叫，
+    新版選單不再使用這兩個 URL（按鈕已換成登記證/營運許可證）。
+    """
     token = _get_token()
 
-    print("[1/6] 生成 Rich Menu 圖 ...")
+    print("[1/6] 生成 Rich Menu 圖（2×4 = 8 格）...")
     img_path = richmenu_designer.make_richmenu_image()
     print(f"  ✓ 圖已生成：{img_path}")
 
-    print("\n[2/6] 生成名片 + 業績 + 牌價並上傳 catbox ...")
-    card_url = ""
+    print("\n[2/6] 生成業績 + 牌價圖並上傳 catbox ...")
     target_url = ""
     price_url = ""
-    try:
-        card_url = uploader.upload_image(image_card.make_business_card_image())
-        print(f"  ✓ 名片 URL：{card_url}")
-    except Exception as e:
-        print(f"  [!] 名片失敗（用 fallback）：{e}")
     try:
         target_url = uploader.upload_image(image_card.make_sales_target_image())
         print(f"  ✓ 業績 URL：{target_url}")
@@ -162,8 +186,8 @@ def deploy(report_url: str = "", solar_url: str = "") -> None:
     for m in old_menus:
         delete_rich_menu(token, m["richMenuId"])
 
-    print("\n[4/6] 建立新 Rich Menu 結構 ...")
-    payload = build_richmenu_payload(report_url, solar_url, target_url, price_url, card_url)
+    print("\n[4/6] 建立新 Rich Menu 結構（8 格）...")
+    payload = build_richmenu_payload(target_url, price_url)
     menu_id = create_rich_menu(token, payload)
     print(f"  ✓ menuId: {menu_id}")
 
@@ -179,7 +203,7 @@ def deploy(report_url: str = "", solar_url: str = "") -> None:
     print("=" * 50)
     print("Rich Menu 已部署到你的 LINE 官方帳號！")
     print("打開手機 LINE，找到「農業有機質肥料市場報告」")
-    print("聊天視窗下方應該會出現 6 格選單")
+    print("聊天視窗下方應該會出現 8 格可愛動物/水果選單")
     print("=" * 50)
 
 

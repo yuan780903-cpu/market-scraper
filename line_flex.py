@@ -142,9 +142,20 @@ def _paginated_bubbles(
         return []
     total = len(items)
     pages = (total + items_per_page - 1) // items_per_page
+
+    # 避免「最後一張只有 1-2 筆」變成孤兒卡（浪費 LINE 50KB 額度）：
+    # 若最後一頁 chunk 太短，併回前一頁，少出一張卡
+    if pages > 1:
+        last_chunk_size = total - (pages - 1) * items_per_page
+        if last_chunk_size <= 2:
+            pages -= 1  # 只用 pages-1 張卡，最後一張裝多於 items_per_page 筆
     bubbles = []
     for page in range(pages):
-        chunk = items[page * items_per_page : (page + 1) * items_per_page]
+        if page == pages - 1:
+            # 最後一張裝完所有剩餘
+            chunk = items[page * items_per_page :]
+        else:
+            chunk = items[page * items_per_page : (page + 1) * items_per_page]
         subtitle = f"共 {total} 筆"
         if pages > 1:
             subtitle += f"  ·  {page + 1}/{pages}"
@@ -854,20 +865,23 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "",
         ))
 
     # 把 footer 按鈕加到「最後一張卡」
-    if bubbles and report_url:
-        bubbles[-1]["footer"] = {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [{
-                "type": "button",
-                "style": "primary",
-                "color": "#2d6a4f",
-                "height": "sm",
-                "action": {"type": "uri", "label": "看完整報表", "uri": report_url},
-            }],
-        }
+    def _attach_footer(bubble_list):
+        if bubble_list and report_url:
+            bubble_list[-1]["footer"] = {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [{
+                    "type": "button",
+                    "style": "primary",
+                    "color": "#2d6a4f",
+                    "height": "sm",
+                    "action": {"type": "uri", "label": "看完整報表", "uri": report_url},
+                }],
+            }
 
-    return {
+    _attach_footer(bubbles)
+
+    payload = {
         "type": "flex",
         "altText": f"有機肥料市場週報 {today}",
         "contents": {
@@ -875,6 +889,41 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "",
             "contents": bubbles,
         },
     }
+
+    # === Size guard：LINE Flex carousel JSON 上限 50 KB ===
+    # 預留 buffer（49000 bytes）。若超過，從尾端砍 bubbles 並把 footer 移到新的最後一張
+    import json as _json
+    MAX_BYTES = 49000
+
+    def _size():
+        return len(_json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+
+    if _size() > MAX_BYTES:
+        # 先記下 footer 要保留
+        had_footer = bubbles and "footer" in bubbles[-1]
+        if had_footer:
+            bubbles[-1].pop("footer", None)
+
+        # 從尾端砍 bubbles（保留至少 3 張：封面 + 節氣 + 區域作物）
+        while len(bubbles) > 3 and _size() > MAX_BYTES:
+            bubbles.pop()
+
+        # 如果還是超：從最後一張砍 body items（保留 header + 至少 3 行）
+        while bubbles and _size() > MAX_BYTES:
+            last_body = bubbles[-1].get("body", {}).get("contents", [])
+            if len(last_body) > 3:
+                last_body.pop()
+            else:
+                bubbles.pop()
+                if len(bubbles) <= 3:
+                    break
+
+        if had_footer:
+            _attach_footer(bubbles)
+
+        print(f"[Flex] 已自動瘦身：carousel 縮到 {len(bubbles)} 張卡、{_size()} bytes")
+
+    return payload
 
 
 if __name__ == "__main__":

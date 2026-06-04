@@ -1,0 +1,49 @@
+{
+  "license_index_url": "https://files.catbox.moe/ioces5.html",
+  "operation_index_url": "https://files.catbox.moe/9mwuup.html",
+  "licenses": [
+    {
+      "name": "碩成基肥1號",
+      "cert": "",
+      "url": "https://files.catbox.moe/b9tsfj.pdf"
+    },
+    {
+      "name": "碩成基肥2號",
+      "cert": "",
+      "url": "https://files.catbox.moe/bgegrm.pdf"
+    },
+    {
+      "name": "碩成基肥2號＋",
+      "cert": "0037005",
+      "url": "https://files.catbox.moe/wahfzl.pdf"
+    },
+    {
+      "name": "碩成有機質肥料1號＋",
+      "cert": "",
+      "url": "https://files.catbox.moe/dvy62t.pdf"
+    },
+    {
+      "name": "碩成有機質肥料2號",
+      "cert": "0237008",
+      "url": "https://files.catbox.moe/w0pzss.pdf"
+    },
+    {
+      "name": "碩成有機質肥料2號＋",
+      "cert": "0037003",
+      "url": "https://files.catbox.moe/ibok92.pdf"
+    },
+    {
+      "name": "碩成生技1號",
+      "cert": "",
+      "url": "https://files.catbox.moe/i8yrnk.pdf"
+    }
+  ],
+  "operations": [
+    {
+      "name": "義竹肥料場 營運許可證",
+      "cert": "農畜肥許字第 0106 號",
+      "url": "https://files.catbox.moe/0na7rx.pdf"
+    }
+  ],
+  "updated": "2026-06-03"
+}
