@@ -30,27 +30,29 @@
 
   /* ===== 預覽 / 列印區 ===== */
   .preview-wrap{ overflow:auto; }
-  .sheet{ background:#fff; width:794px; min-height:1123px; margin:0 auto; padding:40px 56px 48px; border:1px solid #ccc;
-          font-size:14px; color:#000; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+  .sheet{ background:#fff; width:794px; min-height:1123px; margin:0 auto; padding:34px 44px 38px; border:1px solid #ccc;
+          font-size:13px; color:#000; box-shadow:0 2px 10px rgba(0,0,0,.08);
+          font-family:"DFKai-SB","BiauKai","標楷體","KaiTi","PingFang TC","Microsoft JhengHei",serif; }
   .letterhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-  .letterhead img{ height:58px; }
+  .letterhead img{ height:46px; }
   .letterhead .lh-co{ font-size:13px; color:#444; text-align:right; line-height:1.5; }
-  .sheet .title{ text-align:center; font-size:30px; letter-spacing:14px; font-weight:700; margin:4px 0 20px; }
-  .brandline{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:26px; }
-  .brand-badge{ height:48px; }
-  .brand-name{ font-size:22px; font-weight:700; letter-spacing:6px; color:var(--green); }
-  .brand-date{ font-size:15px; margin-left:18px; color:#222; }
-  table.info{ width:100%; border-collapse:collapse; margin-bottom:20px; }
-  table.info td{ border:1px solid var(--line); padding:9px 10px; font-size:14px; }
-  table.info .lbl{ background:#f3f3f3; width:90px; white-space:nowrap; font-weight:600; }
-  table.quote{ width:100%; border-collapse:collapse; margin-bottom:24px; }
-  table.quote th,table.quote td{ border:1px solid var(--line); padding:9px 8px; font-size:14px; text-align:center; }
+  .sheet .title{ text-align:center; font-size:26px; letter-spacing:10px; font-weight:700; margin:2px 0 14px; }
+  .brandline{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; }
+  .brand-badge{ height:40px; }
+  .brand-name{ font-size:18px; font-weight:700; letter-spacing:5px; color:var(--green); }
+  .brand-date{ font-size:13px; margin-left:16px; color:#222; }
+  table.info{ width:100%; border-collapse:collapse; margin-bottom:14px; }
+  table.info td{ border:1px solid var(--line); padding:6px 9px; font-size:13px; }
+  table.info .lbl{ background:#f3f3f3; width:84px; white-space:nowrap; font-weight:600; }
+  table.quote{ width:100%; border-collapse:collapse; margin-bottom:16px; table-layout:fixed; }
+  table.quote th,table.quote td{ border:1px solid var(--line); padding:6px 6px; font-size:13px; text-align:center; word-break:break-word; }
   table.quote th{ background:#f3f3f3; }
   table.quote td.name{ text-align:left; }
-  .notes{ margin:18px 0; }
-  .notes .nt-title{ font-size:17px; font-weight:700; margin-bottom:6px; }
-  .notes ol{ margin:0; padding-left:22px; font-size:13.5px; line-height:1.8; }
-  .cardfoot{ margin-top:46px; text-align:left; }
+  .notes{ margin:14px 0; }
+  .notes .nt-title{ font-size:13px; font-weight:700; margin-bottom:4px; }
+  .notes ol{ margin:0; padding-left:24px; font-size:11.5px; line-height:1.6; list-style:cjk-ideographic; }
+  .notes ol li{ padding-left:2px; }
+  .cardfoot{ margin-top:28px; text-align:left; }
   .cardfoot img{ display:block; max-width:220px; width:auto; height:auto; margin:0; border:1px solid #eee; }
   .cardfoot .missing{ color:#c62828; font-size:13px; padding:20px; border:1px dashed #c62828; border-radius:8px; }
 
@@ -314,15 +316,18 @@ function savePDF(){
   // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  const prev=sheet.style.transform;
+  // 暫時取消縮放與固定頁高，避免 PDF 右邊被切、尾端多一頁空白
+  const prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
   sheet.style.transform="none";
-  const co=val("c_company")||"報價單";
-  const restore=()=>{ sheet.style.transform=prev; scaleSheet(); };
+  sheet.style.minHeight="auto";
+  const cust=val("c_company")||val("c_name")||"客戶";
+  const fname=cust+"報價單.pdf";
+  const restore=()=>{ sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
   html2pdf().set({
-    margin:[8,8,8,8],
-    filename:"報價單_"+co+".pdf",
+    margin:10,
+    filename:fname,
     image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:sheet.scrollWidth},
     jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
     pagebreak:{mode:["css","legacy"]}
   }).from(sheet).toPdf().get("pdf").then(function(pdf){
@@ -331,7 +336,7 @@ function savePDF(){
       const url=pdf.output("bloburl");
       if(win){ win.location.href=url; } else { location.href=url; }
     }else{
-      pdf.save("報價單_"+co+".pdf");
+      pdf.save(fname);
     }
   }).catch(function(){ restore(); if(win){ try{win.close();}catch(e){} } window.print(); });
 }
