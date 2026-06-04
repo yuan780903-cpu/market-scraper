@@ -43,7 +43,9 @@ LICENSE_SNAPSHOT = Path("snapshots/license_index.json")
 # 報價系統（取代原「肥料登記證」按鈕）— 由 GitHub Pages 提供。
 # catbox 會把 HTML 當 text/plain 顯示原始碼，故改用 Pages（正確渲染、URL 固定）。
 # 內容更新：改 docs/quote_system.html 後 git push，Pages 自動重新發布，選單免重部署。
-QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html"
+# 結尾 ?openExternalBrowser=1：強制 LINE 用手機「外部瀏覽器」(Safari/Chrome) 開，
+# 不要用 LINE 內建瀏覽器 — 因為內建瀏覽器無法下載檔案（PDF 存不下來）。
+QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html?openExternalBrowser=1&v=20260604"
 
 
 def _load_license_urls() -> tuple:
