@@ -340,28 +340,34 @@ function savePDF(){
   // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  // 暫時取消縮放(zoom)與固定頁高，量出報價單實際 1:1 像素尺寸
+  // 暫時取消縮放(zoom/transform)與固定頁高，量出報價單實際 1:1 像素尺寸
   const prevZ=sheet.style.zoom, prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
   sheet.style.zoom="";
   sheet.style.transform="none";
   sheet.style.minHeight="auto";
-  // 用報價單「實際寬高」當 PDF 頁面大小(單位 px)，讓畫面 1:1 對應頁面，
-  // 不再經過 A4 縮放那一步 → 右邊絕不會被切、也不會多一頁空白(與裝置 DPR 無關)。
   const W=sheet.offsetWidth;
-  const H=sheet.offsetHeight+2;
-  // jsPDF 會依 orientation 強制長邊當高/寬而對調尺寸，導致頁面比內容窄、右邊被切。
-  // 依實際長寬決定方向，確保頁面剛好是 W×H、報價單 1:1 填滿、絕不裁切。
-  const orient = W>H ? "landscape" : "portrait";
+  const SC=2;
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
   const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
-  html2pdf().set({
+  // 關鍵：PDF 頁面尺寸要用「html2canvas 實際畫出的 canvas 像素」推回去，
+  // 不要用先量好的 offsetHeight。iOS WebKit 的 offsetHeight 與 canvas 實際高度
+  // 常差幾個 px，若拿 offsetHeight 當頁高，內容會比頁面高一點點 → 溢出到第 2 頁、
+  // 接縫處還留一條黑線。先 toCanvas 拿到真正的 canvas，再把頁面設成 canvas/scale，
+  // 並 +1px 容差，確保 ceil 不會變 2 → 永遠剛好 1 頁、無接縫線。
+  const worker=html2pdf().set({
     margin:0,
     filename:fname,
     image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0},
-    jsPDF:{unit:"px",format:[W,H],orientation:orient}
-  }).from(sheet).toPdf().get("pdf").then(function(pdf){
+    html2canvas:{scale:SC,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0}
+  }).from(sheet);
+  worker.toCanvas().get("canvas").then(function(canvas){
+    const pw=canvas.width/SC, ph=canvas.height/SC;
+    // jsPDF 依 orientation 強制長邊當高/寬而對調尺寸 → 依實際長寬決定方向，絕不裁切
+    const orient = pw>ph ? "landscape" : "portrait";
+    return worker.set({ jsPDF:{unit:"px", format:[pw, ph+1], orientation:orient} })
+                 .toPdf().get("pdf");
+  }).then(function(pdf){
     restore();
     if(inApp){
       const url=pdf.output("bloburl");
