@@ -83,7 +83,17 @@ function dueInfo(o){
 
 // ---------- 導覽 ----------
 let tab = 'home';
-let pFilter = {status:'', cat:'', region:'', q:''};      // 名單篩選
+let pFilter = {status:'', cat:'', region:'', q:'', area:''};      // 名單篩選
+// 經營面積級距（公頃）— 多為有機農戶；選了級距會排除無面積資料者
+const AREA_BANDS = [
+  {k:'lt1', label:'未滿1公頃', test:n=>n<1},
+  {k:'1-3', label:'1–3公頃', test:n=>n>=1&&n<3},
+  {k:'3-5', label:'3–5公頃', test:n=>n>=3&&n<5},
+  {k:'5-10', label:'5–10公頃', test:n=>n>=5&&n<10},
+  {k:'10+', label:'10公頃以上', test:n=>n>=10},
+];
+function areaVal(p){ const n=parseFloat(p&&p.area); return isNaN(n)?null:n; }
+function inAreaBand(p,k){ if(!k) return true; const n=areaVal(p); if(n==null) return false; const b=AREA_BANDS.find(x=>x.k===k); return b?b.test(n):true; }
 let pLimit = 60;
 function go(t){
   tab = t; pLimit = 60;
@@ -350,11 +360,24 @@ function renderProspects(){
         ${regionsSorted().map(r=>`<option value="${esc(r)}" ${pFilter.region===r?'selected':''}>${esc(r)}</option>`).join('')}
         </select></div>`;
 
+  // 面積級距：依目前狀態／通路／區域動態計算筆數，只在有面積資料時顯示
+  const areaPool = SEED.filter(p=> inStatus(p) && (!pFilter.cat||p.category===pFilter.cat) && (!pFilter.region||p.region===pFilter.region));
+  const areaCounts={}; let areaTot=0;
+  areaPool.forEach(p=>{ const n=areaVal(p); if(n!=null){ areaTot++; const b=AREA_BANDS.find(x=>x.test(n)); if(b)areaCounts[b.k]=(areaCounts[b.k]||0)+1; } });
+  const effArea = areaTot>0 ? pFilter.area : '';   // 此條件下沒有面積資料就不套用，避免清空結果
+  if(areaTot>0){
+    h += `<div class="rowsel"><span class="rowsel-l">面積</span><div class="chips">
+          <button class="chip ${effArea===''?'on':''}" onclick="setPArea('')">全部 ${areaTot}</button>`;
+    AREA_BANDS.forEach(b=>{ if(areaCounts[b.k]) h+=`<button class="chip ${effArea===b.k?'on':''}" onclick="setPArea('${b.k}')">${b.label} ${areaCounts[b.k]}</button>`; });
+    h += `</div></div>`;
+  }
+
   const q = pFilter.q.trim();
   const res = SEED.filter(p=>{
     if(!inStatus(p)) return false;
     if(pFilter.cat && p.category!==pFilter.cat) return false;
     if(pFilter.region && p.region!==pFilter.region) return false;
+    if(effArea && !inAreaBand(p,effArea)) return false;
     if(q){ const blob=(p.name+p.address+p.phone+p.contact+p.region); if(!blob.includes(q)) return false; }
     return true;
   });
@@ -365,7 +388,9 @@ function renderProspects(){
     h += res.slice(0,pLimit).map(p=>{
       const o=overlay[p.id]; const di=dueInfo(o); const ex=statusOf(p)==='existing';
       const tag = ex?`<span class="badge b-農會">既有</span>`:'';
-      const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${tag}`;
+      const av=areaVal(p);
+      const areaTag = av!=null?`<span class="badge b-有機農戶">${av.toFixed(1)}公頃</span>`:'';
+      const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${areaTag}${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${areaTag}${tag}`;
       return itemRow({name:p.name, sub:[p.region,p.address].filter(Boolean).join(' · '), pill, onclick:`viewProspect('${p.id}')`});
     }).join('');
   }
@@ -378,6 +403,7 @@ function onPSearch(v){ pFilter.q=v; pFilter._focus=true; pLimit=60; renderProspe
 function setPStatus(s){ pFilter.status=s; pFilter.cat=''; pLimit=60; renderProspects(); }
 function setPCat(c){ pFilter.cat=c; pLimit=60; renderProspects(); }
 function setPRegion(r){ pFilter.region=r; pLimit=60; renderProspects(); }
+function setPArea(k){ pFilter.area=k; pLimit=60; renderProspects(); }
 
 function custByProspect(id){ return customers.find(c=>c.fromProspect===id); }
 function viewProspect(id){
