@@ -35,9 +35,9 @@
   .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#fff;
     border-top:1px solid var(--line);display:flex;
     padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
-  .nav button{flex:1;border:0;background:none;padding:8px 2px 10px;font-size:11px;
-    color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:inherit}
-  .nav button .ic{font-size:21px;line-height:1}
+  .nav button{flex:1;border:0;background:none;padding:8px 1px 10px;font-size:10px;
+    color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .nav button .ic{font-size:20px;line-height:1}
   .nav button.on{color:var(--green);font-weight:700}
   .nav button.on .ic{transform:translateY(-1px)}
   /* cards */
@@ -210,6 +210,7 @@
   <button data-tab="prospects" onclick="go('prospects')"><span class="ic">🎯</span>名單</button>
   <button data-tab="route" onclick="go('route')"><span class="ic">🧭</span>排路線</button>
   <button data-tab="customers" onclick="go('customers')"><span class="ic">👤</span>客戶</button>
+  <button data-tab="compete" onclick="go('compete')"><span class="ic">🏷️</span>競品</button>
   <button data-tab="settings" onclick="go('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 
@@ -219,8 +220,8 @@
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="prospects.js?v=20260614"></script>
-<script src="map-data.js?v=20260614"></script>
-<script src="app.js?v=20260614"></script>
+<script src="prospects.js?v=20260615"></script>
+<script src="map-data.js?v=20260615"></script>
+<script src="app.js?v=20260615"></script>
 </body>
 </html>
