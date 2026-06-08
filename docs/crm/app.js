@@ -788,8 +788,14 @@ function field(label,id,val,type='text',req=false,ph=''){ return `<div class="fi
 function productRowHTML(p){
   p=p||{};
   const sel=(arr,v,extra='')=>arr.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('');
+  const isCustom = p.name && !PRODUCTS.includes(p.name);
   return `<div class="prow">
-    <select class="pp-name"><option value="">產品…</option>${PRODUCTS.map(x=>`<option ${x===p.name?'selected':''}>${esc(x)}</option>`).join('')}</select>
+    <select class="pp-name" onchange="onProdNameSel(this)">
+      <option value="">產品…</option>
+      ${PRODUCTS.map(x=>`<option ${x===p.name?'selected':''}>${esc(x)}</option>`).join('')}
+      <option value="__other" ${isCustom?'selected':''}>＋ 其他（手動輸入新產品）</option>
+    </select>
+    <input class="pp-name-other" placeholder="輸入新產品名稱" value="${isCustom?esc(p.name):''}" style="margin-top:6px;display:${isCustom?'block':'none'}">
     <div class="prow-2">
       <select class="pp-form">${sel(FORMS,p.form||'粒狀')}</select>
       <select class="pp-weight">${sel(WEIGHTS,p.weight||'20')}</select>
@@ -799,14 +805,19 @@ function productRowHTML(p){
     </div></div>`;
 }
 function addProductRow(){ const c=document.getElementById('prod-rows'); if(c) c.insertAdjacentHTML('beforeend', productRowHTML()); }
+function onProdNameSel(s){ const t=s.closest('.prow').querySelector('.pp-name-other'); if(!t)return; const other=(s.value==='__other'); t.style.display=other?'block':'none'; if(!other)t.value=''; else t.focus(); }
 function readProducts(){
-  return [...document.querySelectorAll('#prod-rows .prow')].map(el=>({
-    name:el.querySelector('.pp-name').value,
-    form:el.querySelector('.pp-form').value,
-    weight:el.querySelector('.pp-weight').value,
-    price:el.querySelector('.pp-price').value.trim(),
-    freight:el.querySelector('.pp-freight').value
-  })).filter(p=>p.name);
+  return [...document.querySelectorAll('#prod-rows .prow')].map(el=>{
+    let name=el.querySelector('.pp-name').value;
+    if(name==='__other'){ const t=el.querySelector('.pp-name-other'); name=t?t.value.trim():''; }
+    return {
+      name,
+      form:el.querySelector('.pp-form').value,
+      weight:el.querySelector('.pp-weight').value,
+      price:el.querySelector('.pp-price').value.trim(),
+      freight:el.querySelector('.pp-freight').value
+    };
+  }).filter(p=>p.name);
 }
 function prodText(p){ return `${p.form}${p.weight}kg・$${p.price||'—'}・${p.freight}`; }
 
