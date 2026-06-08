@@ -347,9 +347,9 @@ function renderProspects(){
   // 有機屬性筆數（依目前狀態動態）
   const nOrg = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category==='有機農戶'?1:0),0);
   const nNon = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category!=='有機農戶'?1:0),0);
-  // 通路筆數依目前「客戶狀態 + 有機屬性」動態計算
+  // 通路筆數依目前「客戶狀態」動態計算（通路選項一律完整顯示，不受有機/非有機影響）
   const counts = {}; let total=0;
-  SEED.forEach(p=>{ if(inStatus(p)&&inOrganic(p,pFilter.organic)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
+  SEED.forEach(p=>{ if(inStatus(p)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
 
   let h = `<div class="search"><input id="psearch" placeholder="🔍 搜尋名稱 / 地址 / 電話" value="${esc(pFilter.q)}" oninput="onPSearch(this.value)"></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">狀態</span><div class="chips">
@@ -410,10 +410,22 @@ function renderProspects(){
 }
 function onPSearch(v){ pFilter.q=v; pFilter._focus=true; pLimit=60; renderProspects(); }
 function setPStatus(s){ pFilter.status=s; pFilter.cat=''; pLimit=60; renderProspects(); }
-function setPCat(c){ pFilter.cat=c; pLimit=60; renderProspects(); }
+function setPCat(c){
+  pFilter.cat=c;
+  // 選的通路與有機/非有機衝突時，自動把屬性放寬，避免 0 筆
+  if(c==='有機農戶' && pFilter.organic==='non') pFilter.organic='';
+  else if(c && c!=='有機農戶' && pFilter.organic==='org') pFilter.organic='';
+  pLimit=60; renderProspects();
+}
 function setPRegion(r){ pFilter.region=r; pLimit=60; renderProspects(); }
 function setPArea(k){ pFilter.area=k; pLimit=60; renderProspects(); }
-function setPOrganic(v){ pFilter.organic=v; pFilter.cat=''; pLimit=60; renderProspects(); }
+function setPOrganic(v){
+  pFilter.organic=v;
+  // 屬性與目前通路衝突時，放寬通路（保留通路篩選始終可用）
+  if(v==='org' && pFilter.cat && pFilter.cat!=='有機農戶') pFilter.cat='';
+  else if(v==='non' && pFilter.cat==='有機農戶') pFilter.cat='';
+  pLimit=60; renderProspects();
+}
 
 function custByProspect(id){ return customers.find(c=>c.fromProspect===id); }
 function viewProspect(id){
