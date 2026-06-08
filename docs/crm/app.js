@@ -629,37 +629,102 @@ function convertToCustomer(id){
 }
 
 // ========== 我的客戶 ==========
-let cFilter={q:'', grade:''};
+// 由地址取「縣市」（去掉郵遞區號後，取開頭 縣/市）
+function cityOf(addr){
+  if(!addr) return '';
+  let s=String(addr).replace(/^[0-9０-９]+\s*/,'').trim();
+  const m=s.match(/^[一-龥]{1,2}[縣市]/);
+  return m?normR(m[0]):'';
+}
+function cityCmp(a,b){
+  const ia=REGION_ORDER.findIndex(x=>normR(a).includes(x));
+  const ib=REGION_ORDER.findIndex(x=>normR(b).includes(x));
+  return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);
+}
+let cFilter={q:'', grade:'', type:'', city:'', org:''};
 function renderCustomers(){
   let h=`<div class="info">🔒 這一頁的資料（含身分證、統編、出生年月日）只儲存在你這台裝置的瀏覽器，不會上傳。請定期到「設定」備份。</div>`;
   h+=`<div class="search"><input placeholder="🔍 搜尋我的客戶" value="${esc(cFilter.q)}" oninput="cFilter.q=this.value;renderCustomers()"></div>`;
+  // 分級
   const gc={}; customers.forEach(c=>{ gc[c.grade||'']=(gc[c.grade||'']||0)+1; });
   h+=`<div class="rowsel"><span class="rowsel-l">分級</span><div class="chips">
       <button class="chip ${cFilter.grade===''?'on':''}" onclick="setCGrade('')">全部 ${customers.length}</button>
       ${GRADES.map(g=>`<button class="chip ${cFilter.grade===g?'on':''}" onclick="setCGrade('${g}')">${g}・${GRADE_LABEL[g]} ${gc[g]||0}</button>`).join('')}
       <button class="chip ${cFilter.grade==='none'?'on':''}" onclick="setCGrade('none')">未分級 ${gc['']||0}</button></div></div>`;
+  // 通路
+  const tcnt={}; customers.forEach(c=>{ const t=c.type||'其他'; tcnt[t]=(tcnt[t]||0)+1; });
+  const types=CUST_TYPES.filter(t=>tcnt[t]);
+  h+=`<div class="rowsel"><span class="rowsel-l">通路</span><div class="chips">
+      <button class="chip ${cFilter.type===''?'on':''}" onclick="setCType('')">全部</button>
+      ${types.map(t=>`<button class="chip ${cFilter.type===t?'on':''}" onclick="setCType('${t}')">${t} ${tcnt[t]}</button>`).join('')}</div></div>`;
+  // 地區 + 組織 下拉
+  const cities=[...new Set(customers.map(c=>cityOf(c.address)).filter(Boolean))].sort(cityCmp);
+  const orgs=[...new Set(customers.map(c=>c.org).filter(Boolean))].sort();
+  h+=`<div class="field-2">
+      <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustomers()">
+        <option value="">全部地區</option>${cities.map(ci=>`<option value="${esc(ci)}" ${cFilter.city===ci?'selected':''}>${esc(ci)}</option>`).join('')}</select></div>
+      <div class="field"><label>組織</label><select onchange="cFilter.org=this.value;renderCustomers()">
+        <option value="">全部組織</option>${orgs.map(o=>`<option value="${esc(o)}" ${cFilter.org===o?'selected':''}>${esc(o)}</option>`).join('')}
+        <option value="__none" ${cFilter.org==='__none'?'selected':''}>（未分組）</option></select></div></div>`;
+  h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
+  // 篩選
   const q=cFilter.q.trim();
   const res=customers.filter(c=>{
     if(cFilter.grade==='none'){ if(c.grade) return false; }
     else if(cFilter.grade){ if(c.grade!==cFilter.grade) return false; }
-    return !q||(c.name+c.phone+c.address+(c.contact||'')).includes(q);
+    if(cFilter.type && (c.type||'其他')!==cFilter.type) return false;
+    if(cFilter.city && cityOf(c.address)!==cFilter.city) return false;
+    if(cFilter.org==='__none'){ if(c.org) return false; }
+    else if(cFilter.org){ if((c.org||'')!==cFilter.org) return false; }
+    return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
   });
-  h+=`<div class="count">共 ${customers.length} 位客戶${cFilter.grade?`，符合 ${res.length} 位`:''}</div><div class="card">`;
+  const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.org||q;
+  h+=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div><div class="card">`;
   if(!res.length){ h+=`<div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div>`; }
   else res.forEach(c=>{ const di=dueInfo(c);
     const gtag=c.grade?`<span class="badge grade-${c.grade}">${c.grade}</span>`:'';
-    const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:`<span class="badge b-${c.type}">${c.type}</span>`)+gtag;
+    const otag=c.org?`<span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:'';
+    const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:`<span class="badge b-${c.type}">${c.type}</span>`)+gtag+otag;
     h+=itemRow({name:c.name,sub:[c.phone,c.address].filter(Boolean).join(' · '),pill,onclick:`viewCustomer('${c.id}')`}); });
   h+=`</div>`;
   viewHTML(h);
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
+function setCType(t){ cFilter.type=t; renderCustomers(); }
+
+// ---------- 組織（批次歸戶）----------
+function orgManager(){
+  const orgs=[...new Set(customers.map(c=>c.org).filter(Boolean))].sort();
+  const pre=(cFilter.org && cFilter.org!=='__none')?cFilter.org:'';
+  let h=`<div class="field"><label>組織名稱</label><input id="org-name" list="org-dl" placeholder="例如 打貓合作社" value="${esc(pre)}"><datalist id="org-dl">${orgs.map(o=>`<option value="${esc(o)}">`).join('')}</datalist></div>`;
+  h+=`<div class="search" style="margin-top:4px"><input id="org-q" placeholder="🔍 篩選客戶名稱" oninput="orgFilterList(this.value)"></div>`;
+  h+=`<div class="hint" style="margin:6px 0;color:var(--muted);font-size:11.5px;line-height:1.6">勾選要歸入此組織的客戶，按下方「指派」。可重複操作，把不同客戶加進同一個組織。</div>`;
+  h+=`<div id="org-list" style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px">`;
+  customers.slice().sort((a,b)=>cityCmp(cityOf(a.address),cityOf(b.address))||a.name.localeCompare(b.name)).forEach(c=>{
+    h+=`<label class="org-pick" data-name="${esc(c.name)}" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--line)">
+      <input type="checkbox" value="${c.id}" style="width:18px;height:18px;flex:none">
+      <span style="flex:1;min-width:0"><b>${esc(c.name)}</b> <span style="color:var(--muted);font-size:12px">${esc(cityOf(c.address)||'')}</span>${c.org?` <span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:''}</span></label>`;
+  });
+  h+=`</div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="assignOrg()">指派到組織</button></div>`;
+  openModal('整理組織', h);
+}
+function orgFilterList(q){ q=(q||'').trim(); document.querySelectorAll('#org-list .org-pick').forEach(el=>{ el.style.display=(!q||el.dataset.name.includes(q))?'flex':'none'; }); }
+function assignOrg(){
+  const name=$('#org-name').value.trim(); if(!name){ toast('請輸入組織名稱'); return; }
+  const ids=[...document.querySelectorAll('#org-list input:checked')].map(i=>i.value);
+  if(!ids.length){ toast('請至少勾選一位客戶'); return; }
+  const set=new Set(ids); let n=0;
+  customers.forEach(c=>{ if(set.has(c.id)){ c.org=name; n++; } });
+  saveCust(); closeModal(); toast(`已將 ${n} 位歸入「${name}」`); renderCustomers();
+}
 
 function viewCustomer(id){
   const c=customers.find(x=>x.id===id); if(!c) return;
   const di=dueInfo(c);
   let h=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
       <span class="badge b-${c.type}">${c.type}</span>
+      ${c.org?`<span class="badge" style="background:#5d6651;color:#fff">🏷️ ${esc(c.org)}</span>`:''}
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${di?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   h+=`<div class="card">`;
@@ -764,6 +829,8 @@ function editCustomer(c, isNew){
   let h=`<fieldset class="fset"><legend>基本資料</legend>`;
   h+=field('名稱','f-name',c.name,'text',true,'客戶名稱');
   h+=`<div class="field"><label>客戶類型</label><select id="f-type">${CUST_TYPES.map(t=>`<option ${c.type===t?'selected':''}>${t}</option>`).join('')}</select></div>`;
+  const _orgs=[...new Set(customers.map(x=>x.org).filter(Boolean))].sort();
+  h+=`<div class="field"><label>所屬組織</label><input id="f-org" list="f-org-dl" value="${esc(c.org||'')}" placeholder="例如 打貓合作社"><datalist id="f-org-dl">${_orgs.map(o=>`<option value="${esc(o)}">`).join('')}</datalist></div>`;
   h+=field('系統編號','f-sysno',c.sysno,'text',false,'內部系統編號');
   h+=field('電話','f-phone',c.phone,'tel');
   h+=field('聯絡人','f-contact',c.contact);
@@ -806,7 +873,7 @@ function saveCustomer(id, isAdd){
   const name=$('#f-name').value.trim(); if(!name){ toast('請填寫名稱'); return; }
   const base = isAdd ? (window._draft||{id,inter:[]}) : findCust(id);
   const g=i=>$('#'+i).value.trim();
-  Object.assign(base,{ id, name, type:$('#f-type').value, sysno:g('f-sysno'), phone:g('f-phone'), contact:g('f-contact'),
+  Object.assign(base,{ id, name, type:$('#f-type').value, org:g('f-org'), sysno:g('f-sysno'), phone:g('f-phone'), contact:g('f-contact'),
     address:g('f-address'), filedDate:g('f-filedDate'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'),
     regAddress:g('f-regAddress'), terms:g('f-terms'), checkPeriod:readCheckPeriod(), conditions:g('f-conditions'),
     currentFert:g('f-currentFert'), truck:g('f-truck'), deliveryTime:g('f-deliveryTime'),
