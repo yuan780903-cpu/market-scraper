@@ -81,7 +81,7 @@ let pLimit = 60;
 function go(t){
   tab = t; pLimit = 60;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  $('#title').textContent = {home:'客戶管理',map:'戰情地圖',prospects:'目標名單',route:'拜訪路線規劃',customers:'我的客戶',settings:'設定 / 備份'}[t];
+  $('#title').textContent = {home:'戰情總覽',map:'戰情地圖',prospects:'目標名單',route:'拜訪路線規劃',customers:'我的客戶',settings:'設定 / 備份'}[t];
   $('#fab').style.display = (t==='customers') ? 'block' : 'none';
   window.scrollTo(0,0);
   render();
@@ -91,7 +91,50 @@ function onFab(){ if(tab==='customers') editCustomer(null); }
 // ---------- 渲染分派 ----------
 function render(){ ({home:renderHome,map:renderMap,prospects:renderProspects,route:renderRoute,customers:renderCustomers,settings:renderSettings}[tab])(); }
 
-// ========== 首頁 ==========
+// ========== 掌握度統計（以名單為母體：開發=成交既有、接觸=拜訪過） ==========
+function isContacted(id){ const o=overlay[id]; return !!(o && (o.last || (o.inter&&o.inter.length))); }
+function computeCoverage(){
+  const exIds=existingProspectIds();
+  const region={}; let total=0, dev=0, con=0;
+  SEED.forEach(p=>{
+    const r=p.region||'其他';
+    const e=exIds.has(p.id);
+    const c=e||isContacted(p.id);
+    const rr=region[r]=region[r]||{total:0,dev:0,con:0};
+    rr.total++; total++;
+    if(e){ rr.dev++; dev++; }
+    if(c){ rr.con++; con++; }
+  });
+  return {region,total,dev,con};
+}
+// 掌握度進度條（開發率：開發數/名單數）
+function covBarRow(name,total,dev,onclickFn){
+  const r=total?dev/total:0, col=penColor(total,dev);
+  return `<div class="mrow" onclick="${onclickFn()}">
+    <div class="mname">${esc(name)}</div>
+    <div class="mbar"><i style="width:${Math.round(r*100)}%;background:${col}"></i></div>
+    <div class="mnum">開發${dev}/${total}・${Math.round(r*100)}%</div></div>`;
+}
+// 名單多但還沒開發的鄉鎮（gap=名單−客戶 最大者優先）
+function weakestTowns(st, limit){
+  if(!window.TW_MAP) return [];
+  const arr=[];
+  window.TW_MAP.towns.forEach((t,i)=>{ const k=townKey(t), lead=st.lead[k]||0, cust=st.cust[k]||0; if(lead>0) arr.push({i,c:t.c,t:t.t,lead,cust,gap:lead-cust}); });
+  arr.sort((a,b)=>b.gap-a.gap || b.lead-a.lead);
+  return arr.slice(0,limit);
+}
+// 從儀表板跳到地圖並聚焦
+function gotoMapCounty(region){
+  go('map');
+  if(window.TW_MAP){
+    const core=countyCore(region);
+    const key=Object.keys(window.TW_MAP.counties).find(k=>countyCore(k)===core);
+    if(key) mapSelectCounty(key);
+  }
+}
+function gotoMapTown(i){ go('map'); mapTapTown(i); }
+
+// ========== 首頁（戰情儀表板） ==========
 function renderHome(){
   // 待拜訪：合併我的客戶 + 名單 overlay
   const tasks = [];
@@ -101,12 +144,38 @@ function renderHome(){
   const overdue = tasks.filter(t=>t.di.sort<0).length;
   const todayN = tasks.filter(t=>t.di.sort===0).length;
 
-  let h = `<div class="stat-grid">
+  const cov=computeCoverage();
+  const pct=(a,b)=>b?Math.round(a/b*100):0;
+
+  // ── 責任區掌握度 KPI ──
+  let h = `<div class="sec-title"><span class="bar"></span>責任區掌握度</div>`;
+  h += `<div class="stat-grid">
+    <div class="stat cust"><div class="n">${pct(cov.dev,cov.total)}%</div><div class="l">開發率（成交）<br>${cov.dev} / ${cov.total} 家</div></div>
+    <div class="stat prosp"><div class="n">${pct(cov.con,cov.total)}%</div><div class="l">接觸率（拜訪過）<br>${cov.con} / ${cov.total} 家</div></div>
     <div class="stat over"><div class="n">${overdue}</div><div class="l">逾期未拜訪</div></div>
     <div class="stat due"><div class="n">${todayN}</div><div class="l">今天要拜訪</div></div>
-    <div class="stat cust"><div class="n">${customers.length}</div><div class="l">我的客戶</div></div>
-    <div class="stat prosp"><div class="n">${SEED.length}</div><div class="l">名單庫</div></div>
   </div>`;
+
+  // ── 各縣市掌握度（依未開發多寡排序）──
+  const regs=Object.entries(cov.region).filter(([,v])=>v.total>0)
+    .sort((a,b)=>(b[1].total-b[1].dev)-(a[1].total-a[1].dev));
+  if(regs.length){
+    h += `<div class="sec-title"><span class="bar"></span>各縣市掌握度（未開發多者在前）</div><div class="card">`;
+    h += regs.slice(0,12).map(([name,v])=>covBarRow(name,v.total,v.dev,()=>`gotoMapCounty('${esc(name)}')`)).join('');
+    h += `</div>`;
+  }
+
+  // ── 最該開發的鄉鎮 ──
+  if(window.TW_MAP){
+    const st=computeTownStats();
+    const weak=weakestTowns(st,8);
+    if(weak.length){
+      h += `<div class="sec-title"><span class="bar"></span>最該開發的鄉鎮 TOP ${weak.length}</div>
+        <div class="tagline" style="margin:-4px 2px 8px">名單多但還沒開發的，優先攻。點一下看地圖。</div><div class="card">`;
+      h += weak.map(w=>mapBarRow(`${w.c} ${w.t}`,w.lead,w.cust,()=>`gotoMapTown(${w.i})`)).join('');
+      h += `</div>`;
+    }
+  }
 
   h += `<div class="sec-title"><span class="bar"></span>本週待拜訪</div>`;
   if(!tasks.length){
