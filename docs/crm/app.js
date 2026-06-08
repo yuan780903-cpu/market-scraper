@@ -16,6 +16,13 @@ const saveCust = () => LS.set('crm_customers', customers);
 const CATS = ['農會','合作社','肥料行','有機農戶','競爭對手','驗證機構','友善團體','有機促進區'];
 const CUST_TYPES = ['農會','合作社','經銷商','直接農民','其他'];
 
+// 產品報價用：9 項正式品名、性狀、重量、含運、票期
+const PRODUCTS = ['碩成508','碩成1號+','碩成2號','碩成2號+','碩成生技1號','碩成果美肥','碩成基肥1號','碩成基肥2號','碩成基肥2號+'];
+const FORMS = ['粒狀','粉狀'];          // 性狀
+const WEIGHTS = ['20','25','500','1000']; // 規格公斤（粒狀固定20，粉狀多規格）
+const FREIGHTS = ['含運','不含運'];
+const CHECK_PERIODS = ['現金','月結5天','月結15天','月結30天','月結45天','月結60天'];
+
 // 區域（依台灣由北到南排序）
 const REGION_ORDER = '基隆 臺北 新北 桃園 新竹 苗栗 臺中 彰化 南投 雲林 嘉義 臺南 高雄 屏東 宜蘭 花蓮 臺東 澎湖 金門 連江'.split(' ');
 const normR = s => (s||'').replace(/台/g,'臺');
@@ -561,13 +568,21 @@ function viewCustomer(id){
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${di?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   h+=`<div class="card">`;
+  if(c.sysno)h+=drow('系統編號',esc(c.sysno));
   h+=drow('電話',telLink(c.phone));
-  h+=drow('地址',mapLink(c.address));
+  h+=drow('通訊地址',mapLink(c.address));
   if(c.contact)h+=drow('聯絡人',esc(c.contact));
+  if(c.filedDate)h+=drow('建檔日期',esc(c.filedDate));
   if(c.taxid)h+=drow('統一編號',esc(c.taxid));
   if(c.idno)h+=drow('身分證字號',esc(c.idno));
   if(c.birth)h+=drow('出生年月日',esc(c.birth));
+  if(c.regAddress)h+=drow('戶籍地址',mapLink(c.regAddress));
   h+=`</div>`;
+  if(c.products&&c.products.length){
+    h+=`<div class="sec-title"><span class="bar"></span>產品報價</div><div class="card">`;
+    c.products.forEach(p=>h+=drow(esc(p.name), esc(prodText(p))));
+    h+=`</div>`;
+  }
   h+=`<div class="sec-title"><span class="bar"></span>交易 / 配送</div><div class="card">`;
   if(c.terms)h+=drow('交易條件',esc(c.terms));
   if(c.checkPeriod)h+=drow('票期',esc(c.checkPeriod));
@@ -607,25 +622,71 @@ function delCustomer(id){ if(!confirm('確定刪除這位客戶？此動作無�
 
 function field(label,id,val,type='text',req=false,ph=''){ return `<div class="field"><label>${label}${req?' <span class="req">*</span>':''}</label><input type="${type}" id="${id}" value="${esc(val||'')}" placeholder="${esc(ph)}"></div>`; }
 
+// ---------- 產品報價（多筆）----------
+function productRowHTML(p){
+  p=p||{};
+  const sel=(arr,v,extra='')=>arr.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('');
+  return `<div class="prow">
+    <select class="pp-name"><option value="">產品…</option>${PRODUCTS.map(x=>`<option ${x===p.name?'selected':''}>${esc(x)}</option>`).join('')}</select>
+    <div class="prow-2">
+      <select class="pp-form">${sel(FORMS,p.form||'粒狀')}</select>
+      <select class="pp-weight">${sel(WEIGHTS,p.weight||'20')}</select>
+      <input class="pp-price" type="number" inputmode="decimal" placeholder="單價" value="${esc(p.price||'')}">
+      <select class="pp-freight">${sel(FREIGHTS,p.freight||'含運')}</select>
+      <button type="button" class="prow-del" onclick="this.closest('.prow').remove()">✕</button>
+    </div></div>`;
+}
+function addProductRow(){ const c=document.getElementById('prod-rows'); if(c) c.insertAdjacentHTML('beforeend', productRowHTML()); }
+function readProducts(){
+  return [...document.querySelectorAll('#prod-rows .prow')].map(el=>({
+    name:el.querySelector('.pp-name').value,
+    form:el.querySelector('.pp-form').value,
+    weight:el.querySelector('.pp-weight').value,
+    price:el.querySelector('.pp-price').value.trim(),
+    freight:el.querySelector('.pp-freight').value
+  })).filter(p=>p.name);
+}
+function prodText(p){ return `${p.form}${p.weight}kg・$${p.price||'—'}・${p.freight}`; }
+
+// ---------- 票期下拉（現金 / 月結N天 / 手動）----------
+function checkPeriodHTML(v){
+  const known=CHECK_PERIODS.includes(v);
+  const isCustom=v && !known;
+  return `<div class="field"><label>票期</label>
+    <select id="f-checksel" onchange="onCheckSel()">
+      <option value="" ${!v?'selected':''}>未設定</option>
+      ${CHECK_PERIODS.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('')}
+      <option value="__other" ${isCustom?'selected':''}>其他（手動輸入）</option>
+    </select>
+    <input id="f-checktext" placeholder="自訂票期，例如 月結90天" value="${isCustom?esc(v):''}" style="margin-top:6px;display:${isCustom?'block':'none'}"></div>`;
+}
+function onCheckSel(){ const s=$('#f-checksel').value, t=$('#f-checktext'); t.style.display=(s==='__other')?'block':'none'; if(s!=='__other') t.value=''; }
+function readCheckPeriod(){ const s=$('#f-checksel').value; return s==='__other' ? $('#f-checktext').value.trim() : (s||''); }
+
 function editCustomer(c, isNew){
   c = c || {id:'C'+Date.now(), type:'直接農民', inter:[]};
   const isAdd = isNew || !customers.some(x=>x.id===c.id);
   let h=`<fieldset class="fset"><legend>基本資料</legend>`;
   h+=field('名稱','f-name',c.name,'text',true,'客戶名稱');
   h+=`<div class="field"><label>客戶類型</label><select id="f-type">${CUST_TYPES.map(t=>`<option ${c.type===t?'selected':''}>${t}</option>`).join('')}</select></div>`;
+  h+=field('系統編號','f-sysno',c.sysno,'text',false,'內部系統編號');
   h+=field('電話','f-phone',c.phone,'tel');
   h+=field('聯絡人','f-contact',c.contact);
-  h+=field('住址','f-address',c.address);
+  h+=field('通訊地址','f-address',c.address);
+  h+=field('建檔日期','f-filedDate',c.filedDate,'date');
   h+=`</fieldset>`;
   h+=`<fieldset class="fset sens"><legend>🔒 稅務 / 法務（敏感，僅存本機）</legend>`;
   h+=field('統一編號','f-taxid',c.taxid);
   h+=field('身分證字號','f-idno',c.idno);
   h+=field('出生年月日','f-birth',c.birth,'date');
+  h+=field('戶籍地址','f-regAddress',c.regAddress);
   h+=`</fieldset>`;
+  h+=`<fieldset class="fset"><legend>產品報價（可多筆）</legend>
+    <div id="prod-rows">${(c.products||[]).map(productRowHTML).join('')}</div>
+    <div class="more" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</div></fieldset>`;
   h+=`<fieldset class="fset"><legend>交易條件</legend>`;
-  h+=field('交易條件','f-terms',c.terms,'text',false,'例如 月結30天');
-  h+=field('票期','f-checkPeriod',c.checkPeriod,'text',false,'例如 60天票');
-  h+=field('價格','f-price',c.price);
+  h+=field('交易條件','f-terms',c.terms,'text',false,'例如 貨到付款');
+  h+=checkPeriodHTML(c.checkPeriod);
   h+=field('其他條件','f-conditions',c.conditions);
   h+=field('目前使用肥料','f-currentFert',c.currentFert);
   h+=`</fieldset>`;
@@ -650,11 +711,11 @@ function saveCustomer(id, isAdd){
   const name=$('#f-name').value.trim(); if(!name){ toast('請填寫名稱'); return; }
   const base = isAdd ? (window._draft||{id,inter:[]}) : findCust(id);
   const g=i=>$('#'+i).value.trim();
-  Object.assign(base,{ id, name, type:$('#f-type').value, phone:g('f-phone'), contact:g('f-contact'),
-    address:g('f-address'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'),
-    terms:g('f-terms'), checkPeriod:g('f-checkPeriod'), price:g('f-price'), conditions:g('f-conditions'),
+  Object.assign(base,{ id, name, type:$('#f-type').value, sysno:g('f-sysno'), phone:g('f-phone'), contact:g('f-contact'),
+    address:g('f-address'), filedDate:g('f-filedDate'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'),
+    regAddress:g('f-regAddress'), terms:g('f-terms'), checkPeriod:readCheckPeriod(), conditions:g('f-conditions'),
     currentFert:g('f-currentFert'), truck:g('f-truck'), deliveryTime:g('f-deliveryTime'),
-    grade:$('#f-grade').value, notes:g('f-notes') });
+    grade:$('#f-grade').value, notes:g('f-notes'), products:readProducts() });
   const freq=$('#f-freq').value; base.freq=freq?+freq:(base.grade?GRADE_FREQ[base.grade]:null);
   if(base.freq && !base.next) base.next = addDays(todayStr(), base.freq);
   base.inter = base.inter||[];
@@ -690,6 +751,11 @@ function renderSettings(){
   h+=`<input type="file" id="imp" accept="application/json,.json" style="display:none" onchange="importJSON(this)">`;
   h+=`<div class="hint" style="margin-top:8px;color:var(--muted);font-size:11px">匯入會合併客戶與排程；同名客戶會新增為另一筆。</div>`;
   h+=`</div>`;
+  h+=`<div class="sec-title"><span class="bar"></span>匯入既有客戶（SAP 客戶檔）</div><div class="card">`;
+  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="document.getElementById('impxls').click()">📥 匯入 SAP 客戶檔 (.xls)</button></div>`;
+  h+=`<input type="file" id="impxls" accept=".xls,.csv,.txt,.tsv" style="display:none" onchange="importCustomerFile(this)">`;
+  h+=`<div class="hint" style="margin-top:8px;color:var(--muted);font-size:11.5px;line-height:1.7">支援 SAP「客戶/收貨人 ZSD29」匯出的 .xls 檔。會自動帶入<b>系統編號、名稱、電話、通訊地址、戶籍地址、統編、建檔日期</b>；已存在(同系統編號或同名)只補空欄、不覆蓋。檔案在你手機<b>本機</b>讀取，不會上傳。</div>`;
+  h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>使用說明</div><div class="card" style="font-size:13px;line-height:1.7;color:#3a473f">
     <b>📱 加到主畫面：</b>用 Safari/Chrome 開啟後，選「分享 → 加入主畫面」，即可像 App 一樣使用（離線可用）。<br>
     <b>🎯 名單：</b>3,547 筆全國農會／合作社／肥料行／有機農戶。可搜尋、依類別篩選，設定拜訪頻率後自動排程。<br>
@@ -707,9 +773,10 @@ function exportJSON(){
   toast('已匯出備份');
 }
 function exportCSV(){
-  const cols=[['name','名稱'],['type','類型'],['grade','分級'],['phone','電話'],['contact','聯絡人'],['address','地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['terms','交易條件'],['checkPeriod','票期'],['price','價格'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
+  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['products','產品報價'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
   const head=cols.map(c=>c[1]).join(',');
-  const rows=customers.map(c=>cols.map(([k])=>`"${String(c[k]??'').replace(/"/g,'""')}"`).join(','));
+  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); return c[k]??''; };
+  const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
   download(`我的客戶_${todayStr()}.csv`, '﻿'+head+'\n'+rows.join('\n'), 'text/csv');
   toast('已匯出 CSV');
 }
@@ -721,6 +788,63 @@ function importJSON(input){
     saveCust(); saveOverlay(); toast('已匯入還原'); render();
   }catch(e){ alert('檔案格式錯誤，無法匯入'); } };
   r.readAsText(f); input.value='';
+}
+
+// ---------- 匯入 SAP 客戶檔（Big5 定位字元 .xls）----------
+function fmtYmd(s){ s=(s||'').trim(); return /^\d{8}$/.test(s) ? s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8) : s; }
+// 解析 SAP ZSD29 匯出：主列(第1欄有系統編號)=客戶；子列(第2欄有編號)=同一客戶的戶籍地
+function parseCustomerTSV(text){
+  const lines=text.split(/\r\n|\n|\r/);
+  const out=[]; let cur=null;
+  for(const line of lines){
+    if(!line) continue;
+    const c=line.split('\t');
+    if(c.length<7) continue;
+    const code=(c[0]||'').trim(), sub=(c[1]||'').trim(), name=(c[2]||'').trim();
+    const tel=(c[4]||'').trim(), addr=(c[6]||'').trim(), tax=(c[8]||'').trim(), cdate=(c[9]||'').trim();
+    if(code==='客戶/收貨人' || /^客戶/.test(code)) continue; // 標題列
+    if(code){
+      cur={ id:'C'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+        sysno:code, name, type:'直接農民',
+        phone:(tel&&tel!=='0')?tel:'', address:addr, regAddress:'', taxid:tax,
+        filedDate:fmtYmd(cdate), contact:'', idno:'', birth:'', terms:'', checkPeriod:'',
+        conditions:'', currentFert:'', truck:'', deliveryTime:'', grade:'', notes:'',
+        freq:null, last:'', next:'', inter:[], products:[] };
+      out.push(cur);
+    } else if(sub && cur && addr){ // 子列＝同客戶戶籍地
+      if(!cur.regAddress) cur.regAddress=addr;
+      else cur.notes=(cur.notes?cur.notes+'\n':'')+'其他地址：'+addr;
+    }
+  }
+  return out.filter(c=>c.name);
+}
+function importCustomerFile(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let text='';
+    try{ text=new TextDecoder('big5').decode(r.result); }catch(e){ text=''; }
+    // big5 解不出（出現大量替代字元）就改 utf-8
+    if(!text || (text.match(/�/g)||[]).length>20){
+      try{ text=new TextDecoder('utf-8').decode(r.result); }catch(e){}
+    }
+    let rows;
+    try{ rows=parseCustomerTSV(text); }catch(e){ alert('檔案解析失敗：'+e.message); return; }
+    if(!rows.length){ alert('讀不到客戶資料，請確認是 SAP ZSD29 匯出的檔案'); return; }
+    const bySys=new Map(), byName=new Map();
+    customers.forEach(c=>{ if(c.sysno)bySys.set(c.sysno,c); byName.set(c.name,c); });
+    let add=0, upd=0;
+    rows.forEach(nc=>{
+      const ex=(nc.sysno&&bySys.get(nc.sysno)) || byName.get(nc.name);
+      if(ex){
+        ['sysno','phone','address','regAddress','taxid','filedDate'].forEach(k=>{ if(nc[k]&&!ex[k]) ex[k]=nc[k]; });
+        upd++;
+      } else { customers.push(nc); if(nc.sysno)bySys.set(nc.sysno,nc); byName.set(nc.name,nc); add++; }
+    });
+    saveCust(); render();
+    alert(`✅ 匯入完成\n新增 ${add} 位、更新 ${upd} 位\n（身分證、出生年月日、票期、產品報價等請逐筆補上）`);
+  };
+  r.readAsArrayBuffer(f); input.value='';
 }
 
 // ========== 拜訪路線規劃 ==========
