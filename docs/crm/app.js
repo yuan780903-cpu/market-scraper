@@ -162,9 +162,25 @@ const MIL_ICON = {
   rifle: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="13" width="26" height="3" rx="1"/><rect x="6.5" y="16" width="3" height="6.5" rx="1"/><path d="M22 16l-2.2 5.5h3.2L25 16z"/><rect x="12.5" y="9.6" width="2.4" height="3.6"/><rect x="26" y="11.5" width="3" height="1.6" rx=".6"/></svg>`,
   jet: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M16 2c1.1 0 1.8 1.4 2 3l.5 8.5 10.5 5.5v2.6l-10.5-2.8-.4 5.4 3 2.6v2.2l-4.6-1.7-4.6 1.7v-2.2l3-2.6-.4-5.4L3.5 21.6V19l10.5-5.5L14 5c.2-1.6.9-3 2-3z"/></svg>`,
   tank: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="18" width="24" height="6" rx="3"/><circle cx="8" cy="21" r="1.3" fill="#37431d"/><circle cx="13" cy="21" r="1.3" fill="#37431d"/><circle cx="18" cy="21" r="1.3" fill="#37431d"/><circle cx="23" cy="21" r="1.3" fill="#37431d"/><rect x="6" y="12.5" width="16" height="6" rx="1.5"/><rect x="11" y="8" width="8" height="5.5" rx="1.5"/><rect x="18" y="9.6" width="12" height="2.3" rx="1"/></svg>`,
-  carrier: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M3 20h26l-3.5 6H7z"/><rect x="4" y="16" width="25" height="3"/><rect x="20" y="9.5" width="4.2" height="6.5"/><rect x="21.3" y="5" width="1.6" height="4.5"/><path d="M7 16l3-3h6l-1.4 3z" fill="#37431d"/></svg>`
+  carrier: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M3 20h26l-3.5 6H7z"/><rect x="4" y="16" width="25" height="3"/><rect x="20" y="9.5" width="4.2" height="6.5"/><rect x="21.3" y="5" width="1.6" height="4.5"/><path d="M7 16l3-3h6l-1.4 3z" fill="#37431d"/></svg>`,
+  gear: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M14.5 2h3l.55 3.1a9 9 0 0 1 2.05.85l2.6-1.7 2.1 2.1-1.7 2.6c.36.64.64 1.32.85 2.05L29 14.5v3l-3.1.55c-.21.73-.49 1.41-.85 2.05l1.7 2.6-2.1 2.1-2.6-1.7c-.64.36-1.32.64-2.05.85L17.5 30h-3l-.55-3.1a9 9 0 0 1-2.05-.85l-2.6 1.7-2.1-2.1 1.7-2.6a9 9 0 0 1-.85-2.05L3 17.5v-3l3.1-.55c.21-.73.49-1.41.85-2.05l-1.7-2.6 2.1-2.1 2.6 1.7c.64-.36 1.32-.64 2.05-.85L14.5 2z"/><circle cx="16" cy="16" r="4" fill="#37431d"/></svg>`
 };
 function milIcon(k){ return MIL_ICON[k]||''; }
+
+// ---------- 各頁「作戰單位」抬頭卡（全站統一）----------
+const PAGE_META = {
+  map:       {icon:'radar',   code:'RECON',  title:'戰情地圖', desc:'戰區雷達 ・ 鄉鎮滲透'},
+  prospects: {icon:'target',  code:'TARGET', title:'目標名單', desc:'狙擊目標 ・ 名單篩選'},
+  customers: {icon:'rifle',   code:'ALLY',   title:'現有客戶', desc:'友軍部隊 ・ 拜訪跟進'},
+  compete:   {icon:'jet',     code:'BOGEY',  title:'競品價格', desc:'敵機偵蒐 ・ 市場比價'},
+  route:     {icon:'tank',    code:'ARMOR',  title:'拜訪路線', desc:'裝甲行軍 ・ 智慧排程'},
+  report:    {icon:'carrier', code:'SITREP', title:'拜訪週報', desc:'航艦戰報 ・ 紀要生成'},
+  settings:  {icon:'gear',    code:'LOGI',   title:'設定備份', desc:'軍械補給 ・ 資料備份'}
+};
+function pageHeader(k){ const m=PAGE_META[k]; if(!m) return '';
+  return `<div class="unit-hd"><span class="uh-ic">${milIcon(m.icon)}</span><div class="uh-t"><div class="uh-code">${m.code}</div><div class="uh-title">${esc(m.title)}</div><div class="uh-desc">${esc(m.desc)}</div></div></div>`; }
+// 統一寫入 #view：非首頁自動加上單位抬頭卡，直接重繪也保留
+function viewHTML(html){ $('#view').innerHTML = (tab!=='home' ? pageHeader(tab) : '') + html; }
 
 function renderHome(){
   // 待拜訪：合併我的客戶 + 名單 overlay
@@ -301,7 +317,7 @@ function penColor(lead,cust){
   return '#2e7d32';
 }
 function renderMap(){
-  if(!window.TW_MAP){ $('#view').innerHTML='<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'; return; }
+  if(!window.TW_MAP){ viewHTML('<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'); return; }
   const M=window.TW_MAP, st=computeTownStats();
   // viewBox：全島或縮放到選定縣市
   let vb=M.viewBox;
@@ -352,7 +368,7 @@ function renderMap(){
     h+=`<div class="sec-title"><span class="bar"></span>${esc(mapState.countyName)} 各鄉鎮（依未開發排序）</div><div class="card">`+
       (rows.length?rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapTapTown(${r.i})`)).join(''):`<div class="tagline">此區尚無名單資料。</div>`)+`</div>`;
   }
-  $('#view').innerHTML=h;
+  viewHTML(h);
 }
 function mapBarRow(name,lead,cust,onclickFn){
   const rate=lead?Math.min(1,cust/lead):(cust?1:0);
@@ -436,7 +452,7 @@ function renderProspects(){
   }
   h += `</div>`;
   if(res.length>pLimit) h+=`<div class="more" onclick="pLimit+=60;render()">顯示更多 ▼</div>`;
-  $('#view').innerHTML = h;
+  viewHTML(h);
   const inp=$('#psearch'); if(inp&&pFilter._focus){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); pFilter._focus=false; }
 }
 function onPSearch(v){ pFilter.q=v; pFilter._focus=true; pLimit=60; renderProspects(); }
@@ -635,7 +651,7 @@ function renderCustomers(){
     const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:`<span class="badge b-${c.type}">${c.type}</span>`)+gtag;
     h+=itemRow({name:c.name,sub:[c.phone,c.address].filter(Boolean).join(' · '),pill,onclick:`viewCustomer('${c.id}')`}); });
   h+=`</div>`;
-  $('#view').innerHTML=h;
+  viewHTML(h);
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
 
@@ -840,7 +856,7 @@ function renderSettings(){
     <b>🎯 名單：</b>3,547 筆全國農會／合作社／肥料行／有機農戶。可搜尋、依類別篩選，設定拜訪頻率後自動排程。<br>
     <b>⭐ 開發客戶：</b>名單中點「轉為我的客戶」即可補上完整資料。<br>
     <b>🏠 首頁：</b>自動列出逾期與本週該拜訪的對象。</div>`;
-  $('#view').innerHTML=h;
+  viewHTML(h);
 }
 function download(name, content, type){
   const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob);
@@ -982,7 +998,7 @@ function renderRoute(){
     <button class="seg-b ${routeMode==='week'?'on':''}" onclick="setRouteMode('week')">📅 每週智慧排程</button>
     <button class="seg-b ${routeMode==='custom'?'on':''}" onclick="setRouteMode('custom')">🗺️ 自訂單日路線</button></div>
     <div id="route-body"></div>`;
-  $('#view').innerHTML=h;
+  viewHTML(h);
   if(routeMode==='week') renderWeekRoute(); else renderCustomRoute();
 }
 
@@ -1242,7 +1258,7 @@ function renderCompetitors(){
   h += `<div class="count">共 ${res.length} 筆競品報價</div>`;
   if(!res.length){ h+=`<div class="card empty"><div class="big">🏷️</div>還沒有競品報價。<br>用上方「上網查」找價格，或按「新增競品報價」手動建立。</div>`; }
   else { h += res.map(compCard).join(''); }
-  $('#view').innerHTML=h;
+  viewHTML(h);
   const inp=$('#csearch'); if(inp&&compFilter._focus){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); compFilter._focus=false; }
 }
 function compCard(c){
@@ -1352,7 +1368,7 @@ function renderReport(){
       <button class="seg-b" onclick="shiftReportWeek(1)">下一週 →</button></div>`;
   h+=`<div class="count">${mon} ～ ${fri}　·　拜訪 ${visits.length} 次　·　接觸 ${names.size} 家</div>`;
   h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="copyReport()">📋 複製週報文字</button></div>`;
-  if(!visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「我的客戶」或「目標名單」按「記錄拜訪」後，這裡會自動彙整。</div></div>`; $('#view').innerHTML=h; return; }
+  if(!visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「我的客戶」或「目標名單」按「記錄拜訪」後，這裡會自動彙整。</div></div>`; viewHTML(h); return; }
   for(let i=0;i<5;i++){
     const d=addDays(mon,i); const dv=visits.filter(v=>v.date===d); if(!dv.length) continue;
     h+=`<div class="sec-title"><span class="bar"></span>${d.slice(5)}　週${WD_NAME[new Date(d).getDay()]}　(${dv.length})</div><div class="card">`;
@@ -1363,7 +1379,7 @@ function renderReport(){
     });
     h+=`</div>`;
   }
-  $('#view').innerHTML=h;
+  viewHTML(h);
 }
 
 // ---------- modal ----------

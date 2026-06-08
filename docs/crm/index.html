@@ -73,6 +73,31 @@
   .unit .u-code{font-size:9px;letter-spacing:2px;font-weight:800;color:#d7dcab;z-index:1}
   .unit .u-label{font-size:14.5px;font-weight:800;z-index:1;line-height:1.2}
   .unit .u-desc{font-size:10.5px;color:#dfe2c8;z-index:1;margin-top:1px}
+  /* 各頁 作戰單位抬頭卡 */
+  .unit-hd{display:flex;align-items:center;gap:12px;border-radius:14px;padding:11px 14px;margin-bottom:13px;
+    color:#f4f1e2;position:relative;overflow:hidden;border:1px solid #2a3318;box-shadow:var(--shadow);
+    background:linear-gradient(135deg,#56682f,#33401d)}
+  .unit-hd::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.42;
+    background-image:
+      radial-gradient(circle at 22px 14px,rgba(0,0,0,.35) 0 14px,transparent 16px),
+      radial-gradient(circle at 96px 44px,rgba(255,255,255,.10) 0 16px,transparent 18px),
+      radial-gradient(circle at 160px 12px,rgba(0,0,0,.30) 0 12px,transparent 14px),
+      radial-gradient(circle at 220px 40px,rgba(255,255,255,.08) 0 14px,transparent 16px);
+    background-size:260px 70px}
+  .unit-hd::after{content:"";position:absolute;top:7px;right:8px;width:11px;height:11px;
+    border-top:2px solid rgba(255,255,255,.42);border-right:2px solid rgba(255,255,255,.42)}
+  .uh-ic{width:46px;height:46px;flex:none;display:flex;align-items:center;justify-content:center;z-index:1;
+    background:rgba(0,0,0,.20);border:1px solid rgba(255,255,255,.28);border-radius:12px}
+  .uh-ic svg{width:30px;height:30px}
+  .uh-t{z-index:1;flex:1;min-width:0}
+  .uh-code{font-size:9.5px;letter-spacing:2.5px;font-weight:800;color:#d7dcab}
+  .uh-title{font-size:18px;font-weight:800;line-height:1.18}
+  .uh-desc{font-size:11px;color:#dfe2c8;margin-top:1px}
+  /* 品牌標誌（碩成肥料）*/
+  .brand-logo{flex:none;display:flex;align-items:center}
+  .brand-logo svg{height:38px;width:auto;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+  .brand-txt{display:flex;flex-direction:column;line-height:1.12;flex:1;min-width:0}
+  .brand-name{font-size:10.5px;letter-spacing:3px;color:#cdd6a8;font-weight:700}
   main{padding:14px 14px 86px;max-width:760px;margin:0 auto}
   /* nav */
   .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#2b3320;
@@ -245,7 +270,16 @@
 </style>
 </head>
 <body>
-<div class="topbar"><span class="leaf">🎖️</span><h1 id="title">客戶戰情室</h1></div>
+<div class="topbar">
+  <span class="brand-logo" aria-label="碩成肥料">
+    <svg viewBox="0 0 132 92" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="6,46 34,8 98,8 126,46 98,84 34,84" fill="#1c5e34" stroke="#eef2e0" stroke-width="3"/>
+      <polygon points="17,46 41,18 91,18 115,46 91,74 41,74" fill="none" stroke="#eef2e0" stroke-width="3.5"/>
+      <text x="66" y="48" text-anchor="middle" dominant-baseline="central" font-family="'PingFang TC','Microsoft JhengHei',sans-serif" font-weight="800" font-size="40" fill="#fff" letter-spacing="2">碩成</text>
+    </svg>
+  </span>
+  <div class="brand-txt"><div class="brand-name">碩成肥料</div><h1 id="title">客戶戰情室</h1></div>
+</div>
 <main id="view"></main>
 
 <button class="fab" id="fab" onclick="onFab()" style="display:none">＋</button>
@@ -267,8 +301,8 @@
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="prospects.js?v=20260617"></script>
-<script src="map-data.js?v=20260617"></script>
-<script src="app.js?v=20260617"></script>
+<script src="prospects.js?v=20260618"></script>
+<script src="map-data.js?v=20260618"></script>
+<script src="app.js?v=20260618"></script>
 </body>
 </html>
