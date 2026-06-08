@@ -11,14 +11,18 @@
   .header{background:linear-gradient(135deg,#1f3a2e,#4caf73);color:white;padding:18px 16px;text-align:center}
   .header h1{margin:0;font-size:20px;font-weight:700}
   .header p{margin:4px 0 0;color:#d8efde;font-size:13px}
-  .toggle{display:flex;justify-content:center;gap:8px;padding:14px;background:#fff;border-bottom:1px solid #e6e8eb}
+  .toggle{display:flex;justify-content:center;gap:8px;padding:14px 14px 8px;background:#fff;border-bottom:none}
   .toggle button{padding:10px 22px;border:2px solid #d6dade;background:#fff;color:#555;font-size:15px;font-weight:600;border-radius:24px;cursor:pointer;transition:all .15s}
   .toggle button.active{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
-  #map{width:100%;height:62vh}
+  .period{padding:8px 16px 14px;background:#fff;border-bottom:1px solid #e6e8eb;text-align:center;font-size:13px;color:#555}
+  .period strong{color:#1f3a2e;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+  #map{width:100%;height:60vh;background:#cfe9ff}
+  .county-label{background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.15);border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;color:#1f2933;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+  .county-label .mm{color:#c92a2a;margin-left:3px}
   .legend{padding:14px 16px;background:#fff;border-top:1px solid #e6e8eb}
   .legend-title{font-weight:700;color:#1f3a2e;margin-bottom:8px;font-size:14px}
   .legend-row{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}
-  .legend-swatch{width:24px;height:14px;border-radius:3px;flex-shrink:0}
+  .legend-swatch{width:24px;height:14px;border-radius:3px;flex-shrink:0;border:1px solid #ddd}
   .ranking{padding:14px 16px;background:#fff;margin-top:8px}
   .ranking h3{margin:0 0 10px;font-size:15px;color:#1f3a2e}
   .ranking table{width:100%;border-collapse:collapse;font-size:13px}
@@ -33,7 +37,7 @@
 <body>
 <div class="header">
   <h1>🗺️ 全台累積雨量地圖</h1>
-  <p>2026-06-08 · 資料來源 Open-Meteo (ERA5) · 22 縣市</p>
+  <p>資料來源 Open-Meteo (ERA5)　·　22 縣市</p>
 </div>
 
 <div class="toggle">
@@ -42,17 +46,19 @@
   <button data-mode="quarter">本季 (Q2)</button>
 </div>
 
+<div class="period" id="period-info"></div>
+
 <div id="map"></div>
 
 <div class="legend">
   <div class="legend-title">📊 顏色級距（本月 / 本季用，今日按比例縮放）</div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#cfe9ff"></div><span style="color:#cfe9ff;font-weight:700;width:60px">極少</span><span style="color:#555">0–30 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#7bb3eb"></div><span style="color:#7bb3eb;font-weight:700;width:60px">少雨</span><span style="color:#555">30–80 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#3a82c4"></div><span style="color:#3a82c4;font-weight:700;width:60px">普通</span><span style="color:#555">80–150 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#1d4f93"></div><span style="color:#1d4f93;font-weight:700;width:60px">略多</span><span style="color:#555">150–300 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#7b3aa2"></div><span style="color:#7b3aa2;font-weight:700;width:60px">多雨</span><span style="color:#555">300–500 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#c92a2a"></div><span style="color:#c92a2a;font-weight:700;width:60px">豪雨</span><span style="color:#555">500–800 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#6b0606"></div><span style="color:#6b0606;font-weight:700;width:60px">暴雨</span><span style="color:#555">800–∞ mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#f5f6f3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">極少</span><span style="color:#555">0–30 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#a3e0a3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">少雨</span><span style="color:#555">30–80 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#5cb85c"></div><span style="color:#1f3a2e;font-weight:700;width:60px">普通</span><span style="color:#555">80–150 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#f0c040"></div><span style="color:#1f3a2e;font-weight:700;width:60px">略多</span><span style="color:#555">150–300 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#f08040"></div><span style="color:#1f3a2e;font-weight:700;width:60px">多雨</span><span style="color:#555">300–500 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#d63838"></div><span style="color:#1f3a2e;font-weight:700;width:60px">豪雨</span><span style="color:#555">500–800 mm</span></div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#8b1d8b"></div><span style="color:#1f3a2e;font-weight:700;width:60px">暴雨</span><span style="color:#555">800–∞ mm</span></div>
 </div>
 
 <div class="ranking" id="ranking">
@@ -61,54 +67,66 @@
 </div>
 
 <div class="footer">
-  本機產出於 2026-06-08 08:25　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
+  產出於 2026-06-08 16:32　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
 </div>
 
 <script>
-const DATA = [{"name": "臺北市", "lat": 25.04, "lon": 121.51, "today": 61.5, "month": 111.1, "quarter": 237.2}, {"name": "新北市", "lat": 25.01, "lon": 121.46, "today": 41.5, "month": 95.7, "quarter": 198.9}, {"name": "基隆市", "lat": 25.13, "lon": 121.74, "today": 56.2, "month": 125.3, "quarter": 307.6}, {"name": "桃園市", "lat": 24.99, "lon": 121.31, "today": 38.9, "month": 104.5, "quarter": 225.7}, {"name": "新竹市", "lat": 24.81, "lon": 120.97, "today": 39.7, "month": 87.3, "quarter": 156.7}, {"name": "新竹縣", "lat": 24.84, "lon": 121.01, "today": 34.3, "month": 78.9, "quarter": 150.0}, {"name": "宜蘭縣", "lat": 24.7, "lon": 121.74, "today": 13.5, "month": 80.9, "quarter": 243.7}, {"name": "苗栗縣", "lat": 24.56, "lon": 120.82, "today": 48.4, "month": 99.2, "quarter": 189.1}, {"name": "臺中市", "lat": 24.15, "lon": 120.68, "today": 37.3, "month": 111.4, "quarter": 178.9}, {"name": "彰化縣", "lat": 24.07, "lon": 120.54, "today": 48.7, "month": 107.0, "quarter": 148.1}, {"name": "南投縣", "lat": 23.91, "lon": 120.69, "today": 0, "month": 0, "quarter": 0}, {"name": "雲林縣", "lat": 23.71, "lon": 120.43, "today": 0, "month": 0, "quarter": 0}, {"name": "嘉義市", "lat": 23.48, "lon": 120.45, "today": 0, "month": 0, "quarter": 0}, {"name": "嘉義縣", "lat": 23.45, "lon": 120.45, "today": 0, "month": 0, "quarter": 0}, {"name": "臺南市", "lat": 22.99, "lon": 120.21, "today": 41.1, "month": 103.3, "quarter": 140.3}, {"name": "高雄市", "lat": 22.62, "lon": 120.31, "today": 65.3, "month": 137.7, "quarter": 183.8}, {"name": "屏東縣", "lat": 22.55, "lon": 120.55, "today": 41.0, "month": 171.1, "quarter": 239.3}, {"name": "花蓮縣", "lat": 23.99, "lon": 121.6, "today": 11.3, "month": 63.5, "quarter": 228.2}, {"name": "臺東縣", "lat": 22.75, "lon": 121.15, "today": 15.7, "month": 124.1, "quarter": 216.1}, {"name": "澎湖縣", "lat": 23.57, "lon": 119.58, "today": 20.3, "month": 59.4, "quarter": 83.3}, {"name": "金門縣", "lat": 24.43, "lon": 118.32, "today": 9.2, "month": 23.0, "quarter": 103.2}, {"name": "連江縣", "lat": 26.16, "lon": 119.95, "today": 73.2, "month": 83.9, "quarter": 177.4}];
-const BANDS = [[0, 30, "#cfe9ff", "\u6975\u5c11"], [30, 80, "#7bb3eb", "\u5c11\u96e8"], [80, 150, "#3a82c4", "\u666e\u901a"], [150, 300, "#1d4f93", "\u7565\u591a"], [300, 500, "#7b3aa2", "\u591a\u96e8"], [500, 800, "#c92a2a", "\u8c6a\u96e8"], [800, 99999, "#6b0606", "\u66b4\u96e8"]];
+const DATA = [{"name": "臺北市", "lat": 25.04, "lon": 121.51, "today": 61.5, "month": 111.1, "quarter": 237.2}, {"name": "新北市", "lat": 25.01, "lon": 121.46, "today": 41.5, "month": 95.7, "quarter": 198.9}, {"name": "基隆市", "lat": 25.13, "lon": 121.74, "today": 56.2, "month": 125.3, "quarter": 307.6}, {"name": "桃園市", "lat": 24.99, "lon": 121.31, "today": 38.9, "month": 104.5, "quarter": 225.7}, {"name": "新竹市", "lat": 24.81, "lon": 120.97, "today": 39.7, "month": 87.3, "quarter": 156.7}, {"name": "新竹縣", "lat": 24.84, "lon": 121.01, "today": 34.3, "month": 78.9, "quarter": 150.0}, {"name": "宜蘭縣", "lat": 24.7, "lon": 121.74, "today": 13.5, "month": 80.9, "quarter": 243.7}, {"name": "苗栗縣", "lat": 24.56, "lon": 120.82, "today": 48.4, "month": 99.2, "quarter": 189.1}, {"name": "臺中市", "lat": 24.15, "lon": 120.68, "today": 37.3, "month": 111.4, "quarter": 178.9}, {"name": "彰化縣", "lat": 24.07, "lon": 120.54, "today": 48.7, "month": 107.0, "quarter": 148.1}, {"name": "南投縣", "lat": 23.91, "lon": 120.69, "today": 36.6, "month": 131.1, "quarter": 201.9}, {"name": "雲林縣", "lat": 23.71, "lon": 120.43, "today": 36.5, "month": 98.7, "quarter": 157.7}, {"name": "嘉義市", "lat": 23.48, "lon": 120.45, "today": 33.9, "month": 113.3, "quarter": 189.2}, {"name": "嘉義縣", "lat": 23.45, "lon": 120.45, "today": 33.9, "month": 113.3, "quarter": 189.2}, {"name": "臺南市", "lat": 22.99, "lon": 120.21, "today": 41.1, "month": 103.3, "quarter": 140.3}, {"name": "高雄市", "lat": 22.62, "lon": 120.31, "today": 65.3, "month": 137.7, "quarter": 183.8}, {"name": "屏東縣", "lat": 22.55, "lon": 120.55, "today": 41.0, "month": 171.1, "quarter": 239.3}, {"name": "花蓮縣", "lat": 23.99, "lon": 121.6, "today": 11.3, "month": 63.5, "quarter": 228.2}, {"name": "臺東縣", "lat": 22.75, "lon": 121.15, "today": 15.7, "month": 124.1, "quarter": 216.1}, {"name": "澎湖縣", "lat": 23.57, "lon": 119.58, "today": 20.3, "month": 59.4, "quarter": 83.3}, {"name": "金門縣", "lat": 24.43, "lon": 118.32, "today": 9.2, "month": 23.0, "quarter": 103.2}, {"name": "連江縣", "lat": 26.16, "lon": 119.95, "today": 73.2, "month": 83.9, "quarter": 177.4}];
+const BANDS = [[0, 30, "#f5f6f3", "\u6975\u5c11"], [30, 80, "#a3e0a3", "\u5c11\u96e8"], [80, 150, "#5cb85c", "\u666e\u901a"], [150, 300, "#f0c040", "\u7565\u591a"], [300, 500, "#f08040", "\u591a\u96e8"], [500, 800, "#d63838", "\u8c6a\u96e8"], [800, 99999, "#8b1d8b", "\u66b4\u96e8"]];
+const NAME_MAP = {"台北市": "臺北市", "台中市": "臺中市", "台南市": "臺南市", "台東縣": "臺東縣", "桃園縣": "桃園市"};       // GeoJSON 縣市名 → 我們資料的縣市名
+const PERIODS = {"today": "2026-06-08（全日）", "month": "2026-06-01 ~ 2026-06-08（共 8 天）", "quarter": "2026-04-01 ~ 2026-06-08（Q2，共 69 天）"};          // {today: "2026-06-08", month: "2026-06-01 ~ 2026-06-08 (8 天)", ...}
+const GEOJSON_URL = "https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json";
+
+// 建快速查表：name → row
+const DATA_BY_NAME = {};
+DATA.forEach(d => { DATA_BY_NAME[d.name] = d; });
 
 function pickBand(v, mode) {
-  // 今日 mode 用較小級距（÷10 因為單日 vs 月累積）
   const scale = (mode === 'today') ? 0.1 : 1.0;
   for (const [lo, hi, color, label] of BANDS) {
     if (v >= lo * scale && v < hi * scale) return {color, label};
   }
-  return {color: '#cfe9ff', label: '極少'};
+  return {color: BANDS[0][2], label: BANDS[0][3]};
 }
 
-const map = L.map('map').setView([23.7, 121.0], 7);
+const map = L.map('map', {zoomControl: true, attributionControl: true}).setView([23.7, 121.0], 7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap',
-  maxZoom: 18,
+  maxZoom: 12,
+  opacity: 0.4,
 }).addTo(map);
 
-let markers = [];
+let geoLayer = null;
+let labelLayer = L.layerGroup().addTo(map);
+
+function getDataForFeature(feature) {
+  // feature.properties.COUNTYNAME 可能是「台北市」「桃園縣」，要對應到我們的 DATA 名稱
+  const geoName = feature.properties.COUNTYNAME || feature.properties.name || '';
+  const ourName = NAME_MAP[geoName] || geoName;
+  return { name: ourName, row: DATA_BY_NAME[ourName] };
+}
+
 function render(mode) {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  const sorted = [...DATA].sort((a, b) => b[mode] - a[mode]);
-  for (const c of DATA) {
-    const v = c[mode];
-    const {color, label} = pickBand(v, mode);
-    // 半徑：sqrt(雨量) * 5，上下限 8-40
-    const r = Math.max(8, Math.min(40, Math.sqrt(Math.max(v, 1)) * (mode === 'today' ? 4 : 1.5)));
-    const m = L.circleMarker([c.lat, c.lon], {
-      radius: r,
-      color: '#fff',
-      weight: 2,
-      fillColor: color,
-      fillOpacity: 0.78,
-    }).addTo(map);
-    m.bindPopup(
-      `<div class="popup-content"><strong>${c.name}</strong><br>` +
-      `${mode === 'today' ? '今日' : mode === 'month' ? '本月累積' : '本季累積'}：` +
-      `<strong style="color:${color};font-size:16px">${v.toFixed(1)} mm</strong><br>` +
-      `<span style="color:#888">（${label}）</span></div>`
-    );
-    markers.push(m);
+  // 移除舊的
+  if (geoLayer) map.removeLayer(geoLayer);
+  labelLayer.clearLayers();
+
+  // 抓 GeoJSON (cache 在第一次)
+  if (window._geo) {
+    draw(window._geo, mode);
+  } else {
+    fetch(GEOJSON_URL).then(r => r.json()).then(geo => {
+      window._geo = geo;
+      draw(geo, mode);
+    }).catch(e => console.error('GeoJSON 失敗', e));
   }
-  // 排名
+
+  // 更新統計期間
+  document.getElementById('period-info').innerHTML =
+    '📅 統計期間：<strong>' + PERIODS[mode] + '</strong>';
+
+  // 更新排名
+  const sorted = [...DATA].sort((a, b) => b[mode] - a[mode]);
   document.getElementById('ranking-title').textContent =
     (mode === 'today' ? '今日' : mode === 'month' ? '本月' : '本季') + '累積雨量排名';
   const tbody = document.querySelector('#ranking-table tbody');
@@ -116,11 +134,52 @@ function render(mode) {
   sorted.slice(0, 10).forEach((c, i) => {
     const {color} = pickBand(c[mode], mode);
     const row = document.createElement('tr');
-    row.innerHTML = `<td class="rank">${i + 1}</td>` +
-                    `<td class="county">${c.name}</td>` +
-                    `<td class="mm" style="color:${color}">${c[mode].toFixed(1)} mm</td>`;
+    row.innerHTML = '<td class="rank">' + (i + 1) + '</td>' +
+                    '<td class="county">' + c.name + '</td>' +
+                    '<td class="mm" style="color:' + color + '">' + c[mode].toFixed(1) + ' mm</td>';
     tbody.appendChild(row);
   });
+}
+
+function draw(geo, mode) {
+  geoLayer = L.geoJSON(geo, {
+    style: function(feature) {
+      const {row} = getDataForFeature(feature);
+      const v = row ? row[mode] : 0;
+      const {color} = pickBand(v, mode);
+      return {
+        fillColor: color,
+        weight: 1,
+        color: '#fff',
+        fillOpacity: 0.88,
+      };
+    },
+    onEachFeature: function(feature, layer) {
+      const {name, row} = getDataForFeature(feature);
+      const v = row ? row[mode] : 0;
+      const {color, label} = pickBand(v, mode);
+      const modeLabel = mode === 'today' ? '今日' : mode === 'month' ? '本月累積' : '本季累積';
+      layer.bindPopup(
+        '<div class="popup-content"><strong>' + name + '</strong><br>' +
+        modeLabel + '：' +
+        '<strong style="color:' + color + ';font-size:16px">' + v.toFixed(1) + ' mm</strong><br>' +
+        '<span style="color:#888">（' + label + '）</span></div>'
+      );
+      layer.on('mouseover', function() { this.setStyle({weight: 2.5, color: '#1f3a2e'}); });
+      layer.on('mouseout', function() { geoLayer.resetStyle(this); });
+      // 縣市中心 label
+      if (row) {
+        const center = layer.getBounds().getCenter();
+        L.marker([center.lat, center.lng], {
+          icon: L.divIcon({
+            className: 'county-label',
+            html: name.replace('縣','').replace('市','') + '<span class="mm">' + v.toFixed(0) + '</span>',
+            iconSize: null,
+          }),
+        }).addTo(labelLayer);
+      }
+    },
+  }).addTo(map);
 }
 
 document.querySelectorAll('.toggle button').forEach(b => {
