@@ -30,6 +30,22 @@
   .ranking td.rank{width:32px;color:#888;font-weight:600}
   .ranking td.county{width:80px;font-weight:600}
   .ranking td.mm{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}
+  .impact{padding:14px 16px;background:#fff;margin-top:8px}
+  .impact h3{margin:0 0 10px;font-size:15px;color:#1864ab}
+  .impact .group-title{margin:10px 0 4px;font-size:13px;font-weight:700;color:#52616b}
+  .impact .row{display:flex;gap:10px;font-size:13px;margin:3px 0;align-items:baseline}
+  .impact .rng{width:90px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0}
+  .impact .note{color:#1f2933;flex:1}
+  .impact .green{color:#2d6a4f}
+  .impact .amber{color:#a05c00}
+  .impact .red{color:#c92a2a}
+  .impact .gray{color:#52616b}
+  .impact .info-note{margin-top:14px;padding:10px;background:#f5f6f3;border-left:3px solid #4caf73;border-radius:4px;font-size:12px;color:#52616b;line-height:1.6}
+  .source{padding:14px 16px;background:#fff;margin-top:8px;border-top:2px solid #e6e8eb}
+  .source h3{margin:0 0 10px;font-size:14px;color:#52616b}
+  .source ul{margin:0;padding-left:20px;font-size:12px;color:#52616b;line-height:1.7}
+  .source li{margin:3px 0}
+  .source a{color:#1864ab;text-decoration:none;word-break:break-all}
   .footer{padding:14px;text-align:center;color:#888;font-size:11px;background:#f5f6f3}
   .popup-content{font-size:14px}
   .popup-content strong{color:#1f3a2e}
@@ -52,6 +68,9 @@
 
 <div class="legend">
   <div class="legend-title">📊 顏色級距（本月 / 本季用，今日按比例縮放）</div>
+  <div style="font-size:12px;color:#52616b;margin-bottom:8px;padding:6px 8px;background:#f5f6f3;border-radius:4px">
+    ※ 地圖上縣市名稱旁的數字 = 該期間累積雨量（單位：mm）
+  </div>
   <div class="legend-row"><div class="legend-swatch" style="background:#f5f6f3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">極少</span><span style="color:#555">0–30 mm</span></div>
   <div class="legend-row"><div class="legend-swatch" style="background:#a3e0a3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">少雨</span><span style="color:#555">30–80 mm</span></div>
   <div class="legend-row"><div class="legend-swatch" style="background:#5cb85c"></div><span style="color:#1f3a2e;font-weight:700;width:60px">普通</span><span style="color:#555">80–150 mm</span></div>
@@ -61,17 +80,57 @@
   <div class="legend-row"><div class="legend-swatch" style="background:#8b1d8b"></div><span style="color:#1f3a2e;font-weight:700;width:60px">暴雨</span><span style="color:#555">800–∞ mm</span></div>
 </div>
 
+<div class="impact">
+  <h3>💧 雨量對有機質肥料施用的影響程度</h3>
+  <div class="group-title">短期單日</div>
+  <div class="row"><div class="rng green">&lt; 30 mm</div><div class="note">可施肥；雨水帶入水分有助於溶肥滲入</div></div>
+  <div class="row"><div class="rng amber">30 – 80 mm</div><div class="note">表面顆粒被沖刷，氮素流失 10-20%，當日施肥效果打折</div></div>
+  <div class="row"><div class="rng red">&gt; 80 mm</div><div class="note">禁施；農路積水、機具進不去、粒肥泡爛</div></div>
+
+  <div class="group-title">連續 3-5 天</div>
+  <div class="row"><div class="rng green">&lt; 50 mm</div><div class="note">田面 OK；正常出貨無虞</div></div>
+  <div class="row"><div class="rng amber">50 – 150 mm</div><div class="note">泥濘；農路機具不易進入，出貨延後 1-2 天</div></div>
+  <div class="row"><div class="rng red">&gt; 150 mm</div><div class="note">田面積水；微生物轉厭氧、根系活性降，有機質肥效大幅遞減</div></div>
+
+  <div class="group-title">月累積（業務銷量判讀）</div>
+  <div class="row"><div class="rng green">&lt; 150 mm</div><div class="note">施肥黃金期，銷量旺 — 客戶積極備肥</div></div>
+  <div class="row"><div class="rng gray">150 – 300 mm</div><div class="note">普通，看空檔出貨 — 接單頻率正常</div></div>
+  <div class="row"><div class="rng amber">300 – 500 mm</div><div class="note">銷量下滑 20-30% — 客戶觀望、延後備肥</div></div>
+  <div class="row"><div class="rng red">&gt; 500 mm</div><div class="note">銷量低谷 — 田間無法作業，出貨幾乎停滯</div></div>
+
+  <div class="info-note">
+    <strong>📌 為什麼有機肥對雨量比化肥敏感？</strong><br>
+    1. <strong>顆粒比較大</strong>，雨水浸泡 1-2 天會泡爛、養分隨水流失到溝渠<br>
+    2. <strong>含微生物</strong>，連續陰雨 = 田面厭氧，菌相被破壞、肥效歸零<br>
+    3. <strong>多為粒狀/粉狀</strong>，需要機具撒佈，農路積水就根本無法出貨<br>
+    4. <strong>果樹/茶葉</strong>主要客戶在山區，雨季時連道路都不一定能通
+  </div>
+</div>
+
 <div class="ranking" id="ranking">
   <h3 id="ranking-title">本月累積雨量排名</h3>
   <table id="ranking-table"><tbody></tbody></table>
 </div>
 
+<div class="source">
+  <h3>📚 資料來源 / 方法說明</h3>
+  <ul>
+    <li><strong>雨量數據</strong>：Open-Meteo Forecast API（基於 ECMWF & ERA5 reanalysis），準度約 ±10%，分辨率約 11 km。
+      <br><a href="https://open-meteo.com/" target="_blank">https://open-meteo.com</a></li>
+    <li><strong>縣市邊界</strong>：g0v 開源台灣縣市 GeoJSON（twCounty2010）。
+      <br><a href="https://github.com/g0v/twgeojson" target="_blank">github.com/g0v/twgeojson</a></li>
+    <li><strong>地圖底圖</strong>：OpenStreetMap 開放圖資。</li>
+    <li><strong>施肥/銷量影響閾值</strong>：大成長城企業有機肥料部莊政遠業務襄理田間觀察 + 客戶回報整理（非學術研究數據，供業務內部參考）。</li>
+    <li><strong>取樣點</strong>：每縣市取縣治座標作代表，未細分鄉鎮（山區實際雨量可能更高）。</li>
+  </ul>
+</div>
+
 <div class="footer">
-  產出於 2026-06-08 08:43　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
+  產出於 2026-06-08 16:47　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
 </div>
 
 <script>
-const DATA = [{"name": "臺北市", "lat": 25.04, "lon": 121.51, "today": 61.5, "month": 111.1, "quarter": 237.2}, {"name": "新北市", "lat": 25.01, "lon": 121.46, "today": 41.5, "month": 95.7, "quarter": 198.9}, {"name": "基隆市", "lat": 25.13, "lon": 121.74, "today": 56.2, "month": 125.3, "quarter": 307.6}, {"name": "桃園市", "lat": 24.99, "lon": 121.31, "today": 38.9, "month": 104.5, "quarter": 225.7}, {"name": "新竹市", "lat": 24.81, "lon": 120.97, "today": 39.7, "month": 87.3, "quarter": 156.7}, {"name": "新竹縣", "lat": 24.84, "lon": 121.01, "today": 34.3, "month": 78.9, "quarter": 150.0}, {"name": "宜蘭縣", "lat": 24.7, "lon": 121.74, "today": 13.5, "month": 80.9, "quarter": 243.7}, {"name": "苗栗縣", "lat": 24.56, "lon": 120.82, "today": 48.4, "month": 99.2, "quarter": 189.1}, {"name": "臺中市", "lat": 24.15, "lon": 120.68, "today": 37.3, "month": 111.4, "quarter": 178.9}, {"name": "彰化縣", "lat": 24.07, "lon": 120.54, "today": 48.7, "month": 107.0, "quarter": 148.1}, {"name": "南投縣", "lat": 23.91, "lon": 120.69, "today": 0, "month": 0, "quarter": 0}, {"name": "雲林縣", "lat": 23.71, "lon": 120.43, "today": 0, "month": 0, "quarter": 0}, {"name": "嘉義市", "lat": 23.48, "lon": 120.45, "today": 0, "month": 0, "quarter": 0}, {"name": "嘉義縣", "lat": 23.45, "lon": 120.45, "today": 0, "month": 0, "quarter": 0}, {"name": "臺南市", "lat": 22.99, "lon": 120.21, "today": 41.1, "month": 103.3, "quarter": 140.3}, {"name": "高雄市", "lat": 22.62, "lon": 120.31, "today": 65.3, "month": 137.7, "quarter": 183.8}, {"name": "屏東縣", "lat": 22.55, "lon": 120.55, "today": 41.0, "month": 171.1, "quarter": 239.3}, {"name": "花蓮縣", "lat": 23.99, "lon": 121.6, "today": 11.3, "month": 63.5, "quarter": 228.2}, {"name": "臺東縣", "lat": 22.75, "lon": 121.15, "today": 15.7, "month": 124.1, "quarter": 216.1}, {"name": "澎湖縣", "lat": 23.57, "lon": 119.58, "today": 20.3, "month": 59.4, "quarter": 83.3}, {"name": "金門縣", "lat": 24.43, "lon": 118.32, "today": 9.2, "month": 23.0, "quarter": 103.2}, {"name": "連江縣", "lat": 26.16, "lon": 119.95, "today": 73.2, "month": 83.9, "quarter": 177.4}];
+const DATA = [{"name": "臺北市", "lat": 25.04, "lon": 121.51, "today": 61.5, "month": 111.1, "quarter": 237.2}, {"name": "新北市", "lat": 25.01, "lon": 121.46, "today": 41.5, "month": 95.7, "quarter": 198.9}, {"name": "基隆市", "lat": 25.13, "lon": 121.74, "today": 56.2, "month": 125.3, "quarter": 307.6}, {"name": "桃園市", "lat": 24.99, "lon": 121.31, "today": 38.9, "month": 104.5, "quarter": 225.7}, {"name": "新竹市", "lat": 24.81, "lon": 120.97, "today": 39.7, "month": 87.3, "quarter": 156.7}, {"name": "新竹縣", "lat": 24.84, "lon": 121.01, "today": 34.3, "month": 78.9, "quarter": 150.0}, {"name": "宜蘭縣", "lat": 24.7, "lon": 121.74, "today": 13.5, "month": 80.9, "quarter": 243.7}, {"name": "苗栗縣", "lat": 24.56, "lon": 120.82, "today": 48.4, "month": 99.2, "quarter": 189.1}, {"name": "臺中市", "lat": 24.15, "lon": 120.68, "today": 37.3, "month": 111.4, "quarter": 178.9}, {"name": "彰化縣", "lat": 24.07, "lon": 120.54, "today": 48.7, "month": 107.0, "quarter": 148.1}, {"name": "南投縣", "lat": 23.91, "lon": 120.69, "today": 36.6, "month": 131.1, "quarter": 201.9}, {"name": "雲林縣", "lat": 23.71, "lon": 120.43, "today": 36.5, "month": 98.7, "quarter": 157.7}, {"name": "嘉義市", "lat": 23.48, "lon": 120.45, "today": 33.9, "month": 113.3, "quarter": 189.2}, {"name": "嘉義縣", "lat": 23.45, "lon": 120.45, "today": 33.9, "month": 113.3, "quarter": 189.2}, {"name": "臺南市", "lat": 22.99, "lon": 120.21, "today": 41.1, "month": 103.3, "quarter": 140.3}, {"name": "高雄市", "lat": 22.62, "lon": 120.31, "today": 65.3, "month": 137.7, "quarter": 183.8}, {"name": "屏東縣", "lat": 22.55, "lon": 120.55, "today": 41.0, "month": 171.1, "quarter": 239.3}, {"name": "花蓮縣", "lat": 23.99, "lon": 121.6, "today": 11.3, "month": 63.5, "quarter": 228.2}, {"name": "臺東縣", "lat": 22.75, "lon": 121.15, "today": 15.7, "month": 124.1, "quarter": 216.1}, {"name": "澎湖縣", "lat": 23.57, "lon": 119.58, "today": 20.3, "month": 59.4, "quarter": 83.3}, {"name": "金門縣", "lat": 24.43, "lon": 118.32, "today": 9.2, "month": 23.0, "quarter": 103.2}, {"name": "連江縣", "lat": 26.16, "lon": 119.95, "today": 73.2, "month": 83.9, "quarter": 177.4}];
 const BANDS = [[0, 30, "#f5f6f3", "\u6975\u5c11"], [30, 80, "#a3e0a3", "\u5c11\u96e8"], [80, 150, "#5cb85c", "\u666e\u901a"], [150, 300, "#f0c040", "\u7565\u591a"], [300, 500, "#f08040", "\u591a\u96e8"], [500, 800, "#d63838", "\u8c6a\u96e8"], [800, 99999, "#8b1d8b", "\u66b4\u96e8"]];
 const NAME_MAP = {"台北市": "臺北市", "台中市": "臺中市", "台南市": "臺南市", "台東縣": "臺東縣", "桃園縣": "桃園市"};       // GeoJSON 縣市名 → 我們資料的縣市名
 const PERIODS = {"today": "2026-06-08（全日）", "month": "2026-06-01 ~ 2026-06-08（共 8 天）", "quarter": "2026-04-01 ~ 2026-06-08（Q2，共 69 天）"};          // {today: "2026-06-08", month: "2026-06-01 ~ 2026-06-08 (8 天)", ...}
