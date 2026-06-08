@@ -10,13 +10,16 @@
 
 import json
 import os
+import subprocess
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import requests
 
 OUTPUT_DIR = Path("output")
+DOCS_DIR = Path("docs")          # GitHub Pages 來源資料夾
+GITHUB_PAGES_BASE = "https://yuan780903-cpu.github.io/market-scraper"
 
 # 全台 22 縣市（座標 = 縣市政府所在地或中心點）
 # 用「最會下雨那個鄉鎮」更準，但 22 縣市先夠用
@@ -283,31 +286,70 @@ def collect_rows(verbose: bool = True) -> list:
     return rows
 
 
-def generate_and_upload(verbose: bool = True) -> str:
-    """產地圖 HTML → 寫本機 → 上傳 catbox → 回傳 URL（失敗回 ""）。
-    給 weekly_line_push 在推播前呼叫，把 URL 加進 Flex 雨量卡的 footer 按鈕。"""
+def _git_commit_and_push_docs(verbose: bool = True) -> bool:
+    """在 GitHub Actions runner 自動 commit + push docs/taiwan_rainfall_map.html
+    本機跑時提示用戶手動 push。"""
+    in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
+    if not in_actions:
+        if verbose:
+            print("[Rainfall Map] (本機) 已寫入 docs/，請手動 git push 才會更新 GitHub Pages")
+        return False
+    try:
+        subprocess.run(["git", "config", "user.email",
+                         "github-actions[bot]@users.noreply.github.com"], check=True)
+        subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
+        subprocess.run(["git", "add", "docs/taiwan_rainfall_map.html"], check=True)
+        diff = subprocess.run(["git", "diff", "--staged", "--quiet"])
+        if diff.returncode != 0:  # 有差異才 commit
+            subprocess.run(["git", "commit", "-m",
+                             f"chore(map): rainfall {date.today().isoformat()}"], check=True)
+            # rebase 拉新後 push（其他 workflow 可能也推過）
+            subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=False)
+            subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
+            if verbose:
+                print("[Rainfall Map] ✓ 推到 GitHub，Pages 將自動部署（約 30-60 秒）")
+        else:
+            if verbose:
+                print("[Rainfall Map] docs/ 內容無變動，跳過 commit")
+        return True
+    except subprocess.CalledProcessError as e:
+        if verbose:
+            print(f"[Rainfall Map] [!] git 操作失敗：{e}")
+        return False
+
+
+def generate_and_publish(verbose: bool = True) -> str:
+    """產地圖 HTML → 寫到 docs/（GitHub Pages 源）→ commit+push（Actions）→ 回傳公開 URL。
+    GitHub Pages 會回正確 Content-Type: text/html（catbox 會回 text/plain）。"""
     today = date.today()
     if verbose:
         print(f"[Rainfall Map] 產出全台 22 縣市互動地圖 ...")
     rows = collect_rows(verbose=verbose)
     html = build_html(rows, today)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUTPUT_DIR / f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html"
-    out_path.write_text(html, encoding="utf-8")
+
+    # 寫到 docs/ (GitHub Pages 來源，固定檔名讓 URL 不變)
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    docs_path = DOCS_DIR / "taiwan_rainfall_map.html"
+    docs_path.write_text(html, encoding="utf-8")
     if verbose:
-        print(f"[Rainfall Map] 本機備份：{out_path}")
-    try:
-        import uploader
-        url = uploader.upload_html(
-            html, filename=f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html"
-        )
-        if verbose:
-            print(f"[Rainfall Map] ✓ 公開 URL：{url}")
-        return url
-    except Exception as e:
-        if verbose:
-            print(f"[Rainfall Map] [!] 上傳失敗：{e}")
-        return ""
+        print(f"[Rainfall Map] 寫入 {docs_path}")
+
+    # 本機備份（每次跑都存一份歷史）
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUTPUT_DIR / f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html") \
+        .write_text(html, encoding="utf-8")
+
+    # 在 Actions 環境自動 push；本機需自己 push
+    _git_commit_and_push_docs(verbose=verbose)
+
+    # 加 ?v=YYYYMMDDHHMM 強制 cache bust；?openExternalBrowser=1 強制 LINE 開外部瀏覽器
+    ts = datetime.now().strftime("%Y%m%d%H%M")
+    return f"{GITHUB_PAGES_BASE}/taiwan_rainfall_map.html?v={ts}&openExternalBrowser=1"
+
+
+# 向下相容（weekly_line_push 還在用舊名稱）
+def generate_and_upload(verbose: bool = True) -> str:
+    return generate_and_publish(verbose=verbose)
 
 
 def main():
@@ -321,9 +363,10 @@ def main():
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip())
-    url = generate_and_upload(verbose=True)
+    url = generate_and_publish(verbose=True)
     if url:
-        print(f"\n🌐 catbox URL（永久）：\n  {url}")
+        print(f"\n🌐 公開 URL（GitHub Pages，永久）：\n  {url}")
+        print(f"\n注意：本機跑只寫了 docs/，請 git push 後 Pages 才會更新（~30-60 秒）")
 
 
 if __name__ == "__main__":
