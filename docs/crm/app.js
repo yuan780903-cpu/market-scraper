@@ -155,6 +155,17 @@ function gotoMapCounty(region){
 function gotoMapTown(i){ go('map'); mapTapTown(i); }
 
 // ========== 首頁（戰情儀表板） ==========
+// ---------- 軍事圖標（白色剪影 SVG）----------
+const MIL_ICON = {
+  radar: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 26h22"/><path d="M16 26v-9"/><path d="M16 17 6.5 13.5 9 7l9.5 3.5z" fill="#fff" stroke="none"/><path d="M20.5 9.5A7.5 7.5 0 0 1 25 16"/><path d="M22.5 5.5A11.5 11.5 0 0 1 29 15"/></svg>`,
+  target: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.3"><circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4.6"/><circle cx="16" cy="16" r="1.4" fill="#fff" stroke="none"/><path d="M16 2v6M16 24v6M2 16h6M24 16h6" stroke-linecap="round"/></svg>`,
+  rifle: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="13" width="26" height="3" rx="1"/><rect x="6.5" y="16" width="3" height="6.5" rx="1"/><path d="M22 16l-2.2 5.5h3.2L25 16z"/><rect x="12.5" y="9.6" width="2.4" height="3.6"/><rect x="26" y="11.5" width="3" height="1.6" rx=".6"/></svg>`,
+  jet: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M16 2c1.1 0 1.8 1.4 2 3l.5 8.5 10.5 5.5v2.6l-10.5-2.8-.4 5.4 3 2.6v2.2l-4.6-1.7-4.6 1.7v-2.2l3-2.6-.4-5.4L3.5 21.6V19l10.5-5.5L14 5c.2-1.6.9-3 2-3z"/></svg>`,
+  tank: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="18" width="24" height="6" rx="3"/><circle cx="8" cy="21" r="1.3" fill="#37431d"/><circle cx="13" cy="21" r="1.3" fill="#37431d"/><circle cx="18" cy="21" r="1.3" fill="#37431d"/><circle cx="23" cy="21" r="1.3" fill="#37431d"/><rect x="6" y="12.5" width="16" height="6" rx="1.5"/><rect x="11" y="8" width="8" height="5.5" rx="1.5"/><rect x="18" y="9.6" width="12" height="2.3" rx="1"/></svg>`,
+  carrier: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M3 20h26l-3.5 6H7z"/><rect x="4" y="16" width="25" height="3"/><rect x="20" y="9.5" width="4.2" height="6.5"/><rect x="21.3" y="5" width="1.6" height="4.5"/><path d="M7 16l3-3h6l-1.4 3z" fill="#37431d"/></svg>`
+};
+function milIcon(k){ return MIL_ICON[k]||''; }
+
 function renderHome(){
   // 待拜訪：合併我的客戶 + 名單 overlay
   const tasks = [];
@@ -167,20 +178,38 @@ function renderHome(){
   const cov=computeCoverage();
   const pct=(a,b)=>b?Math.round(a/b*100):0;
 
-  // ── 責任區掌握度 KPI ──
-  let h = `<div class="sec-title"><span class="bar"></span>責任區掌握度</div>`;
+  // ── 作戰單位 指揮格 ──
+  const UNITS=[
+    {tab:'map',       icon:'radar',   code:'RECON',  label:'戰情地圖', desc:'戰區雷達'},
+    {tab:'prospects', icon:'target',  code:'TARGET', label:'目標名單', desc:'狙擊目標'},
+    {tab:'customers', icon:'rifle',   code:'ALLY',   label:'現有客戶', desc:'友軍部隊'},
+    {tab:'compete',   icon:'jet',     code:'BOGEY',  label:'競品價格', desc:'敵機偵蒐'},
+    {tab:'route',     icon:'tank',    code:'ARMOR',  label:'拜訪路線', desc:'裝甲行軍'},
+    {tab:'report',    icon:'carrier', code:'SITREP', label:'拜訪週報', desc:'航艦戰報'}
+  ];
+  let h = `<div class="sec-title"><span class="bar"></span>作戰單位 ・ 指揮中心</div>`;
+  h += `<div class="cmd-grid">` + UNITS.map(u=>`
+    <button class="unit" onclick="go('${u.tab}')">
+      <span class="u-ic">${milIcon(u.icon)}</span>
+      <span class="u-code">${u.code}</span>
+      <span class="u-label">${u.label}</span>
+      <span class="u-desc">${u.desc}</span>
+    </button>`).join('') + `</div>`;
+
+  // ── 戰區掌握度 KPI ──
+  h += `<div class="sec-title"><span class="bar"></span>戰區掌握度</div>`;
   h += `<div class="stat-grid">
-    <div class="stat cust"><div class="n">${pct(cov.dev,cov.total)}%</div><div class="l">開發率（成交）<br>${cov.dev} / ${cov.total} 家</div></div>
-    <div class="stat prosp"><div class="n">${pct(cov.con,cov.total)}%</div><div class="l">接觸率（拜訪過）<br>${cov.con} / ${cov.total} 家</div></div>
-    <div class="stat over"><div class="n">${overdue}</div><div class="l">逾期未拜訪</div></div>
-    <div class="stat due"><div class="n">${todayN}</div><div class="l">今天要拜訪</div></div>
+    <div class="stat cust"><div class="n">${pct(cov.dev,cov.total)}%</div><div class="l">佔領率（成交）<br>${cov.dev} / ${cov.total} 家</div></div>
+    <div class="stat prosp"><div class="n">${pct(cov.con,cov.total)}%</div><div class="l">接觸率（偵蒐）<br>${cov.con} / ${cov.total} 家</div></div>
+    <div class="stat over"><div class="n">${overdue}</div><div class="l">逾期未出擊</div></div>
+    <div class="stat due"><div class="n">${todayN}</div><div class="l">今日任務</div></div>
   </div>`;
 
   // ── 各縣市掌握度（依未開發多寡排序）──
   const regs=Object.entries(cov.region).filter(([,v])=>v.total>0)
     .sort((a,b)=>(b[1].total-b[1].dev)-(a[1].total-a[1].dev));
   if(regs.length){
-    h += `<div class="sec-title"><span class="bar"></span>各縣市掌握度（未開發多者在前）</div><div class="card">`;
+    h += `<div class="sec-title"><span class="bar"></span>各縣市戰況（未攻佔多者在前）</div><div class="card">`;
     h += regs.slice(0,12).map(([name,v])=>covBarRow(name,v.total,v.dev,()=>`gotoMapCounty('${esc(name)}')`)).join('');
     h += `</div>`;
   }
@@ -190,14 +219,14 @@ function renderHome(){
     const st=computeTownStats();
     const weak=weakestTowns(st,8);
     if(weak.length){
-      h += `<div class="sec-title"><span class="bar"></span>最該開發的鄉鎮 TOP ${weak.length}</div>
+      h += `<div class="sec-title"><span class="bar"></span>優先攻佔鄉鎮 TOP ${weak.length}</div>
         <div class="tagline" style="margin:-4px 2px 8px">名單多但還沒開發的，優先攻。點一下看地圖。</div><div class="card">`;
       h += weak.map(w=>mapBarRow(`${w.c} ${w.t}`,w.lead,w.cust,()=>`gotoMapTown(${w.i})`)).join('');
       h += `</div>`;
     }
   }
 
-  h += `<div class="sec-title"><span class="bar"></span>本週待拜訪</div>`;
+  h += `<div class="sec-title"><span class="bar"></span>本週出擊任務</div>`;
   if(!tasks.length){
     h += `<div class="card empty"><div class="big">📭</div>目前沒有排定的拜訪。<br>到「名單」或「我的客戶」設定拜訪頻率即可自動排程。</div>`;
   } else {
@@ -213,7 +242,7 @@ function renderHome(){
   customers.forEach(c=>(c.follow||[]).forEach(f=>{ if(!f.done) fups.push({name:c.name,sub:c.type,kind:'cust',id:c.id,f}); }));
   Object.entries(overlay).forEach(([id,o])=>{ (o.follow||[]).forEach(f=>{ if(!f.done){ const p=SEED.find(x=>x.id===id); if(p) fups.push({name:p.name,sub:p.category,kind:'prosp',id,f}); } }); });
   fups.sort((a,b)=>((a.f.due||'9999').localeCompare(b.f.due||'9999')));
-  h += `<div class="sec-title"><span class="bar"></span>待跟進事項${fups.length?`（${fups.length}）`:''}</div>`;
+  h += `<div class="sec-title"><span class="bar"></span>待辦戰術跟進${fups.length?`（${fups.length}）`:''}</div>`;
   if(!fups.length){
     h += `<div class="card empty"><div class="big">✅</div>沒有待辦的跟進事項。<br>拜訪後在客戶頁記下「後續跟進」就會出現在這裡。</div>`;
   } else {
