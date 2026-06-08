@@ -753,6 +753,34 @@ function assignOrg(){
   saveCust(); closeModal(); toast(`已將 ${n} 位歸入「${name}」`); renderCustomers();
 }
 
+// ===== 客戶詳情：卡片選單（一張卡片 → 一頁內容）=====
+const CUST_SECTIONS = [
+  {key:'basic',    icon:'📋', title:'基本資料'},
+  {key:'products', icon:'💰', title:'產品報價'},
+  {key:'deal',     icon:'🚚', title:'交易 / 配送'},
+  {key:'visit',    icon:'📅', title:'拜訪管理'},
+  {key:'follow',   icon:'🔔', title:'後續跟進'},
+  {key:'inter',    icon:'💬', title:'互動紀錄'},
+  {key:'notes',    icon:'📝', title:'備註'},
+];
+function custSectionSummary(c,key){
+  switch(key){
+    case 'basic':    return [pickPhone(c.phone),regionFull(c.address)].filter(x=>x&&x!=='未填地區').join('・')||'點此填寫';
+    case 'products': return (c.products&&c.products.length)?`${c.products.length} 筆報價`:'尚未填寫';
+    case 'deal':     return c.checkPeriod?`票期：${c.checkPeriod}`:'尚未設定票期';
+    case 'visit':    { const di=dueInfo(c); return (c.grade?gradeText(c.grade):'未分級')+(di?`・下次 ${di.txt}`:''); }
+    case 'follow':   { const n=(c.follow||[]).filter(f=>!f.done).length; return n?`${n} 項待辦`:'無待辦'; }
+    case 'inter':    return (c.inter&&c.inter.length)?`${c.inter.length} 筆紀錄`:'尚無紀錄';
+    case 'notes':    return c.notes?String(c.notes).slice(0,16)+(c.notes.length>16?'…':''):'無';
+  }
+  return '';
+}
+function custTile(id,key,icon,title,sum,onclick){
+  return `<div class="item" onclick="${onclick}">
+    <div class="avatar" style="background:#5d6651;font-size:19px">${icon}</div>
+    <div class="body"><div class="nm">${esc(title)}</div><div class="sub">${esc(sum||'')}</div></div>
+    <div class="meta" style="color:var(--muted);font-size:20px">›</div></div>`;
+}
 function viewCustomer(id){
   const c=customers.find(x=>x.id===id); if(!c) return;
   const di=dueInfo(c);
@@ -762,56 +790,93 @@ function viewCustomer(id){
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${di?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   h+=`<div class="card">`;
-  if(c.sysno)h+=drow('系統編號',esc(c.sysno));
-  h+=drow('電話',telLink(c.phone));
-  h+=drow('通訊地址',mapLink(c.address));
-  if(c.contact)h+=drow('聯絡人',esc(c.contact));
-  if(c.filedDate)h+=drow('建檔日期',esc(c.filedDate));
-  if(c.taxid)h+=drow('統一編號',esc(c.taxid));
-  if(c.idno)h+=drow('身分證字號',esc(c.idno));
-  if(c.birth)h+=drow('出生年月日',esc(c.birth));
-  if(c.regAddress)h+=drow('戶籍地址',mapLink(c.regAddress));
+  CUST_SECTIONS.forEach(s=>{ h+=custTile(id,s.key,s.icon,s.title,custSectionSummary(c,s.key),`custSection('${id}','${s.key}')`); });
+  (c.cards||[]).forEach(cd=>{ h+=custTile(id,'cd'+cd.id,'🗂️',cd.title,cd.body?String(cd.body).slice(0,16)+(cd.body.length>16?'…':''):'點此填寫',`custCustomCard('${id}','${cd.id}')`); });
   h+=`</div>`;
-  // 產品報價（可直接編輯補齊，下拉選單）
-  h+=`<div class="sec-title"><span class="bar"></span>產品報價（含運/不含運）</div><div class="card">`;
-  h+=`<div id="prod-rows">${(c.products&&c.products.length?c.products:[]).map(p=>productRowHTML(p)).join('')}</div>`;
-  h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</button>`;
-  h+=`</div>`;
-  // 交易 / 配送（票期可直接編輯）
-  h+=`<div class="sec-title"><span class="bar"></span>交易 / 配送</div><div class="card">`;
-  h+=checkPeriodHTML(c.checkPeriod||'');
-  if(c.terms)h+=drow('交易條件',esc(c.terms));
-  if(c.price)h+=drow('價格',esc(c.price));
-  if(c.conditions)h+=drow('其他條件',esc(c.conditions));
-  if(c.currentFert)h+=drow('目前用肥',esc(c.currentFert));
-  if(c.truck)h+=drow('運送車輛',esc(c.truck));
-  if(c.deliveryTime)h+=drow('送貨時間',esc(c.deliveryTime));
-  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-gray" onclick="saveCustDeal('${id}')">💾 儲存票期 / 產品報價</button></div>`;
-  h+=`</div>`;
-  if(c.notes){ h+=`<div class="sec-title"><span class="bar"></span>備註</div><div class="card">${esc(c.notes)}</div>`; }
-
-  h+=`<div class="sec-title"><span class="bar"></span>拜訪管理</div><div class="card">`;
-  h+=`<div class="field"><label>客戶分級（決定拜訪頻率）</label><select id="c-grade" onchange="if(this.value)document.getElementById('c-freq').value={A:7,B:30,C:90,D:365}[this.value]">
-      <option value="" ${!c.grade?'selected':''}>未分級</option>
-      ${GRADES.map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g} 級・${GRADE_LABEL[g]}拜訪</option>`).join('')}
-      </select></div>`;
-  h+=`<div class="field-2"><div class="field"><label>拜訪頻率(天)</label><input type="number" id="c-freq" value="${c.freq||''}" min="1"></div>
-      <div class="field"><label>下次拜訪日</label><input type="date" id="c-next" value="${c.next||''}"></div></div>`;
-  h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('cust','${id}')">📍 記錄拜訪</button>
-      <button class="btn btn-gray" onclick="saveCustSchedule('${id}')">儲存排程</button></div></div>`;
-
-  h+=followBlock('cust', id, c.follow);
-
-  h+=interactionBlock(c.inter, `addCustInter('${id}')`);
-
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="editCustomer(findCust('${id}'))">✏️ 編輯</button>
+  h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="addCustCard('${id}')">⚙️ 新增卡片</button></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="editCustomer(findCust('${id}'))">✏️ 編輯客戶</button>
       <button class="btn btn-red" onclick="delCustomer('${id}')">刪除</button></div>`;
   openModal(c.name, h);
 }
+function sectionTitleOf(key){ const s=CUST_SECTIONS.find(x=>x.key===key); return s?s.title:key; }
+function custBackBar(id){ return `<div class="btn-row" style="margin-top:0;margin-bottom:12px"><button class="btn btn-gray" onclick="viewCustomer('${id}')">← 返回</button></div>`; }
+function custSection(id,key){
+  const c=findCust(id); if(!c) return;
+  let h=custBackBar(id);
+  if(key==='basic'){
+    h+=`<div class="card">`;
+    if(c.sysno)h+=drow('系統編號',esc(c.sysno));
+    h+=drow('電話',telLink(c.phone));
+    h+=drow('通訊地址',mapLink(c.address));
+    if(c.contact)h+=drow('聯絡人',esc(c.contact));
+    if(c.filedDate)h+=drow('建檔日期',esc(c.filedDate));
+    if(c.taxid)h+=drow('統一編號',esc(c.taxid));
+    if(c.idno)h+=drow('身分證字號',esc(c.idno));
+    if(c.birth)h+=drow('出生年月日',esc(c.birth));
+    if(c.regAddress)h+=drow('戶籍地址',mapLink(c.regAddress));
+    h+=`</div><div class="btn-row"><button class="btn btn-pri" onclick="editCustomer(findCust('${id}'))">✏️ 編輯基本資料</button></div>`;
+  } else if(key==='products'){
+    h+=`<div class="card"><div id="prod-rows">${(c.products&&c.products.length?c.products:[]).map(p=>productRowHTML(p)).join('')}</div>`;
+    h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</button>`;
+    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustProducts('${id}')">💾 儲存產品報價</button></div></div>`;
+  } else if(key==='deal'){
+    h+=`<div class="card">`+checkPeriodHTML(c.checkPeriod||'');
+    if(c.terms)h+=drow('交易條件',esc(c.terms));
+    if(c.price)h+=drow('價格',esc(c.price));
+    if(c.conditions)h+=drow('其他條件',esc(c.conditions));
+    if(c.currentFert)h+=drow('目前用肥',esc(c.currentFert));
+    if(c.truck)h+=drow('運送車輛',esc(c.truck));
+    if(c.deliveryTime)h+=drow('送貨時間',esc(c.deliveryTime));
+    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustCheck('${id}')">💾 儲存票期</button></div></div>`;
+  } else if(key==='visit'){
+    h+=`<div class="card"><div class="field"><label>客戶分級（決定拜訪頻率）</label><select id="c-grade" onchange="if(this.value)document.getElementById('c-freq').value={A:7,B:30,C:90,D:365}[this.value]">
+        <option value="" ${!c.grade?'selected':''}>未分級</option>
+        ${GRADES.map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g} 級・${GRADE_LABEL[g]}拜訪</option>`).join('')}
+        </select></div>`;
+    h+=`<div class="field-2"><div class="field"><label>拜訪頻率(天)</label><input type="number" id="c-freq" value="${c.freq||''}" min="1"></div>
+        <div class="field"><label>下次拜訪日</label><input type="date" id="c-next" value="${c.next||''}"></div></div>`;
+    h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('cust','${id}')">📍 記錄拜訪</button>
+        <button class="btn btn-pri" onclick="saveCustSchedule('${id}')">儲存排程</button></div></div>`;
+  } else if(key==='follow'){
+    h+=followBlock('cust', id, c.follow);
+  } else if(key==='inter'){
+    h+=interactionBlock(c.inter, `addCustInter('${id}')`);
+  } else if(key==='notes'){
+    h+=`<div class="card"><div class="field"><label>備註</label><textarea id="c-notes" placeholder="輸入備註…">${esc(c.notes||'')}</textarea></div>
+        <div class="btn-row"><button class="btn btn-pri" onclick="saveCustNotes('${id}')">💾 儲存備註</button></div></div>`;
+  }
+  openModal(`${c.name}・${sectionTitleOf(key)}`, h);
+}
 function findCust(id){ return customers.find(x=>x.id===id); }
 
-function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value; c.freq=$('#c-freq').value?+$('#c-freq').value:(c.grade?GRADE_FREQ[c.grade]:null); c.next=$('#c-next').value||(c.freq?addDays(c.last||todayStr(),c.freq):c.next); saveCust(); toast('已儲存'); viewCustomer(id); render(); }
-function saveCustDeal(id){ const c=findCust(id); c.products=readProducts(); c.checkPeriod=readCheckPeriod(); saveCust(); toast('已儲存票期 / 產品報價'); viewCustomer(id); render(); }
+// ----- 自訂卡片 -----
+function addCustCard(id){
+  const c=findCust(id); if(!c) return;
+  let h=`<div class="field"><label>卡片名稱</label><input id="cc-title" placeholder="例如：土壤檢測、特殊備註"></div>
+    <div class="field"><label>內容（選填）</label><textarea id="cc-body" placeholder="可先空白，之後再填"></textarea></div>
+    <div class="btn-row"><button class="btn btn-gray" onclick="viewCustomer('${id}')">取消</button>
+      <button class="btn btn-pri" id="cc-save">新增卡片</button></div>`;
+  openModal('新增卡片', h);
+  $('#cc-save').onclick=()=>{ const t=$('#cc-title').value.trim(); if(!t){toast('請輸入卡片名稱');return;}
+    c.cards=c.cards||[]; c.cards.push({id:'K'+Date.now(),title:t,body:$('#cc-body').value.trim()});
+    saveCust(); toast('已新增卡片'); viewCustomer(id); render(); };
+}
+function custCustomCard(id,cardId){
+  const c=findCust(id); if(!c) return; const cd=(c.cards||[]).find(x=>x.id===cardId); if(!cd){ viewCustomer(id); return; }
+  let h=custBackBar(id);
+  h+=`<div class="card"><div class="field"><label>卡片名稱</label><input id="cc-title" value="${esc(cd.title)}"></div>
+      <div class="field"><label>內容</label><textarea id="cc-body" placeholder="輸入內容…">${esc(cd.body||'')}</textarea></div>
+      <div class="btn-row"><button class="btn btn-pri" onclick="saveCustomCard('${id}','${cardId}')">💾 儲存</button>
+        <button class="btn btn-red" onclick="delCustomCard('${id}','${cardId}')">刪除卡片</button></div></div>`;
+  openModal(`${c.name}・${cd.title}`, h);
+}
+function saveCustomCard(id,cardId){ const c=findCust(id); const cd=(c.cards||[]).find(x=>x.id===cardId); if(!cd)return; const t=$('#cc-title').value.trim(); if(!t){toast('請輸入卡片名稱');return;} cd.title=t; cd.body=$('#cc-body').value.trim(); saveCust(); toast('已儲存'); viewCustomer(id); render(); }
+function delCustomCard(id,cardId){ if(!confirm('確定刪除這張卡片？'))return; const c=findCust(id); c.cards=(c.cards||[]).filter(x=>x.id!==cardId); saveCust(); toast('已刪除卡片'); viewCustomer(id); render(); }
+
+function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value; c.freq=$('#c-freq').value?+$('#c-freq').value:(c.grade?GRADE_FREQ[c.grade]:null); c.next=$('#c-next').value||(c.freq?addDays(c.last||todayStr(),c.freq):c.next); saveCust(); toast('已儲存'); custSection(id,'visit'); render(); }
+function saveCustProducts(id){ const c=findCust(id); c.products=readProducts(); saveCust(); toast('已儲存產品報價'); custSection(id,'products'); render(); }
+function saveCustCheck(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); saveCust(); toast('已儲存票期'); custSection(id,'deal'); render(); }
+function saveCustNotes(id){ const c=findCust(id); c.notes=$('#c-notes').value.trim(); saveCust(); toast('已儲存備註'); custSection(id,'notes'); render(); }
 function logCustVisit(id){ const c=findCust(id); const t=todayStr(); c.last=t; if(c.freq)c.next=addDays(t,c.freq); c.inter=c.inter||[]; c.inter.push({date:t,type:'拜訪',content:'完成拜訪'}); saveCust(); toast('已記錄拜訪'); viewCustomer(id); }
 function addCustInter(id){ interForm(it=>{ const c=findCust(id); c.inter=c.inter||[]; c.inter.push(it); saveCust(); toast('已新增'); viewCustomer(id); }); }
 function delCustomer(id){ if(!confirm('確定刪除這位客戶？此動作無法復原。'))return; customers=customers.filter(c=>c.id!==id); saveCust(); closeModal(); toast('已刪除'); render(); }
