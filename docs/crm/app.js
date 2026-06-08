@@ -738,20 +738,21 @@ function viewCustomer(id){
   if(c.birth)h+=drow('出生年月日',esc(c.birth));
   if(c.regAddress)h+=drow('戶籍地址',mapLink(c.regAddress));
   h+=`</div>`;
-  if(c.products&&c.products.length){
-    h+=`<div class="sec-title"><span class="bar"></span>產品報價</div><div class="card">`;
-    c.products.forEach(p=>h+=drow(esc(p.name), esc(prodText(p))));
-    h+=`</div>`;
-  }
+  // 產品報價（可直接編輯補齊，下拉選單）
+  h+=`<div class="sec-title"><span class="bar"></span>產品報價（含運/不含運）</div><div class="card">`;
+  h+=`<div id="prod-rows">${(c.products&&c.products.length?c.products:[]).map(p=>productRowHTML(p)).join('')}</div>`;
+  h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</button>`;
+  h+=`</div>`;
+  // 交易 / 配送（票期可直接編輯）
   h+=`<div class="sec-title"><span class="bar"></span>交易 / 配送</div><div class="card">`;
+  h+=checkPeriodHTML(c.checkPeriod||'');
   if(c.terms)h+=drow('交易條件',esc(c.terms));
-  if(c.checkPeriod)h+=drow('票期',esc(c.checkPeriod));
   if(c.price)h+=drow('價格',esc(c.price));
   if(c.conditions)h+=drow('其他條件',esc(c.conditions));
   if(c.currentFert)h+=drow('目前用肥',esc(c.currentFert));
   if(c.truck)h+=drow('運送車輛',esc(c.truck));
   if(c.deliveryTime)h+=drow('送貨時間',esc(c.deliveryTime));
-  if(!(c.terms||c.checkPeriod||c.price||c.conditions||c.currentFert||c.truck||c.deliveryTime))h+=`<div class="tagline">尚未填寫</div>`;
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-gray" onclick="saveCustDeal('${id}')">💾 儲存票期 / 產品報價</button></div>`;
   h+=`</div>`;
   if(c.notes){ h+=`<div class="sec-title"><span class="bar"></span>備註</div><div class="card">${esc(c.notes)}</div>`; }
 
@@ -776,6 +777,7 @@ function viewCustomer(id){
 function findCust(id){ return customers.find(x=>x.id===id); }
 
 function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value; c.freq=$('#c-freq').value?+$('#c-freq').value:(c.grade?GRADE_FREQ[c.grade]:null); c.next=$('#c-next').value||(c.freq?addDays(c.last||todayStr(),c.freq):c.next); saveCust(); toast('已儲存'); viewCustomer(id); render(); }
+function saveCustDeal(id){ const c=findCust(id); c.products=readProducts(); c.checkPeriod=readCheckPeriod(); saveCust(); toast('已儲存票期 / 產品報價'); viewCustomer(id); render(); }
 function logCustVisit(id){ const c=findCust(id); const t=todayStr(); c.last=t; if(c.freq)c.next=addDays(t,c.freq); c.inter=c.inter||[]; c.inter.push({date:t,type:'拜訪',content:'完成拜訪'}); saveCust(); toast('已記錄拜訪'); viewCustomer(id); }
 function addCustInter(id){ interForm(it=>{ const c=findCust(id); c.inter=c.inter||[]; c.inter.push(it); saveCust(); toast('已新增'); viewCustomer(id); }); }
 function delCustomer(id){ if(!confirm('確定刪除這位客戶？此動作無法復原。'))return; customers=customers.filter(c=>c.id!==id); saveCust(); closeModal(); toast('已刪除'); render(); }
