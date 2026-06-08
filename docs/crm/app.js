@@ -88,7 +88,7 @@ let pLimit = 60;
 function go(t){
   tab = t; pLimit = 60;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  $('#title').textContent = {home:'戰情總覽',map:'戰情地圖',prospects:'目標名單',route:'拜訪路線規劃',customers:'我的客戶',settings:'設定 / 備份'}[t];
+  $('#title').textContent = {home:'戰情總覽',map:'戰情地圖',prospects:'目標名單',route:'智慧拜訪規劃',customers:'我的客戶',settings:'設定 / 備份'}[t];
   $('#fab').style.display = (t==='customers') ? 'block' : 'none';
   window.scrollTo(0,0);
   render();
@@ -894,7 +894,131 @@ function ruleCard(r,i,canDel){
       <div class="field"><label>家數</label><input class="rr-n" type="number" min="1" max="9" value="${r.n}"></div></div>
   </div>`;
 }
+// ---------- 模式切換：每週智慧排程 / 自訂單日路線 ----------
+let routeMode = 'week';
+function setRouteMode(m){ routeMode=m; renderRoute(); }
 function renderRoute(){
+  let h=`<div class="seg">
+    <button class="seg-b ${routeMode==='week'?'on':''}" onclick="setRouteMode('week')">📅 每週智慧排程</button>
+    <button class="seg-b ${routeMode==='custom'?'on':''}" onclick="setRouteMode('custom')">🗺️ 自訂單日路線</button></div>
+    <div id="route-body"></div>`;
+  $('#view').innerHTML=h;
+  if(routeMode==='week') renderWeekRoute(); else renderCustomRoute();
+}
+
+// ========== 每週拜訪智慧排程 ==========
+let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, region:'', mode:'all', _last:'' };
+const WD_NAME = ['日','一','二','三','四','五','六'];
+function thisMonday(){ const d=new Date(); const w=d.getDay(); d.setDate(d.getDate()+(w===0?-6:1-w)); return d.toISOString().slice(0,10); }
+function gradeFreq(g){ return GRADE_FREQ[g]||null; }
+function syncWeek(){
+  const s=$('#w-start'); if(s)weekCfg.start=s.value||weekCfg.start;
+  const m=$('#w-max'); if(m)weekCfg.maxPerDay=Math.max(1,Math.min(12,+m.value||6));
+  const r=$('#w-region'); if(r)weekCfg.region=r.value;
+  const md=$('#w-mode'); if(md)weekCfg.mode=md.value;
+}
+function toggleWeekDay(wd){ syncWeek(); const i=weekCfg.days.indexOf(wd); if(i<0)weekCfg.days.push(wd); else weekCfg.days.splice(i,1); renderRoute(); }
+function renderWeekRoute(){
+  const regs = regionsSorted();
+  if(weekCfg.region===''&&weekCfg._inited!==1){ weekCfg.region = regs.find(r=>normR(r).includes('臺南')) || ''; weekCfg._inited=1; }
+  if(!weekCfg.start) weekCfg.start=thisMonday();
+  let h=`<div class="info">系統自動收集「到期 / 逾期」要回訪的客戶與名單，加上依分級頻率該回訪的對象，按鄉鎮就近分配到本週各出訪日。全程本機計算、不外傳。</div>`;
+  h+=`<div class="card">`;
+  h+=`<div class="field"><label>本週起始日（週一）</label><input type="date" id="w-start" value="${weekCfg.start}"></div>`;
+  h+=`<div class="field"><label>區域（限定責任區，留空＝全部）</label><select id="w-region"><option value="">全部區域</option>${regs.map(r=>`<option value="${esc(r)}" ${r===weekCfg.region?'selected':''}>${esc(r)}</option>`).join('')}</select></div>`;
+  h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
+  h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
+      <div class="field"><label>排程範圍</label><select id="w-mode"><option value="all" ${weekCfg.mode==='all'?'selected':''}>到期＋依分級建議(推薦)</option><option value="due" ${weekCfg.mode==='due'?'selected':''}>只排已設下次拜訪日</option></select></div></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planWeek()">📅 產生本週拜訪計畫</button></div>`;
+  h+=`</div><div id="week-result">${weekCfg._last||''}</div>`;
+  $('#route-body').innerHTML=h;
+}
+// 收集本週該拜訪的對象（客戶＋有排程/分級的名單）
+function collectVisitTargets(region, weekEnd, includeGrade){
+  const core = region ? normR(region).replace(/[縣市]$/,'') : '';
+  const exIds = existingProspectIds();
+  const today = todayStr();
+  const list=[];
+  const push=(o, base)=>{
+    let next=o.next||'';
+    if(!next && includeGrade && base.grade){ const f=gradeFreq(base.grade); if(f) next = o.last? addDays(o.last,f) : today; }
+    if(!next) return;
+    if(next>weekEnd) return;          // 還沒到本週範圍
+    const d=daysBetween(today,next);
+    const reason = o.next ? (d<0?`逾期${-d}天`:(d===0?'今天到期':`${d}天後到期`))
+                          : (o.last?`分級${base.grade}・約${gradeFreq(base.grade)}天回訪`:`分級${base.grade}・建議首訪`);
+    list.push(Object.assign({}, base, {next, sort:d, overdue:d<0, reason}));
+  };
+  customers.forEach(c=>{
+    if(core && !normR(c.address||'').includes(core)) return;
+    push({next:c.next,last:c.last}, {kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type||'其他',status:'existing',grade:c.grade||'',address:c.address||'',phone:c.phone||'',district:district(c.address)});
+  });
+  SEED.forEach(p=>{
+    const o=overlay[p.id]; if(!o) return;   // 名單沒有任何排程才不掃，避免 3547 筆全進來
+    if(core && !(normR(p.region||'')===normR(region) || normR(p.address||'').includes(core))) return;
+    push({next:o.next,last:o.last}, {kind:'prosp',id:p.id,name:p.name,channel:p.category||'其他',status:exIds.has(p.id)?'existing':'cold',grade:o.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address)});
+  });
+  const seen=new Set();
+  return list.filter(x=>{const k=x.name+x.address; if(seen.has(k))return false; seen.add(k); return true;});
+}
+function planWeek(){
+  syncWeek();
+  const start=weekCfg.start||thisMonday();
+  const days=weekCfg.days.slice().sort((a,b)=>(a===0?7:a)-(b===0?7:b));
+  const resEl=()=>$('#week-result');
+  if(!days.length){ toast('請至少選一個出訪日'); return; }
+  const weekEnd=addDays(start,6);
+  const includeGrade=weekCfg.mode==='all';
+  const targets=collectVisitTargets(weekCfg.region,weekEnd,includeGrade);
+  if(!targets.length){
+    weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或建議拜訪的對象。<br>到「我的客戶」或「名單」設定分級或下次拜訪日，就會自動排入。</div>`;
+    resEl().innerHTML=weekCfg._last; return;
+  }
+  // 依鄉鎮急迫度排序：同鄉鎮集中、急的先排
+  const townUrg={};
+  targets.forEach(t=>{ const k=t.district||'其他'; if(!(k in townUrg)||t.sort<townUrg[k]) townUrg[k]=t.sort; });
+  targets.sort((a,b)=>{ const ua=townUrg[a.district||'其他'],ub=townUrg[b.district||'其他']; if(ua!==ub)return ua-ub; const da=a.district||'其他',db=b.district||'其他'; if(da!==db)return da.localeCompare(db,'zh-Hant'); return a.sort-b.sort; });
+  const dayDates=days.map(wd=>addDays(start, wd===0?6:wd-1));
+  const cap=weekCfg.maxPerDay, totalSlots=dayDates.length*cap;
+  const scheduled=targets.slice(0,totalSlots), overflow=targets.slice(totalSlots);
+  const buckets=dayDates.map((d,i)=>({date:d, wd:days[i], items:[]}));
+  let bi=0; scheduled.forEach(t=>{ while(bi<buckets.length-1 && buckets[bi].items.length>=cap) bi++; buckets[bi].items.push(t); });
+  const overdue=targets.filter(t=>t.overdue).length;
+
+  let h=`<div class="sec-title"><span class="bar"></span>本週拜訪計畫</div><div class="card">`;
+  h+=drow('期間', `${start} ～ ${weekEnd}`);
+  h+=drow('總計', `${targets.length} 家（逾期 ${overdue}）｜排入 ${scheduled.length} 家／${buckets.filter(b=>b.items.length).length} 個出訪日`);
+  if(overflow.length) h+=drow('順延', `${overflow.length} 家本週排不完，可增加出訪日或每日家數，否則下週優先安排`);
+  h+=`</div>`;
+  buckets.forEach(b=>{
+    h+=`<div class="sec-title" style="margin-top:14px"><span class="bar"></span>週${WD_NAME[b.wd]}　${b.date.slice(5)}　(${b.items.length} 家)</div>`;
+    if(!b.items.length){ h+=`<div class="card empty" style="padding:16px">這天暫無安排</div>`; return; }
+    h+=`<div class="card" style="padding:4px 14px">`;
+    b.items.forEach((x,i)=>{
+      const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
+      const pill=`<span class="badge ${x.overdue?'pill-over':'pill-due'}">${esc(x.reason)}</span>`;
+      h+=`<div class="item" onclick="${x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`}">
+        <div class="avatar" style="background:${colorFor(x.name)}">${i+1}</div>
+        <div class="body"><div class="nm">${esc(x.name)}</div>
+          <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
+          <div class="tagline" style="margin-top:4px">${pill} <span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div>
+        <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
+      </div>`;
+    });
+    h+=`</div>`;
+    const addrs=b.items.filter(x=>x.address).map(x=>encodeURIComponent(x.address));
+    if(addrs.length){
+      const origin=weekCfg.region||'';
+      const url=`https://www.google.com/maps/dir/?api=1&${origin?`origin=${encodeURIComponent(origin)}&`:''}destination=${addrs[addrs.length-1]}&travelmode=driving&waypoints=${addrs.slice(0,-1).join('%7C')}`;
+      h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`;
+    }
+  });
+  h+=`<div class="tagline" style="margin:10px 2px 0">排序原則：逾期/急迫優先、同鄉鎮集中同一天以減少往返。點任一家可進客戶頁；記錄拜訪後會自動排下次。</div>`;
+  weekCfg._last=h; resEl().innerHTML=h;
+  resEl().scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderCustomRoute(){
   const regs = regionsSorted();
   if(!routeCfg.region) routeCfg.region = regs.find(r=>normR(r).includes('臺南')) || regs[0] || '';
   if(!routeCfg.rules||!routeCfg.rules.length) routeCfg.rules=[{status:'',channel:'',grade:'',n:5}];
@@ -917,7 +1041,7 @@ function renderRoute(){
   h+=`<div class="field"><label>每家停留(分)</label><input type="number" id="r-dwell" min="10" step="5" value="${routeCfg.dwell}"></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planRoute()">🗺️ 產生路線</button></div>`;
   h+=`</div><div id="route-result">${routeCfg._last||''}</div>`;
-  $('#view').innerHTML=h;
+  $('#route-body').innerHTML=h;
 }
 function readRules(){
   return [...document.querySelectorAll('#rules .rcard')].map(el=>({
