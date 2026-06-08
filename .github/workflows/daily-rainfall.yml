@@ -1,0 +1,49 @@
+name: 每日雨量 snapshot 更新
+
+# 每天台北時間 07:00 跑（= UTC 前一天 23:00）
+# 純粹抓 CWA 雨量資料累積到 snapshot，不推 LINE 不寄信
+# 這樣月/季累積雨量才會反映真實降雨，週一推播時讀到的是準確值
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-rainfall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write  # 允許 commit snapshot 回 repo
+
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安裝 Python 套件
+        run: pip install -r requirements.txt
+
+      - name: 抓 CWA 雨量並寫入 snapshot
+        env:
+          CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
+        run: python daily_rainfall_update.py
+
+      - name: Commit snapshot 回 repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add snapshots/rainfall_*.json
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(rainfall): daily update $(date -u +%Y-%m-%d)"
+            # 與週一 workflow 可能同時寫，rebase 一下再 push
+            git pull --rebase origin main || git rebase --abort
+            git push
+          else
+            echo "snapshot 無變動，跳過 commit"
+          fi

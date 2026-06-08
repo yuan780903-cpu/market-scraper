@@ -34,6 +34,10 @@ AFA_NEWS_URL = "https://www.afa.gov.tw/cht/index.php?code=list&ids=307"
 AFA_PRODSALES_URL = "https://agrpmg.afa.gov.tw/agr-Sed/agrJsp/main.jsp?page=00"
 AFA_FERT_BRAND_URL = "https://fims.afa.gov.tw/WFR/PublicFun/QueryFertBrand.aspx"
 AFA_FERT_LAW_URL = "https://www.afa.gov.tw/cht/index.php?code=list&ids=353&mod_code=view&a_id=176"
+# 品牌推薦作業規範 PDF（115/03/17 修正版）— 自存 catbox 永久 URL
+BRAND_REC_SPEC_URL = "https://files.catbox.moe/1fexh7.pdf"
+# 肥料種類品目及規格修正規定 附件一（109/04/24 版）— 自存 catbox 永久 URL
+FERT_ITEM_SPEC_URL = "https://files.catbox.moe/0j74ap.pdf"
 AFA_AGRI_REPORT_URL = "https://agr.afa.gov.tw/afa/afa_frame.jsp"
 # 自製 index 頁 fallback（若 snapshots/license_index.json 讀不到才會用到）
 LICENSE_INDEX_URL_FALLBACK = "https://files.catbox.moe/ioces5.html"
@@ -93,9 +97,9 @@ def delete_rich_menu(token: str, menu_id: str) -> None:
 def build_richmenu_payload(target_url: str, price_url: str, quote_url: str) -> dict:
     """組合 Rich Menu 結構：8 個按鈕的位置與動作（2 列 × 4 欄）"""
     areas_geo = richmenu_designer.get_button_areas()
-    license_url, operation_url = _load_license_urls()
+    license_url, _ = _load_license_urls()  # 營運許可證已不再用
     print(f"  報價系統 URL: {quote_url}")
-    print(f"  營運許可證 URL: {operation_url}")
+    print(f"  肥料品目規格 URL: {FERT_ITEM_SPEC_URL}")
 
     # 8 個按鈕對應動作（順序需與 richmenu_designer.BUTTONS 一致）
     actions = [
@@ -111,12 +115,12 @@ def build_richmenu_payload(target_url: str, price_url: str, quote_url: str) -> d
         # 第二列
         {"type": "uri", "uri": price_url or AFA_SUBSIDY_URL,
          "label": "產品牌價"},
-        {"type": "uri", "uri": AFA_FERT_LAW_URL,
-         "label": "肥料法規"},
+        {"type": "uri", "uri": BRAND_REC_SPEC_URL,
+         "label": "品牌推薦規範"},
         {"type": "uri", "uri": quote_url,
          "label": "報價系統"},
-        {"type": "uri", "uri": operation_url,
-         "label": "營運許可證"},
+        {"type": "uri", "uri": FERT_ITEM_SPEC_URL,
+         "label": "肥料品目規格"},
     ]
 
     payload = {
