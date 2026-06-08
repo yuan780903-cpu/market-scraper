@@ -83,7 +83,8 @@ function dueInfo(o){
 
 // ---------- 導覽 ----------
 let tab = 'home';
-let pFilter = {status:'', cat:'', region:'', q:'', area:''};      // 名單篩選
+let pFilter = {status:'', cat:'', region:'', q:'', area:'', organic:''};      // 名單篩選
+function inOrganic(p,v){ if(!v) return true; return v==='org' ? p.category==='有機農戶' : p.category!=='有機農戶'; }
 // 經營面積級距（公頃）— 多為有機農戶；選了級距會排除無面積資料者
 const AREA_BANDS = [
   {k:'lt1', label:'未滿1公頃', test:n=>n<1},
@@ -343,15 +344,22 @@ function renderProspects(){
   const statusOf = p => exIds.has(p.id) ? 'existing' : 'cold';
   const nEx = SEED.reduce((a,p)=>a+(statusOf(p)==='existing'?1:0),0);
   const inStatus = p => !pFilter.status || statusOf(p)===pFilter.status;
-  // 通路筆數依目前「客戶狀態」動態計算
+  // 有機屬性筆數（依目前狀態動態）
+  const nOrg = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category==='有機農戶'?1:0),0);
+  const nNon = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category!=='有機農戶'?1:0),0);
+  // 通路筆數依目前「客戶狀態 + 有機屬性」動態計算
   const counts = {}; let total=0;
-  SEED.forEach(p=>{ if(inStatus(p)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
+  SEED.forEach(p=>{ if(inStatus(p)&&inOrganic(p,pFilter.organic)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
 
   let h = `<div class="search"><input id="psearch" placeholder="🔍 搜尋名稱 / 地址 / 電話" value="${esc(pFilter.q)}" oninput="onPSearch(this.value)"></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">狀態</span><div class="chips">
         <button class="chip ${pFilter.status===''?'on':''}" onclick="setPStatus('')">全部 ${SEED.length}</button>
         <button class="chip ${pFilter.status==='cold'?'on':''}" onclick="setPStatus('cold')">陌生目標客戶 ${SEED.length-nEx}</button>
         <button class="chip ${pFilter.status==='existing'?'on':''}" onclick="setPStatus('existing')">既有客戶 ${nEx}</button></div></div>`;
+  h += `<div class="rowsel"><span class="rowsel-l">屬性</span><div class="chips">
+        <button class="chip ${pFilter.organic===''?'on':''}" onclick="setPOrganic('')">全部 ${SEED.length}</button>
+        <button class="chip ${pFilter.organic==='org'?'on':''}" onclick="setPOrganic('org')">🌱 有機農戶 ${nOrg}</button>
+        <button class="chip ${pFilter.organic==='non'?'on':''}" onclick="setPOrganic('non')">非有機 ${nNon}</button></div></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">通路</span><div class="chips"><button class="chip ${pFilter.cat===''?'on':''}" onclick="setPCat('')">全部 ${total}</button>`;
   CATS.forEach(c=>{ if(counts[c]) h+=`<button class="chip ${pFilter.cat===c?'on':''}" onclick="setPCat('${c}')">${c} ${counts[c]}</button>`; });
   h += `</div></div>`;
@@ -361,7 +369,7 @@ function renderProspects(){
         </select></div>`;
 
   // 面積級距：依目前狀態／通路／區域動態計算筆數，只在有面積資料時顯示
-  const areaPool = SEED.filter(p=> inStatus(p) && (!pFilter.cat||p.category===pFilter.cat) && (!pFilter.region||p.region===pFilter.region));
+  const areaPool = SEED.filter(p=> inStatus(p) && inOrganic(p,pFilter.organic) && (!pFilter.cat||p.category===pFilter.cat) && (!pFilter.region||p.region===pFilter.region));
   const areaCounts={}; let areaTot=0;
   areaPool.forEach(p=>{ const n=areaVal(p); if(n!=null){ areaTot++; const b=AREA_BANDS.find(x=>x.test(n)); if(b)areaCounts[b.k]=(areaCounts[b.k]||0)+1; } });
   const effArea = areaTot>0 ? pFilter.area : '';   // 此條件下沒有面積資料就不套用，避免清空結果
@@ -375,6 +383,7 @@ function renderProspects(){
   const q = pFilter.q.trim();
   const res = SEED.filter(p=>{
     if(!inStatus(p)) return false;
+    if(!inOrganic(p,pFilter.organic)) return false;
     if(pFilter.cat && p.category!==pFilter.cat) return false;
     if(pFilter.region && p.region!==pFilter.region) return false;
     if(effArea && !inAreaBand(p,effArea)) return false;
@@ -404,6 +413,7 @@ function setPStatus(s){ pFilter.status=s; pFilter.cat=''; pLimit=60; renderProsp
 function setPCat(c){ pFilter.cat=c; pLimit=60; renderProspects(); }
 function setPRegion(r){ pFilter.region=r; pLimit=60; renderProspects(); }
 function setPArea(k){ pFilter.area=k; pLimit=60; renderProspects(); }
+function setPOrganic(v){ pFilter.organic=v; pFilter.cat=''; pLimit=60; renderProspects(); }
 
 function custByProspect(id){ return customers.find(c=>c.fromProspect===id); }
 function viewProspect(id){
