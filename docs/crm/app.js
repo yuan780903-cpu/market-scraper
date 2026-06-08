@@ -822,4 +822,26 @@ function closeModal(){ $('#modal').classList.remove('show'); }
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
 
 // ---------- 啟動 ----------
-go('home');
+function isInLineApp(){ return /Line\//i.test(navigator.userAgent||''); }
+function appUrl(){ return location.href.split('#')[0].split('?')[0]; }
+function copyAppUrl(){
+  const u=appUrl();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(()=>toast('已複製網址，貼到 Safari 開啟'),()=>toast(u)); }
+  else toast(u);
+}
+function showInAppWarning(){
+  if(!isInLineApp()||document.getElementById('inapp-warn')) return;
+  const bar=document.createElement('div');
+  bar.id='inapp-warn';
+  bar.innerHTML=`⚠️ 你正在 <b>LINE 內建瀏覽器</b>開啟，這裡輸入的客戶資料 <b>不會被儲存</b>！<br>請改用手機<b>主畫面的「客戶戰情室」圖示</b>開啟（或用 Safari／Chrome）。
+    <div class="wbtns"><button class="wcopy" onclick="copyAppUrl()">複製網址</button><button class="wok" onclick="document.getElementById('inapp-warn').remove()">知道了</button></div>`;
+  document.body.appendChild(bar);
+}
+function initApp(){
+  const valid=['home','map','prospects','route','customers','settings'];
+  const hash=(location.hash||'').replace('#','');
+  go(valid.includes(hash)?hash:'home');
+  showInAppWarning();
+}
+window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['home','map','prospects','route','customers','settings']; if(valid.includes(h)) go(h); });
+initApp();
