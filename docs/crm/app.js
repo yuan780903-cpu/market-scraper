@@ -718,9 +718,10 @@ function renderCustomers(){
   if(!res.length){
     h+=`<div class="card"><div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div></div>`;
   } else {
-    // 依地區分組（縣市＋鄉鎮市區），每個地區獨立一塊
+    // 依地區分組（縣市層級），每個縣市獨立一塊
+    const cityKey=c=>{ const ci=cityOf(c.address); return ci?ci.replace(/臺/g,'台'):'未填地區'; };
     const groups={};
-    res.forEach(c=>{ const d=regionFull(c.address); (groups[d]=groups[d]||[]).push(c); });
+    res.forEach(c=>{ const d=cityKey(c); (groups[d]=groups[d]||[]).push(c); });
     const dists=Object.keys(groups).sort((a,b)=>{ if(a==='未填地區')return 1; if(b==='未填地區')return -1; return cityCmp(a,b)||a.localeCompare(b); });
     dists.forEach(d=>{
       const list=groups[d];
