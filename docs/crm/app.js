@@ -221,55 +221,77 @@ function renderHome(){
     <div class="stat due"><div class="n">${todayN}</div><div class="l">今日任務</div></div>
   </div>`;
 
-  // ── 各縣市掌握度（依未開發多寡排序）──
+  // ── 作戰快報：精簡卡片，點一張只看那一張的內容 ──
+  const fups=getFollowUps();
   const regs=Object.entries(cov.region).filter(([,v])=>v.total>0)
     .sort((a,b)=>(b[1].total-b[1].dev)-(a[1].total-a[1].dev));
-  if(regs.length){
-    h += `<div class="sec-title"><span class="bar"></span>各縣市戰況（未攻佔多者在前）</div><div class="card">`;
-    h += regs.slice(0,12).map(([name,v])=>covBarRow(name,v.total,v.dev,()=>`gotoMapCounty('${esc(name)}')`)).join('');
-    h += `</div>`;
-  }
+  const weakCounty=regs.length?regs[0][0]:'';
+  let weakN=0;
+  if(window.TW_MAP){ weakN=weakestTowns(computeTownStats(),8).length; }
 
-  // ── 最該開發的鄉鎮 ──
-  if(window.TW_MAP){
-    const st=computeTownStats();
-    const weak=weakestTowns(st,8);
-    if(weak.length){
-      h += `<div class="sec-title"><span class="bar"></span>優先攻佔鄉鎮 TOP ${weak.length}</div>
-        <div class="tagline" style="margin:-4px 2px 8px">名單多但還沒開發的，優先攻。點一下看地圖。</div><div class="card">`;
-      h += weak.map(w=>mapBarRow(`${w.c} ${w.t}`,w.lead,w.cust,()=>`gotoMapTown(${w.i})`)).join('');
-      h += `</div>`;
-    }
-  }
-
-  h += `<div class="sec-title"><span class="bar"></span>本週出擊任務</div>`;
-  if(!tasks.length){
-    h += `<div class="card empty"><div class="big">📭</div>目前沒有排定的拜訪。<br>到「名單」或「我的客戶」設定拜訪頻率即可自動排程。</div>`;
-  } else {
-    h += `<div class="card">` + tasks.slice(0,30).map(t=>itemRow({
-      name:t.name, sub:t.sub, cat:(t.kind==='cust'?t.ref.type:t.ref.category),
-      pill:`<span class="badge ${t.di.cls}">${t.di.txt}</span>`,
-      onclick: t.kind==='cust'?`viewCustomer('${t.ref.id}')`:`viewProspect('${t.ref.id}')`
-    })).join('') + `</div>`;
-  }
-
-  // 待跟進事項（拜訪後留下的後續事項）
+  h += `<div class="sec-title"><span class="bar"></span>作戰快報 ・ 點卡片看內容</div><div class="card">`;
+  h += homeTile('rifle', '本週出擊任務', tasks.length?`${tasks.length} 個任務${overdue?`・逾期 ${overdue}`:''}`:'目前沒有排定的拜訪', 'openHomeTasks()');
+  h += homeTile('target','待辦戰術跟進', fups.length?`${fups.length} 項待辦`:'沒有待辦的跟進事項', 'openHomeFollow()');
+  if(regs.length) h += homeTile('radar', '各縣市戰況', `共 ${regs.length} 縣市・最待開發：${esc(weakCounty)}`, 'openHomeCounty()');
+  if(weakN)       h += homeTile('tank',  '優先攻佔鄉鎮', `名單多未開發 TOP ${weakN}`, 'openHomeTown()');
+  h += `</div>`;
+  $('#view').innerHTML = h;
+}
+function homeTile(icon,title,sum,onclick){
+  return `<div class="item" onclick="${onclick}">
+    <div class="avatar" style="background:#5d6651;font-size:18px">${milIcon(icon)}</div>
+    <div class="body"><div class="nm">${esc(title)}</div><div class="sub">${esc(sum||'')}</div></div>
+    <div class="meta" style="color:var(--muted);font-size:20px">›</div></div>`;
+}
+// ── 首頁快報的資料來源（重算，供卡片彈窗用）──
+function getDueTasks(){
+  const tasks=[];
+  customers.forEach(c=>{ const di=dueInfo(c); if(di&&di.sort<=7) tasks.push({kind:'cust',ref:c,di,name:c.name,sub:c.type}); });
+  Object.entries(overlay).forEach(([id,o])=>{ const di=dueInfo(o); if(di&&di.sort<=7){ const p=SEED.find(x=>x.id===id); if(p) tasks.push({kind:'prosp',ref:p,o,di,name:p.name,sub:p.category+(p.region?' · '+p.region:'')}); } });
+  tasks.sort((a,b)=>a.di.sort-b.di.sort);
+  return tasks;
+}
+function getFollowUps(){
   const fups=[];
   customers.forEach(c=>(c.follow||[]).forEach(f=>{ if(!f.done) fups.push({name:c.name,sub:c.type,kind:'cust',id:c.id,f}); }));
   Object.entries(overlay).forEach(([id,o])=>{ (o.follow||[]).forEach(f=>{ if(!f.done){ const p=SEED.find(x=>x.id===id); if(p) fups.push({name:p.name,sub:p.category,kind:'prosp',id,f}); } }); });
   fups.sort((a,b)=>((a.f.due||'9999').localeCompare(b.f.due||'9999')));
-  h += `<div class="sec-title"><span class="bar"></span>待辦戰術跟進${fups.length?`（${fups.length}）`:''}</div>`;
-  if(!fups.length){
-    h += `<div class="card empty"><div class="big">✅</div>沒有待辦的跟進事項。<br>拜訪後在客戶頁記下「後續跟進」就會出現在這裡。</div>`;
-  } else {
-    h += `<div class="card">` + fups.slice(0,30).map(u=>{
-      const od=u.f.due&&u.f.due<todayStr();
-      const pill=u.f.due?`<span class="badge ${od?'pill-over':'pill-ok'}">${od?'逾期 ':''}${esc(u.f.due)}</span>`:'';
-      return itemRow({ name:u.f.text, sub:`${u.name}・${u.sub}`, pill,
-        onclick: u.kind==='cust'?`viewCustomer('${u.id}')`:`viewProspect('${u.id}')` });
-    }).join('') + `</div>`;
-  }
-  $('#view').innerHTML = h;
+  return fups;
+}
+function openHomeTasks(){
+  const tasks=getDueTasks();
+  let h = tasks.length
+    ? `<div class="card">`+tasks.map(t=>itemRow({ name:t.name, sub:t.sub, cat:(t.kind==='cust'?t.ref.type:t.ref.category),
+        pill:`<span class="badge ${t.di.cls}">${t.di.txt}</span>`,
+        onclick: t.kind==='cust'?`viewCustomer('${t.ref.id}')`:`viewProspect('${t.ref.id}')` })).join('')+`</div>`
+    : `<div class="card empty"><div class="big">📭</div>目前沒有排定的拜訪。<br>到「名單」或「我的客戶」設定拜訪頻率即可自動排程。</div>`;
+  openModal('本週出擊任務', h);
+}
+function openHomeFollow(){
+  const fups=getFollowUps();
+  let h = fups.length
+    ? `<div class="card">`+fups.map(u=>{ const od=u.f.due&&u.f.due<todayStr();
+        const pill=u.f.due?`<span class="badge ${od?'pill-over':'pill-ok'}">${od?'逾期 ':''}${esc(u.f.due)}</span>`:'';
+        return itemRow({ name:u.f.text, sub:`${u.name}・${u.sub}`, pill,
+          onclick: u.kind==='cust'?`viewCustomer('${u.id}')`:`viewProspect('${u.id}')` }); }).join('')+`</div>`
+    : `<div class="card empty"><div class="big">✅</div>沒有待辦的跟進事項。<br>拜訪後在客戶頁記下「後續跟進」就會出現在這裡。</div>`;
+  openModal('待辦戰術跟進', h);
+}
+function openHomeCounty(){
+  const cov=computeCoverage();
+  const regs=Object.entries(cov.region).filter(([,v])=>v.total>0).sort((a,b)=>(b[1].total-b[1].dev)-(a[1].total-a[1].dev));
+  let h=`<div class="tagline" style="margin:0 2px 8px">未攻佔多者在前。點一下看地圖。</div><div class="card">`;
+  h+=regs.slice(0,16).map(([name,v])=>covBarRow(name,v.total,v.dev,()=>`closeModal();gotoMapCounty('${esc(name)}')`)).join('');
+  h+=`</div>`;
+  openModal('各縣市戰況', h);
+}
+function openHomeTown(){
+  if(!window.TW_MAP){ openModal('優先攻佔鄉鎮','<div class="card empty"><div class="big">🗺️</div>地圖資料尚未載入。</div>'); return; }
+  const weak=weakestTowns(computeTownStats(),12);
+  let h=`<div class="tagline" style="margin:0 2px 8px">名單多但還沒開發的，優先攻。點一下看地圖。</div><div class="card">`;
+  h+=weak.map(w=>mapBarRow(`${w.c} ${w.t}`,w.lead,w.cust,()=>`closeModal();gotoMapTown(${w.i})`)).join('');
+  h+=`</div>`;
+  openModal('優先攻佔鄉鎮', h);
 }
 
 function itemRow({name,sub,cat,pill,onclick}){
