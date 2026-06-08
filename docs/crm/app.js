@@ -641,6 +641,19 @@ function cityCmp(a,b){
   const ib=REGION_ORDER.findIndex(x=>normR(b).includes(x));
   return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);
 }
+// 地區（縣市＋鄉鎮市區，例：台南市佳里區）；顯示用「台」
+function regionFull(addr){
+  const c=cityOf(addr), d=district(addr);
+  if(!c&&!d) return '未填地區';
+  return ((c||'')+(d||'')).replace(/臺/g,'台');
+}
+// 取一筆電話，以手機（09開頭）優先
+function pickPhone(p){
+  if(!p) return '';
+  const parts=String(p).split(/[\/、,，;；\s]+/).map(x=>x.trim()).filter(Boolean);
+  const mob=parts.find(x=>/^09\d{8}$/.test(x.replace(/[^\d]/g,'')));
+  return mob||parts[0]||'';
+}
 let cFilter={q:'', grade:'', type:'', city:'', org:''};
 function renderCustomers(){
   let h=`<div class="info">🔒 這一頁的資料（含身分證、統編、出生年月日）只儲存在你這台裝置的瀏覽器，不會上傳。請定期到「設定」備份。</div>`;
@@ -679,14 +692,35 @@ function renderCustomers(){
     return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
   });
   const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.org||q;
-  h+=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div><div class="card">`;
-  if(!res.length){ h+=`<div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div>`; }
-  else res.forEach(c=>{ const di=dueInfo(c);
-    const gtag=c.grade?`<span class="badge grade-${c.grade}">${c.grade}</span>`:'';
-    const otag=c.org?`<span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:'';
-    const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:`<span class="badge b-${c.type}">${c.type}</span>`)+gtag+otag;
-    h+=itemRow({name:c.name,sub:[c.phone,c.address].filter(Boolean).join(' · '),pill,onclick:`viewCustomer('${c.id}')`}); });
-  h+=`</div>`;
+  h+=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div>`;
+  if(!res.length){
+    h+=`<div class="card"><div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div></div>`;
+  } else {
+    // 依地區分組（縣市＋鄉鎮市區），每個地區獨立一塊
+    const groups={};
+    res.forEach(c=>{ const d=regionFull(c.address); (groups[d]=groups[d]||[]).push(c); });
+    const dists=Object.keys(groups).sort((a,b)=>{ if(a==='未填地區')return 1; if(b==='未填地區')return -1; return cityCmp(a,b)||a.localeCompare(b); });
+    dists.forEach(d=>{
+      const list=groups[d];
+      h+=`<div class="sec-title"><span class="bar"></span>${esc(d)} <span style="color:var(--muted);font-weight:400;font-size:12px">${list.length} 位</span></div>`;
+      // 地區內再依通路分類
+      const byType={};
+      list.forEach(c=>{ const t=c.type||'其他'; (byType[t]=byType[t]||[]).push(c); });
+      const typeOrder=CUST_TYPES.filter(t=>byType[t]).concat(Object.keys(byType).filter(t=>!CUST_TYPES.includes(t)));
+      h+=`<div class="card">`;
+      typeOrder.forEach(t=>{
+        h+=`<div style="display:flex;align-items:center;gap:7px;padding:7px 4px 4px;font-size:12px;color:var(--muted)"><span class="badge b-${t}">${esc(t)}</span><span>${byType[t].length} 位</span></div>`;
+        byType[t].slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{
+          const di=dueInfo(c);
+          const gtag=c.grade?`<span class="badge grade-${c.grade}">${c.grade}</span>`:'';
+          const otag=c.org?`<span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:'';
+          const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:'')+gtag+otag;
+          h+=itemRow({name:c.name,sub:pickPhone(c.phone)||'—',pill,onclick:`viewCustomer('${c.id}')`});
+        });
+      });
+      h+=`</div>`;
+    });
+  }
   viewHTML(h);
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
