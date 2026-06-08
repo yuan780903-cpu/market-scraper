@@ -256,13 +256,13 @@ def build_html(rows: list, today: date) -> str:
     )
 
 
-def main():
+def collect_rows(verbose: bool = True) -> list:
+    """抓 22 縣市 90 天雨量，回傳 rows 給 HTML 用"""
     today = date.today()
-    print(f"=== 全台雨量地圖產出 · {today} ===\n")
-
     rows = []
     for i, (name, lat, lon) in enumerate(COUNTIES, 1):
-        print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ... ", end="", flush=True)
+        if verbose:
+            print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ... ", end="", flush=True)
         try:
             daily = fetch_rainfall(lat, lon, past_days=92)
             agg = aggregate(daily, today)
@@ -272,35 +272,58 @@ def main():
                 "month": agg["month"],
                 "quarter": agg["quarter"],
             })
-            print(f"今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
+            if verbose:
+                print(f"今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
             time.sleep(0.25)
         except Exception as e:
-            print(f"FAIL：{e}")
+            if verbose:
+                print(f"FAIL：{e}")
             rows.append({"name": name, "lat": lat, "lon": lon,
                          "today": 0, "month": 0, "quarter": 0})
+    return rows
 
-    print(f"\n資料抓取完成，{len(rows)} 縣市")
+
+def generate_and_upload(verbose: bool = True) -> str:
+    """產地圖 HTML → 寫本機 → 上傳 catbox → 回傳 URL（失敗回 ""）。
+    給 weekly_line_push 在推播前呼叫，把 URL 加進 Flex 雨量卡的 footer 按鈕。"""
+    today = date.today()
+    if verbose:
+        print(f"[Rainfall Map] 產出全台 22 縣市互動地圖 ...")
+    rows = collect_rows(verbose=verbose)
     html = build_html(rows, today)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html"
     out_path.write_text(html, encoding="utf-8")
-    print(f"✓ HTML 已寫入 {out_path}")
-
-    # 嘗試上傳 catbox（如有 CATBOX_USERHASH）
+    if verbose:
+        print(f"[Rainfall Map] 本機備份：{out_path}")
     try:
-        # 載 .env
-        env_path = Path(".env")
-        if env_path.exists():
-            for line in env_path.read_text(encoding="utf-8").splitlines():
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    k, v = line.split("=", 1)
-                    os.environ.setdefault(k.strip(), v.strip())
         import uploader
-        url = uploader.upload_html(html, filename=f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html")
-        print(f"\n🌐 catbox URL（永久）：\n  {url}")
+        url = uploader.upload_html(
+            html, filename=f"taiwan_rainfall_map_{today.strftime('%Y%m%d')}.html"
+        )
+        if verbose:
+            print(f"[Rainfall Map] ✓ 公開 URL：{url}")
+        return url
     except Exception as e:
-        print(f"\n[!] 上傳 catbox 失敗：{e}")
+        if verbose:
+            print(f"[Rainfall Map] [!] 上傳失敗：{e}")
+        return ""
+
+
+def main():
+    today = date.today()
+    print(f"=== 全台雨量地圖產出 · {today} ===\n")
+    # 載 .env (供 catbox userhash 等)
+    env_path = Path(".env")
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+    url = generate_and_upload(verbose=True)
+    if url:
+        print(f"\n🌐 catbox URL（永久）：\n  {url}")
 
 
 if __name__ == "__main__":

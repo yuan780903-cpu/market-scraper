@@ -31,6 +31,7 @@ import uploader
 import line_flex
 import line_sender
 import image_card
+import rainfall_taiwan_map
 import richmenu_deploy
 from config import OUTPUT_DIR
 
@@ -107,11 +108,21 @@ def main(dry_run: bool = False) -> None:
     except Exception as e:
         print(f"[!] 節氣圖產製失敗（已忽略）：{e}")
 
+    # 3.8 生成「全台互動雨量地圖」HTML 上傳 catbox，URL 傳給 Flex 雨量卡 footer 按鈕
+    rainfall_map_url = ""
+    try:
+        rainfall_map_url = rainfall_taiwan_map.generate_and_upload(verbose=False)
+        if rainfall_map_url:
+            print(f"[Rainfall Map] ✓ {rainfall_map_url}")
+    except Exception as e:
+        print(f"[!] 雨量地圖產製失敗（已忽略）：{e}")
+
     # 4. 生成 LINE Flex Message Carousel（金句已挑、不會重複消耗）
     flex_msg = line_flex.build_flex(rows, pdf_result, report_url,
                                      mark_motivation_used=False,
                                      rainfall_result=rainfall_result,
-                                     motivation_picked=motivation_picked)
+                                     motivation_picked=motivation_picked,
+                                     rainfall_map_url=rainfall_map_url)
     flex_json = json.dumps(flex_msg, ensure_ascii=False)
 
     print("\n" + "-" * 60)

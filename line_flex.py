@@ -527,8 +527,10 @@ def _build_motivation_bubble(today: Optional[date] = None,
 
 # ---------- 雨量警示 Flex bubble ----------
 
-def _build_rainfall_bubble(rainfall_result: Dict) -> Optional[Dict]:
-    """雨量警示卡：4 區月/季累積 + 業務判讀"""
+def _build_rainfall_bubble(rainfall_result: Dict,
+                            rainfall_map_url: str = "") -> Optional[Dict]:
+    """雨量警示卡：4 區月/季累積 + 業務判讀
+    若提供 rainfall_map_url，footer 會加「看全台互動地圖」按鈕。"""
     if not rainfall_result or rainfall_result.get("skipped"):
         return None
     regions = rainfall_result.get("regions", [])
@@ -644,7 +646,28 @@ def _build_rainfall_bubble(rainfall_result: Dict) -> Optional[Dict]:
     header = _header("雨量警示 · 區域出貨判讀",
                       f"{today}　·　4 區代表站",
                       "#1864ab")
-    return _bubble(header, body)
+
+    # footer：若有地圖 URL，加「看全台互動地圖」按鈕
+    footer = None
+    if rainfall_map_url:
+        footer = {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": [{
+                "type": "button",
+                "style": "primary",
+                "color": "#1864ab",
+                "height": "sm",
+                "action": {
+                    "type": "uri",
+                    "label": "📍 看全台互動雨量地圖",
+                    "uri": rainfall_map_url,
+                },
+            }],
+        }
+
+    return _bubble(header, body, footer=footer)
 
 
 # ---------- 全台縣市重災排名 Flex bubble ----------
@@ -754,7 +777,8 @@ def _build_rainfall_ranking_bubble(rainfall_result: Dict) -> Optional[Dict]:
 def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "",
                 mark_motivation_used: bool = True,
                 rainfall_result: Optional[Dict] = None,
-                motivation_picked: Optional[Dict] = None) -> Dict:
+                motivation_picked: Optional[Dict] = None,
+                rainfall_map_url: str = "") -> Dict:
     today = datetime.now().strftime("%Y-%m-%d")
     bubbles: List[Dict] = []
 
@@ -791,7 +815,7 @@ def build_flex(rows: List[Dict], pdf_result: Dict, report_url: str = "",
     bubbles.append(_build_regional_crops_bubble())
 
     # 1.5 雨量警示卡（4 區）
-    rb = _build_rainfall_bubble(rainfall_result)
+    rb = _build_rainfall_bubble(rainfall_result, rainfall_map_url=rainfall_map_url)
     if rb:
         bubbles.append(rb)
 
