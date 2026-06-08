@@ -347,7 +347,7 @@ function draw(geo, mode) {{
         L.marker([center.lat, center.lng], {{
           icon: L.divIcon({{
             className: 'county-label',
-            html: name.replace('縣','').replace('市','') + '<span class="mm">' + v.toFixed(0) + '</span>',
+            html: name.replace('縣','').replace('市','') + '<span class="mm">' + v.toFixed(0) + ' mm</span>',
             iconSize: null,
           }}),
         }}).addTo(labelLayer);
