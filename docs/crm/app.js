@@ -101,7 +101,7 @@ let pLimit = 60;
 function go(t){
   tab = t; pLimit = 60;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  $('#title').textContent = {home:'戰情總覽',map:'戰情地圖',prospects:'目標名單',route:'智慧拜訪規劃',customers:'我的客戶',compete:'即時競品價格',settings:'設定 / 備份'}[t];
+  $('#title').textContent = {home:'戰情總覽',map:'戰情地圖',prospects:'目標名單',route:'智慧拜訪規劃',customers:'我的客戶',compete:'即時競品價格',report:'拜訪週報',settings:'設定 / 備份'}[t];
   $('#fab').style.display = (t==='customers') ? 'block' : 'none';
   window.scrollTo(0,0);
   render();
@@ -109,7 +109,7 @@ function go(t){
 function onFab(){ if(tab==='customers') editCustomer(null); }
 
 // ---------- 渲染分派 ----------
-function render(){ ({home:renderHome,map:renderMap,prospects:renderProspects,route:renderRoute,customers:renderCustomers,compete:renderCompetitors,settings:renderSettings}[tab])(); }
+function render(){ ({home:renderHome,map:renderMap,prospects:renderProspects,route:renderRoute,customers:renderCustomers,compete:renderCompetitors,report:renderReport,settings:renderSettings}[tab])(); }
 
 // ========== 掌握度統計（以名單為母體：開發=成交既有、接觸=拜訪過） ==========
 function isContacted(id){ const o=overlay[id]; return !!(o && (o.last || (o.inter&&o.inter.length))); }
@@ -1278,6 +1278,65 @@ function saveCompetitor(id, isAdd){
 }
 function delCompetitor(id){ if(!confirm('確定刪除這筆競品報價？')) return; competitors=competitors.filter(x=>x.id!==id); saveComp(); toast('已刪除'); renderCompetitors(); }
 
+// ========== 拜訪週報（彙整本週拜訪紀錄；工作週＝週一～週五）==========
+let reportWeekStart=''; // 該週週一（空字串＝本週）
+function repMonday(){ return reportWeekStart||thisMonday(); }
+function shiftReportWeek(n){ reportWeekStart=addDays(repMonday(),n*7); renderReport(); }
+function resetReportWeek(){ reportWeekStart=''; renderReport(); }
+// 蒐集某週（週一～週五）內，我的客戶＋目標名單的所有拜訪紀錄
+function collectWeekVisits(){
+  const mon=repMonday(), fri=addDays(mon,4);
+  const inRange=d=>d&&d>=mon&&d<=fri;
+  const out=[];
+  customers.forEach(c=>{ (c.inter||[]).forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:c.name,kind:'客戶',type:it.type||'拜訪',content:it.content||'',id:c.id,who:'cust'}); }); });
+  Object.keys(overlay).forEach(pid=>{ const o=overlay[pid]; if(!o||!o.inter) return; const p=SEED.find(x=>x.id===pid); const nm=p?p.name:'(名單)'; o.inter.forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:nm,kind:'名單',type:it.type||'拜訪',content:it.content||'',id:pid,who:'prospect'}); }); });
+  out.sort((a,b)=>a.date.localeCompare(b.date));
+  return out;
+}
+function reportText(){
+  const mon=repMonday(), fri=addDays(mon,4);
+  const visits=collectWeekVisits();
+  const names=new Set(visits.map(v=>v.name));
+  let t=`【拜訪週報】${mon} ～ ${fri}\n本週拜訪 ${visits.length} 次，接觸 ${names.size} 家\n────────────────\n`;
+  if(!visits.length){ return t+'本週尚無拜訪紀錄。\n'; }
+  for(let i=0;i<5;i++){
+    const d=addDays(mon,i); const dv=visits.filter(v=>v.date===d); if(!dv.length) continue;
+    t+=`\n■ ${d.slice(5)}（週${WD_NAME[new Date(d).getDay()]}）\n`;
+    dv.forEach(v=>{ t+=`・${v.name}（${v.kind}）${v.type&&v.type!=='拜訪'?'｜'+v.type:''}\n  ${v.content||'完成拜訪'}\n`; });
+  }
+  return t;
+}
+function copyReport(){
+  const t=reportText();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast('週報文字已複製，可貼到 LINE/記事本')).catch(()=>repFallbackCopy(t)); }
+  else repFallbackCopy(t);
+}
+function repFallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('週報文字已複製'); }catch(e){ toast('複製失敗，請長按下方文字手動複製'); } document.body.removeChild(ta); }
+function renderReport(){
+  const mon=repMonday(), fri=addDays(mon,4);
+  const visits=collectWeekVisits();
+  const names=new Set(visits.map(v=>v.name));
+  const isThis=(repMonday()===thisMonday());
+  let h=`<div class="info">📝 自動彙整本週（工作日 週一～週五）所有拜訪紀錄，資料來自「我的客戶」與「目標名單」裡你記下的拜訪，全部只存在本機。</div>`;
+  h+=`<div class="seg"><button class="seg-b" onclick="shiftReportWeek(-1)">← 上一週</button>
+      <button class="seg-b ${isThis?'on':''}" onclick="resetReportWeek()">本週</button>
+      <button class="seg-b" onclick="shiftReportWeek(1)">下一週 →</button></div>`;
+  h+=`<div class="count">${mon} ～ ${fri}　·　拜訪 ${visits.length} 次　·　接觸 ${names.size} 家</div>`;
+  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="copyReport()">📋 複製週報文字</button></div>`;
+  if(!visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「我的客戶」或「目標名單」按「記錄拜訪」後，這裡會自動彙整。</div></div>`; $('#view').innerHTML=h; return; }
+  for(let i=0;i<5;i++){
+    const d=addDays(mon,i); const dv=visits.filter(v=>v.date===d); if(!dv.length) continue;
+    h+=`<div class="sec-title"><span class="bar"></span>${d.slice(5)}　週${WD_NAME[new Date(d).getDay()]}　(${dv.length})</div><div class="card">`;
+    dv.forEach(v=>{
+      const pill=`<span class="badge b-${v.kind==='客戶'?'農會':'其他'}">${v.kind}</span>`;
+      const click=v.who==='cust'?`viewCustomer('${v.id}')`:`viewProspect('${v.id}')`;
+      h+=itemRow({name:v.name,sub:(v.type&&v.type!=='拜訪'?v.type+'｜':'')+(v.content||'完成拜訪'),pill,onclick:click});
+    });
+    h+=`</div>`;
+  }
+  $('#view').innerHTML=h;
+}
+
 // ---------- modal ----------
 function openModal(title, html){ $('#m-title').textContent=title; $('#m-body').innerHTML=html; $('#modal').classList.add('show'); }
 function closeModal(){ $('#modal').classList.remove('show'); }
@@ -1300,10 +1359,10 @@ function showInAppWarning(){
   document.body.appendChild(bar);
 }
 function initApp(){
-  const valid=['home','map','prospects','route','customers','compete','settings'];
+  const valid=['home','map','prospects','route','customers','compete','report','settings'];
   const hash=(location.hash||'').replace('#','');
   go(valid.includes(hash)?hash:'home');
   showInAppWarning();
 }
-window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['home','map','prospects','route','customers','compete','settings']; if(valid.includes(h)) go(h); });
+window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['home','map','prospects','route','customers','compete','report','settings']; if(valid.includes(h)) go(h); });
 initApp();
