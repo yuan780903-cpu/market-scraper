@@ -157,35 +157,35 @@ PDF_CHANGE_DAYS = 30
 # ==========================================
 # FB 粉專追蹤（透過 Apify）
 # ==========================================
-# 注意：apify/facebook-posts-scraper 是 paid actor，實測 $5/月可能跑 1-2 次完整推送
-# 若 6/1 配額刷新後又用完，請考慮：
-#   (1) 把 FB_PAGES 再砍半 (2) 改抽便宜 scraper (3) 升級 Apify
+# Apify 免費 $5/月，apify/facebook-posts-scraper 每跑一次 ~$0.4-1.0
+# 原本 12 個粉專 × 8 篇 = ~$3-5/次，跑一兩次就燒光。
 #
-# 目前精選 12 個業務最相關的粉專（同業/重點改良場/重點農會/農糧署）
+# 2026/06 精簡到 6 個粉專 × 5 篇 = ~$1-2/次，這樣每月可跑 2-4 次（撐到月底）。
+# 保留原則：
+#   - 競爭情報是最高優先（宏生、福壽 — 主要競爭對手）
+#   - 業務區改良場才留（北中南各 1，涵蓋你的客戶熱區）
+#   - 政府補助動態（農糧署）
+# 砍掉的（從新聞 RSS 也能間接拿到）：
+#   - 泰霖、台肥（同業但客群重疊度低）
+#   - 高雄改場（與台南重疊）
+#   - 雲林/嘉義/屏東農會（補助/觀摩會多走 Google News 抓）
 FB_PAGES = [
-    # ===== 競爭同業 / 經銷商（4 個）=====
-    "https://www.facebook.com/888HS888/",                                       # 宏生農業生化
-    "https://www.facebook.com/fsfeiliao/",                                      # 福壽肥料
-    "https://www.facebook.com/p/泰霖生物科技有限公司-100063778283357/",            # 泰霖生物科技
-    "https://www.facebook.com/people/台肥農業推廣中心/100057266087190/",            # 台肥農業推廣中心
+    # ===== 競爭同業（2 個，最高優先）=====
+    "https://www.facebook.com/888HS888/",        # 宏生農業生化（主要競爭對手）
+    "https://www.facebook.com/fsfeiliao/",       # 福壽肥料（主要競爭對手）
 
-    # ===== 政府/官方（1 個）=====
-    "https://www.facebook.com/afayayaya/",       # 農糧署（鮮享農YA）
+    # ===== 政府（1 個）=====
+    "https://www.facebook.com/afayayaya/",       # 農糧署 鮮享農YA（補助/政策）
 
-    # ===== 重點改良場（4 個，主要農業大區）=====
-    "https://www.facebook.com/tydares/",         # 桃園農改場
-    "https://www.facebook.com/tdares/",          # 台中農改場
-    "https://www.facebook.com/tndais/",          # 台南農改場
-    "https://www.facebook.com/Kaohsiung.DAIS/",  # 高雄農改場
-
-    # ===== 重點縣農會（3 個，有機/稻作大縣）=====
-    "https://www.facebook.com/p/雲林縣農會-100090170528272/",  # 雲林（米倉）
-    "https://www.facebook.com/chiayifarmers/",                # 嘉義
-    "https://www.facebook.com/fwres3030/",                    # 屏東（有機大縣）
+    # ===== 業務區改良場（3 個，北/中/南各 1）=====
+    "https://www.facebook.com/tydares/",         # 桃園農改場（北部觀摩會）
+    "https://www.facebook.com/tdares/",          # 台中農改場（中部觀摩會）
+    "https://www.facebook.com/tndais/",          # 台南農改場（南部觀摩會）
 ]
 
 # 每個粉專最多抓最近幾篇貼文（影響 Apify 配額消耗）
-FB_POSTS_PER_PAGE = 8
+# 從 8 降到 5：6 粉專 × 5 篇 = 30 筆，估計每次 ~$1-2
+FB_POSTS_PER_PAGE = 5
 
 # Apify 餘額低於此值時自動跳過 FB 抓取（避免重蹈覆轍）
 APIFY_MIN_REMAINING_USD = 0.5
