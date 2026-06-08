@@ -151,6 +151,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .ranking td.rank{{width:32px;color:#888;font-weight:600}}
   .ranking td.county{{width:80px;font-weight:600}}
   .ranking td.mm{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
+  .impact{{padding:14px 16px;background:#fff;margin-top:8px}}
+  .impact h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
+  .impact .group-title{{margin:10px 0 4px;font-size:13px;font-weight:700;color:#52616b}}
+  .impact .row{{display:flex;gap:10px;font-size:13px;margin:3px 0;align-items:baseline}}
+  .impact .rng{{width:90px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0}}
+  .impact .note{{color:#1f2933;flex:1}}
+  .impact .green{{color:#2d6a4f}}
+  .impact .amber{{color:#a05c00}}
+  .impact .red{{color:#c92a2a}}
+  .impact .gray{{color:#52616b}}
+  .impact .info-note{{margin-top:14px;padding:10px;background:#f5f6f3;border-left:3px solid #4caf73;border-radius:4px;font-size:12px;color:#52616b;line-height:1.6}}
+  .source{{padding:14px 16px;background:#fff;margin-top:8px;border-top:2px solid #e6e8eb}}
+  .source h3{{margin:0 0 10px;font-size:14px;color:#52616b}}
+  .source ul{{margin:0;padding-left:20px;font-size:12px;color:#52616b;line-height:1.7}}
+  .source li{{margin:3px 0}}
+  .source a{{color:#1864ab;text-decoration:none;word-break:break-all}}
   .footer{{padding:14px;text-align:center;color:#888;font-size:11px;background:#f5f6f3}}
   .popup-content{{font-size:14px}}
   .popup-content strong{{color:#1f3a2e}}
@@ -173,12 +189,55 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <div class="legend">
   <div class="legend-title">📊 顏色級距（本月 / 本季用，今日按比例縮放）</div>
+  <div style="font-size:12px;color:#52616b;margin-bottom:8px;padding:6px 8px;background:#f5f6f3;border-radius:4px">
+    ※ 地圖上縣市名稱旁的數字 = 該期間累積雨量（單位：mm）
+  </div>
   {legend_rows}
+</div>
+
+<div class="impact">
+  <h3>💧 雨量對有機質肥料施用的影響程度</h3>
+  <div class="group-title">短期單日</div>
+  <div class="row"><div class="rng green">&lt; 30 mm</div><div class="note">可施肥；雨水帶入水分有助於溶肥滲入</div></div>
+  <div class="row"><div class="rng amber">30 – 80 mm</div><div class="note">表面顆粒被沖刷，氮素流失 10-20%，當日施肥效果打折</div></div>
+  <div class="row"><div class="rng red">&gt; 80 mm</div><div class="note">禁施；農路積水、機具進不去、粒肥泡爛</div></div>
+
+  <div class="group-title">連續 3-5 天</div>
+  <div class="row"><div class="rng green">&lt; 50 mm</div><div class="note">田面 OK；正常出貨無虞</div></div>
+  <div class="row"><div class="rng amber">50 – 150 mm</div><div class="note">泥濘；農路機具不易進入，出貨延後 1-2 天</div></div>
+  <div class="row"><div class="rng red">&gt; 150 mm</div><div class="note">田面積水；微生物轉厭氧、根系活性降，有機質肥效大幅遞減</div></div>
+
+  <div class="group-title">月累積（業務銷量判讀）</div>
+  <div class="row"><div class="rng green">&lt; 150 mm</div><div class="note">施肥黃金期，銷量旺 — 客戶積極備肥</div></div>
+  <div class="row"><div class="rng gray">150 – 300 mm</div><div class="note">普通，看空檔出貨 — 接單頻率正常</div></div>
+  <div class="row"><div class="rng amber">300 – 500 mm</div><div class="note">銷量下滑 20-30% — 客戶觀望、延後備肥</div></div>
+  <div class="row"><div class="rng red">&gt; 500 mm</div><div class="note">銷量低谷 — 田間無法作業，出貨幾乎停滯</div></div>
+
+  <div class="info-note">
+    <strong>📌 為什麼有機肥對雨量比化肥敏感？</strong><br>
+    1. <strong>顆粒比較大</strong>，雨水浸泡 1-2 天會泡爛、養分隨水流失到溝渠<br>
+    2. <strong>含微生物</strong>，連續陰雨 = 田面厭氧，菌相被破壞、肥效歸零<br>
+    3. <strong>多為粒狀/粉狀</strong>，需要機具撒佈，農路積水就根本無法出貨<br>
+    4. <strong>果樹/茶葉</strong>主要客戶在山區，雨季時連道路都不一定能通
+  </div>
 </div>
 
 <div class="ranking" id="ranking">
   <h3 id="ranking-title">本月累積雨量排名</h3>
   <table id="ranking-table"><tbody></tbody></table>
+</div>
+
+<div class="source">
+  <h3>📚 資料來源 / 方法說明</h3>
+  <ul>
+    <li><strong>雨量數據</strong>：Open-Meteo Forecast API（基於 ECMWF & ERA5 reanalysis），準度約 ±10%，分辨率約 11 km。
+      <br><a href="https://open-meteo.com/" target="_blank">https://open-meteo.com</a></li>
+    <li><strong>縣市邊界</strong>：g0v 開源台灣縣市 GeoJSON（twCounty2010）。
+      <br><a href="https://github.com/g0v/twgeojson" target="_blank">github.com/g0v/twgeojson</a></li>
+    <li><strong>地圖底圖</strong>：OpenStreetMap 開放圖資。</li>
+    <li><strong>施肥/銷量影響閾值</strong>：大成長城企業有機肥料部莊政遠業務襄理田間觀察 + 客戶回報整理（非學術研究數據，供業務內部參考）。</li>
+    <li><strong>取樣點</strong>：每縣市取縣治座標作代表，未細分鄉鎮（山區實際雨量可能更高）。</li>
+  </ul>
 </div>
 
 <div class="footer">
