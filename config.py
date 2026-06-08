@@ -112,8 +112,18 @@ RSS_FEEDS = [
      "url": "https://news.google.com/rss/search?q=%E9%9B%9E%E7%B3%9E+%E8%82%A5%E6%96%99&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
     {"name": "Google News - 廚餘 堆肥", "category": "新聞",
      "url": "https://news.google.com/rss/search?q=%E5%BB%9A%E9%A4%98+%E5%A0%86%E8%82%A5&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
-    {"name": "農傳媒", "category": "新聞",
-     "url": "https://www.agriharvest.tw/feed"},
+    # 農傳媒：原本直連 RSS 已被 Vercel anti-bot challenge 擋（HTTP 429）
+    # 改透過 Google News 的 site: 搜尋拿（Google bot 過得了 Vercel challenge）
+    {"name": "Google News - 農傳媒 肥料", "category": "新聞",
+     "url": "https://news.google.com/rss/search?q=site%3Aagriharvest.tw+%E8%82%A5%E6%96%99&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
+    {"name": "Google News - 農傳媒 有機", "category": "新聞",
+     "url": "https://news.google.com/rss/search?q=site%3Aagriharvest.tw+%E6%9C%89%E6%A9%9F&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
+    # 上下游新聞市集（深度農業議題媒體）— 走 Google News site: 搜尋
+    # 直連 RSS 拿得到，但內容多是廣議題（鳳梨/水產等）易被肥料關鍵字過濾掉
+    {"name": "Google News - 上下游 肥料", "category": "新聞",
+     "url": "https://news.google.com/rss/search?q=site%3Anewsmarket.com.tw+%E8%82%A5%E6%96%99&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
+    {"name": "Google News - 上下游 有機", "category": "新聞",
+     "url": "https://news.google.com/rss/search?q=site%3Anewsmarket.com.tw+%E6%9C%89%E6%A9%9F&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"},
 
     # ===== 活動類（觀摩會、推廣會、示範會、研習）=====
     {"name": "Google News - 肥料觀摩會", "category": "活動",
