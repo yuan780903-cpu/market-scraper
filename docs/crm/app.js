@@ -1838,10 +1838,11 @@ function ruleCard(r,i,canDel){
 let routeMode = 'smart';
 function setRouteMode(m){ routeMode=m; renderRoute(); }
 function renderRoute(){
-  let h=`<div class="seg">
-    <button class="seg-b ${routeMode==='smart'?'on':''}" onclick="setRouteMode('smart')">🧠 智慧安排</button>
-    <button class="seg-b ${routeMode==='week'?'on':''}" onclick="setRouteMode('week')">📅 每週排程</button>
-    <button class="seg-b ${routeMode==='custom'?'on':''}" onclick="setRouteMode('custom')">🗺️ 條件路線</button></div>
+  let h=`<div class="field" style="margin-bottom:10px"><label>排程模式</label>
+    <select onchange="setRouteMode(this.value)">
+      <option value="smart" ${routeMode==='smart'?'selected':''}>🧠 每日智慧安排</option>
+      <option value="week" ${routeMode==='week'?'selected':''}>📅 每週排程</option>
+      <option value="custom" ${routeMode==='custom'?'selected':''}>🗺️ 每日條件路線</option></select></div>
     <div id="route-body"></div>`;
   viewHTML(h);
   if(routeMode==='smart') renderSmartRoute();
@@ -1923,6 +1924,11 @@ function syncSmart(){
     const d=el.querySelector('.pk-dwell'), fx=el.querySelector('.pk-fixed');
     if(d) p.dwell=Math.max(5,+d.value||SMART_DWELL);
     if(fx) p.fixed=fx.value||'';
+    if(p.kind==='custom'){
+      const nm=el.querySelector('.pk-name'), ad=el.querySelector('.pk-addr');
+      if(nm) p.name=nm.value||'其他行程';
+      if(ad){ p.address=ad.value.trim(); p.district=district(p.address); }
+    }
   });
 }
 function smartAddPick(key){
@@ -1945,6 +1951,17 @@ function smartLocate(fieldId){
     const el=$('#'+fieldId); if(el) el.value=coord;
     if(fieldId==='sm-startloc') smartCfg.startLoc=coord; else if(fieldId==='sm-endloc') smartCfg.endLoc=coord;
     toast('已帶入目前位置座標');
+  });
+}
+function smartAddCustom(){
+  syncSmart();
+  smartCfg.picks.push({key:'x'+Date.now(), kind:'custom', name:'其他行程', address:'', district:'', channel:'其他', organic:'', grade:'', status:'', dwell:30, fixed:''});
+  renderRoute();
+}
+function smartLocateCustom(key){
+  syncSmart();
+  getGeo(coord=>{
+    const p=smartCfg.picks.find(x=>x.key===key); if(p){ p.address=coord; renderRoute(); toast('已帶入目前位置座標'); }
   });
 }
 function smartRemovePick(key){ syncSmart(); smartCfg.picks=smartCfg.picks.filter(p=>p.key!==key); renderRoute(); }
@@ -2004,24 +2021,38 @@ function renderSmartRoute(){
   // 已選名單
   h+=`<div class="sec-title"><span class="bar"></span>拜訪名單（${smartCfg.picks.length}）${smartCfg.picks.length?` <button class="rule-del" style="float:right" onclick="smartClearPicks()">✕ 全部清除</button>`:''}</div>`;
   if(!smartCfg.picks.length){
-    h+=`<div class="card empty" style="padding:16px">尚未加入客戶。用上面的篩選找到對象後按「＋ 加入」。<br>有約定時間的客戶（例如 10:00 到豐修企業社）可在加入後填「約定到達」，系統會固定排在該時間。</div>`;
+    h+=`<div class="card empty" style="padding:16px">尚未加入行程。用上面的篩選找到客戶後按「＋ 加入」。<br>也可按下方「＋ 新增其他行程」插入非客戶事項（例如 10:00 到某地址加油／開會／取貨）。<br>有約定時間者填「約定到達」，系統會固定排在該時段、其餘排在前後。</div>`;
   }else{
     h+=`<div class="card" style="padding:8px 12px">`;
     smartCfg.picks.forEach((p,i)=>{
-      h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line)">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="avatar" style="background:${colorFor(p.name)};width:26px;height:26px;font-size:13px">${i+1}</div>
-          <div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(p.name)}</div>
-            <div class="sub" style="font-size:11.5px">${esc([p.district,p.channel].filter(Boolean).join(' · '))}${p.organic==='org'?' 🌱':''}</div></div>
-          <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
-        <div class="field-2" style="margin-top:6px">
-          <div class="field" style="margin:0"><label style="font-size:11px">預計拜訪(分)</label><input class="pk-dwell" type="number" min="5" step="5" value="${p.dwell||SMART_DWELL}"></div>
-          <div class="field" style="margin:0"><label style="font-size:11px">約定到達(可空)</label><input class="pk-fixed" type="time" value="${p.fixed||''}"></div></div>
-      </div>`;
+      if(p.kind==='custom'){
+        h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line);background:var(--amber-l);border-radius:8px;margin:2px 0;padding-left:8px;padding-right:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="avatar" style="background:#7a6a3a;width:26px;height:26px;font-size:13px">📍</div>
+            <div style="flex:1;min-width:0"><div class="nm" style="font-size:13px;color:var(--amber)">其他行程（非客戶）</div></div>
+            <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
+          <div class="field" style="margin:6px 0 0"><label style="font-size:11px">做什麼事</label><input class="pk-name" value="${esc(p.name||'')}" placeholder="例如 加油 / 開會 / 取貨"></div>
+          <div class="field" style="margin:6px 0 0"><label style="font-size:11px">地點 / 地址</label><div style="display:flex;gap:6px"><input class="pk-addr" style="flex:1;min-width:0" value="${esc(p.address||'')}" placeholder="地址或座標（可空）"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 10px" onclick="smartLocateCustom('${p.key}')">📍</button></div></div>
+          <div class="field-2" style="margin-top:6px">
+            <div class="field" style="margin:0"><label style="font-size:11px">預計時間(分)</label><input class="pk-dwell" type="number" min="5" step="5" value="${p.dwell||30}"></div>
+            <div class="field" style="margin:0"><label style="font-size:11px">約定到達(可空)</label><input class="pk-fixed" type="time" value="${p.fixed||''}"></div></div>
+        </div>`;
+      }else{
+        h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="avatar" style="background:${colorFor(p.name)};width:26px;height:26px;font-size:13px">${i+1}</div>
+            <div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(p.name)}</div>
+              <div class="sub" style="font-size:11.5px">${esc([p.district,p.channel].filter(Boolean).join(' · '))}${p.organic==='org'?' 🌱':''}</div></div>
+            <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
+          <div class="field-2" style="margin-top:6px">
+            <div class="field" style="margin:0"><label style="font-size:11px">預計拜訪(分)</label><input class="pk-dwell" type="number" min="5" step="5" value="${p.dwell||SMART_DWELL}"></div>
+            <div class="field" style="margin:0"><label style="font-size:11px">約定到達(可空)</label><input class="pk-fixed" type="time" value="${p.fixed||''}"></div></div>
+        </div>`;
+      }
     });
     h+=`</div>`;
-    h+=`<div class="btn-row"><button class="btn btn-pri" onclick="smartPlan()">🧠 智慧安排路線</button></div>`;
   }
+  h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-out" onclick="smartAddCustom()">＋ 新增其他行程</button>${smartCfg.picks.length?`<button class="btn btn-pri" onclick="smartPlan()">🧠 智慧安排路線</button>`:''}</div>`;
   h+=`<div id="smart-result">${smartCfg._last||''}</div>`;
   $('#route-body').innerHTML=h;
 }
@@ -2097,24 +2128,27 @@ function smartPlan(){
     if(x.lunch){ h+=`<div class="drow"><div class="k">🍱 午餐</div><div class="v">${x.arrive}–${x.leave} 休息</div></div>`; return; }
     idx++;
     const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
-    const onclick=x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`;
-    h+=`<div class="item" onclick="${onclick}">
-      <div class="avatar" style="background:${colorFor(x.name)}">${idx}</div>
+    const isCustom=x.kind==='custom';
+    const onclick=isCustom?'':(x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`);
+    const dwLabel=isCustom?'預計':'抵達・拜訪';
+    h+=`<div class="item"${onclick?` onclick="${onclick}"`:''} style="${isCustom?'background:var(--amber-l)':''}">
+      <div class="avatar" style="background:${isCustom?'#7a6a3a':colorFor(x.name)}">${idx}</div>
       <div class="body">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
           <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
-          <span style="font-size:12.5px;color:var(--muted)">抵達・拜訪 ${x._dur} 分</span></div>
+          <span style="font-size:12.5px;color:var(--muted)">${dwLabel} ${x._dur} 分</span></div>
         <div style="font-size:11.5px;color:var(--muted);margin-top:1px">時段 ${x.arrive}–${x.leave}</div>
-        <div class="nm" style="margin-top:4px">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
-        <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
-        <div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div></div>
-      <div class="meta"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
+        <div class="nm" style="margin-top:4px">${isCustom?'📍 ':''}${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
+        ${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}
+        ${isCustom?`<div class="tagline" style="margin-top:4px"><span class="badge">其他行程</span></div>`:`<div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div>`}</div>
+      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
     </div>`;
   });
   h+=`</div>`;
-  if(stops.length){
-    const wp=stops.map(x=>encodeURIComponent(x.address)).join('%7C');
-    const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||stops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||stops[stops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
+  const mapStops=stops.filter(x=>x.address);
+  if(mapStops.length){
+    const wp=mapStops.map(x=>encodeURIComponent(x.address)).join('%7C');
+    const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||mapStops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||mapStops[mapStops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
     h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
   }
   h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後；時間為估算（站間車程約 10–35 分），地圖內可再拖曳微調。</div>`;
