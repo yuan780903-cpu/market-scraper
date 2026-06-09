@@ -89,6 +89,8 @@
       <div class="toolbar">
         <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
         <button class="btn btn-ghost" id="stampBtn" onclick="toggleStamp()">✓ 蓋發票章</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('stampFile').click()">選擇發票章照片</button>
+        <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="uploadStamp(event)">
         <button class="btn btn-ghost" onclick="saveDraft()">儲存草稿</button>
         <button class="btn btn-ghost" onclick="loadDraft()">讀取草稿</button>
         <button class="btn btn-ghost" onclick="clearCustomer()">清空客戶</button>
@@ -281,43 +283,30 @@ function render(){
   scaleSheet();
 }
 
-/* ----- 發票專用章（仿照截圖：橄欖球形=上下凸弧+左右直線+雙框）----- */
-// 外框 path：上弧 + 右直線 + 下弧 + 左直線（橄欖球/公文章形狀）
-// viewBox 300x220 — 公司名沿上弧排列、地址沿下弧排列、中央 6 行
-const INVOICE_STAMP_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 220" style="font-family:'PMingLiU','Songti TC','Times New Roman',serif">
-  <defs>
-    <!-- 上弧外緣（給公司名 textPath 跟著走，比外框稍小些確保文字在邊框內） -->
-    <path id="topArc" d="M 32 78 A 145 70 0 0 1 268 78" fill="none"/>
-    <!-- 下弧外緣（給地址 textPath） -->
-    <path id="botArc" d="M 32 142 A 145 70 0 0 0 268 142" fill="none"/>
-  </defs>
-  <!-- 外框：橄欖球形（上下凸弧 + 左右短直線）-->
-  <path d="M 30 60 A 200 80 0 0 1 270 60 L 270 160 A 200 80 0 0 1 30 160 Z"
-        fill="none" stroke="#1a3a8c" stroke-width="3"/>
-  <!-- 內框（細，距外框 4px）-->
-  <path d="M 35 64 A 195 75 0 0 1 265 64 L 265 156 A 195 75 0 0 1 35 156 Z"
-        fill="none" stroke="#1a3a8c" stroke-width="0.7"/>
-  <!-- 上弧：公司名 -->
-  <text font-weight="bold" font-size="16" fill="#1a3a8c" letter-spacing="3">
-    <textPath href="#topArc" startOffset="50%" text-anchor="middle">大成長城企業股份有限公司</textPath>
-  </text>
-  <!-- 中央 4 行 -->
-  <text x="150" y="92" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a3a8c" letter-spacing="3">統一發票專用章</text>
-  <text x="150" y="111" text-anchor="middle" font-size="12" fill="#1a3a8c" letter-spacing="2">統一編號(1)</text>
-  <text x="150" y="142" text-anchor="middle" font-size="26" font-weight="900" fill="#1a3a8c" letter-spacing="2">❀73008303❀</text>
-  <text x="150" y="164" text-anchor="middle" font-size="13" fill="#1a3a8c" letter-spacing="1">負責人：韓家宇</text>
-  <text x="150" y="182" text-anchor="middle" font-size="12" fill="#1a3a8c">TEL:2531111-10</text>
-  <!-- 下弧：地址 -->
-  <text font-weight="bold" font-size="12" fill="#1a3a8c" letter-spacing="1">
-    <textPath href="#botArc" startOffset="50%" text-anchor="middle">台南市永康區蔦松二街3號</textPath>
-  </text>
-</svg>`;
-
+/* ----- 發票專用章（用上傳的照片，只存本機 localStorage 不上雲）----- */
+function getStampImg(){ return localStorage.getItem("ss_stamp_img"); }
+function uploadStamp(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    localStorage.setItem("ss_stamp_img", r.result);
+    // 上傳後自動開啟蓋章
+    localStorage.setItem("ss_stamp_on", "1");
+    const btn = document.getElementById("stampBtn");
+    if(btn) btn.textContent = "✗ 撤章";
+    render();
+    alert("✓ 發票章已上傳並蓋上預覽（圖片只存本機瀏覽器，不上雲）");
+  };
+  r.readAsDataURL(f);
+  e.target.value = "";
+}
 function stampHtml(){
-  return localStorage.getItem("ss_stamp_on") === "1"
-    ? `<div class="stamp">${INVOICE_STAMP_SVG}</div>`
-    : "";
+  if(localStorage.getItem("ss_stamp_on") !== "1") return "";
+  const img = getStampImg();
+  if(!img){
+    return `<div class="stamp" style="opacity:1;transform:none;color:#c62828;font-size:13px;padding:14px;border:1px dashed #c62828;border-radius:8px;width:auto;text-align:center">尚未上傳發票章照片<br>請按「選擇發票章照片」</div>`;
+  }
+  return `<div class="stamp"><img src="${img}" alt="發票章" style="display:block;width:100%;height:auto"></div>`;
 }
 function toggleStamp(){
   const on = localStorage.getItem("ss_stamp_on") !== "1";
@@ -326,7 +315,6 @@ function toggleStamp(){
   if(btn) btn.textContent = on ? "✗ 撤章" : "✓ 蓋發票章";
   render();
 }
-// 載入時初始化按鈕文字
 document.addEventListener("DOMContentLoaded", ()=>{
   const btn = document.getElementById("stampBtn");
   if(btn && localStorage.getItem("ss_stamp_on") === "1") btn.textContent = "✗ 撤章";
@@ -406,15 +394,21 @@ function savePDF(){
   const prevZ = sheet.style.zoom;
   const prevT = sheet.style.transform;
   const prevMH = sheet.style.minHeight;
+  const prevBorder = sheet.style.border;
+  const prevBoxShadow = sheet.style.boxShadow;
   sheet.style.width = PRINT_W_PX + "px";
   sheet.style.zoom = "";
   sheet.style.transform = "none";
   sheet.style.minHeight = "auto";
+  sheet.style.border = "none";         // PDF 不要邊框
+  sheet.style.boxShadow = "none";
   const restore = ()=>{
     sheet.style.width = prevW;
     sheet.style.zoom = prevZ;
     sheet.style.transform = prevT;
     sheet.style.minHeight = prevMH;
+    sheet.style.border = prevBorder;
+    sheet.style.boxShadow = prevBoxShadow;
     scaleSheet();
   };
 
