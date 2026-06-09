@@ -58,13 +58,24 @@ const LOC_TYPES = ['住家','下貨位置','倉庫','田區','其他'];
 const REGION_ORDER = '基隆 臺北 新北 桃園 新竹 苗栗 臺中 彰化 南投 雲林 嘉義 臺南 高雄 屏東 宜蘭 花蓮 臺東 澎湖 金門 連江'.split(' ');
 const normR = s => (s||'').replace(/台/g,'臺');
 function regionsSorted(){
-  const set=[...new Set(SEED.map(p=>p.region).filter(Boolean))];
+  // 只保留有效的台灣縣市（過濾掉名單裡誤填的數字、「全國」等雜訊）
+  const set=[...new Set(SEED.map(p=>p.region).filter(Boolean))].filter(r=>countyCore(r));
   return set.sort((a,b)=>{
     const ia=REGION_ORDER.findIndex(x=>normR(a).includes(x));
     const ib=REGION_ORDER.findIndex(x=>normR(b).includes(x));
     return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b);
   });
 }
+// 多選區域晶片（不選＝全部）：toggleFn 收到 regionsSorted() 的索引
+function regionMultiHTML(selected, toggleFn){
+  const regs=regionsSorted();
+  if(!regs.length) return `<div class="hint">尚無區域資料</div>`;
+  return `<div class="wdays">${regs.map((r,i)=>`<button type="button" class="chip ${selected.includes(r)?'on':''}" onclick="${toggleFn}(${i})">${esc(r)}</button>`).join('')}</div>`;
+}
+function toggleInArr(arr, r){ if(!r)return; const i=arr.indexOf(r); if(i<0)arr.push(r); else arr.splice(i,1); }
+function toggleSmartRegion(i){ syncSmart(); toggleInArr(smartCfg.f.regions, regionsSorted()[i]); renderRoute(); }
+function toggleWeekRegion(i){ syncWeek(); toggleInArr(weekCfg.regions, regionsSorted()[i]); renderRoute(); }
+function toggleRouteRegion(i){ syncRoute(); toggleInArr(routeCfg.regions, regionsSorted()[i]); renderRoute(); }
 function district(addr){
   if(!addr) return '';
   let s=String(addr).replace(/^[0-9０-９]+\s*/,'');
@@ -1778,7 +1789,7 @@ function importCustomerFile(input){
 
 // ========== 拜訪路線規劃 ==========
 // rules: 多組條件，每組 {status, channel, grade, n}，分別挑選後合併成一條路線
-let routeCfg = {region:'', home:'', start:'08:00', end:'17:00', dwell:40, nl:'', rules:[{status:'',channel:'',grade:'',n:5}], _last:''};
+let routeCfg = {regions:[], home:'', start:'08:00', end:'17:00', dwell:40, nl:'', rules:[{status:'',channel:'',grade:'',n:5}], _last:''};
 const ROUTE_CHANS = ['農會','合作社','肥料行','有機農戶'];
 // 自然語言→組合：完全離線解析（免費、不外傳）
 const CN_NUM={零:0,一:1,二:2,兩:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9,十:10};
@@ -1798,7 +1809,6 @@ function parseRouteText(raw){
   return out;
 }
 function parseNL(){
-  routeCfg.region=$('#r-region').value;
   const nlEl=$('#r-nl'); routeCfg.nl=nlEl?nlEl.value:'';
   const homeEl=$('#r-home'); if(homeEl)routeCfg.home=homeEl.value.trim();
   const sEl=$('#r-start'); if(sEl)routeCfg.start=sEl.value||'08:00';
@@ -1847,7 +1857,7 @@ let smartCfg = {
   startLoc:'', startTime:'08:00',
   endLoc:'', endTime:'17:00',
   lunchStart:'12:00', lunchEnd:'13:00',
-  f:{ src:'', organic:'', region:'', channel:'', area:'', grade:'' },
+  f:{ src:'', organic:'', regions:[], channel:'', area:'', grade:'' },
   picks:[],   // {key,kind,id,name,channel,grade,address,phone,district,organic,area,dwell,fixed}
   _last:'', _inited:0, _poolOpen:0
 };
@@ -1864,7 +1874,8 @@ function smartGeoIdx(addr){
 function smartTravel(a,b){ if(!a||!b)return 15; const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10; }
 function smartPool(){
   const f=smartCfg.f;
-  const core = f.region ? normR(f.region).replace(/[縣市]$/,'') : '';
+  const regs=f.regions||[];
+  const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
   const exIds=existingProspectIds();
   let pool=[];
   if(f.src!=='prosp'){
@@ -1881,7 +1892,7 @@ function smartPool(){
   }
   return pool.filter(x=>{
     if(!x.address) return false;
-    if(f.region){ const okR=(x.region&&normR(x.region)===normR(f.region))||(core&&normR(x.address).includes(core)); if(!okR)return false; }
+    if(regs.length){ const okR=regs.some(rg=>x.region&&normR(x.region)===normR(rg))||cores.some(core=>normR(x.address).includes(core)); if(!okR)return false; }
     if(f.organic && x.organic!==f.organic) return false;
     if(f.channel && x.channel!==f.channel) return false;
     if(f.grade){ if(f.grade==='none'){ if(x.grade)return false; } else if(x.grade!==f.grade)return false; }
@@ -1901,7 +1912,7 @@ function syncSmart(){
   // filters
   if((v=g('sm-src'))!==undefined) smartCfg.f.src=v;
   if((v=g('sm-organic'))!==undefined) smartCfg.f.organic=v;
-  if((v=g('sm-region'))!==undefined) smartCfg.f.region=v;
+  // 地區改為多選晶片，由 toggleSmartRegion 直接維護 smartCfg.f.regions
   if((v=g('sm-channel'))!==undefined) smartCfg.f.channel=v;
   if((v=g('sm-grade'))!==undefined) smartCfg.f.grade=v;
   if((v=g('sm-area'))!==undefined) smartCfg.f.area=v;
@@ -1940,7 +1951,7 @@ function smartClearPicks(){ smartCfg.picks=[]; smartCfg._last=''; renderRoute();
 function smartTogglePool(){ syncSmart(); smartCfg._poolOpen=smartCfg._poolOpen?0:1; renderRoute(); }
 function renderSmartRoute(){
   const regs=regionsSorted();
-  if(!smartCfg._inited){ smartCfg.f.region = regs.find(r=>normR(r).includes('臺南'))||regs[0]||''; smartCfg._inited=1; }
+  if(!smartCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); smartCfg.f.regions = tn?[tn]:[]; smartCfg._inited=1; }
   const f=smartCfg.f;
   let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與午休。全程本機計算、不外傳。</div>`;
   // 出發 / 回家
@@ -1962,11 +1973,10 @@ function renderSmartRoute(){
         <option value="prosp" ${f.src==='prosp'?'selected':''}>目標客戶</option></select></div>
       <div class="field"><label>有機/非有機</label><select id="sm-organic" onchange="syncSmart();renderRoute()">${orgOpts.map(([k,l])=>`<option value="${k}" ${f.organic===k?'selected':''}>${l}</option>`).join('')}</select></div></div>`;
   h+=`<div class="field-2">
-      <div class="field"><label>地區</label><select id="sm-region" onchange="syncSmart();renderRoute()"><option value="">全部地區</option>${regs.map(r=>`<option value="${esc(r)}" ${f.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
-      <div class="field"><label>通路</label><select id="sm-channel" onchange="syncSmart();renderRoute()"><option value="">全部通路</option>${ROUTE_CHANS.map(c=>`<option value="${c}" ${f.channel===c?'selected':''}>${c}</option>`).join('')}</select></div></div>`;
-  h+=`<div class="field-2">
-      <div class="field"><label>等級</label><select id="sm-grade" onchange="syncSmart();renderRoute()"><option value="">全部等級</option>${GRADES.map(g=>`<option value="${g}" ${f.grade===g?'selected':''}>${g}・${GRADE_LABEL[g]}</option>`).join('')}<option value="none" ${f.grade==='none'?'selected':''}>未分級</option></select></div>
-      <div class="field"><label>面積≥(公頃)</label><input id="sm-area" type="number" inputmode="decimal" value="${esc(f.area)}" placeholder="不限" oninput="smartCfg.f.area=this.value"></div></div>`;
+      <div class="field"><label>通路</label><select id="sm-channel" onchange="syncSmart();renderRoute()"><option value="">全部通路</option>${ROUTE_CHANS.map(c=>`<option value="${c}" ${f.channel===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>等級</label><select id="sm-grade" onchange="syncSmart();renderRoute()"><option value="">全部等級</option>${GRADES.map(g=>`<option value="${g}" ${f.grade===g?'selected':''}>${g}・${GRADE_LABEL[g]}</option>`).join('')}<option value="none" ${f.grade==='none'?'selected':''}>未分級</option></select></div></div>`;
+  h+=`<div class="field"><label>面積≥(公頃)</label><input id="sm-area" type="number" inputmode="decimal" value="${esc(f.area)}" placeholder="不限" oninput="smartCfg.f.area=this.value"></div>`;
+  h+=`<div class="field"><label>地區（可複選，不選＝全部）</label>${regionMultiHTML(f.regions,'toggleSmartRegion')}</div>`;
   const pool=smartPool();
   const pickedKeys=new Set(smartCfg.picks.map(p=>p.key));
   h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px">
@@ -2023,7 +2033,7 @@ function smartPlan(){
   const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(((m%60)+60)%60)).padStart(2,'0')}`;
   const s=toMin(smartCfg.startTime), e=toMin(smartCfg.endTime);
   const ls=toMin(smartCfg.lunchStart), le=toMin(smartCfg.lunchEnd);
-  const startLoc=smartCfg.startLoc||smartCfg.f.region||'';
+  const startLoc=smartCfg.startLoc||(smartCfg.f.regions&&smartCfg.f.regions[0])||'';
   const endLoc=smartCfg.endLoc||startLoc;
   const dwellOf=p=>Math.max(5,p.dwell||SMART_DWELL);
   // 地理就近排序（單向掃描）：自由客戶依地理索引排，方向由出發位置決定
@@ -2112,25 +2122,25 @@ function smartPlan(){
 }
 
 // ========== 每週拜訪智慧排程 ==========
-let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, region:'', mode:'all', _last:'' };
+let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, regions:[], mode:'all', _last:'' };
 const WD_NAME = ['日','一','二','三','四','五','六'];
 function thisMonday(){ const d=new Date(); const w=d.getDay(); d.setDate(d.getDate()+(w===0?-6:1-w)); return d.toISOString().slice(0,10); }
 function gradeFreq(g){ return GRADE_FREQ[g]||null; }
 function syncWeek(){
   const s=$('#w-start'); if(s)weekCfg.start=s.value||weekCfg.start;
   const m=$('#w-max'); if(m)weekCfg.maxPerDay=Math.max(1,Math.min(12,+m.value||6));
-  const r=$('#w-region'); if(r)weekCfg.region=r.value;
+  // 區域改為多選晶片，由 toggleWeekRegion 直接維護 weekCfg.regions
   const md=$('#w-mode'); if(md)weekCfg.mode=md.value;
 }
 function toggleWeekDay(wd){ syncWeek(); const i=weekCfg.days.indexOf(wd); if(i<0)weekCfg.days.push(wd); else weekCfg.days.splice(i,1); renderRoute(); }
 function renderWeekRoute(){
   const regs = regionsSorted();
-  if(weekCfg.region===''&&weekCfg._inited!==1){ weekCfg.region = regs.find(r=>normR(r).includes('臺南')) || ''; weekCfg._inited=1; }
+  if(weekCfg._inited!==1){ const tn=regs.find(r=>normR(r).includes('臺南')); weekCfg.regions = tn?[tn]:[]; weekCfg._inited=1; }
   if(!weekCfg.start) weekCfg.start=thisMonday();
   let h=`<div class="info">系統自動收集「到期 / 逾期」要回訪的客戶與名單，加上依分級頻率該回訪的對象，按鄉鎮就近分配到本週各出訪日。全程本機計算、不外傳。</div>`;
   h+=`<div class="card">`;
   h+=`<div class="field"><label>本週起始日（週一）</label><input type="date" id="w-start" value="${weekCfg.start}"></div>`;
-  h+=`<div class="field"><label>區域（限定責任區，留空＝全部）</label><select id="w-region"><option value="">全部區域</option>${regs.map(r=>`<option value="${esc(r)}" ${r===weekCfg.region?'selected':''}>${esc(r)}</option>`).join('')}</select></div>`;
+  h+=`<div class="field"><label>區域（可複選・限定責任區，不選＝全部）</label>${regionMultiHTML(weekCfg.regions,'toggleWeekRegion')}</div>`;
   h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
   h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
       <div class="field"><label>排程範圍</label><select id="w-mode"><option value="all" ${weekCfg.mode==='all'?'selected':''}>到期＋依分級建議(推薦)</option><option value="due" ${weekCfg.mode==='due'?'selected':''}>只排已設下次拜訪日</option></select></div></div>`;
@@ -2139,8 +2149,9 @@ function renderWeekRoute(){
   $('#route-body').innerHTML=h;
 }
 // 收集本週該拜訪的對象（客戶＋有排程/分級的名單）
-function collectVisitTargets(region, weekEnd, includeGrade){
-  const core = region ? normR(region).replace(/[縣市]$/,'') : '';
+function collectVisitTargets(regions, weekEnd, includeGrade){
+  const regs = Array.isArray(regions) ? regions : (regions?[regions]:[]);
+  const cores = regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
   const exIds = existingProspectIds();
   const today = todayStr();
   const list=[];
@@ -2155,12 +2166,12 @@ function collectVisitTargets(region, weekEnd, includeGrade){
     list.push(Object.assign({}, base, {next, sort:d, overdue:d<0, reason}));
   };
   customers.forEach(c=>{
-    if(core && !normR(c.address||'').includes(core)) return;
+    if(cores.length && !cores.some(core=>normR(c.address||'').includes(core))) return;
     push({next:c.next,last:c.last}, {kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type||'其他',status:'existing',grade:c.grade||'',address:c.address||'',phone:c.phone||'',district:district(c.address)});
   });
   SEED.forEach(p=>{
     const o=overlay[p.id]; if(!o) return;   // 名單沒有任何排程才不掃，避免 3547 筆全進來
-    if(core && !(normR(p.region||'')===normR(region) || normR(p.address||'').includes(core))) return;
+    if(cores.length && !(regs.some(rg=>normR(p.region||'')===normR(rg)) || cores.some(core=>normR(p.address||'').includes(core)))) return;
     push({next:o.next,last:o.last}, {kind:'prosp',id:p.id,name:p.name,channel:p.category||'其他',status:exIds.has(p.id)?'existing':'cold',grade:o.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address)});
   });
   const seen=new Set();
@@ -2174,7 +2185,7 @@ function planWeek(){
   if(!days.length){ toast('請至少選一個出訪日'); return; }
   const weekEnd=addDays(start,6);
   const includeGrade=weekCfg.mode==='all';
-  const targets=collectVisitTargets(weekCfg.region,weekEnd,includeGrade);
+  const targets=collectVisitTargets(weekCfg.regions,weekEnd,includeGrade);
   if(!targets.length){
     weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或建議拜訪的對象。<br>到「我的客戶」或「名單」設定分級或下次拜訪日，就會自動排入。</div>`;
     resEl().innerHTML=weekCfg._last; return;
@@ -2213,7 +2224,7 @@ function planWeek(){
     h+=`</div>`;
     const addrs=b.items.filter(x=>x.address).map(x=>encodeURIComponent(x.address));
     if(addrs.length){
-      const origin=weekCfg.region||'';
+      const origin=(weekCfg.regions&&weekCfg.regions[0])||'';
       const url=`https://www.google.com/maps/dir/?api=1&${origin?`origin=${encodeURIComponent(origin)}&`:''}destination=${addrs[addrs.length-1]}&travelmode=driving&waypoints=${addrs.slice(0,-1).join('%7C')}`;
       h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`;
     }
@@ -2225,10 +2236,11 @@ function planWeek(){
 
 function renderCustomRoute(){
   const regs = regionsSorted();
-  if(!routeCfg.region) routeCfg.region = regs.find(r=>normR(r).includes('臺南')) || regs[0] || '';
+  if(!Array.isArray(routeCfg.regions)) routeCfg.regions=[];
+  if(!routeCfg.regions.length){ const tn=regs.find(r=>normR(r).includes('臺南'))||regs[0]; if(tn)routeCfg.regions=[tn]; }
   if(!routeCfg.rules||!routeCfg.rules.length) routeCfg.rules=[{status:'',channel:'',grade:'',n:5}];
   let h=`<div class="info">可加多組條件(例如:陌生×肥料行 2 家 + 既有×農會 1 家),系統會分別挑選再合併排成一條順路路線。資料皆在本機計算。</div>`;
-  h+=`<div class="card"><div class="field"><label>區域</label><select id="r-region">${regs.map(r=>`<option ${r===routeCfg.region?'selected':''}>${esc(r)}</option>`).join('')}</select></div></div>`;
+  h+=`<div class="card"><div class="field"><label>區域（可複選）</label>${regionMultiHTML(routeCfg.regions,'toggleRouteRegion')}</div></div>`;
   h+=`<div class="card">`;
   h+=`<div class="field"><label>🤖 智慧輸入（用打的，自動拆成下面的組合）</label>
       <input id="r-nl" value="${esc(routeCfg.nl)}" placeholder="例如：陌生農會1 陌生合作社2 陌生直接農民3 既有經銷商2"></div>`;
@@ -2257,7 +2269,8 @@ function readRules(){
   }));
 }
 function syncRoute(){
-  routeCfg.region=$('#r-region').value;
+  // 區域改為多選晶片，由 toggleRouteRegion 直接維護 routeCfg.regions
+  if(!Array.isArray(routeCfg.regions)) routeCfg.regions=[];
   const nlEl=$('#r-nl'); if(nlEl) routeCfg.nl=nlEl.value;
   routeCfg.home=$('#r-home').value.trim();
   routeCfg.start=$('#r-start').value||'08:00';
@@ -2269,12 +2282,13 @@ function addRule(){ syncRoute(); routeCfg.rules.push({status:'',channel:'',grade
 function removeRule(i){ syncRoute(); routeCfg.rules.splice(i,1); if(!routeCfg.rules.length)routeCfg.rules=[{status:'',channel:'',grade:'',n:5}]; renderRoute(); }
 function planRoute(){
   syncRoute();
-  const core=normR(routeCfg.region).replace(/[縣市]$/,'');
+  const regs=routeCfg.regions||[];
+  const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
   const exIds=existingProspectIds();
   let pool=[];
-  customers.forEach(c=>{ if(!c.address)return; if(normR(c.address).includes(core))
+  customers.forEach(c=>{ if(!c.address)return; if(!cores.length || cores.some(core=>normR(c.address).includes(core)))
     pool.push({kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type,status:'existing',grade:c.grade||'',address:c.address,phone:c.phone,district:district(c.address),due:dueInfo(c)}); });
-  SEED.forEach(p=>{ if(!p.address)return; if(normR(p.region)===normR(routeCfg.region)||normR(p.address).includes(core))
+  SEED.forEach(p=>{ if(!p.address)return; if(!cores.length || regs.some(rg=>normR(p.region)===normR(rg)) || cores.some(core=>normR(p.address).includes(core)))
     pool.push({kind:'prosp',id:p.id,name:p.name,channel:p.category,status:exIds.has(p.id)?'existing':'cold',grade:'',address:p.address,phone:p.phone,district:district(p.address),due:dueInfo(overlay[p.id])}); });
   const dseen=new Set(); pool=pool.filter(x=>{const k=x.name+x.address; if(dseen.has(k))return false; dseen.add(k); return true;});
   const byDue=(a,b)=>((a.due?a.due.sort:999)-(b.due?b.due.sort:999));
@@ -2287,7 +2301,7 @@ function planRoute(){
       .sort(byDue).slice(0,r.n)
       .forEach(x=>{ used.add(x.name+x.address); pick.push(x); });
   });
-  if(!pick.length){ routeCfg._last=`<div class="card empty"><div class="big">📍</div>「${esc(routeCfg.region)}」找不到符合組合條件的對象。<br>放寬條件，或換個區域再試。</div>`; $('#route-result').innerHTML=routeCfg._last; return; }
+  if(!pick.length){ routeCfg._last=`<div class="card empty"><div class="big">📍</div>「${esc(regs.join('、')||'所選區域')}」找不到符合組合條件的對象。<br>放寬條件，或換個區域再試。</div>`; $('#route-result').innerHTML=routeCfg._last; return; }
   pick.sort((a,b)=>(a.district||'').localeCompare(b.district||'','zh-Hant'));
 
   const n=pick.length, toMin=t=>{const[a,b]=t.split(':').map(Number);return a*60+b;};
@@ -2304,7 +2318,7 @@ function planRoute(){
   let h=`<div class="sec-title"><span class="bar"></span>建議路線(${n} 家)</div>`;
   if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
   h+=`<div class="card">`;
-  h+=drow('區域', esc(routeCfg.region));
+  h+=drow('區域', esc(regs.join('、')||'全部'));
   const stMap={'':'全部',cold:'陌生',existing:'既有'};
   const ruleDesc=routeCfg.rules.map(r=>`${stMap[r.status]}・${r.channel||'全通路'}${r.grade?'・'+r.grade+'級':''} ×${r.n}`).join('　＋　');
   h+=drow('組合', esc(ruleDesc)+`（共要 ${routeCfg.rules.reduce((a,r)=>a+r.n,0)} 家，實排 ${n} 家）`);
@@ -2323,7 +2337,7 @@ function planRoute(){
     </div>`;
   });
   h+=`</div>`;
-  const origin=routeCfg.home||routeCfg.region;
+  const origin=routeCfg.home||regs[0]||'';
   const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(origin)}&travelmode=driving&waypoints=${pick.map(x=>encodeURIComponent(x.address)).join('%7C')}`;
   h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
   h+=`<div class="tagline" style="margin:8px 2px 0">時間為估算(午休約60分、各站車程約${travel}分);地圖會依實際道路顯示,順序可在地圖中拖曳微調。</div>`;
