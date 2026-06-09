@@ -1178,13 +1178,12 @@ function custGroup(id,key){
     h+=field('戶籍地址','f-regAddress',c.regAddress);
     h+=`</div>`;
     h+=`<div class="card"><div class="grp-sub">🚚 交易 / 配送</div>`;
-    h+=field('交易條件','f-terms',c.terms,'text',false,'例如 貨到付款');
     h+=checkPeriodHTML(c.checkPeriod||'');
     h+=field('額度（萬元）','f-creditLimit',c.creditLimit,'number',false,'例如 50');
+    h+=mortgageEditorHTML(c);
     h+=`<div id="reg-wrap">`+profileRegionBlock(c)+`</div>`;
     h+=locEditorHTML(getMapLocs(c));
     h+=field('其他條件','f-conditions',c.conditions);
-    h+=field('目前使用肥料','f-currentFert',c.currentFert);
     h+=field('運送車輛大小','f-truck',c.truck,'text',false,'例如 3.5噸 / 小貨車');
     h+=field('送貨時間','f-deliveryTime',c.deliveryTime,'text',false,'例如 週二上午');
     h+=`</div>`;
@@ -1220,8 +1219,9 @@ function saveCustProfile(id){
   const type=$('#f-type').value;
   Object.assign(c,{ name, type, org:g('f-org'), sysno:g('f-sysno'), phone:g('f-phone'), contact:g('f-contact'),
     address:g('f-address'), filedDate:g('f-filedDate'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'), regAddress:g('f-regAddress'),
-    terms:g('f-terms'), checkPeriod:readCheckPeriod(), creditLimit:g('f-creditLimit'), conditions:g('f-conditions'),
-    currentFert:g('f-currentFert'), truck:g('f-truck'), deliveryTime:g('f-deliveryTime'), notes:g('f-notes') });
+    checkPeriod:readCheckPeriod(), creditLimit:g('f-creditLimit'), conditions:g('f-conditions'),
+    mortgageSet:($('#f-mortset')?$('#f-mortset').value:''), mortgageType:($('#f-morttype')?$('#f-morttype').value:''), mortgageAmount:g('f-mortamt'),
+    truck:g('f-truck'), deliveryTime:g('f-deliveryTime'), notes:g('f-notes') });
   const regs=readRegionChips(); if(type==='經銷商') c.salesRegions=regs; else if(type==='直接農民') c.fertRegions=regs;
   c.mapLocations=readMapLocs();
   if(type!=='經銷商'){
@@ -1249,7 +1249,7 @@ function buildFullProfile(c){
   const regs = c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[];
   if(regs.length) addd(c.type==='經銷商'?'經銷區域':'使用肥料區域', regs.join('、'));
   (c.mapLocations||[]).forEach((l,i)=> d.push([`位置${i+1}（${l.type}）`, l.url]));
-  addd('交易條件',c.terms); addd('其他條件',c.conditions); addd('目前用肥',c.currentFert);
+  addd('抵押設定',mortgageSummary(c)); addd('其他條件',c.conditions);
   addd('運送車輛',c.truck); addd('送貨時間',c.deliveryTime);
   secs.push({title:'交易 / 配送', rows:d});
   if(c.type!=='經銷商'){
@@ -1403,20 +1403,32 @@ function rivalText(r){ return [`${r.form||''}${r.price?'・$'+r.price:''}`, r.fr
 function getSalesRegions(c){ if(!Array.isArray(c.salesRegions)){ c.salesRegions = c.salesRegion ? [c.salesRegion] : []; } return c.salesRegions; }
 function getFertRegions(c){ if(!Array.isArray(c.fertRegions)){ c.fertRegions = (c.fertLocation && countyCore(c.fertLocation)) ? [c.fertLocation] : []; } return c.fertRegions; }
 function townsOfCounty(county){ if(!window.TW_MAP||!county) return []; const list=townsByCore()[countyCore(county)]||[]; return list.map(x=>x.raw).slice().sort((a,b)=>a.localeCompare(b,'zh-Hant')); }
-function regionChipHTML(r){ return `<span class="reg-chip" data-r="${esc(r)}">📍 ${esc(r)}<button type="button" onclick="this.parentNode.remove()">✕</button></span>`; }
+function regionChipHTML(r){ const ic=(r==='線上通路')?'🌐':'📍'; return `<span class="reg-chip" data-r="${esc(r)}">${ic} ${esc(r)}<button type="button" onclick="this.parentNode.remove()">✕</button></span>`; }
 function regionEditorHTML(label, regions, hint){
   const cn=countyNames();
   let h=`<div class="field"><label>${label}（縣市／鄉鎮・可複選）</label>`;
   if(hint) h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;margin:-2px 0 6px">${hint}</div>`;
   h+=`<div id="reg-chips" style="display:flex;flex-wrap:wrap;margin-bottom:${(regions&&regions.length)?'7px':'0'}">${(regions||[]).map(regionChipHTML).join('')}</div>`;
-  h+=`<div class="field-2"><div class="field" style="margin:0"><select id="reg-county" onchange="onRegCountyChange()"><option value="">選縣市…</option>${cn.map(n=>`<option>${esc(n)}</option>`).join('')}</select></div>`;
+  h+=`<div class="field-2"><div class="field" style="margin:0"><select id="reg-county" onchange="onRegCountyChange()"><option value="">選縣市…</option><option value="線上通路">🌐 線上通路</option>${cn.map(n=>`<option>${esc(n)}</option>`).join('')}</select></div>`;
   h+=`<div class="field" style="margin:0"><select id="reg-town"><option value="">全縣市（不分鄉鎮）</option></select></div></div>`;
   h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addRegionChip()">＋ 新增區域</button></div>`;
   return h;
 }
-function onRegCountyChange(){ const c=$('#reg-county').value, t=$('#reg-town'); const tw=c?townsOfCounty(c):[]; t.innerHTML='<option value="">全縣市（不分鄉鎮）</option>'+tw.map(x=>`<option>${esc(x)}</option>`).join(''); }
-function addRegionChip(){ const c=$('#reg-county').value; if(!c){ toast('請先選縣市'); return; } const tw=$('#reg-town').value; const r=tw?`${c} ${tw}`:c; const box=$('#reg-chips'); if([...box.querySelectorAll('.reg-chip')].some(el=>el.dataset.r===r)){ toast('已加入此區域'); return; } box.style.marginBottom='7px'; box.insertAdjacentHTML('beforeend', regionChipHTML(r)); $('#reg-county').value=''; $('#reg-town').innerHTML='<option value="">全縣市（不分鄉鎮）</option>'; }
+function onRegCountyChange(){ const c=$('#reg-county').value, t=$('#reg-town'); if(c==='線上通路'){ t.innerHTML='<option value="">（線上通路免選鄉鎮）</option>'; t.disabled=true; return; } t.disabled=false; const tw=c?townsOfCounty(c):[]; t.innerHTML='<option value="">全縣市（不分鄉鎮）</option>'+tw.map(x=>`<option>${esc(x)}</option>`).join(''); }
+function addRegionChip(){ const c=$('#reg-county').value; if(!c){ toast('請先選縣市'); return; } const tw=$('#reg-town').value; const r=(c==='線上通路')?'線上通路':(tw?`${c} ${tw}`:c); const box=$('#reg-chips'); if([...box.querySelectorAll('.reg-chip')].some(el=>el.dataset.r===r)){ toast('已加入此區域'); return; } box.style.marginBottom='7px'; box.insertAdjacentHTML('beforeend', regionChipHTML(r)); $('#reg-county').value=''; const t=$('#reg-town'); t.disabled=false; t.innerHTML='<option value="">全縣市（不分鄉鎮）</option>'; }
 function readRegionChips(){ const box=$('#reg-chips'); if(!box) return []; return [...box.querySelectorAll('.reg-chip')].map(el=>el.dataset.r); }
+
+// ---------- 抵押設定（取代原「交易條件」，下拉為主）----------
+const MORTGAGE_SET = ['有設定','無設定'];
+const MORTGAGE_TYPE = ['動產','不動產'];
+function mortgageEditorHTML(c){
+  const set=c.mortgageSet||'', type=c.mortgageType||'', amt=c.mortgageAmount||'';
+  let h=`<div class="field"><label>有無設定抵押</label><select id="f-mortset"><option value="" ${!set?'selected':''}>未設定</option>${MORTGAGE_SET.map(o=>`<option ${set===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+  h+=`<div class="field-2"><div class="field"><label>動產 / 不動產</label><select id="f-morttype"><option value="" ${!type?'selected':''}>未選</option>${MORTGAGE_TYPE.map(o=>`<option ${type===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+  h+=`<div class="field"><label>金額（萬元）</label><input id="f-mortamt" type="number" inputmode="decimal" value="${esc(amt)}" placeholder="例如 300"></div></div>`;
+  return h;
+}
+function mortgageSummary(c){ const set=c.mortgageSet||''; if(!set) return ''; if(set==='無設定') return '無設定抵押'; const parts=[c.mortgageType, c.mortgageAmount?c.mortgageAmount+' 萬':''].filter(Boolean); return '有設定抵押'+(parts.length?'（'+parts.join('・')+'）':''); }
 
 // ---------- 位置資訊（住家 / 下貨位置 + Google 地圖網址，可多筆）----------
 function getMapLocs(c){ if(!Array.isArray(c.mapLocations)) c.mapLocations=[]; return c.mapLocations; }
@@ -1500,12 +1512,11 @@ function editCustomer(c, isNew){
     <div id="rival-rows">${(c.rivals||[]).map(rivalRowHTML).join('')}</div>
     <div class="more" style="margin-top:8px" onclick="addRivalRow()">＋ 新增競品肥料</div></fieldset>`;
   h+=`<fieldset class="fset"><legend>交易條件</legend>`;
-  h+=field('交易條件','f-terms',c.terms,'text',false,'例如 貨到付款');
   h+=checkPeriodHTML(c.checkPeriod);
   h+=field('額度（萬元）','f-creditLimit',c.creditLimit,'number',false,'例如 50');
+  h+=mortgageEditorHTML(c);
   h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;margin:2px 0 6px">經銷區域（經銷商）／使用肥料區域（直接農民）請到「交易 / 配送」卡片用縣市鄉鎮下拉設定。</div>`;
   h+=field('其他條件','f-conditions',c.conditions);
-  h+=field('目前使用肥料','f-currentFert',c.currentFert);
   h+=`</fieldset>`;
   h+=`<fieldset class="fset"><legend>物流配送</legend>`;
   h+=field('運送車輛大小','f-truck',c.truck,'text',false,'例如 3.5噸 / 小貨車');
@@ -1530,8 +1541,9 @@ function saveCustomer(id, isAdd){
   const g=i=>$('#'+i).value.trim();
   Object.assign(base,{ id, name, type:$('#f-type').value, org:g('f-org'), sysno:g('f-sysno'), phone:g('f-phone'), contact:g('f-contact'),
     address:g('f-address'), filedDate:g('f-filedDate'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'),
-    regAddress:g('f-regAddress'), terms:g('f-terms'), checkPeriod:readCheckPeriod(), conditions:g('f-conditions'),
-    currentFert:g('f-currentFert'), truck:g('f-truck'), deliveryTime:g('f-deliveryTime'),
+    regAddress:g('f-regAddress'), checkPeriod:readCheckPeriod(), conditions:g('f-conditions'),
+    mortgageSet:($('#f-mortset')?$('#f-mortset').value:''), mortgageType:($('#f-morttype')?$('#f-morttype').value:''), mortgageAmount:g('f-mortamt'),
+    truck:g('f-truck'), deliveryTime:g('f-deliveryTime'),
     creditLimit:g('f-creditLimit'),
     grade:$('#f-grade').value, notes:g('f-notes'), products:readProducts(), rivals:readRivals() });
   const freq=$('#f-freq').value; base.freq=freq?+freq:(base.grade?GRADE_FREQ[base.grade]:null);
@@ -1613,7 +1625,7 @@ function exportJSON(){
   toast('已匯出備份');
 }
 function exportCSV(){
-  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['plantArea','種植面積'],['crops','作物類別'],['fertTons','年用肥噸數'],['fertMonths','用肥月份'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['mapLocations','位置資訊'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
+  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['mortgageSet','有無設定抵押'],['mortgageType','抵押動產/不動產'],['mortgageAmount','抵押金額(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['plantArea','種植面積'],['crops','作物類別'],['fertTons','年用肥噸數'],['fertMonths','用肥月份'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['truck','運送車輛'],['deliveryTime','送貨時間'],['mapLocations','位置資訊'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
   const head=cols.map(c=>c[1]).join(',');
   const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='salesRegions'||k==='fertRegions'||k==='crops') return (c[k]||[]).join('、'); if(k==='fertMonths') return (c.fertMonths||[]).map(m=>m+'月').join('、'); if(k==='mapLocations') return (c.mapLocations||[]).map(l=>`${l.type}:${l.url}`).join(' / '); if(k==='plantArea') return c.plantArea?c.plantArea+(c.plantAreaUnit||'公頃'):''; if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
   const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
