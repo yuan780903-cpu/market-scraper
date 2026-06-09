@@ -145,12 +145,12 @@ function weakestTowns(st, limit){
 }
 // 從儀表板跳到地圖並聚焦
 function gotoMapCounty(region){
-  go('map');
   if(window.TW_MAP){
     const core=countyCore(region);
     const key=Object.keys(window.TW_MAP.counties).find(k=>countyCore(k)===core);
-    if(key) mapSelectCounty(key);
+    mapState.counties=key?[key]:[]; mapState.town=-1;
   }
+  go('map');
 }
 function gotoMapTown(i){ go('map'); mapTapTown(i); }
 
@@ -178,7 +178,7 @@ const PAGE_META = {
   settings:  {icon:'gear',    code:'LOGI',   title:'設定備份', desc:'軍械補給 ・ 資料備份'}
 };
 function pageHeader(k){ const m=PAGE_META[k]; if(!m) return '';
-  return `<div class="unit-hd"><span class="uh-ic">${milIcon(m.icon)}</span><div class="uh-t"><div class="uh-code">${m.code}</div><div class="uh-title">${esc(m.title)}</div><div class="uh-desc">${esc(m.desc)}</div></div></div>`; }
+  return `<div class="unit-hd"><span class="uh-ic">${milIcon(m.icon)}</span><div class="uh-t"><div class="uh-code">${m.code}</div><div class="uh-title">${esc(m.title)}</div><div class="uh-desc">${esc(m.desc)}</div></div><button class="uh-home" onclick="go('home')">🏠 首頁</button></div>`; }
 // 統一寫入 #view：非首頁自動加上單位抬頭卡，直接重繪也保留
 function viewHTML(html){ $('#view').innerHTML = (tab!=='home' ? pageHeader(tab) : '') + html; }
 
@@ -201,7 +201,8 @@ function renderHome(){
     {tab:'customers', icon:'rifle',   code:'ALLY',   label:'現有客戶', desc:'友軍部隊'},
     {tab:'compete',   icon:'jet',     code:'BOGEY',  label:'競品價格', desc:'敵機偵蒐'},
     {tab:'route',     icon:'tank',    code:'ARMOR',  label:'拜訪路線', desc:'裝甲行軍'},
-    {tab:'report',    icon:'carrier', code:'SITREP', label:'拜訪週報', desc:'航艦戰報'}
+    {tab:'report',    icon:'carrier', code:'SITREP', label:'拜訪週報', desc:'航艦戰報'},
+    {tab:'settings',  icon:'gear',    code:'LOGI',   label:'設定備份', desc:'軍械補給'}
   ];
   let h = `<div class="sec-title"><span class="bar"></span>作戰單位 ・ 指揮中心</div>`;
   h += `<div class="cmd-grid">` + UNITS.map(u=>`
@@ -304,7 +305,7 @@ function itemRow({name,sub,cat,pill,onclick}){
 }
 
 // ========== 戰情地圖 ==========
-let mapState = {countyName:'', town:-1};   // countyName: 地圖縣市名(全島='')；town: 選取鄉鎮 index
+let mapState = {counties:[], town:-1};   // counties: 負責銷售區域(可複選，空=全台灣)；town: 選取鄉鎮 index
 function countyCore(s){ s=normR(s); return REGION_ORDER.find(x=>s.includes(x))||''; }
 // 以官方鄉鎮名清單做權威比對（避免「平鎮區→平鎮」「台西/臺西」等誤判）
 function townsByCore(){
@@ -341,20 +342,24 @@ function penColor(lead,cust){
 function renderMap(){
   if(!window.TW_MAP){ viewHTML('<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'); return; }
   const M=window.TW_MAP, st=computeTownStats();
-  // viewBox：全島或縮放到選定縣市
+  const sel=(mapState.counties||[]).filter(n=>M.counties[n]);
+  // viewBox：全島或縮放到所選負責區域（聯集）
   let vb=M.viewBox;
-  if(mapState.countyName && M.counties[mapState.countyName]){
-    const b=M.counties[mapState.countyName], pad=Math.max(b[2],b[3])*0.08;
-    vb=`${b[0]-pad} ${b[1]-pad} ${b[2]+pad*2} ${b[3]+pad*2}`;
+  if(sel.length){
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    sel.forEach(n=>{ const b=M.counties[n]; minX=Math.min(minX,b[0]); minY=Math.min(minY,b[1]); maxX=Math.max(maxX,b[0]+b[2]); maxY=Math.max(maxY,b[1]+b[3]); });
+    const w=maxX-minX, hh=maxY-minY, pad=Math.max(w,hh)*0.08;
+    vb=`${minX-pad} ${minY-pad} ${w+pad*2} ${hh+pad*2}`;
   }
-  // 縣市下拉
+  // 縣市清單（由北到南）
   const cNames=Object.keys(M.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x)));
+  // 負責銷售區域（可複選）
   let h=`<div class="card" style="padding:12px 13px">
-    <div class="field" style="margin:0"><label>聚焦區域</label>
-    <select onchange="mapSelectCounty(this.value)">
-      <option value="" ${!mapState.countyName?'selected':''}>🌏 全台灣</option>
-      ${cNames.map(n=>`<option value="${esc(n)}" ${mapState.countyName===n?'selected':''}>${esc(n)}</option>`).join('')}
-    </select></div></div>`;
+    <div class="rowsel" style="margin-bottom:6px"><span class="rowsel-l">負責銷售區域</span><span style="font-size:11px;color:var(--muted)">可複選${sel.length?`・已選 ${sel.length}`:''}</span></div>
+    <div class="chips">
+      <button class="chip ${!sel.length?'on':''}" onclick="mapClearCounties()">🌏 全台灣</button>
+      ${cNames.map(n=>`<button class="chip ${sel.includes(n)?'on':''}" onclick="mapToggleCounty('${esc(n)}')">${esc(n)}</button>`).join('')}
+    </div></div>`;
   // 選取鄉鎮資訊卡
   if(mapState.town>=0 && M.towns[mapState.town]){
     const t=M.towns[mapState.town], k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
@@ -377,17 +382,17 @@ function renderMap(){
     <span><i style="background:#52b265"></i>~66%</span>
     <span><i style="background:#2e7d32"></i>67%以上</span>
     <span><i style="background:#eceff1"></i>無名單</span></div>`;
-  // 明細表：全島→各縣市滾算；選定縣市→該縣市各鄉鎮
-  if(!mapState.countyName){
+  // 明細表：未選→各縣市滾算；已選→所選縣市各鄉鎮（聯集）
+  if(!sel.length){
     const roll={};
     M.towns.forEach(t=>{ const k=townKey(t); const r=roll[t.c]=roll[t.c]||{lead:0,cust:0}; r.lead+=st.lead[k]||0; r.cust+=st.cust[k]||0; });
     const rows=cNames.map(n=>({name:n,...roll[n]})).filter(r=>r.lead||r.cust);
-    h+=`<div class="sec-title"><span class="bar"></span>各縣市滲透概況</div><div class="card">`+
-      rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapSelectCounty('${esc(r.name)}')`)).join('')+`</div>`;
+    h+=`<div class="sec-title"><span class="bar"></span>各縣市滲透概況<span style="font-weight:400;font-size:11.5px;color:var(--muted)">（點縣市加入負責區）</span></div><div class="card">`+
+      rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapToggleCounty('${esc(r.name)}')`)).join('')+`</div>`;
   } else {
-    const towns=M.towns.map((t,i)=>({i,t})).filter(o=>o.t.c===mapState.countyName);
-    const rows=towns.map(o=>{ const k=townKey(o.t); return {i:o.i,name:o.t.t,lead:st.lead[k]||0,cust:st.cust[k]||0}; }).filter(r=>r.lead||r.cust);
-    h+=`<div class="sec-title"><span class="bar"></span>${esc(mapState.countyName)} 各鄉鎮（依未開發排序）</div><div class="card">`+
+    const towns=M.towns.map((t,i)=>({i,t})).filter(o=>sel.includes(o.t.c));
+    const rows=towns.map(o=>{ const k=townKey(o.t); return {i:o.i,name:`${o.t.c} ${o.t.t}`,lead:st.lead[k]||0,cust:st.cust[k]||0}; }).filter(r=>r.lead||r.cust);
+    h+=`<div class="sec-title"><span class="bar"></span>負責區域 各鄉鎮（依未開發排序）</div><div class="card">`+
       (rows.length?rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapTapTown(${r.i})`)).join(''):`<div class="tagline">此區尚無名單資料。</div>`)+`</div>`;
   }
   viewHTML(h);
@@ -400,12 +405,9 @@ function mapBarRow(name,lead,cust,onclickFn){
     <div class="mbar"><i style="width:${Math.round(rate*100)}%;background:${col}"></i></div>
     <div class="mnum">客${cust}/名單${lead}・${Math.round(rate*100)}%</div></div>`;
 }
-function mapSelectCounty(n){ mapState.countyName=n; mapState.town=-1; renderMap(); window.scrollTo(0,0); }
-function mapTapTown(i){
-  const t=window.TW_MAP.towns[i]; mapState.town=i;
-  if(t && mapState.countyName!==t.c) mapState.countyName=t.c;   // 點鄉鎮自動聚焦其縣市
-  renderMap(); window.scrollTo(0,0);
-}
+function mapToggleCounty(n){ const a=mapState.counties=mapState.counties||[]; const i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
+function mapClearCounties(){ mapState.counties=[]; mapState.town=-1; renderMap(); window.scrollTo(0,0); }
+function mapTapTown(i){ mapState.town=i; renderMap(); window.scrollTo(0,0); }
 
 // ========== 名單 ==========
 function renderProspects(){

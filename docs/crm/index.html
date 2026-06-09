@@ -98,9 +98,15 @@
   .brand-logo svg{height:38px;width:auto;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
   .brand-txt{display:flex;flex-direction:column;line-height:1.12;flex:1;min-width:0}
   .brand-name{font-size:10.5px;letter-spacing:3px;color:#cdd6a8;font-weight:700}
-  main{padding:14px 14px 86px;max-width:760px;margin:0 auto}
-  /* nav */
-  .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#2b3320;
+  main{padding:14px 14px 28px;max-width:760px;margin:0 auto}
+  /* 回首頁按鈕（取代底部導覽列）*/
+  .uh-home{margin-left:auto;z-index:1;flex:none;display:flex;align-items:center;justify-content:center;gap:5px;
+    background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.30);color:#f4f1e2;
+    border-radius:11px;padding:9px 12px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer}
+  .uh-home:active{transform:scale(.95)}
+  /* nav（已停用，改用首頁卡片導覽）*/
+  .nav{display:none !important}
+  .nav-x{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#2b3320;
     border-top:2px solid #1f2613;display:flex;
     padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.25)}
   .nav button{flex:1;border:0;background:none;padding:8px 1px 10px;font-size:10px;
@@ -199,7 +205,7 @@
   .seg-b.on{background:var(--green);color:#fff;border-color:var(--green)}
   .wdays{display:flex;flex-wrap:wrap;gap:6px}
   .rowsel{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .rowsel-l{font-size:12px;font-weight:700;color:var(--muted);flex:none;width:32px}
+  .rowsel-l{font-size:12px;font-weight:700;color:var(--muted);flex:none;min-width:32px;white-space:nowrap}
   .rowsel .chips{margin-bottom:0;flex:1}
   .regsel{flex:1;border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
   .regsel:focus{outline:none;border-color:var(--green)}
@@ -213,7 +219,7 @@
   .btn-red{background:var(--red-l);color:var(--red)}
   .btn-row{display:flex;gap:9px;margin-top:10px}
   .btn-row .btn{flex:1}
-  .fab{position:fixed;right:18px;bottom:78px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:35;
+  .fab{position:fixed;right:18px;bottom:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:35;
     width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;border:0;font-size:30px;
     box-shadow:0 4px 14px rgba(46,125,50,.45);cursor:pointer;line-height:1}
   /* modal */
@@ -301,8 +307,8 @@
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="prospects.js?v=20260625"></script>
-<script src="map-data.js?v=20260625"></script>
-<script src="app.js?v=20260625"></script>
+<script src="prospects.js?v=20260626"></script>
+<script src="map-data.js?v=20260626"></script>
+<script src="app.js?v=20260626"></script>
 </body>
 </html>
