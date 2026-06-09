@@ -344,19 +344,29 @@ function savePDF(){
   sheet.style.zoom="";
   sheet.style.transform="none";
   sheet.style.minHeight="auto";
-  const W=sheet.offsetWidth;
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
   const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
-  // PDF 永遠用 A4 固定尺寸 (210 × 297 mm)，內容短就下半部留白
-  // margin 14mm 與 @media print 一致；內容超 1 頁 html2pdf 會自動分頁
+  // === A4 標準尺寸（mm）===
+  // 紙張：210 × 297 mm；外距 0（sheet 自身已有 padding 當邊距）
+  // sheet 寬度 794px ≈ 210mm @96dpi，剛好一張 A4 寬
+  // 用 windowWidth=794 強制 html2canvas 用桌面尺寸渲染，
+  // 避免手機 viewport (~390px) 導致 sheet 被擠縮、寬度錯位
   html2pdf().set({
-    margin:[14,14,14,14],
+    margin:0,
     filename:fname,
     image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0},
+    html2canvas:{
+      scale:2,
+      useCORS:true,
+      backgroundColor:"#ffffff",
+      windowWidth:794,
+      width:794,
+      scrollX:0,
+      scrollY:0,
+    },
     jsPDF:{unit:"mm", format:"a4", orientation:"portrait"},
-    pagebreak:{mode:["css","legacy"]}
+    pagebreak:{mode:["css","legacy"], avoid:"tr"}
   }).from(sheet).toPdf().get("pdf").then(function(pdf){
     restore();
     if(inApp){
