@@ -928,7 +928,8 @@ function renderCustomers(){
           const di=dueInfo(c);
           const gtag=c.grade?`<span class="badge grade-${c.grade}">${c.grade}</span>`:'';
           const otag=c.org?`<span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:'';
-          const pill=(di?`<span class="badge ${di.cls}">${di.txt}</span>`:'')+gtag+otag;
+          const itag=c.inactive?`<span class="badge" style="background:#9a9a8a;color:#fff">⏸️ 停用</span>`:'';
+          const pill=(c.inactive?'':(di?`<span class="badge ${di.cls}">${di.txt}</span>`:''))+gtag+otag+itag;
           h+=itemRow({name:c.name,sub:pickPhone(c.phone)||'—',pill,onclick:`viewCustomer('${c.id}')`});
         });
       });
@@ -971,6 +972,7 @@ function assignOrg(){
 const CUST_SECTIONS = [
   {key:'basic',    icon:'📋', title:'基本資料'},
   {key:'products', icon:'💰', title:'產品報價'},
+  {key:'rivals',   icon:'⚔️', title:'競品肥料'},
   {key:'deal',     icon:'🚚', title:'交易 / 配送'},
   {key:'visit',    icon:'📅', title:'拜訪管理'},
   {key:'follow',   icon:'🔔', title:'後續跟進'},
@@ -981,7 +983,8 @@ function custSectionSummary(c,key){
   switch(key){
     case 'basic':    return [pickPhone(c.phone),regionFull(c.address)].filter(x=>x&&x!=='未填地區').join('・')||'點此填寫';
     case 'products': return (c.products&&c.products.length)?`${c.products.length} 筆報價`:'尚未填寫';
-    case 'deal':     return c.checkPeriod?`票期：${c.checkPeriod}`:'尚未設定票期';
+    case 'rivals':   return (c.rivals&&c.rivals.length)?`${c.rivals.length} 筆競品`:'尚未填寫';
+    case 'deal':     { const parts=[]; if(c.checkPeriod)parts.push('票期：'+c.checkPeriod); if(c.creditLimit)parts.push('額度 '+c.creditLimit+' 萬'); return parts.length?parts.join('・'):'尚未設定'; }
     case 'visit':    { const di=dueInfo(c); return (c.grade?gradeText(c.grade):'未分級')+(di?`・下次 ${di.txt}`:''); }
     case 'follow':   { const n=(c.follow||[]).filter(f=>!f.done).length; return n?`${n} 項待辦`:'無待辦'; }
     case 'inter':    return (c.inter&&c.inter.length)?`${c.inter.length} 筆紀錄`:'尚無紀錄';
@@ -1000,16 +1003,18 @@ function viewCustomer(id){
   const di=dueInfo(c);
   let h=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
       <span class="badge b-${c.type}">${c.type}</span>
+      ${c.inactive?`<span class="badge" style="background:#9a9a8a;color:#fff">⏸️ 已停用</span>`:''}
       ${c.org?`<span class="badge" style="background:#5d6651;color:#fff">🏷️ ${esc(c.org)}</span>`:''}
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
-      ${di?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
+      ${(!c.inactive&&di)?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   h+=`<div class="card">`;
   CUST_SECTIONS.forEach(s=>{ h+=custTile(id,s.key,s.icon,s.title,custSectionSummary(c,s.key),`custSection('${id}','${s.key}')`); });
   (c.cards||[]).forEach(cd=>{ h+=custTile(id,'cd'+cd.id,'🗂️',cd.title,cd.body?String(cd.body).slice(0,16)+(cd.body.length>16?'…':''):'點此填寫',`custCustomCard('${id}','${cd.id}')`); });
   h+=`</div>`;
   h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="addCustCard('${id}')">⚙️ 新增卡片</button></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="editCustomer(findCust('${id}'))">✏️ 編輯客戶</button>
-      <button class="btn btn-red" onclick="delCustomer('${id}')">刪除</button></div>`;
+      <button class="btn btn-gray" onclick="toggleInactive('${id}')">${c.inactive?'▶️ 啟用客戶':'⏸️ 停用客戶'}</button></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-red" onclick="delCustomer('${id}')">刪除</button></div>`;
   openModal(c.name, h);
 }
 function sectionTitleOf(key){ const s=CUST_SECTIONS.find(x=>x.key===key); return s?s.title:key; }
@@ -1033,15 +1038,24 @@ function custSection(id,key){
     h+=`<div class="card"><div id="prod-rows">${(c.products&&c.products.length?c.products:[]).map(p=>productRowHTML(p)).join('')}</div>`;
     h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</button>`;
     h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustProducts('${id}')">💾 儲存產品報價</button></div></div>`;
+  } else if(key==='rivals'){
+    h+=`<div class="card"><div class="hint" style="color:var(--muted);font-size:12px;margin-bottom:8px">目前使用（銷售）的競品肥料，掌握對手價格與條件。</div>`;
+    h+=`<div id="rival-rows">${(c.rivals&&c.rivals.length?c.rivals:[]).map(r=>rivalRowHTML(r)).join('')}</div>`;
+    h+=`<button type="button" class="btn btn-out" style="margin-top:8px" onclick="addRivalRow()">＋ 新增競品肥料</button>`;
+    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustRivals('${id}')">💾 儲存競品肥料</button></div></div>`;
   } else if(key==='deal'){
     h+=`<div class="card">`+checkPeriodHTML(c.checkPeriod||'');
+    h+=`<div class="field-2"><div class="field"><label>額度（萬元）</label><input id="c-credit" type="number" inputmode="decimal" value="${esc(c.creditLimit||'')}" placeholder="例如 50"></div>
+        <div class="field"><label>使用肥料位置</label><input id="c-fertloc" value="${esc(c.fertLocation||'')}" placeholder="例如 倉庫後棟 / 田區"></div></div>`;
+    h+=`<div class="field"><label>配屬銷售區域${c.type==='經銷商'?'（經銷商通路）':''}</label><select id="c-salesregion">
+        <option value="">未指定</option>${countyNames().map(n=>`<option value="${esc(n)}" ${c.salesRegion===n?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;
     if(c.terms)h+=drow('交易條件',esc(c.terms));
     if(c.price)h+=drow('價格',esc(c.price));
     if(c.conditions)h+=drow('其他條件',esc(c.conditions));
     if(c.currentFert)h+=drow('目前用肥',esc(c.currentFert));
     if(c.truck)h+=drow('運送車輛',esc(c.truck));
     if(c.deliveryTime)h+=drow('送貨時間',esc(c.deliveryTime));
-    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustCheck('${id}')">💾 儲存票期</button></div></div>`;
+    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustDeal('${id}')">💾 儲存交易資料</button></div></div>`;
   } else if(key==='visit'){
     h+=`<div class="card"><div class="field"><label>客戶分級（決定拜訪頻率）</label><select id="c-grade" onchange="if(this.value)document.getElementById('c-freq').value={A:7,B:30,C:90,D:365}[this.value]">
         <option value="" ${!c.grade?'selected':''}>未分級</option>
@@ -1089,7 +1103,9 @@ function delCustomCard(id,cardId){ if(!confirm('確定刪除這張卡片？'))re
 
 function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value; c.freq=$('#c-freq').value?+$('#c-freq').value:(c.grade?GRADE_FREQ[c.grade]:null); c.next=$('#c-next').value||(c.freq?addDays(c.last||todayStr(),c.freq):c.next); saveCust(); toast('已儲存'); custSection(id,'visit'); render(); }
 function saveCustProducts(id){ const c=findCust(id); c.products=readProducts(); saveCust(); toast('已儲存產品報價'); custSection(id,'products'); render(); }
-function saveCustCheck(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); saveCust(); toast('已儲存票期'); custSection(id,'deal'); render(); }
+function saveCustDeal(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); const cr=$('#c-credit'); c.creditLimit=cr?cr.value.trim():(c.creditLimit||''); const fl=$('#c-fertloc'); c.fertLocation=fl?fl.value.trim():(c.fertLocation||''); const sr=$('#c-salesregion'); c.salesRegion=sr?sr.value:(c.salesRegion||''); saveCust(); toast('已儲存交易資料'); custSection(id,'deal'); render(); }
+function saveCustRivals(id){ const c=findCust(id); c.rivals=readRivals(); saveCust(); toast('已儲存競品肥料'); custSection(id,'rivals'); render(); }
+function toggleInactive(id){ const c=findCust(id); if(!c)return; if(!c.inactive){ if(!confirm('確定停用此客戶？資料會保留，但會標示為停用。'))return; c.inactive=true; toast('已停用客戶（資料保留）'); } else { c.inactive=false; toast('已重新啟用客戶'); } saveCust(); viewCustomer(id); render(); }
 function saveCustNotes(id){ const c=findCust(id); c.notes=$('#c-notes').value.trim(); saveCust(); toast('已儲存備註'); custSection(id,'notes'); render(); }
 function logCustVisit(id){ const c=findCust(id); const t=todayStr(); c.last=t; if(c.freq)c.next=addDays(t,c.freq); c.inter=c.inter||[]; c.inter.push({date:t,type:'拜訪',content:'完成拜訪'}); saveCust(); toast('已記錄拜訪'); viewCustomer(id); }
 function addCustInter(id){ interForm(it=>{ const c=findCust(id); c.inter=c.inter||[]; c.inter.push(it); saveCust(); toast('已新增'); viewCustomer(id); }); }
@@ -1134,6 +1150,35 @@ function readProducts(){
 }
 function prodText(p){ return `${p.form}${p.weight}kg・$${p.price||'—'}・${p.freight}`; }
 
+// ---------- 競品肥料（多筆）----------
+function rivalRowHTML(r){
+  r=r||{};
+  const sel=(arr,v)=>arr.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+  return `<div class="prow rrow">
+    <input class="rv-name" placeholder="競品產品名稱" value="${esc(r.name||'')}">
+    <div class="rrow-2">
+      <select class="rv-form">${sel(FORMS,r.form||'粒狀')}</select>
+      <input class="rv-price" type="number" inputmode="decimal" placeholder="價格" value="${esc(r.price||'')}">
+      <select class="rv-freight">${sel(FREIGHTS,r.freight||'含運')}</select>
+      <button type="button" class="prow-del" onclick="this.closest('.rrow').remove()">✕</button>
+    </div>
+    <input class="rv-check rv-line" placeholder="票期，例如 月結30天 / 現金" value="${esc(r.checkPeriod||'')}">
+    <input class="rv-note rv-line" placeholder="備註" value="${esc(r.note||'')}">
+  </div>`;
+}
+function addRivalRow(){ const c=document.getElementById('rival-rows'); if(c) c.insertAdjacentHTML('beforeend', rivalRowHTML()); }
+function readRivals(){
+  return [...document.querySelectorAll('#rival-rows .rrow')].map(el=>({
+    name:el.querySelector('.rv-name').value.trim(),
+    form:el.querySelector('.rv-form').value,
+    price:el.querySelector('.rv-price').value.trim(),
+    freight:el.querySelector('.rv-freight').value,
+    checkPeriod:el.querySelector('.rv-check').value.trim(),
+    note:el.querySelector('.rv-note').value.trim()
+  })).filter(r=>r.name);
+}
+function rivalText(r){ return [`${r.form||''}${r.price?'・$'+r.price:''}`, r.freight, r.checkPeriod].filter(Boolean).join('・'); }
+
 // ---------- 票期下拉（現金 / 月結N天 / 手動）----------
 function checkPeriodHTML(v){
   const known=CHECK_PERIODS.includes(v);
@@ -1172,9 +1217,16 @@ function editCustomer(c, isNew){
   h+=`<fieldset class="fset"><legend>產品報價（可多筆）</legend>
     <div id="prod-rows">${(c.products||[]).map(productRowHTML).join('')}</div>
     <div class="more" style="margin-top:8px" onclick="addProductRow()">＋ 新增產品報價</div></fieldset>`;
+  h+=`<fieldset class="fset"><legend>競品肥料（目前使用 / 銷售・可多筆）</legend>
+    <div id="rival-rows">${(c.rivals||[]).map(rivalRowHTML).join('')}</div>
+    <div class="more" style="margin-top:8px" onclick="addRivalRow()">＋ 新增競品肥料</div></fieldset>`;
   h+=`<fieldset class="fset"><legend>交易條件</legend>`;
   h+=field('交易條件','f-terms',c.terms,'text',false,'例如 貨到付款');
   h+=checkPeriodHTML(c.checkPeriod);
+  h+=`<div class="field-2"><div class="field"><label>額度（萬元）</label><input id="f-creditLimit" type="number" inputmode="decimal" value="${esc(c.creditLimit||'')}" placeholder="例如 50"></div>
+      <div class="field"><label>使用肥料位置</label><input id="f-fertLocation" value="${esc(c.fertLocation||'')}" placeholder="例如 倉庫後棟 / 田區"></div></div>`;
+  h+=`<div class="field"><label>配屬銷售區域（經銷商通路）</label><select id="f-salesRegion">
+      <option value="">未指定</option>${countyNames().map(n=>`<option value="${esc(n)}" ${c.salesRegion===n?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;
   h+=field('其他條件','f-conditions',c.conditions);
   h+=field('目前使用肥料','f-currentFert',c.currentFert);
   h+=`</fieldset>`;
@@ -1203,7 +1255,8 @@ function saveCustomer(id, isAdd){
     address:g('f-address'), filedDate:g('f-filedDate'), taxid:g('f-taxid'), idno:g('f-idno'), birth:g('f-birth'),
     regAddress:g('f-regAddress'), terms:g('f-terms'), checkPeriod:readCheckPeriod(), conditions:g('f-conditions'),
     currentFert:g('f-currentFert'), truck:g('f-truck'), deliveryTime:g('f-deliveryTime'),
-    grade:$('#f-grade').value, notes:g('f-notes'), products:readProducts() });
+    creditLimit:g('f-creditLimit'), fertLocation:g('f-fertLocation'), salesRegion:$('#f-salesRegion').value,
+    grade:$('#f-grade').value, notes:g('f-notes'), products:readProducts(), rivals:readRivals() });
   const freq=$('#f-freq').value; base.freq=freq?+freq:(base.grade?GRADE_FREQ[base.grade]:null);
   if(base.freq && !base.next) base.next = addDays(todayStr(), base.freq);
   base.inter = base.inter||[];
@@ -1283,9 +1336,9 @@ function exportJSON(){
   toast('已匯出備份');
 }
 function exportCSV(){
-  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['products','產品報價'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
+  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertLocation','使用肥料位置'],['salesRegion','配屬銷售區域'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
   const head=cols.map(c=>c[1]).join(',');
-  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); return c[k]??''; };
+  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
   const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
   download(`我的客戶_${todayStr()}.csv`, '﻿'+head+'\n'+rows.join('\n'), 'text/csv');
   toast('已匯出 CSV');
@@ -1320,6 +1373,7 @@ function parseCustomerTSV(text){
         sysno:code, name, type:'直接農民',
         phone:(tel&&tel!=='0')?tel:'', address:addr, regAddress:'', taxid:tax,
         filedDate:fmtYmd(cdate), contact:'', idno:'', birth:'', terms:'', checkPeriod:'',
+        creditLimit:'', fertLocation:'', salesRegion:'', rivals:[], inactive:false,
         conditions:'', currentFert:'', truck:'', deliveryTime:'', grade:'', notes:'',
         freq:null, last:'', next:'', inter:[], products:[] };
       out.push(cur);
