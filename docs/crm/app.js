@@ -1302,9 +1302,38 @@ function custFullText(c){
 function custFullView(id){
   const c=findCust(id); if(!c) return;
   let h=custBackBar(id);
-  h+=`<div class="btn-row" style="margin-top:0;margin-bottom:10px"><button class="btn btn-pri" onclick="copyCustFull('${id}')">📋 複製全部</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:0;margin-bottom:6px"><button class="btn btn-pri" onclick="copyCustFull('${id}')">📋 複製全部文字</button>
+      <button class="btn btn-out" onclick="exportCustPDF('${id}')">🖨️ 輸出 PDF</button></div>`;
+  h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;margin:0 2px 10px">「輸出 PDF」會開啟列印預覽，iPhone 可選「儲存到檔案」存成 PDF，再用 LINE/Email 傳出。</div>`;
   buildFullProfile(c).forEach(s=>{ if(!s.rows.length) return; h+=`<div class="grp-sub" style="margin:8px 0 6px 2px">${esc(s.title)}</div><div class="card">`; s.rows.forEach(([k,v])=>{ h+=drow(k||'·', esc(String(v))); }); h+=`</div>`; });
   openModal(`${c.name}・資料全貌`, h);
+}
+function buildCustPrintHTML(c){
+  const secs=buildFullProfile(c);
+  let body=`<h1>${esc(c.name)}</h1><div class="sub">${esc(c.type||'')}${c.inactive?'（已停用）':''} ｜ 碩成肥料 ｜ 列印日期 ${esc(todayStr())}</div>`;
+  secs.forEach(s=>{ if(!s.rows.length) return; body+=`<h2>${esc(s.title)}</h2><table>`; s.rows.forEach(([k,v])=>{ body+=`<tr><th>${esc(k||'·')}</th><td>${esc(String(v))}</td></tr>`; }); body+=`</table>`; });
+  return `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.name)}_客戶資料</title>
+<style>*{box-sizing:border-box}body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:#23271c;margin:18px;font-size:13px;line-height:1.55}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#666;font-size:12px;margin-bottom:16px;border-bottom:2px solid #556b2f;padding-bottom:9px}
+h2{font-size:14px;color:#3c4d20;margin:15px 0 6px;border-left:4px solid #556b2f;padding-left:8px}
+table{width:100%;border-collapse:collapse;margin-bottom:8px}
+th,td{border:1px solid #d8d8c8;padding:6px 8px;text-align:left;vertical-align:top;word-break:break-word}
+th{width:32%;background:#f2f2e6;font-weight:700;color:#3c4d20;white-space:nowrap}
+@page{margin:12mm}@media print{body{margin:0}}</style></head>
+<body>${body}<scr`+`ipt>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},350);};</scr`+`ipt></body></html>`;
+}
+function exportCustPDF(id){
+  const c=findCust(id); if(!c){ return; }
+  const html=buildCustPrintHTML(c);
+  const w=window.open('','_blank');
+  if(w&&w.document){ w.document.open(); w.document.write(html); w.document.close(); return; }
+  // 後備：用隱藏 iframe 列印（彈窗被擋時）
+  let ifr=document.getElementById('pdf-frame'); if(ifr) ifr.remove();
+  ifr=document.createElement('iframe'); ifr.id='pdf-frame';
+  ifr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(ifr);
+  const doc=ifr.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(()=>{ try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }catch(e){ toast('此瀏覽器不支援列印，請改用「複製全部文字」'); } }, 500);
 }
 function copyCustFull(id){ const c=findCust(id); if(!c) return; const txt=custFullText(c);
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>toast('已複製全部資料'),()=>fallbackCopy(txt)); } else fallbackCopy(txt); }
