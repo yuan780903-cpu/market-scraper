@@ -347,11 +347,12 @@ function savePDF(){
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
   const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
-  // === A4 標準尺寸（mm）===
-  // 紙張：210 × 297 mm；外距 0（sheet 自身已有 padding 當邊距）
-  // sheet 寬度 794px ≈ 210mm @96dpi，剛好一張 A4 寬
-  // 用 windowWidth=794 強制 html2canvas 用桌面尺寸渲染，
-  // 避免手機 viewport (~390px) 導致 sheet 被擠縮、寬度錯位
+  // === A4 1:1 對應 ===
+  // 之前用 unit:"mm" + format:"a4" 會把 sheet 的 px 當 pt 處理 (1pt=1.33px @96dpi)
+  // 導致 sheet 794px 在 PDF 中佔 1058pt 寬 > A4 的 595pt → 右邊被切
+  // 改用 unit:"px"，紙張尺寸 [794, 1123] (= A4 @96dpi)，sheet 1:1 完美對齊
+  // PDF reader 仍會把這份檔案辨識為 A4 (8.27×11.69 in = 210×297 mm)
+  const A4_W = 794, A4_H = 1123;  // A4 @ 96dpi pixels
   html2pdf().set({
     margin:0,
     filename:fname,
@@ -360,12 +361,12 @@ function savePDF(){
       scale:2,
       useCORS:true,
       backgroundColor:"#ffffff",
-      windowWidth:794,
-      width:794,
+      windowWidth:A4_W,
+      width:A4_W,
       scrollX:0,
       scrollY:0,
     },
-    jsPDF:{unit:"mm", format:"a4", orientation:"portrait"},
+    jsPDF:{unit:"px", format:[A4_W, A4_H], orientation:"portrait", hotfixes:["px_scaling"]},
     pagebreak:{mode:["css","legacy"], avoid:"tr"}
   }).from(sheet).toPdf().get("pdf").then(function(pdf){
     restore();
