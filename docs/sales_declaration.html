@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>銷售申報預先登錄系統</title>
+<style>
+  :root{
+    --blue:#4472c4; --blue-d:#2f5597; --blue-l:#d9e1f2;
+    --grey:#f4f6fb; --line:#cdd6e8; --ink:#222; --muted:#6b7280;
+    --green:#2e7d32; --red:#c62828; --amber:#b26a00;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft JhengHei","PingFang TC","Heiti TC",sans-serif;margin:0;background:var(--grey);color:var(--ink)}
+  header{background:linear-gradient(135deg,var(--blue),var(--blue-d));color:#fff;padding:18px 24px}
+  header h1{margin:0;font-size:20px}
+  header p{margin:4px 0 0;font-size:13px;opacity:.9}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 60px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card h2{margin:0 0 14px;font-size:15px;color:var(--blue-d);border-left:4px solid var(--blue);padding-left:8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input,select{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:inherit;background:#fff}
+  input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-l)}
+  .row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  button{cursor:pointer;border:none;border-radius:6px;padding:9px 16px;font-size:14px;font-family:inherit;font-weight:600}
+  .btn-pri{background:var(--blue);color:#fff}
+  .btn-pri:hover{background:var(--blue-d)}
+  .btn-ghost{background:#eef2fb;color:var(--blue-d)}
+  .btn-ghost:hover{background:var(--blue-l)}
+  .btn-warn{background:#fff3e0;color:var(--amber)}
+  .btn-danger{background:#fdecec;color:var(--red)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .toolbar .left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{font-size:12px;background:var(--blue-l);color:var(--blue-d);padding:3px 10px;border-radius:20px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 8px;text-align:center}
+  thead th{background:var(--blue);color:#fff;font-weight:600;position:sticky;top:0}
+  tbody tr:nth-child(even){background:#f7f9fd}
+  tbody tr:hover{background:var(--blue-l)}
+  td.name{text-align:left}
+  .tbl-wrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:8px}
+  .gift{color:var(--green);font-weight:700}
+  .mini{font-size:12px;padding:5px 10px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  tfoot td{background:var(--blue-l);font-weight:700;color:var(--blue-d)}
+  .tag{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600}
+  .tag-pre{background:#e3f2fd;color:#1565c0}
+  .tag-fix{background:#fff3e0;color:var(--amber)}
+  .note{font-size:12px;color:var(--muted);line-height:1.6}
+  .stat-row{display:flex;gap:14px;flex-wrap:wrap}
+  .stat{flex:1;min-width:130px;background:var(--grey);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center}
+  .stat b{display:block;font-size:22px;color:var(--blue-d)}
+  .stat span{font-size:12px;color:var(--muted)}
+  dialog{border:none;border-radius:12px;padding:0;max-width:560px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  dialog::backdrop{background:rgba(0,0,0,.4)}
+  .dlg-head{background:var(--blue);color:#fff;padding:14px 18px;font-size:15px;font-weight:600;border-radius:12px 12px 0 0}
+  .dlg-body{padding:16px 18px;max-height:60vh;overflow:auto}
+  .dlg-foot{padding:12px 18px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line)}
+  .prod-line{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .prod-line input{flex:1}
+  .prod-line button{background:#fdecec;color:var(--red);padding:6px 10px}
+  @media print{
+    body{background:#fff}
+    header,.no-print,.card.no-print,dialog{display:none!important}
+    .wrap{max-width:100%;padding:0}
+    #printArea{display:block!important}
+  }
+  #printArea{display:none}
+  .memo h3{text-align:center;font-size:20px;margin:0 0 10px;letter-spacing:6px}
+  .memo .meta{display:flex;justify-content:space-between;font-size:13px;color:#444;border-bottom:1px solid #999;padding-bottom:6px;margin-bottom:12px}
+  .memo .subj{font-size:14.5px;line-height:1.8;margin:0 0 10px}
+  .memo .expl{font-size:14px;line-height:1.8;margin:0 0 14px}
+  .memo .expl b{display:block;margin-bottom:2px}
+  .memo .expl ol{margin:0;padding-left:22px}
+  .memo .expl li{margin-bottom:5px}
+  .memo .attach-label{font-size:13.5px;font-weight:700;margin:0 0 6px}
+  .memo table{font-size:12.5px}
+  .memo .sign{display:flex;justify-content:flex-end;gap:60px;margin-top:30px;font-size:14px}
+  .memo .sign div{text-align:center}
+  .memo .sign .ln{border-top:1px solid #333;width:120px;margin-top:40px;padding-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>碩成 ｜ 銷售申報預先登錄系統</h1>
+  <p>對應每月 10 日／25 日預先登錄作業 ‧ 資料只存本機電腦，不上雲端</p>
+</header>
+
+<div class="wrap">
+
+  <!-- 批次設定 -->
+  <div class="card no-print">
+    <h2>① 申報批次</h2>
+    <div class="grid">
+      <div>
+        <label>批次名稱（會印在備忘錄上）</label>
+        <input id="batchName" placeholder="例：115年6月上半月（6/1–6/15）">
+      </div>
+      <div>
+        <label>申報類型</label>
+        <select id="entryType">
+          <option value="預先登錄">預先登錄</option>
+          <option value="修正">修正</option>
+        </select>
+      </div>
+    </div>
+    <div class="note" style="margin-top:8px">
+      規則提醒：每月 10 日及 25 日提供「未來兩週」預先登錄資料給生產單位；需修正時以「修正」類型另送。<b>備忘錄須經張總核准</b>，贈包亦須以備忘錄核准。
+    </div>
+  </div>
+
+  <!-- 新增 -->
+  <div class="card no-print">
+    <h2>② 新增一筆出貨資料</h2>
+    <div class="grid">
+      <div>
+        <label>出貨日期</label>
+        <input type="date" id="f_date">
+      </div>
+      <div>
+        <label>送達縣市</label>
+        <select id="f_city"></select>
+      </div>
+      <div>
+        <label>送達鄉鎮</label>
+        <input id="f_town" list="townList" placeholder="例：屏東市">
+        <datalist id="townList"></datalist>
+      </div>
+      <div>
+        <label>收貨人 / 收貨點</label>
+        <input id="f_recv" placeholder="例：展榮農業商行">
+      </div>
+      <div>
+        <label>廠牌商品名稱</label>
+        <select id="f_prod"></select>
+      </div>
+      <div>
+        <label>包裝重量（公斤）</label>
+        <input id="f_weight" list="wList" value="25">
+        <datalist id="wList">
+          <option value="20"><option value="25"><option value="500"><option value="1000">
+        </datalist>
+      </div>
+      <div>
+        <label>包數</label>
+        <input type="number" id="f_qty" min="0" placeholder="例：960">
+      </div>
+      <div>
+        <label>贈送（包）</label>
+        <input type="number" id="f_gift" min="0" placeholder="無則留空">
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn-pri" onclick="addEntry()">＋ 新增到清單</button>
+      <button class="btn-ghost" onclick="openProducts()">管理品名</button>
+      <span id="editHint" class="pill" style="display:none">修改中…<a href="#" onclick="cancelEdit();return false" style="margin-left:6px">取消</a></span>
+    </div>
+  </div>
+
+  <!-- 清單 -->
+  <div class="card">
+    <div class="toolbar no-print">
+      <div class="left">
+        <h2 style="margin:0;border:none;padding:0">③ 申報清單</h2>
+        <span class="pill" id="countPill">0 筆</span>
+      </div>
+      <div class="left">
+        <button class="btn-pri mini" onclick="openMemo()">📄 產生備忘錄</button>
+        <button class="btn-ghost mini" onclick="exportCSV()">⬇ 匯出 Excel(CSV)</button>
+        <button class="btn-danger mini" onclick="clearAll()">清空全部</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th>
+            <th>廠牌商品名稱</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th>
+            <th>類型</th><th class="no-print">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+    </div>
+    <div id="emptyMsg" class="empty">尚無資料，請於上方新增。</div>
+  </div>
+
+  <!-- 統計 -->
+  <div class="card no-print">
+    <h2>④ 本批次統計</h2>
+    <div class="stat-row">
+      <div class="stat"><b id="s_rows">0</b><span>筆數</span></div>
+      <div class="stat"><b id="s_qty">0</b><span>總包數</span></div>
+      <div class="stat"><b id="s_gift">0</b><span>贈送總包數</span></div>
+      <div class="stat"><b id="s_weight">0</b><span>總重量(公斤)</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 列印區（備忘錄） -->
+<div id="printArea">
+  <div class="memo">
+    <h3>備忘錄</h3>
+    <div class="meta">
+      <span>申報類型：<b id="p_type"></b></span>
+      <span>製表日期：<span id="p_today"></span></span>
+    </div>
+    <p class="subj"><b>主旨：</b><span id="p_subj"></span></p>
+    <div class="expl"><b>說明：</b><ol id="p_expl"></ol></div>
+    <p class="attach-label">附件 ‧ 銷售申報預先登錄明細表：</p>
+    <table id="p_table"></table>
+    <div class="sign">
+      <div><div class="ln">承辦</div></div>
+      <div><div class="ln">主管</div></div>
+      <div><div class="ln">張總 核准</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 品名管理 -->
+<dialog id="prodDlg">
+  <div class="dlg-head">管理廠牌商品名稱（肥料登記證全名）</div>
+  <div class="dlg-body">
+    <div id="prodList"></div>
+    <button class="btn-ghost mini" onclick="addProdLine('')">＋ 新增品名</button>
+    <p class="note" style="margin-top:10px">提示：粒狀料規格固定 20kg；粉狀料有 20/25/500/1000 多種。品名請填肥料登記證全名（如「碩成有機質肥料2號+」）。</p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-ghost" onclick="prodDlg.close()">取消</button>
+    <button class="btn-pri" onclick="saveProducts()">儲存</button>
+  </div>
+</dialog>
+
+<!-- 備忘錄預覽 -->
+<dialog id="memoDlg" style="max-width:860px">
+  <div class="dlg-head">備忘錄預覽（確認後可列印 / 存成 PDF）</div>
+  <div class="dlg-body"><div id="memoView" class="memo"></div></div>
+  <div class="dlg-foot">
+    <button class="btn-ghost" onclick="memoDlg.close()">關閉</button>
+    <button class="btn-pri" onclick="window.print()">🖨 列印 / 存PDF</button>
+  </div>
+</dialog>
+
+<script>
+const CITIES=["基隆市","臺北市","新北市","桃園市","新竹市","新竹縣","苗栗縣","臺中市","彰化縣","南投縣","雲林縣","嘉義市","嘉義縣","臺南市","高雄市","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
+const DEFAULT_PRODUCTS=["碩成508有機質肥料","碩成有機質肥料1號+","碩成有機質肥料2號","碩成有機質肥料2號+","碩成生技1號","碩成果美肥","碩成基肥1號","碩成基肥2號","碩成基肥2號+","農會牌(嘉)有機質肥料1號"];
+
+let entries=load('sc_entries',[]);
+let products=load('sc_products',DEFAULT_PRODUCTS);
+let editId=null;
+
+// 一次性更新：補上農會牌品項（之後使用者自行刪除不會復原）
+if(!localStorage.getItem('sc_seed_v2')){
+  if(!products.includes("農會牌(嘉)有機質肥料1號"))products.push("農會牌(嘉)有機質肥料1號");
+  localStorage.setItem('sc_seed_v2','1');
+  localStorage.setItem('sc_products',JSON.stringify(products));
+}
+
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
+function save(){localStorage.setItem('sc_entries',JSON.stringify(entries));localStorage.setItem('sc_products',JSON.stringify(products));localStorage.setItem('sc_batch',JSON.stringify({n:batchName.value,t:entryType.value}))}
+
+// 民國日期
+function toROC(iso){if(!iso)return"";const[y,m,d]=iso.split("-");return (Number(y)-1911)+"/"+Number(m)+"/"+Number(d)}
+
+function fillSelects(){
+  f_city.innerHTML='<option value="">—</option>'+CITIES.map(c=>`<option>${c}</option>`).join("");
+  refreshProdSelect();
+}
+function refreshProdSelect(){
+  f_prod.innerHTML='<option value="">—</option>'+products.map(p=>`<option>${p}</option>`).join("");
+}
+
+function addEntry(){
+  const e={
+    id:editId??Date.now(),
+    date:f_date.value, city:f_city.value, town:f_town.value.trim(),
+    recv:f_recv.value.trim(), prod:f_prod.value, weight:f_weight.value.trim(),
+    qty:Number(f_qty.value)||0, gift:Number(f_gift.value)||0, type:entryType.value
+  };
+  if(!e.date||!e.city||!e.prod||!e.qty){alert("請至少填寫：出貨日期、送達縣市、廠牌商品名稱、包數。");return}
+  if(editId){const i=entries.findIndex(x=>x.id===editId);entries[i]=e;editId=null;editHint.style.display="none"}
+  else{entries.push(e)}
+  save();render();
+  // 保留縣市/日期，清空其餘以便連續輸入
+  f_town.value="";f_recv.value="";f_qty.value="";f_gift.value="";f_prod.value="";f_prod.focus();
+}
+function editEntry(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  f_date.value=e.date;f_city.value=e.city;f_town.value=e.town;f_recv.value=e.recv;
+  f_prod.value=e.prod;f_weight.value=e.weight;f_qty.value=e.qty;f_gift.value=e.gift||"";
+  entryType.value=e.type;editId=id;editHint.style.display="inline-block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function cancelEdit(){editId=null;editHint.style.display="none";f_prod.value="";f_qty.value="";f_gift.value="";f_recv.value="";f_town.value=""}
+function delEntry(id){if(!confirm("確定刪除這筆？"))return;entries=entries.filter(x=>x.id!==id);save();render()}
+function clearAll(){if(!confirm("清空全部資料？此動作無法復原。"))return;entries=[];save();render()}
+
+function render(){
+  entries.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  tbody.innerHTML=entries.map(e=>`
+    <tr>
+      <td>${toROC(e.date)}</td><td>${e.city||""}</td><td>${e.town||""}</td>
+      <td class="name">${e.recv||""}</td><td class="name">${e.prod||""}</td>
+      <td>${e.weight||""}</td><td>${e.qty||""}</td>
+      <td class="gift">${e.gift?e.gift:""}</td>
+      <td><span class="tag ${e.type==='修正'?'tag-fix':'tag-pre'}">${e.type}</span></td>
+      <td class="no-print">
+        <button class="btn-warn mini" onclick="editEntry(${e.id})">改</button>
+        <button class="btn-danger mini" onclick="delEntry(${e.id})">刪</button>
+      </td>
+    </tr>`).join("");
+  const tq=entries.reduce((s,e)=>s+(e.qty||0),0);
+  const tg=entries.reduce((s,e)=>s+(e.gift||0),0);
+  const tw=entries.reduce((s,e)=>s+(e.qty||0)*(Number(e.weight)||0),0);
+  tfoot.innerHTML=entries.length?`<tr><td colspan="6">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td><td colspan="2" class="no-print"></td></tr>`:"";
+  emptyMsg.style.display=entries.length?"none":"block";
+  countPill.textContent=entries.length+" 筆";
+  s_rows.textContent=entries.length;s_qty.textContent=tq.toLocaleString();
+  s_gift.textContent=tg.toLocaleString();s_weight.textContent=tw.toLocaleString();
+  buildPrint();
+}
+
+function buildPrint(){
+  const batch=batchName.value||"（未命名批次）";
+  const type=entryType.value;
+  const tq=entries.reduce((s,e)=>s+(e.qty||0),0),tg=entries.reduce((s,e)=>s+(e.gift||0),0);
+  p_type.textContent=type;
+  p_today.textContent=toROC(new Date().toISOString().slice(0,10));
+
+  // 主旨
+  const word=type==="修正"?"預先登錄『修正』":"預先登錄";
+  p_subj.textContent=`檢送本公司「${batch}」銷售申報${word}資料乙份（明細如附表），陳請核示後送生產單位辦理銷售申報登錄。`;
+
+  // 說明（依規則動態產生）
+  const ex=[];
+  ex.push(`依本公司與生產單位議定之銷售申報作業辦理，每月10日及25日提供未來兩週之預先登錄資料。本案為「${batch}」之${word}資料。`);
+  // 依規格分組統計重量（銷售與贈送分開）
+  const byW={},byWG={};
+  entries.forEach(e=>{const w=Number(e.weight)||0;if(e.qty)byW[w]=(byW[w]||0)+e.qty;if(e.gift)byWG[w]=(byWG[w]||0)+e.gift});
+  const fmtBreak=obj=>Object.keys(obj).map(Number).sort((a,b)=>a-b)
+    .map(w=>`每包${w}公斤 × ${obj[w].toLocaleString()} 包＝${(w*obj[w]).toLocaleString()} 公斤`).join("；");
+  const tws=entries.reduce((s,e)=>s+(e.qty||0)*(Number(e.weight)||0),0);
+  const twg=entries.reduce((s,e)=>s+(e.gift||0)*(Number(e.weight)||0),0);
+  const twAll=tws+twg, tonnes=(twAll/1000).toLocaleString(undefined,{maximumFractionDigits:3});
+  let p2=`本批次共 ${entries.length} 筆，銷售合計 ${tq.toLocaleString()} 包（規格明細：${fmtBreak(byW)}）`;
+  if(tg>0)p2+=`；另含贈送 ${tg.toLocaleString()} 包（規格明細：${fmtBreak(byWG)}）`;
+  p2+=tg>0
+    ? `；合計總重量 ${twAll.toLocaleString()} 公斤（約 ${tonnes} 公噸，其中銷售 ${tws.toLocaleString()} 公斤、贈送 ${twg.toLocaleString()} 公斤）。`
+    : `；合計總重量 ${twAll.toLocaleString()} 公斤（約 ${tonnes} 公噸）。`;
+  ex.push(p2);
+  if(tg>0)ex.push(`本批次贈送共 ${tg.toLocaleString()} 包，依規定須經核准後始由生產單位提供並落實申報，敬請一併核准。`);
+  ex.push(`本案經張總核准後送生產單位登錄；隔月5日前由生產單位依SAP銷售資料完成最後申報確認。`);
+  p_expl.innerHTML=ex.map(t=>`<li>${t}</li>`).join("");
+
+  const head=`<thead><tr><th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th><th>廠牌商品名稱</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th></tr></thead>`;
+  const body=entries.map(e=>`<tr><td>${toROC(e.date)}</td><td>${e.city||""}</td><td>${e.town||""}</td><td>${e.recv||""}</td><td>${e.prod||""}</td><td>${e.weight||""}</td><td>${e.qty||""}</td><td>${e.gift||""}</td></tr>`).join("");
+  const foot=`<tfoot><tr><td colspan="6">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td></tr></tfoot>`;
+  p_table.innerHTML=head+"<tbody>"+body+"</tbody>"+foot;
+}
+
+function openMemo(){
+  if(!entries.length){alert("清單目前沒有資料，請先新增出貨資料。");return}
+  buildPrint();
+  memoView.innerHTML=printArea.querySelector(".memo").innerHTML;
+  memoDlg.showModal();
+}
+
+function exportCSV(){
+  const cols=["出貨日期","送達縣市","送達鄉鎮","收貨人/收貨點","廠牌商品名稱","包裝重量(公斤)","包數","贈送(包)","類型"];
+  const rows=entries.map(e=>[toROC(e.date),e.city,e.town,e.recv,e.prod,e.weight,e.qty,e.gift||"",e.type]);
+  let csv=cols.join(",")+"\n"+rows.map(r=>r.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="申報_"+(batchName.value||"清單")+".csv";a.click();
+}
+
+// 品名管理
+function openProducts(){prodList.innerHTML="";products.forEach(p=>addProdLine(p));prodDlg.showModal()}
+function addProdLine(v){
+  const d=document.createElement("div");d.className="prod-line";
+  d.innerHTML=`<input value="${v.replace(/"/g,'&quot;')}"><button onclick="this.parentElement.remove()">刪</button>`;
+  prodList.appendChild(d);
+}
+function saveProducts(){
+  products=[...prodList.querySelectorAll("input")].map(i=>i.value.trim()).filter(Boolean);
+  if(!products.length)products=[...DEFAULT_PRODUCTS];
+  save();refreshProdSelect();prodDlg.close();
+}
+
+// init
+fillSelects();
+const b=load('sc_batch',{n:"",t:"預先登錄"});batchName.value=b.n;entryType.value=b.t;
+f_date.value=new Date().toISOString().slice(0,10);
+batchName.addEventListener("input",()=>{save();buildPrint()});
+entryType.addEventListener("change",()=>{save();buildPrint()});
+render();
+</script>
+</body>
+</html>

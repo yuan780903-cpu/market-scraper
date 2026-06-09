@@ -16,11 +16,11 @@ from image_card import _find_font_path
 WIDTH = 2500
 HEIGHT = 1686
 
-# 2x4 grid
-COLS = 4
-ROWS = 2
-CELL_W = WIDTH // COLS   # 625
-CELL_H = HEIGHT // ROWS  # 843
+# 3x3 grid (9 宮格)
+COLS = 3
+ROWS = 3
+CELL_W = WIDTH // COLS   # 833
+CELL_H = HEIGHT // ROWS  # 562
 
 # 文字顏色
 COLOR_TEXT_TITLE = "#1f2933"
@@ -30,16 +30,20 @@ EMOJI_DIR = Path("output/emoji")
 OUTPUT_DIR = Path("output/richmenu")
 
 
-# 8 個按鈕：(col, row, 背景色, emoji 檔名, 主標, 副標)
+# 9 個按鈕：(col, row, 背景色, emoji 檔名, 主標, 副標)
 BUTTONS = [
+    # 第一列
     (0, 0, "#bce4a8", "1f96c.png", "產銷班查詢", "農糧署系統"),       # 蔬菜 嫩綠
     (1, 0, "#ffe27a", "1f414.png", "肥料廠牌查詢", "登記查詢"),        # 蛋雞 蛋黃
     (2, 0, "#ffc3d8", "1f437.png", "目標業績", "達成追蹤"),            # 豬   蜜桃粉
-    (3, 0, "#a3dfe0", "1f986.png", "農情報告網", "即時農情"),          # 鴨子 湖水藍
-    (0, 1, "#ffa39e", "1f34e.png", "產品牌價", "各通路價格"),          # 蘋果 番茄紅
-    (1, 1, "#a4ccf2", "1f41f.png", "品牌推薦規範", "農糧署作業規範"),   # 魚   天空藍
-    (2, 1, "#d9b9f0", "1f9fe.png", "報價系統", "線上開單"),            # 收據 薰衣草紫
-    (3, 1, "#ffc88c", "1f347.png", "肥料品目規格", "農糧署修正規定"),  # 葡萄 橘子橙
+    # 第二列
+    (0, 1, "#a3dfe0", "1f986.png", "農情報告網", "即時農情"),          # 鴨子 湖水藍
+    (1, 1, "#ffa39e", "1f34e.png", "產品牌價", "各通路價格"),          # 蘋果 番茄紅
+    (2, 1, "#a4ccf2", "1f41f.png", "品牌推薦規範", "農糧署作業規範"),   # 魚   天空藍
+    # 第三列
+    (0, 2, "#d9b9f0", "1f9fe.png", "報價系統", "線上開單"),            # 收據 薰衣草紫
+    (1, 2, "#ffc88c", "1f347.png", "肥料品目規格", "農糧署修正規定"),  # 葡萄 橘子橙
+    (2, 2, "#f5d0a9", "1f404.png", "預先登錄申請", "銷售申報系統"),    # 乳牛 奶茶色
 ]
 
 
@@ -69,28 +73,29 @@ def _draw_button(img, draw, col, row, bg_color, emoji_file, title, subtitle):
     # 1. 鮮豔色背景（鋪滿整格）
     draw.rectangle([(x0, y0), (x1, y1)], fill=bg_color)
 
-    # 2. 白色圓圈底襯（配合字級放大）
-    circle_r = 200
+    # 9 宮格 layout：CELL 833×562（寬扁），重新排版
+    # 2. 白色圓圈底襯
+    circle_r = 170
     cx_circle = x0 + CELL_W // 2
-    cy_circle = y0 + 270
+    cy_circle = y0 + 190
     draw.ellipse(
         [(cx_circle - circle_r, cy_circle - circle_r),
          (cx_circle + circle_r, cy_circle + circle_r)],
         fill="#ffffff",
     )
 
-    # 3. Emoji（放大、置中於白圓內）
-    emoji_size = 320
+    # 3. Emoji（置中於白圓內）
+    emoji_size = 260
     emoji_img = _load_emoji(emoji_file, emoji_size)
     ex = x0 + CELL_W // 2 - emoji_size // 2
     ey = cy_circle - emoji_size // 2
     img.paste(emoji_img, (ex, ey), emoji_img)
 
     # 4. 主標（單行、置中、加描邊模擬粗體效果）
-    f_title = _font(72)
+    f_title = _font(64)
     tw, th = _measure(draw, title, f_title)
     draw.text(
-        (x0 + CELL_W // 2 - tw // 2, y0 + 600),
+        (x0 + CELL_W // 2 - tw // 2, y0 + 400),
         title,
         font=f_title,
         fill=COLOR_TEXT_TITLE,

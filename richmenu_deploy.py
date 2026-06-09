@@ -51,6 +51,10 @@ LICENSE_SNAPSHOT = Path("snapshots/license_index.json")
 # 不要用 LINE 內建瀏覽器 — 因為內建瀏覽器無法下載檔案（PDF 存不下來）。
 QUOTE_URL = "https://yuan780903-cpu.github.io/market-scraper/quote_system.html?openExternalBrowser=1&v=2026060407"
 
+# 銷售申報預先登錄系統 — 純前端 + localStorage（個資只存使用者本機，不上雲）
+# 上 GitHub Pages 安全：公開的只是程式 UI，使用者輸入的客戶資料留在自己瀏覽器
+SALES_DECLARATION_URL = "https://yuan780903-cpu.github.io/market-scraper/sales_declaration.html?openExternalBrowser=1"
+
 
 def _load_license_urls() -> tuple:
     """從 snapshots/license_index.json 讀最新 URL；讀不到就用 fallback。"""
@@ -95,13 +99,14 @@ def delete_rich_menu(token: str, menu_id: str) -> None:
 
 
 def build_richmenu_payload(target_url: str, price_url: str, quote_url: str) -> dict:
-    """組合 Rich Menu 結構：8 個按鈕的位置與動作（2 列 × 4 欄）"""
+    """組合 Rich Menu 結構：9 個按鈕的位置與動作（3 列 × 3 欄）"""
     areas_geo = richmenu_designer.get_button_areas()
     license_url, _ = _load_license_urls()  # 營運許可證已不再用
     print(f"  報價系統 URL: {quote_url}")
     print(f"  肥料品目規格 URL: {FERT_ITEM_SPEC_URL}")
+    print(f"  預先登錄申請 URL: {SALES_DECLARATION_URL}")
 
-    # 8 個按鈕對應動作（順序需與 richmenu_designer.BUTTONS 一致）
+    # 9 個按鈕對應動作（順序需與 richmenu_designer.BUTTONS 一致）
     actions = [
         # 第一列
         {"type": "uri", "uri": AFA_PRODSALES_URL,
@@ -110,17 +115,20 @@ def build_richmenu_payload(target_url: str, price_url: str, quote_url: str) -> d
          "label": "肥料廠牌查詢"},
         {"type": "uri", "uri": target_url or AFA_SUBSIDY_URL,
          "label": "目標業績"},
+        # 第二列
         {"type": "uri", "uri": AFA_AGRI_REPORT_URL,
          "label": "農情報告網"},
-        # 第二列
         {"type": "uri", "uri": price_url or AFA_SUBSIDY_URL,
          "label": "產品牌價"},
         {"type": "uri", "uri": BRAND_REC_SPEC_URL,
          "label": "品牌推薦規範"},
+        # 第三列
         {"type": "uri", "uri": quote_url,
          "label": "報價系統"},
         {"type": "uri", "uri": FERT_ITEM_SPEC_URL,
          "label": "肥料品目規格"},
+        {"type": "uri", "uri": SALES_DECLARATION_URL,
+         "label": "預先登錄申請"},
     ]
 
     payload = {
