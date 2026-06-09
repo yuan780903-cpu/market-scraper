@@ -877,32 +877,38 @@ function pickPhone(p){
   const mob=parts.find(x=>/^09\d{8}$/.test(x.replace(/[^\d]/g,'')));
   return mob||parts[0]||'';
 }
-let cFilter={q:'', grade:'', type:'', city:'', org:''};
+let cFilter={q:'', grade:'', type:'', city:'', org:'', status:'active'};
+// 依狀態取基底名單：使用中（隱藏停用）或 停用客戶
+function custStatusBase(){ return cFilter.status==='inactive' ? customers.filter(c=>c.inactive) : customers.filter(c=>!c.inactive); }
 function renderCustomers(){
   let h=`<div class="info">🔒 這一頁的資料（含身分證、統編、出生年月日）只儲存在你這台裝置的瀏覽器，不會上傳。請定期到「設定」備份。</div>`;
   // 搜尋框：只更新結果區、不重建輸入框，並避開中文（注音）組字中觸發搜尋
   h+=`<div class="search"><input id="cust-q" placeholder="🔍 搜尋我的客戶" value="${esc(cFilter.q)}" oninput="onCustSearchInput(this)" oncompositionstart="cFilter._composing=true" oncompositionend="cFilter._composing=false;onCustSearchInput(this)"></div>`;
-  // 分級
-  const gc={}; customers.forEach(c=>{ gc[c.grade||'']=(gc[c.grade||'']||0)+1; });
-  h+=`<div class="rowsel"><span class="rowsel-l">分級</span><div class="chips">
-      <button class="chip ${cFilter.grade===''?'on':''}" onclick="setCGrade('')">全部 ${customers.length}</button>
-      ${GRADES.map(g=>`<button class="chip ${cFilter.grade===g?'on':''}" onclick="setCGrade('${g}')">${g}・${GRADE_LABEL[g]} ${gc[g]||0}</button>`).join('')}
-      <button class="chip ${cFilter.grade==='none'?'on':''}" onclick="setCGrade('none')">未分級 ${gc['']||0}</button></div></div>`;
-  // 通路
-  const tcnt={}; customers.forEach(c=>{ const t=c.type||'其他'; tcnt[t]=(tcnt[t]||0)+1; });
+  const base=custStatusBase();
+  const activeN=customers.filter(c=>!c.inactive).length, inactiveN=customers.filter(c=>c.inactive).length;
+  // 篩選下拉（改用下拉式選單，畫面不擁擠）
+  const gc={}; base.forEach(c=>{ gc[c.grade||'']=(gc[c.grade||'']||0)+1; });
+  const tcnt={}; base.forEach(c=>{ const t=c.type||'其他'; tcnt[t]=(tcnt[t]||0)+1; });
   const types=CUST_TYPES.filter(t=>tcnt[t]);
-  h+=`<div class="rowsel"><span class="rowsel-l">通路</span><div class="chips">
-      <button class="chip ${cFilter.type===''?'on':''}" onclick="setCType('')">全部</button>
-      ${types.map(t=>`<button class="chip ${cFilter.type===t?'on':''}" onclick="setCType('${t}')">${t} ${tcnt[t]}</button>`).join('')}</div></div>`;
-  // 地區 + 組織 下拉
-  const cities=[...new Set(customers.map(c=>custCity(c)).filter(Boolean))].sort(cityCmp);
-  const orgs=[...new Set(customers.map(c=>c.org).filter(Boolean))].sort();
+  const cities=[...new Set(base.map(c=>custCity(c)).filter(Boolean))].sort(cityCmp);
+  const orgs=[...new Set(base.map(c=>c.org).filter(Boolean))].sort();
+  h+=`<div class="field-2">
+      <div class="field"><label>分級</label><select onchange="cFilter.grade=this.value;renderCustomers()">
+        <option value="">全部分級（${base.length}）</option>
+        ${GRADES.map(g=>`<option value="${g}" ${cFilter.grade===g?'selected':''}>${g}・${GRADE_LABEL[g]}（${gc[g]||0}）</option>`).join('')}
+        <option value="none" ${cFilter.grade==='none'?'selected':''}>未分級（${gc['']||0}）</option></select></div>
+      <div class="field"><label>通路</label><select onchange="cFilter.type=this.value;renderCustomers()">
+        <option value="">全部通路</option>
+        ${types.map(t=>`<option value="${esc(t)}" ${cFilter.type===t?'selected':''}>${esc(t)}（${tcnt[t]}）</option>`).join('')}</select></div></div>`;
   h+=`<div class="field-2">
       <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustResults()">
         <option value="">全部地區</option>${cities.map(ci=>`<option value="${esc(ci)}" ${cFilter.city===ci?'selected':''}>${esc(ci)}</option>`).join('')}</select></div>
       <div class="field"><label>組織</label><select onchange="cFilter.org=this.value;renderCustResults()">
         <option value="">全部組織</option>${orgs.map(o=>`<option value="${esc(o)}" ${cFilter.org===o?'selected':''}>${esc(o)}</option>`).join('')}
         <option value="__none" ${cFilter.org==='__none'?'selected':''}>（未分組）</option></select></div></div>`;
+  h+=`<div class="field"><label>狀態</label><select onchange="cFilter.status=this.value;renderCustomers()">
+        <option value="active" ${cFilter.status!=='inactive'?'selected':''}>✅ 使用中（${activeN}）</option>
+        <option value="inactive" ${cFilter.status==='inactive'?'selected':''}>⏸️ 停用客戶（${inactiveN}）</option></select></div>`;
   h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
   h+=`<div id="cust-results"></div>`;
   viewHTML(h);
@@ -912,7 +918,8 @@ function onCustSearchInput(el){ cFilter.q=el.value; if(cFilter._composing) retur
 function renderCustResults(){
   const box=document.getElementById('cust-results'); if(!box) return;
   const q=cFilter.q.trim();
-  const res=customers.filter(c=>{
+  const base=custStatusBase();
+  const res=base.filter(c=>{
     if(cFilter.grade==='none'){ if(c.grade) return false; }
     else if(cFilter.grade){ if(c.grade!==cFilter.grade) return false; }
     if(cFilter.type && (c.type||'其他')!==cFilter.type) return false;
@@ -922,9 +929,9 @@ function renderCustResults(){
     return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
   });
   const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.org||q;
-  let h=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div>`;
+  let h=`<div class="count">${cFilter.status==='inactive'?`⏸️ 停用客戶 ${base.length} 位`:`共 ${base.length} 位客戶`}${active?`，符合 ${res.length} 位`:''}</div>`;
   if(!res.length){
-    h+=`<div class="card"><div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div></div>`;
+    h+=`<div class="card"><div class="empty"><div class="big">${cFilter.status==='inactive'?'⏸️':'👤'}</div>${cFilter.status==='inactive'?'目前沒有停用的客戶。':(customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。')}</div></div>`;
   } else {
     // 依地區分組（縣市層級），每個縣市獨立一塊
     const cityKey=c=>{ const ci=custCity(c); return ci?ci.replace(/臺/g,'台'):'未填地區'; };
