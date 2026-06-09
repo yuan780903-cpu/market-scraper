@@ -305,13 +305,16 @@ function uploadStamp(e){
       const a = d.data;
       for(let i=0; i<a.length; i+=4){
         const r=a[i], g=a[i+1], b=a[i+2];
-        // 全透明：接近白色 (RGB 都 ≥ 200)
-        if(r>=200 && g>=200 && b>=200){
+        const max = Math.max(r,g,b);
+        const min = Math.min(r,g,b);
+        const isGrayish = (max - min) < 28;        // R≈G≈B → 灰階(紙張/邊框)
+        const isBluish  = b > r + 15 && b > g + 8; // 偏藍(印章主體)→ 一律保留
+        if(isBluish) continue;
+        // 灰階像素依亮度分級透明：min ≥ 180 全透明、150-180 半透明
+        if(isGrayish && min >= 180){
           a[i+3] = 0;
-        }
-        // 半透明：淡灰漸層 (160-200) — 邊緣淡化過渡
-        else if(r>=160 && g>=160 && b>=160){
-          a[i+3] = Math.max(0, 255 - (r+g+b)/3);
+        } else if(isGrayish && min >= 150){
+          a[i+3] = Math.max(0, 255 - (min - 130) * 5);
         }
       }
       ctx.putImageData(d, 0, 0);
