@@ -52,6 +52,7 @@ const CHECK_PERIODS = ['現金','月結5天','月結15天','月結30天','月結
 // 種植 / 用肥（非經銷商通路）
 const COMMON_CROPS = ['水稻','蔬菜','果樹','茶','花卉','雜糧','根莖類','菇類','檳榔','其他'];
 const AREA_UNITS = ['公頃','甲','分','坪'];
+const LOC_TYPES = ['住家','下貨位置','倉庫','田區','其他'];
 
 // 區域（依台灣由北到南排序）
 const REGION_ORDER = '基隆 臺北 新北 桃園 新竹 苗栗 臺中 彰化 南投 雲林 嘉義 臺南 高雄 屏東 宜蘭 花蓮 臺東 澎湖 金門 連江'.split(' ');
@@ -1001,7 +1002,7 @@ function custSectionSummary(c,key){
     case 'basic':    return [pickPhone(c.phone),regionFull(c.address)].filter(x=>x&&x!=='未填地區').join('・')||'點此填寫';
     case 'products': return (c.products&&c.products.length)?`${c.products.length} 筆報價`:'尚未填寫';
     case 'rivals':   return (c.rivals&&c.rivals.length)?`${c.rivals.length} 筆競品`:'尚未填寫';
-    case 'deal':     { const parts=[]; if(c.checkPeriod)parts.push('票期：'+c.checkPeriod); if(c.creditLimit)parts.push('額度 '+c.creditLimit+' 萬'); const rg=c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[]; if(rg.length)parts.push((c.type==='經銷商'?'經銷區':'肥料區')+' '+rg.length); return parts.length?parts.join('・'):'尚未設定'; }
+    case 'deal':     { const parts=[]; if(c.checkPeriod)parts.push('票期：'+c.checkPeriod); if(c.creditLimit)parts.push('額度 '+c.creditLimit+' 萬'); const rg=c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[]; if(rg.length)parts.push((c.type==='經銷商'?'經銷區':'肥料區')+' '+rg.length); if(Array.isArray(c.mapLocations)&&c.mapLocations.length)parts.push('📍'+c.mapLocations.length); return parts.length?parts.join('・'):'尚未設定'; }
     case 'farm':     { const a=[]; if(c.plantArea)a.push(c.plantArea+(c.plantAreaUnit||'公頃')); if(Array.isArray(c.crops)&&c.crops.length)a.push(c.crops.slice(0,2).join('、')+(c.crops.length>2?'…':'')); if(c.fertTons)a.push(c.fertTons+'噸/年'); return a.length?a.join('・'):'尚未填寫'; }
     case 'visit':    { const di=dueInfo(c); return (c.grade?gradeText(c.grade):'未分級')+(di?`・下次 ${di.txt}`:''); }
     case 'follow':   { const n=(c.follow||[]).filter(f=>!f.done).length; return n?`${n} 項待辦`:'無待辦'; }
@@ -1066,6 +1067,7 @@ function custSection(id,key){
     h+=`<div class="field"><label>額度（萬元）</label><input id="c-credit" type="number" inputmode="decimal" value="${esc(c.creditLimit||'')}" placeholder="例如 50"></div>`;
     if(c.type==='經銷商') h+=regionEditorHTML('經銷區域', getSalesRegions(c), '經銷商實際銷售涵蓋的縣市／鄉鎮');
     else if(c.type==='直接農民') h+=regionEditorHTML('使用肥料區域', getFertRegions(c), '實際施肥的縣市／鄉鎮（與居住地可能不同，影響業績判讀）');
+    h+=locEditorHTML(getMapLocs(c));
     if(c.terms)h+=drow('交易條件',esc(c.terms));
     if(c.price)h+=drow('價格',esc(c.price));
     if(c.conditions)h+=drow('其他條件',esc(c.conditions));
@@ -1134,7 +1136,7 @@ function delCustomCard(id,cardId){ if(!confirm('確定刪除這張卡片？'))re
 
 function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value; c.freq=$('#c-freq').value?+$('#c-freq').value:(c.grade?GRADE_FREQ[c.grade]:null); c.next=$('#c-next').value||(c.freq?addDays(c.last||todayStr(),c.freq):c.next); saveCust(); toast('已儲存'); custSection(id,'visit'); render(); }
 function saveCustProducts(id){ const c=findCust(id); c.products=readProducts(); saveCust(); toast('已儲存產品報價'); custSection(id,'products'); render(); }
-function saveCustDeal(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); const cr=$('#c-credit'); c.creditLimit=cr?cr.value.trim():(c.creditLimit||''); const regs=readRegionChips(); if(c.type==='經銷商') c.salesRegions=regs; else if(c.type==='直接農民') c.fertRegions=regs; saveCust(); toast('已儲存交易資料'); custSection(id,'deal'); render(); }
+function saveCustDeal(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); const cr=$('#c-credit'); c.creditLimit=cr?cr.value.trim():(c.creditLimit||''); const regs=readRegionChips(); if(c.type==='經銷商') c.salesRegions=regs; else if(c.type==='直接農民') c.fertRegions=regs; c.mapLocations=readMapLocs(); saveCust(); toast('已儲存交易資料'); custSection(id,'deal'); render(); }
 function saveCustRivals(id){ const c=findCust(id); c.rivals=readRivals(); saveCust(); toast('已儲存競品肥料'); custSection(id,'rivals'); render(); }
 function saveCustFarm(id){
   const c=findCust(id);
@@ -1238,6 +1240,39 @@ function regionEditorHTML(label, regions, hint){
 function onRegCountyChange(){ const c=$('#reg-county').value, t=$('#reg-town'); const tw=c?townsOfCounty(c):[]; t.innerHTML='<option value="">全縣市（不分鄉鎮）</option>'+tw.map(x=>`<option>${esc(x)}</option>`).join(''); }
 function addRegionChip(){ const c=$('#reg-county').value; if(!c){ toast('請先選縣市'); return; } const tw=$('#reg-town').value; const r=tw?`${c} ${tw}`:c; const box=$('#reg-chips'); if([...box.querySelectorAll('.reg-chip')].some(el=>el.dataset.r===r)){ toast('已加入此區域'); return; } box.style.marginBottom='7px'; box.insertAdjacentHTML('beforeend', regionChipHTML(r)); $('#reg-county').value=''; $('#reg-town').innerHTML='<option value="">全縣市（不分鄉鎮）</option>'; }
 function readRegionChips(){ const box=$('#reg-chips'); if(!box) return []; return [...box.querySelectorAll('.reg-chip')].map(el=>el.dataset.r); }
+
+// ---------- 位置資訊（住家 / 下貨位置 + Google 地圖網址，可多筆）----------
+function getMapLocs(c){ if(!Array.isArray(c.mapLocations)) c.mapLocations=[]; return c.mapLocations; }
+function locChipHTML(l){
+  const url=(l&&l.url)||''; const type=(l&&l.type)||'位置';
+  const link = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="loc-open">🔗 開啟</a>` : '';
+  return `<div class="loc-chip" data-type="${esc(type)}" data-url="${esc(url)}">`
+    + `<span class="loc-t">📍 ${esc(type)}</span>`
+    + (url?`<span class="loc-u">${esc(url)}</span>`:`<span class="loc-u loc-empty">未填網址</span>`)
+    + link
+    + `<button type="button" class="loc-del" onclick="this.closest('.loc-chip').remove()">✕</button></div>`;
+}
+function locEditorHTML(locs){
+  let h=`<div class="field"><label>位置資訊（住家／下貨位置・可新增多筆）</label>`;
+  h+=`<div class="hint">選擇類型並貼上 Google 地圖網址，方便日後導航或分享給司機</div>`;
+  h+=`<div id="loc-chips" style="display:flex;flex-direction:column;gap:6px;margin-bottom:${(locs&&locs.length)?'7px':'0'}">${(locs||[]).map(locChipHTML).join('')}</div>`;
+  h+=`<div class="loc-add"><select id="loc-type">${LOC_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>`
+    + `<input id="loc-url" type="url" inputmode="url" placeholder="貼上 Google 地圖網址"></div>`;
+  h+=`<button type="button" class="btn btn-out" style="margin-top:6px" onclick="addMapLoc()">＋ 新增位置</button>`;
+  h+=`</div>`;
+  return h;
+}
+function addMapLoc(){
+  const t=$('#loc-type').value; const u=($('#loc-url').value||'').trim();
+  if(!u){ toast('請貼上 Google 地圖網址'); return; }
+  if(!/^https?:\/\//i.test(u)){ toast('網址需以 http:// 或 https:// 開頭'); return; }
+  const box=$('#loc-chips'); if(!box) return;
+  if([...box.querySelectorAll('.loc-chip')].some(el=>el.dataset.url===u)){ toast('已加入此網址'); return; }
+  box.style.marginBottom='7px';
+  box.insertAdjacentHTML('beforeend', locChipHTML({type:t,url:u}));
+  $('#loc-url').value='';
+}
+function readMapLocs(){ const box=$('#loc-chips'); if(!box) return []; return [...box.querySelectorAll('.loc-chip')].map(el=>({type:el.dataset.type||'位置',url:el.dataset.url||''})).filter(l=>l.url); }
 
 // ---------- 票期下拉（現金 / 月結N天 / 手動）----------
 function checkPeriodHTML(v){
@@ -1394,9 +1429,9 @@ function exportJSON(){
   toast('已匯出備份');
 }
 function exportCSV(){
-  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['plantArea','種植面積'],['crops','作物類別'],['fertTons','年用肥噸數'],['fertMonths','用肥月份'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
+  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['plantArea','種植面積'],['crops','作物類別'],['fertTons','年用肥噸數'],['fertMonths','用肥月份'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['mapLocations','位置資訊'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
   const head=cols.map(c=>c[1]).join(',');
-  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='salesRegions'||k==='fertRegions'||k==='crops') return (c[k]||[]).join('、'); if(k==='fertMonths') return (c.fertMonths||[]).map(m=>m+'月').join('、'); if(k==='plantArea') return c.plantArea?c.plantArea+(c.plantAreaUnit||'公頃'):''; if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
+  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='salesRegions'||k==='fertRegions'||k==='crops') return (c[k]||[]).join('、'); if(k==='fertMonths') return (c.fertMonths||[]).map(m=>m+'月').join('、'); if(k==='mapLocations') return (c.mapLocations||[]).map(l=>`${l.type}:${l.url}`).join(' / '); if(k==='plantArea') return c.plantArea?c.plantArea+(c.plantAreaUnit||'公頃'):''; if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
   const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
   download(`我的客戶_${todayStr()}.csv`, '﻿'+head+'\n'+rows.join('\n'), 'text/csv');
   toast('已匯出 CSV');
@@ -1432,7 +1467,7 @@ function parseCustomerTSV(text){
         phone:(tel&&tel!=='0')?tel:'', address:addr, regAddress:'', taxid:tax,
         filedDate:fmtYmd(cdate), contact:'', idno:'', birth:'', terms:'', checkPeriod:'',
         creditLimit:'', fertRegions:[], salesRegions:[], rivals:[], inactive:false,
-        plantArea:'', plantAreaUnit:'公頃', crops:[], fertTons:'', fertMonths:[],
+        plantArea:'', plantAreaUnit:'公頃', crops:[], fertTons:'', fertMonths:[], mapLocations:[],
         conditions:'', currentFert:'', truck:'', deliveryTime:'', grade:'', notes:'',
         freq:null, last:'', next:'', inter:[], products:[] };
       out.push(cur);
