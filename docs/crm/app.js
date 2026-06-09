@@ -14,6 +14,10 @@ let competitors = LS.get('crm_competitors', []); // 競品報價（本機）
 const saveOverlay = () => LS.set('crm_overlay', overlay);
 const saveCust = () => LS.set('crm_customers', customers);
 const saveComp = () => LS.set('crm_competitors', competitors);
+// 臨時目標客戶（使用者手動新增，只存本機）：併入 SEED，讓名單/地圖/排路線各處自動納入
+let customProspects = LS.get('crm_prospects', []);
+customProspects.forEach(p=>{ if(p&&p.id&&!SEED.some(s=>s.id===p.id)) SEED.push(p); });
+const saveProspects = () => LS.set('crm_prospects', customProspects);
 
 // 戰鬥人員（戰情公仔）— 只存本機
 let soldier = LS.get('crm_soldier', {name:'', region:[], branch:'army', weapon:'rifle', photo:''});
@@ -642,17 +646,18 @@ function renderProspects(){
   SEED.forEach(p=>{ if(inStatus(p)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
 
   let h = `<div class="search"><input id="psearch" placeholder="🔍 搜尋名稱 / 地址 / 電話" value="${esc(pFilter.q)}" oninput="onPSearch(this.value)"></div>`;
-  h += `<div class="rowsel"><span class="rowsel-l">狀態</span><div class="chips">
-        <button class="chip ${pFilter.status===''?'on':''}" onclick="setPStatus('')">全部 ${SEED.length}</button>
-        <button class="chip ${pFilter.status==='cold'?'on':''}" onclick="setPStatus('cold')">陌生目標客戶 ${SEED.length-nEx}</button>
-        <button class="chip ${pFilter.status==='existing'?'on':''}" onclick="setPStatus('existing')">既有客戶 ${nEx}</button></div></div>`;
-  h += `<div class="rowsel"><span class="rowsel-l">屬性</span><div class="chips">
-        <button class="chip ${pFilter.organic===''?'on':''}" onclick="setPOrganic('')">全部 ${SEED.length}</button>
-        <button class="chip ${pFilter.organic==='org'?'on':''}" onclick="setPOrganic('org')">🌱 有機農戶 ${nOrg}</button>
-        <button class="chip ${pFilter.organic==='non'?'on':''}" onclick="setPOrganic('non')">非有機 ${nNon}</button></div></div>`;
-  h += `<div class="rowsel"><span class="rowsel-l">通路</span><div class="chips"><button class="chip ${pFilter.cat===''?'on':''}" onclick="setPCat('')">全部 ${total}</button>`;
-  CATS.forEach(c=>{ if(counts[c]) h+=`<button class="chip ${pFilter.cat===c?'on':''}" onclick="setPCat('${c}')">${c} ${counts[c]}</button>`; });
-  h += `</div></div>`;
+  h += `<div class="btn-row" style="margin:2px 0 8px"><button class="btn btn-pri" onclick="addCustomProspect()">＋ 新增臨時目標客戶</button></div>`;
+  h += `<div class="rowsel"><span class="rowsel-l">狀態</span><select class="regsel" onchange="setPStatus(this.value)">
+        <option value="" ${pFilter.status===''?'selected':''}>全部 ${SEED.length}</option>
+        <option value="cold" ${pFilter.status==='cold'?'selected':''}>陌生目標客戶 ${SEED.length-nEx}</option>
+        <option value="existing" ${pFilter.status==='existing'?'selected':''}>既有客戶 ${nEx}</option></select></div>`;
+  h += `<div class="rowsel"><span class="rowsel-l">屬性</span><select class="regsel" onchange="setPOrganic(this.value)">
+        <option value="" ${pFilter.organic===''?'selected':''}>全部 ${SEED.length}</option>
+        <option value="org" ${pFilter.organic==='org'?'selected':''}>🌱 有機農戶 ${nOrg}</option>
+        <option value="non" ${pFilter.organic==='non'?'selected':''}>非有機 ${nNon}</option></select></div>`;
+  h += `<div class="rowsel"><span class="rowsel-l">通路</span><select class="regsel" onchange="setPCat(this.value)">
+        <option value="" ${pFilter.cat===''?'selected':''}>全部 ${total}</option>
+        ${CATS.filter(c=>counts[c]).map(c=>`<option value="${esc(c)}" ${pFilter.cat===c?'selected':''}>${esc(c)} ${counts[c]}</option>`).join('')}</select></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">區域</span><select class="regsel" onchange="setPRegion(this.value)">
         <option value="">全部區域</option>
         ${regionsSorted().map(r=>`<option value="${esc(r)}" ${pFilter.region===r?'selected':''}>${esc(r)}</option>`).join('')}
@@ -664,10 +669,9 @@ function renderProspects(){
   areaPool.forEach(p=>{ const n=areaVal(p); if(n!=null){ areaTot++; const b=AREA_BANDS.find(x=>x.test(n)); if(b)areaCounts[b.k]=(areaCounts[b.k]||0)+1; } });
   const effArea = areaTot>0 ? pFilter.area : '';   // 此條件下沒有面積資料就不套用，避免清空結果
   if(areaTot>0){
-    h += `<div class="rowsel"><span class="rowsel-l">面積</span><div class="chips">
-          <button class="chip ${effArea===''?'on':''}" onclick="setPArea('')">全部 ${areaTot}</button>`;
-    AREA_BANDS.forEach(b=>{ if(areaCounts[b.k]) h+=`<button class="chip ${effArea===b.k?'on':''}" onclick="setPArea('${b.k}')">${b.label} ${areaCounts[b.k]}</button>`; });
-    h += `</div></div>`;
+    h += `<div class="rowsel"><span class="rowsel-l">面積</span><select class="regsel" onchange="setPArea(this.value)">
+          <option value="" ${effArea===''?'selected':''}>全部 ${areaTot}</option>
+          ${AREA_BANDS.filter(b=>areaCounts[b.k]).map(b=>`<option value="${b.k}" ${effArea===b.k?'selected':''}>${b.label} ${areaCounts[b.k]}</option>`).join('')}</select></div>`;
   }
 
   const q = pFilter.q.trim();
@@ -726,6 +730,7 @@ function viewProspect(id){
   h+=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
       <span class="badge b-${p.category}">${p.category}</span>
       ${p.region?`<span class="badge b-其他">${esc(p.region)}</span>`:''}
+      ${p.custom?`<span class="badge pill-due">📌 臨時新增</span>`:''}
       ${exCust?`<span class="badge b-合作社">✅ 已是我的客戶</span>`:''}
       ${di?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   if(exCust) h+=`<div class="info">這個目標客戶已轉成「我的客戶」，名單統計已自動從「陌生」改記為「既有」。拜訪排程請到客戶資料管理。</div>`;
@@ -765,7 +770,50 @@ function viewProspect(id){
   } else {
     h+=`<div class="btn-row"><button class="btn btn-pri" onclick="convertToCustomer('${id}')">⭐ 轉為我的客戶（+1 既有 / −1 陌生）</button></div>`;
   }
+  if(p.custom){ h+=`<div class="btn-row"><button class="btn btn-out" onclick="editCustomProspect('${id}')">✏️ 編輯臨時資料</button></div>`; }
   openModal(p.name, h);
+}
+
+// ---------- 臨時目標客戶（手動新增，本機儲存，併入 SEED 後各處自動納入） ----------
+function addCustomProspect(){ openCustomProspectForm(null); }
+function editCustomProspect(id){ const p=SEED.find(x=>x.id===id); if(p) openCustomProspectForm(p); }
+function cpLocate(){ getGeo(coord=>{ const el=$('#cp-addr'); if(el) el.value=coord; toast('已帶入目前位置座標'); }); }
+function openCustomProspectForm(p){
+  const isEdit=!!p; p=p||{};
+  const cats=['農會','合作社','肥料行','有機農戶','驗證機構','友善團體','其他'];
+  const regs=regionsSorted();
+  let h=`<div class="info">把你在網路或路上看到的潛在客戶臨時加進來，會一起出現在名單、戰情地圖與排路線中。資料只存在你的手機本機。</div>`;
+  h+=`<div class="card">`;
+  h+=`<div class="field"><label>名稱 *</label><input id="cp-name" value="${esc(p.name||'')}" placeholder="例如 ○○農產行 / ○○農場"></div>`;
+  h+=`<div class="field-2">
+      <div class="field"><label>通路 / 屬性</label><select id="cp-cat">${cats.map(c=>`<option ${(p.category||'肥料行')===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>區域</label><select id="cp-region"><option value="">（未填）</option>${regs.map(r=>`<option ${p.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div></div>`;
+  h+=`<div class="field"><label>地址</label><div style="display:flex;gap:6px"><input id="cp-addr" style="flex:1;min-width:0" value="${esc(p.address||'')}" placeholder="地址或座標"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="cpLocate()">📍 定位</button></div></div>`;
+  h+=`<div class="field-2">
+      <div class="field"><label>電話</label><input id="cp-phone" value="${esc(p.phone||'')}" placeholder="可空"></div>
+      <div class="field"><label>聯絡人</label><input id="cp-contact" value="${esc(p.contact||'')}" placeholder="可空"></div></div>`;
+  h+=`<div class="field-2">
+      <div class="field"><label>面積(公頃)</label><input id="cp-area" type="number" inputmode="decimal" value="${esc(p.area||'')}" placeholder="可空"></div>
+      <div class="field"><label>作物 / 種類</label><input id="cp-crop" value="${esc(p.crop||'')}" placeholder="可空"></div></div>`;
+  h+=`<div class="field"><label>備註（來源、觀察）</label><input id="cp-notes" value="${esc(p.notes||'')}" placeholder="例如 FB 看到 / 路過 ○○路口"></div>`;
+  h+=`</div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="saveCustomProspect('${isEdit?p.id:''}')">💾 儲存</button>${isEdit?`<button class="btn btn-gray" onclick="delCustomProspect('${p.id}')">🗑️ 刪除</button>`:''}</div>`;
+  openModal(isEdit?'編輯臨時目標客戶':'新增臨時目標客戶', h);
+}
+function saveCustomProspect(id){
+  const g=i=>{const el=$('#'+i);return el?el.value.trim():'';};
+  const name=g('cp-name'); if(!name){ toast('請填名稱'); return; }
+  const data={ category:($('#cp-cat')&&$('#cp-cat').value)||'肥料行', region:($('#cp-region')&&$('#cp-region').value)||'', name, address:g('cp-addr'), phone:g('cp-phone'), contact:g('cp-contact'), area:g('cp-area'), crop:g('cp-crop'), notes:g('cp-notes'), custom:true };
+  if(id){ const cp=customProspects.find(x=>x.id===id); if(cp)Object.assign(cp,data); const s=SEED.find(x=>x.id===id); if(s)Object.assign(s,data); toast('已更新'); }
+  else { id='CP'+Date.now(); const obj=Object.assign({id},data); customProspects.push(obj); SEED.push(obj); toast('已新增臨時目標客戶'); }
+  saveProspects(); closeModal(); render(); viewProspect(id);
+}
+function delCustomProspect(id){
+  if(!confirm('確定刪除這筆臨時目標客戶？此動作無法復原。')) return;
+  customProspects=customProspects.filter(x=>x.id!==id);
+  const i=SEED.findIndex(x=>x.id===id); if(i>=0) SEED.splice(i,1);
+  if(overlay[id]){ delete overlay[id]; saveOverlay(); }
+  saveProspects(); closeModal(); toast('已刪除'); render();
 }
 
 function drow(k,v){ return `<div class="drow"><div class="k">${k}</div><div class="v">${v||'—'}</div></div>`; }
