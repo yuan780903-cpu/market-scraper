@@ -15,6 +15,25 @@ const saveOverlay = () => LS.set('crm_overlay', overlay);
 const saveCust = () => LS.set('crm_customers', customers);
 const saveComp = () => LS.set('crm_competitors', competitors);
 
+// 戰鬥人員（戰情公仔）— 只存本機
+let soldier = LS.get('crm_soldier', {name:'', region:'', branch:'army', weapon:'rifle', photo:''});
+const saveSoldier = () => LS.set('crm_soldier', soldier);
+const BRANCHES = {
+  army:{label:'陸軍', emoji:'🪖', uni:'#586b3f', uni2:'#46552f', skin:'#ffd9b0'},
+  navy:{label:'海軍', emoji:'⚓', uni:'#23436b', uni2:'#172e4d', skin:'#ffd9b0'},
+  air :{label:'空軍', emoji:'✈️', uni:'#4f6f8f', uni2:'#3a5773', skin:'#ffd9b0'}
+};
+const WEAPONS = {
+  water  :{label:'水槍',  emoji:'💦'},
+  pistol :{label:'手槍',  emoji:'🔫'},
+  rifle  :{label:'步槍',  emoji:'🔫'},
+  mg     :{label:'機關槍',emoji:'🔥'},
+  tank   :{label:'坦克車',emoji:'🛡️'},
+  jet    :{label:'戰鬥機',emoji:'✈️'},
+  carrier:{label:'航空母艦',emoji:'🚢'}
+};
+const SOLDIER_LINES = ['報告長官！士氣高昂 💪','保證達成業績目標！','衝啊！拿下這張訂單！','碩成肥料・使命必達 🫡','今天也要努力跑客戶！','敵不動我不動，敵一動我成交！','一鼓作氣，攻下這區！','嘿嘿～再摸我會害羞 😆'];
+
 const CATS = ['農會','合作社','肥料行','有機農戶','競爭對手','驗證機構','友善團體','有機促進區'];
 const CUST_TYPES = ['農會','合作社','經銷商','直接農民','其他'];
 
@@ -353,8 +372,10 @@ function renderMap(){
   }
   // 縣市清單（由北到南）
   const cNames=Object.keys(M.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x)));
+  // 戰情公仔
+  let h=soldierCardHTML();
   // 負責銷售區域（可複選）
-  let h=`<div class="card" style="padding:12px 13px">
+  h+=`<div class="card" style="padding:12px 13px">
     <div class="rowsel" style="margin-bottom:6px"><span class="rowsel-l">負責銷售區域</span><span style="font-size:11px;color:var(--muted)">可複選${sel.length?`・已選 ${sel.length}`:''}</span></div>
     <div class="chips">
       <button class="chip ${!sel.length?'on':''}" onclick="mapClearCounties()">🌏 全台灣</button>
@@ -408,6 +429,168 @@ function mapBarRow(name,lead,cust,onclickFn){
 function mapToggleCounty(n){ const a=mapState.counties=mapState.counties||[]; const i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapClearCounties(){ mapState.counties=[]; mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapTapTown(i){ mapState.town=i; renderMap(); window.scrollTo(0,0); }
+
+// ---------- 戰情公仔（Q版戰鬥娃娃）----------
+function starPath(cx,cy,r){ let p=''; for(let i=0;i<10;i++){ const a=Math.PI/5*i-Math.PI/2, rr=i%2?r*0.45:r; p+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1); } return p+'Z'; }
+// 帽子（依軍種）
+function dollHat(s){
+  const b=BRANCHES[s.branch]||BRANCHES.army;
+  if(s.branch==='navy') return `
+    <path d="M58 50 Q100 30 142 50 L142 56 Q100 38 58 56 Z" fill="#fff"/>
+    <ellipse cx="100" cy="46" rx="42" ry="15" fill="#fff"/>
+    <rect x="60" y="49" width="80" height="9" rx="4" fill="#16294a"/>
+    <circle cx="100" cy="46" r="5" fill="#c0392b"/>`;
+  if(s.branch==='air') return `
+    <path d="M58 56 Q58 28 100 28 Q142 28 142 56 Z" fill="#3a5773"/>
+    <rect x="56" y="52" width="88" height="7" rx="3" fill="#24384a"/>
+    <circle cx="84" cy="55" r="9" fill="#bfe6f2" stroke="#24384a" stroke-width="3"/>
+    <circle cx="116" cy="55" r="9" fill="#bfe6f2" stroke="#24384a" stroke-width="3"/>
+    <path d="${starPath(100,42,7)}" fill="#ffd84d"/>`;
+  // army helmet
+  return `
+    <path d="M60 58 Q60 24 100 24 Q140 24 140 58 Z" fill="${b.uni2}"/>
+    <rect x="56" y="56" width="88" height="9" rx="4" fill="#36421f"/>
+    <path d="${starPath(100,42,8)}" fill="#ffd84d"/>`;
+}
+// 臉（照片或卡通臉）
+function dollFace(s,id){
+  if(s.photo) return `
+    <clipPath id="fc${id}"><circle cx="100" cy="78" r="31"/></clipPath>
+    <circle cx="100" cy="78" r="34" fill="#ffd9b0"/>
+    <image href="${s.photo}" x="69" y="47" width="62" height="62" preserveAspectRatio="xMidYMid slice" clip-path="url(#fc${id})"/>
+    <circle cx="100" cy="78" r="31" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>`;
+  return `
+    <circle cx="100" cy="78" r="34" fill="#ffd9b0"/>
+    <ellipse cx="89" cy="78" rx="4" ry="5" fill="#3a2a1a"/><ellipse cx="111" cy="78" rx="4" ry="5" fill="#3a2a1a"/>
+    <circle cx="90.5" cy="76.5" r="1.3" fill="#fff"/><circle cx="112.5" cy="76.5" r="1.3" fill="#fff"/>
+    <circle cx="82" cy="88" r="5" fill="#ff9a9a" opacity=".5"/><circle cx="118" cy="88" r="5" fill="#ff9a9a" opacity=".5"/>
+    <path d="M91 90 Q100 98 109 90" stroke="#b5654a" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+}
+// 身體 + 手臂（pose: 'hold' 持武器 / 'stand' 立正）
+function dollBody(s,pose){
+  const b=BRANCHES[s.branch]||BRANCHES.army;
+  const arms = pose==='hold'
+    ? `<path d="M70 124 Q62 146 84 153" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
+       <path d="M130 124 Q138 146 116 153" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
+       <circle cx="84" cy="153" r="8" fill="${b.skin}"/><circle cx="116" cy="153" r="8" fill="${b.skin}"/>`
+    : `<path d="M70 124 Q58 152 70 176" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
+       <path d="M130 124 Q142 152 130 176" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
+       <circle cx="70" cy="176" r="8" fill="${b.skin}"/><circle cx="130" cy="176" r="8" fill="${b.skin}"/>`;
+  return `
+    <rect x="84" y="174" width="14" height="34" rx="6" fill="${b.uni2}"/>
+    <rect x="102" y="174" width="14" height="34" rx="6" fill="${b.uni2}"/>
+    <ellipse cx="89" cy="210" rx="13" ry="7" fill="#2a2a2a"/><ellipse cx="111" cy="210" rx="13" ry="7" fill="#2a2a2a"/>
+    <rect x="64" y="108" width="72" height="76" rx="22" fill="${b.uni}"/>
+    <path d="M86 108 Q100 122 114 108" stroke="${b.uni2}" stroke-width="4" fill="none"/>
+    <rect x="96" y="112" width="8" height="58" rx="3" fill="${b.uni2}" opacity=".5"/>
+    ${arms}`;
+}
+// 手持武器
+function heldWeapon(w){
+  if(w==='water') return `
+    <rect x="78" y="145" width="54" height="14" rx="6" fill="#ff7a3c"/>
+    <rect x="92" y="131" width="30" height="15" rx="6" fill="#36c5e0"/>
+    <rect x="130" y="147" width="22" height="9" rx="3" fill="#36c5e0"/>
+    <rect x="86" y="157" width="11" height="16" rx="3" fill="#e85d27"/>
+    <circle cx="156" cy="151" r="3.5" fill="#9fe0f0"/><circle cx="163" cy="146" r="2.5" fill="#9fe0f0"/>`;
+  if(w==='pistol') return `
+    <rect x="94" y="146" width="36" height="12" rx="3" fill="#3b3b42"/>
+    <rect x="96" y="156" width="13" height="17" rx="3" fill="#2a2a30"/>
+    <rect x="128" y="148" width="8" height="6" rx="2" fill="#1e1e24"/>`;
+  if(w==='mg') return `
+    <rect x="56" y="146" width="98" height="11" rx="3" fill="#33332f"/>
+    <rect x="150" y="148" width="26" height="6" rx="2" fill="#222"/>
+    <rect x="96" y="157" width="12" height="16" rx="3" fill="#222"/>
+    <rect x="70" y="157" width="22" height="15" rx="3" fill="#4a4a44"/>
+    <path d="M150 156 l9 17 M160 156 l9 17" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+    <path d="M92 164 q9 5 14 -1" stroke="#caa64a" stroke-width="3" fill="none"/>`;
+  // rifle (default)
+  return `
+    <rect x="62" y="147" width="86" height="9" rx="3" fill="#4a3a2a"/>
+    <rect x="148" y="149" width="18" height="5" rx="2" fill="#2a2a2a"/>
+    <rect x="54" y="144" width="14" height="15" rx="4" fill="#5a4632"/>
+    <rect x="100" y="156" width="11" height="14" rx="3" fill="#3a2e22"/>
+    <rect x="112" y="156" width="10" height="21" rx="3" fill="#2a2a2a"/>`;
+}
+// 載具（坦克／戰機／航母）+ 公仔擺放
+const VEHICLES = {
+  tank: { doll:'translate(45,46) scale(.55)', svg:`
+    <rect x="22" y="204" width="156" height="24" rx="12" fill="#2f3a22"/>
+    <circle cx="44" cy="216" r="8" fill="#16190f"/><circle cx="72" cy="216" r="8" fill="#16190f"/><circle cx="100" cy="216" r="8" fill="#16190f"/><circle cx="128" cy="216" r="8" fill="#16190f"/><circle cx="156" cy="216" r="8" fill="#16190f"/>
+    <rect x="34" y="178" width="132" height="32" rx="10" fill="#4f6336"/>
+    <rect x="76" y="158" width="56" height="26" rx="9" fill="#5b7040"/>
+    <rect x="128" y="166" width="66" height="9" rx="4" fill="#3a4a2a"/>
+    <rect x="190" y="164" width="6" height="13" rx="3" fill="#2f3a22"/>`},
+  jet: { doll:'translate(50,30) scale(.5)', svg:`
+    <path d="M16 196 Q70 178 160 184 L190 190 Q160 198 160 198 L70 210 Q30 206 16 196 Z" fill="#aebcc7"/>
+    <path d="M70 192 L42 224 L104 202 Z" fill="#8497a6"/>
+    <path d="M150 186 L170 160 L176 188 Z" fill="#8497a6"/>
+    <ellipse cx="126" cy="186" rx="17" ry="9" fill="#bfe6f2" stroke="#5c6b76" stroke-width="2"/>
+    <circle cx="22" cy="194" r="5" fill="#5c6b76"/>`},
+  carrier: { doll:'translate(50,86) scale(.5)', svg:`
+    <path d="M14 198 L186 198 L168 226 L32 226 Z" fill="#5a6470"/>
+    <rect x="18" y="190" width="166" height="10" rx="2" fill="#3f4750"/>
+    <rect x="40" y="193" width="22" height="3" fill="#d9c24a"/><rect x="78" y="193" width="22" height="3" fill="#d9c24a"/><rect x="116" y="193" width="22" height="3" fill="#d9c24a"/>
+    <rect x="146" y="166" width="24" height="26" rx="3" fill="#6b7682"/>
+    <rect x="156" y="150" width="4" height="18" fill="#6b7682"/>
+    <path d="M6 226 Q26 220 46 226 T86 226 T126 226 T166 226 T206 226 L206 240 L6 240 Z" fill="#7fa8c4" opacity=".7"/>`}
+};
+function soldierSVG(s, id){
+  const w=s.weapon||'rifle';
+  const veh=VEHICLES[w];
+  let inner;
+  if(veh){
+    inner = veh.svg + `<g transform="${veh.doll}">${dollBody(s,'stand')}${dollFace(s,id)}${dollHat(s)}</g>`;
+  } else {
+    inner = dollBody(s,'hold') + heldWeapon(w) + dollFace(s,id) + dollHat(s);
+  }
+  return `<svg viewBox="0 0 200 232" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
+}
+function soldierWrap(s,id){
+  return `<div class="doll-wrap" id="dollWrap" onclick="petSoldier()" title="點我互動">
+    <div class="doll-bubble" id="dollBubble"></div>
+    <div class="doll-fx" id="dollFx"></div>
+    ${soldierSVG(s,id)}
+  </div>`;
+}
+function soldierCardHTML(){
+  const s=soldier, b=BRANCHES[s.branch]||BRANCHES.army, w=WEAPONS[s.weapon]||WEAPONS.rifle;
+  const nm=s.name?esc(s.name):'未命名戰士';
+  return `<div class="card soldier-card" style="padding:10px 13px 12px">
+    ${soldierWrap(s,'m')}
+    <div class="sol-name">${nm}</div>
+    <div class="sol-tags">
+      <span class="sol-badge" style="background:${b.uni}">${b.emoji} ${b.label}</span>
+      <span class="sol-badge wpn">${w.emoji} ${w.label}</span>
+      ${s.region?`<span class="sol-badge reg">📍 ${esc(s.region)}</span>`:''}
+    </div>
+    <div class="sol-hint">點公仔互動 👆 ・ <span class="sol-link" onclick="event.stopPropagation();go('settings')">⚙️ 設定戰鬥人員</span></div>
+  </div>`;
+}
+function petSoldier(){
+  const d=document.getElementById('dollWrap'); if(!d) return;
+  d.classList.remove('pet'); void d.offsetWidth; d.classList.add('pet');
+  const bub=document.getElementById('dollBubble');
+  if(bub){ bub.textContent=SOLDIER_LINES[Math.floor(Math.random()*SOLDIER_LINES.length)]; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
+  const fx=document.getElementById('dollFx');
+  if(fx){ const base=(soldier.weapon==='water')?['💦','💧','✨']:['❤️','⭐','✨','💥'];
+    for(let i=0;i<4;i++){ const sp=document.createElement('span'); sp.className='fxp'; sp.textContent=base[Math.floor(Math.random()*base.length)];
+      sp.style.left=(22+Math.random()*56)+'%'; sp.style.animationDelay=(i*70)+'ms'; fx.appendChild(sp); setTimeout(()=>sp.remove(),1200); } }
+}
+function setSoldierBranch(b){ soldier.branch=b; saveSoldier(); renderSettings(); }
+function setSoldierWeapon(w){ soldier.weapon=w; saveSoldier(); renderSettings(); }
+function removeSoldierPhoto(){ soldier.photo=''; saveSoldier(); renderSettings(); }
+function uploadSoldierPhoto(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ const img=new Image(); img.onload=()=>{
+    const sz=240, cv=document.createElement('canvas'); cv.width=sz; cv.height=sz; const ctx=cv.getContext('2d');
+    const scale=Math.max(sz/img.width, sz/img.height), dw=img.width*scale, dh=img.height*scale;
+    ctx.drawImage(img,(sz-dw)/2,(sz-dh)/2,dw,dh);
+    soldier.photo=cv.toDataURL('image/jpeg',0.85); saveSoldier(); toast('已更新戰鬥人員照片'); renderSettings();
+  }; img.onerror=()=>alert('圖片讀取失敗'); img.src=r.result; };
+  r.readAsDataURL(f); input.value='';
+}
 
 // ========== 名單 ==========
 function renderProspects(){
@@ -1037,6 +1220,20 @@ function interForm(cb){
 function renderSettings(){
   const size=((JSON.stringify(overlay).length+JSON.stringify(customers).length)/1024).toFixed(0);
   let h=`<div class="info">所有資料只存在這台裝置的瀏覽器中。換手機、清除瀏覽器資料前，請先「匯出備份」。</div>`;
+  // 戰鬥人員（戰情公仔）設定
+  h+=`<div class="sec-title"><span class="bar"></span>戰鬥人員設定（戰情公仔）</div><div class="card">`;
+  h+=soldierWrap(soldier,'s');
+  h+=`<div class="field"><label>戰鬥人員名稱</label><input id="sol-name" type="text" value="${esc(soldier.name||'')}" placeholder="例：莊政遠 中士" oninput="soldier.name=this.value;saveSoldier()"></div>`;
+  h+=`<div class="field"><label>所屬戰鬥區域</label><input id="sol-region" type="text" value="${esc(soldier.region||'')}" placeholder="例：台南・高雄前線" oninput="soldier.region=this.value;saveSoldier()"></div>`;
+  h+=`<div class="rowsel"><span class="rowsel-l">軍種</span><div class="chips">`+
+    Object.entries(BRANCHES).map(([k,v])=>`<button class="chip ${soldier.branch===k?'on':''}" onclick="setSoldierBranch('${k}')">${v.emoji} ${v.label}</button>`).join('')+`</div></div>`;
+  h+=`<div class="rowsel" style="align-items:flex-start"><span class="rowsel-l">武器</span><div class="chips">`+
+    Object.entries(WEAPONS).map(([k,v])=>`<button class="chip ${soldier.weapon===k?'on':''}" onclick="setSoldierWeapon('${k}')">${v.emoji} ${v.label}</button>`).join('')+`</div></div>`;
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-out" onclick="document.getElementById('solphoto').click()">📷 上傳照片當公仔的臉</button></div>`;
+  h+=`<input type="file" id="solphoto" accept="image/*" style="display:none" onchange="uploadSoldierPhoto(this)">`;
+  if(soldier.photo) h+=`<div class="btn-row"><button class="btn btn-gray" onclick="removeSoldierPhoto()">🗑️ 移除照片（改用卡通臉）</button></div>`;
+  h+=`<div class="hint" style="margin-top:7px;color:var(--muted);font-size:11px">照片會自動縮圖、只存在你本機裝置，不會上傳。點公仔可以撫摸互動 😆</div>`;
+  h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>資料統計</div><div class="card">`;
   h+=drow('名單庫', SEED.length+' 筆（內建）');
   h+=drow('我的客戶', customers.length+' 位');
@@ -1067,7 +1264,7 @@ function download(name, content, type){
   const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function exportJSON(){
-  const data={ver:1, exported:new Date().toISOString(), customers, overlay, competitors};
+  const data={ver:1, exported:new Date().toISOString(), customers, overlay, competitors, soldier};
   download(`客戶管理備份_${todayStr()}.json`, JSON.stringify(data), 'application/json');
   toast('已匯出備份');
 }
@@ -1085,6 +1282,7 @@ function importJSON(input){
     if(Array.isArray(d.customers)){ const ids=new Set(customers.map(c=>c.id)); d.customers.forEach(c=>{ if(ids.has(c.id))c.id='C'+Date.now()+Math.random().toString(36).slice(2,5); customers.push(c); }); }
     if(d.overlay) Object.assign(overlay, d.overlay);
     if(Array.isArray(d.competitors)){ const cids=new Set(competitors.map(c=>c.id)); d.competitors.forEach(c=>{ if(!cids.has(c.id)) competitors.push(c); }); saveComp(); }
+    if(d.soldier && typeof d.soldier==='object'){ Object.assign(soldier, d.soldier); saveSoldier(); }
     saveCust(); saveOverlay(); toast('已匯入還原'); render();
   }catch(e){ alert('檔案格式錯誤，無法匯入'); } };
   r.readAsText(f); input.value='';
