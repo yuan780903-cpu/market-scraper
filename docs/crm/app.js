@@ -1736,6 +1736,25 @@ function renderSettings(){
   h+=`<input type="file" id="imp" accept="application/json,.json" style="display:none" onchange="importJSON(this)">`;
   h+=`<div class="hint" style="margin-top:8px;color:var(--muted);font-size:11px">匯入會合併客戶與排程；同名客戶會新增為另一筆。</div>`;
   h+=`</div>`;
+  // Google 雲端硬碟備份
+  const _gcid=gdriveClientId(), _glast=gdriveLast();
+  h+=`<div class="sec-title"><span class="bar"></span>Google 雲端硬碟備份</div><div class="card">`;
+  h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;line-height:1.7;margin-top:0">把全部資料（含客戶個資）備份到<b>你自己的</b> Google 雲端硬碟。⚠️ 資料會以<b>原文</b>存到 Google，請確認帳號只有你能登入。需先做一次性設定（見下方說明）。</div>`;
+  h+=`<div class="field" style="margin-top:8px"><label>Google OAuth 用戶端 ID</label><input id="gd-cid" value="${esc(_gcid)}" placeholder="xxxxx.apps.googleusercontent.com" style="font-size:12px"></div>`;
+  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="saveGdriveClientId(document.getElementById('gd-cid').value)">💾 儲存 ID</button></div>`;
+  h+=`<label style="display:flex;align-items:center;gap:8px;margin:10px 2px 2px;font-size:13px"><input type="checkbox" ${gdriveAuto()?'checked':''} onchange="toggleGdriveAuto(this.checked)" style="width:18px;height:18px">每天自動備份（每次開App超過約20小時就自動上傳）</label>`;
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="gdriveBackup('')">☁️ 立即備份到雲端</button></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-gray" onclick="gdriveRestore()">⬇️ 從雲端還原最新備份</button></div>`;
+  h+=`<div class="hint" style="margin-top:6px;color:var(--muted);font-size:11px">上次雲端備份：${_glast?esc(new Date(_glast).toLocaleString('zh-TW')):'尚未備份'}</div>`;
+  h+=`<details style="margin-top:8px"><summary style="font-size:12.5px;color:#3a473f;cursor:pointer;font-weight:600">📋 一次性設定教學（點開）</summary><div style="font-size:11.5px;line-height:1.9;color:#3a473f;margin-top:6px">
+    1. 到 <b>Google Cloud Console</b>（console.cloud.google.com）用你的 Google 帳號登入，建立一個專案。<br>
+    2. 「API 和服務 → 程式庫」搜尋 <b>Google Drive API</b> 並<b>啟用</b>。<br>
+    3. 「OAuth 同意畫面」選 <b>外部</b>，填App名稱，把<b>你自己的 Gmail 加入測試使用者</b>。<br>
+    4. 「憑證 → 建立憑證 → OAuth 用戶端 ID → 網頁應用程式」。<br>
+    5. 「已授權的 JavaScript 來源」填：<b>https://yuan780903-cpu.github.io</b><br>
+    6. 建立後複製<b>用戶端 ID</b>，貼到上面欄位按「儲存 ID」即可。<br>
+    （用戶端 ID 不是密碼，只存你手機本機；權限只開放本App建立的備份檔，看不到你雲端其他檔案。）</div></details>`;
+  h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>匯入既有客戶（SAP 客戶檔）</div><div class="card">`;
   h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="document.getElementById('impxls').click()">📥 匯入 SAP 客戶檔 (.xls)</button></div>`;
   h+=`<input type="file" id="impxls" accept=".xls,.csv,.txt,.tsv" style="display:none" onchange="importCustomerFile(this)">`;
@@ -1752,9 +1771,9 @@ function download(name, content, type){
   const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function backupBundle(){ return {ver:2, exported:new Date().toISOString(), customers, overlay, competitors, soldier, prospects:customProspects}; }
 function exportJSON(){
-  const data={ver:1, exported:new Date().toISOString(), customers, overlay, competitors, soldier};
-  download(`客戶管理備份_${todayStr()}.json`, JSON.stringify(data), 'application/json');
+  download(`客戶管理備份_${todayStr()}.json`, JSON.stringify(backupBundle()), 'application/json');
   toast('已匯出備份');
 }
 function exportCSV(){
@@ -1772,9 +1791,91 @@ function importJSON(input){
     if(d.overlay) Object.assign(overlay, d.overlay);
     if(Array.isArray(d.competitors)){ const cids=new Set(competitors.map(c=>c.id)); d.competitors.forEach(c=>{ if(!cids.has(c.id)) competitors.push(c); }); saveComp(); }
     if(d.soldier && typeof d.soldier==='object'){ Object.assign(soldier, d.soldier); saveSoldier(); }
+    if(Array.isArray(d.prospects)){ const pids=new Set(customProspects.map(p=>p.id)); d.prospects.forEach(p=>{ if(p&&p.id&&!pids.has(p.id)){ customProspects.push(p); if(!SEED.some(s=>s.id===p.id)) SEED.push(p); } }); saveProspects(); }
     saveCust(); saveOverlay(); toast('已匯入還原'); render();
   }catch(e){ alert('檔案格式錯誤，無法匯入'); } };
   r.readAsText(f); input.value='';
+}
+
+// ---------- Google 雲端硬碟備份（存到使用者自己的 Drive；drive.file 權限只看得到本App建立的檔）----------
+const GDRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
+let _gToken=null;   // {token, exp}
+function gdriveClientId(){ return (localStorage.getItem('crm_gdrive_clientid')||'').trim(); }
+function gdriveLast(){ return localStorage.getItem('crm_gdrive_last')||''; }
+function gdriveAuto(){ return localStorage.getItem('crm_gdrive_auto')==='1'; }
+function saveGdriveClientId(v){ localStorage.setItem('crm_gdrive_clientid',(v||'').trim()); _gToken=null; toast('已儲存用戶端 ID'); }
+function toggleGdriveAuto(on){ localStorage.setItem('crm_gdrive_auto', on?'1':'0'); toast(on?'已開啟每天自動備份':'已關閉自動備份'); }
+function loadGIS(){ return new Promise((res,rej)=>{ if(window.google&&google.accounts&&google.accounts.oauth2) return res(); const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); }); }
+function getDriveToken(mode){   // mode==='silent' → 用 prompt:'none'（無彈窗，需既有授權）；否則互動授權
+  return new Promise(async (resolve,reject)=>{
+    const cid=gdriveClientId(); if(!cid){ reject(new Error('尚未填入 Google 用戶端 ID')); return; }
+    if(_gToken && _gToken.exp>Date.now()+60000){ resolve(_gToken.token); return; }
+    try{ await loadGIS(); }catch(e){ return reject(e); }
+    const tc=google.accounts.oauth2.initTokenClient({
+      client_id:cid, scope:GDRIVE_SCOPE,
+      callback:(resp)=>{ if(resp&&resp.access_token){ _gToken={token:resp.access_token, exp:Date.now()+(resp.expires_in||3600)*1000}; resolve(resp.access_token); } else reject(new Error(resp&&resp.error?resp.error:'授權失敗')); },
+      error_callback:(err)=>reject(new Error((err&&err.type)||'授權失敗或被取消'))
+    });
+    try{ tc.requestAccessToken({prompt: mode==='silent'?'none':''}); }catch(e){ reject(e); }
+  });
+}
+async function driveFindFile(token,name){
+  const q=encodeURIComponent(`name='${name}' and trashed=false`);
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)&orderBy=modifiedTime desc`,{headers:{Authorization:'Bearer '+token}});
+  if(!r.ok) throw new Error('Drive 查詢失敗 '+r.status);
+  const j=await r.json(); return (j.files&&j.files[0])||null;
+}
+async function driveUpload(token,name,content,existingId){
+  const boundary='crmbnd'+Date.now();
+  const meta=existingId?{}:{name, mimeType:'application/json'};
+  const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+  const url=existingId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart&fields=id`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`;
+  const r=await fetch(url,{method:existingId?'PATCH':'POST', headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary}, body});
+  if(!r.ok){ const t=await r.text(); throw new Error('上傳失敗 '+r.status+' '+t.slice(0,100)); }
+  return r.json();
+}
+async function gdriveBackup(mode){
+  try{
+    if(mode!=='silent') toast('連結 Google 中…');
+    const token=await getDriveToken(mode);
+    const name=`碩成CRM備份_${todayStr()}.json`;
+    const ex=await driveFindFile(token,name);
+    await driveUpload(token,name,JSON.stringify(backupBundle()), ex&&ex.id);
+    localStorage.setItem('crm_gdrive_last', new Date().toISOString());
+    toast('✅ 已備份到 Google 雲端硬碟');
+    if(tab==='settings') renderSettings();
+  }catch(e){
+    if(mode==='silent'){ console.log('silent backup skipped:', e.message); return; }
+    toast('雲端備份失敗：'+e.message);
+  }
+}
+async function gdriveRestore(){
+  if(!confirm('將從 Google 雲端硬碟取回最新備份，並「覆蓋」這台裝置目前的客戶／排程資料。確定要還原嗎？')) return;
+  try{
+    toast('連結 Google 中…');
+    const token=await getDriveToken('');
+    const q=encodeURIComponent(`name contains '碩成CRM備份' and trashed=false`);
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)&orderBy=modifiedTime desc`,{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok) throw new Error('查詢失敗 '+r.status);
+    const j=await r.json(); const f=j.files&&j.files[0];
+    if(!f){ toast('雲端找不到備份檔'); return; }
+    const dr=await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{headers:{Authorization:'Bearer '+token}});
+    if(!dr.ok) throw new Error('下載失敗 '+dr.status);
+    const d=await dr.json();
+    if(Array.isArray(d.customers)){ customers=d.customers; saveCust(); }
+    if(d.overlay&&typeof d.overlay==='object'){ overlay=d.overlay; saveOverlay(); }
+    if(Array.isArray(d.competitors)){ competitors=d.competitors; saveComp(); }
+    if(d.soldier&&typeof d.soldier==='object'){ Object.assign(soldier,d.soldier); saveSoldier(); }
+    if(Array.isArray(d.prospects)){ customProspects=d.prospects; customProspects.forEach(p=>{ if(p&&p.id&&!SEED.some(s=>s.id===p.id)) SEED.push(p); }); saveProspects(); }
+    toast('✅ 已從雲端還原'); render();
+  }catch(e){ toast('還原失敗：'+e.message); }
+}
+function maybeAutoBackup(){
+  if(!gdriveAuto()||!gdriveClientId()) return;
+  const last=gdriveLast(); if(last && (Date.now()-new Date(last).getTime()) < 20*3600*1000) return;
+  setTimeout(()=>gdriveBackup('silent'), 3000);   // 試無彈窗備份；iPhone Safari 可能擋，會自動略過待手動
 }
 
 // ---------- 匯入 SAP 客戶檔（Big5 定位字元 .xls）----------
@@ -2692,6 +2793,7 @@ function initApp(){
   const hash=(location.hash||'').replace('#','');
   go(valid.includes(hash)?hash:'home');
   showInAppWarning();
+  maybeAutoBackup();
 }
 window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['home','map','prospects','route','customers','compete','report','settings']; if(valid.includes(h)) go(h); });
 initApp();
