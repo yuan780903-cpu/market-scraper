@@ -281,24 +281,35 @@ function render(){
   scaleSheet();
 }
 
-/* ----- 發票專用章（SVG 仿真章樣式，藍色橢圓框 + 公司名上弧 + 統編大字 + 地址下弧）----- */
+/* ----- 發票專用章（仿照截圖：橄欖球形=上下凸弧+左右直線+雙框）----- */
+// 外框 path：上弧 + 右直線 + 下弧 + 左直線（橄欖球/公文章形狀）
+// viewBox 300x220 — 公司名沿上弧排列、地址沿下弧排列、中央 6 行
 const INVOICE_STAMP_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 220" style="font-family:'PMingLiU','Songti TC','Times New Roman',serif">
   <defs>
-    <path id="topArc" d="M 25 95 A 130 80 0 0 1 275 95" fill="none"/>
-    <path id="botArc" d="M 25 145 A 130 80 0 0 0 275 145" fill="none"/>
+    <!-- 上弧外緣（給公司名 textPath 跟著走，比外框稍小些確保文字在邊框內） -->
+    <path id="topArc" d="M 32 78 A 145 70 0 0 1 268 78" fill="none"/>
+    <!-- 下弧外緣（給地址 textPath） -->
+    <path id="botArc" d="M 32 142 A 145 70 0 0 0 268 142" fill="none"/>
   </defs>
-  <rect x="5" y="5" width="290" height="210" rx="55" ry="80" fill="none" stroke="#1a3a8c" stroke-width="3"/>
-  <rect x="11" y="11" width="278" height="198" rx="50" ry="74" fill="none" stroke="#1a3a8c" stroke-width="0.8"/>
-  <text font-weight="bold" font-size="18" fill="#1a3a8c" letter-spacing="2">
+  <!-- 外框：橄欖球形（上下凸弧 + 左右短直線）-->
+  <path d="M 30 60 A 200 80 0 0 1 270 60 L 270 160 A 200 80 0 0 1 30 160 Z"
+        fill="none" stroke="#1a3a8c" stroke-width="3"/>
+  <!-- 內框（細，距外框 4px）-->
+  <path d="M 35 64 A 195 75 0 0 1 265 64 L 265 156 A 195 75 0 0 1 35 156 Z"
+        fill="none" stroke="#1a3a8c" stroke-width="0.7"/>
+  <!-- 上弧：公司名 -->
+  <text font-weight="bold" font-size="16" fill="#1a3a8c" letter-spacing="3">
     <textPath href="#topArc" startOffset="50%" text-anchor="middle">大成長城企業股份有限公司</textPath>
   </text>
-  <text x="150" y="95" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a3a8c" letter-spacing="3">統一發票專用章</text>
-  <text x="150" y="115" text-anchor="middle" font-size="13" fill="#1a3a8c" letter-spacing="2">統一編號(1)</text>
-  <text x="150" y="150" text-anchor="middle" font-size="28" font-weight="900" fill="#1a3a8c" letter-spacing="3">❀73008303❀</text>
-  <text x="150" y="172" text-anchor="middle" font-size="14" fill="#1a3a8c" letter-spacing="1">負責人：韓家宇</text>
-  <text x="150" y="190" text-anchor="middle" font-size="13" fill="#1a3a8c">TEL:2531111-10</text>
-  <text font-weight="bold" font-size="13" fill="#1a3a8c" letter-spacing="1">
+  <!-- 中央 4 行 -->
+  <text x="150" y="92" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a3a8c" letter-spacing="3">統一發票專用章</text>
+  <text x="150" y="111" text-anchor="middle" font-size="12" fill="#1a3a8c" letter-spacing="2">統一編號(1)</text>
+  <text x="150" y="142" text-anchor="middle" font-size="26" font-weight="900" fill="#1a3a8c" letter-spacing="2">❀73008303❀</text>
+  <text x="150" y="164" text-anchor="middle" font-size="13" fill="#1a3a8c" letter-spacing="1">負責人：韓家宇</text>
+  <text x="150" y="182" text-anchor="middle" font-size="12" fill="#1a3a8c">TEL:2531111-10</text>
+  <!-- 下弧：地址 -->
+  <text font-weight="bold" font-size="12" fill="#1a3a8c" letter-spacing="1">
     <textPath href="#botArc" startOffset="50%" text-anchor="middle">台南市永康區蔦松二街3號</textPath>
   </text>
 </svg>`;
@@ -382,44 +393,59 @@ function savePDF(){
   const inApp=isInApp();
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  // 取消縮放讓 html2canvas 抓到 1:1 原始尺寸
-  const prevZ=sheet.style.zoom, prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
-  sheet.style.zoom="";
-  sheet.style.transform="none";
-  sheet.style.minHeight="auto";
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
-  const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
-  // === A4 1:1 對應 ===
-  // 之前用 unit:"mm" + format:"a4" 會把 sheet 的 px 當 pt 處理 (1pt=1.33px @96dpi)
-  // 導致 sheet 794px 在 PDF 中佔 1058pt 寬 > A4 的 595pt → 右邊被切
-  // 改用 unit:"px"，紙張尺寸 [794, 1123] (= A4 @96dpi)，sheet 1:1 完美對齊
-  // PDF reader 仍會把這份檔案辨識為 A4 (8.27×11.69 in = 210×297 mm)
-  const A4_W = 794, A4_H = 1123;  // A4 @ 96dpi pixels
+
+  // === 降寬度法：徹底避免 px/pt 換算誤差 ===
+  // 1. PDF 用 A4 mm，邊距 10mm → 工作區寬 190mm
+  // 2. sheet 暫時鎖成 718px (= 190mm @96dpi)，跟工作區 1:1 對應
+  // 3. html2canvas 抓 718px 寬 → html2pdf 把它放進 190mm → 完美對齊不切
+  // 4. 完成後還原 sheet 寬度（恢復畫面顯示）
+  const PRINT_W_PX = 718;  // 190mm @ 96dpi
+  const prevW = sheet.style.width;
+  const prevZ = sheet.style.zoom;
+  const prevT = sheet.style.transform;
+  const prevMH = sheet.style.minHeight;
+  sheet.style.width = PRINT_W_PX + "px";
+  sheet.style.zoom = "";
+  sheet.style.transform = "none";
+  sheet.style.minHeight = "auto";
+  const restore = ()=>{
+    sheet.style.width = prevW;
+    sheet.style.zoom = prevZ;
+    sheet.style.transform = prevT;
+    sheet.style.minHeight = prevMH;
+    scaleSheet();
+  };
+
   html2pdf().set({
-    margin:0,
-    filename:fname,
-    image:{type:"jpeg",quality:0.96},
-    html2canvas:{
-      scale:2,
-      useCORS:true,
-      backgroundColor:"#ffffff",
-      windowWidth:A4_W,
-      width:A4_W,
-      scrollX:0,
-      scrollY:0,
+    margin: 10,                                   // 10mm 邊距，內容置中
+    filename: fname,
+    image: {type:"jpeg", quality:0.96},
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: PRINT_W_PX,
+      width: PRINT_W_PX,
+      scrollX: 0,
+      scrollY: 0,
     },
-    jsPDF:{unit:"px", format:[A4_W, A4_H], orientation:"portrait", hotfixes:["px_scaling"]},
-    pagebreak:{mode:["css","legacy"], avoid:"tr"}
+    jsPDF: {unit:"mm", format:"a4", orientation:"portrait"},
+    pagebreak: {mode:["css","legacy"], avoid:"tr"}
   }).from(sheet).toPdf().get("pdf").then(function(pdf){
     restore();
     if(inApp){
-      const url=pdf.output("bloburl");
-      if(win){ win.location.href=url; } else { location.href=url; }
+      const url = pdf.output("bloburl");
+      if(win){ win.location.href = url; } else { location.href = url; }
     }else{
       pdf.save(fname);
     }
-  }).catch(function(){ restore(); if(win){ try{win.close();}catch(e){} } window.print(); });
+  }).catch(function(){
+    restore();
+    if(win){ try{win.close();}catch(e){} }
+    window.print();
+  });
 }
 
 /* ----- 草稿（整張單）----- */
