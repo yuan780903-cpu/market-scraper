@@ -379,7 +379,7 @@ function buildPrint(){
 
   // 說明（依規則動態產生）
   const ex=[];
-  ex.push(`依業務單位與生產單位議定之銷售申報作業辦理，每月10日及25日提供未來兩週之預先登錄資料。本案為「${batch}」之${word}資料。`);
+  ex.push(`依業務單位與生產單位議定之銷售申報作業辦理，每月10日及25日做預先登錄資料。本案為「${batch}」之${word}資料。`);
   // 依規格分組統計重量（銷售與贈送分開）
   const byW={},byWG={};
   entries.forEach(e=>{const w=Number(e.weight)||0;if(e.qty)byW[w]=(byW[w]||0)+e.qty;if(e.gift)byWG[w]=(byWG[w]||0)+e.gift});
