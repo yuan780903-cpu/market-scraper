@@ -1497,10 +1497,11 @@ function mortgageSummary(c){ const set=c.mortgageSet||''; if(!set) return ''; if
 // 取得目前 GPS 座標（需 HTTPS 與使用者授權；座標只用於本機帶入欄位/產生地圖連結，不外傳）
 function getGeo(onOk){
   if(!navigator.geolocation){ toast('此裝置不支援定位'); return; }
+  if(isInLineApp()){ toast('LINE 內建瀏覽器無法定位，請點右下「⋯」用 Safari 開啟，或手動輸入地址'); return; }
   toast('定位中…請允許位置權限');
   navigator.geolocation.getCurrentPosition(
     pos=>{ const la=pos.coords.latitude.toFixed(6), ln=pos.coords.longitude.toFixed(6); onOk(la+','+ln); },
-    err=>{ toast(err && err.code===1 ? '已拒絕定位權限，請到瀏覽器設定開啟' : '定位失敗，請稍後再試或手動輸入'); },
+    err=>{ toast(err && err.code===1 ? '已拒絕定位權限：請到 iPhone 設定→隱私權→定位服務→Safari 開啟，再重新整理' : '定位失敗，請稍後再試或手動輸入地址'); },
     {enableHighAccuracy:true, timeout:10000, maximumAge:0}
   );
 }
