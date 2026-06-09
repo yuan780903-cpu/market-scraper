@@ -2055,13 +2055,13 @@ function smartPlan(){
       let arr=Math.max(t + (result.length?smartTravel(prevAddr,fx.address):0), fx._at);
       if(arr>fx._at) lateFix=true;
       arr=lunchAdj(arr);
-      result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),fixedMark:true}));
+      result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
       t=arr+dwellOf(fx); prevAddr=fx.address;
     }else{
       const p=free[ui++];
       let arr=t + (result.length?smartTravel(prevAddr,p.address):0);
       arr=lunchAdj(arr);
-      result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p))}));
+      result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
       t=arr+dwellOf(p); prevAddr=p.address;
     }
   }
@@ -2089,9 +2089,14 @@ function smartPlan(){
     const onclick=x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`;
     h+=`<div class="item" onclick="${onclick}">
       <div class="avatar" style="background:${colorFor(x.name)}">${idx}</div>
-      <div class="body"><div class="nm">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
+      <div class="body">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
+          <span style="font-size:12.5px;color:var(--muted)">抵達・拜訪 ${x._dur} 分</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:1px">時段 ${x.arrive}–${x.leave}</div>
+        <div class="nm" style="margin-top:4px">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
         <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
-        <div class="tagline" style="margin-top:4px">🕐 ${x.arrive}–${x.leave}　<span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div></div>
+        <div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div></div>
       <div class="meta"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
     </div>`;
   });
