@@ -879,7 +879,8 @@ function pickPhone(p){
 let cFilter={q:'', grade:'', type:'', city:'', org:''};
 function renderCustomers(){
   let h=`<div class="info">🔒 這一頁的資料（含身分證、統編、出生年月日）只儲存在你這台裝置的瀏覽器，不會上傳。請定期到「設定」備份。</div>`;
-  h+=`<div class="search"><input placeholder="🔍 搜尋我的客戶" value="${esc(cFilter.q)}" oninput="cFilter.q=this.value;renderCustomers()"></div>`;
+  // 搜尋框：只更新結果區、不重建輸入框，並避開中文（注音）組字中觸發搜尋
+  h+=`<div class="search"><input id="cust-q" placeholder="🔍 搜尋我的客戶" value="${esc(cFilter.q)}" oninput="onCustSearchInput(this)" oncompositionstart="cFilter._composing=true" oncompositionend="cFilter._composing=false;onCustSearchInput(this)"></div>`;
   // 分級
   const gc={}; customers.forEach(c=>{ gc[c.grade||'']=(gc[c.grade||'']||0)+1; });
   h+=`<div class="rowsel"><span class="rowsel-l">分級</span><div class="chips">
@@ -896,13 +897,19 @@ function renderCustomers(){
   const cities=[...new Set(customers.map(c=>custCity(c)).filter(Boolean))].sort(cityCmp);
   const orgs=[...new Set(customers.map(c=>c.org).filter(Boolean))].sort();
   h+=`<div class="field-2">
-      <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustomers()">
+      <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustResults()">
         <option value="">全部地區</option>${cities.map(ci=>`<option value="${esc(ci)}" ${cFilter.city===ci?'selected':''}>${esc(ci)}</option>`).join('')}</select></div>
-      <div class="field"><label>組織</label><select onchange="cFilter.org=this.value;renderCustomers()">
+      <div class="field"><label>組織</label><select onchange="cFilter.org=this.value;renderCustResults()">
         <option value="">全部組織</option>${orgs.map(o=>`<option value="${esc(o)}" ${cFilter.org===o?'selected':''}>${esc(o)}</option>`).join('')}
         <option value="__none" ${cFilter.org==='__none'?'selected':''}>（未分組）</option></select></div></div>`;
   h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
-  // 篩選
+  h+=`<div id="cust-results"></div>`;
+  viewHTML(h);
+  renderCustResults();
+}
+function onCustSearchInput(el){ cFilter.q=el.value; if(cFilter._composing) return; renderCustResults(); }
+function renderCustResults(){
+  const box=document.getElementById('cust-results'); if(!box) return;
   const q=cFilter.q.trim();
   const res=customers.filter(c=>{
     if(cFilter.grade==='none'){ if(c.grade) return false; }
@@ -914,7 +921,7 @@ function renderCustomers(){
     return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
   });
   const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.org||q;
-  h+=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div>`;
+  let h=`<div class="count">共 ${customers.length} 位客戶${active?`，符合 ${res.length} 位`:''}</div>`;
   if(!res.length){
     h+=`<div class="card"><div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div></div>`;
   } else {
@@ -945,7 +952,7 @@ function renderCustomers(){
       h+=`</div>`;
     });
   }
-  viewHTML(h);
+  box.innerHTML=h;
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
 function setCType(t){ cFilter.type=t; renderCustomers(); }
