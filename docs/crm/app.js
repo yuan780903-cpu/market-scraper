@@ -1944,9 +1944,24 @@ function smartLatLng(addr){
   if(!addr) return null;
   const mc=String(addr).trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
   if(mc){ const la=+mc[1], ln=+mc[2]; if(la>=20&&la<=27&&ln>=118&&ln<=123) return [la,ln]; }
-  const C=smartTownCentroids(); const core=countyCore(addr); if(!core) return null;
-  const tn=matchTown(addr,core); if(tn&&C[core+'|'+tn]) return C[core+'|'+tn];
-  return C['#'+core]||null;   // 只知縣市→用縣市中心
+  const C=smartTownCentroids(); const core=countyCore(addr);
+  if(core){
+    const tn=matchTown(addr,core); if(tn&&C[core+'|'+tn]) return C[core+'|'+tn];
+    return C['#'+core]||null;   // 只知縣市→用縣市中心
+  }
+  // 沒有縣市字樣→用鄉鎮市區名稱比對（例如「楠西7-11」→ 楠西）
+  const t=smartTownByName(addr);
+  if(t){ const k=countyCore(t.c)+'|'+t.t; if(C[k]) return C[k]; }
+  return null;
+}
+function smartTownByName(addr){
+  if(!window.TW_MAP||!window.TW_MAP.towns) return null;
+  const s=normR(addr); let best=null,bl=0;
+  window.TW_MAP.towns.forEach(t=>{
+    const base=normR(t.t).replace(/[區鄉鎮市]$/,'');
+    if(base.length>=2 && s.indexOf(base)>=0 && base.length>bl){ best=t; bl=base.length; }
+  });
+  return best;
 }
 function kmBetween(a,b){ const R=6371,d2r=Math.PI/180; const dla=(b[0]-a[0])*d2r,dlo=(b[1]-a[1])*d2r; const x=Math.sin(dla/2)**2+Math.cos(a[0]*d2r)*Math.cos(b[0]*d2r)*Math.sin(dlo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 // 以「開車走高速公路為主」估速：短程市區較慢、中長程上快速道路/國道
@@ -2002,7 +2017,7 @@ function syncSmart(){
   if((v=g('sm-grade'))!==undefined) smartCfg.f.grade=v;
   if((v=g('sm-area'))!==undefined) smartCfg.f.area=v;
   // pick rows (dwell + fixed time)
-  document.querySelectorAll('#sm-picks .pk-row').forEach(el=>{
+  document.querySelectorAll('#route-body .pk-row').forEach(el=>{
     const k=el.dataset.k, p=smartCfg.picks.find(x=>x.key===k); if(!p)return;
     const d=el.querySelector('.pk-dwell'), fx=el.querySelector('.pk-fixed');
     if(d) p.dwell=Math.max(5,+d.value||SMART_DWELL);
@@ -2184,7 +2199,7 @@ function smartPlan(){
       else {
         const fr=free[ui];
         // 若先插一家自由客戶會害下一個約定客戶遲到，就先去約定客戶
-        const afterFree = t + (result.length?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address);
+        const afterFree = t + (hasPrev()?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address);
         if(afterFree > nextFx._at) useFixed=true;
       }
     }
