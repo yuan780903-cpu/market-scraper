@@ -75,8 +75,13 @@
   .memo .expl ol{margin:0;padding-left:22px}
   .memo .expl li{margin-bottom:5px}
   .memo .attach-label{font-size:13.5px;font-weight:700;margin:0 0 6px}
-  .memo table{font-size:12.5px}
-  .memo .endorse{margin-top:36px;text-align:right;font-size:15px;line-height:2;color:#222;padding-right:8px}
+  .memo table{font-size:12.5px;width:100%;table-layout:auto;word-break:keep-all;white-space:nowrap}
+  .memo table th,.memo table td{padding:6px 8px;white-space:nowrap}
+  .memo table td.name{white-space:normal;word-break:break-all;text-align:left;min-width:140px}
+  /* 手機：表格水平滾動避免欄位被擠成直書 */
+  .memo .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px 14px;border:1px solid #d6dade;border-radius:6px}
+  .memo .tbl-scroll table{margin:0;border:none;min-width:680px}
+  .memo .endorse{margin-top:36px;text-align:left;font-size:15px;line-height:2;color:#222;padding-left:8px}
   .memo .endorse div+div{margin-top:2px}
 </style>
 </head>
@@ -214,7 +219,7 @@
     <p class="subj"><b>主旨：</b><span id="p_subj"></span></p>
     <div class="expl"><b>說明：</b><ol id="p_expl"></ol></div>
     <p class="attach-label">附件 ‧ 銷售申報預先登錄明細表：</p>
-    <table id="p_table"></table>
+    <div class="tbl-scroll"><table id="p_table"></table></div>
     <div class="endorse">
       <div>以上內容</div>
       <div>呈請鈞長核示</div>
@@ -375,7 +380,7 @@ function buildPrint(){
 
   // 主旨
   const word=type==="修正"?"預先登錄『修正』":"預先登錄";
-  p_subj.textContent=`檢送業務單位「${batch}」銷售申報${word}資料乙份（明細如附表），陳請核示後送生產單位辦理銷售申報登錄。`;
+  p_subj.textContent=`檢送業務單位莊政遠銷售區域「${batch}」銷售申報${word}資料乙份（明細如附表），陳請核示後送生產單位辦理銷售申報登錄。`;
 
   // 說明（依規則動態產生）
   const ex=[];
