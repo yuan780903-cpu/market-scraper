@@ -337,37 +337,27 @@ function savePDF(){
   const sheet=document.getElementById("sheet");
   if(typeof html2pdf==="undefined"){ window.print(); return; }
   const inApp=isInApp();
-  // App 內：先在點擊手勢中同步開好新分頁，避免被當彈窗擋掉
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
-  // 暫時取消縮放(zoom/transform)與固定頁高，量出報價單實際 1:1 像素尺寸
+  // 取消縮放讓 html2canvas 抓到 1:1 原始尺寸
   const prevZ=sheet.style.zoom, prevT=sheet.style.transform, prevMH=sheet.style.minHeight;
   sheet.style.zoom="";
   sheet.style.transform="none";
   sheet.style.minHeight="auto";
   const W=sheet.offsetWidth;
-  const SC=2;
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
   const restore=()=>{ sheet.style.zoom=prevZ; sheet.style.transform=prevT; sheet.style.minHeight=prevMH; scaleSheet(); };
-  // 關鍵：PDF 頁面尺寸要用「html2canvas 實際畫出的 canvas 像素」推回去，
-  // 不要用先量好的 offsetHeight。iOS WebKit 的 offsetHeight 與 canvas 實際高度
-  // 常差幾個 px，若拿 offsetHeight 當頁高，內容會比頁面高一點點 → 溢出到第 2 頁、
-  // 接縫處還留一條黑線。先 toCanvas 拿到真正的 canvas，再把頁面設成 canvas/scale，
-  // 並 +1px 容差，確保 ceil 不會變 2 → 永遠剛好 1 頁、無接縫線。
-  const worker=html2pdf().set({
-    margin:0,
+  // PDF 永遠用 A4 固定尺寸 (210 × 297 mm)，內容短就下半部留白
+  // margin 14mm 與 @media print 一致；內容超 1 頁 html2pdf 會自動分頁
+  html2pdf().set({
+    margin:[14,14,14,14],
     filename:fname,
     image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:SC,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0}
-  }).from(sheet);
-  worker.toCanvas().get("canvas").then(function(canvas){
-    const pw=canvas.width/SC, ph=canvas.height/SC;
-    // jsPDF 依 orientation 強制長邊當高/寬而對調尺寸 → 依實際長寬決定方向，絕不裁切
-    const orient = pw>ph ? "landscape" : "portrait";
-    return worker.set({ jsPDF:{unit:"px", format:[pw, ph+1], orientation:orient} })
-                 .toPdf().get("pdf");
-  }).then(function(pdf){
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:W,width:W,scrollX:0,scrollY:0},
+    jsPDF:{unit:"mm", format:"a4", orientation:"portrait"},
+    pagebreak:{mode:["css","legacy"]}
+  }).from(sheet).toPdf().get("pdf").then(function(pdf){
     restore();
     if(inApp){
       const url=pdf.output("bloburl");
