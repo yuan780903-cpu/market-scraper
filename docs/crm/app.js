@@ -353,10 +353,21 @@ function matchTown(addr, core){
 }
 // 計算各鄉鎮的「名單數 / 客戶數」（key = 縣市核心|官方鄉鎮名）
 function computeTownStats(){
-  const lead={}, cust={};
+  const lead={}, cust={}, dist={}, distNames={};
   SEED.forEach(p=>{ const core=countyCore(p.region)||countyCore(p.address); const tn=matchTown(p.address,core)||matchTown(p.region,core); if(core&&tn){ const k=core+'|'+tn; lead[k]=(lead[k]||0)+1; } });
   customers.forEach(c=>{ const core=countyCore(c.address); const tn=matchTown(c.address,core); if(core&&tn){ const k=core+'|'+tn; cust[k]=(cust[k]||0)+1; } });
-  return {lead,cust};
+  // 經銷商「經銷區域」覆蓋：縣市層級＝整個縣市所有鄉鎮；有鄉鎮＝該鄉鎮
+  customers.forEach(c=>{
+    if(c.inactive || c.type!=='經銷商') return;
+    (c.salesRegions||[]).forEach(r=>{
+      if(!r || r==='線上通路') return;
+      const core=countyCore(r); if(!core) return;
+      const tn=matchTown(r,core);
+      const keys = tn ? [core+'|'+tn] : (townsByCore()[core]||[]).map(t=>core+'|'+t.raw);
+      keys.forEach(k=>{ dist[k]=(dist[k]||0)+1; (distNames[k]=distNames[k]||new Set()).add(c.name); });
+    });
+  });
+  return {lead,cust,dist,distNames};
 }
 function townKey(t){ return countyCore(t.c)+'|'+t.t; }
 // 滲透色：灰=無資料、橘=有名單未開發、綠由淺到深=滲透越高
@@ -388,15 +399,18 @@ function renderMap(){
   if(mapState.town>=0 && M.towns[mapState.town]){
     const t=M.towns[mapState.town], k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
     const rate=lead?Math.round(Math.min(1,cu/lead)*100):(cu?100:0);
+    const dn = st.distNames[k] ? [...st.distNames[k]] : [];
     h+=`<div class="minfo"><div class="mt">${esc(t.c)} ${esc(t.t)}</div>
-      <div class="mstat"><div>名單<br><b>${lead}</b></div><div>我的客戶<br><b style="color:var(--green)">${cu}</b></div><div>滲透率<br><b>${rate}%</b></div></div></div>`;
+      <div class="mstat"><div>名單<br><b>${lead}</b></div><div>我的客戶<br><b style="color:var(--green)">${cu}</b></div><div>滲透率<br><b>${rate}%</b></div></div>`+
+      (dn.length?`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px">🛡️ 已有經銷商經營：<b>${dn.map(esc).join('、')}</b></div>`:'')+`</div>`;
   }
   // SVG 地圖
   let paths='';
   M.towns.forEach((t,i)=>{
     const k=townKey(t);
     const col=penColor(st.lead[k]||0,st.cust[k]||0);
-    paths+=`<path class="tw-town${i===mapState.town?' sel':''}" d="${t.d}" fill="${col}" onclick="mapTapTown(${i})"></path>`;
+    const covered=(st.dist[k]||0)>0;
+    paths+=`<path class="tw-town${i===mapState.town?' sel':''}${covered?' tw-dist':''}" d="${t.d}" fill="${col}" onclick="mapTapTown(${i})"></path>`;
   });
   h+=`<div class="mapwrap"><svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${paths}</svg></div>`;
   // 圖例
@@ -405,27 +419,28 @@ function renderMap(){
     <span><i style="background:#a5d6a7"></i>滲透 ~33%</span>
     <span><i style="background:#52b265"></i>~66%</span>
     <span><i style="background:#2e7d32"></i>67%以上</span>
-    <span><i style="background:#eceff1"></i>無名單</span></div>`;
+    <span><i style="background:#eceff1"></i>無名單</span>
+    <span><i style="background:#fff;border:2px solid #d4a017"></i>🛡️ 已有經銷商經營</span></div>`;
   // 明細表：未選→各縣市滾算；已選→所選縣市各鄉鎮（聯集）
   if(!sel.length){
     const roll={};
-    M.towns.forEach(t=>{ const k=townKey(t); const r=roll[t.c]=roll[t.c]||{lead:0,cust:0}; r.lead+=st.lead[k]||0; r.cust+=st.cust[k]||0; });
-    const rows=cNames.map(n=>({name:n,...roll[n]})).filter(r=>r.lead||r.cust);
+    M.towns.forEach(t=>{ const k=townKey(t); const r=roll[t.c]=roll[t.c]||{lead:0,cust:0,dist:0}; r.lead+=st.lead[k]||0; r.cust+=st.cust[k]||0; if(st.dist[k])r.dist++; });
+    const rows=cNames.map(n=>({name:n,...roll[n]})).filter(r=>r.lead||r.cust||r.dist);
     h+=`<div class="sec-title"><span class="bar"></span>各縣市滲透概況<span style="font-weight:400;font-size:11.5px;color:var(--muted)">（點縣市加入負責區）</span></div><div class="card">`+
-      rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapToggleCounty('${esc(r.name)}')`)).join('')+`</div>`;
+      rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapToggleCounty('${esc(r.name)}')`,r.dist>0)).join('')+`</div>`;
   } else {
     const towns=M.towns.map((t,i)=>({i,t})).filter(o=>sel.includes(o.t.c));
-    const rows=towns.map(o=>{ const k=townKey(o.t); return {i:o.i,name:`${o.t.c} ${o.t.t}`,lead:st.lead[k]||0,cust:st.cust[k]||0}; }).filter(r=>r.lead||r.cust);
+    const rows=towns.map(o=>{ const k=townKey(o.t); return {i:o.i,name:`${o.t.c} ${o.t.t}`,lead:st.lead[k]||0,cust:st.cust[k]||0,dist:st.dist[k]||0}; }).filter(r=>r.lead||r.cust||r.dist);
     h+=`<div class="sec-title"><span class="bar"></span>負責區域 各鄉鎮（依未開發排序）</div><div class="card">`+
-      (rows.length?rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapTapTown(${r.i})`)).join(''):`<div class="tagline">此區尚無名單資料。</div>`)+`</div>`;
+      (rows.length?rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapTapTown(${r.i})`,r.dist>0)).join(''):`<div class="tagline">此區尚無名單資料。</div>`)+`</div>`;
   }
   viewHTML(h);
 }
-function mapBarRow(name,lead,cust,onclickFn){
+function mapBarRow(name,lead,cust,onclickFn,covered){
   const rate=lead?Math.min(1,cust/lead):(cust?1:0);
   const col=penColor(lead,cust);
   return `<div class="mrow" onclick="${onclickFn()}">
-    <div class="mname">${esc(name)}</div>
+    <div class="mname">${esc(name)}${covered?' <span title="已有經銷商經營">🛡️</span>':''}</div>
     <div class="mbar"><i style="width:${Math.round(rate*100)}%;background:${col}"></i></div>
     <div class="mnum">客${cust}/名單${lead}・${Math.round(rate*100)}%</div></div>`;
 }
@@ -1011,7 +1026,7 @@ const CUST_GROUPS = [
   {key:'mgmt',    icon:'📅', title:'拜訪管理'},
 ];
 function groupSummary(c,key){
-  if(key==='profile'){ const parts=[regionFull(c.address)].filter(x=>x&&x!=='未填地區'); const ph=pickPhone(c.phone); if(ph)parts.push(ph); if(c.checkPeriod)parts.push('票期 '+c.checkPeriod); return parts.length?parts.join('・'):'點此填寫'; }
+  if(key==='profile'){ const parts=[regionFull(c.address)].filter(x=>x&&x!=='未填地區'); const ph=pickPhone(c.phone); if(ph)parts.push(ph); if(c.checkPeriod)parts.push('票期 '+c.checkPeriod); const rg=c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[]; if(rg.length)parts.push((c.type==='經銷商'?'經銷區 ':'肥料區 ')+rg.length); return parts.length?parts.join('・'):'點此填寫'; }
   if(key==='pricing'){ const a=[]; const np=(c.products||[]).length, nr=(c.rivals||[]).length; if(np)a.push(np+' 報價'); if(nr)a.push(nr+' 競品'); return a.length?a.join('・'):'尚未填寫'; }
   if(key==='mgmt'){ const di=dueInfo(c); const open=(c.follow||[]).filter(f=>!f.done).length; const a=[c.grade?gradeText(c.grade):'未分級']; if(di)a.push('下次 '+di.txt); if(open)a.push(open+' 待辦'); return a.join('・'); }
   return '';
@@ -1045,6 +1060,14 @@ function viewCustomer(id){
       ${c.org?`<span class="badge" style="background:#5d6651;color:#fff">🏷️ ${esc(c.org)}</span>`:''}
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${(!c.inactive&&di)?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
+  // 經銷 / 使用肥料區域（唯讀總覽，設定後可直接看到）
+  const _rg = c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[];
+  if(_rg.length){
+    const _lbl = c.type==='經銷商'?'經銷區域':'使用肥料區域';
+    h+=`<div class="card" style="padding:12px 14px"><div class="grp-sub" style="margin-bottom:8px;padding-bottom:6px">📍 ${_lbl}（${_rg.length}）</div>`+
+       `<div style="display:flex;flex-wrap:wrap;gap:6px">`+_rg.map(r=>`<span class="reg-chip" style="cursor:default">${r==='線上通路'?'🌐':'📍'} ${esc(r)}</span>`).join('')+`</div>`+
+       (c.type==='經銷商'?`<div class="hint" style="color:var(--muted);font-size:11.5px;margin-top:8px">這些區域已在「戰情地圖」標示為有經銷商經營。</div>`:'')+`</div>`;
+  }
   h+=`<div class="card">`;
   CUST_GROUPS.forEach(g=>{ h+=custTile(id,g.key,g.icon,g.title,groupSummary(c,g.key),`custGroup('${id}','${g.key}')`); });
   (c.cards||[]).forEach(cd=>{ h+=custTile(id,'cd'+cd.id,'🗂️',cd.title,cd.body?String(cd.body).slice(0,16)+(cd.body.length>16?'…':''):'點此填寫',`custCustomCard('${id}','${cd.id}')`); });
