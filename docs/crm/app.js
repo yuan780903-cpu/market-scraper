@@ -854,6 +854,12 @@ function cityCmp(a,b){
   const ib=REGION_ORDER.findIndex(x=>normR(b).includes(x));
   return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);
 }
+// 客戶分區用縣市：經銷商以「經銷區域」、直接農民以「使用肥料區域」第一筆判讀；未填則退回基本資料地址
+function custCity(c){
+  const regs = c.type==='經銷商' ? c.salesRegions : c.type==='直接農民' ? c.fertRegions : null;
+  if(Array.isArray(regs)){ for(const r of regs){ const ci=cityOf(r); if(ci) return ci; } }
+  return cityOf(c.address);
+}
 // 地區（縣市＋鄉鎮市區，例：台南市佳里區）；顯示用「台」
 function regionFull(addr){
   const c=cityOf(addr), d=district(addr);
@@ -884,7 +890,7 @@ function renderCustomers(){
       <button class="chip ${cFilter.type===''?'on':''}" onclick="setCType('')">全部</button>
       ${types.map(t=>`<button class="chip ${cFilter.type===t?'on':''}" onclick="setCType('${t}')">${t} ${tcnt[t]}</button>`).join('')}</div></div>`;
   // 地區 + 組織 下拉
-  const cities=[...new Set(customers.map(c=>cityOf(c.address)).filter(Boolean))].sort(cityCmp);
+  const cities=[...new Set(customers.map(c=>custCity(c)).filter(Boolean))].sort(cityCmp);
   const orgs=[...new Set(customers.map(c=>c.org).filter(Boolean))].sort();
   h+=`<div class="field-2">
       <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustomers()">
@@ -899,7 +905,7 @@ function renderCustomers(){
     if(cFilter.grade==='none'){ if(c.grade) return false; }
     else if(cFilter.grade){ if(c.grade!==cFilter.grade) return false; }
     if(cFilter.type && (c.type||'其他')!==cFilter.type) return false;
-    if(cFilter.city && cityOf(c.address)!==cFilter.city) return false;
+    if(cFilter.city && custCity(c)!==cFilter.city) return false;
     if(cFilter.org==='__none'){ if(c.org) return false; }
     else if(cFilter.org){ if((c.org||'')!==cFilter.org) return false; }
     return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
@@ -910,7 +916,7 @@ function renderCustomers(){
     h+=`<div class="card"><div class="empty"><div class="big">👤</div>${customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。'}</div></div>`;
   } else {
     // 依地區分組（縣市層級），每個縣市獨立一塊
-    const cityKey=c=>{ const ci=cityOf(c.address); return ci?ci.replace(/臺/g,'台'):'未填地區'; };
+    const cityKey=c=>{ const ci=custCity(c); return ci?ci.replace(/臺/g,'台'):'未填地區'; };
     const groups={};
     res.forEach(c=>{ const d=cityKey(c); (groups[d]=groups[d]||[]).push(c); });
     const dists=Object.keys(groups).sort((a,b)=>{ if(a==='未填地區')return 1; if(b==='未填地區')return -1; return cityCmp(a,b)||a.localeCompare(b); });
