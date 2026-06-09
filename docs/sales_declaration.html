@@ -376,11 +376,11 @@ function buildPrint(){
 
   // 主旨
   const word=type==="修正"?"預先登錄『修正』":"預先登錄";
-  p_subj.textContent=`檢送本公司「${batch}」銷售申報${word}資料乙份（明細如附表），陳請核示後送生產單位辦理銷售申報登錄。`;
+  p_subj.textContent=`檢送業務單位「${batch}」銷售申報${word}資料乙份（明細如附表），陳請核示後送生產單位辦理銷售申報登錄。`;
 
   // 說明（依規則動態產生）
   const ex=[];
-  ex.push(`依本公司與生產單位議定之銷售申報作業辦理，每月10日及25日提供未來兩週之預先登錄資料。本案為「${batch}」之${word}資料。`);
+  ex.push(`依業務單位與生產單位議定之銷售申報作業辦理，每月10日及25日提供未來兩週之預先登錄資料。本案為「${batch}」之${word}資料。`);
   // 依規格分組統計重量（銷售與贈送分開）
   const byW={},byWG={};
   entries.forEach(e=>{const w=Number(e.weight)||0;if(e.qty)byW[w]=(byW[w]||0)+e.qty;if(e.gift)byWG[w]=(byWG[w]||0)+e.gift});
@@ -396,7 +396,7 @@ function buildPrint(){
     : `；合計總重量 ${twAll.toLocaleString()} 公斤（約 ${tonnes} 公噸）。`;
   ex.push(p2);
   if(tg>0)ex.push(`本批次贈送共 ${tg.toLocaleString()} 包，依規定須經核准後始由生產單位提供並落實申報，敬請一併核准。`);
-  ex.push(`本案經張總核准後送生產單位登錄；隔月5日前由生產單位依SAP銷售資料完成最後申報確認。`);
+  ex.push(`本案經鈞長核准後送生產單位登錄；隔月5日前由生產單位依SAP銷售資料完成最後申報確認。`);
   p_expl.innerHTML=ex.map(t=>`<li>${t}</li>`).join("");
 
   const head=`<thead><tr><th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th><th>廠牌商品名稱</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th></tr></thead>`;
