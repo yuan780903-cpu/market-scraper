@@ -1262,17 +1262,24 @@ function locEditorHTML(locs){
   h+=`</div>`;
   return h;
 }
+function normLocUrl(u){ u=(u||'').trim(); if(!u) return ''; if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,''); return u; }
 function addMapLoc(){
-  const t=$('#loc-type').value; const u=($('#loc-url').value||'').trim();
+  const t=$('#loc-type').value; const u=normLocUrl($('#loc-url').value);
   if(!u){ toast('請貼上 Google 地圖網址'); return; }
-  if(!/^https?:\/\//i.test(u)){ toast('網址需以 http:// 或 https:// 開頭'); return; }
   const box=$('#loc-chips'); if(!box) return;
   if([...box.querySelectorAll('.loc-chip')].some(el=>el.dataset.url===u)){ toast('已加入此網址'); return; }
   box.style.marginBottom='7px';
   box.insertAdjacentHTML('beforeend', locChipHTML({type:t,url:u}));
   $('#loc-url').value='';
 }
-function readMapLocs(){ const box=$('#loc-chips'); if(!box) return []; return [...box.querySelectorAll('.loc-chip')].map(el=>({type:el.dataset.type||'位置',url:el.dataset.url||''})).filter(l=>l.url); }
+function readMapLocs(){
+  const box=$('#loc-chips');
+  const out = box ? [...box.querySelectorAll('.loc-chip')].map(el=>({type:el.dataset.type||'位置',url:el.dataset.url||''})) : [];
+  // 若使用者打了網址但忘了按「＋新增位置」，儲存時自動納入
+  const ui=$('#loc-url'); const ut=$('#loc-type');
+  if(ui){ const u=normLocUrl(ui.value); if(u && !out.some(l=>l.url===u)) out.push({type:(ut&&ut.value)||'位置', url:u}); }
+  return out.filter(l=>l.url);
+}
 
 // ---------- 票期下拉（現金 / 月結N天 / 手動）----------
 function checkPeriodHTML(v){
