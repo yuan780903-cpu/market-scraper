@@ -378,15 +378,8 @@ function renderMap(){
   }
   // 縣市清單（由北到南）
   const cNames=Object.keys(M.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x)));
-  // 戰情公仔
+  // 戰情公仔（負責區域由公仔設定，地圖直接套用，不再重複選擇）
   let h=soldierCardHTML();
-  // 負責銷售區域（可複選）
-  h+=`<div class="card" style="padding:12px 13px">
-    <div class="rowsel" style="margin-bottom:6px"><span class="rowsel-l">負責銷售區域</span><span style="font-size:11px;color:var(--muted)">可複選${sel.length?`・已選 ${sel.length}`:''}</span></div>
-    <div class="chips">
-      <button class="chip ${!sel.length?'on':''}" onclick="mapClearCounties()">🌏 全台灣</button>
-      ${cNames.map(n=>`<button class="chip ${sel.includes(n)?'on':''}" onclick="mapToggleCounty('${esc(n)}')">${esc(n)}</button>`).join('')}
-    </div></div>`;
   // 選取鄉鎮資訊卡
   if(mapState.town>=0 && M.towns[mapState.town]){
     const t=M.towns[mapState.town], k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
