@@ -49,6 +49,9 @@ const FORMS = ['粒狀','粉狀'];          // 性狀
 const WEIGHTS = ['20','25','500','1000']; // 規格公斤（粒狀固定20，粉狀多規格）
 const FREIGHTS = ['含運','不含運'];
 const CHECK_PERIODS = ['現金','月結5天','月結15天','月結30天','月結45天','月結60天'];
+// 種植 / 用肥（非經銷商通路）
+const COMMON_CROPS = ['水稻','蔬菜','果樹','茶','花卉','雜糧','根莖類','菇類','檳榔','其他'];
+const AREA_UNITS = ['公頃','甲','分','坪'];
 
 // 區域（依台灣由北到南排序）
 const REGION_ORDER = '基隆 臺北 新北 桃園 新竹 苗栗 臺中 彰化 南投 雲林 嘉義 臺南 高雄 屏東 宜蘭 花蓮 臺東 澎湖 金門 連江'.split(' ');
@@ -980,6 +983,7 @@ const CUST_SECTIONS = [
   {key:'products', icon:'💰', title:'產品報價'},
   {key:'rivals',   icon:'⚔️', title:'競品肥料'},
   {key:'deal',     icon:'🚚', title:'交易 / 配送'},
+  {key:'farm',     icon:'🌱', title:'種植 / 用肥'},
   {key:'visit',    icon:'📅', title:'拜訪管理'},
   {key:'follow',   icon:'🔔', title:'後續跟進'},
   {key:'inter',    icon:'💬', title:'互動紀錄'},
@@ -991,6 +995,7 @@ function custSectionSummary(c,key){
     case 'products': return (c.products&&c.products.length)?`${c.products.length} 筆報價`:'尚未填寫';
     case 'rivals':   return (c.rivals&&c.rivals.length)?`${c.rivals.length} 筆競品`:'尚未填寫';
     case 'deal':     { const parts=[]; if(c.checkPeriod)parts.push('票期：'+c.checkPeriod); if(c.creditLimit)parts.push('額度 '+c.creditLimit+' 萬'); const rg=c.type==='經銷商'?(c.salesRegions||[]):c.type==='直接農民'?(c.fertRegions||[]):[]; if(rg.length)parts.push((c.type==='經銷商'?'經銷區':'肥料區')+' '+rg.length); return parts.length?parts.join('・'):'尚未設定'; }
+    case 'farm':     { const a=[]; if(c.plantArea)a.push(c.plantArea+(c.plantAreaUnit||'公頃')); if(Array.isArray(c.crops)&&c.crops.length)a.push(c.crops.slice(0,2).join('、')+(c.crops.length>2?'…':'')); if(c.fertTons)a.push(c.fertTons+'噸/年'); return a.length?a.join('・'):'尚未填寫'; }
     case 'visit':    { const di=dueInfo(c); return (c.grade?gradeText(c.grade):'未分級')+(di?`・下次 ${di.txt}`:''); }
     case 'follow':   { const n=(c.follow||[]).filter(f=>!f.done).length; return n?`${n} 項待辦`:'無待辦'; }
     case 'inter':    return (c.inter&&c.inter.length)?`${c.inter.length} 筆紀錄`:'尚無紀錄';
@@ -1014,7 +1019,7 @@ function viewCustomer(id){
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${(!c.inactive&&di)?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   h+=`<div class="card">`;
-  CUST_SECTIONS.forEach(s=>{ h+=custTile(id,s.key,s.icon,s.title,custSectionSummary(c,s.key),`custSection('${id}','${s.key}')`); });
+  CUST_SECTIONS.filter(s=>!(s.key==='farm' && c.type==='經銷商')).forEach(s=>{ h+=custTile(id,s.key,s.icon,s.title,custSectionSummary(c,s.key),`custSection('${id}','${s.key}')`); });
   (c.cards||[]).forEach(cd=>{ h+=custTile(id,'cd'+cd.id,'🗂️',cd.title,cd.body?String(cd.body).slice(0,16)+(cd.body.length>16?'…':''):'點此填寫',`custCustomCard('${id}','${cd.id}')`); });
   h+=`</div>`;
   h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="addCustCard('${id}')">⚙️ 新增卡片</button></div>`;
@@ -1061,6 +1066,20 @@ function custSection(id,key){
     if(c.truck)h+=drow('運送車輛',esc(c.truck));
     if(c.deliveryTime)h+=drow('送貨時間',esc(c.deliveryTime));
     h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustDeal('${id}')">💾 儲存交易資料</button></div></div>`;
+  } else if(key==='farm'){
+    const crops=Array.isArray(c.crops)?c.crops:[];
+    const months=Array.isArray(c.fertMonths)?c.fertMonths:[];
+    const customCrops=crops.filter(x=>!COMMON_CROPS.includes(x));
+    h+=`<div class="card">`;
+    h+=`<div class="field-2"><div class="field"><label>種植面積</label><input id="c-area" type="number" inputmode="decimal" value="${esc(c.plantArea||'')}" placeholder="例如 2.5"></div>
+        <div class="field"><label>單位</label><select id="c-areaunit">${AREA_UNITS.map(u=>`<option ${(c.plantAreaUnit||'公頃')===u?'selected':''}>${u}</option>`).join('')}</select></div></div>`;
+    h+=`<div class="field"><label>每年使用肥料噸數（噸）</label><input id="c-ferttons" type="number" inputmode="decimal" value="${esc(c.fertTons||'')}" placeholder="例如 12"></div>`;
+    h+=`<div class="field"><label>作物類別（可複選）</label><div class="chips chips-wrap" id="c-crops">`+
+       COMMON_CROPS.map(cr=>`<button type="button" class="chip ${crops.includes(cr)?'on':''}" data-c="${esc(cr)}" onclick="this.classList.toggle('on')">${esc(cr)}</button>`).join('')+`</div>`;
+    h+=`<input id="c-cropother" placeholder="其他作物（多項用、分隔）" value="${esc(customCrops.join('、'))}" style="margin-top:7px;width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;font-family:inherit"></div>`;
+    h+=`<div class="field"><label>使用肥料時機（月份・可複選）</label><div class="chips chips-wrap" id="c-months">`+
+       Array.from({length:12},(_,i)=>i+1).map(m=>`<button type="button" class="chip ${months.includes(m)?'on':''}" data-m="${m}" onclick="this.classList.toggle('on')">${m}月</button>`).join('')+`</div></div>`;
+    h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="saveCustFarm('${id}')">💾 儲存種植資料</button></div></div>`;
   } else if(key==='visit'){
     h+=`<div class="card"><div class="field"><label>客戶分級（決定拜訪頻率）</label><select id="c-grade" onchange="if(this.value)document.getElementById('c-freq').value={A:7,B:30,C:90,D:365}[this.value]">
         <option value="" ${!c.grade?'selected':''}>未分級</option>
@@ -1110,6 +1129,16 @@ function saveCustSchedule(id){ const c=findCust(id); c.grade=$('#c-grade').value
 function saveCustProducts(id){ const c=findCust(id); c.products=readProducts(); saveCust(); toast('已儲存產品報價'); custSection(id,'products'); render(); }
 function saveCustDeal(id){ const c=findCust(id); c.checkPeriod=readCheckPeriod(); const cr=$('#c-credit'); c.creditLimit=cr?cr.value.trim():(c.creditLimit||''); const regs=readRegionChips(); if(c.type==='經銷商') c.salesRegions=regs; else if(c.type==='直接農民') c.fertRegions=regs; saveCust(); toast('已儲存交易資料'); custSection(id,'deal'); render(); }
 function saveCustRivals(id){ const c=findCust(id); c.rivals=readRivals(); saveCust(); toast('已儲存競品肥料'); custSection(id,'rivals'); render(); }
+function saveCustFarm(id){
+  const c=findCust(id);
+  c.plantArea=($('#c-area').value||'').trim(); c.plantAreaUnit=$('#c-areaunit').value||'公頃';
+  c.fertTons=($('#c-ferttons').value||'').trim();
+  const sel=[...document.querySelectorAll('#c-crops .chip.on')].map(b=>b.dataset.c);
+  const other=($('#c-cropother').value||'').split(/[、,，\s]+/).map(s=>s.trim()).filter(Boolean);
+  c.crops=[...new Set([...sel, ...other])];
+  c.fertMonths=[...document.querySelectorAll('#c-months .chip.on')].map(b=>+b.dataset.m).sort((a,b)=>a-b);
+  saveCust(); toast('已儲存種植資料'); custSection(id,'farm'); render();
+}
 function toggleInactive(id){ const c=findCust(id); if(!c)return; if(!c.inactive){ if(!confirm('確定停用此客戶？資料會保留，但會標示為停用。'))return; c.inactive=true; toast('已停用客戶（資料保留）'); } else { c.inactive=false; toast('已重新啟用客戶'); } saveCust(); viewCustomer(id); render(); }
 function saveCustNotes(id){ const c=findCust(id); c.notes=$('#c-notes').value.trim(); saveCust(); toast('已儲存備註'); custSection(id,'notes'); render(); }
 function logCustVisit(id){ const c=findCust(id); const t=todayStr(); c.last=t; if(c.freq)c.next=addDays(t,c.freq); c.inter=c.inter||[]; c.inter.push({date:t,type:'拜訪',content:'完成拜訪'}); saveCust(); toast('已記錄拜訪'); viewCustomer(id); }
@@ -1358,9 +1387,9 @@ function exportJSON(){
   toast('已匯出備份');
 }
 function exportCSV(){
-  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
+  const cols=[['sysno','系統編號'],['name','名稱'],['type','類型'],['grade','分級'],['inactive','停用'],['phone','電話'],['contact','聯絡人'],['address','通訊地址'],['regAddress','戶籍地址'],['taxid','統編'],['idno','身分證'],['birth','生日'],['filedDate','建檔日期'],['terms','交易條件'],['checkPeriod','票期'],['creditLimit','額度(萬元)'],['fertRegions','使用肥料區域'],['salesRegions','經銷區域'],['plantArea','種植面積'],['crops','作物類別'],['fertTons','年用肥噸數'],['fertMonths','用肥月份'],['products','產品報價'],['rivals','競品肥料'],['conditions','其他條件'],['currentFert','目前用肥'],['truck','運送車輛'],['deliveryTime','送貨時間'],['freq','拜訪頻率'],['next','下次拜訪'],['notes','備註']];
   const head=cols.map(c=>c[1]).join(',');
-  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='salesRegions'||k==='fertRegions') return (c[k]||[]).join('、'); if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
+  const fmt=(c,k)=>{ if(k==='products') return (c.products||[]).map(p=>`${p.name} ${prodText(p)}`).join(' / '); if(k==='rivals') return (c.rivals||[]).map(r=>`${r.name} ${rivalText(r)}${r.note?'('+r.note+')':''}`).join(' / '); if(k==='salesRegions'||k==='fertRegions'||k==='crops') return (c[k]||[]).join('、'); if(k==='fertMonths') return (c.fertMonths||[]).map(m=>m+'月').join('、'); if(k==='plantArea') return c.plantArea?c.plantArea+(c.plantAreaUnit||'公頃'):''; if(k==='inactive') return c.inactive?'停用':''; return c[k]??''; };
   const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
   download(`我的客戶_${todayStr()}.csv`, '﻿'+head+'\n'+rows.join('\n'), 'text/csv');
   toast('已匯出 CSV');
@@ -1396,6 +1425,7 @@ function parseCustomerTSV(text){
         phone:(tel&&tel!=='0')?tel:'', address:addr, regAddress:'', taxid:tax,
         filedDate:fmtYmd(cdate), contact:'', idno:'', birth:'', terms:'', checkPeriod:'',
         creditLimit:'', fertRegions:[], salesRegions:[], rivals:[], inactive:false,
+        plantArea:'', plantAreaUnit:'公頃', crops:[], fertTons:'', fertMonths:[],
         conditions:'', currentFert:'', truck:'', deliveryTime:'', grade:'', notes:'',
         freq:null, last:'', next:'', inter:[], products:[] };
       out.push(cur);
