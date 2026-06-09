@@ -581,6 +581,10 @@ function setSoldierBranch(b){ soldier.branch=b; saveSoldier(); renderSettings();
 function setSoldierWeapon(w){ soldier.weapon=w; saveSoldier(); renderSettings(); }
 function setSoldierCounty(n){ toggleRegion(n); renderSettings(); }
 function clearSoldierCounties(){ clearRegions(); renderSettings(); }
+function saveSoldierSettings(){
+  const nm=document.getElementById('sol-name'); if(nm) soldier.name=nm.value.trim();
+  saveSoldier(); renderSettings(); toast('已儲存戰鬥人員設定 ✅');
+}
 function removeSoldierPhoto(){ soldier.photo=''; saveSoldier(); renderSettings(); }
 function uploadSoldierPhoto(input){
   const f=input.files[0]; if(!f) return;
@@ -1242,6 +1246,7 @@ function renderSettings(){
   h+=`<input type="file" id="solphoto" accept="image/*" style="display:none" onchange="uploadSoldierPhoto(this)">`;
   if(soldier.photo) h+=`<div class="btn-row"><button class="btn btn-gray" onclick="removeSoldierPhoto()">🗑️ 移除照片（改用卡通臉）</button></div>`;
   h+=`<div class="hint" style="margin-top:7px;color:var(--muted);font-size:11px">照片會自動縮圖、只存在你本機裝置，不會上傳。點公仔可以撫摸互動 😆</div>`;
+  h+=`<div class="btn-row" style="margin-top:10px"><button class="btn btn-pri" onclick="saveSoldierSettings()">💾 儲存戰鬥人員設定</button></div>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>資料統計</div><div class="card">`;
   h+=drow('名單庫', SEED.length+' 筆（內建）');
