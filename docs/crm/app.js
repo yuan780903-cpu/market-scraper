@@ -16,8 +16,14 @@ const saveCust = () => LS.set('crm_customers', customers);
 const saveComp = () => LS.set('crm_competitors', competitors);
 
 // 戰鬥人員（戰情公仔）— 只存本機
-let soldier = LS.get('crm_soldier', {name:'', region:'', branch:'army', weapon:'rifle', photo:''});
+let soldier = LS.get('crm_soldier', {name:'', region:[], branch:'army', weapon:'rifle', photo:''});
+if(!Array.isArray(soldier.region)) soldier.region = [];   // region：所屬戰鬥區域(縣市，可複選)＝戰情地圖負責銷售區域
 const saveSoldier = () => LS.set('crm_soldier', soldier);
+function getRegions(){ if(!Array.isArray(soldier.region)) soldier.region=[]; return soldier.region; }
+function toggleRegion(n){ const a=getRegions(), i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); saveSoldier(); }
+function clearRegions(){ soldier.region=[]; saveSoldier(); }
+// 縣市清單（北到南），供地圖與設定共用
+function countyNames(){ return window.TW_MAP ? Object.keys(window.TW_MAP.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x))) : []; }
 const BRANCHES = {
   army:{label:'陸軍', emoji:'🪖', uni:'#586b3f', uni2:'#46552f', skin:'#ffd9b0'},
   navy:{label:'海軍', emoji:'⚓', uni:'#23436b', uni2:'#172e4d', skin:'#ffd9b0'},
@@ -167,7 +173,7 @@ function gotoMapCounty(region){
   if(window.TW_MAP){
     const core=countyCore(region);
     const key=Object.keys(window.TW_MAP.counties).find(k=>countyCore(k)===core);
-    mapState.counties=key?[key]:[]; mapState.town=-1;
+    soldier.region=key?[key]:[]; saveSoldier(); mapState.town=-1;
   }
   go('map');
 }
@@ -324,7 +330,7 @@ function itemRow({name,sub,cat,pill,onclick}){
 }
 
 // ========== 戰情地圖 ==========
-let mapState = {counties:[], town:-1};   // counties: 負責銷售區域(可複選，空=全台灣)；town: 選取鄉鎮 index
+let mapState = {town:-1};   // town: 選取鄉鎮 index（負責銷售區域改存 soldier.region，可跨頁連動並持久化）
 function countyCore(s){ s=normR(s); return REGION_ORDER.find(x=>s.includes(x))||''; }
 // 以官方鄉鎮名清單做權威比對（避免「平鎮區→平鎮」「台西/臺西」等誤判）
 function townsByCore(){
@@ -361,7 +367,7 @@ function penColor(lead,cust){
 function renderMap(){
   if(!window.TW_MAP){ viewHTML('<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'); return; }
   const M=window.TW_MAP, st=computeTownStats();
-  const sel=(mapState.counties||[]).filter(n=>M.counties[n]);
+  const sel=getRegions().filter(n=>M.counties[n]);
   // viewBox：全島或縮放到所選負責區域（聯集）
   let vb=M.viewBox;
   if(sel.length){
@@ -426,8 +432,8 @@ function mapBarRow(name,lead,cust,onclickFn){
     <div class="mbar"><i style="width:${Math.round(rate*100)}%;background:${col}"></i></div>
     <div class="mnum">客${cust}/名單${lead}・${Math.round(rate*100)}%</div></div>`;
 }
-function mapToggleCounty(n){ const a=mapState.counties=mapState.counties||[]; const i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
-function mapClearCounties(){ mapState.counties=[]; mapState.town=-1; renderMap(); window.scrollTo(0,0); }
+function mapToggleCounty(n){ toggleRegion(n); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
+function mapClearCounties(){ clearRegions(); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapTapTown(i){ mapState.town=i; renderMap(); window.scrollTo(0,0); }
 
 // ---------- 戰情公仔（Q版戰鬥娃娃）----------
@@ -556,13 +562,14 @@ function soldierWrap(s,id){
 function soldierCardHTML(){
   const s=soldier, b=BRANCHES[s.branch]||BRANCHES.army, w=WEAPONS[s.weapon]||WEAPONS.rifle;
   const nm=s.name?esc(s.name):'未命名戰士';
+  const regTxt=getRegions().join('、');
   return `<div class="card soldier-card" style="padding:10px 13px 12px">
     ${soldierWrap(s,'m')}
     <div class="sol-name">${nm}</div>
     <div class="sol-tags">
       <span class="sol-badge" style="background:${b.uni}">${b.emoji} ${b.label}</span>
       <span class="sol-badge wpn">${w.emoji} ${w.label}</span>
-      ${s.region?`<span class="sol-badge reg">📍 ${esc(s.region)}</span>`:''}
+      <span class="sol-badge reg">📍 ${regTxt?esc(regTxt):'全台灣'}</span>
     </div>
     <div class="sol-hint">點公仔互動 👆 ・ <span class="sol-link" onclick="event.stopPropagation();go('settings')">⚙️ 設定戰鬥人員</span></div>
   </div>`;
@@ -579,6 +586,8 @@ function petSoldier(){
 }
 function setSoldierBranch(b){ soldier.branch=b; saveSoldier(); renderSettings(); }
 function setSoldierWeapon(w){ soldier.weapon=w; saveSoldier(); renderSettings(); }
+function setSoldierCounty(n){ toggleRegion(n); renderSettings(); }
+function clearSoldierCounties(){ clearRegions(); renderSettings(); }
 function removeSoldierPhoto(){ soldier.photo=''; saveSoldier(); renderSettings(); }
 function uploadSoldierPhoto(input){
   const f=input.files[0]; if(!f) return;
@@ -1224,7 +1233,14 @@ function renderSettings(){
   h+=`<div class="sec-title"><span class="bar"></span>戰鬥人員設定（戰情公仔）</div><div class="card">`;
   h+=soldierWrap(soldier,'s');
   h+=`<div class="field"><label>戰鬥人員名稱</label><input id="sol-name" type="text" value="${esc(soldier.name||'')}" placeholder="例：莊政遠 中士" oninput="soldier.name=this.value;saveSoldier()"></div>`;
-  h+=`<div class="field"><label>所屬戰鬥區域</label><input id="sol-region" type="text" value="${esc(soldier.region||'')}" placeholder="例：台南・高雄前線" oninput="soldier.region=this.value;saveSoldier()"></div>`;
+  const _cN=countyNames(), _reg=getRegions();
+  h+=`<div class="field"><label>所屬戰鬥區域（可複選・連動戰情地圖）</label>`;
+  if(_cN.length){
+    h+=`<div class="chips chips-wrap"><button class="chip ${!_reg.length?'on':''}" onclick="clearSoldierCounties()">🌏 全台灣</button>`+
+      _cN.map(n=>`<button class="chip ${_reg.includes(n)?'on':''}" onclick="setSoldierCounty('${esc(n)}')">${esc(n)}</button>`).join('')+`</div>`;
+    h+=`<div class="hint" style="font-size:11px;color:var(--muted)">選好的區域會自動帶到「戰情地圖」並縮放顯示。${_reg.length?'已選 '+_reg.length+' 區':''}</div>`;
+  } else { h+=`<div class="hint" style="color:var(--muted)">地圖資料載入中，請稍候再設定。</div>`; }
+  h+=`</div>`;
   h+=`<div class="rowsel"><span class="rowsel-l">軍種</span><div class="chips">`+
     Object.entries(BRANCHES).map(([k,v])=>`<button class="chip ${soldier.branch===k?'on':''}" onclick="setSoldierBranch('${k}')">${v.emoji} ${v.label}</button>`).join('')+`</div></div>`;
   h+=`<div class="rowsel" style="align-items:flex-start"><span class="rowsel-l">武器</span><div class="chips">`+
