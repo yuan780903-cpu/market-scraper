@@ -93,11 +93,11 @@
       <div class="toolbar">
         <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
         <button class="btn btn-ghost" id="stampBtn" onclick="toggleStamp()">✓ 蓋發票章</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('stampFile').click()">選擇發票章照片</button>
-        <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="uploadStamp(event)">
         <button class="btn btn-ghost" onclick="saveDraft()">儲存草稿</button>
         <button class="btn btn-ghost" onclick="loadDraft()">讀取草稿</button>
         <button class="btn btn-ghost" onclick="clearCustomer()">清空客戶</button>
+        <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="uploadStamp(event)">
+        <a href="#" id="changeStampLink" onclick="document.getElementById('stampFile').click();return false" style="margin-left:auto;font-size:11px;color:#888;text-decoration:underline;align-self:center">更換發票章圖</a>
       </div>
     </div>
 
@@ -338,6 +338,11 @@ function stampHtml(){
   return `<div class="stamp"><img src="${img}" alt="發票章" style="display:block;width:100%;height:auto"></div>`;
 }
 function toggleStamp(){
+  // 智能：第一次按但沒上傳過 → 自動跳檔案選擇，上傳完成後自動蓋上
+  if(localStorage.getItem("ss_stamp_on") !== "1" && !getStampImg()){
+    document.getElementById("stampFile").click();
+    return;
+  }
   const on = localStorage.getItem("ss_stamp_on") !== "1";
   localStorage.setItem("ss_stamp_on", on ? "1" : "0");
   const btn = document.getElementById("stampBtn");
