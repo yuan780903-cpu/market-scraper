@@ -1858,7 +1858,7 @@ const UNIT_HA = {'公頃':1,'甲':0.9699,'分':0.09699,'坪':0.0033058};
 let smartCfg = {
   startLoc:'', startTime:'08:00',
   endLoc:'', endTime:'17:00',
-  lunchStart:'12:00', lunchEnd:'13:00',
+  lunchStart:'12:00', lunchEnd:'13:00', lunchLoc:'',
   f:{ src:'', organic:'', regions:[], channel:'', area:'', grade:'' },
   picks:[],   // {key,kind,id,name,channel,grade,address,phone,district,organic,area,dwell,fixed}
   _last:'', _inited:0, _poolOpen:0
@@ -1901,7 +1901,8 @@ function smartLatLng(addr){
   return C['#'+core]||null;   // 只知縣市→用縣市中心
 }
 function kmBetween(a,b){ const R=6371,d2r=Math.PI/180; const dla=(b[0]-a[0])*d2r,dlo=(b[1]-a[1])*d2r; const x=Math.sin(dla/2)**2+Math.cos(a[0]*d2r)*Math.cos(b[0]*d2r)*Math.sin(dlo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
-function driveMin(km){ const rk=km*1.3; let sp; if(rk<6)sp=24; else if(rk<20)sp=36; else if(rk<50)sp=52; else sp=78; return Math.max(8, Math.round(rk/sp*60)+3); }
+// 以「開車走高速公路為主」估速：短程市區較慢、中長程上快速道路/國道
+function driveMin(km){ const rk=km*1.25; let sp; if(rk<6)sp=28; else if(rk<20)sp=45; else if(rk<50)sp=62; else sp=85; return Math.max(8, Math.round(rk/sp*60)+3); }
 function smartTravel(a,b){
   const pa=smartLatLng(a), pb=smartLatLng(b);
   if(pa&&pb) return driveMin(kmBetween(pa,pb));
@@ -1944,6 +1945,7 @@ function syncSmart(){
   if((v=g('sm-end'))!==undefined) smartCfg.endTime=v||'17:00';
   if((v=g('sm-lunch1'))!==undefined) smartCfg.lunchStart=v||'12:00';
   if((v=g('sm-lunch2'))!==undefined) smartCfg.lunchEnd=v||'13:00';
+  if((v=g('sm-lunchloc'))!==undefined) smartCfg.lunchLoc=v.trim();
   // filters
   if((v=g('sm-src'))!==undefined) smartCfg.f.src=v;
   if((v=g('sm-organic'))!==undefined) smartCfg.f.organic=v;
@@ -1982,7 +1984,7 @@ function smartLocate(fieldId){
   syncSmart();
   getGeo(coord=>{
     const el=$('#'+fieldId); if(el) el.value=coord;
-    if(fieldId==='sm-startloc') smartCfg.startLoc=coord; else if(fieldId==='sm-endloc') smartCfg.endLoc=coord;
+    if(fieldId==='sm-startloc') smartCfg.startLoc=coord; else if(fieldId==='sm-endloc') smartCfg.endLoc=coord; else if(fieldId==='sm-lunchloc') smartCfg.lunchLoc=coord;
     toast('已帶入目前位置座標');
   });
 }
@@ -2004,15 +2006,16 @@ function renderSmartRoute(){
   const regs=regionsSorted();
   if(!smartCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); smartCfg.f.regions = tn?[tn]:[]; smartCfg._inited=1; }
   const f=smartCfg.f;
-  let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與午休。全程本機計算、不外傳。</div>`;
+  let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與中午休息。全程本機計算、不外傳。</div>`;
   // 出發 / 回家
   h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家</div>`;
   h+=`<div class="field"><label>🏁 出發位置</label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
   h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍 定位</button></div></div>`;
   h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>
       <div class="field"><label>回家時間</label><input type="time" id="sm-end" value="${smartCfg.endTime}"></div></div>`;
-  h+=`<div class="field-2"><div class="field"><label>午休起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
-      <div class="field"><label>午休迄</label><input type="time" id="sm-lunch2" value="${smartCfg.lunchEnd}"></div></div>`;
+  h+=`<div class="field-2"><div class="field"><label>中午休息起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
+      <div class="field"><label>中午休息迄</label><input type="time" id="sm-lunch2" value="${smartCfg.lunchEnd}"></div></div>`;
+  h+=`<div class="field"><label>🍱 中午休息地點（可空，填了會算進前後車程）</label><div style="display:flex;gap:6px"><input id="sm-lunchloc" style="flex:1;min-width:0" value="${esc(smartCfg.lunchLoc)}" placeholder="例如 某餐廳地址，或按定位"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-lunchloc')">📍 定位</button></div></div>`;
   h+=`</div>`;
   // 篩選
   const orgOpts=[['','有機/非有機'],['org','🌱 有機'],['non','非有機']];
@@ -2108,9 +2111,21 @@ function smartPlan(){
     if(Math.abs(si-hi)<Math.abs(si-lo)) free.reverse();   // 出發點較靠南就由南往北掃
   }
   const fixed=picks.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
-  // 排程：依時間穿插已約客戶、就近排自由客戶、插入午休
+  // 排程：依時間穿插已約客戶、就近排自由客戶、插入中午休息（含休息地點的前後車程）
+  const lunchLoc=smartCfg.lunchLoc, lunchDur=Math.max(0,le-ls);
   const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
-  const lunchAdj=(arr)=>{ if(!lunchDone && arr>=ls){ result.push({lunch:true,arrive:fmt(ls),leave:fmt(le)}); lunchDone=true; return Math.max(arr,le); } return arr; };
+  const hasPrev=()=>!!(result.length||startLoc);
+  // 在下一個拜訪點之前若已到休息時間，先插入中午休息（先開到休息地點、休息、再從休息地點出發）
+  const insertLunchBefore=(stopAddr)=>{
+    if(lunchDone) return;
+    const naive=t + (hasPrev()?smartTravel(prevAddr,stopAddr):0);
+    if(naive < ls) return;
+    let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : t;
+    larr=Math.max(larr,ls);
+    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
+    t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
+    lunchDone=true;
+  };
   let fi=0, ui=0;
   while(ui<free.length || fi<fixed.length){
     const nextFx = fi<fixed.length ? fixed[fi] : null;
@@ -2127,20 +2142,25 @@ function smartPlan(){
     }
     if(useFixed){
       const fx=fixed[fi++];
-      let arr=Math.max(t + ((result.length||startLoc)?smartTravel(prevAddr,fx.address):0), fx._at);
+      insertLunchBefore(fx.address);
+      let arr=Math.max(t + (hasPrev()?smartTravel(prevAddr,fx.address):0), fx._at);
       if(arr>fx._at) lateFix=true;
-      arr=lunchAdj(arr);
       result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
       t=arr+dwellOf(fx); prevAddr=fx.address;
     }else{
       const p=free[ui++];
-      let arr=t + ((result.length||startLoc)?smartTravel(prevAddr,p.address):0);
-      arr=lunchAdj(arr);
+      insertLunchBefore(p.address);
+      let arr=t + (hasPrev()?smartTravel(prevAddr,p.address):0);
       result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
       t=arr+dwellOf(p); prevAddr=p.address;
     }
   }
-  if(!lunchDone && ls>=s && ls<=e){ result.push({lunch:true,arrive:fmt(ls),leave:fmt(le)}); }
+  if(!lunchDone && ls>=s && ls<=e){
+    let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : Math.max(t,ls);
+    larr=Math.max(larr,ls);
+    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
+    t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
+  }
   const backTravel=smartTravel(prevAddr,endLoc);
   const home=t+backTravel;
   const stops=result.filter(x=>!x.lunch);
@@ -2153,12 +2173,22 @@ function smartPlan(){
   h+=`<div class="card">`;
   h+=drow('出發', `${esc(startLoc||'(未填)')}　${smartCfg.startTime}`);
   h+=drow('回家', `${esc(endLoc||'(同出發)')}　預計 ${fmt(home)} 到家`);
-  h+=drow('午休', `${smartCfg.lunchStart}–${smartCfg.lunchEnd}`);
+  h+=drow('中午休息', `${smartCfg.lunchStart}–${smartCfg.lunchEnd}${smartCfg.lunchLoc?'　@ '+esc(smartCfg.lunchLoc):''}`);
   h+=`</div>`;
   h+=`<div class="card" style="padding:4px 14px">`;
   let idx=0;
   result.forEach(x=>{
-    if(x.lunch){ h+=`<div class="drow"><div class="k">🍱 午餐</div><div class="v">${x.arrive}–${x.leave} 休息</div></div>`; return; }
+    if(x.lunch){ h+=`<div class="item" style="background:#f3efe2">
+      <div class="avatar" style="background:#b08948">🍱</div>
+      <div class="body">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
+          <span style="font-size:12.5px;color:var(--muted)">中午休息</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:1px">時段 ${x.arrive}–${x.leave}</div>
+        <div class="nm" style="margin-top:4px">🍱 中午休息</div>
+        ${x.address?`<div class="sub">${esc(x.address)}</div>`:''}</div>
+      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}</div>
+    </div>`; return; }
     idx++;
     const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
     const isCustom=x.kind==='custom';
@@ -2184,7 +2214,7 @@ function smartPlan(){
     const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||mapStops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||mapStops[mapStops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
     h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
   }
-  h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後。站間車程是依鄉鎮中心點的直線距離換算（直線×1.3 倍路程、依距離抓 24–78 km/h），實際會因路況、山路而異，僅供估算；點「用 Google 地圖開啟整條路線」可看實際時間。填寫出發位置才能算第一段車程。</div>`;
+  h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後。站間車程以「開車走高速公路為主」估算（鄉鎮中心點直線距離×1.25 倍路程、依距離抓 28–85 km/h），實際會因路況、山路而異，僅供參考；點「用 Google 地圖開啟整條路線」可看實際時間。填寫出發位置才能算第一段車程；填了中午休息地點，會把上午最後一站→休息地點→下午第一站的車程一起算進去。</div>`;
   smartCfg._last=h; resEl().innerHTML=h;
   resEl().scrollIntoView({behavior:'smooth',block:'start'});
 }
