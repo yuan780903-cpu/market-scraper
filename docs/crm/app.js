@@ -238,27 +238,8 @@ function renderHome(){
   const cov=computeCoverage();
   const pct=(a,b)=>b?Math.round(a/b*100):0;
 
-  // ── 作戰單位 指揮格 ──
-  const UNITS=[
-    {tab:'map',       icon:'radar',   code:'RECON',  label:'戰情地圖', desc:'戰區雷達'},
-    {tab:'prospects', icon:'target',  code:'TARGET', label:'目標名單', desc:'狙擊目標'},
-    {tab:'customers', icon:'rifle',   code:'ALLY',   label:'現有客戶', desc:'友軍部隊'},
-    {tab:'compete',   icon:'jet',     code:'BOGEY',  label:'競品價格', desc:'敵機偵蒐'},
-    {tab:'route',     icon:'tank',    code:'ARMOR',  label:'智慧拜訪規劃', desc:'裝甲行軍'},
-    {tab:'report',    icon:'carrier', code:'SITREP', label:'拜訪週報', desc:'航艦戰報'},
-    {tab:'settings',  icon:'gear',    code:'LOGI',   label:'設定備份', desc:'軍械補給'}
-  ];
-  let h = `<div class="sec-title"><span class="bar"></span>作戰單位 ・ 指揮中心</div>`;
-  h += `<div class="cmd-grid">` + UNITS.map(u=>`
-    <button class="unit" onclick="go('${u.tab}')">
-      <span class="u-ic">${milIcon(u.icon)}</span>
-      <span class="u-code">${u.code}</span>
-      <span class="u-label">${u.label}</span>
-      <span class="u-desc">${u.desc}</span>
-    </button>`).join('') + `</div>`;
-
-  // ── 戰區掌握度 KPI ──
-  h += `<div class="sec-title"><span class="bar"></span>戰區掌握度</div>`;
+  // ── 戰區掌握度 KPI ──（功能總覽改由 LINE 選單導覽，首頁只留戰情看板）
+  let h = `<div class="sec-title"><span class="bar"></span>戰區掌握度</div>`;
   h += `<div class="stat-grid">
     <div class="stat cust"><div class="n">${pct(cov.dev,cov.total)}%</div><div class="l">佔領率（成交）<br>${cov.dev} / ${cov.total} 家</div></div>
     <div class="stat prosp"><div class="n">${pct(cov.con,cov.total)}%</div><div class="l">接觸率（偵蒐）<br>${cov.con} / ${cov.total} 家</div></div>
