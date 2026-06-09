@@ -1873,7 +1873,40 @@ function smartGeoIdx(addr){
   if(tn){ const tw=window.TW_MAP.towns; const idx=tw.findIndex(t=>countyCore(t.c)===core && t.t===tn); if(idx>=0)ti=idx; }
   return (ci<0?99:ci)*100000 + ti;
 }
-function smartTravel(a,b){ if(!a||!b)return 15; const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10; }
+// ---- 離線距離估算（不外傳）----
+// 由 map-data.js 的鄉鎮 SVG 路徑算出中心點，再以校正後的仿射轉換換成近似經緯度，
+// 用 haversine 算直線距離→換算開車時間。座標(定位)地址可直接用。全程本機計算。
+const GEO_LAT=[-1.892765e-5,-2.349097e-3,2.531461e+1];
+const GEO_LNG=[2.571412e-3,7.081449e-6,1.194307e+2];
+function smartTownCentroids(){
+  if(window._tcen) return window._tcen;
+  const m={};
+  if(window.TW_MAP&&window.TW_MAP.towns){
+    window.TW_MAP.towns.forEach(t=>{
+      const nums=(t.d||'').replace(/[A-Za-z]/g,' ').trim().split(/\s+/).map(Number).filter(n=>!isNaN(n));
+      let sx=0,sy=0,n=0; for(let i=0;i+1<nums.length;i+=2){ sx+=nums[i]; sy+=nums[i+1]; n++; }
+      if(n){ const core=countyCore(t.c); const ll=[GEO_LAT[0]*(sx/n)+GEO_LAT[1]*(sy/n)+GEO_LAT[2], GEO_LNG[0]*(sx/n)+GEO_LNG[1]*(sy/n)+GEO_LNG[2]]; m[core+'|'+t.t]=ll; (m[core]=m[core]||[]).push(ll); }
+    });
+    // 縣市中心＝該縣市各鄉鎮中心平均
+    Object.keys(m).forEach(k=>{ if(k.includes('|'))return; const arr=m[k]; m['#'+k]=[arr.reduce((s,p)=>s+p[0],0)/arr.length, arr.reduce((s,p)=>s+p[1],0)/arr.length]; });
+  }
+  window._tcen=m; return m;
+}
+function smartLatLng(addr){
+  if(!addr) return null;
+  const mc=String(addr).trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  if(mc){ const la=+mc[1], ln=+mc[2]; if(la>=20&&la<=27&&ln>=118&&ln<=123) return [la,ln]; }
+  const C=smartTownCentroids(); const core=countyCore(addr); if(!core) return null;
+  const tn=matchTown(addr,core); if(tn&&C[core+'|'+tn]) return C[core+'|'+tn];
+  return C['#'+core]||null;   // 只知縣市→用縣市中心
+}
+function kmBetween(a,b){ const R=6371,d2r=Math.PI/180; const dla=(b[0]-a[0])*d2r,dlo=(b[1]-a[1])*d2r; const x=Math.sin(dla/2)**2+Math.cos(a[0]*d2r)*Math.cos(b[0]*d2r)*Math.sin(dlo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+function driveMin(km){ const rk=km*1.3; let sp; if(rk<6)sp=24; else if(rk<20)sp=36; else if(rk<50)sp=52; else sp=78; return Math.max(8, Math.round(rk/sp*60)+3); }
+function smartTravel(a,b){
+  const pa=smartLatLng(a), pb=smartLatLng(b);
+  if(pa&&pb) return driveMin(kmBetween(pa,pb));
+  if(!a||!b)return 15; const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10;
+}
 function smartPool(){
   const f=smartCfg.f;
   const regs=f.regions||[];
@@ -2094,14 +2127,14 @@ function smartPlan(){
     }
     if(useFixed){
       const fx=fixed[fi++];
-      let arr=Math.max(t + (result.length?smartTravel(prevAddr,fx.address):0), fx._at);
+      let arr=Math.max(t + ((result.length||startLoc)?smartTravel(prevAddr,fx.address):0), fx._at);
       if(arr>fx._at) lateFix=true;
       arr=lunchAdj(arr);
       result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
       t=arr+dwellOf(fx); prevAddr=fx.address;
     }else{
       const p=free[ui++];
-      let arr=t + (result.length?smartTravel(prevAddr,p.address):0);
+      let arr=t + ((result.length||startLoc)?smartTravel(prevAddr,p.address):0);
       arr=lunchAdj(arr);
       result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
       t=arr+dwellOf(p); prevAddr=p.address;
@@ -2151,7 +2184,7 @@ function smartPlan(){
     const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||mapStops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||mapStops[mapStops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
     h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
   }
-  h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後；時間為估算（站間車程約 10–35 分），地圖內可再拖曳微調。</div>`;
+  h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後。站間車程是依鄉鎮中心點的直線距離換算（直線×1.3 倍路程、依距離抓 24–78 km/h），實際會因路況、山路而異，僅供估算；點「用 Google 地圖開啟整條路線」可看實際時間。填寫出發位置才能算第一段車程。</div>`;
   smartCfg._last=h; resEl().innerHTML=h;
   resEl().scrollIntoView({behavior:'smooth',block:'start'});
 }
