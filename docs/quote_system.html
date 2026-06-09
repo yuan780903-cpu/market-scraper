@@ -293,13 +293,38 @@ function uploadStamp(e){
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{
-    localStorage.setItem("ss_stamp_img", r.result);
-    // 上傳後自動開啟蓋章
-    localStorage.setItem("ss_stamp_on", "1");
-    const btn = document.getElementById("stampBtn");
-    if(btn) btn.textContent = "✗ 撤章";
-    render();
-    alert("✓ 發票章已上傳並蓋上預覽（圖片只存本機瀏覽器，不上雲）");
+    const img = new Image();
+    img.onload = ()=>{
+      // canvas 去背：把白色/淡灰背景變透明（保留藍色章）
+      const cvs = document.createElement("canvas");
+      cvs.width = img.naturalWidth;
+      cvs.height = img.naturalHeight;
+      const ctx = cvs.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, cvs.width, cvs.height);
+      const a = d.data;
+      for(let i=0; i<a.length; i+=4){
+        const r=a[i], g=a[i+1], b=a[i+2];
+        // 全透明：接近白色 (RGB 都 ≥ 200)
+        if(r>=200 && g>=200 && b>=200){
+          a[i+3] = 0;
+        }
+        // 半透明：淡灰漸層 (160-200) — 邊緣淡化過渡
+        else if(r>=160 && g>=160 && b>=160){
+          a[i+3] = Math.max(0, 255 - (r+g+b)/3);
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+      const cleaned = cvs.toDataURL("image/png");
+      localStorage.setItem("ss_stamp_img", cleaned);
+      localStorage.setItem("ss_stamp_on", "1");
+      const btn = document.getElementById("stampBtn");
+      if(btn) btn.textContent = "✗ 撤章";
+      render();
+      alert("✓ 發票章已上傳（已自動去除白色背景，只存本機不上雲）");
+    };
+    img.onerror = ()=>alert("圖片載入失敗，請換一張試試");
+    img.src = r.result;
   };
   r.readAsDataURL(f);
   e.target.value = "";
