@@ -1483,6 +1483,16 @@ function mortgageEditorHTML(c){
 function mortgageSummary(c){ const set=c.mortgageSet||''; if(!set) return ''; if(set==='無設定') return '無設定抵押'; const parts=[c.mortgageType, c.mortgageAmount?c.mortgageAmount+' 萬':''].filter(Boolean); return '有設定抵押'+(parts.length?'（'+parts.join('・')+'）':''); }
 
 // ---------- 位置資訊（住家 / 下貨位置 + Google 地圖網址，可多筆）----------
+// 取得目前 GPS 座標（需 HTTPS 與使用者授權；座標只用於本機帶入欄位/產生地圖連結，不外傳）
+function getGeo(onOk){
+  if(!navigator.geolocation){ toast('此裝置不支援定位'); return; }
+  toast('定位中…請允許位置權限');
+  navigator.geolocation.getCurrentPosition(
+    pos=>{ const la=pos.coords.latitude.toFixed(6), ln=pos.coords.longitude.toFixed(6); onOk(la+','+ln); },
+    err=>{ toast(err && err.code===1 ? '已拒絕定位權限，請到瀏覽器設定開啟' : '定位失敗，請稍後再試或手動輸入'); },
+    {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+  );
+}
 function getMapLocs(c){ if(!Array.isArray(c.mapLocations)) c.mapLocations=[]; return c.mapLocations; }
 function locChipHTML(l){
   const url=(l&&l.url)||''; const type=(l&&l.type)||'位置';
@@ -1495,11 +1505,11 @@ function locChipHTML(l){
 }
 function locEditorHTML(locs){
   let h=`<div class="field"><label>位置資訊（住家／下貨位置・可新增多筆）</label>`;
-  h+=`<div class="hint">選擇類型並貼上 Google 地圖網址，方便日後導航或分享給司機</div>`;
+  h+=`<div class="hint">選好類型後可按「📍 用目前定位」就地擷取座標，或貼上 Google 地圖網址，方便日後導航或分享給司機</div>`;
   h+=`<div id="loc-chips" style="display:flex;flex-direction:column;gap:6px;margin-bottom:${(locs&&locs.length)?'7px':'0'}">${(locs||[]).map(locChipHTML).join('')}</div>`;
   h+=`<div class="loc-add"><select id="loc-type">${LOC_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>`
     + `<input id="loc-url" type="url" inputmode="url" placeholder="貼上 Google 地圖網址"></div>`;
-  h+=`<button type="button" class="btn btn-out" style="margin-top:6px" onclick="addMapLoc()">＋ 新增位置</button>`;
+  h+=`<div class="btn-row" style="margin-top:6px;gap:8px"><button type="button" class="btn btn-out" onclick="addMapLoc()">＋ 新增位置</button><button type="button" class="btn btn-out" onclick="addMapLocGeo()">📍 用目前定位</button></div>`;
   h+=`</div>`;
   return h;
 }
@@ -1512,6 +1522,17 @@ function addMapLoc(){
   box.style.marginBottom='7px';
   box.insertAdjacentHTML('beforeend', locChipHTML({type:t,url:u}));
   $('#loc-url').value='';
+}
+function addMapLocGeo(){
+  const t=($('#loc-type')&&$('#loc-type').value)||'位置';
+  getGeo(coord=>{
+    const u='https://www.google.com/maps/search/?api=1&query='+coord;
+    const box=$('#loc-chips'); if(!box) return;
+    if([...box.querySelectorAll('.loc-chip')].some(el=>el.dataset.url===u)){ toast('已加入此位置'); return; }
+    box.style.marginBottom='7px';
+    box.insertAdjacentHTML('beforeend', locChipHTML({type:t,url:u}));
+    toast('已加入目前定位（'+coord+'）');
+  });
 }
 function readMapLocs(){
   const box=$('#loc-chips');
@@ -1906,6 +1927,14 @@ function smartAddAll(){
   pool.slice(0,40).forEach(item=>{ if(!smartCfg.picks.some(p=>p.key===item.key)){ smartCfg.picks.push(Object.assign({}, item, {dwell:SMART_DWELL, fixed:''})); n++; } });
   toast(n?`已加入 ${n} 家`:'這些客戶都已在名單中'); renderRoute();
 }
+function smartLocate(fieldId){
+  syncSmart();
+  getGeo(coord=>{
+    const el=$('#'+fieldId); if(el) el.value=coord;
+    if(fieldId==='sm-startloc') smartCfg.startLoc=coord; else if(fieldId==='sm-endloc') smartCfg.endLoc=coord;
+    toast('已帶入目前位置座標');
+  });
+}
 function smartRemovePick(key){ syncSmart(); smartCfg.picks=smartCfg.picks.filter(p=>p.key!==key); renderRoute(); }
 function smartClearPicks(){ smartCfg.picks=[]; smartCfg._last=''; renderRoute(); }
 function smartTogglePool(){ syncSmart(); smartCfg._poolOpen=smartCfg._poolOpen?0:1; renderRoute(); }
@@ -1916,8 +1945,8 @@ function renderSmartRoute(){
   let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與午休。全程本機計算、不外傳。</div>`;
   // 出發 / 回家
   h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家</div>`;
-  h+=`<div class="field"><label>🏁 出發位置</label><input id="sm-startloc" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"></div>`;
-  h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><input id="sm-endloc" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"></div>`;
+  h+=`<div class="field"><label>🏁 出發位置</label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
+  h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍 定位</button></div></div>`;
   h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>
       <div class="field"><label>回家時間</label><input type="time" id="sm-end" value="${smartCfg.endTime}"></div></div>`;
   h+=`<div class="field-2"><div class="field"><label>午休起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
