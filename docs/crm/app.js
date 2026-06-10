@@ -2156,7 +2156,7 @@ function renderSmartRoute(){
   let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與中午休息。全程本機計算、不外傳。</div>`;
   // 出發 / 回家
   h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家</div>`;
-  h+=`<div class="field"><label>🏁 出發位置</label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
+  h+=`<div class="field"><label>🏁 出發位置 <span style="color:var(--red);font-weight:700">必填</span></label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
   h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍 定位</button></div></div>`;
   h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>
       <div class="field"><label>回家時間</label><input type="time" id="sm-end" value="${smartCfg.endTime}"></div></div>`;
@@ -2243,6 +2243,7 @@ function smartPlan(){
   syncSmart();
   const picks=smartCfg.picks;
   const resEl=()=>$('#smart-result');
+  if(!smartCfg.startLoc){ toast('請先填出發位置（或按 📍 定位）'); const el=$('#sm-startloc'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>el.focus(),300); } return; }
   if(!picks.length){ toast('請先把客戶加入名單'); return; }
   const toMin=t=>{const[a,b]=(t||'').split(':').map(Number);return (a||0)*60+(b||0);};
   const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(((m%60)+60)%60)).padStart(2,'0')}`;
