@@ -1727,13 +1727,15 @@ function renderSettings(){
   h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="gdriveBackup('')">☁️ 立即備份到雲端</button></div>`;
   h+=`<div class="btn-row"><button class="btn btn-gray" onclick="gdriveRestore()">⬇️ 從雲端還原最新備份</button></div>`;
   h+=`<div class="hint" style="margin-top:6px;color:var(--muted);font-size:11px">上次雲端備份：${_glast?esc(new Date(_glast).toLocaleString('zh-TW')):'尚未備份'}</div>`;
-  h+=`<details style="margin-top:8px"><summary style="font-size:12.5px;color:#3a473f;cursor:pointer;font-weight:600">📋 一次性設定教學（點開）</summary><div style="font-size:11.5px;line-height:1.9;color:#3a473f;margin-top:6px">
-    1. 到 <b>Google Cloud Console</b>（console.cloud.google.com）用你的 Google 帳號登入，建立一個專案。<br>
-    2. 「API 和服務 → 程式庫」搜尋 <b>Google Drive API</b> 並<b>啟用</b>。<br>
-    3. 「OAuth 同意畫面」選 <b>外部</b>，填App名稱，把<b>你自己的 Gmail 加入測試使用者</b>。<br>
-    4. 「憑證 → 建立憑證 → OAuth 用戶端 ID → 網頁應用程式」。<br>
-    5. 「已授權的 JavaScript 來源」填：<b>https://yuan780903-cpu.github.io</b><br>
-    6. 建立後複製<b>用戶端 ID</b>，貼到上面欄位按「儲存 ID」即可。<br>
+  h+=`<details style="margin-top:8px"><summary style="font-size:12.5px;color:#3a473f;cursor:pointer;font-weight:600">📋 一次性設定教學（換手機時也照這個做‧點開）</summary><div style="font-size:11.5px;line-height:1.9;color:#3a473f;margin-top:6px">
+    <b>建議用電腦操作。</b>到 <b>Google Cloud Console</b>（console.cloud.google.com）用你的 Google 帳號登入，沿用預設的「My First Project」即可。<br>
+    <b>1.</b> 點「<b>Google Auth Platform</b>」（管理類別，說明寫 OAuth 設定和憑證）→「開始使用 / Get started」。<br>
+    <b>2.</b> 填：應用程式名稱 <b>碩成CRM</b>、支援信箱選自己、<b>目標對象選「外部 External」</b>、聯絡信箱填自己 → 同意 → 建立。<br>
+    <b>3.</b> 左側「<b>目標對象 / Audience</b>」→ 測試使用者「+ Add users」→ 把<b>你自己的 Gmail</b> 加進去 → 儲存。<br>
+    <b>4.</b> 左側「<b>用戶端 / Clients</b>」→「建立用戶端」→ 類型選「<b>網頁應用程式</b>」。<br>
+    <b>5.</b> 「已授權的 JavaScript 來源」新增：<b>https://yuan780903-cpu.github.io</b> → 建立。<br>
+    <b>6.</b> 複製跳出的<b>用戶端 ID</b>（結尾 .apps.googleusercontent.com），貼到上面欄位按「儲存 ID」。<br>
+    <b>7.</b> 漢堡選單 ☰ →「API 和服務 → 程式庫」搜尋 <b>Google Drive API</b> 並<b>啟用</b>（沒開備份會失敗）。<br>
     （用戶端 ID 不是密碼，只存你手機本機；權限只開放本App建立的備份檔，看不到你雲端其他檔案。）</div></details>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>匯入既有客戶（SAP 客戶檔）</div><div class="card">`;
