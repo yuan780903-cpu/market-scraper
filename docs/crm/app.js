@@ -2024,10 +2024,21 @@ function smartTownCentroids(){
   }
   window._tcen=m; return m;
 }
+// 從 Google 地圖網址 / 座標字串取出 [lat,lng]（純前端解析，不連網）
+function parseGmaps(s){
+  s=String(s||'');
+  const m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+      || s.match(/[?&](?:q|query|ll|center|destination|daddr)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
+      || s.match(/\/(-?\d+\.\d+),(-?\d+\.\d+)(?:[\/,?]|$)/);
+  if(m){ const la=+m[1], ln=+m[2]; if(la>=20&&la<=27&&ln>=118&&ln<=123) return [la,ln]; }
+  return null;
+}
 function smartLatLng(addr){
   if(!addr) return null;
   const mc=String(addr).trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
   if(mc){ const la=+mc[1], ln=+mc[2]; if(la>=20&&la<=27&&ln>=118&&ln<=123) return [la,ln]; }
+  const gm=parseGmaps(addr); if(gm) return gm;   // 貼上 Google 地圖網址也能精準定位
   const C=smartTownCentroids(); const core=countyCore(addr);
   if(core){
     const tn=matchTown(addr,core); if(tn&&C[core+'|'+tn]) return C[core+'|'+tn];
@@ -2135,6 +2146,23 @@ function smartLocate(fieldId){
     toast('已帶入目前位置座標');
   });
 }
+// 開 Google 地圖找地點（用現有文字/座標當搜尋起點）
+function smartMapPick(fieldId){
+  syncSmart();
+  const el=$('#'+fieldId); const q=(el&&el.value.trim())||'';
+  const gm=q?smartLatLng(q):null;
+  const url=gm ? `https://www.google.com/maps/search/?api=1&query=${gm[0]},${gm[1]}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q||'附近 餐廳')}`;
+  window.open(url,'_blank');
+  toast('在地圖找到位置後，複製座標或連結貼回欄位');
+}
+// 貼上 Google 地圖網址時自動轉成精準座標
+function smartNormLoc(el){
+  if(!el) return;
+  const gm=parseGmaps(el.value);
+  if(gm){ el.value=gm[0].toFixed(6)+','+gm[1].toFixed(6); toast('已從地圖網址取得座標'); }
+  syncSmart();
+}
 function smartAddCustom(){
   syncSmart();
   smartCfg.picks.push({key:'x'+Date.now(), kind:'custom', name:'其他行程', address:'', district:'', channel:'其他', organic:'', grade:'', status:'', dwell:30, fixed:''});
@@ -2158,11 +2186,12 @@ function renderSmartRoute(){
   h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家</div>`;
   h+=`<div class="field"><label>🏁 出發位置 <span style="color:var(--red);font-weight:700">必填</span></label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
   h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍 定位</button></div></div>`;
-  h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>
-      <div class="field"><label>回家時間</label><input type="time" id="sm-end" value="${smartCfg.endTime}"></div></div>`;
+  h+=`<div class="field"><label>出發時間（回家時間排完路線會自動估算）</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>`;
   h+=`<div class="field-2"><div class="field"><label>中午休息起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
       <div class="field"><label>中午休息迄</label><input type="time" id="sm-lunch2" value="${smartCfg.lunchEnd}"></div></div>`;
-  h+=`<div class="field"><label>🍱 中午休息地點（可空，填了會算進前後車程）</label><div style="display:flex;gap:6px"><input id="sm-lunchloc" style="flex:1;min-width:0" value="${esc(smartCfg.lunchLoc)}" placeholder="例如 某餐廳地址，或按定位"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-lunchloc')">📍 定位</button></div></div>`;
+  h+=`<div class="field"><label>🍱 中午休息地點（可空，填了會算進前後車程）</label><div style="display:flex;gap:6px"><input id="sm-lunchloc" style="flex:1;min-width:0" value="${esc(smartCfg.lunchLoc)}" placeholder="例如 某餐廳地址，或貼地圖座標/網址" onchange="smartNormLoc(this)"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-lunchloc')">📍 定位</button></div>
+    <button type="button" class="btn btn-out" style="width:100%;margin-top:6px;font-size:12.5px" onclick="smartMapPick('sm-lunchloc')">🗺️ 用 Google 地圖選地點</button>
+    <div class="hint" style="color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.6">在地圖上<b>長按</b>你要的位置會掉一根針，下方/搜尋列會出現座標 → 複製貼回上面欄位最準；也可在店家頁按「分享→複製連結」貼回來。</div></div>`;
   h+=`</div>`;
   // 篩選
   const orgOpts=[['','有機/非有機'],['org','🌱 有機'],['non','非有機']];
@@ -2313,14 +2342,14 @@ function smartPlan(){
   const home=t+backTravel;
   const stops=result.filter(x=>!x.lunch);
   let warn='';
-  if(home>e) warn=`依估算約 ${fmt(home)} 才到家，略晚於 ${smartCfg.endTime}。可減少家數、縮短停留或提早出發。`;
+  if(home>e) warn=`預估約 ${fmt(home)} 才到家，行程偏長。可減少家數、縮短停留或提早出發。`;
   else if(lateFix) warn=`部分約定客戶因前段時間排不下而略有延後，請現場彈性調整。`;
 
   let h=`<div class="sec-title"><span class="bar"></span>智慧安排結果（${stops.length} 家）</div>`;
   if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
   h+=`<div class="card">`;
   h+=drow('出發', `${esc(startLoc||'(未填)')}　${smartCfg.startTime}`);
-  h+=drow('回家', `${esc(endLoc||'(同出發)')}　預計 ${fmt(home)} 到家`);
+  h+=drow('預估回家', `🏁 ${fmt(home)} 到家　${esc(endLoc||'(同出發)')}`);
   h+=drow('中午休息', `${smartCfg.lunchStart}–${smartCfg.lunchEnd}${smartCfg.lunchLoc?'　@ '+esc(smartCfg.lunchLoc):''}`);
   h+=`</div>`;
   h+=`<div class="card" style="padding:4px 14px">`;
@@ -2355,6 +2384,16 @@ function smartPlan(){
       <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
     </div>`;
   });
+  h+=`<div class="item" style="background:#eef1e6">
+      <div class="avatar" style="background:#4c5a2e">🏁</div>
+      <div class="body">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${fmt(home)}</span>
+          <span style="font-size:12.5px;color:var(--muted)">預估回家時間</span></div>
+        <div class="nm" style="margin-top:4px">🏁 回到${endLoc&&endLoc!==startLoc?'回家點':'出發地'}</div>
+        ${endLoc?`<div class="sub">${esc(endLoc)}</div>`:''}</div>
+      <div class="meta">${endLoc?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endLoc)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}</div>
+    </div>`;
   h+=`</div>`;
   const mapStops=stops.filter(x=>x.address);
   if(mapStops.length){
