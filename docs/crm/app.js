@@ -1814,9 +1814,9 @@ function readCheckPeriod(){ const s=$('#f-checksel').value; return s==='__other'
 
 // ---------- 貼文字自動建檔 ----------
 function custPasteImport(){
-  let h=`<div class="info">把客戶的名片、Email 簽名、SAP 客戶檔欄位，或任何含「名稱／電話／統編／身分證／地址」的文字貼進來，系統會自動拆好欄位、開啟新增表單讓你確認後儲存。🔒 只存本機、不上傳。</div>`;
-  h+=ocrButtonHTML('cpi-text');
-  h+=`<div class="field"><label>貼上客戶資料文字（或用上方拍照辨識帶入）</label><textarea id="cpi-text" rows="9" placeholder="例：\n大豐農場\n統編 12345678\n聯絡人 王大明\n0912-345-678\n臺南市玉井區中正路100號\n出生 1975/3/8"></textarea></div>`;
+  let h=`<div class="info">把客戶的名片、Email 簽名、SAP 客戶檔欄位，或任何含「名稱／電話／統編／身分證／地址」的文字貼進來，系統會自動拆好欄位。🔒 只存本機、不上傳。<br>· <b>單筆</b>：開啟新增表單確認後儲存。<br>· <b>多筆批次</b>：選多張照片，或用<b>空白行</b>分隔每位客戶，會出現勾選清單一次建立。</div>`;
+  h+=ocrButtonHTML('cpi-text', true);
+  h+=`<div class="field"><label>貼上客戶資料文字（或用上方拍照辨識帶入；多位客戶請用空白行分隔）</label><textarea id="cpi-text" rows="9" placeholder="例：\n大豐農場\n統編 12345678\n聯絡人 王大明\n0912-345-678\n臺南市玉井區中正路100號\n出生 1975/3/8"></textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="custPasteParse()">🪄 解析並開啟新增表單</button></div>`;
   openModal('📋 貼文字自動建檔', h);
 }
@@ -1858,12 +1858,34 @@ function parseCustomerText(text){
 }
 function custPasteParse(){
   const t=($('#cpi-text')&&$('#cpi-text').value)||''; if(!t.trim()){ toast('請先貼上文字'); return; }
+  const blocks=t.split(/\n\s*\n|\n-{2,}\n/).map(s=>s.trim()).filter(Boolean);
+  if(blocks.length>1){ custBatchReview(blocks); return; }
   const d=parseCustomerText(t);
   const found=['name','phone','address','taxid','idno','birth','contact','org'].filter(k=>d[k]).length;
   if(!found){ toast('沒抓到可用欄位，請檢查文字內容'); return; }
   closeModal();
   editCustomer(Object.assign({id:'C'+Date.now(), inter:[]}, d), true);
   toast('已帶入 '+found+' 個欄位，請確認後儲存');
+}
+function custBatchReview(blocks){
+  const drafts=blocks.map(b=>parseCustomerText(b)).filter(d=>['name','phone','address','taxid','idno'].some(k=>d[k]));
+  if(!drafts.length){ toast('沒抓到可用欄位，請檢查文字內容'); return; }
+  window._custBatch=drafts;
+  let h=`<div class="info">辨識／貼上的 <b>${drafts.length}</b> 筆資料如下，請勾選要建立的客戶（可取消明顯辨識錯誤的）。建立後可再進每位客戶補欄位。🔒 只存本機。</div>`;
+  h+=drafts.map((d,i)=>{
+    const meta=[d.type,d.phone?'📞'+d.phone:'',d.taxid?'統編 '+d.taxid:'',d.address?'📍'+d.address:'',d.contact?'👤'+d.contact:''].filter(Boolean).join('　');
+    return `<label class="card" style="display:flex;gap:10px;align-items:flex-start;padding:10px;margin:6px 0;cursor:pointer"><input type="checkbox" class="cb-batch" data-i="${i}" checked style="margin-top:3px;width:18px;height:18px;flex:0 0 auto"><span style="min-width:0"><b>${esc(d.name||'(未辨識到名稱)')}</b><br><span class="tagline" style="font-size:12px">${esc(meta)||'—'}</span></span></label>`;
+  }).join('');
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="custBatchCreate()">✅ 建立勾選的客戶</button></div>`;
+  openModal('📋 批次建檔確認', h);
+}
+function custBatchCreate(){
+  const drafts=window._custBatch||[];
+  const idx=[...document.querySelectorAll('.cb-batch:checked')].map(c=>+c.dataset.i);
+  if(!idx.length){ toast('請至少勾選一位'); return; }
+  let n=0;
+  idx.forEach(i=>{ const d=drafts[i]; if(!d) return; const c=Object.assign({id:'C'+Date.now()+'_'+i, inter:[], type:d.type||'直接農民'}, d); if(!c.name) c.name='未命名客戶'; customers.push(c); n++; });
+  saveCust(); closeModal(); toast('已建立 '+n+' 位客戶'); go('customers');
 }
 function editCustomer(c, isNew){
   c = c || {id:'C'+Date.now(), type:'直接農民', inter:[]};
@@ -2058,28 +2080,35 @@ function toggleGdriveAuto(on){ localStorage.setItem('crm_gdrive_auto', on?'1':'0
 function loadGIS(){ return new Promise((res,rej)=>{ if(window.google&&google.accounts&&google.accounts.oauth2) return res(); const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); }); }
 // ---------- 拍照 / 選照片 文字辨識（OCR，全程在本機瀏覽器執行，圖片不上傳） ----------
 function loadTesseract(){ return new Promise((res,rej)=>{ if(window.Tesseract) return res(); const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入文字辨識元件，請確認網路')); document.head.appendChild(s); }); }
-async function ocrToTextarea(input, textareaId, afterFn){
-  const file=input&&input.files&&input.files[0]; if(!file){ return; }
+async function ocrToTextarea(input, textareaId){
+  const files=input&&input.files?[...input.files]:[]; if(!files.length){ return; }
   const ta=$('#'+textareaId); const tip=$('#ocr-tip');
   const setTip=m=>{ if(tip) tip.textContent=m; };
   setTip('📷 文字辨識中…首次使用需下載辨識模型（約 10–20 秒，之後會快很多）');
   try{
     await loadTesseract();
-    const worker=await Tesseract.createWorker(['chi_tra','eng'],1,{ logger:m=>{ if(m&&m.status==='recognizing text') setTip('📷 辨識中… '+Math.round((m.progress||0)*100)+'%'); } });
-    const r=await worker.recognize(file);
+    let ocrProg='📷 辨識中…';
+    const worker=await Tesseract.createWorker(['chi_tra','eng'],1,{ logger:m=>{ if(m&&m.status==='recognizing text') setTip(ocrProg+' '+Math.round((m.progress||0)*100)+'%'); } });
+    const blocks=[];
+    for(let i=0;i<files.length;i++){
+      ocrProg=files.length>1?('📷 辨識第 '+(i+1)+'/'+files.length+' 張…'):'📷 辨識中…';
+      setTip(ocrProg);
+      const r=await worker.recognize(files[i]);
+      let text=(r&&r.data&&r.data.text)||'';
+      text=text.replace(/([一-鿿])[ \t]+(?=[一-鿿])/g,'$1') // 去掉中文字之間的空白
+               .replace(/[ \t]{2,}/g,' ').replace(/\n{2,}/g,'\n').trim();
+      if(text) blocks.push(text);
+    }
     await worker.terminate();
-    let text=(r&&r.data&&r.data.text)||'';
-    text=text.replace(/([一-鿿])[ \t]+(?=[一-鿿])/g,'$1') // 去掉中文字之間的空白
-             .replace(/[ \t]{2,}/g,' ').replace(/\n{2,}/g,'\n').trim();
-    if(!text){ setTip('⚠️ 沒辨識到文字，請拍清楚、置中、光線充足，或改用打字。'); return; }
-    if(ta){ ta.value=(ta.value?ta.value+'\n':'')+text; }
-    setTip('✅ 辨識完成，請檢查文字內容後再解析。');
-    if(typeof afterFn==='function') afterFn();
+    if(!blocks.length){ setTip('⚠️ 沒辨識到文字，請拍清楚、置中、光線充足，或改用打字。'); return; }
+    if(ta){ ta.value=(ta.value?ta.value+'\n\n':'')+blocks.join('\n\n'); }
+    setTip('✅ 辨識完成 '+blocks.length+' 張，請檢查文字內容後再解析。');
   }catch(e){ setTip('⚠️ 辨識失敗：'+((e&&e.message)||e)); }
   finally{ if(input) input.value=''; }
 }
-function ocrButtonHTML(textareaId, afterFn){
-  return `<div class="btn-row" style="gap:6px;margin-top:6px"><label class="btn btn-out" style="cursor:pointer;margin:0">📷 拍照 / 選照片辨識文字<input type="file" accept="image/*" style="display:none" onchange="ocrToTextarea(this,'${textareaId}'${afterFn?","+afterFn:""})"></label></div><div id="ocr-tip" class="tagline" style="font-size:12px;margin:4px 0;color:var(--muted)"></div>`;
+function ocrButtonHTML(textareaId, multi){
+  const label=multi?'📷 拍照 / 選多張照片辨識':'📷 拍照 / 選照片辨識文字';
+  return `<div class="btn-row" style="gap:6px;margin-top:6px"><label class="btn btn-out" style="cursor:pointer;margin:0">${label}<input type="file" accept="image/*"${multi?' multiple':''} style="display:none" onchange="ocrToTextarea(this,'${textareaId}')"></label></div><div id="ocr-tip" class="tagline" style="font-size:12px;margin:4px 0;color:var(--muted)"></div>`;
 }
 function getDriveToken(mode){   // mode==='silent' → 用 prompt:'none'（無彈窗，需既有授權）；否則互動授權
   return new Promise(async (resolve,reject)=>{
