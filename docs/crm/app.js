@@ -820,6 +820,7 @@ function smartProspectSearch(){
   h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-pri" onclick="ssAutoFetch()">🤖 一鍵自動爬取</button><button class="btn btn-ghost" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
   h+=`<div id="ss-auto"></div>`;
   h+=`<div id="ss-links"></div>`;
+  h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a8f7a)">⚙️ 進階：自動爬取代理（Cloudflare Worker，設定一次永久生效）</summary><div class="field" style="margin-top:8px"><input id="ss-proxy" placeholder="貼上你的 Worker 網址，例：https://crm-proxy.xxx.workers.dev" value="${esc(LS.get('crm_ssproxy',''))}"><div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:5px 14px;font-size:13px" onclick="ssSaveProxy()">💾 儲存代理</button></div><div class="tagline" style="font-size:12px;margin-top:4px">設定後「🤖 一鍵自動爬取」會優先走你的 Worker，穩定不被擋。</div></div></details>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>② 自動讀取的資料（可直接修改）</div><div class="card">`;
   h+=`<div class="field"><label>抓到的農民資訊（按上方「一鍵自動爬取」會自動填入；也可手動貼上 FB／新聞／名片／地圖文字）</label><textarea id="ss-paste" rows="5" placeholder="按「🤖 一鍵自動爬取」後這裡會自動帶入內容…"></textarea></div>`;
@@ -846,6 +847,8 @@ function ssSelAll(which,on){
   ssCnt(which);
 }
 function ssRegionsSel(){ return [...document.querySelectorAll('.ss-regck:checked')].map(c=>c.value); }
+function ssProxy(){ return (LS.get('crm_ssproxy','')||'').trim().replace(/\/+$/,''); }
+function ssSaveProxy(){ const v=(($('#ss-proxy')&&$('#ss-proxy').value)||'').trim().replace(/\/+$/,''); LS.set('crm_ssproxy',v); toast(v?'已儲存代理 ✓':'已清除代理'); }
 function ssToggleElev(){
   const tea=ssCrops().some(c=>/茶/.test(c));
   const w=$('#ss-elev-wrap'); if(w) w.style.display=tea?'':'none';
@@ -886,7 +889,9 @@ async function ssAutoFetch(){
   const box=$('#ss-auto');
   const regions=ssRegionsSel(); const regList=regions.length?regions.slice(0,4):[''];
   if(box) box.innerHTML='<div class="tagline" style="margin:8px 0">🤖 自動爬取中…（向 Google 新聞查詢 '+regList.length+' 個地區，約 5–12 秒，視網路而定）</div>';
+  const saved=ssProxy();
   const proxies=[
+    ...(saved?[u=>saved+(saved.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u)]:[]),
     u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
     u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
     u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),
