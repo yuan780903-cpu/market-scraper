@@ -1167,7 +1167,7 @@ function renderCustomers(){
   h+=`<div class="field"><label>狀態</label><select onchange="cFilter.status=this.value;renderCustomers()">
         <option value="active" ${cFilter.status!=='inactive'?'selected':''}>✅ 使用中（${activeN}）</option>
         <option value="inactive" ${cFilter.status==='inactive'?'selected':''}>⏸️ 停用客戶（${inactiveN}）</option></select></div>`;
-  h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:2px;gap:6px"><button class="btn btn-pri" onclick="custPasteImport()">📋 貼文字自動建檔</button><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
   h+=`<div id="cust-results"></div>`;
   viewHTML(h);
   renderCustResults();
@@ -1811,6 +1811,58 @@ function invoiceTypeHTML(v){
 function onCheckSel(){ const s=$('#f-checksel').value, t=$('#f-checktext'); t.style.display=(s==='__other')?'block':'none'; if(s!=='__other') t.value=''; }
 function readCheckPeriod(){ const s=$('#f-checksel').value; return s==='__other' ? $('#f-checktext').value.trim() : (s||''); }
 
+// ---------- 貼文字自動建檔 ----------
+function custPasteImport(){
+  let h=`<div class="info">把客戶的名片、Email 簽名、SAP 客戶檔欄位，或任何含「名稱／電話／統編／身分證／地址」的文字貼進來，系統會自動拆好欄位、開啟新增表單讓你確認後儲存。🔒 只存本機、不上傳。</div>`;
+  h+=`<div class="field"><label>貼上客戶資料文字</label><textarea id="cpi-text" rows="9" placeholder="例：\n大豐農場\n統編 12345678\n聯絡人 王大明\n0912-345-678\n臺南市玉井區中正路100號\n出生 1975/3/8"></textarea></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="custPasteParse()">🪄 解析並開啟新增表單</button></div>`;
+  openModal('📋 貼文字自動建檔', h);
+}
+function parseCustomerText(text){
+  const t=String(text||'');
+  const lines=t.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const grab=(labels)=>{ const re=new RegExp('(?:'+labels+')\\s*[:：]?\\s*(.+)'); for(const ln of lines){ const m=ln.match(re); if(m&&m[1]){ const v=m[1].trim().replace(/[，。；;]+$/,''); if(v) return v; } } return ''; };
+  // 統一編號（8 碼，避開電話）
+  let taxid=(t.match(/(?:統一?編號|統編|營利事業)\D{0,4}(\d{8})/)||[])[1] || (t.match(/(?:^|[^\d])(\d{8})(?:[^\d]|$)/)||[])[1] || '';
+  // 身分證字號
+  let idno=((t.match(/[A-Za-z][12]\d{8}/)||[])[0]||'').toUpperCase();
+  // 出生年月日（支援西元與民國）
+  let birth='';
+  const bm=t.match(/(?:生日|出生)\D{0,4}(\d{2,4})[\/\-\.年](\d{1,2})[\/\-\.月](\d{1,2})/) || t.match(/(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if(bm){ let y=+bm[1]; if(y<1911) y+=1911; birth=y+'-'+String(+bm[2]).padStart(2,'0')+'-'+String(+bm[3]).padStart(2,'0'); }
+  // 電話
+  const mobile=(t.match(/09\d{2}[-\s]?\d{3}[-\s]?\d{3}/)||[])[0]||'';
+  const tel=(t.match(/0\d{1,2}[-\s)]?\s?\d{3,4}[-\s]?\d{4}/)||[])[0]||'';
+  const phone=(mobile||tel||'').replace(/[\s)]/g,'');
+  // 地址
+  let address=grab('通訊地址|營業地址|公司地址|地址');
+  if(!address){ const cm=t.match(/((?:台|臺)?[一-龥]{1,3}[縣市][一-龥]{1,4}[區鄉鎮市][^\n，,。、；;]{0,30})/); if(cm) address=cm[1].trim(); }
+  let regAddress=grab('戶籍地址|戶籍');
+  // 聯絡人
+  let contact=grab('聯絡人|聯 ?絡 ?人|窗口|負責人|主人');
+  // 組織
+  let org=grab('所屬組織|組織|歸戶');
+  // 名稱
+  let name=grab('客戶名稱|公司名稱|名稱|店名|戶名|姓名');
+  if(!name){ const f=lines[0]; if(f && f.length>=2 && f.length<=8 && !/[:：\d]/.test(f) && !/[縣市鄉鎮區路街號段巷弄村鄰]/.test(f)) name=f; }
+  if(!name) name=(t.match(/[一-龥A-Za-z0-9]{2,16}(?:股份有限公司|有限公司|企業社|合作社|農會|農場|果園|農園|茶園|資材行|商行|農莊|蜂場)/)||[])[0]||'';
+  if(!name){ const nm=lines.find(l=>l.length>=2&&l.length<=16&&/[一-龥A-Za-z]/.test(l)&&!/[:：]/.test(l)&&!/https?:|\d{6,}|統編|電話|地址|身分證|出生|生日/.test(l)); name=nm||''; }
+  // 類型推測
+  let type='直接農民';
+  if(/農會/.test(t)) type='農會';
+  else if(/合作社/.test(t)) type='合作社';
+  else if(/經銷|資材行|農藥行|肥料行|商行|企業社|有限公司|股份/.test(t)) type='經銷商';
+  return {name, phone, address, regAddress, contact, org, taxid, idno, birth, type};
+}
+function custPasteParse(){
+  const t=($('#cpi-text')&&$('#cpi-text').value)||''; if(!t.trim()){ toast('請先貼上文字'); return; }
+  const d=parseCustomerText(t);
+  const found=['name','phone','address','taxid','idno','birth','contact','org'].filter(k=>d[k]).length;
+  if(!found){ toast('沒抓到可用欄位，請檢查文字內容'); return; }
+  closeModal();
+  editCustomer(Object.assign({id:'C'+Date.now(), inter:[]}, d), true);
+  toast('已帶入 '+found+' 個欄位，請確認後儲存');
+}
 function editCustomer(c, isNew){
   c = c || {id:'C'+Date.now(), type:'直接農民', inter:[]};
   const isAdd = isNew || !customers.some(x=>x.id===c.id);
