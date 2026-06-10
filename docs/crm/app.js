@@ -628,7 +628,7 @@ function renderProspects(){
   SEED.forEach(p=>{ if(inStatus(p)){ counts[p.category]=(counts[p.category]||0)+1; total++; } });
 
   let h = `<div class="search"><input id="psearch" placeholder="🔍 搜尋名稱 / 地址 / 電話" value="${esc(pFilter.q)}" oninput="onPSearch(this.value)"></div>`;
-  h += `<div class="btn-row" style="margin:2px 0 8px"><button class="btn btn-pri" onclick="addCustomProspect()">＋ 新增臨時目標客戶</button></div>`;
+  h += `<div class="btn-row" style="margin:2px 0 8px;gap:6px"><button class="btn btn-pri" onclick="addCustomProspect()">＋ 新增臨時目標客戶</button><button class="btn btn-ghost" onclick="smartProspectSearch()">🔎 智慧目標客戶搜尋</button></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">狀態</span><select class="regsel" onchange="setPStatus(this.value)">
         <option value="" ${pFilter.status===''?'selected':''}>全部 ${SEED.length}</option>
         <option value="cold" ${pFilter.status==='cold'?'selected':''}>陌生目標客戶 ${SEED.length-nEx}</option>
@@ -797,6 +797,107 @@ function delCustomProspect(id){
   const i=SEED.findIndex(x=>x.id===id); if(i>=0) SEED.splice(i,1);
   if(overlay[id]){ delete overlay[id]; saveOverlay(); }
   saveProspects(); closeModal(); toast('已刪除'); render();
+}
+
+// ---------- 🔎 智慧目標客戶搜尋（找有聲量的種植農民 → 解析欄位 → 一鍵加入臨時目標客戶） ----------
+// 注意：本機 App 無法自行爬網，這裡幫忙產生精準搜尋連結；找到人後把文字貼回來，前端自動解析欄位（不連網、不上傳）。
+const SS_CROPS=['芒果','番茄','水稻','稻米','咖啡','茶葉','烏龍茶','紅茶','鳳梨','香蕉','火龍果','芭樂','番石榴','葡萄','柑橘','柳丁','茂谷柑','洋蔥','大蒜','薑','草莓','荔枝','龍眼','百香果','酪梨','木瓜','蓮霧','紅棗','花生','玉米','地瓜','南瓜','苦瓜','絲瓜','melon','哈密瓜','洋香瓜','蔬菜','有機蔬菜','茭白筍','金針','蜂蜜','菇'];
+function smartProspectSearch(){
+  const regs=regionsSorted();
+  let h=`<div class="info">找出「有話題聲量」的種植農民，加進你的臨時目標客戶。<b>App 不會自動爬網</b>（免費離線版做不到），但會幫你產生精準搜尋連結；找到人後把那段文字貼回來，前端自動幫你抓出欄位、一鍵新增。全程不上傳、只存本機。</div>`;
+  h+=`<div class="sec-title"><span class="bar"></span>① 產生「聲量」搜尋連結</div><div class="card">`;
+  h+=`<div class="field"><label>作物 / 農產品</label><input id="ss-crop" placeholder="例如 芒果、番茄、咖啡、有機蔬菜" list="ss-croplist"><datalist id="ss-croplist">${SS_CROPS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>`;
+  h+=`<div class="field"><label>區域（縣市，可空）</label><select id="ss-region"><option value="">全台</option>${regs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;
+  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:4px;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:13px"><input type="checkbox" value="${k}">${k}</label>`).join('')}</div></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
+  h+=`<div id="ss-links"></div>`;
+  h+=`</div>`;
+  h+=`<div class="sec-title"><span class="bar"></span>② 貼上資訊，自動抓欄位</div><div class="card">`;
+  h+=`<div class="field"><label>把找到的農民資訊貼上來（FB 貼文／新聞／名片／Google 地圖資訊都行）</label><textarea id="ss-paste" rows="5" placeholder="貼上含 名稱 / 電話 / 地址 / 作物 的文字…"></textarea></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssParse()">🪄 解析欄位</button></div>`;
+  h+=`<div id="ss-parsed"></div>`;
+  h+=`</div>`;
+  openModal('🔎 智慧目標客戶搜尋', h);
+}
+function ssBuildLinks(){
+  const crop=($('#ss-crop')&&$('#ss-crop').value.trim())||'';
+  const region=($('#ss-region')&&$('#ss-region').value)||'';
+  const kws=[...document.querySelectorAll('#ss-kw input:checked')].map(c=>c.value);
+  if(!crop && !region && !kws.length){ toast('至少填作物或選關鍵字'); return; }
+  const news=encodeURIComponent([crop,region,...kws,'農民'].filter(Boolean).join(' '));
+  const gen=encodeURIComponent([crop,region,...kws,'農場'].filter(Boolean).join(' '));
+  const fb=encodeURIComponent([crop,region,'農場'].filter(Boolean).join(' '));
+  const yt=encodeURIComponent([crop,region,'農民'].filter(Boolean).join(' '));
+  const map=encodeURIComponent([crop,region,'農場 果園'].filter(Boolean).join(' '));
+  const links=[
+    ['📰 Google 新聞（找報導 / 爆紅）',`https://www.google.com/search?tbm=nws&q=${news}`],
+    ['🔍 Google 一般搜尋',`https://www.google.com/search?q=${gen}`],
+    ['📘 Facebook 貼文 / 粉專',`https://www.facebook.com/search/top?q=${fb}`],
+    ['▶️ YouTube（直播 / 介紹）',`https://www.youtube.com/results?search_query=${yt}`],
+    ['🗺️ Google 地圖（農場 / 果園）',`https://www.google.com/maps/search/${map}`],
+    ['📗 上下游新聞市集',`https://www.newsmarket.com.tw/?s=${encodeURIComponent([crop,kws[0]].filter(Boolean).join(' '))}`],
+    ['🌾 農傳媒 AgriHarvest',`https://www.agriharvest.tw/?s=${encodeURIComponent([crop,kws[0]].filter(Boolean).join(' '))}`]
+  ];
+  let html=`<div class="tagline" style="margin:8px 0 4px">點開連結瀏覽，找到有聲量的農民後，複製那段文字貼到下方解析。</div>`;
+  html+=links.map(([t,u])=>`<a class="btn btn-out" style="display:block;text-align:left;text-decoration:none;margin:4px 0" href="${u}" target="_blank" rel="noopener">${t}</a>`).join('');
+  $('#ss-links').innerHTML=html;
+}
+function parseLead(text){
+  const t=String(text||'');
+  const mobile=(t.match(/09\d{2}[-\s]?\d{3}[-\s]?\d{3}/)||[])[0]||'';
+  const tel=(t.match(/0\d{1,2}[-\s)]?\s?\d{3,4}[-\s]?\d{4}/)||[])[0]||'';
+  const phone=(mobile||tel||'').replace(/[\s)]/g,'');
+  const url=(t.match(/https?:\/\/[^\s)）」』]+/)||[])[0]||'';
+  // 地址：抓「○○縣/市 ○○鄉/鎮/市/區 …」整段
+  let address='';
+  const cm=t.match(/((?:台|臺)?[一-龥]{1,3}[縣市][一-龥]{1,4}[區鄉鎮市][^\n，,。、；;]{0,22})/);
+  if(cm){ address=cm[1].trim(); }
+  else { const core=countyCore(t); if(core){ const tn=matchTown(t,core); address=core+(/[縣市]$/.test(core)?'':( /市/.test(core)?'市':'縣'))+(tn||''); } }
+  const core2=countyCore(address||t);
+  const am=t.match(/(\d+(?:\.\d+)?)\s*(公頃|甲|分地|分)/);
+  const area=am?am[1]:'';
+  const cropInput=($('#ss-crop')&&$('#ss-crop').value.trim())||'';
+  const crop=cropInput||SS_CROPS.find(c=>t.includes(c))||'';
+  let name=(t.match(/[一-龥]{2,10}(?:生態農場|有機農場|休閒農場|觀光果園|農場|果園|農園|農莊|果園|莊園|茶園|蜂場)/)||[])[0]||'';
+  if(!name){
+    const lines=t.split(/\n/).map(s=>s.trim()).filter(Boolean);
+    const nm=lines.find(l=>l.length>=2&&l.length<=14&&/[一-龥]/.test(l)&&!/https?:|\d{6,}|電話|地址/.test(l));
+    name=nm||(crop?crop+'農友':'');
+  }
+  return {name, phone, address, region:core2, area, crop, source:url};
+}
+function ssParse(){
+  const txt=($('#ss-paste')&&$('#ss-paste').value)||'';
+  if(!txt.trim()){ toast('請先貼上文字'); return; }
+  const d=parseLead(txt);
+  const regs=regionsSorted();
+  const cats=['農會','合作社','肥料行','有機農戶','驗證機構','友善團體','其他'];
+  const rcore=normR(d.region||'').replace(/[縣市]$/,'');
+  let h=`<div class="tagline" style="margin:8px 0">自動抓到以下欄位，確認 / 修改後按新增（抓不到的請手動補）：</div>`;
+  h+=`<div class="field"><label>名稱 *</label><input id="ssp-name" value="${esc(d.name)}"></div>`;
+  h+=`<div class="field-2"><div class="field"><label>通路 / 屬性</label><select id="ssp-cat">${cats.map(c=>`<option ${c==='有機農戶'?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>區域</label><select id="ssp-region"><option value="">（未填）</option>${regs.map(r=>`<option ${rcore&&normR(r).includes(rcore)?'selected':''}>${esc(r)}</option>`).join('')}</select></div></div>`;
+  h+=`<div class="field"><label>地址</label><input id="ssp-addr" value="${esc(d.address)}"></div>`;
+  h+=`<div class="field-2"><div class="field"><label>電話</label><input id="ssp-phone" value="${esc(d.phone)}"></div>
+      <div class="field"><label>作物 / 種類</label><input id="ssp-crop" value="${esc(d.crop)}"></div></div>`;
+  h+=`<div class="field-2"><div class="field"><label>面積(公頃)</label><input id="ssp-area" type="number" inputmode="decimal" value="${esc(d.area)}"></div>
+      <div class="field"><label>聯絡人</label><input id="ssp-contact" value=""></div></div>`;
+  h+=`<div class="field"><label>備註 / 聲量來源</label><input id="ssp-notes" value="${esc(d.source?('來源:'+d.source):'')}"></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssAdd()">➕ 新增為臨時目標客戶</button></div>`;
+  $('#ss-parsed').innerHTML=h;
+}
+function ssAdd(){
+  const g=i=>{const e=$('#'+i);return e?e.value.trim():'';};
+  const name=g('ssp-name'); if(!name){ toast('請填名稱'); return; }
+  const id='CP'+Date.now();
+  const obj={ id, category:($('#ssp-cat')&&$('#ssp-cat').value)||'有機農戶', region:($('#ssp-region')&&$('#ssp-region').value)||'',
+    name, address:g('ssp-addr'), phone:g('ssp-phone'), contact:g('ssp-contact'),
+    area:g('ssp-area'), crop:g('ssp-crop'), notes:g('ssp-notes'), custom:true };
+  customProspects.push(obj); SEED.push(obj); saveProspects();
+  toast('已新增臨時目標客戶：'+name);
+  $('#ss-parsed').innerHTML=`<div class="info">✅ 已加入「${esc(name)}」到臨時目標客戶。可繼續貼下一位，或關閉視窗到「目標客戶」查看。</div>`;
+  const pa=$('#ss-paste'); if(pa)pa.value='';
+  render();
 }
 
 function drow(k,v){ return `<div class="drow"><div class="k">${k}</div><div class="v">${v||'—'}</div></div>`; }
