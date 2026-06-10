@@ -823,7 +823,8 @@ function smartProspectSearch(){
   h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a8f7a)">⚙️ 進階：自動爬取代理（Cloudflare Worker，設定一次永久生效）</summary><div class="field" style="margin-top:8px"><input id="ss-proxy" placeholder="貼上你的 Worker 網址，例：https://crm-proxy.xxx.workers.dev" value="${esc(LS.get('crm_ssproxy',''))}"><div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:5px 14px;font-size:13px" onclick="ssSaveProxy()">💾 儲存代理</button></div><div class="tagline" style="font-size:12px;margin-top:4px">設定後「🤖 一鍵自動爬取」會優先走你的 Worker，穩定不被擋。</div></div></details>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>② 自動讀取的資料（可直接修改）</div><div class="card">`;
-  h+=`<div class="field"><label>抓到的農民資訊（按上方「一鍵自動爬取」會自動填入；也可手動貼上 FB／新聞／名片／地圖文字）</label><textarea id="ss-paste" rows="5" placeholder="按「🤖 一鍵自動爬取」後這裡會自動帶入內容…"></textarea></div>`;
+  h+=ocrButtonHTML('ss-paste');
+  h+=`<div class="field"><label>抓到的農民資訊（自動爬取／拍照辨識會自動填入；也可手動貼上 FB／新聞／名片／地圖文字）</label><textarea id="ss-paste" rows="5" placeholder="按「🤖 一鍵自動爬取」或「📷 拍照辨識」後這裡會自動帶入內容…"></textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssParse()">🪄 解析欄位</button></div>`;
   h+=`<div id="ss-parsed"></div>`;
   h+=`</div>`;
@@ -1814,7 +1815,8 @@ function readCheckPeriod(){ const s=$('#f-checksel').value; return s==='__other'
 // ---------- 貼文字自動建檔 ----------
 function custPasteImport(){
   let h=`<div class="info">把客戶的名片、Email 簽名、SAP 客戶檔欄位，或任何含「名稱／電話／統編／身分證／地址」的文字貼進來，系統會自動拆好欄位、開啟新增表單讓你確認後儲存。🔒 只存本機、不上傳。</div>`;
-  h+=`<div class="field"><label>貼上客戶資料文字</label><textarea id="cpi-text" rows="9" placeholder="例：\n大豐農場\n統編 12345678\n聯絡人 王大明\n0912-345-678\n臺南市玉井區中正路100號\n出生 1975/3/8"></textarea></div>`;
+  h+=ocrButtonHTML('cpi-text');
+  h+=`<div class="field"><label>貼上客戶資料文字（或用上方拍照辨識帶入）</label><textarea id="cpi-text" rows="9" placeholder="例：\n大豐農場\n統編 12345678\n聯絡人 王大明\n0912-345-678\n臺南市玉井區中正路100號\n出生 1975/3/8"></textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="custPasteParse()">🪄 解析並開啟新增表單</button></div>`;
   openModal('📋 貼文字自動建檔', h);
 }
@@ -2054,6 +2056,31 @@ function gdriveAuto(){ return localStorage.getItem('crm_gdrive_auto')==='1'; }
 function saveGdriveClientId(v){ localStorage.setItem('crm_gdrive_clientid',(v||'').trim()); _gToken=null; toast('已儲存用戶端 ID'); }
 function toggleGdriveAuto(on){ localStorage.setItem('crm_gdrive_auto', on?'1':'0'); toast(on?'已開啟每天自動備份':'已關閉自動備份'); }
 function loadGIS(){ return new Promise((res,rej)=>{ if(window.google&&google.accounts&&google.accounts.oauth2) return res(); const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); }); }
+// ---------- 拍照 / 選照片 文字辨識（OCR，全程在本機瀏覽器執行，圖片不上傳） ----------
+function loadTesseract(){ return new Promise((res,rej)=>{ if(window.Tesseract) return res(); const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入文字辨識元件，請確認網路')); document.head.appendChild(s); }); }
+async function ocrToTextarea(input, textareaId, afterFn){
+  const file=input&&input.files&&input.files[0]; if(!file){ return; }
+  const ta=$('#'+textareaId); const tip=$('#ocr-tip');
+  const setTip=m=>{ if(tip) tip.textContent=m; };
+  setTip('📷 文字辨識中…首次使用需下載辨識模型（約 10–20 秒，之後會快很多）');
+  try{
+    await loadTesseract();
+    const worker=await Tesseract.createWorker(['chi_tra','eng'],1,{ logger:m=>{ if(m&&m.status==='recognizing text') setTip('📷 辨識中… '+Math.round((m.progress||0)*100)+'%'); } });
+    const r=await worker.recognize(file);
+    await worker.terminate();
+    let text=(r&&r.data&&r.data.text)||'';
+    text=text.replace(/([一-鿿])[ \t]+(?=[一-鿿])/g,'$1') // 去掉中文字之間的空白
+             .replace(/[ \t]{2,}/g,' ').replace(/\n{2,}/g,'\n').trim();
+    if(!text){ setTip('⚠️ 沒辨識到文字，請拍清楚、置中、光線充足，或改用打字。'); return; }
+    if(ta){ ta.value=(ta.value?ta.value+'\n':'')+text; }
+    setTip('✅ 辨識完成，請檢查文字內容後再解析。');
+    if(typeof afterFn==='function') afterFn();
+  }catch(e){ setTip('⚠️ 辨識失敗：'+((e&&e.message)||e)); }
+  finally{ if(input) input.value=''; }
+}
+function ocrButtonHTML(textareaId, afterFn){
+  return `<div class="btn-row" style="gap:6px;margin-top:6px"><label class="btn btn-out" style="cursor:pointer;margin:0">📷 拍照 / 選照片辨識文字<input type="file" accept="image/*" style="display:none" onchange="ocrToTextarea(this,'${textareaId}'${afterFn?","+afterFn:""})"></label></div><div id="ocr-tip" class="tagline" style="font-size:12px;margin:4px 0;color:var(--muted)"></div>`;
+}
 function getDriveToken(mode){   // mode==='silent' → 用 prompt:'none'（無彈窗，需既有授權）；否則互動授權
   return new Promise(async (resolve,reject)=>{
     const cid=gdriveClientId(); if(!cid){ reject(new Error('尚未填入 Google 用戶端 ID')); return; }
