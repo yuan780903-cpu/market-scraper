@@ -801,14 +801,20 @@ function delCustomProspect(id){
 
 // ---------- 🔎 智慧目標客戶搜尋（找有聲量的種植農民 → 解析欄位 → 一鍵加入臨時目標客戶） ----------
 // 注意：本機 App 無法自行爬網，這裡幫忙產生精準搜尋連結；找到人後把文字貼回來，前端自動解析欄位（不連網、不上傳）。
-const SS_CROPS=['芒果','番茄','水稻','稻米','咖啡','茶葉','烏龍茶','紅茶','鳳梨','香蕉','火龍果','芭樂','番石榴','葡萄','柑橘','柳丁','茂谷柑','洋蔥','大蒜','薑','草莓','荔枝','龍眼','百香果','酪梨','木瓜','蓮霧','紅棗','花生','玉米','地瓜','南瓜','苦瓜','絲瓜','melon','哈密瓜','洋香瓜','蔬菜','有機蔬菜','茭白筍','金針','蜂蜜','菇'];
+const SS_CROP_GROUPS={
+  '果樹類':['芒果','鳳梨','香蕉','火龍果','芭樂','葡萄','柑橘','柳丁','茂谷柑','荔枝','龍眼','百香果','酪梨','木瓜','蓮霧','紅棗','草莓','棗子','文旦柚','椪柑','水蜜桃','梨','柿子','李子','哈密瓜','洋香瓜'],
+  '雜糧':['水稻','稻米','玉米','大豆','花生','紅豆','黑豆','小麥','高粱','薏仁','地瓜','馬鈴薯','蕎麥','芝麻'],
+  '蔬菜':['高麗菜','大白菜','青江菜','番茄','苦瓜','絲瓜','南瓜','茭白筍','洋蔥','大蒜','薑','蘿蔔','萵苣','菠菜','空心菜','茄子','甜椒','四季豆','金針','菇類','韭菜','芹菜','有機蔬菜'],
+  '特作 / 飲料作物':['茶葉','烏龍茶','紅茶','咖啡','可可','蜂蜜']
+};
+const SS_CROPS=Object.values(SS_CROP_GROUPS).reduce((a,b)=>a.concat(b),[]);
 function smartProspectSearch(){
   const regs=regionsSorted();
   let h=`<div class="info">找出「有話題聲量」的種植農民，加進你的臨時目標客戶。<b>App 不會自動爬網</b>（免費離線版做不到），但會幫你產生精準搜尋連結；找到人後把那段文字貼回來，前端自動幫你抓出欄位、一鍵新增。全程不上傳、只存本機。</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>① 產生「聲量」搜尋連結</div><div class="card">`;
-  h+=`<div class="field"><label>作物 / 農產品</label><input id="ss-crop" placeholder="例如 芒果、番茄、咖啡、有機蔬菜" list="ss-croplist"><datalist id="ss-croplist">${SS_CROPS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>`;
+  h+=`<div class="field"><label>作物 / 農產品</label><select id="ss-crop-sel" onchange="if(this.value){document.querySelector('#ss-crop').value=this.value;}"><option value="">▼ 從清單挑選（或下方自行輸入）</option>${Object.keys(SS_CROP_GROUPS).map(g=>`<optgroup label="${g}">${SS_CROP_GROUPS[g].map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>`).join('')}</select><input id="ss-crop" placeholder="可自行輸入，例如 愛文芒果、有機蔬菜" style="margin-top:6px"></div>`;
   h+=`<div class="field"><label>區域（縣市，可空）</label><select id="ss-region"><option value="">全台</option>${regs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;
-  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:4px;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:13px"><input type="checkbox" value="${k}">${k}</label>`).join('')}</div></div>`;
+  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
   h+=`<div id="ss-links"></div>`;
   h+=`</div>`;
