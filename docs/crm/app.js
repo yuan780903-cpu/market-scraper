@@ -812,10 +812,10 @@ function smartProspectSearch(){
   const regs=regionsSorted();
   let h=`<div class="info">找出「有話題聲量」的種植農民，加進你的臨時目標客戶。按「🤖 自動抓取候選」會用免費管道幫你查 <b>Google 新聞</b>並自動帶出欄位；FB／YouTube／地圖等無法免費自動抓，請用「🔎 產生搜尋連結」。只查公開資訊、不會上傳你的客戶資料。</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>① 設定條件 → 自動抓 / 產生連結</div><div class="card">`;
-  h+=`<div class="field"><label>作物 / 農產品（可複選）</label>${Object.keys(SS_CROP_GROUPS).map(g=>`<div style="margin-top:6px"><div style="font-size:12px;color:var(--muted,#8a8f7a);margin-bottom:3px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:7px">${SS_CROP_GROUPS[g].map(c=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;line-height:1"><input type="checkbox" class="ss-cropck" value="${esc(c)}" onchange="ssToggleElev()" style="margin:0;width:15px;height:15px;flex:0 0 auto">${esc(c)}</label>`).join('')}</div></div>`).join('')}<input id="ss-crop" placeholder="其他自訂（可用、分隔，例：愛文芒果、金鑽鳳梨）" oninput="ssToggleElev()" style="margin-top:8px"></div>`;
+  h+=`<div class="field"><label>作物 / 農產品（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選作物 <b id="ss-cnt-crop" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:4px 12px 12px;margin-top:-1px">${Object.keys(SS_CROP_GROUPS).map(g=>`<div style="margin-top:8px"><div style="font-size:12px;color:var(--muted,#8a8f7a);margin-bottom:3px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:7px">${SS_CROP_GROUPS[g].map(c=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;line-height:1"><input type="checkbox" class="ss-cropck" value="${esc(c)}" onchange="ssToggleElev();ssCnt('crop')" style="margin:0;width:15px;height:15px;flex:0 0 auto">${esc(c)}</label>`).join('')}</div></div>`).join('')}</div><input id="ss-crop" placeholder="其他自訂（可用、分隔，例：愛文芒果）" oninput="ssToggleElev()" style="margin-top:8px"></div>`;
   h+=`<div class="field" id="ss-elev-wrap" style="display:none"><label>🫖 茶葉海拔分級</label><select id="ss-elev"><option value="">不限海拔</option><option value="高山茶 高冷茶 海拔1000公尺以上">高山茶（1000m 以上）</option><option value="中海拔茶 海拔500-1000公尺">中海拔（500–1000m）</option><option value="低海拔茶 平地茶 海拔500公尺以下">低海拔 / 平地（500m 以下）</option></select></div>`;
   h+=`<div class="field"><label>區域（縣市，可空）</label><select id="ss-region"><option value="">全台</option>${regs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;
-  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div>`;
+  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選關鍵字 <b id="ss-cnt-kw" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:10px 12px;margin-top:-1px"><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" onchange="ssCnt('kw')" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div></div>`;
   h+=`<div class="btn-row" style="gap:6px;flex-wrap:wrap"><button class="btn btn-pri" onclick="ssAutoFetch()">🤖 自動抓取候選</button><button class="btn btn-out" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
   h+=`<div id="ss-auto"></div>`;
   h+=`<div id="ss-links"></div>`;
@@ -831,6 +831,11 @@ function ssCrops(){
   const a=[...document.querySelectorAll('.ss-cropck:checked')].map(c=>c.value);
   const t=(($('#ss-crop')&&$('#ss-crop').value)||'').split(/[、,，]/).map(s=>s.trim()).filter(Boolean);
   return [...new Set(a.concat(t))];
+}
+function ssDD(head){ const b=head.nextElementSibling; if(!b)return; const open=b.style.display==='none'; b.style.display=open?'':'none'; const a=head.querySelector('.ss-dd-arrow'); if(a)a.textContent=open?'▴':'▾'; }
+function ssCnt(which){
+  if(which==='crop'){ const n=document.querySelectorAll('.ss-cropck:checked').length; const e=$('#ss-cnt-crop'); if(e)e.textContent=n?('已選 '+n+' 項'):''; }
+  if(which==='kw'){ const n=document.querySelectorAll('#ss-kw input:checked').length; const e=$('#ss-cnt-kw'); if(e)e.textContent=n?('已選 '+n+' 項'):''; }
 }
 function ssToggleElev(){
   const tea=ssCrops().some(c=>/茶/.test(c));
@@ -874,12 +879,17 @@ async function ssAutoFetch(){
   if(box) box.innerHTML='<div class="tagline" style="margin:8px 0">🤖 自動抓取中…（向 Google 新聞查詢，約 3–8 秒，視網路而定）</div>';
   const q=[crops.join(' '),elev,region,...kws,'農民 農場'].filter(Boolean).join(' ');
   const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
-  const proxies=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url='];
+  const proxies=[
+    u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://api.codetabs.com/v1/proxy/?quest='+u,
+    u=>'https://thingproxy.freeboard.io/fetch/'+u
+  ];
   let xml='';
-  for(const p of proxies){
+  for(const mk of proxies){
     try{
-      const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
-      const r=await fetch(p+encodeURIComponent(rss),{signal:ctl.signal}); clearTimeout(tm);
+      const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),10000);
+      const r=await fetch(mk(rss),{signal:ctl.signal}); clearTimeout(tm);
       if(r.ok){ const tx=await r.text(); if(tx && tx.indexOf('<item')>=0){ xml=tx; break; } }
     }catch(e){}
   }
