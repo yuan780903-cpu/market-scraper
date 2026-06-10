@@ -812,7 +812,7 @@ function smartProspectSearch(){
   const regs=regionsSorted();
   let h=`<div class="info">找出「有話題聲量」的種植農民，加進你的臨時目標客戶。<b>App 不會自動爬網</b>（免費離線版做不到），但會幫你產生精準搜尋連結；找到人後把那段文字貼回來，前端自動幫你抓出欄位、一鍵新增。全程不上傳、只存本機。</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>① 產生「聲量」搜尋連結</div><div class="card">`;
-  h+=`<div class="field"><label>作物 / 農產品</label><select id="ss-crop-sel" onchange="if(this.value){document.querySelector('#ss-crop').value=this.value;}"><option value="">▼ 從清單挑選（或下方自行輸入）</option>${Object.keys(SS_CROP_GROUPS).map(g=>`<optgroup label="${g}">${SS_CROP_GROUPS[g].map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>`).join('')}</select><input id="ss-crop" placeholder="可自行輸入，例如 愛文芒果、有機蔬菜" style="margin-top:6px"></div>`;
+  h+=`<div class="field"><label>作物 / 農產品（可複選）</label>${Object.keys(SS_CROP_GROUPS).map(g=>`<div style="margin-top:6px"><div style="font-size:12px;color:var(--muted,#8a8f7a);margin-bottom:3px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:7px">${SS_CROP_GROUPS[g].map(c=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;line-height:1"><input type="checkbox" class="ss-cropck" value="${esc(c)}" style="margin:0;width:15px;height:15px;flex:0 0 auto">${esc(c)}</label>`).join('')}</div></div>`).join('')}<input id="ss-crop" placeholder="其他自訂（可用、分隔，例：愛文芒果、金鑽鳳梨）" style="margin-top:8px"></div>`;
   h+=`<div class="field"><label>區域（縣市，可空）</label><select id="ss-region"><option value="">全台</option>${regs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;
   h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:var(--card2,#f1efe6);border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
@@ -825,11 +825,17 @@ function smartProspectSearch(){
   h+=`</div>`;
   openModal('🔎 智慧目標客戶搜尋', h);
 }
+function ssCrops(){
+  const a=[...document.querySelectorAll('.ss-cropck:checked')].map(c=>c.value);
+  const t=(($('#ss-crop')&&$('#ss-crop').value)||'').split(/[、,，]/).map(s=>s.trim()).filter(Boolean);
+  return [...new Set(a.concat(t))];
+}
 function ssBuildLinks(){
-  const crop=($('#ss-crop')&&$('#ss-crop').value.trim())||'';
+  const crops=ssCrops();
+  const crop=crops.join(' ');
   const region=($('#ss-region')&&$('#ss-region').value)||'';
   const kws=[...document.querySelectorAll('#ss-kw input:checked')].map(c=>c.value);
-  if(!crop && !region && !kws.length){ toast('至少填作物或選關鍵字'); return; }
+  if(!crops.length && !region && !kws.length){ toast('至少勾一個作物或選關鍵字'); return; }
   const news=encodeURIComponent([crop,region,...kws,'農民'].filter(Boolean).join(' '));
   const gen=encodeURIComponent([crop,region,...kws,'農場'].filter(Boolean).join(' '));
   const fb=encodeURIComponent([crop,region,'農場'].filter(Boolean).join(' '));
@@ -862,8 +868,8 @@ function parseLead(text){
   const core2=countyCore(address||t);
   const am=t.match(/(\d+(?:\.\d+)?)\s*(公頃|甲|分地|分)/);
   const area=am?am[1]:'';
-  const cropInput=($('#ss-crop')&&$('#ss-crop').value.trim())||'';
-  const crop=cropInput||SS_CROPS.find(c=>t.includes(c))||'';
+  const selCrops=(typeof ssCrops==='function')?ssCrops():[];
+  const crop=selCrops.find(c=>t.includes(c))||SS_CROPS.find(c=>t.includes(c))||selCrops[0]||'';
   let name=(t.match(/[一-龥]{2,10}(?:生態農場|有機農場|休閒農場|觀光果園|農場|果園|農園|農莊|果園|莊園|茶園|蜂場)/)||[])[0]||'';
   if(!name){
     const lines=t.split(/\n/).map(s=>s.trim()).filter(Boolean);
