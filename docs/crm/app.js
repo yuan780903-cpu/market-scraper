@@ -810,17 +810,19 @@ const SS_CROP_GROUPS={
 const SS_CROPS=Object.values(SS_CROP_GROUPS).reduce((a,b)=>a.concat(b),[]);
 function smartProspectSearch(){
   const regs=regionsSorted();
-  let h=`<div class="info">找出「有話題聲量」的種植農民，加進你的臨時目標客戶。<b>最穩的方式</b>：把「作物＋縣市」在 LINE／對話跟你的助理說，他直接幫你爬好、整理成可貼格式，貼進下方 ② 即可。或用「🔎 產生搜尋連結」自己找。只查公開資訊、不會上傳你的客戶資料。</div>`;
-  h+=`<div class="sec-title"><span class="bar"></span>① 設定條件 → 自動抓 / 產生連結</div><div class="card">`;
-  h+=`<div class="field"><label>作物 / 農產品（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選作物 <b id="ss-cnt-crop" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:4px 12px 12px;margin-top:-1px">${Object.keys(SS_CROP_GROUPS).map(g=>`<div style="margin-top:8px"><div style="font-size:12px;color:var(--muted,#8a8f7a);margin-bottom:3px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:7px">${SS_CROP_GROUPS[g].map(c=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;line-height:1"><input type="checkbox" class="ss-cropck" value="${esc(c)}" onchange="ssToggleElev();ssCnt('crop')" style="margin:0;width:15px;height:15px;flex:0 0 auto">${esc(c)}</label>`).join('')}</div></div>`).join('')}</div><input id="ss-crop" placeholder="其他自訂（可用、分隔，例：愛文芒果）" oninput="ssToggleElev()" style="margin-top:8px"></div>`;
+  const allBar=(which)=>`<div style="display:flex;gap:8px;margin:6px 0 8px"><button type="button" class="btn btn-out" style="padding:3px 14px;font-size:12px" onclick="ssSelAll('${which}',true)">全選</button><button type="button" class="btn btn-out" style="padding:3px 14px;font-size:12px" onclick="ssSelAll('${which}',false)">清除</button></div>`;
+  let h=`<div class="info">勾選條件後按「🤖 一鍵自動爬取」，系統會自動向 Google 新聞抓取相關報導、直接帶到下方欄位，<b>不用手動貼文字</b>。只查公開資訊、不會上傳你的客戶資料。若網路或免費代理不穩抓不到，可改用「🔎 產生搜尋連結」自己找，或把作物＋縣市告訴你的 LINE 助理代爬。</div>`;
+  h+=`<div class="sec-title"><span class="bar"></span>① 勾選條件（可複選 / 全選）</div><div class="card">`;
+  h+=`<div class="field"><label>作物 / 農產品（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選作物 <b id="ss-cnt-crop" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:4px 12px 12px;margin-top:-1px">${allBar('crop')}${Object.keys(SS_CROP_GROUPS).map(g=>`<div style="margin-top:8px"><div style="font-size:12px;color:var(--muted,#8a8f7a);margin-bottom:3px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:7px">${SS_CROP_GROUPS[g].map(c=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;line-height:1"><input type="checkbox" class="ss-cropck" value="${esc(c)}" onchange="ssToggleElev();ssCnt('crop')" style="margin:0;width:15px;height:15px;flex:0 0 auto">${esc(c)}</label>`).join('')}</div></div>`).join('')}</div><input id="ss-crop" placeholder="其他自訂（可用、分隔，例：愛文芒果）" oninput="ssToggleElev()" style="margin-top:8px"></div>`;
   h+=`<div class="field" id="ss-elev-wrap" style="display:none"><label>🫖 茶葉海拔分級</label><select id="ss-elev"><option value="">不限海拔</option><option value="高山茶 高冷茶 海拔1000公尺以上">高山茶（1000m 以上）</option><option value="中海拔茶 海拔500-1000公尺">中海拔（500–1000m）</option><option value="低海拔茶 平地茶 海拔500公尺以下">低海拔 / 平地（500m 以下）</option></select></div>`;
-  h+=`<div class="field"><label>區域（縣市，可空）</label><select id="ss-region"><option value="">全台</option>${regs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;
-  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選關鍵字 <b id="ss-cnt-kw" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:10px 12px;margin-top:-1px"><div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" onchange="ssCnt('kw')" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div></div>`;
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
+  h+=`<div class="field"><label>區域（縣市，可複選，全不選＝全台）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選區域 <b id="ss-cnt-reg" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:10px 12px;margin-top:-1px">${allBar('reg')}<div id="ss-reg" style="display:flex;flex-wrap:wrap;gap:8px">${regs.map(r=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" class="ss-regck" value="${esc(r)}" onchange="ssCnt('reg')" style="margin:0;width:16px;height:16px;flex:0 0 auto">${esc(r)}</label>`).join('')}</div></div></div>`;
+  h+=`<div class="field"><label>聲量關鍵字（可複選）</label><div class="ss-dd-head" onclick="ssDD(this)" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card2,#f1efe6);cursor:pointer"><span>點此挑選關鍵字 <b id="ss-cnt-kw" style="color:#4d5d2a"></b></span><span class="ss-dd-arrow">▾</span></div><div class="ss-dd-body" style="display:none;border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:10px 12px;margin-top:-1px">${allBar('kw')}<div id="ss-kw" style="display:flex;flex-wrap:wrap;gap:8px">${['爆紅','網紅','直播','得獎','有機','青農','產銷履歷','友善耕作','故事'].map(k=>`<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 13px;font-size:14px;line-height:1"><input type="checkbox" value="${k}" onchange="ssCnt('kw')" style="margin:0;width:16px;height:16px;flex:0 0 auto">${k}</label>`).join('')}</div></div></div>`;
+  h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-pri" onclick="ssAutoFetch()">🤖 一鍵自動爬取</button><button class="btn btn-ghost" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
+  h+=`<div id="ss-auto"></div>`;
   h+=`<div id="ss-links"></div>`;
   h+=`</div>`;
-  h+=`<div class="sec-title"><span class="bar"></span>② 貼上資訊，自動抓欄位</div><div class="card">`;
-  h+=`<div class="field"><label>把找到的農民資訊貼上來（FB 貼文／新聞／名片／Google 地圖資訊都行）</label><textarea id="ss-paste" rows="5" placeholder="貼上含 名稱 / 電話 / 地址 / 作物 的文字…"></textarea></div>`;
+  h+=`<div class="sec-title"><span class="bar"></span>② 自動讀取的資料（可直接修改）</div><div class="card">`;
+  h+=`<div class="field"><label>抓到的農民資訊（按上方「一鍵自動爬取」會自動填入；也可手動貼上 FB／新聞／名片／地圖文字）</label><textarea id="ss-paste" rows="5" placeholder="按「🤖 一鍵自動爬取」後這裡會自動帶入內容…"></textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="ssParse()">🪄 解析欄位</button></div>`;
   h+=`<div id="ss-parsed"></div>`;
   h+=`</div>`;
@@ -835,7 +837,15 @@ function ssDD(head){ const b=head.nextElementSibling; if(!b)return; const open=b
 function ssCnt(which){
   if(which==='crop'){ const n=document.querySelectorAll('.ss-cropck:checked').length; const e=$('#ss-cnt-crop'); if(e)e.textContent=n?('已選 '+n+' 項'):''; }
   if(which==='kw'){ const n=document.querySelectorAll('#ss-kw input:checked').length; const e=$('#ss-cnt-kw'); if(e)e.textContent=n?('已選 '+n+' 項'):''; }
+  if(which==='reg'){ const n=document.querySelectorAll('.ss-regck:checked').length; const e=$('#ss-cnt-reg'); if(e)e.textContent=n?('已選 '+n+' 縣市'):''; }
 }
+function ssSelAll(which,on){
+  const sel = which==='crop' ? '.ss-cropck' : which==='kw' ? '#ss-kw input[type=checkbox]' : '.ss-regck';
+  document.querySelectorAll(sel).forEach(c=>{ c.checked=on; });
+  if(which==='crop') ssToggleElev();
+  ssCnt(which);
+}
+function ssRegionsSel(){ return [...document.querySelectorAll('.ss-regck:checked')].map(c=>c.value); }
 function ssToggleElev(){
   const tea=ssCrops().some(c=>/茶/.test(c));
   const w=$('#ss-elev-wrap'); if(w) w.style.display=tea?'':'none';
@@ -848,7 +858,7 @@ function ssBuildLinks(){
   const crops=ssCrops();
   const crop=crops.join(' ');
   const elev=ssElev();
-  const region=($('#ss-region')&&$('#ss-region').value)||'';
+  const region=ssRegionsSel().join(' ');
   const kws=[...document.querySelectorAll('#ss-kw input:checked')].map(c=>c.value);
   if(!crops.length && !region && !kws.length){ toast('至少勾一個作物或選關鍵字'); return; }
   const news=encodeURIComponent([crop,elev,region,...kws,'農民'].filter(Boolean).join(' '));
@@ -871,45 +881,56 @@ function ssBuildLinks(){
 }
 async function ssAutoFetch(){
   const crops=ssCrops(); const elev=ssElev();
-  const region=($('#ss-region')&&$('#ss-region').value)||'';
   const kws=[...document.querySelectorAll('#ss-kw input:checked')].map(c=>c.value);
-  if(!crops.length && !region && !kws.length){ toast('至少勾一個作物或選關鍵字'); return; }
+  if(!crops.length && !ssRegionsSel().length && !kws.length){ toast('至少勾一個作物或選關鍵字'); return; }
   const box=$('#ss-auto');
-  if(box) box.innerHTML='<div class="tagline" style="margin:8px 0">🤖 自動抓取中…（向 Google 新聞查詢，約 3–8 秒，視網路而定）</div>';
-  const q=[crops.join(' '),elev,region,...kws,'農民 農場'].filter(Boolean).join(' ');
-  const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
+  const regions=ssRegionsSel(); const regList=regions.length?regions.slice(0,4):[''];
+  if(box) box.innerHTML='<div class="tagline" style="margin:8px 0">🤖 自動爬取中…（向 Google 新聞查詢 '+regList.length+' 個地區，約 5–12 秒，視網路而定）</div>';
   const proxies=[
     u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
     u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),
     u=>'https://api.codetabs.com/v1/proxy/?quest='+u,
     u=>'https://thingproxy.freeboard.io/fetch/'+u
   ];
-  let xml='';
-  for(const mk of proxies){
-    try{
-      const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),10000);
-      const r=await fetch(mk(rss),{signal:ctl.signal}); clearTimeout(tm);
-      if(r.ok){ const tx=await r.text(); if(tx && tx.indexOf('<item')>=0){ xml=tx; break; } }
-    }catch(e){}
+  const fetchRss=async(rss)=>{
+    for(const mk of proxies){
+      try{
+        const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),11000);
+        const r=await fetch(mk(rss),{signal:ctl.signal}); clearTimeout(tm);
+        if(!r.ok) continue;
+        let tx=await r.text();
+        if(tx && tx.charAt(0)==='{'){ try{ const j=JSON.parse(tx); tx=j.contents||''; }catch(e){} }
+        if(tx && tx.indexOf('<item')>=0) return tx;
+      }catch(e){}
+    }
+    return '';
+  };
+  window._ssCand=[]; const seen={}; let got=0;
+  for(const rg of regList){
+    const q=[crops.join(' '),elev,rg,...kws,'農民 農場'].filter(Boolean).join(' ');
+    const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
+    const xml=await fetchRss(rss); if(!xml) continue; got++;
+    let doc=null; try{ doc=new DOMParser().parseFromString(xml,'text/xml'); }catch(e){}
+    const items=doc?[].slice.call(doc.querySelectorAll('item')).slice(0,12):[];
+    items.forEach(it=>{
+      const gt=s=>{ const e=it.querySelector(s); return e?e.textContent:''; };
+      const title=gt('title'); if(!title||seen[title]) return; seen[title]=1;
+      const desc=gt('description').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      window._ssCand.push(title+'\n'+desc+'\n'+gt('link'));
+    });
   }
-  if(!xml){ if(box) box.innerHTML='<div class="info">⚠️ 自動抓取失敗（免費代理不穩或目前無網路）。請改用下方「🔎 產生搜尋連結」，或把找到的文字貼到 ② 解析。</div>'; return; }
-  let doc=null; try{ doc=new DOMParser().parseFromString(xml,'text/xml'); }catch(e){}
-  const items=doc?[].slice.call(doc.querySelectorAll('item')).slice(0,12):[];
-  if(!items.length){ if(box) box.innerHTML='<div class="info">沒抓到相關新聞，換個作物或關鍵字再試。</div>'; return; }
-  window._ssCand=[];
-  let h=`<div class="tagline" style="margin:8px 0 4px">🤖 自動抓到 ${items.length} 則相關報導（新聞多為政策／通路，請挑出真正的個別農民）：</div>`;
-  items.forEach((it,i)=>{
-    const gt=s=>{ const e=it.querySelector(s); return e?e.textContent:''; };
-    const title=gt('title');
-    const desc=gt('description').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-    const link=gt('link');
-    const txt=title+'\n'+desc+'\n'+link;
-    window._ssCand[i]=txt;
-    const d=parseLead(txt);
+  if(!got){ if(box) box.innerHTML='<div class="info">⚠️ 自動爬取失敗（免費代理不穩或目前無網路）。手機上免費代理有時會被擋——可改按「🔎 產生搜尋連結」自己找，或把「作物＋縣市」告訴你的 LINE 助理代爬，再把文字貼到下方。</div>'; return; }
+  const cands=window._ssCand;
+  if(!cands.length){ if(box) box.innerHTML='<div class="info">沒抓到相關報導，換個作物或關鍵字再試。</div>'; return; }
+  let h=`<div class="tagline" style="margin:8px 0 4px">🤖 自動抓到 ${cands.length} 則相關報導，已把第 1 則帶到下方欄位。新聞常為政策／通路，請從清單挑出真正的個別農民：</div>`;
+  cands.forEach((txt,i)=>{
+    const d=parseLead(txt); const title=txt.split('\n')[0];
     const meta=[d.name?'👤'+esc(d.name):'',d.crop?'🌱'+esc(d.crop):'',d.address?'📍'+esc(d.address):'',d.phone?'📞'+esc(d.phone):''].filter(Boolean).join('　');
-    h+=`<div class="card" style="padding:10px;margin:6px 0"><div style="font-weight:600;font-size:14px;margin-bottom:4px">${esc(title)}</div>${meta?`<div class="tagline" style="font-size:12px">${meta}</div>`:''}<div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:4px 12px;font-size:13px" onclick="ssUseCand(${i})">🪄 帶到下方解析</button></div></div>`;
+    h+=`<div class="card" style="padding:10px;margin:6px 0"><div style="font-weight:600;font-size:14px;margin-bottom:4px">${esc(title)}</div>${meta?`<div class="tagline" style="font-size:12px">${meta}</div>`:''}<div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:4px 12px;font-size:13px" onclick="ssUseCand(${i})">🪄 帶到下方</button></div></div>`;
   });
   if(box) box.innerHTML=h;
+  ssUseCand(0);
 }
 function ssUseCand(i){
   const t=(window._ssCand||[])[i]||''; const pa=$('#ss-paste'); if(pa) pa.value=t;
