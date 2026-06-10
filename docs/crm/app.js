@@ -901,7 +901,7 @@ async function ssAutoFetch(){
   const fetchRss=async(rss)=>{
     for(const mk of proxies){
       try{
-        const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),11000);
+        const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),16000);
         const r=await fetch(mk(rss),{signal:ctl.signal}); clearTimeout(tm);
         if(!r.ok) continue;
         let tx=await r.text();
