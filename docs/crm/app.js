@@ -618,7 +618,8 @@ function renderProspects(){
   const exIds = existingProspectIds();
   const statusOf = p => exIds.has(p.id) ? 'existing' : 'cold';
   const nEx = SEED.reduce((a,p)=>a+(statusOf(p)==='existing'?1:0),0);
-  const inStatus = p => !pFilter.status || statusOf(p)===pFilter.status;
+  const nVisited = SEED.reduce((a,p)=>a+(isContacted(p.id)?1:0),0);
+  const inStatus = p => !pFilter.status || (pFilter.status==='visited' ? isContacted(p.id) : statusOf(p)===pFilter.status);
   // 有機屬性筆數（依目前狀態動態）
   const nOrg = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category==='有機農戶'?1:0),0);
   const nNon = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category!=='有機農戶'?1:0),0);
@@ -631,6 +632,7 @@ function renderProspects(){
   h += `<div class="rowsel"><span class="rowsel-l">狀態</span><select class="regsel" onchange="setPStatus(this.value)">
         <option value="" ${pFilter.status===''?'selected':''}>全部 ${SEED.length}</option>
         <option value="cold" ${pFilter.status==='cold'?'selected':''}>陌生目標客戶 ${SEED.length-nEx}</option>
+        <option value="visited" ${pFilter.status==='visited'?'selected':''}>✅ 已拜訪目標客戶 ${nVisited}</option>
         <option value="existing" ${pFilter.status==='existing'?'selected':''}>既有客戶 ${nEx}</option></select></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">屬性</span><select class="regsel" onchange="setPOrganic(this.value)">
         <option value="" ${pFilter.organic===''?'selected':''}>全部 ${SEED.length}</option>
@@ -671,7 +673,7 @@ function renderProspects(){
   else {
     h += res.slice(0,pLimit).map(p=>{
       const o=overlay[p.id]; const di=dueInfo(o); const ex=statusOf(p)==='existing';
-      const tag = ex?`<span class="badge b-農會">既有</span>`:'';
+      const tag = ex?`<span class="badge b-農會">既有</span>`:(isContacted(p.id)?`<span class="badge b-合作社">✅已拜訪</span>`:'');
       const av=areaVal(p);
       const areaTag = av!=null?`<span class="badge b-有機農戶">${av.toFixed(1)}公頃</span>`:'';
       const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${areaTag}${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${areaTag}${tag}`;
@@ -2437,7 +2439,7 @@ function smartPlan(){
         <div class="nm" style="margin-top:4px">${isCustom?'📍 ':''}${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
         ${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}
         ${isCustom?`<div class="tagline" style="margin-top:4px"><span class="badge">其他行程</span></div>`:`<div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div>`}</div>
-      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}</div>
+      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}${(x.kind==='prosp'&&!custByProspect(x.id))?`<br><a href="javascript:void(0)" style="color:var(--amber)" onclick="event.stopPropagation();convertToCustomer('${x.id}')">⭐ 轉既有</a>`:''}</div>
     </div>`;
   });
   h+=`<div class="item" style="background:#eef1e6">
@@ -2493,7 +2495,7 @@ function convertProspectSilent(id, interItem){
 }
 function routeFinishToday(){
   const list=window._routeToday||[]; if(!list.length){ toast('沒有可記錄的客戶'); return; }
-  let h=`<div class="info">把今日路線上的 ${list.length} 家一次記成「已拜訪」，會寫入互動紀錄並流入「拜訪週報」。<b>目標客戶會自動建立／補進「我的客戶」卡片</b>（身分證等個資欄位留空，可日後補）。</div>`;
+  let h=`<div class="info">把今日路線上的 ${list.length} 家一次記成「已拜訪」，會寫入互動紀錄並流入「拜訪週報」。<b>目標客戶會自動進入「目標客戶 ▸ ✅ 已拜訪」列表</b>；談得有意願時，再到該客戶頁或路線上按「⭐ 轉既有」轉成你的客戶。</div>`;
   h+=`<div class="field"><label>拜訪日期</label><input type="date" id="rf-date" value="${todayStr()}"></div>`;
   h+=`<div class="card" style="padding:6px 12px">`;
   list.forEach((x,i)=>{
@@ -2511,7 +2513,7 @@ function routeFinishToday(){
     const date=$('#rf-date').value||todayStr();
     const ons=[...document.querySelectorAll('.rf-on')];
     const notes=[...document.querySelectorAll('.rf-note')];
-    let n=0, conv=0;
+    let n=0, visP=0;
     ons.forEach((cb,idx)=>{
       if(!cb.checked) return;
       const x=list[idx]; const content=(notes[idx]&&notes[idx].value.trim())||'完成拜訪';
@@ -2521,14 +2523,13 @@ function routeFinishToday(){
       }else{
         const ex=custByProspect(x.id);
         if(ex){ ex.inter=ex.inter||[]; ex.inter.push(it); ex.last=date; if(ex.freq)ex.next=addDays(date,ex.freq); }
-        else { convertProspectSilent(x.id, it); conv++; }
-        const o=overlay[x.id]||{}; o.last=date; if(o.freq)o.next=addDays(date,o.freq); overlay[x.id]=o; // 名單顯示用，紀錄存在客戶卡片
+        else { const o=overlay[x.id]||{}; o.inter=o.inter||[]; o.inter.push(it); o.last=date; if(o.freq)o.next=addDays(date,o.freq); overlay[x.id]=o; visP++; } // 記成已拜訪，留在目標客戶清單
         n++;
       }
     });
     saveCust(); saveOverlay();
     closeModal();
-    toast(`已記錄 ${n} 家拜訪${conv?`，新增 ${conv} 家到我的客戶`:''}`);
+    toast(`已記錄 ${n} 家拜訪${visP?`，${visP} 家目標客戶已進入「已拜訪」清單`:''}`);
     go('report');
   };
 }
