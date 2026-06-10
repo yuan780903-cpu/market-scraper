@@ -128,7 +128,7 @@ function dueInfo(o){
 }
 
 // ---------- 導覽 ----------
-let tab = 'home';
+let tab = 'map';
 let pFilter = {status:'', cat:'', region:'', q:'', area:'', organic:''};      // 名單篩選
 function inOrganic(p,v){ if(!v) return true; return v==='org' ? p.category==='有機農戶' : p.category!=='有機農戶'; }
 // 經營面積級距（公頃）— 多為有機農戶；選了級距會排除無面積資料者
@@ -222,7 +222,7 @@ const PAGE_META = {
   settings:  {icon:'gear',    code:'LOGI',   title:'設定備份', desc:'軍械補給 ・ 資料備份'}
 };
 function pageHeader(k){ const m=PAGE_META[k]; if(!m) return '';
-  return `<div class="unit-hd"><span class="uh-ic">${milIcon(m.icon)}</span><div class="uh-t"><div class="uh-code">${m.code}</div><div class="uh-title">${esc(m.title)}</div><div class="uh-desc">${esc(m.desc)}</div></div><button class="uh-home" onclick="go('home')">🏠 首頁</button></div>`; }
+  return `<div class="unit-hd"><span class="uh-ic">${milIcon(m.icon)}</span><div class="uh-t"><div class="uh-code">${m.code}</div><div class="uh-title">${esc(m.title)}</div><div class="uh-desc">${esc(m.desc)}</div></div></div>`; }
 // 統一寫入 #view：非首頁自動加上單位抬頭卡，直接重繪也保留
 function viewHTML(html){ $('#view').innerHTML = (tab!=='home' ? pageHeader(tab) : '') + html; }
 
@@ -1745,7 +1745,7 @@ function renderSettings(){
     <b>📱 加到主畫面：</b>用 Safari/Chrome 開啟後，選「分享 → 加入主畫面」，即可像 App 一樣使用（離線可用）。<br>
     <b>🎯 名單：</b>3,547 筆全國農會／合作社／肥料行／有機農戶。可搜尋、依類別篩選，設定拜訪頻率後自動排程。<br>
     <b>⭐ 開發客戶：</b>名單中點「轉為我的客戶」即可補上完整資料。<br>
-    <b>🏠 首頁：</b>自動列出逾期與本週該拜訪的對象。</div>`;
+    <b>🧭 切換功能：</b>用畫面最下方的導覽列（或 LINE 選單）切換地圖／名單／路線／客戶／競品／週報／設定。</div>`;
   viewHTML(h);
 }
 function download(name, content, type){
@@ -2770,11 +2770,11 @@ function showInAppWarning(){
   document.body.appendChild(bar);
 }
 function initApp(){
-  const valid=['home','map','prospects','route','customers','compete','report','settings'];
+  const valid=['map','prospects','route','customers','compete','report','settings'];
   const hash=(location.hash||'').replace('#','');
-  go(valid.includes(hash)?hash:'home');
+  go(valid.includes(hash)?hash:'map');
   showInAppWarning();
   maybeAutoBackup();
 }
-window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['home','map','prospects','route','customers','compete','report','settings']; if(valid.includes(h)) go(h); });
+window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['map','prospects','route','customers','compete','report','settings']; if(valid.includes(h)) go(h); });
 initApp();
