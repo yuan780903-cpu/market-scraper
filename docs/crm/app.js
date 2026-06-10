@@ -2060,11 +2060,63 @@ function smartTownByName(addr){
 }
 function kmBetween(a,b){ const R=6371,d2r=Math.PI/180; const dla=(b[0]-a[0])*d2r,dlo=(b[1]-a[1])*d2r; const x=Math.sin(dla/2)**2+Math.cos(a[0]*d2r)*Math.cos(b[0]*d2r)*Math.sin(dlo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 // 以「開車走高速公路為主」估速：短程市區較慢、中長程上快速道路/國道
-function driveMin(km){ const rk=km*1.25; let sp; if(rk<6)sp=28; else if(rk<20)sp=45; else if(rk<50)sp=62; else sp=85; return Math.max(8, Math.round(rk/sp*60)+3); }
+function driveMin(km){ const rk=km*1.30; let sp; if(rk<5)sp=24; else if(rk<15)sp=38; else if(rk<35)sp=55; else if(rk<70)sp=72; else sp=88; return Math.max(7, Math.round(rk/sp*60)+3); }
+// ---- 線上實際路網車程（OSRM，可選；只送鄉鎮中心座標，不送任何客戶地址/個資）----
+window._osrmDur = window._osrmDur || {};
+function llKey(ll){ return ll[0].toFixed(4)+','+ll[1].toFixed(4); }
+function osrmLookup(a,b){ if(!a||!b)return null; const v=window._osrmDur[llKey(a)+'>'+llKey(b)]; return v==null?null:v; }
+async function osrmFillTable(lls){
+  // 只取唯一的鄉鎮中心座標送出（去重），不含任何地址文字
+  const uniq=[], seen={};
+  lls.forEach(ll=>{ if(!ll)return; const k=llKey(ll); if(!(k in seen)){ seen[k]=uniq.length; uniq.push(ll); } });
+  if(uniq.length<2 || uniq.length>90) return false;
+  const pts=uniq.map(c=>c[1].toFixed(5)+','+c[0].toFixed(5)).join(';');  // OSRM 是 lng,lat
+  const url=`https://router.project-osrm.org/table/v1/driving/${pts}?annotations=duration`;
+  let j;
+  try{ const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),9000);
+    const r=await fetch(url,{signal:ctrl.signal}); clearTimeout(to); if(!r.ok)return false; j=await r.json();
+  }catch(e){ return false; }
+  if(!j||j.code!=='Ok'||!Array.isArray(j.durations)) return false;
+  for(let i=0;i<uniq.length;i++) for(let k=0;k<uniq.length;k++){
+    const sec=j.durations[i] && j.durations[i][k]; if(sec==null)continue;
+    const min=Math.max(6, Math.round(sec/60*1.15)+2);   // 實際車程＋15%路況緩衝
+    window._osrmDur[llKey(uniq[i])+'>'+llKey(uniq[k])]=min;
+  }
+  return true;
+}
 function smartTravel(a,b){
   const pa=smartLatLng(a), pb=smartLatLng(b);
-  if(pa&&pb) return driveMin(kmBetween(pa,pb));
+  if(pa&&pb){ const od=osrmLookup(pa,pb); if(od!=null)return od; return driveMin(kmBetween(pa,pb)); }
   if(!a||!b)return 15; const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10;
+}
+// 兩座標間的車程（分鐘）：有 OSRM 用實際路網，否則用離線估算
+function travelMinLL(a,b){ if(!a||!b)return null; const od=osrmLookup(a,b); if(od!=null)return od; return driveMin(kmBetween(a,b)); }
+// 最近鄰 + 2-opt 路徑最佳化（離線/線上皆可，依出發點決定方向，消除來回繞路）
+function optimizeFreeOrder(items, startLL, endLL){
+  const withLL=items.filter(p=>p._ll), noLL=items.filter(p=>!p._ll);
+  noLL.sort((a,b)=>smartGeoIdx(a.address)-smartGeoIdx(b.address));
+  if(withLL.length<=1) return withLL.concat(noLL);
+  const D=(x,y)=>travelMinLL(x,y);
+  // 最近鄰建構
+  const left=withLL.slice(), order=[]; let cur=startLL;
+  if(!cur){ order.push(left.shift()); cur=order[0]._ll; }
+  while(left.length){ let bi=0,bd=Infinity; for(let i=0;i<left.length;i++){ const d=D(cur,left[i]._ll); if(d<bd){bd=d;bi=i;} } const nx=left.splice(bi,1)[0]; order.push(nx); cur=nx._ll; }
+  // 2-opt 改良（含「回到出發/回家點」的最後一段，避免結束在最遠的離群點）
+  let improved=true, guard=0;
+  while(improved && guard++<80){
+    improved=false;
+    for(let i=0;i<order.length-1;i++){
+      const A = i>0 ? order[i-1]._ll : startLL; if(!A) continue;
+      const B = order[i]._ll;
+      for(let k=i+1;k<order.length;k++){
+        const C=order[k]._ll, E=(k<order.length-1)?order[k+1]._ll:(endLL||null);
+        const cur=D(A,B)+(E?D(C,E):0);
+        const swp=D(A,C)+(E?D(B,E):0);
+        if(swp+1e-6 < cur){ let lo=i,hi=k; while(lo<hi){ const t=order[lo];order[lo]=order[hi];order[hi]=t;lo++;hi--; } improved=true; }
+      }
+    }
+  }
+  return order.concat(noLL);
 }
 function smartPool(){
   const f=smartCfg.f;
@@ -2280,72 +2332,76 @@ function smartPlan(){
   const ls=toMin(smartCfg.lunchStart), le=toMin(smartCfg.lunchEnd);
   const startLoc=smartCfg.startLoc||(smartCfg.f.regions&&smartCfg.f.regions[0])||'';
   const endLoc=smartCfg.endLoc||startLoc;
+  const startLL=smartLatLng(startLoc), endLL=smartLatLng(endLoc);
   const dwellOf=p=>Math.max(5,p.dwell||SMART_DWELL);
-  // 地理就近排序（單向掃描）：自由客戶依地理索引排，方向由出發位置決定
-  const free=picks.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_gi:smartGeoIdx(p.address)})).sort((a,b)=>a._gi-b._gi);
-  if(free.length>=2 && startLoc){
-    const si=smartGeoIdx(startLoc), lo=free[0]._gi, hi=free[free.length-1]._gi;
-    if(Math.abs(si-hi)<Math.abs(si-lo)) free.reverse();   // 出發點較靠南就由南往北掃
-  }
-  const fixed=picks.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
-  // 排程：依時間穿插已約客戶、就近排自由客戶、插入中午休息（含休息地點的前後車程）
   const lunchLoc=smartCfg.lunchLoc, lunchDur=Math.max(0,le-ls);
-  const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
-  const hasPrev=()=>!!(result.length||startLoc);
-  // 在下一個拜訪點之前若已到休息時間，先插入中午休息（先開到休息地點、休息、再從休息地點出發）
-  const insertLunchBefore=(stopAddr)=>{
-    if(lunchDone) return;
-    const naive=t + (hasPrev()?smartTravel(prevAddr,stopAddr):0);
-    if(naive < ls) return;
-    let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : t;
-    larr=Math.max(larr,ls);
-    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
-    t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
-    lunchDone=true;
-  };
-  let fi=0, ui=0;
-  while(ui<free.length || fi<fixed.length){
-    const nextFx = fi<fixed.length ? fixed[fi] : null;
-    let useFixed=false;
-    if(nextFx){
-      if(ui>=free.length) useFixed=true;
-      else if(nextFx._at <= t + smartTravel(prevAddr, nextFx.address)) useFixed=true;   // 約定時間已到
-      else {
-        const fr=free[ui];
-        // 若先插一家自由客戶會害下一個約定客戶遲到，就先去約定客戶
-        const afterFree = t + (hasPrev()?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address);
-        if(afterFree > nextFx._at) useFixed=true;
+
+  // 依目前可用的車程資料（離線估算 or 已載入的 OSRM 實際路網）建立行程
+  function buildPlan(){
+    // 自由客戶：最近鄰 + 2-opt 就近排序（取代舊的一維索引，消除來回繞路）
+    const free=optimizeFreeOrder(picks.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_ll:smartLatLng(p.address)})), startLL, endLL);
+    const fixed=picks.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
+    const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
+    const hasPrev=()=>!!(result.length||startLoc);
+    const insertLunchBefore=(stopAddr)=>{
+      if(lunchDone) return;
+      const naive=t + (hasPrev()?smartTravel(prevAddr,stopAddr):0);
+      if(naive < ls) return;
+      let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : t;
+      larr=Math.max(larr,ls);
+      result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
+      t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
+      lunchDone=true;
+    };
+    let fi=0, ui=0;
+    while(ui<free.length || fi<fixed.length){
+      const nextFx = fi<fixed.length ? fixed[fi] : null;
+      let useFixed=false;
+      if(nextFx){
+        if(ui>=free.length) useFixed=true;
+        else if(nextFx._at <= t + smartTravel(prevAddr, nextFx.address)) useFixed=true;
+        else {
+          const fr=free[ui];
+          const afterFree = t + (hasPrev()?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address);
+          if(afterFree > nextFx._at) useFixed=true;
+        }
+      }
+      if(useFixed){
+        const fx=fixed[fi++];
+        insertLunchBefore(fx.address);
+        let arr=Math.max(t + (hasPrev()?smartTravel(prevAddr,fx.address):0), fx._at);
+        if(arr>fx._at) lateFix=true;
+        result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
+        t=arr+dwellOf(fx); prevAddr=fx.address;
+      }else{
+        const p=free[ui++];
+        insertLunchBefore(p.address);
+        let arr=t + (hasPrev()?smartTravel(prevAddr,p.address):0);
+        result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
+        t=arr+dwellOf(p); prevAddr=p.address;
       }
     }
-    if(useFixed){
-      const fx=fixed[fi++];
-      insertLunchBefore(fx.address);
-      let arr=Math.max(t + (hasPrev()?smartTravel(prevAddr,fx.address):0), fx._at);
-      if(arr>fx._at) lateFix=true;
-      result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
-      t=arr+dwellOf(fx); prevAddr=fx.address;
-    }else{
-      const p=free[ui++];
-      insertLunchBefore(p.address);
-      let arr=t + (hasPrev()?smartTravel(prevAddr,p.address):0);
-      result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
-      t=arr+dwellOf(p); prevAddr=p.address;
+    if(!lunchDone && ls>=s && ls<=e){
+      let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : Math.max(t,ls);
+      larr=Math.max(larr,ls);
+      result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
+      t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
     }
+    const backTravel=smartTravel(prevAddr,endLoc);
+    return {result, home:t+backTravel, lateFix};
   }
-  if(!lunchDone && ls>=s && ls<=e){
-    let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : Math.max(t,ls);
-    larr=Math.max(larr,ls);
-    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
-    t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
-  }
-  const backTravel=smartTravel(prevAddr,endLoc);
-  const home=t+backTravel;
+
+  function renderPlan(online){
+  const plan=buildPlan();
+  const result=plan.result, home=plan.home, lateFix=plan.lateFix;
   const stops=result.filter(x=>!x.lunch);
   let warn='';
   if(home>e) warn=`預估約 ${fmt(home)} 才到家，行程偏長。可減少家數、縮短停留或提早出發。`;
   else if(lateFix) warn=`部分約定客戶因前段時間排不下而略有延後，請現場彈性調整。`;
 
-  let h=`<div class="sec-title"><span class="bar"></span>智慧安排結果（${stops.length} 家）</div>`;
+  let h=`<div class="sec-title"><span class="bar"></span>智慧安排結果（${stops.length} 家）`;
+  h+=online ? ` <span class="badge" style="background:#2f5d34;color:#dff0e0;float:right">✅ 線上路網校正</span>` : ` <span class="badge" style="background:#5a4a2a;color:#f0e6cf;float:right">離線估算</span>`;
+  h+=`</div>`;
   if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
   h+=`<div class="card">`;
   h+=drow('出發', `${esc(startLoc||'(未填)')}　${smartCfg.startTime}`);
@@ -2381,7 +2437,7 @@ function smartPlan(){
         <div class="nm" style="margin-top:4px">${isCustom?'📍 ':''}${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
         ${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}
         ${isCustom?`<div class="tagline" style="margin-top:4px"><span class="badge">其他行程</span></div>`:`<div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div>`}</div>
-      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
+      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}</div>
     </div>`;
   });
   h+=`<div class="item" style="background:#eef1e6">
@@ -2401,9 +2457,80 @@ function smartPlan(){
     const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||mapStops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||mapStops[mapStops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
     h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
   }
-  h+=`<div class="tagline" style="margin:8px 2px 0">順序依「縣市由北而南＋鄉鎮相鄰」就近安排，並把你填的約定到達時間固定在該時段、其餘客戶排在前後。站間車程以「開車走高速公路為主」估算（鄉鎮中心點直線距離×1.25 倍路程、依距離抓 28–85 km/h），實際會因路況、山路而異，僅供參考；點「用 Google 地圖開啟整條路線」可看實際時間。填寫出發位置才能算第一段車程；填了中午休息地點，會把上午最後一站→休息地點→下午第一站的車程一起算進去。</div>`;
+  // 今日拜訪客戶清單（可一鍵記錄成拜訪管理，流入週報；目標客戶會自動建/補到「我的客戶」）
+  window._routeToday = stops.filter(x=>x.kind==='cust'||x.kind==='prosp').map(x=>({kind:x.kind,id:x.id,name:x.name}));
+  if(window._routeToday.length){
+    h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-out" style="border-color:#4c5a2e;color:#3a4622" onclick="routeFinishToday()">✅ 完成今日拜訪（記錄 ${window._routeToday.length} 家並寫入週報）</button></div>`;
+    h+=`<div class="tagline" style="margin:2px 2px 0">按下後，今日這 ${window._routeToday.length} 家會各自新增一筆拜訪紀錄（你可逐家補內容）；目標客戶會自動寫進「我的客戶」卡片。完成後可到「拜訪週報」一鍵產生主管週報。</div>`;
+  }
+  h+=`<div class="tagline" style="margin:8px 2px 0">順序用「最近鄰＋2-opt」就近最佳化（自動消除來回繞路），並把你填的約定到達時間固定在該時段、其餘客戶排在前後。${online?'<b>站間車程已用線上 OSRM 實際路網校正</b>（只送鄉鎮中心座標，不含任何客戶地址/個資）。':'站間車程為離線估算（鄉鎮中心點直線距離×1.3 倍路程、依距離抓 24–88 km/h）；連上網路會自動用實際路網校正。'}實際會因路況、山路而異，僅供參考；點「用 Google 地圖開啟整條路線」可看實際時間。填了中午休息地點，會把上午最後一站→休息地點→下午第一站的車程一起算進去。</div>`;
   smartCfg._last=h; resEl().innerHTML=h;
+  }
+  renderPlan(false);
   resEl().scrollIntoView({behavior:'smooth',block:'start'});
+  // 線上 OSRM 實際路網校正（可選；只送鄉鎮中心座標，失敗則維持離線估算）
+  if(navigator.onLine!==false){
+    const lls=[startLL,endLL,smartLatLng(lunchLoc)].concat(picks.map(p=>smartLatLng(p.address))).filter(Boolean);
+    osrmFillTable(lls).then(ok=>{ if(ok && $('#smart-result')) renderPlan(true); }).catch(()=>{});
+  }
+}
+
+// ========== 完成今日拜訪：把今日路線上的客戶一次記成拜訪、寫入週報 ==========
+// 不開表單、直接把目標客戶補進「我的客戶」（個資欄位留空，可日後補）
+function convertProspectSilent(id, interItem){
+  const p=SEED.find(x=>x.id===id); if(!p) return null;
+  const exist=custByProspect(id); if(exist) return exist;
+  const o=overlay[id]||{};
+  const typeMap={'農會':'農會','合作社':'合作社','肥料行':'經銷商','有機農戶':'直接農民'};
+  const c={ id:'C'+Date.now()+Math.random().toString(36).slice(2,5), name:p.name, type:typeMap[p.category]||'其他',
+    phone:p.phone||'', address:p.address||'', contact:p.contact||'',
+    idno:'', birth:'', taxid:'', terms:'', checkPeriod:'', truck:'', deliveryTime:'',
+    currentFert:p.brand||'', price:p.price||'', conditions:'', grade:(o.grade||''),
+    freq:o.freq||null, last:o.last||'', next:o.next||'', notes:p.notes||'',
+    inter:o.inter?[...o.inter]:[], fromProspect:id };
+  if(interItem){ c.inter.push(interItem); c.last=interItem.date; if(c.freq)c.next=addDays(interItem.date,c.freq); }
+  customers.push(c); return c;
+}
+function routeFinishToday(){
+  const list=window._routeToday||[]; if(!list.length){ toast('沒有可記錄的客戶'); return; }
+  let h=`<div class="info">把今日路線上的 ${list.length} 家一次記成「已拜訪」，會寫入互動紀錄並流入「拜訪週報」。<b>目標客戶會自動建立／補進「我的客戶」卡片</b>（身分證等個資欄位留空，可日後補）。</div>`;
+  h+=`<div class="field"><label>拜訪日期</label><input type="date" id="rf-date" value="${todayStr()}"></div>`;
+  h+=`<div class="card" style="padding:6px 12px">`;
+  list.forEach((x,i)=>{
+    h+=`<div style="padding:7px 0;border-bottom:1px solid var(--line)">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" class="rf-on" data-i="${i}" checked>
+        <span class="nm" style="font-size:14px">${i+1}. ${esc(x.name)}${x.kind==='prosp'?' <span class="badge">目標</span>':''}</span></label>
+      <input class="rf-note" data-i="${i}" placeholder="這家談了什麼／結果（可空）" style="margin-top:5px;width:100%;box-sizing:border-box">
+    </div>`;
+  });
+  h+=`</div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" id="rf-save">✅ 確認記錄</button><button class="btn btn-gray" onclick="closeModal()">取消</button></div>`;
+  openModal('完成今日拜訪', h);
+  $('#rf-save').onclick=()=>{
+    const date=$('#rf-date').value||todayStr();
+    const ons=[...document.querySelectorAll('.rf-on')];
+    const notes=[...document.querySelectorAll('.rf-note')];
+    let n=0, conv=0;
+    ons.forEach((cb,idx)=>{
+      if(!cb.checked) return;
+      const x=list[idx]; const content=(notes[idx]&&notes[idx].value.trim())||'完成拜訪';
+      const it={date,type:'拜訪',content};
+      if(x.kind==='cust'){
+        const c=findCust(x.id); if(!c)return; c.inter=c.inter||[]; c.inter.push(it); c.last=date; if(c.freq)c.next=addDays(date,c.freq); n++;
+      }else{
+        const ex=custByProspect(x.id);
+        if(ex){ ex.inter=ex.inter||[]; ex.inter.push(it); ex.last=date; if(ex.freq)ex.next=addDays(date,ex.freq); }
+        else { convertProspectSilent(x.id, it); conv++; }
+        const o=overlay[x.id]||{}; o.last=date; if(o.freq)o.next=addDays(date,o.freq); overlay[x.id]=o; // 名單顯示用，紀錄存在客戶卡片
+        n++;
+      }
+    });
+    saveCust(); saveOverlay();
+    closeModal();
+    toast(`已記錄 ${n} 家拜訪${conv?`，新增 ${conv} 家到我的客戶`:''}`);
+    go('report');
+  };
 }
 
 // ========== 每週拜訪智慧排程 ==========
@@ -2742,21 +2869,62 @@ function collectWeekVisits(){
   const inRange=d=>d&&d>=mon&&d<=fri;
   const out=[];
   customers.forEach(c=>{ (c.inter||[]).forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:c.name,kind:'客戶',type:it.type||'拜訪',content:it.content||'',id:c.id,who:'cust'}); }); });
-  Object.keys(overlay).forEach(pid=>{ const o=overlay[pid]; if(!o||!o.inter) return; const p=SEED.find(x=>x.id===pid); const nm=p?p.name:'(名單)'; o.inter.forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:nm,kind:'名單',type:it.type||'拜訪',content:it.content||'',id:pid,who:'prospect'}); }); });
+  Object.keys(overlay).forEach(pid=>{ const o=overlay[pid]; if(!o||!o.inter) return; if(custByProspect(pid)) return; /* 已轉為我的客戶→紀錄改記在客戶卡片，避免重複 */ const p=SEED.find(x=>x.id===pid); const nm=p?p.name:'(名單)'; o.inter.forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:nm,kind:'名單',type:it.type||'拜訪',content:it.content||'',id:pid,who:'prospect'}); }); });
   out.sort((a,b)=>a.date.localeCompare(b.date));
   return out;
 }
-function reportText(){
+// 彙整本週拜訪 + 結構分析 + 跟進 + 下週回訪（純本機規則運算）
+function weekAnalysis(){
   const mon=repMonday(), fri=addDays(mon,4);
   const visits=collectWeekVisits();
+  const metaOf=v=>{
+    if(v.who==='cust'){ const c=findCust(v.id)||{}; return {chan:TYPE2CHAN[c.type]||c.type||'其他', county:cityOf(c.address)||custCity(c)||'未分區', region:regionFull(c.address), grade:c.grade||'', conv:!!c.fromProspect}; }
+    const p=SEED.find(x=>x.id===v.id)||{}; const o=overlay[v.id]||{}; return {chan:p.category||'其他', county:cityOf(p.address)||normR(p.region||'')||'未分區', region:regionFull(p.address), grade:o.grade||'', conv:false};
+  };
+  visits.forEach(v=>{ v.m=metaOf(v); });
   const names=new Set(visits.map(v=>v.name));
-  let t=`【拜訪週報】${mon} ～ ${fri}\n本週拜訪 ${visits.length} 次，接觸 ${names.size} 家\n────────────────\n`;
-  if(!visits.length){ return t+'本週尚無拜訪紀錄。\n'; }
+  const custVisits=visits.filter(v=>v.who==='cust'), prospVisits=visits.filter(v=>v.who==='prospect');
+  const byChan={}, byCounty={}, byGrade={};
+  visits.forEach(v=>{ byChan[v.m.chan]=(byChan[v.m.chan]||0)+1; byCounty[v.m.county]=(byCounty[v.m.county]||0)+1; if(v.m.grade)byGrade[v.m.grade]=(byGrade[v.m.grade]||0)+1; });
+  const newCust=[], seenNew=new Set();
+  custVisits.forEach(v=>{ if(v.m.conv && !seenNew.has(v.id)){ seenNew.add(v.id); newCust.push(v.name); } });
+  // 待跟進（未完成）
+  const follows=[];
+  customers.forEach(c=>{(c.follow||[]).forEach(f=>{ if(!f.done) follows.push({name:c.name,text:f.text,due:f.due||''}); });});
+  Object.keys(overlay).forEach(pid=>{ if(custByProspect(pid))return; const o=overlay[pid]; const p=SEED.find(x=>x.id===pid); ((o&&o.follow)||[]).forEach(f=>{ if(!f.done) follows.push({name:p?p.name:'(名單)',text:f.text,due:f.due||''}); });});
+  follows.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  // 下週應回訪（next 落在下週一～下週五）
+  const nwm=addDays(mon,7), nwf=addDays(mon,11), nextWk=[];
+  customers.forEach(c=>{ if(c.next&&c.next>=nwm&&c.next<=nwf) nextWk.push({name:c.name,due:c.next,grade:c.grade||''}); });
+  Object.keys(overlay).forEach(pid=>{ if(custByProspect(pid))return; const o=overlay[pid]; const p=SEED.find(x=>x.id===pid); if(o&&o.next&&o.next>=nwm&&o.next<=nwf) nextWk.push({name:p?p.name:'(名單)',due:o.next,grade:(o&&o.grade)||''}); });
+  nextWk.sort((a,b)=>a.due.localeCompare(b.due));
+  return {mon,fri,visits,names,custVisits,prospVisits,byChan,byCounty,byGrade,newCust,follows,nextWk};
+}
+function sortedKeys(obj){ return Object.keys(obj).sort((x,y)=>obj[y]-obj[x]); }
+function reportText(){
+  const a=weekAnalysis();
+  let t=`【業務週報】${a.mon} ～ ${a.fri}\n業務員：莊政遠（碩成肥料）\n════════════════\n`;
+  if(!a.visits.length){ return t+'\n本週尚無拜訪紀錄。\n建議到「拜訪路線」安排行程，當日跑完後按「完成今日拜訪」即可自動彙整成週報。\n'; }
+  const custN=new Set(a.custVisits.map(v=>v.id)).size, prospN=new Set(a.prospVisits.map(v=>v.id)).size;
+  t+=`\n一、本週執行摘要\n`;
+  t+=`　本週共拜訪 ${a.visits.length} 次、接觸 ${a.names.size} 家（既有客戶 ${custN} 家、目標開發 ${prospN} 家）。\n`;
+  if(a.newCust.length) t+=`　本週新轉入「我的客戶」${a.newCust.length} 家：${a.newCust.join('、')}。\n`;
+  t+=`　足跡涵蓋 ${Object.keys(a.byCounty).length} 個縣市：${sortedKeys(a.byCounty).map(k=>`${k} ${a.byCounty[k]} 次`).join('、')}。\n`;
+  t+=`\n二、拜訪結構分析\n`;
+  t+=`　‧ 通路別：${sortedKeys(a.byChan).map(k=>`${k} ${a.byChan[k]}`).join('、')}\n`;
+  if(Object.keys(a.byGrade).length) t+=`　‧ 客戶分級：${sortedKeys(a.byGrade).map(k=>`${k}級 ${a.byGrade[k]}`).join('、')}\n`;
+  t+=`\n三、每日行程紀要\n`;
   for(let i=0;i<5;i++){
-    const d=addDays(mon,i); const dv=visits.filter(v=>v.date===d); if(!dv.length) continue;
-    t+=`\n■ ${d.slice(5)}（週${WD_NAME[new Date(d).getDay()]}）\n`;
-    dv.forEach(v=>{ t+=`・${v.name}（${v.kind}）${v.type&&v.type!=='拜訪'?'｜'+v.type:''}\n  ${v.content||'完成拜訪'}\n`; });
+    const d=addDays(a.mon,i); const dv=a.visits.filter(v=>v.date===d); if(!dv.length) continue;
+    t+=`\n■ ${d.slice(5)}（週${WD_NAME[new Date(d).getDay()]}）　${dv.length} 家\n`;
+    dv.forEach(v=>{ t+=`　・${v.name}（${[v.m.chan,v.m.region].filter(Boolean).join('・')}${v.m.grade?` ${v.m.grade}級`:''}）\n　　${v.content||'完成拜訪'}\n`; });
   }
+  let sec=4;
+  if(a.follows.length){ t+=`\n四、待跟進事項（${a.follows.length}）\n`; a.follows.slice(0,15).forEach(f=>{ t+=`　‧ ${f.name}：${f.text}${f.due?`（期限 ${f.due}）`:''}\n`; }); sec=5; }
+  t+=`\n${sec===5?'五':'四'}、下週工作規劃\n`;
+  if(a.nextWk.length){ t+=`　依拜訪頻率，下週應回訪 ${a.nextWk.length} 家：\n`; a.nextWk.slice(0,15).forEach(x=>{ t+=`　‧ ${x.due.slice(5)} ${x.name}${x.grade?` ${x.grade}級`:''}\n`; }); }
+  else t+=`　下週無系統排定回訪，建議持續開發目標名單、深耕本週新接觸客戶。\n`;
+  t+=`\n────────────────\n本報表由「客戶戰情室」依本機拜訪紀錄自動產生。\n`;
   return t;
 }
 function copyReport(){
@@ -2766,27 +2934,53 @@ function copyReport(){
 }
 function repFallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('週報文字已複製'); }catch(e){ toast('複製失敗，請長按下方文字手動複製'); } document.body.removeChild(ta); }
 function renderReport(){
-  const mon=repMonday(), fri=addDays(mon,4);
-  const visits=collectWeekVisits();
-  const names=new Set(visits.map(v=>v.name));
+  const a=weekAnalysis();
   const isThis=(repMonday()===thisMonday());
-  let h=`<div class="info">📝 自動彙整本週（工作日 週一～週五）所有拜訪紀錄，資料來自「我的客戶」與「目標名單」裡你記下的拜訪，全部只存在本機。</div>`;
+  let h=`<div class="info">📊 自動把本週（週一～週五）拜訪彙整成可給主管看的<b>業務週報</b>，含摘要、結構分析、每日紀要、跟進與下週規劃。資料只存本機。在「拜訪路線」按「完成今日拜訪」會自動寫進這裡。</div>`;
   h+=`<div class="seg"><button class="seg-b" onclick="shiftReportWeek(-1)">← 上一週</button>
       <button class="seg-b ${isThis?'on':''}" onclick="resetReportWeek()">本週</button>
       <button class="seg-b" onclick="shiftReportWeek(1)">下一週 →</button></div>`;
-  h+=`<div class="count">${mon} ～ ${fri}　·　拜訪 ${visits.length} 次　·　接觸 ${names.size} 家</div>`;
-  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="copyReport()">📋 複製週報文字</button></div>`;
-  if(!visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「我的客戶」或「目標名單」按「記錄拜訪」後，這裡會自動彙整。</div></div>`; viewHTML(h); return; }
+  h+=`<div class="count">${a.mon} ～ ${a.fri}　·　拜訪 ${a.visits.length} 次　·　接觸 ${a.names.size} 家</div>`;
+  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="copyReport()">📋 複製主管週報（文字）</button></div>`;
+  if(!a.visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「拜訪路線」排行程，當日跑完按「完成今日拜訪」，<br>或在客戶/名單按「記錄拜訪」，這裡就會自動彙整。</div></div>`; viewHTML(h); return; }
+  const custN=new Set(a.custVisits.map(v=>v.id)).size, prospN=new Set(a.prospVisits.map(v=>v.id)).size;
+  // 一、摘要
+  h+=`<div class="sec-title"><span class="bar"></span>① 本週執行摘要</div><div class="card">`;
+  h+=drow('拜訪 / 接觸', `${a.visits.length} 次　·　${a.names.size} 家`);
+  h+=drow('既有 / 目標', `既有客戶 ${custN} 家　·　目標開發 ${prospN} 家`);
+  if(a.newCust.length) h+=drow('新轉入客戶', `⭐ ${esc(a.newCust.join('、'))}`);
+  h+=drow('縣市足跡', sortedKeys(a.byCounty).map(k=>`${esc(k)} ${a.byCounty[k]}`).join('　'));
+  h+=`</div>`;
+  // 二、結構分析
+  h+=`<div class="sec-title"><span class="bar"></span>② 拜訪結構分析</div><div class="card">`;
+  h+=drow('通路別', sortedKeys(a.byChan).map(k=>`<span class="badge b-${k}">${esc(k)} ${a.byChan[k]}</span>`).join(' '));
+  if(Object.keys(a.byGrade).length) h+=drow('客戶分級', sortedKeys(a.byGrade).map(k=>`<span class="badge grade-${k}">${k}級 ${a.byGrade[k]}</span>`).join(' '));
+  h+=`</div>`;
+  // 三、每日紀要
+  h+=`<div class="sec-title"><span class="bar"></span>③ 每日行程紀要</div>`;
   for(let i=0;i<5;i++){
-    const d=addDays(mon,i); const dv=visits.filter(v=>v.date===d); if(!dv.length) continue;
-    h+=`<div class="sec-title"><span class="bar"></span>${d.slice(5)}　週${WD_NAME[new Date(d).getDay()]}　(${dv.length})</div><div class="card">`;
+    const d=addDays(a.mon,i); const dv=a.visits.filter(v=>v.date===d); if(!dv.length) continue;
+    h+=`<div class="sec-title" style="font-size:13px;margin-top:8px"><span class="bar"></span>${d.slice(5)}　週${WD_NAME[new Date(d).getDay()]}　(${dv.length})</div><div class="card">`;
     dv.forEach(v=>{
       const pill=`<span class="badge b-${v.kind==='客戶'?'農會':'其他'}">${v.kind}</span>`;
       const click=v.who==='cust'?`viewCustomer('${v.id}')`:`viewProspect('${v.id}')`;
-      h+=itemRow({name:v.name,sub:(v.type&&v.type!=='拜訪'?v.type+'｜':'')+(v.content||'完成拜訪'),pill,onclick:click});
+      h+=itemRow({name:v.name,sub:[v.m.chan,v.m.region].filter(Boolean).join('・')+'｜'+(v.content||'完成拜訪'),pill,onclick:click});
     });
     h+=`</div>`;
   }
+  // 四、跟進
+  if(a.follows.length){
+    h+=`<div class="sec-title"><span class="bar"></span>④ 待跟進事項（${a.follows.length}）</div><div class="card">`;
+    a.follows.slice(0,15).forEach(f=>{ const od=f.due&&f.due<todayStr(); h+=`<div class="drow"><div class="dk">${esc(f.name)}</div><div class="dv">${esc(f.text)}${f.due?` <span class="${od?'over':''}" style="color:${od?'var(--red)':'var(--muted)'}">📅${esc(f.due)}${od?'逾期':''}</span>`:''}</div></div>`; });
+    h+=`</div>`;
+  }
+  // 五、下週規劃
+  h+=`<div class="sec-title"><span class="bar"></span>${a.follows.length?'⑤':'④'} 下週工作規劃</div><div class="card">`;
+  if(a.nextWk.length){
+    h+=`<div class="tagline" style="margin:0 0 6px">依拜訪頻率，下週應回訪 ${a.nextWk.length} 家：</div>`;
+    a.nextWk.slice(0,15).forEach(x=>{ h+=`<div class="drow"><div class="dk">${esc(x.due.slice(5))}</div><div class="dv">${esc(x.name)}${x.grade?` <span class="badge grade-${x.grade}">${x.grade}級</span>`:''}</div></div>`; });
+  } else h+=`<div class="tagline" style="margin:0">下週無系統排定回訪，建議持續開發目標名單、深耕本週新接觸客戶。</div>`;
+  h+=`</div>`;
   viewHTML(h);
 }
 
