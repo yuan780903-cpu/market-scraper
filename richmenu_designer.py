@@ -16,8 +16,9 @@ from image_card import _find_font_path
 WIDTH = 2500
 HEIGHT = 1686
 
-# 版權署名 banner（上方裝飾，不可點）
+# 版權署名 banner（底部裝飾，不可點）
 BANNER_H = 200
+BANNER_Y = HEIGHT - BANNER_H  # = 1486，從這 y 起算到底部
 
 # 3x3 grid (9 宮格) — 從 banner 下方開始
 COLS = 3
@@ -69,19 +70,19 @@ def _load_emoji(filename: str, size: int) -> Image.Image:
 
 
 def _draw_banner(img, draw):
-    """上方裝飾橫條：頭像 + 版權署名（不可點區域）"""
-    # 1. 漸層綠色背景 — 從左到右淺到深
+    """底部裝飾橫條：頭像 + 版權署名（不可點區域）"""
+    # 1. 漸層綠色背景 — 從左到右淺到深，y 從 BANNER_Y 開始
     for x in range(WIDTH):
         ratio = x / WIDTH
         r = int(31 + (76 - 31) * ratio)   # #1f3a2e → #4caf73
         g = int(58 + (175 - 58) * ratio)
         b = int(46 + (115 - 46) * ratio)
-        draw.line([(x, 0), (x, BANNER_H)], fill=(r, g, b))
+        draw.line([(x, BANNER_Y), (x, HEIGHT)], fill=(r, g, b))
 
     # 2. 頭像（圓形，左側偏中）
     portrait_size = 160
-    portrait_x = WIDTH // 2 - 460   # 頭像中心點 X
-    portrait_y = BANNER_H // 2       # 頭像中心點 Y
+    portrait_x = WIDTH // 2 - 460          # 頭像中心點 X
+    portrait_y = BANNER_Y + BANNER_H // 2  # 頭像中心點 Y（banner 垂直中央）
     if PORTRAIT_PATH.exists():
         try:
             p_img = Image.open(PORTRAIT_PATH).convert("RGBA")
@@ -104,7 +105,7 @@ def _draw_banner(img, draw):
     f = _font(64)
     tw, th = _measure(draw, text, f)
     tx = portrait_x + portrait_size // 2 + 50
-    ty = BANNER_H // 2 - th // 2 - 6
+    ty = BANNER_Y + BANNER_H // 2 - th // 2 - 6
     draw.text((tx, ty), text, font=f, fill="#ffffff",
               stroke_width=2, stroke_fill="#ffffff")
 
@@ -112,7 +113,7 @@ def _draw_banner(img, draw):
 def _draw_button(img, draw, col, row, bg_color, emoji_file, title, subtitle):
     """畫一格按鈕。subtitle 參數保留向後相容，但不再渲染（使用者要求去除）。"""
     x0 = col * CELL_W
-    y0 = BANNER_H + row * CELL_H   # 從 banner 下方開始
+    y0 = row * CELL_H              # 9 格從頂部開始，底部留給 banner
     x1 = x0 + CELL_W
     y1 = y0 + CELL_H
 
@@ -174,7 +175,7 @@ def get_button_areas() -> List[dict]:
             "title": title,
             "bounds": {
                 "x": col * CELL_W,
-                "y": BANNER_H + row * CELL_H,  # 從 banner 下方開始
+                "y": row * CELL_H,             # 9 格從頂部開始
                 "width": CELL_W,
                 "height": CELL_H,
             },
