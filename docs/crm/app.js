@@ -822,7 +822,7 @@ function smartProspectSearch(){
   h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-pri" onclick="ssAutoFetch()">🤖 一鍵自動爬取</button><button class="btn btn-ghost" onclick="ssBuildLinks()">🔎 產生搜尋連結</button></div>`;
   h+=`<div id="ss-auto"></div>`;
   h+=`<div id="ss-links"></div>`;
-  h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a8f7a)">⚙️ 進階：自動爬取代理（Cloudflare Worker，設定一次永久生效）</summary><div class="field" style="margin-top:8px"><input id="ss-proxy" placeholder="貼上你的 Worker 網址，例：https://crm-proxy.xxx.workers.dev" value="${esc(LS.get('crm_ssproxy',''))}"><div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:5px 14px;font-size:13px" onclick="ssSaveProxy()">💾 儲存代理</button></div><div class="tagline" style="font-size:12px;margin-top:4px">設定後「🤖 一鍵自動爬取」會優先走你的 Worker，穩定不被擋。</div></div></details>`;
+  h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a8f7a)">⚙️ 進階：自動爬取代理（Cloudflare Worker，已內建預設）</summary><div class="field" style="margin-top:8px"><input id="ss-proxy" placeholder="貼上你的 Worker 網址，例：https://crm-proxy.xxx.workers.dev" value="${esc(ssProxy())}"><div class="btn-row" style="margin-top:6px"><button class="btn btn-out" style="padding:5px 14px;font-size:13px" onclick="ssSaveProxy()">💾 儲存代理</button></div><div class="tagline" style="font-size:12px;margin-top:4px">已內建你的 Worker，免設定即可用。換 Worker 時才需改這裡。</div></div></details>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>② 自動讀取的資料（可直接修改）</div><div class="card">`;
   h+=ocrButtonHTML('ss-paste');
@@ -850,7 +850,8 @@ function ssSelAll(which,on){
   ssCnt(which);
 }
 function ssRegionsSel(){ return [...document.querySelectorAll('.ss-regck:checked')].map(c=>c.value); }
-function ssProxy(){ return (LS.get('crm_ssproxy','')||'').trim().replace(/\/+$/,''); }
+const DEFAULT_SSPROXY='https://crm-proxy.yuan780903.workers.dev';   // 使用者自有的 Cloudflare Worker（內建預設，免手動設定）
+function ssProxy(){ const v=(LS.get('crm_ssproxy','')||'').trim().replace(/\/+$/,''); return v||DEFAULT_SSPROXY; }
 function ssSaveProxy(){ const v=(($('#ss-proxy')&&$('#ss-proxy').value)||'').trim().replace(/\/+$/,''); LS.set('crm_ssproxy',v); toast(v?'已儲存代理 ✓':'已清除代理'); }
 function ssToggleElev(){
   const tea=ssCrops().some(c=>/茶/.test(c));
@@ -901,16 +902,19 @@ async function ssAutoFetch(){
     u=>'https://api.codetabs.com/v1/proxy/?quest='+u,
     u=>'https://thingproxy.freeboard.io/fetch/'+u
   ];
+  let lastErr='';
   const fetchRss=async(rss)=>{
     for(const mk of proxies){
       try{
         const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),16000);
         const r=await fetch(mk(rss),{signal:ctl.signal}); clearTimeout(tm);
-        if(!r.ok) continue;
+        if(!r.ok){ lastErr='HTTP '+r.status; continue; }
         let tx=await r.text();
         if(tx && tx.charAt(0)==='{'){ try{ const j=JSON.parse(tx); tx=j.contents||''; }catch(e){} }
-        if(tx && tx.indexOf('<item')>=0) return tx;
-      }catch(e){}
+        // 只要是有效的 RSS（即使 0 篇）就算連線成功，回傳給上層判斷篇數
+        if(tx && (tx.indexOf('<item')>=0 || tx.indexOf('<rss')>=0 || tx.indexOf('<feed')>=0)) return tx;
+        lastErr='回應非 RSS';
+      }catch(e){ lastErr=(e&&e.name==='AbortError')?'逾時':((e&&e.message)||'連線失敗'); }
     }
     return '';
   };
@@ -929,7 +933,7 @@ async function ssAutoFetch(){
       window._ssCand.push(title+'\n'+desc+'\n'+gt('link'));
     });
   }
-  if(!got){ if(box) box.innerHTML='<div class="info">⚠️ 自動爬取失敗（免費代理不穩或目前無網路）。手機上免費代理有時會被擋——可改按「🔎 產生搜尋連結」自己找，或把「作物＋縣市」告訴你的 LINE 助理代爬，再把文字貼到下方。</div>'; return; }
+  if(!got){ if(box) box.innerHTML='<div class="info">⚠️ 自動爬取連線失敗'+(lastErr?'（'+esc(lastErr)+'）':'')+'。請確認手機有網路；若仍不行，可改按「🔎 產生搜尋連結」自己找，或把「作物＋縣市」告訴你的 LINE 助理代爬，再把文字貼到下方。</div>'; return; }
   const cands=window._ssCand;
   if(!cands.length){ if(box) box.innerHTML='<div class="info">沒抓到相關報導，換個作物或關鍵字再試。</div>'; return; }
   let h=`<div class="tagline" style="margin:8px 0 4px">🤖 自動抓到 ${cands.length} 則相關報導，已把第 1 則帶到下方欄位。新聞常為政策／通路，請從清單挑出真正的個別農民：</div>`;
