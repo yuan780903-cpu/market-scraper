@@ -11,18 +11,20 @@ const SEED = window.SEED_DATA || [];
 let overlay = LS.get('crm_overlay', {});      // { prospectId: {freq,last,next,note,inter:[],hidden} }
 let customers = LS.get('crm_customers', []);   // 我的客戶（含敏感欄位）
 let competitors = LS.get('crm_competitors', []); // 競品報價（本機）
-const saveOverlay = () => LS.set('crm_overlay', overlay);
-const saveCust = () => LS.set('crm_customers', customers);
-const saveComp = () => LS.set('crm_competitors', competitors);
+let _crmDirty = false;               // 自上次雲端備份後資料是否有變更（供離開App時自動備份判斷）
+function markDirty(){ _crmDirty = true; }
+const saveOverlay = () => { LS.set('crm_overlay', overlay); markDirty(); };
+const saveCust = () => { LS.set('crm_customers', customers); markDirty(); };
+const saveComp = () => { LS.set('crm_competitors', competitors); markDirty(); };
 // 臨時目標客戶（使用者手動新增，只存本機）：併入 SEED，讓名單/地圖/排路線各處自動納入
 let customProspects = LS.get('crm_prospects', []);
 customProspects.forEach(p=>{ if(p&&p.id&&!SEED.some(s=>s.id===p.id)) SEED.push(p); });
-const saveProspects = () => LS.set('crm_prospects', customProspects);
+const saveProspects = () => { LS.set('crm_prospects', customProspects); markDirty(); };
 
 // 戰鬥人員（戰情公仔）— 只存本機
 let soldier = LS.get('crm_soldier', {name:'', region:[], branch:'army', weapon:'rifle', photo:''});
 if(!Array.isArray(soldier.region)) soldier.region = [];   // region：所屬戰鬥區域(縣市，可複選)＝戰情地圖負責銷售區域
-const saveSoldier = () => LS.set('crm_soldier', soldier);
+const saveSoldier = () => { LS.set('crm_soldier', soldier); markDirty(); };
 function getRegions(){ if(!Array.isArray(soldier.region)) soldier.region=[]; return soldier.region; }
 function toggleRegion(n){ const a=getRegions(), i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); saveSoldier(); }
 function clearRegions(){ soldier.region=[]; saveSoldier(); }
@@ -1168,7 +1170,8 @@ function renderCustomers(){
   h+=`<div class="field"><label>狀態</label><select onchange="cFilter.status=this.value;renderCustomers()">
         <option value="active" ${cFilter.status!=='inactive'?'selected':''}>✅ 使用中（${activeN}）</option>
         <option value="inactive" ${cFilter.status==='inactive'?'selected':''}>⏸️ 停用客戶（${inactiveN}）</option></select></div>`;
-  h+=`<div class="btn-row" style="margin-top:2px;gap:6px"><button class="btn btn-pri" onclick="custPasteImport()">📋 貼文字自動建檔</button><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" style="width:100%;padding:14px;font-size:16px;font-weight:700" onclick="custSearch()">🔍 搜尋客戶</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:6px;gap:6px"><button class="btn btn-out" onclick="custPasteImport()">📋 貼文字自動建檔</button><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
   h+=`<div id="cust-results"></div>`;
   viewHTML(h);
   renderCustResults();
@@ -1220,6 +1223,14 @@ function renderCustResults(){
     });
   }
   box.innerHTML=h;
+  return res.length;
+}
+function custSearch(){
+  const el=document.getElementById('cust-q'); if(el) cFilter.q=el.value;
+  const n=renderCustResults();
+  const box=document.getElementById('cust-results');
+  if(box) box.scrollIntoView({behavior:'smooth', block:'start'});
+  toast(`🔍 找到 ${n} 位客戶`);
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
 function setCType(t){ cFilter.type=t; renderCustomers(); }
@@ -2013,6 +2024,8 @@ function renderSettings(){
   h+=`<div class="field" style="margin-top:8px"><label>Google OAuth 用戶端 ID</label><input id="gd-cid" value="${esc(_gcid)}" placeholder="xxxxx.apps.googleusercontent.com" style="font-size:12px"></div>`;
   h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="saveGdriveClientId(document.getElementById('gd-cid').value)">💾 儲存 ID</button></div>`;
   h+=`<label style="display:flex;align-items:center;gap:8px;margin:10px 2px 2px;font-size:13px"><input type="checkbox" ${gdriveAuto()?'checked':''} onchange="toggleGdriveAuto(this.checked)" style="width:18px;height:18px">每天自動備份（每次開App超過約20小時就自動上傳）</label>`;
+  h+=`<label style="display:flex;align-items:center;gap:8px;margin:8px 2px 2px;font-size:13px"><input type="checkbox" ${gdriveOnExit()?'checked':''} onchange="toggleGdriveOnExit(this.checked)" style="width:18px;height:18px">改客戶／加目標客戶／確認路線後，<b>離開App時自動備份</b></label>`;
+  h+=`<div class="hint" style="margin:2px 2px 0;color:var(--muted);font-size:11px;line-height:1.6">開啟後，當天第一次操作會跳一次 Google 授權（之後就免）；只要資料有變更，切換離開或關閉App時會自動把最新資料傳到你的雲端。</div>`;
   h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="gdriveBackup('')">☁️ 立即備份到雲端</button></div>`;
   h+=`<div class="btn-row"><button class="btn btn-gray" onclick="gdriveRestore()">⬇️ 從雲端還原最新備份</button></div>`;
   h+=`<div class="hint" style="margin-top:6px;color:var(--muted);font-size:11px">上次雲端備份：${_glast?esc(new Date(_glast).toLocaleString('zh-TW')):'尚未備份'}</div>`;
@@ -2077,6 +2090,35 @@ function gdriveLast(){ return localStorage.getItem('crm_gdrive_last')||''; }
 function gdriveAuto(){ return localStorage.getItem('crm_gdrive_auto')==='1'; }
 function saveGdriveClientId(v){ localStorage.setItem('crm_gdrive_clientid',(v||'').trim()); _gToken=null; toast('已儲存用戶端 ID'); }
 function toggleGdriveAuto(on){ localStorage.setItem('crm_gdrive_auto', on?'1':'0'); toast(on?'已開啟每天自動備份':'已關閉自動備份'); }
+function gdriveOnExit(){ return localStorage.getItem('crm_gdrive_onexit')==='1'; }
+function toggleGdriveOnExit(on){
+  localStorage.setItem('crm_gdrive_onexit', on?'1':'0');
+  if(on){ toast('已開啟：離開App時自動備份'); prewarmDriveToken(); }
+  else toast('已關閉離開時自動備份');
+}
+// 在App使用中先取得一個無彈窗授權 token，這樣離開時才來得及直接上傳（離開瞬間無法再跳授權視窗）
+function prewarmDriveToken(){
+  if(!gdriveOnExit()||!gdriveClientId()) return;
+  getDriveToken('silent').catch(e=>console.log('prewarm token skip:', e.message));
+}
+// 離開／關閉App時：若資料有變更且已有可用 token，靜默備份一次（沿用每日備份的同一檔名覆蓋）
+let _exitBackupBusy=false;
+async function backupOnExit(){
+  if(_exitBackupBusy) return;
+  if(!gdriveOnExit()||!gdriveClientId()) return;
+  if(!_crmDirty) return;
+  if(!(_gToken && _gToken.exp>Date.now()+5000)) return;   // 沒有現成 token 就略過，待下次開App預熱或手動備份
+  _exitBackupBusy=true;
+  const token=_gToken.token;
+  _crmDirty=false;   // 樂觀清除，避免 visibilitychange/pagehide 重複觸發
+  try{
+    const name=`碩成CRM備份_${todayStr()}.json`;
+    const ex=await driveFindFile(token,name);
+    await driveUpload(token,name,JSON.stringify(backupBundle()), ex&&ex.id, true);
+    localStorage.setItem('crm_gdrive_last', new Date().toISOString());
+  }catch(e){ _crmDirty=true; console.log('exit backup failed:', e.message); }
+  finally{ _exitBackupBusy=false; }
+}
 function loadGIS(){ return new Promise((res,rej)=>{ if(window.google&&google.accounts&&google.accounts.oauth2) return res(); const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); }); }
 // ---------- 拍照 / 選照片 文字辨識（OCR，全程在本機瀏覽器執行，圖片不上傳） ----------
 function loadTesseract(){ return new Promise((res,rej)=>{ if(window.Tesseract) return res(); const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('無法載入文字辨識元件，請確認網路')); document.head.appendChild(s); }); }
@@ -2129,14 +2171,16 @@ async function driveFindFile(token,name){
   if(!r.ok) throw new Error('Drive 查詢失敗 '+r.status);
   const j=await r.json(); return (j.files&&j.files[0])||null;
 }
-async function driveUpload(token,name,content,existingId){
+async function driveUpload(token,name,content,existingId,keepalive){
   const boundary='crmbnd'+Date.now();
   const meta=existingId?{}:{name, mimeType:'application/json'};
   const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
   const url=existingId
     ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart&fields=id`
     : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`;
-  const r=await fetch(url,{method:existingId?'PATCH':'POST', headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary}, body});
+  const opt={method:existingId?'PATCH':'POST', headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary}, body};
+  if(keepalive) opt.keepalive=true;   // 讓請求在頁面被隱藏／關閉後仍能送出完成
+  const r=await fetch(url,opt);
   if(!r.ok){ const t=await r.text(); throw new Error('上傳失敗 '+r.status+' '+t.slice(0,100)); }
   return r.json();
 }
@@ -3331,6 +3375,10 @@ function initApp(){
   go(valid.includes(hash)?hash:'map');
   showInAppWarning();
   maybeAutoBackup();
+  // 離開App時自動備份：開App先預熱無彈窗 token；切到背景或關閉時若資料有變更就靜默上傳
+  prewarmDriveToken();
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') backupOnExit(); });
+  window.addEventListener('pagehide', backupOnExit);
 }
 window.addEventListener('hashchange',()=>{ const h=(location.hash||'').replace('#',''); const valid=['map','prospects','route','customers','compete','report','settings']; if(valid.includes(h)) go(h); });
 initApp();
