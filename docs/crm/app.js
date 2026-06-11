@@ -738,8 +738,8 @@ function viewProspect(id){
   h+=`<div class="field"><label>拜訪頻率（天）— 設定後自動排下次拜訪</label>
       <input type="number" id="p-freq" min="1" placeholder="例如 30" value="${o.freq||''}"></div>`;
   h+=`<div class="field-2">
-      <div class="field"><label>上次拜訪日</label><input type="date" id="p-last" value="${o.last||''}"></div>
-      <div class="field"><label>下次拜訪日</label><input type="date" id="p-next" value="${o.next||''}"></div></div>`;
+      <div class="field"><label>上次拜訪日</label>${rocDateInput('p-last',o.last)}</div>
+      <div class="field"><label>下次拜訪日</label>${rocDateInput('p-next',o.next)}</div></div>`;
   h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('prosp','${id}')">📍 記錄拜訪</button>
       <button class="btn btn-gray" onclick="saveProspectSchedule('${id}')">儲存排程</button></div>`;
   h+=`</div>`;
@@ -1025,10 +1025,10 @@ function saveHolder(kind){ kind==='cust'?saveCust():saveOverlay(); }
 function reopenDetail(kind,id){ kind==='cust'?custGroup(id,'mgmt'):viewProspect(id); }
 // 點「記錄拜訪」：一次記下內容＋後續跟進，並自動往後排下次拜訪
 function visitForm(kind,id){
-  let h=`<div class="field"><label>拜訪日期</label><input type="date" id="v-date" value="${todayStr()}"></div>`;
+  let h=`<div class="field"><label>拜訪日期</label>${rocDateInput('v-date',todayStr())}</div>`;
   h+=`<div class="field"><label>拜訪結果 / 內容</label><textarea id="v-content" placeholder="談了什麼、對方反應、結果…"></textarea></div>`;
   h+=`<div class="field"><label>後續跟進事項（選填）</label><input id="v-follow" placeholder="例如：下週二送試用樣品 / 補報價單"></div>`;
-  h+=`<div class="field"><label>跟進期限（選填）</label><input type="date" id="v-due"></div>`;
+  h+=`<div class="field"><label>跟進期限（選填）</label>${rocDateInput('v-due','')}</div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" id="v-save">儲存拜訪</button></div>`;
   openModal('記錄拜訪', h);
   $('#v-save').onclick=()=>{
@@ -1044,7 +1044,7 @@ function visitForm(kind,id){
 }
 function addFollow(kind,id){
   let h=`<div class="field"><label>跟進事項</label><input id="nf-text" placeholder="例如：下週二送樣品"></div>`;
-  h+=`<div class="field"><label>跟進期限（選填）</label><input type="date" id="nf-due"></div>`;
+  h+=`<div class="field"><label>跟進期限（選填）</label>${rocDateInput('nf-due','')}</div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" id="nf-save">新增</button></div>`;
   openModal('新增跟進事項', h);
   $('#nf-save').onclick=()=>{ const t=$('#nf-text').value.trim(); if(!t){toast('請填寫事項');return;}
@@ -1344,10 +1344,10 @@ function custSection(id,key){
     h+=drow('電話',telLink(c.phone));
     h+=drow('通訊地址',mapLink(c.address));
     if(c.contact)h+=drow('聯絡人',esc(c.contact));
-    if(c.filedDate)h+=drow('建檔日期',esc(c.filedDate));
+    if(c.filedDate)h+=drow('建檔日期',esc(toROCDate(c.filedDate)));
     if(c.taxid)h+=drow('統一編號',esc(c.taxid));
     if(c.idno)h+=drow('身分證字號',esc(c.idno));
-    if(c.birth)h+=drow('出生年月日',esc(c.birth));
+    if(c.birth)h+=drow('出生年月日',esc(toROCDate(c.birth)));
     if(c.regAddress)h+=drow('戶籍地址',mapLink(c.regAddress));
     h+=`</div><div class="btn-row"><button class="btn btn-pri" onclick="editCustomer(findCust('${id}'))">✏️ 編輯基本資料</button></div>`;
   } else if(key==='products'){
@@ -1392,7 +1392,7 @@ function custSection(id,key){
         ${GRADES.map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g} 級・${GRADE_LABEL[g]}拜訪</option>`).join('')}
         </select></div>`;
     h+=`<div class="field-2"><div class="field"><label>拜訪頻率(天)</label><input type="number" id="c-freq" value="${c.freq||''}" min="1"></div>
-        <div class="field"><label>下次拜訪日</label><input type="date" id="c-next" value="${c.next||''}"></div></div>`;
+        <div class="field"><label>下次拜訪日</label>${rocDateInput('c-next',c.next)}</div></div>`;
     h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('cust','${id}')">📍 記錄拜訪</button>
         <button class="btn btn-pri" onclick="saveCustSchedule('${id}')">儲存排程</button></div></div>`;
   } else if(key==='follow'){
@@ -1484,7 +1484,7 @@ function custGroup(id,key){
         ${GRADES.map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g} 級・${GRADE_LABEL[g]}拜訪</option>`).join('')}
         </select></div>`;
     h+=`<div class="field-2"><div class="field"><label>拜訪頻率(天)</label><input type="number" id="c-freq" value="${c.freq||''}" min="1"></div>
-        <div class="field"><label>下次拜訪日</label><input type="date" id="c-next" value="${c.next||''}"></div></div>`;
+        <div class="field"><label>下次拜訪日</label>${rocDateInput('c-next',c.next)}</div></div>`;
     h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('cust','${id}')">📍 記錄拜訪</button>
         <button class="btn btn-pri" onclick="saveCustSchedule('${id}')">儲存排程</button></div></div>`;
     h+=followBlock('cust', id, c.follow);
@@ -1519,8 +1519,8 @@ function buildFullProfile(c){
   const secs=[];
   const b=[]; const add=(k,v)=>{ if(v!==''&&v!=null) b.push([k,v]); };
   add('名稱',c.name); add('類型',c.type); add('所屬組織',c.org); add('系統編號',c.sysno);
-  add('電話',c.phone); add('聯絡人',c.contact); add('通訊地址',c.address); add('建檔日期',c.filedDate);
-  add('統一編號',c.taxid); add('身分證字號',c.idno); add('出生年月日',c.birth); add('戶籍地址',c.regAddress);
+  add('電話',c.phone); add('聯絡人',c.contact); add('通訊地址',c.address); add('建檔日期',toROCDate(c.filedDate));
+  add('統一編號',c.taxid); add('身分證字號',c.idno); add('出生年月日',toROCDate(c.birth)); add('戶籍地址',c.regAddress);
   if(c.notes) b.push(['備註',c.notes]);
   secs.push({title:'基本資料', rows:b});
   const d=[]; const addd=(k,v)=>{ if(v!==''&&v!=null) d.push([k,v]); };
@@ -1639,7 +1639,48 @@ function logCustVisit(id){ const c=findCust(id); const t=todayStr(); c.last=t; i
 function addCustInter(id){ interForm(it=>{ const c=findCust(id); c.inter=c.inter||[]; c.inter.push(it); saveCust(); toast('已新增'); custGroup(id,'mgmt'); }); }
 function delCustomer(id){ if(!confirm('確定刪除這位客戶？此動作無法復原。'))return; customers=customers.filter(c=>c.id!==id); saveCust(); closeModal(); toast('已刪除'); render(); }
 
-function field(label,id,val,type='text',req=false,ph=''){ return `<div class="field"><label>${label}${req?' <span class="req">*</span>':''}</label><input type="${type}" id="${id}" value="${esc(val||'')}" placeholder="${esc(ph)}"></div>`; }
+function field(label,id,val,type='text',req=false,ph=''){
+  const inner = type==='date'
+    ? rocDateInput(id,val)
+    : `<input type="${type}" id="${id}" value="${esc(val||'')}" placeholder="${esc(ph)}">`;
+  return `<div class="field"><label>${label}${req?' <span class="req">*</span>':''}</label>${inner}</div>`;
+}
+// ===== 民國日期選擇器（畫面顯示民國年，底層仍存西元 ISO yyyy-mm-dd） =====
+function rocDateInput(id,val){
+  const m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec((val||'').trim());
+  const yy=m?(+m[1]-1911):'', mm=m?(+m[2]):'', dd=m?(+m[3]):'';
+  const nowR=new Date().getFullYear()-1911;
+  let yo=`<option value="">年</option>`;
+  for(let i=nowR+5;i>=1;i--) yo+=`<option value="${i}" ${yy===i?'selected':''}>${i}</option>`;
+  let mo=`<option value="">月</option>`;
+  for(let i=1;i<=12;i++) mo+=`<option value="${i}" ${mm===i?'selected':''}>${i}</option>`;
+  let dao=`<option value="">日</option>`;
+  for(let i=1;i<=31;i++) dao+=`<option value="${i}" ${dd===i?'selected':''}>${i}</option>`;
+  return `<input type="hidden" id="${id}" value="${esc(val||'')}">`
+    +`<div class="rocdate" style="display:flex;gap:6px;align-items:center">`
+    +`<span style="font-size:13px;color:var(--muted);flex:0 0 auto">民國</span>`
+    +`<select data-rd="${id}" data-p="y" onchange="rocDateSync('${id}')" style="flex:1.3;min-width:0">${yo}</select>`
+    +`<select data-rd="${id}" data-p="m" onchange="rocDateSync('${id}')" style="flex:1;min-width:0">${mo}</select>`
+    +`<select data-rd="${id}" data-p="d" onchange="rocDateSync('${id}')" style="flex:1;min-width:0">${dao}</select>`
+    +`</div>`;
+}
+function rocDateSync(id){
+  const y=document.querySelector(`select[data-rd="${id}"][data-p="y"]`);
+  const mo=document.querySelector(`select[data-rd="${id}"][data-p="m"]`);
+  const d=document.querySelector(`select[data-rd="${id}"][data-p="d"]`);
+  const hid=document.getElementById(id);
+  if(!y||!mo||!d||!hid) return;
+  if(y.value&&mo.value&&d.value){
+    const yr=(+y.value)+1911;
+    hid.value=`${yr}-${String(+mo.value).padStart(2,'0')}-${String(+d.value).padStart(2,'0')}`;
+  } else hid.value='';
+}
+// 西元 ISO → 民國顯示字串（例：2021-04-19 → 民國110年4月19日）
+function toROCDate(iso){
+  const m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec((iso||'').trim());
+  if(!m) return iso||'';
+  return `民國${+m[1]-1911}年${+m[2]}月${+m[3]}日`;
+}
 
 // ---------- 產品報價（多筆）----------
 function productRowHTML(p){
@@ -1970,7 +2011,7 @@ function saveCustomer(id, isAdd){
 // ---------- 互動紀錄表單 ----------
 function interForm(cb){
   const types=['拜訪','電話','報價','成交','其他'];
-  let h=`<div class="field"><label>日期</label><input type="date" id="i-date" value="${todayStr()}"></div>`;
+  let h=`<div class="field"><label>日期</label>${rocDateInput('i-date',todayStr())}</div>`;
   h+=`<div class="field"><label>類型</label><select id="i-type">${types.map(t=>`<option>${t}</option>`).join('')}</select></div>`;
   h+=`<div class="field"><label>內容</label><textarea id="i-content" placeholder="談了什麼、結果、下一步…"></textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" id="i-save">儲存紀錄</button></div>`;
@@ -2859,7 +2900,7 @@ function convertProspectSilent(id, interItem){
 function routeFinishToday(){
   const list=window._routeToday||[]; if(!list.length){ toast('沒有可記錄的客戶'); return; }
   let h=`<div class="info">把今日路線上的 ${list.length} 家一次記成「已拜訪」，會寫入互動紀錄並流入「拜訪週報」。<b>目標客戶會自動進入「目標客戶 ▸ ✅ 已拜訪」列表</b>；談得有意願時，再到該客戶頁或路線上按「⭐ 轉既有」轉成你的客戶。</div>`;
-  h+=`<div class="field"><label>拜訪日期</label><input type="date" id="rf-date" value="${todayStr()}"></div>`;
+  h+=`<div class="field"><label>拜訪日期</label>${rocDateInput('rf-date',todayStr())}</div>`;
   h+=`<div class="card" style="padding:6px 12px">`;
   list.forEach((x,i)=>{
     h+=`<div style="padding:7px 0;border-bottom:1px solid var(--line)">
@@ -2915,7 +2956,7 @@ function renderWeekRoute(){
   if(!weekCfg.start) weekCfg.start=thisMonday();
   let h=`<div class="info">系統自動收集「到期 / 逾期」要回訪的客戶與名單，加上依分級頻率該回訪的對象，按鄉鎮就近分配到本週各出訪日。全程本機計算、不外傳。</div>`;
   h+=`<div class="card">`;
-  h+=`<div class="field"><label>本週起始日（週一）</label><input type="date" id="w-start" value="${weekCfg.start}"></div>`;
+  h+=`<div class="field"><label>本週起始日（週一）</label>${rocDateInput('w-start',weekCfg.start)}</div>`;
   h+=`<div class="field"><label>區域（可複選・限定責任區，不選＝全部）</label>${regionMultiHTML(weekCfg.regions,'toggleWeekRegion')}</div>`;
   h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
   h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
@@ -3205,7 +3246,7 @@ function editCompetitor(id, isNew){
     <div class="field"><label>價格(元)</label><input id="k-price" type="number" inputmode="decimal" value="${esc(c.price||'')}" placeholder="一包單價"></div>
     <div class="field"><label>是否含運</label><select id="k-freight">${sel(FREIGHTS,c.freight||'含運')}</select></div></div>`;
   h+=checkPeriodHTML(c.checkPeriod||'');
-  h+=`<div class="field"><label>報價日期</label><input type="date" id="k-date" value="${esc(c.date||todayStr())}"></div>`;
+  h+=`<div class="field"><label>報價日期</label>${rocDateInput('k-date',c.date||todayStr())}</div>`;
   h+=`<div class="field"><label>備註</label><textarea id="k-note" placeholder="來源、附帶條件、聯絡資訊…">${esc(c.note||'')}</textarea></div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="saveCompetitor('${c.id}',${isNew?'true':'false'})">💾 儲存</button></div>`;
   openModal(isNew?'新增競品報價':'編輯競品報價', h);
