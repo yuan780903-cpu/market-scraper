@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小朋友著色畫產生器</title>
+<style>
+  :root{
+    --pink:#ff9eb5; --peach:#ffd6a5; --sky:#a5d8ff; --mint:#b8f2d8; --pur:#cdb4f6;
+    --ink:#3a3550; --soft:#7a7390; --card:#ffffff; --line:#efe7f5; --accent:#ff7aa2;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:"PingFang TC","Microsoft JhengHei",system-ui,"Segoe UI",sans-serif;
+    color:var(--ink); background:linear-gradient(160deg,#fff4f7 0%,#fef0e6 40%,#eef6ff 100%);
+    min-height:100vh; padding-bottom:96px; }
+  header{ text-align:center; padding:22px 16px 10px; }
+  header h1{ margin:0; font-size:25px; letter-spacing:1px; }
+  header p{ margin:6px 0 0; font-size:13px; color:var(--soft); }
+  .wrap{ max-width:760px; margin:0 auto; padding:8px 14px 20px; }
+  .music-btn{ position:fixed; top:12px; right:12px; z-index:50; border:none; cursor:pointer;
+    background:rgba(255,255,255,.85); backdrop-filter:blur(6px); color:var(--accent); font-weight:700;
+    font-size:13px; padding:8px 13px; border-radius:999px; box-shadow:0 3px 10px rgba(180,150,200,.25); }
+  .music-btn.off{ color:#b6adc4; }
+  .music-btn:active{ transform:scale(.94); }
+
+  .grp-label{ font-size:14px; font-weight:800; color:var(--accent); margin:18px 4px 10px;
+    display:flex; align-items:center; gap:6px; }
+  .grp-label::before{ content:""; width:6px; height:18px; border-radius:3px; background:var(--accent); }
+
+  .theme{ background:var(--card); border-radius:20px; margin-bottom:12px; overflow:hidden;
+    box-shadow:0 6px 18px rgba(180,150,200,.12); border:1px solid var(--line); }
+  .theme-head{ display:flex; align-items:center; gap:12px; padding:15px 16px; cursor:pointer; }
+  .theme-emo{ font-size:30px; }
+  .theme-name{ font-size:17px; font-weight:700; flex:1; }
+  .theme-badge{ background:var(--mint); color:#1f7a4d; font-size:12px; font-weight:700;
+    padding:3px 9px; border-radius:999px; min-width:22px; text-align:center; display:none; }
+  .theme-badge.on{ display:inline-block; }
+  .theme-arrow{ color:var(--soft); font-size:14px; transition:.2s; }
+  .theme.open .theme-arrow{ transform:rotate(180deg); }
+  .theme-body{ display:none; padding:4px 14px 16px; }
+  .theme.open .theme-body{ display:block; }
+
+  .mini-bar{ display:flex; gap:8px; margin:0 0 12px; flex-wrap:wrap; }
+  .mini-btn{ border:none; background:#f4eefb; color:var(--ink); font-size:13px; font-weight:600;
+    padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .mini-btn:active{ transform:scale(.95); }
+
+  .chips{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px; }
+  .chip{ border:2.5px solid var(--line); border-radius:16px; padding:8px 6px 6px; text-align:center;
+    cursor:pointer; background:#fff; position:relative; transition:.12s; }
+  .chip:active{ transform:scale(.94); }
+  .chip.sel{ border-color:var(--accent); background:#fff6f9; }
+  .chip svg, .chip img{ width:100%; height:74px; object-fit:contain; display:block; }
+  .chip .nm{ font-size:12px; margin-top:4px; color:var(--soft); }
+  .chip .tk{ position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:13px; line-height:22px; display:none; }
+  .chip.sel .tk{ display:block; }
+
+  /* 我的圖片 / 線上 */
+  .tool-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .ipt{ flex:1; min-width:140px; border:2px solid var(--line); border-radius:12px; padding:10px 12px;
+    font-size:14px; outline:none; }
+  .ipt:focus{ border-color:var(--accent); }
+  .btn{ border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:700;
+    padding:10px 16px; border-radius:12px; cursor:pointer; }
+  .btn.soft{ background:#f4eefb; color:var(--ink); }
+  .btn:active{ transform:scale(.96); }
+  .hint{ font-size:11.5px; color:#a99fb8; line-height:1.7; margin:6px 2px 0; }
+  .spinner{ display:inline-block; width:16px; height:16px; border:3px solid #fff; border-top-color:transparent;
+    border-radius:50%; animation:spin .7s linear infinite; vertical-align:-3px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* 底部固定列 */
+  .dock{ position:fixed; left:0; right:0; bottom:0; z-index:40;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; gap:12px; box-shadow:0 -4px 20px rgba(180,150,200,.15); }
+  .dock .cnt{ font-size:14px; font-weight:700; flex:1; }
+  .dock .cnt b{ color:var(--accent); font-size:18px; }
+  .dock .go{ background:linear-gradient(135deg,var(--accent),#ff9d6e); color:#fff; border:none;
+    font-size:16px; font-weight:800; padding:13px 22px; border-radius:14px; cursor:pointer;
+    box-shadow:0 6px 14px rgba(255,122,162,.4); }
+  .dock .go:disabled{ opacity:.45; box-shadow:none; }
+  .dock .go:active{ transform:scale(.96); }
+
+  /* 彈窗 */
+  .overlay{ position:fixed; inset:0; z-index:60; background:rgba(58,53,80,.45); display:none;
+    align-items:flex-end; justify-content:center; }
+  .overlay.show{ display:flex; }
+  .modal{ background:#fff; width:100%; max-width:560px; border-radius:24px 24px 0 0; padding:20px 18px 28px;
+    max-height:88vh; overflow:auto; animation:up .25s ease; }
+  @keyframes up{ from{ transform:translateY(40px); opacity:.6; } }
+  .modal h3{ margin:2px 0 14px; font-size:18px; text-align:center; }
+  .count-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:12px; }
+  .cbtn{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 0; cursor:pointer;
+    font-size:17px; font-weight:700; flex:1; min-width:56px; }
+  .cbtn.sel{ border-color:var(--accent); background:#fff6f9; color:var(--accent); }
+  .custom-row{ display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:14px; }
+  .custom-row input{ width:90px; font-size:18px; text-align:center; padding:8px; border:2px solid var(--line); border-radius:12px; }
+  .pv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px; margin:10px 0 16px; }
+  .pv{ border:1px solid var(--line); border-radius:10px; padding:4px; text-align:center; }
+  .pv svg, .pv img{ width:100%; height:64px; object-fit:contain; }
+  .pv .nm{ font-size:10px; color:var(--soft); }
+  .modal .go{ width:100%; background:linear-gradient(135deg,var(--accent),#ff9d6e); color:#fff; border:none;
+    font-size:17px; font-weight:800; padding:15px; border-radius:14px; cursor:pointer; }
+
+  /* 列印：A4 滿版，一頁一張 */
+  #printArea{ display:none; }
+  @media print{
+    @page{ size:A4 portrait; margin:8mm; }
+    body{ background:#fff; padding:0; }
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{ display:block; position:absolute; left:0; top:0; width:100%; }
+    .sheet{ page-break-after:always; height:281mm; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; }
+    .sheet:last-child{ page-break-after:auto; }
+    .sheet .art{ flex:1; width:100%; display:flex; align-items:center; justify-content:center; }
+    .sheet .art svg{ width:100%; height:100%; max-height:272mm; }
+    .sheet .art img{ width:100%; height:100%; max-height:272mm; object-fit:contain; }
+    .sheet .nm{ font-size:11px; color:#bbb; padding-bottom:2mm; }
+  }
+</style>
+</head>
+<body>
+<button id="musicToggle" class="music-btn">🎵 音樂</button>
+<header>
+  <h1>🎨 著色畫產生器</h1>
+  <p>選主題 → 挑角色（可隨機）→ 選張數 → 印出 A4 滿版著色畫</p>
+</header>
+
+<div class="wrap" id="wrap"></div>
+
+<div class="dock">
+  <div class="cnt">已選 <b id="selCount">0</b> 張原圖</div>
+  <button class="mini-btn" id="clearAll" style="display:none">清除</button>
+  <button class="go" id="goPDF" disabled>產生 PDF</button>
+</div>
+
+<!-- 張數彈窗 -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>要印幾張？</h3>
+    <div class="count-row" id="countRow"></div>
+    <div class="custom-row">
+      <span style="color:var(--soft);font-size:14px">自訂</span>
+      <input type="number" id="customCount" min="1" max="60" placeholder="?">
+      <span style="color:var(--soft);font-size:14px">張</span>
+    </div>
+    <div class="pv-grid" id="pvGrid"></div>
+    <button class="go" id="printBtn">🖨 開始列印 / 另存 PDF</button>
+    <p class="hint" style="text-align:center">列印視窗的「目的地」選「另存為 PDF」即可存檔。張數比角色多會自動隨機重複。</p>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script src="sound.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
