@@ -317,7 +317,7 @@ function itemRow({name,sub,cat,pill,onclick}){
 }
 
 // ========== 戰情地圖 ==========
-let mapState = {town:-1};   // town: 選取鄉鎮 index（負責銷售區域改存 soldier.region，可跨頁連動並持久化）
+let mapState = {town:-1, mode:'cust'};   // town: 選取鄉鎮 index；mode: 'cust'=既有客戶分布 / 'ops'=經營狀況（經銷商 vs 直營）
 function countyCore(s){ s=normR(s); return REGION_ORDER.find(x=>s.includes(x))||''; }
 // 以官方鄉鎮名清單做權威比對（避免「平鎮區→平鎮」「台西/臺西」等誤判）
 function townsByCore(){
@@ -353,14 +353,33 @@ function computeTownStats(){
   return {lead,cust,dist,distNames};
 }
 function townKey(t){ return countyCore(t.c)+'|'+t.t; }
-// 滲透色：灰=無資料、橘=有名單未開發、綠由淺到深=滲透越高
-function penColor(lead,cust){
-  if(!lead && !cust) return '#eceff1';
-  if(cust<=0) return '#ffd9a8';
-  const rate=lead?Math.min(1,cust/lead):1;
-  if(rate<0.34) return '#a5d6a7';
-  if(rate<0.67) return '#52b265';
-  return '#2e7d32';
+// 既有客戶分布色（不再分滲透％）：灰=無名單、橘=有名單未開發、綠=已有既有客戶
+const COL_NODATA='#eceff1', COL_LEAD='#ffd9a8', COL_CUST='#2e7d32';
+function custColor(lead,cust){
+  if(cust>0) return COL_CUST;
+  if(lead>0) return COL_LEAD;
+  return COL_NODATA;
+}
+// ---- 經營狀況：每家經銷商一個顏色，其餘有經營的鄉鎮＝直營 ----
+const COL_DIRECT='#1b4d8f';   // 直營區域（企業藍）
+const COL_MULTI='#7e57c2';    // 多家經銷重疊（紫）
+// 經銷商配色盤（避開藍/綠/灰，以免和直營／無資料混淆）
+const DIST_PALETTE=['#e57373','#ffb74d','#ba68c8','#f06292','#a1887f','#ff8a65','#9575cd','#4db6ac','#c0ca33','#ec407a','#8d6e63','#26c6da','#d4e157','#ff7043'];
+// 目前作用中的經銷商（有實際經銷區域者）→ 穩定的名稱→顏色對照
+function distColorMap(){
+  const names=new Set();
+  customers.forEach(c=>{ if(!c.inactive && c.type==='經銷商' && (c.salesRegions||[]).some(r=>r&&r!=='線上通路')) names.add(c.name); });
+  const sorted=[...names].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const map={}; sorted.forEach((n,i)=>{ map[n]=DIST_PALETTE[i%DIST_PALETTE.length]; });
+  return {sorted, map};
+}
+// 某鄉鎮的經營狀況色：依覆蓋的經銷商；無經銷商但有名單/客戶＝直營；皆無＝無資料
+function opsColor(distNamesSet, lead, cust, cmap){
+  const ds = distNamesSet ? [...distNamesSet] : [];
+  if(ds.length>=2) return COL_MULTI;
+  if(ds.length===1) return cmap[ds[0]] || COL_DIRECT;
+  if(lead>0 || cust>0) return COL_DIRECT;
+  return COL_NODATA;
 }
 function renderMap(){
   if(!window.TW_MAP){ viewHTML('<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'); return; }
@@ -378,38 +397,61 @@ function renderMap(){
   const cNames=Object.keys(M.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x)));
   // 負責銷售區域橫幅（地圖直接套用，不再重複選擇）
   let h=mapRegionBanner();
+  const ops = mapState.mode==='ops';
+  const {sorted:distList, map:cmap} = distColorMap();
+  // 圖層切換選單
+  h+=`<div class="rowsel"><span class="rowsel-l">圖層</span><select class="regsel" onchange="setMapMode(this.value)">
+      <option value="cust" ${ops?'':'selected'}>既有客戶分布</option>
+      <option value="ops" ${ops?'selected':''}>經營狀況（經銷商／直營）</option></select></div>`;
   // 選取鄉鎮資訊卡
   if(mapState.town>=0 && M.towns[mapState.town]){
     const t=M.towns[mapState.town], k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
-    const rate=lead?Math.round(Math.min(1,cu/lead)*100):(cu?100:0);
     const dn = st.distNames[k] ? [...st.distNames[k]] : [];
-    h+=`<div class="minfo"><div class="mt">${esc(t.c)} ${esc(t.t)}</div>
-      <div class="mstat"><div>名單<br><b>${lead}</b></div><div>我的客戶<br><b style="color:var(--green)">${cu}</b></div><div>滲透率<br><b>${rate}%</b></div></div>`+
-      (dn.length?`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px">🛡️ 已有經銷商經營：<b>${dn.map(esc).join('、')}</b></div>`:'')+`</div>`;
+    if(ops){
+      const typ = dn.length ? `經銷：${dn.map(esc).join('、')}` : ((lead||cu)?'直營區域':'尚無經營');
+      h+=`<div class="minfo"><div class="mt">${esc(t.c)} ${esc(t.t)}</div>
+        <div style="font-size:14px"><b style="color:${dn.length?(dn.length>1?COL_MULTI:(cmap[dn[0]]||COL_DIRECT)):COL_DIRECT}">${typ}</b></div>
+        <div class="mstat" style="margin-top:7px"><div>名單<br><b>${lead}</b></div><div>我的客戶<br><b style="color:var(--green)">${cu}</b></div></div></div>`;
+    }else{
+      h+=`<div class="minfo"><div class="mt">${esc(t.c)} ${esc(t.t)}</div>
+        <div class="mstat"><div>名單<br><b>${lead}</b></div><div>我的客戶<br><b style="color:var(--green)">${cu}</b></div></div>`+
+        (dn.length?`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px">🛡️ 已有經銷商經營：<b>${dn.map(esc).join('、')}</b></div>`:'')+`</div>`;
+    }
   }
   // SVG 地圖
   let paths='';
   M.towns.forEach((t,i)=>{
-    const k=townKey(t);
-    const col=penColor(st.lead[k]||0,st.cust[k]||0);
+    const k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
     const covered=(st.dist[k]||0)>0;
-    paths+=`<path class="tw-town${i===mapState.town?' sel':''}${covered?' tw-dist':''}" d="${t.d}" fill="${col}" onclick="mapTapTown(${i})"></path>`;
+    const col = ops ? opsColor(st.distNames[k], lead, cu, cmap) : custColor(lead, cu);
+    const distCls = (!ops && covered) ? ' tw-dist' : '';
+    paths+=`<path class="tw-town${i===mapState.town?' sel':''}${distCls}" d="${t.d}" fill="${col}" onclick="mapTapTown(${i})"></path>`;
   });
-  h+=`<div class="mapwrap"><svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${paths}</svg></div>`;
-  // 圖例
-  h+=`<div class="maplegend">
-    <span><i style="background:#ffd9a8"></i>有名單未開發</span>
-    <span><i style="background:#a5d6a7"></i>滲透 ~33%</span>
-    <span><i style="background:#52b265"></i>~66%</span>
-    <span><i style="background:#2e7d32"></i>67%以上</span>
-    <span><i style="background:#eceff1"></i>無名單</span>
-    <span><i style="background:#fff;border:2px solid #d4a017"></i>🛡️ 已有經銷商經營</span></div>`;
+  // 經營狀況：右下角經銷商色票圖例（疊在地圖上）
+  let opsOverlay='';
+  if(ops){
+    let items = distList.map(n=>`<span><i style="background:${cmap[n]}"></i>${esc(n)}</span>`).join('');
+    items += `<span><i style="background:${COL_DIRECT}"></i>直營區域</span>`;
+    if(M.towns.some(t=>{ const k=townKey(t); return st.distNames[k] && st.distNames[k].size>=2; })) items += `<span><i style="background:${COL_MULTI}"></i>多家經銷</span>`;
+    opsOverlay=`<div class="ops-legend"><div class="ol-t">經銷商</div>${items||'<span style="color:var(--muted)">尚無經銷商經營區域</span>'}</div>`;
+  }
+  h+=`<div class="mapwrap"><svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${paths}</svg>${opsOverlay}</div>`;
+  // 圖例（既有客戶模式）
+  if(!ops){
+    h+=`<div class="maplegend">
+      <span><i style="background:${COL_CUST}"></i>有既有客戶</span>
+      <span><i style="background:${COL_LEAD}"></i>有名單未開發</span>
+      <span><i style="background:${COL_NODATA}"></i>無名單</span>
+      <span><i style="background:#fff;border:2px solid #d4a017"></i>🛡️ 已有經銷商經營</span></div>`;
+  }
   // 明細表：未選→各縣市滾算；已選→所選縣市各鄉鎮（聯集）
-  if(!sel.length){
+  if(ops){
+    h+=renderOpsDetail(M,st,sel,cmap,distList);
+  } else if(!sel.length){
     const roll={};
     M.towns.forEach(t=>{ const k=townKey(t); const r=roll[t.c]=roll[t.c]||{lead:0,cust:0,dist:0}; r.lead+=st.lead[k]||0; r.cust+=st.cust[k]||0; if(st.dist[k])r.dist++; });
     const rows=cNames.map(n=>({name:n,...roll[n]})).filter(r=>r.lead||r.cust||r.dist);
-    h+=`<div class="sec-title"><span class="bar"></span>各縣市滲透概況<span style="font-weight:400;font-size:11.5px;color:var(--muted)">（點縣市加入負責區）</span></div><div class="card">`+
+    h+=`<div class="sec-title"><span class="bar"></span>各縣市開發概況<span style="font-weight:400;font-size:11.5px;color:var(--muted)">（點縣市加入負責區）</span></div><div class="card">`+
       rows.sort((a,b)=>(b.lead-b.cust)-(a.lead-a.cust)).map(r=>mapBarRow(r.name,r.lead,r.cust,()=>`mapToggleCounty('${esc(r.name)}')`,r.dist>0)).join('')+`</div>`;
   } else {
     const towns=M.towns.map((t,i)=>({i,t})).filter(o=>sel.includes(o.t.c));
@@ -419,13 +461,30 @@ function renderMap(){
   }
   viewHTML(h);
 }
+// 經營狀況明細：各經銷商版圖統計（含直營）
+function renderOpsDetail(M,st,sel,cmap,distList){
+  // 統計每家經銷商覆蓋鄉鎮數、直營鄉鎮數、多家重疊數
+  const distTowns={}; let direct=0, multi=0;
+  M.towns.forEach(t=>{ if(sel.length && !sel.includes(t.c)) return; const k=townKey(t); const set=st.distNames[k]; const n=set?set.size:0; const lead=st.lead[k]||0, cu=st.cust[k]||0;
+    if(n>=2){ multi++; set.forEach(nm=>distTowns[nm]=(distTowns[nm]||0)+1); }
+    else if(n===1){ const nm=[...set][0]; distTowns[nm]=(distTowns[nm]||0)+1; }
+    else if(lead||cu){ direct++; }
+  });
+  const scope = sel.length ? '負責區域' : '全台';
+  let rows = distList.filter(n=>distTowns[n]).sort((a,b)=>distTowns[b]-distTowns[a]).map(n=>
+    `<div class="mrow" style="cursor:default"><div class="mname" style="width:auto;flex:1;display:flex;align-items:center;gap:7px"><i style="width:13px;height:13px;border-radius:3px;background:${cmap[n]};flex:none"></i>${esc(n)}</div><div class="mnum">${distTowns[n]} 鄉鎮</div></div>`).join('');
+  rows += `<div class="mrow" style="cursor:default"><div class="mname" style="width:auto;flex:1;display:flex;align-items:center;gap:7px"><i style="width:13px;height:13px;border-radius:3px;background:${COL_DIRECT};flex:none"></i>直營區域</div><div class="mnum">${direct} 鄉鎮</div></div>`;
+  if(multi) rows += `<div class="mrow" style="cursor:default"><div class="mname" style="width:auto;flex:1;display:flex;align-items:center;gap:7px"><i style="width:13px;height:13px;border-radius:3px;background:${COL_MULTI};flex:none"></i>多家經銷重疊</div><div class="mnum">${multi} 鄉鎮</div></div>`;
+  return `<div class="sec-title"><span class="bar"></span>經銷商經營版圖<span style="font-weight:400;font-size:11.5px;color:var(--muted)">（${scope}）</span></div><div class="card">${rows}</div>`;
+}
+function setMapMode(m){ mapState.mode=m; mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapBarRow(name,lead,cust,onclickFn,covered){
-  const rate=lead?Math.min(1,cust/lead):(cust?1:0);
-  const col=penColor(lead,cust);
+  const developed = lead ? Math.min(1, cust/lead) : (cust?1:0);
+  const col=custColor(lead,cust);
   return `<div class="mrow" onclick="${onclickFn()}">
     <div class="mname">${esc(name)}${covered?' <span title="已有經銷商經營">🛡️</span>':''}</div>
-    <div class="mbar"><i style="width:${Math.round(rate*100)}%;background:${col}"></i></div>
-    <div class="mnum">客${cust}/名單${lead}・${Math.round(rate*100)}%</div></div>`;
+    <div class="mbar"><i style="width:${Math.round(developed*100)}%;background:${col}"></i></div>
+    <div class="mnum">客${cust}/名單${lead}</div></div>`;
 }
 function mapToggleCounty(n){ toggleRegion(n); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapClearCounties(){ clearRegions(); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
