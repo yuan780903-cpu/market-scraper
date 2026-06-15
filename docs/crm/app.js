@@ -188,24 +188,24 @@ function gotoMapTown(i){ go('map'); mapTapTown(i); }
 // ========== 首頁（戰情儀表板） ==========
 // ---------- 軍事圖標（白色剪影 SVG）----------
 const MIL_ICON = {
-  radar: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 26h22"/><path d="M16 26v-9"/><path d="M16 17 6.5 13.5 9 7l9.5 3.5z" fill="#fff" stroke="none"/><path d="M20.5 9.5A7.5 7.5 0 0 1 25 16"/><path d="M22.5 5.5A11.5 11.5 0 0 1 29 15"/></svg>`,
+  map: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5 4 8v19l8-3 8 3 8-3V5l-8 3z"/><path d="M12 5v19M20 8v19"/></svg>`,
   target: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.3"><circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4.6"/><circle cx="16" cy="16" r="1.4" fill="#fff" stroke="none"/><path d="M16 2v6M16 24v6M2 16h6M24 16h6" stroke-linecap="round"/></svg>`,
-  rifle: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="13" width="26" height="3" rx="1"/><rect x="6.5" y="16" width="3" height="6.5" rx="1"/><path d="M22 16l-2.2 5.5h3.2L25 16z"/><rect x="12.5" y="9.6" width="2.4" height="3.6"/><rect x="26" y="11.5" width="3" height="1.6" rx=".6"/></svg>`,
-  jet: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M16 2c1.1 0 1.8 1.4 2 3l.5 8.5 10.5 5.5v2.6l-10.5-2.8-.4 5.4 3 2.6v2.2l-4.6-1.7-4.6 1.7v-2.2l3-2.6-.4-5.4L3.5 21.6V19l10.5-5.5L14 5c.2-1.6.9-3 2-3z"/></svg>`,
-  tank: `<svg viewBox="0 0 32 32" fill="#fff"><rect x="3" y="18" width="24" height="6" rx="3"/><circle cx="8" cy="21" r="1.3" fill="#37431d"/><circle cx="13" cy="21" r="1.3" fill="#37431d"/><circle cx="18" cy="21" r="1.3" fill="#37431d"/><circle cx="23" cy="21" r="1.3" fill="#37431d"/><rect x="6" y="12.5" width="16" height="6" rx="1.5"/><rect x="11" y="8" width="8" height="5.5" rx="1.5"/><rect x="18" y="9.6" width="12" height="2.3" rx="1"/></svg>`,
-  carrier: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M3 20h26l-3.5 6H7z"/><rect x="4" y="16" width="25" height="3"/><rect x="20" y="9.5" width="4.2" height="6.5"/><rect x="21.3" y="5" width="1.6" height="4.5"/><path d="M7 16l3-3h6l-1.4 3z" fill="#37431d"/></svg>`,
-  gear: `<svg viewBox="0 0 32 32" fill="#fff"><path d="M14.5 2h3l.55 3.1a9 9 0 0 1 2.05.85l2.6-1.7 2.1 2.1-1.7 2.6c.36.64.64 1.32.85 2.05L29 14.5v3l-3.1.55c-.21.73-.49 1.41-.85 2.05l1.7 2.6-2.1 2.1-2.6-1.7c-.64.36-1.32.64-2.05.85L17.5 30h-3l-.55-3.1a9 9 0 0 1-2.05-.85l-2.6 1.7-2.1-2.1 1.7-2.6a9 9 0 0 1-.85-2.05L3 17.5v-3l3.1-.55c.21-.73.49-1.41.85-2.05l-1.7-2.6 2.1-2.1 2.6 1.7c.64-.36 1.32-.64 2.05-.85L14.5 2z"/><circle cx="16" cy="16" r="4" fill="#37431d"/></svg>`
+  people: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12.5" cy="11" r="4"/><path d="M5 25c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/><path d="M21 8.2a4 4 0 0 1 0 7.6"/><path d="M22.6 18.3c2.7.8 4.7 3.2 4.7 6.7"/></svg>`,
+  tag: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h10.5L28 17.5 17.5 28 5 15.5z"/><circle cx="10.6" cy="10.6" r="2"/></svg>`,
+  route: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"><circle cx="16" cy="16" r="11"/><path d="M20.8 11.2 14.4 14.4 11.2 20.8 17.6 17.6z" fill="#fff" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="#fff" stroke="none"/></svg>`,
+  doc: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h9l6 6v18H9z"/><path d="M17.5 4v6.5H24"/><path d="M12.5 16h9M12.5 20h9M12.5 24h6"/></svg>`,
+  gear: `<svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"><path d="M14.5 3h3l.55 3.1a9 9 0 0 1 2.05.85l2.6-1.7 2.1 2.1-1.7 2.6c.36.64.64 1.32.85 2.05L29 13.5v3l-3.1.55c-.21.73-.49 1.41-.85 2.05l1.7 2.6-2.1 2.1-2.6-1.7c-.64.36-1.32.64-2.05.85L17.5 29h-3l-.55-3.1a9 9 0 0 1-2.05-.85l-2.6 1.7-2.1-2.1 1.7-2.6a9 9 0 0 1-.85-2.05L3 16.5v-3l3.1-.55c.21-.73.49-1.41.85-2.05l-1.7-2.6 2.1-2.1 2.6 1.7c.64-.36 1.32-.64 2.05-.85L14.5 3z"/><circle cx="16" cy="15" r="3.8"/></svg>`
 };
 function milIcon(k){ return MIL_ICON[k]||''; }
 
 // ---------- 各頁「作戰單位」抬頭卡（全站統一）----------
 const PAGE_META = {
-  map:       {icon:'radar',   code:'RECON',  title:'戰情地圖', desc:'戰區雷達 ・ 鄉鎮滲透'},
-  prospects: {icon:'target',  code:'TARGET', title:'目標名單', desc:'狙擊目標 ・ 名單篩選'},
-  customers: {icon:'rifle',   code:'ALLY',   title:'現有客戶', desc:'友軍部隊 ・ 拜訪跟進'},
-  compete:   {icon:'jet',     code:'BOGEY',  title:'競品價格', desc:'敵機偵蒐 ・ 市場比價'},
-  route:     {icon:'tank',    code:'ARMOR',  title:'智慧拜訪規劃', desc:'裝甲行軍 ・ 智慧排程'},
-  report:    {icon:'carrier', code:'SITREP', title:'拜訪週報', desc:'航艦戰報 ・ 紀要生成'},
+  map:       {icon:'map',    code:'RECON',  title:'戰情地圖', desc:'戰區雷達 ・ 鄉鎮滲透'},
+  prospects: {icon:'target', code:'TARGET', title:'目標名單', desc:'狙擊目標 ・ 名單篩選'},
+  customers: {icon:'people', code:'ALLY',   title:'現有客戶', desc:'友軍部隊 ・ 拜訪跟進'},
+  compete:   {icon:'tag',    code:'BOGEY',  title:'競品價格', desc:'敵機偵蒐 ・ 市場比價'},
+  route:     {icon:'route',  code:'ARMOR',  title:'智慧拜訪規劃', desc:'裝甲行軍 ・ 智慧排程'},
+  report:    {icon:'doc',    code:'SITREP', title:'拜訪週報', desc:'航艦戰報 ・ 紀要生成'},
   settings:  {icon:'gear',    code:'LOGI',   title:'設定備份', desc:'軍械補給 ・ 資料備份'}
 };
 function pageHeader(k){ const m=PAGE_META[k]; if(!m) return '';
@@ -243,10 +243,10 @@ function renderHome(){
   if(window.TW_MAP){ weakN=weakestTowns(computeTownStats(),8).length; }
 
   h += `<div class="sec-title"><span class="bar"></span>作戰快報 ・ 點卡片看內容</div><div class="card">`;
-  h += homeTile('rifle', '本週出擊任務', tasks.length?`${tasks.length} 個任務${overdue?`・逾期 ${overdue}`:''}`:'目前沒有排定的拜訪', 'openHomeTasks()');
+  h += homeTile('people', '本週出擊任務', tasks.length?`${tasks.length} 個任務${overdue?`・逾期 ${overdue}`:''}`:'目前沒有排定的拜訪', 'openHomeTasks()');
   h += homeTile('target','待辦戰術跟進', fups.length?`${fups.length} 項待辦`:'沒有待辦的跟進事項', 'openHomeFollow()');
-  if(regs.length) h += homeTile('radar', '各縣市戰況', `共 ${regs.length} 縣市・最待開發：${esc(weakCounty)}`, 'openHomeCounty()');
-  if(weakN)       h += homeTile('tank',  '優先攻佔鄉鎮', `名單多未開發 TOP ${weakN}`, 'openHomeTown()');
+  if(regs.length) h += homeTile('map', '各縣市戰況', `共 ${regs.length} 縣市・最待開發：${esc(weakCounty)}`, 'openHomeCounty()');
+  if(weakN)       h += homeTile('route',  '優先攻佔鄉鎮', `名單多未開發 TOP ${weakN}`, 'openHomeTown()');
   h += `</div>`;
   $('#view').innerHTML = h;
 }
