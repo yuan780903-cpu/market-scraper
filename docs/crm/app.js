@@ -95,8 +95,9 @@ const gradeText = g => g ? `${g}級・${GRADE_LABEL[g]}` : '';
 // ---------- 工具 ----------
 const $ = s => document.querySelector(s);
 const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const todayStr = () => new Date().toISOString().slice(0,10);
-function addDays(dstr, n){ const d=new Date(dstr); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+const ymdLocal = d => { const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
+const todayStr = () => ymdLocal(new Date());
+function addDays(dstr, n){ const d=new Date(dstr); d.setDate(d.getDate()+n); return ymdLocal(d); }
 function daysBetween(a, b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 function colorFor(name){ const c=['#43a047','#1e88e5','#8e24aa','#00897b','#fb8c00','#5e35b1','#d81b60','#3949ab']; let h=0; for(const ch of (name||'')) h=(h*31+ch.charCodeAt(0))>>>0; return c[h%c.length]; }
 let toastT;
@@ -2285,20 +2286,264 @@ function ruleCard(r,i,canDel){
       <div class="field"><label>家數</label><input class="rr-n" type="number" min="1" max="9" value="${r.n}"></div></div>
   </div>`;
 }
-// ---------- 模式切換：智慧安排 / 每週智慧排程 / 自訂單日路線 ----------
-let routeMode = 'smart';
-function setRouteMode(m){ routeMode=m; renderRoute(); }
+// ========== 整合路線頁：每週排程為主軸＋智慧時間安排＋加料＋單選每日＋寫入存檔 ==========
+// 一頁搞定：自動收集到期/逾期/分級對象→分配各出訪日→每日就近排序與抵達時刻；
+// 需要時用「加料」(條件組合/關鍵字)加入特定對象；按💾寫入存檔後，每天打開頁首即見今日行程，
+// 依行程拜訪完按「完成今日拜訪」一鍵寫入週報。全程本機計算、不外傳。
 function renderRoute(){
-  let h=`<div class="field" style="margin-bottom:10px"><label>排程模式</label>
-    <select onchange="setRouteMode(this.value)">
-      <option value="smart" ${routeMode==='smart'?'selected':''}>🧠 每日智慧安排</option>
-      <option value="week" ${routeMode==='week'?'selected':''}>📅 每週排程</option>
-      <option value="custom" ${routeMode==='custom'?'selected':''}>🗺️ 每日條件路線</option></select></div>
-    <div id="route-body"></div>`;
+  const regs=regionsSorted();
+  if(!weekCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); weekCfg.regions=tn?[tn]:[]; smartCfg.f.regions=tn?[tn]:[]; weekCfg._inited=1; }
+  if(!weekCfg.start) weekCfg.start=thisMonday();
+  smartCfg.f.regions=weekCfg.regions;   // 加料關鍵字搜尋跟著本週區域
+  let h='';
+  // ── 今日行程（讀已寫入存檔）──
+  h+=`<div id="route-today">${renderTodayCard()}</div>`;
+  // ── 本週規劃設定 ──
+  h+=`<div class="sec-title" style="margin-top:6px"><span class="bar"></span>本週規劃</div>`;
+  h+=`<div class="info">自動收集「到期／逾期」要回訪的客戶與名單，加上依分級頻率該回訪的對象，分配到本週各出訪日，並排出每日就近順序與抵達時刻。需要時用下方「加料」加入特定對象。</div>`;
+  h+=`<div class="card">`;
+  h+=`<div class="field"><label>本週起始日（週一）</label>${rocDateInput('w-start',weekCfg.start)}</div>`;
+  h+=`<div class="field"><label>區域（可複選・限定責任區，不選＝全部）</label>${regionMultiHTML(weekCfg.regions,'toggleWeekRegion')}</div>`;
+  h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
+  h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
+      <div class="field"><label>排程範圍</label><select id="w-mode"><option value="all" ${weekCfg.mode==='all'?'selected':''}>到期＋依分級建議(推薦)</option><option value="due" ${weekCfg.mode==='due'?'selected':''}>只排已設下次拜訪日</option></select></div></div>`;
+  h+=`</div>`;
+  // ── 出發/回家/時間（供每日智慧時間排序）──
+  h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家 / 時間</div>`;
+  h+=`<div class="field"><label>🏁 出發位置（排每日順序與抵達時刻用，建議填）</label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址" onchange="smartNormLoc(this)"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍</button></div></div>`;
+  h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置" onchange="smartNormLoc(this)"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍</button></div></div>`;
+  h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>
+      <div class="field"><label>回家時間（估算用）</label><input type="time" id="sm-end" value="${smartCfg.endTime}"></div></div>`;
+  h+=`<div class="field"><label>每家停留(分)</label><input type="number" id="w-dwell" min="5" step="5" value="${weekCfg.dwell||SMART_DWELL}"></div>`;
+  h+=`<div class="field-2"><div class="field"><label>中午休息起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
+      <div class="field"><label>中午休息迄</label><input type="time" id="sm-lunch2" value="${smartCfg.lunchEnd}"></div></div>`;
+  h+=`<div class="field"><label>🍱 中午休息地點（可空）</label><div style="display:flex;gap:6px"><input id="sm-lunchloc" style="flex:1;min-width:0" value="${esc(smartCfg.lunchLoc)}" placeholder="餐廳地址或座標/地圖網址" onchange="smartNormLoc(this)"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-lunchloc')">📍</button></div></div>`;
+  h+=`</div>`;
+  // ── 加料（可選）──
+  h+=renderAddOn();
+  // ── 產生 ──
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planWeek()">📅 產生本週計畫</button></div>`;
+  h+=`<div id="week-result">${weekCfg.plan?renderPlanResult():(weekCfg._last||'')}</div>`;
   viewHTML(h);
-  if(routeMode==='smart') renderSmartRoute();
-  else if(routeMode==='week') renderWeekRoute();
-  else renderCustomRoute();
+  if(smartCfg._kwFocus){ const el=$('#sm-kw'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); } smartCfg._kwFocus=false; }
+}
+
+// 加料區：條件組合(陌生農會1…) + 關鍵字挑特定客戶（重用 smartCfg.picks / routeCfg.rules）
+function weekToggleAdd(){ weekCfg._addOpen=weekCfg._addOpen?0:1; renderRoute(); }
+function renderAddOn(){
+  const comboN=(routeCfg.rules||[]).filter(r=>r.status||r.channel||r.grade).length;
+  let h=`<div class="sec-title"><span class="bar"></span>加料（可選）<button class="rule-del" style="float:right" onclick="weekToggleAdd()">${weekCfg._addOpen?'▲ 收合':'▼ 展開'}</button></div>`;
+  if(!weekCfg._addOpen){
+    h+=`<div class="card" style="padding:12px 14px;color:var(--muted);font-size:12.5px">把「自動收集」以外的特定對象也排進來：用條件組合（例如 陌生農會1）或關鍵字挑個別客戶。${(smartCfg.picks.length||comboN)?`<br>目前已加：指定 ${smartCfg.picks.length} 家＋條件 ${comboN} 組。`:''}</div>`;
+    return h;
+  }
+  // 條件組合
+  h+=`<div class="card"><div class="field"><label>🤖 條件組合（自動拆解，挑到期優先）</label><input id="r-nl" value="${esc(routeCfg.nl)}" placeholder="例如：陌生農會1 既有合作社2"></div>
+    <div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="parseNL()">✨ 解析成組合</button></div>`;
+  h+=`<div id="rules">${(routeCfg.rules||[]).map((r,i)=>ruleCard(r,i,true)).join('')}</div>`;
+  h+=`<div class="more" onclick="addRule()">＋ 新增一組條件</div>`;
+  h+=`<div class="tagline" style="margin-top:6px">這些條件挑出的對象會「加料」進本週計畫（即使未到期）。看得懂：陌生／既有・農會／合作社／肥料行／有機農戶・可加 A~D 級・數字＝家數。</div></div>`;
+  // 關鍵字挑特定客戶（重用 smartPool / smartCfg.picks）
+  const f=smartCfg.f;
+  h+=`<div class="card"><div class="field"><label>🔍 關鍵字挑特定客戶/名單加入</label>
+      <div style="position:relative"><input id="sm-kw" value="${esc(f.kw||'')}" placeholder="名稱／地址／電話…例如 翁俊榮 / 義竹" oninput="smartKwInput(this.value)" style="width:100%;box-sizing:border-box;padding-right:34px">${(f.kw||'')?`<button type="button" onclick="smartKwInput('')" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer">✕</button>`:''}</div></div>`;
+  const pool=smartPool(); const pickedKeys=new Set(smartCfg.picks.map(p=>p.key));
+  h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="smartTogglePool()">${smartCfg._poolOpen?'▲ 收合符合清單':`顯示符合清單（${pool.length}）`}</button></div>`;
+  if(smartCfg._poolOpen){
+    if(!pool.length) h+=`<div class="card empty" style="padding:14px">沒有符合的對象，放寬條件或換區域。</div>`;
+    else{
+      h+=`<div class="card" style="padding:4px 14px;max-height:300px;overflow:auto">`;
+      pool.slice(0,60).forEach(x=>{ const added=pickedKeys.has(x.key);
+        h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
+      if(pool.length>60) h+=`<div class="tagline" style="padding:8px 2px">符合 ${pool.length}，僅顯示前 60，請縮小關鍵字。</div>`;
+      h+=`</div>`;
+    }
+  }
+  h+=`</div>`;
+  // 指定清單
+  if(smartCfg.picks.length){
+    h+=`<div class="sec-title"><span class="bar"></span>指定加入（${smartCfg.picks.length}）<button class="rule-del" style="float:right" onclick="smartClearPicks()">✕ 全部清除</button></div><div class="card" style="padding:8px 12px">`;
+    smartCfg.picks.forEach((p,i)=>{ h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px"><div class="avatar" style="background:${colorFor(p.name)};width:26px;height:26px;font-size:13px">${i+1}</div><div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(p.name)}</div><div class="sub" style="font-size:11.5px">${esc([p.district,p.channel].filter(Boolean).join(' · '))}</div></div><button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>`; });
+    h+=`</div>`;
+  }
+  return h;
+}
+
+// 每日時間排序引擎（最近鄰＋2-opt 就近排序＋約定到達＋中午休息→估抵達時刻；離線/OSRM 皆可）
+function scheduleDayPlan(items, cfg){
+  const toMin=t=>{const[a,b]=(t||'').split(':').map(Number);return (a||0)*60+(b||0);};
+  const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(((m%60)+60)%60)).padStart(2,'0')}`;
+  const startLoc=cfg.startLoc||'', endLoc=cfg.endLoc||startLoc;
+  const startLL=smartLatLng(startLoc), endLL=smartLatLng(endLoc);
+  const s=toMin(cfg.startTime||'08:00');
+  const ls=toMin(cfg.lunchStart||'12:00'), le=toMin(cfg.lunchEnd||'13:00');
+  const lunchLoc=cfg.lunchLoc||'', lunchDur=Math.max(0,le-ls);
+  const dwellOf=p=>Math.max(5,p.dwell||cfg.dwell||SMART_DWELL);
+  const free=optimizeFreeOrder(items.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_ll:smartLatLng(p.address)})), startLL, endLL);
+  const fixed=items.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
+  const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
+  const hasPrev=()=>!!(result.length||startLoc);
+  const insertLunchBefore=(stopAddr)=>{
+    if(lunchDone) return;
+    const naive=t + (hasPrev()?smartTravel(prevAddr,stopAddr):0);
+    if(naive < ls) return;
+    let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : t; larr=Math.max(larr,ls);
+    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
+    t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc; lunchDone=true;
+  };
+  let fi=0, ui=0;
+  while(ui<free.length || fi<fixed.length){
+    const nextFx = fi<fixed.length ? fixed[fi] : null; let useFixed=false;
+    if(nextFx){
+      if(ui>=free.length) useFixed=true;
+      else if(nextFx._at <= t + smartTravel(prevAddr, nextFx.address)) useFixed=true;
+      else { const fr=free[ui]; const afterFree = t + (hasPrev()?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address); if(afterFree > nextFx._at) useFixed=true; }
+    }
+    if(useFixed){ const fx=fixed[fi++]; insertLunchBefore(fx.address); let arr=Math.max(t + (hasPrev()?smartTravel(prevAddr,fx.address):0), fx._at); if(arr>fx._at) lateFix=true; result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true})); t=arr+dwellOf(fx); prevAddr=fx.address; }
+    else{ const p=free[ui++]; insertLunchBefore(p.address); let arr=t + (hasPrev()?smartTravel(prevAddr,p.address):0); result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)})); t=arr+dwellOf(p); prevAddr=p.address; }
+  }
+  if(!lunchDone && result.length && ls>=s){
+    let larr = lunchLoc ? t + smartTravel(prevAddr,lunchLoc) : Math.max(t,ls); larr=Math.max(larr,ls);
+    result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''}); t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
+  }
+  const homeMin = result.length ? t+smartTravel(prevAddr,endLoc) : s;
+  return {result, home:fmt(homeMin), lateFix};
+}
+
+// 產生本週計畫：自動收集 + 加料(條件/指定) → 依鄉鎮急迫度分配各出訪日 → 每日套智慧時間排序
+function planWeek(){
+  syncWeek(); syncSmart(); syncRoute();
+  const start=weekCfg.start||thisMonday();
+  const days=weekCfg.days.slice().sort((a,b)=>(a===0?7:a)-(b===0?7:b));
+  if(!days.length){ toast('請至少選一個出訪日'); return; }
+  const weekEnd=addDays(start,6);
+  const includeGrade=weekCfg.mode==='all';
+  let targets=collectVisitTargets(weekCfg.regions,weekEnd,includeGrade);
+  const seen=new Set(); targets.forEach(t=>seen.add(t.name+t.address));
+  const exIds=existingProspectIds();
+  const regs=weekCfg.regions||[]; const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
+  // 加料：條件組合
+  if((routeCfg.rules||[]).some(r=>r.status||r.channel||r.grade)){
+    let pool=[];
+    customers.forEach(c=>{ if(c.inactive||!c.address)return; if(!cores.length||cores.some(core=>normR(c.address).includes(core))) pool.push({kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type,status:'existing',grade:c.grade||'',address:c.address,phone:c.phone,district:district(c.address),due:dueInfo(c)}); });
+    SEED.forEach(p=>{ if(!p.address)return; if(!cores.length||regs.some(rg=>normR(p.region)===normR(rg))||cores.some(core=>normR(p.address).includes(core))) pool.push({kind:'prosp',id:p.id,name:p.name,channel:p.category,status:exIds.has(p.id)?'existing':'cold',grade:'',address:p.address,phone:p.phone,district:district(p.address),due:dueInfo(overlay[p.id])}); });
+    const used=new Set(); const byDue=(a,b)=>((a.due?a.due.sort:999)-(b.due?b.due.sort:999));
+    routeCfg.rules.forEach(r=>{ if(!(r.status||r.channel||r.grade))return;
+      pool.filter(x=>!used.has(x.name+x.address)&&!seen.has(x.name+x.address)&&(!r.status||x.status===r.status)&&(!r.channel||x.channel===r.channel)&&(!r.grade||x.grade===r.grade)).sort(byDue).slice(0,r.n).forEach(x=>{ used.add(x.name+x.address); seen.add(x.name+x.address); targets.push(Object.assign({},x,{reason:'加料',sort:x.due?x.due.sort:998,overdue:x.due?x.due.sort<0:false})); }); });
+  }
+  // 加料：手動指定（smartCfg.picks）
+  smartCfg.picks.forEach(p=>{
+    const k=(p.name||'')+(p.address||''); if(seen.has(k))return; seen.add(k);
+    targets.push({kind:p.kind,id:p.id,name:p.name,channel:p.channel||'其他',grade:p.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address||''),reason:'指定',sort:-1,overdue:false,dwell:p.dwell,fixed:p.fixed});
+  });
+  if(!targets.length){ weekCfg.plan=null; weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或指定的對象。<br>到「我的客戶／名單」設定分級或下次拜訪日，或用上方「加料」加入特定對象。</div>`; renderRoute(); return; }
+  // 依鄉鎮急迫度排序：同鄉鎮集中、急的先排
+  const townUrg={}; targets.forEach(t=>{ const k=t.district||'其他'; if(!(k in townUrg)||t.sort<townUrg[k]) townUrg[k]=t.sort; });
+  targets.sort((a,b)=>{ const ua=townUrg[a.district||'其他'],ub=townUrg[b.district||'其他']; if(ua!==ub)return ua-ub; const da=a.district||'其他',db=b.district||'其他'; if(da!==db)return da.localeCompare(db,'zh-Hant'); return a.sort-b.sort; });
+  const dayDates=days.map(wd=>addDays(start, wd===0?6:wd-1));
+  const cap=weekCfg.maxPerDay, totalSlots=dayDates.length*cap;
+  const scheduled=targets.slice(0,totalSlots), overflow=targets.slice(totalSlots);
+  const rawBuckets=dayDates.map((d,i)=>({date:d, wd:days[i], items:[]}));
+  let bi=0; scheduled.forEach(t=>{ while(bi<rawBuckets.length-1 && rawBuckets[bi].items.length>=cap) bi++; rawBuckets[bi].items.push(t); });
+  const cfg={startLoc:smartCfg.startLoc, endLoc:smartCfg.endLoc, startTime:smartCfg.startTime, endTime:smartCfg.endTime, lunchStart:smartCfg.lunchStart, lunchEnd:smartCfg.lunchEnd, lunchLoc:smartCfg.lunchLoc, dwell:weekCfg.dwell||SMART_DWELL};
+  const buildBuckets=()=>rawBuckets.map(b=>{ const sd=scheduleDayPlan(b.items, cfg); return {date:b.date, wd:b.wd, stops:sd.result, home:sd.home, lateFix:sd.lateFix}; });
+  weekCfg.plan={start, weekEnd, days, cfg, overflow:overflow.map(o=>({name:o.name,district:o.district})), buckets:buildBuckets(), overdue:targets.filter(t=>t.overdue).length, total:targets.length, scheduled:scheduled.length};
+  weekCfg._viewDay='today'; weekCfg._last='';
+  renderRoute();
+  setTimeout(()=>{ const el=$('#week-result'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },60);
+  // 線上 OSRM 校正後重排一次（只送鄉鎮中心座標、不含個資）
+  if(navigator.onLine!==false){
+    const lls=[smartLatLng(cfg.startLoc),smartLatLng(cfg.endLoc),smartLatLng(cfg.lunchLoc)].concat(scheduled.map(t=>smartLatLng(t.address))).filter(Boolean);
+    osrmFillTable(lls).then(ok=>{ if(ok && weekCfg.plan){ weekCfg.plan.buckets=buildBuckets(); weekCfg.plan.osrm=true; const el=$('#week-result'); if(el) el.innerHTML=renderPlanResult(); } }).catch(()=>{});
+  }
+}
+
+function weekSetViewDay(v){ weekCfg._viewDay=v; renderRoute(); }
+function renderPlanResult(){
+  const p=weekCfg.plan; if(!p) return weekCfg._last||'';
+  const today=todayStr();
+  let h=`<div class="sec-title"><span class="bar"></span>本週拜訪計畫${p.osrm?' <span class="badge" style="background:#1b4d8f;color:#dceaff;float:right">✅ 線上路網校正</span>':''}</div><div class="card">`;
+  h+=drow('期間', `${p.start} ～ ${p.weekEnd}`);
+  h+=drow('總計', `${p.total} 家（逾期 ${p.overdue}）｜排入 ${p.scheduled} 家／${p.buckets.filter(b=>b.stops.some(s=>!s.lunch)).length} 個出訪日`);
+  if(p.overflow.length) h+=drow('順延', `${p.overflow.length} 家本週排不完，可增加出訪日或每日家數，否則下週優先安排`);
+  h+=`</div>`;
+  // 單選每日 / 全部
+  const chips=[`<button type="button" class="chip ${weekCfg._viewDay==='today'?'on':''}" onclick="weekSetViewDay('today')">今日</button>`,
+    `<button type="button" class="chip ${weekCfg._viewDay==='all'?'on':''}" onclick="weekSetViewDay('all')">全部</button>`]
+    .concat(p.buckets.map((b,i)=>`<button type="button" class="chip ${weekCfg._viewDay===i?'on':''}" onclick="weekSetViewDay(${i})">週${WD_NAME[b.wd]} ${b.date.slice(5)}${b.date===today?'•今':''}</button>`));
+  h+=`<div class="field" style="margin-top:10px"><label>查看</label><div class="wdays">${chips.join('')}</div></div>`;
+  let show=[];
+  if(weekCfg._viewDay==='all') show=p.buckets.map((b,i)=>i);
+  else if(weekCfg._viewDay==='today'){ const i=p.buckets.findIndex(b=>b.date===today); if(i>=0) show=[i]; else { h+=`<div class="info">今天不是排定出訪日，以下顯示本週各日。</div>`; show=p.buckets.map((b,i)=>i); } }
+  else show=[weekCfg._viewDay];
+  show.forEach(i=>{ const b=p.buckets[i]; const cnt=b.stops.filter(s=>!s.lunch).length;
+    h+=`<div class="sec-title" style="margin-top:14px"><span class="bar"></span>週${WD_NAME[b.wd]}　${b.date.slice(5)}　(${cnt} 家)</div>`;
+    h+= cnt ? dayStopsHTML(b, p.cfg, b.date===today) : `<div class="card empty" style="padding:16px">這天暫無安排</div>`;
+  });
+  const saved=loadWeekPlan();
+  h+=`<div class="btn-row" style="gap:8px;margin-top:12px"><button class="btn btn-pri" onclick="saveWeekPlan()">💾 寫入存檔（每天看今日行程）</button><button class="btn btn-out" onclick="planWeek()">🔄 重新規劃</button>${saved?`<button class="btn btn-gray" onclick="clearWeekPlan()">清除存檔</button>`:''}</div>`;
+  if(saved) h+=`<div class="tagline" style="margin:2px 2px 0">已存檔於 ${(saved.savedAt||'').slice(0,16).replace('T',' ')}。重新規劃後請再按一次「寫入存檔」覆蓋。</div>`;
+  h+=`<div class="tagline" style="margin:8px 2px 0">排序原則：逾期/急迫優先、同鄉鎮集中同一天減少往返；每日抵達時刻以最近鄰＋2-opt 就近順序＋約定到達＋中午休息估算。站間車程離線估算（鄉鎮中心點直線距離×1.3 倍、依距離抓 24–88 km/h），連網會用 OSRM 實際路網校正（只送鄉鎮中心座標、不含個資）。實際依路況而異，僅供參考。</div>`;
+  return h;
+}
+
+// 單日行程清單（今日行程卡與計畫結果共用）：時刻＋導航＋整條路線＋完成當日拜訪
+function dayStopsHTML(b, cfg, isToday){
+  const stops=b.stops.filter(s=>!s.lunch);
+  const toMin=t=>{const[a,c]=(t||'').split(':').map(Number);return (a||0)*60+(c||0);};
+  let h='';
+  if(cfg && cfg.endTime && b.home && toMin(b.home)>toMin(cfg.endTime)) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ 預估約 ${b.home} 才到家，略晚於 ${cfg.endTime}，可減少家數或提早出發。</div>`;
+  h+=`<div class="card" style="padding:4px 14px">`;
+  let idx=0;
+  b.stops.forEach(x=>{
+    if(x.lunch){ h+=`<div class="item" style="background:#fdf6e8"><div class="avatar" style="background:#c4811b">🍱</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${x.arrive}</span><span style="font-size:12px;color:var(--muted)">中午休息</span></div><div class="nm" style="margin-top:4px">🍱 中午休息</div>${x.address?`<div class="sub">${esc(x.address)}</div>`:''}</div><div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}</div></div>`; return; }
+    idx++;
+    const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
+    const onclick=x.kind==='cust'?`viewCustomer('${x.id}')`:(x.kind==='prosp'?`viewProspect('${x.id}')`:'');
+    h+=`<div class="item"${onclick?` onclick="${onclick}"`:''}><div class="avatar" style="background:${colorFor(x.name)}">${idx}</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${x.arrive}</span><span style="font-size:12px;color:var(--muted)">${x._dur?('停留 '+x._dur+' 分'):''}</span></div><div class="nm" style="margin-top:3px">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}<div class="tagline" style="margin-top:4px">${x.reason?`<span class="badge ${x.overdue?'pill-over':((x.reason==='加料'||x.reason==='指定')?'':'pill-due')}">${esc(x.reason)}</span> `:''}<span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}</div></div>`;
+  });
+  if(stops.length) h+=`<div class="item" style="background:#e8f0fa"><div class="avatar" style="background:#1b4d8f">🏁</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${b.home||''}</span><span style="font-size:12px;color:var(--muted)">預估回家</span></div></div></div>`;
+  h+=`</div>`;
+  const mapStops=stops.filter(x=>x.address);
+  if(mapStops.length){ const origin=(cfg&&cfg.startLoc)||mapStops[0].address; const dest=(cfg&&cfg.endLoc)||origin; const wp=mapStops.map(x=>encodeURIComponent(x.address)).join('%7C'); const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}&travelmode=driving&waypoints=${wp}`; h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`; }
+  const recordable=stops.filter(x=>x.kind==='cust'||x.kind==='prosp');
+  if(recordable.length) h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-pri" onclick="weekFinishDay('${b.date}')">✅ 完成${isToday?'今日':'當日'}拜訪（記錄 ${recordable.length} 家 → 週報）</button></div>`;
+  return h;
+}
+
+// ── 寫入存檔 / 讀取 / 今日行程 ──
+function saveWeekPlan(){
+  if(!weekCfg.plan){ toast('請先產生計畫'); return; }
+  const p=weekCfg.plan;
+  const slim={start:p.start, weekEnd:p.weekEnd, days:p.days, cfg:p.cfg, overflow:p.overflow, savedAt:new Date().toISOString(),
+    buckets:p.buckets.map(b=>({date:b.date, wd:b.wd, home:b.home,
+      stops:b.stops.map(s=> s.lunch ? {lunch:true,arrive:s.arrive,leave:s.leave,address:s.address||''}
+        : {kind:s.kind,id:s.id,name:s.name,channel:s.channel,grade:s.grade||'',address:s.address||'',phone:s.phone||'',district:s.district||'',reason:s.reason||'',status:s.status||'',arrive:s.arrive,leave:s.leave,_dur:s._dur||0,fixedMark:!!s.fixedMark,overdue:!!s.overdue}) }))};
+  LS.set('crm_week_plan', slim);
+  toast('已寫入本週行程，每天打開頁首即見今日行程');
+  renderRoute();
+}
+function loadWeekPlan(){ return LS.get('crm_week_plan', null); }
+function clearWeekPlan(){ if(!confirm('清除已寫入的本週行程存檔？')) return; LS.set('crm_week_plan', null); toast('已清除存檔'); renderRoute(); }
+function renderTodayCard(){
+  const plan=loadWeekPlan(); const today=todayStr();
+  if(!plan) return `<div class="info" style="background:#eef3fb;color:#143a6e">尚未寫入本週行程。請在下方規劃好後按「💾 寫入存檔」，之後每天打開這頁，頁首就會直接顯示今日行程。</div>`;
+  const b=plan.buckets.find(x=>x.date===today);
+  if(!b){ const inWeek = today>=plan.start && today<=plan.weekEnd;
+    return `<div class="card" style="padding:12px 14px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:#143a6e">📅 本週行程已寫入（${plan.start.slice(5)} ～ ${plan.weekEnd.slice(5)}）</span><button class="rule-del" style="margin-left:auto" onclick="clearWeekPlan()">✕ 清除</button></div><div style="font-size:12.5px;color:var(--muted);margin-top:6px">${inWeek?'今天不是排定出訪日':'今天不在本週範圍'}，可於下方查看各日或重新規劃。</div></div>`; }
+  const stops=b.stops.filter(s=>!s.lunch);
+  let h=`<div class="sec-title" style="margin-top:0"><span class="bar"></span>📍 今日行程　${today.slice(5)}（週${WD_NAME[b.wd]}）<button class="rule-del" style="float:right" onclick="clearWeekPlan()">✕ 清除存檔</button></div>`;
+  if(!stops.length){ h+=`<div class="card empty" style="padding:16px">今天沒有排定拜訪。</div>`; return h; }
+  h+=dayStopsHTML(b, plan.cfg, true);
+  return h;
+}
+function weekFinishDay(date){
+  let plan=loadWeekPlan(); let b=plan && plan.buckets.find(x=>x.date===date);
+  if(!b && weekCfg.plan) b=weekCfg.plan.buckets.find(x=>x.date===date);
+  if(!b){ toast('找不到該日行程'); return; }
+  window._routeToday=b.stops.filter(x=>!x.lunch && (x.kind==='cust'||x.kind==='prosp')).map(x=>({kind:x.kind,id:x.id,name:x.name}));
+  if(!window._routeToday.length){ toast('這天沒有可記錄的客戶'); return; }
+  routeFinishToday();
 }
 
 // ========== 智慧客戶拜訪路線安排 ==========
@@ -2486,7 +2731,7 @@ function syncSmart(){
   if((v=g('sm-area'))!==undefined) smartCfg.f.area=v;
   if((v=g('sm-kw'))!==undefined) smartCfg.f.kw=v;
   // pick rows (dwell + fixed time)
-  document.querySelectorAll('#route-body .pk-row').forEach(el=>{
+  document.querySelectorAll('.pk-row').forEach(el=>{
     const k=el.dataset.k, p=smartCfg.picks.find(x=>x.key===k); if(!p)return;
     const d=el.querySelector('.pk-dwell'), fx=el.querySelector('.pk-fixed');
     if(d) p.dwell=Math.max(5,+d.value||SMART_DWELL);
@@ -2551,260 +2796,8 @@ function smartLocateCustom(key){
 function smartRemovePick(key){ syncSmart(); smartCfg.picks=smartCfg.picks.filter(p=>p.key!==key); renderRoute(); }
 function smartClearPicks(){ smartCfg.picks=[]; smartCfg._last=''; renderRoute(); }
 function smartTogglePool(){ syncSmart(); smartCfg._poolOpen=smartCfg._poolOpen?0:1; renderRoute(); }
-function renderSmartRoute(){
-  const regs=regionsSorted();
-  if(!smartCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); smartCfg.f.regions = tn?[tn]:[]; smartCfg._inited=1; }
-  const f=smartCfg.f;
-  let h=`<div class="info">設好出發/回家地點與時間，用下方條件把要拜訪的客戶加入名單，再按「🧠 智慧安排」。系統會依位置排出最順的前後順序、穿插你已約好的客戶與中午休息。全程本機計算、不外傳。</div>`;
-  // 出發 / 回家
-  h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>出發 / 回家</div>`;
-  h+=`<div class="field"><label>🏁 出發位置 <span style="color:var(--red);font-weight:700">必填</span></label><div style="display:flex;gap:6px"><input id="sm-startloc" style="flex:1;min-width:0" value="${esc(smartCfg.startLoc)}" placeholder="例如 台南市東區自家地址"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-startloc')">📍 定位</button></div></div>`;
-  h+=`<div class="field"><label>🏠 回家位置（留空＝同出發）</label><div style="display:flex;gap:6px"><input id="sm-endloc" style="flex:1;min-width:0" value="${esc(smartCfg.endLoc)}" placeholder="留空則回到出發位置"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-endloc')">📍 定位</button></div></div>`;
-  h+=`<div class="field"><label>出發時間（回家時間排完路線會自動估算）</label><input type="time" id="sm-start" value="${smartCfg.startTime}"></div>`;
-  h+=`<div class="field-2"><div class="field"><label>中午休息起</label><input type="time" id="sm-lunch1" value="${smartCfg.lunchStart}"></div>
-      <div class="field"><label>中午休息迄</label><input type="time" id="sm-lunch2" value="${smartCfg.lunchEnd}"></div></div>`;
-  h+=`<div class="field"><label>🍱 中午休息地點（可空，填了會算進前後車程）</label><div style="display:flex;gap:6px"><input id="sm-lunchloc" style="flex:1;min-width:0" value="${esc(smartCfg.lunchLoc)}" placeholder="例如 某餐廳地址，或貼地圖座標/網址" onchange="smartNormLoc(this)"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 12px" onclick="smartLocate('sm-lunchloc')">📍 定位</button></div>
-    <button type="button" class="btn btn-out" style="width:100%;margin-top:6px;font-size:12.5px" onclick="smartMapPick('sm-lunchloc')">🗺️ 用 Google 地圖選地點</button>
-    <div class="hint" style="color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.6">在地圖上<b>長按</b>你要的位置會掉一根針，下方/搜尋列會出現座標 → 複製貼回上面欄位最準；也可在店家頁按「分享→複製連結」貼回來。</div></div>`;
-  h+=`</div>`;
-  // 篩選
-  const orgOpts=[['','有機/非有機'],['org','🌱 有機'],['non','非有機']];
-  h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>篩選客戶</div>`;
-  h+=`<div class="field"><label>關鍵字搜尋（名稱／地址／電話／通路）</label>
-      <div style="position:relative">
-        <input id="sm-kw" value="${esc(f.kw||'')}" placeholder="🔍 輸入關鍵字…例如 翁俊榮 / 義竹 / 農會" oninput="smartKwInput(this.value)" style="width:100%;box-sizing:border-box;padding-right:34px">
-        ${(f.kw||'')?`<button type="button" onclick="smartKwInput('')" title="清除" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer">✕</button>`:''}
-      </div></div>`;
-  h+=`<div class="field-2">
-      <div class="field"><label>客戶來源</label><select id="sm-src" onchange="syncSmart();renderRoute()">
-        <option value="" ${f.src===''?'selected':''}>全部</option>
-        <option value="cust" ${f.src==='cust'?'selected':''}>既有客戶</option>
-        <option value="prosp" ${f.src==='prosp'?'selected':''}>目標客戶</option></select></div>
-      <div class="field"><label>有機/非有機</label><select id="sm-organic" onchange="syncSmart();renderRoute()">${orgOpts.map(([k,l])=>`<option value="${k}" ${f.organic===k?'selected':''}>${l}</option>`).join('')}</select></div></div>`;
-  h+=`<div class="field-2">
-      <div class="field"><label>通路</label><select id="sm-channel" onchange="syncSmart();renderRoute()"><option value="">全部通路</option>${ROUTE_CHANS.map(c=>`<option value="${c}" ${f.channel===c?'selected':''}>${c}</option>`).join('')}</select></div>
-      <div class="field"><label>等級</label><select id="sm-grade" onchange="syncSmart();renderRoute()"><option value="">全部等級</option>${GRADES.map(g=>`<option value="${g}" ${f.grade===g?'selected':''}>${g}・${GRADE_LABEL[g]}</option>`).join('')}<option value="none" ${f.grade==='none'?'selected':''}>未分級</option></select></div></div>`;
-  h+=`<div class="field"><label>面積≥(公頃)</label><input id="sm-area" type="number" inputmode="decimal" value="${esc(f.area)}" placeholder="不限" oninput="smartCfg.f.area=this.value"></div>`;
-  h+=`<div class="field"><label>地區（可複選，不選＝全部）</label>${regionMultiHTML(f.regions,'toggleSmartRegion')}</div>`;
-  const pool=smartPool();
-  const pickedKeys=new Set(smartCfg.picks.map(p=>p.key));
-  h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px">
-      <button class="btn btn-out" onclick="smartTogglePool()">${smartCfg._poolOpen?'▲ 收合符合清單':`🔍 顯示符合清單（${pool.length}）`}</button>
-      <button class="btn btn-pri" onclick="smartAddAll()">＋ 全部加入${pool.length>40?'（前40）':''}</button></div>`;
-  if(smartCfg._poolOpen){
-    if(!pool.length){ h+=`<div class="card empty" style="padding:14px">沒有符合條件的客戶，放寬篩選再試。</div>`; }
-    else{
-      h+=`<div class="card" style="padding:4px 14px;max-height:340px;overflow:auto">`;
-      pool.slice(0,80).forEach(x=>{
-        const added=pickedKeys.has(x.key);
-        h+=`<div class="item" style="cursor:default">
-          <div class="body"><div class="nm">${esc(x.name)}</div>
-            <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
-            <div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}${x.area!=null?` <span class="badge">${x.area.toFixed(1)}ha</span>`:''}</div></div>
-          <div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div>
-        </div>`;
-      });
-      if(pool.length>80) h+=`<div class="tagline" style="padding:8px 2px">符合 ${pool.length} 家，僅顯示前 80，請縮小篩選或直接「全部加入」。</div>`;
-      h+=`</div>`;
-    }
-  }
-  h+=`</div>`;
-  // 已選名單
-  h+=`<div class="sec-title"><span class="bar"></span>拜訪名單（${smartCfg.picks.length}）${smartCfg.picks.length?` <button class="rule-del" style="float:right" onclick="smartClearPicks()">✕ 全部清除</button>`:''}</div>`;
-  if(!smartCfg.picks.length){
-    h+=`<div class="card empty" style="padding:16px">尚未加入行程。用上面的篩選找到客戶後按「＋ 加入」。<br>也可按下方「＋ 新增其他行程」插入非客戶事項（例如 10:00 到某地址加油／開會／取貨）。<br>有約定時間者填「約定到達」，系統會固定排在該時段、其餘排在前後。</div>`;
-  }else{
-    h+=`<div class="card" style="padding:8px 12px">`;
-    smartCfg.picks.forEach((p,i)=>{
-      if(p.kind==='custom'){
-        h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line);background:var(--amber-l);border-radius:8px;margin:2px 0;padding-left:8px;padding-right:8px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="avatar" style="background:#3b82f6;width:26px;height:26px;font-size:13px">📍</div>
-            <div style="flex:1;min-width:0"><div class="nm" style="font-size:13px;color:var(--amber)">其他行程（非客戶）</div></div>
-            <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
-          <div class="field" style="margin:6px 0 0"><label style="font-size:11px">做什麼事</label><input class="pk-name" value="${esc(p.name||'')}" placeholder="例如 加油 / 開會 / 取貨"></div>
-          <div class="field" style="margin:6px 0 0"><label style="font-size:11px">地點 / 地址</label><div style="display:flex;gap:6px"><input class="pk-addr" style="flex:1;min-width:0" value="${esc(p.address||'')}" placeholder="地址或座標（可空）"><button type="button" class="btn btn-out" style="white-space:nowrap;padding:0 10px" onclick="smartLocateCustom('${p.key}')">📍</button></div></div>
-          <div class="field-2" style="margin-top:6px">
-            <div class="field" style="margin:0"><label style="font-size:11px">預計時間(分)</label><input class="pk-dwell" type="number" min="5" step="5" value="${p.dwell||30}"></div>
-            <div class="field" style="margin:0"><label style="font-size:11px">約定到達(可空)</label><input class="pk-fixed" type="time" value="${p.fixed||''}"></div></div>
-        </div>`;
-      }else{
-        h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="avatar" style="background:${colorFor(p.name)};width:26px;height:26px;font-size:13px">${i+1}</div>
-            <div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(p.name)}</div>
-              <div class="sub" style="font-size:11.5px">${esc([p.district,p.channel].filter(Boolean).join(' · '))}${p.organic==='org'?' 🌱':''}</div></div>
-            <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
-          <div class="field-2" style="margin-top:6px">
-            <div class="field" style="margin:0"><label style="font-size:11px">預計拜訪(分)</label><input class="pk-dwell" type="number" min="5" step="5" value="${p.dwell||SMART_DWELL}"></div>
-            <div class="field" style="margin:0"><label style="font-size:11px">約定到達(可空)</label><input class="pk-fixed" type="time" value="${p.fixed||''}"></div></div>
-        </div>`;
-      }
-    });
-    h+=`</div>`;
-  }
-  h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-out" onclick="smartAddCustom()">＋ 新增其他行程</button>${smartCfg.picks.length?`<button class="btn btn-pri" onclick="smartPlan()">🧠 智慧安排路線</button>`:''}</div>`;
-  h+=`<div id="smart-result">${smartCfg._last||''}</div>`;
-  $('#route-body').innerHTML=h;
-  if(smartCfg._kwFocus){ const el=$('#sm-kw'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); } smartCfg._kwFocus=false; }
-}
 // 關鍵字搜尋：輸入時即時篩選符合清單（自動展開），並保住輸入焦點
 function smartKwInput(v){ smartCfg.f.kw=v; if((v||'').trim()) smartCfg._poolOpen=1; smartCfg._kwFocus=true; renderRoute(); }
-function smartPlan(){
-  syncSmart();
-  const picks=smartCfg.picks;
-  const resEl=()=>$('#smart-result');
-  if(!smartCfg.startLoc){ toast('請先填出發位置（或按 📍 定位）'); const el=$('#sm-startloc'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>el.focus(),300); } return; }
-  if(!picks.length){ toast('請先把客戶加入名單'); return; }
-  const toMin=t=>{const[a,b]=(t||'').split(':').map(Number);return (a||0)*60+(b||0);};
-  const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(((m%60)+60)%60)).padStart(2,'0')}`;
-  const s=toMin(smartCfg.startTime), e=toMin(smartCfg.endTime);
-  const ls=toMin(smartCfg.lunchStart), le=toMin(smartCfg.lunchEnd);
-  const startLoc=smartCfg.startLoc||(smartCfg.f.regions&&smartCfg.f.regions[0])||'';
-  const endLoc=smartCfg.endLoc||startLoc;
-  const startLL=smartLatLng(startLoc), endLL=smartLatLng(endLoc);
-  const dwellOf=p=>Math.max(5,p.dwell||SMART_DWELL);
-  const lunchLoc=smartCfg.lunchLoc, lunchDur=Math.max(0,le-ls);
-
-  // 依目前可用的車程資料（離線估算 or 已載入的 OSRM 實際路網）建立行程
-  function buildPlan(){
-    // 自由客戶：最近鄰 + 2-opt 就近排序（取代舊的一維索引，消除來回繞路）
-    const free=optimizeFreeOrder(picks.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_ll:smartLatLng(p.address)})), startLL, endLL);
-    const fixed=picks.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
-    const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
-    const hasPrev=()=>!!(result.length||startLoc);
-    const insertLunchBefore=(stopAddr)=>{
-      if(lunchDone) return;
-      const naive=t + (hasPrev()?smartTravel(prevAddr,stopAddr):0);
-      if(naive < ls) return;
-      let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : t;
-      larr=Math.max(larr,ls);
-      result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
-      t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
-      lunchDone=true;
-    };
-    let fi=0, ui=0;
-    while(ui<free.length || fi<fixed.length){
-      const nextFx = fi<fixed.length ? fixed[fi] : null;
-      let useFixed=false;
-      if(nextFx){
-        if(ui>=free.length) useFixed=true;
-        else if(nextFx._at <= t + smartTravel(prevAddr, nextFx.address)) useFixed=true;
-        else {
-          const fr=free[ui];
-          const afterFree = t + (hasPrev()?smartTravel(prevAddr,fr.address):0) + dwellOf(fr) + smartTravel(fr.address, nextFx.address);
-          if(afterFree > nextFx._at) useFixed=true;
-        }
-      }
-      if(useFixed){
-        const fx=fixed[fi++];
-        insertLunchBefore(fx.address);
-        let arr=Math.max(t + (hasPrev()?smartTravel(prevAddr,fx.address):0), fx._at);
-        if(arr>fx._at) lateFix=true;
-        result.push(Object.assign({},fx,{arrive:fmt(arr),leave:fmt(arr+dwellOf(fx)),_dur:dwellOf(fx),fixedMark:true}));
-        t=arr+dwellOf(fx); prevAddr=fx.address;
-      }else{
-        const p=free[ui++];
-        insertLunchBefore(p.address);
-        let arr=t + (hasPrev()?smartTravel(prevAddr,p.address):0);
-        result.push(Object.assign({},p,{arrive:fmt(arr),leave:fmt(arr+dwellOf(p)),_dur:dwellOf(p)}));
-        t=arr+dwellOf(p); prevAddr=p.address;
-      }
-    }
-    if(!lunchDone && ls>=s && ls<=e){
-      let larr = lunchLoc ? t + (hasPrev()?smartTravel(prevAddr,lunchLoc):0) : Math.max(t,ls);
-      larr=Math.max(larr,ls);
-      result.push({lunch:true,arrive:fmt(larr),leave:fmt(larr+lunchDur),address:lunchLoc||''});
-      t=larr+lunchDur; if(lunchLoc) prevAddr=lunchLoc;
-    }
-    const backTravel=smartTravel(prevAddr,endLoc);
-    return {result, home:t+backTravel, lateFix};
-  }
-
-  function renderPlan(online){
-  const plan=buildPlan();
-  const result=plan.result, home=plan.home, lateFix=plan.lateFix;
-  const stops=result.filter(x=>!x.lunch);
-  let warn='';
-  if(home>e) warn=`預估約 ${fmt(home)} 才到家，行程偏長。可減少家數、縮短停留或提早出發。`;
-  else if(lateFix) warn=`部分約定客戶因前段時間排不下而略有延後，請現場彈性調整。`;
-
-  let h=`<div class="sec-title"><span class="bar"></span>智慧安排結果（${stops.length} 家）`;
-  h+=online ? ` <span class="badge" style="background:#1b4d8f;color:#dceaff;float:right">✅ 線上路網校正</span>` : ` <span class="badge" style="background:#64748b;color:#eef1f6;float:right">離線估算</span>`;
-  h+=`</div>`;
-  if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
-  h+=`<div class="card">`;
-  h+=drow('出發', `${esc(startLoc||'(未填)')}　${smartCfg.startTime}`);
-  h+=drow('預估回家', `🏁 ${fmt(home)} 到家　${esc(endLoc||'(同出發)')}`);
-  h+=drow('中午休息', `${smartCfg.lunchStart}–${smartCfg.lunchEnd}${smartCfg.lunchLoc?'　@ '+esc(smartCfg.lunchLoc):''}`);
-  h+=`</div>`;
-  h+=`<div class="card" style="padding:4px 14px">`;
-  let idx=0;
-  result.forEach(x=>{
-    if(x.lunch){ h+=`<div class="item" style="background:#fdf6e8">
-      <div class="avatar" style="background:#c4811b">🍱</div>
-      <div class="body">
-        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
-          <span style="font-size:12.5px;color:var(--muted)">中午休息</span></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-top:1px">時段 ${x.arrive}–${x.leave}</div>
-        <div class="nm" style="margin-top:4px">🍱 中午休息</div>
-        ${x.address?`<div class="sub">${esc(x.address)}</div>`:''}</div>
-      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}</div>
-    </div>`; return; }
-    idx++;
-    const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
-    const isCustom=x.kind==='custom';
-    const onclick=isCustom?'':(x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`);
-    const dwLabel=isCustom?'預計':'抵達・拜訪';
-    h+=`<div class="item"${onclick?` onclick="${onclick}"`:''} style="${isCustom?'background:var(--amber-l)':''}">
-      <div class="avatar" style="background:${isCustom?'#3b82f6':colorFor(x.name)}">${idx}</div>
-      <div class="body">
-        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
-          <span style="font-size:12.5px;color:var(--muted)">${dwLabel} ${x._dur} 分</span></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-top:1px">時段 ${x.arrive}–${x.leave}</div>
-        <div class="nm" style="margin-top:4px">${isCustom?'📍 ':''}${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>
-        ${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}
-        ${isCustom?`<div class="tagline" style="margin-top:4px"><span class="badge">其他行程</span></div>`:`<div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}${x.organic==='org'?' 🌱':''}</div>`}</div>
-      <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}${(x.kind==='prosp'&&!custByProspect(x.id))?`<br><a href="javascript:void(0)" style="color:var(--amber)" onclick="event.stopPropagation();convertToCustomer('${x.id}')">⭐ 轉既有</a>`:''}</div>
-    </div>`;
-  });
-  h+=`<div class="item" style="background:#e8f0fa">
-      <div class="avatar" style="background:#1b4d8f">🏁</div>
-      <div class="body">
-        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-          <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${fmt(home)}</span>
-          <span style="font-size:12.5px;color:var(--muted)">預估回家時間</span></div>
-        <div class="nm" style="margin-top:4px">🏁 回到${endLoc&&endLoc!==startLoc?'回家點':'出發地'}</div>
-        ${endLoc?`<div class="sub">${esc(endLoc)}</div>`:''}</div>
-      <div class="meta">${endLoc?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endLoc)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}</div>
-    </div>`;
-  h+=`</div>`;
-  const mapStops=stops.filter(x=>x.address);
-  if(mapStops.length){
-    const wp=mapStops.map(x=>encodeURIComponent(x.address)).join('%7C');
-    const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc||mapStops[0].address)}&destination=${encodeURIComponent(endLoc||startLoc||mapStops[mapStops.length-1].address)}&travelmode=driving&waypoints=${wp}`;
-    h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
-  }
-  // 今日拜訪客戶清單（可一鍵記錄成拜訪管理，流入週報；目標客戶會自動建/補到「我的客戶」）
-  window._routeToday = stops.filter(x=>x.kind==='cust'||x.kind==='prosp').map(x=>({kind:x.kind,id:x.id,name:x.name}));
-  if(window._routeToday.length){
-    h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-out" style="border-color:#1b4d8f;color:#143a6e" onclick="routeFinishToday()">✅ 完成今日拜訪（記錄 ${window._routeToday.length} 家並寫入週報）</button></div>`;
-    h+=`<div class="tagline" style="margin:2px 2px 0">按下後，今日這 ${window._routeToday.length} 家會各自新增一筆拜訪紀錄（你可逐家補內容）；目標客戶會自動寫進「我的客戶」卡片。完成後可到「拜訪週報」一鍵產生主管週報。</div>`;
-  }
-  h+=`<div class="tagline" style="margin:8px 2px 0">順序用「最近鄰＋2-opt」就近最佳化（自動消除來回繞路），並把你填的約定到達時間固定在該時段、其餘客戶排在前後。${online?'<b>站間車程已用線上 OSRM 實際路網校正</b>（只送鄉鎮中心座標，不含任何客戶地址/個資）。':'站間車程為離線估算（鄉鎮中心點直線距離×1.3 倍路程、依距離抓 24–88 km/h）；連上網路會自動用實際路網校正。'}實際會因路況、山路而異，僅供參考；點「用 Google 地圖開啟整條路線」可看實際時間。填了中午休息地點，會把上午最後一站→休息地點→下午第一站的車程一起算進去。</div>`;
-  smartCfg._last=h; resEl().innerHTML=h;
-  }
-  renderPlan(false);
-  resEl().scrollIntoView({behavior:'smooth',block:'start'});
-  // 線上 OSRM 實際路網校正（可選；只送鄉鎮中心座標，失敗則維持離線估算）
-  if(navigator.onLine!==false){
-    const lls=[startLL,endLL,smartLatLng(lunchLoc)].concat(picks.map(p=>smartLatLng(p.address))).filter(Boolean);
-    osrmFillTable(lls).then(ok=>{ if(ok && $('#smart-result')) renderPlan(true); }).catch(()=>{});
-  }
-}
-
 // ========== 完成今日拜訪：把今日路線上的客戶一次記成拜訪、寫入週報 ==========
 // 不開表單、直接把目標客戶補進「我的客戶」（個資欄位留空，可日後補）
 function convertProspectSilent(id, interItem){
@@ -2862,33 +2855,20 @@ function routeFinishToday(){
   };
 }
 
-// ========== 每週拜訪智慧排程 ==========
-let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, regions:[], mode:'all', _last:'' };
+// ========== 每週拜訪資料/設定（整合路線頁使用）==========
+let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, regions:[], mode:'all',
+  dwell:40, plan:null, _viewDay:'today', _addOpen:0, _inited:0, _last:'' };
 const WD_NAME = ['日','一','二','三','四','五','六'];
-function thisMonday(){ const d=new Date(); const w=d.getDay(); d.setDate(d.getDate()+(w===0?-6:1-w)); return d.toISOString().slice(0,10); }
+function thisMonday(){ const d=new Date(); const w=d.getDay(); d.setDate(d.getDate()+(w===0?-6:1-w)); return ymdLocal(d); }
 function gradeFreq(g){ return GRADE_FREQ[g]||null; }
 function syncWeek(){
   const s=$('#w-start'); if(s)weekCfg.start=s.value||weekCfg.start;
   const m=$('#w-max'); if(m)weekCfg.maxPerDay=Math.max(1,Math.min(12,+m.value||6));
+  const dw=$('#w-dwell'); if(dw)weekCfg.dwell=Math.max(5,+dw.value||SMART_DWELL);
   // 區域改為多選晶片，由 toggleWeekRegion 直接維護 weekCfg.regions
   const md=$('#w-mode'); if(md)weekCfg.mode=md.value;
 }
 function toggleWeekDay(wd){ syncWeek(); const i=weekCfg.days.indexOf(wd); if(i<0)weekCfg.days.push(wd); else weekCfg.days.splice(i,1); renderRoute(); }
-function renderWeekRoute(){
-  const regs = regionsSorted();
-  if(weekCfg._inited!==1){ const tn=regs.find(r=>normR(r).includes('臺南')); weekCfg.regions = tn?[tn]:[]; weekCfg._inited=1; }
-  if(!weekCfg.start) weekCfg.start=thisMonday();
-  let h=`<div class="info">系統自動收集「到期 / 逾期」要回訪的客戶與名單，加上依分級頻率該回訪的對象，按鄉鎮就近分配到本週各出訪日。全程本機計算、不外傳。</div>`;
-  h+=`<div class="card">`;
-  h+=`<div class="field"><label>本週起始日（週一）</label>${rocDateInput('w-start',weekCfg.start)}</div>`;
-  h+=`<div class="field"><label>區域（可複選・限定責任區，不選＝全部）</label>${regionMultiHTML(weekCfg.regions,'toggleWeekRegion')}</div>`;
-  h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
-  h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
-      <div class="field"><label>排程範圍</label><select id="w-mode"><option value="all" ${weekCfg.mode==='all'?'selected':''}>到期＋依分級建議(推薦)</option><option value="due" ${weekCfg.mode==='due'?'selected':''}>只排已設下次拜訪日</option></select></div></div>`;
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planWeek()">📅 產生本週拜訪計畫</button></div>`;
-  h+=`</div><div id="week-result">${weekCfg._last||''}</div>`;
-  $('#route-body').innerHTML=h;
-}
 // 收集本週該拜訪的對象（客戶＋有排程/分級的名單）
 function collectVisitTargets(regions, weekEnd, includeGrade){
   const regs = Array.isArray(regions) ? regions : (regions?[regions]:[]);
@@ -2918,89 +2898,6 @@ function collectVisitTargets(regions, weekEnd, includeGrade){
   const seen=new Set();
   return list.filter(x=>{const k=x.name+x.address; if(seen.has(k))return false; seen.add(k); return true;});
 }
-function planWeek(){
-  syncWeek();
-  const start=weekCfg.start||thisMonday();
-  const days=weekCfg.days.slice().sort((a,b)=>(a===0?7:a)-(b===0?7:b));
-  const resEl=()=>$('#week-result');
-  if(!days.length){ toast('請至少選一個出訪日'); return; }
-  const weekEnd=addDays(start,6);
-  const includeGrade=weekCfg.mode==='all';
-  const targets=collectVisitTargets(weekCfg.regions,weekEnd,includeGrade);
-  if(!targets.length){
-    weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或建議拜訪的對象。<br>到「我的客戶」或「名單」設定分級或下次拜訪日，就會自動排入。</div>`;
-    resEl().innerHTML=weekCfg._last; return;
-  }
-  // 依鄉鎮急迫度排序：同鄉鎮集中、急的先排
-  const townUrg={};
-  targets.forEach(t=>{ const k=t.district||'其他'; if(!(k in townUrg)||t.sort<townUrg[k]) townUrg[k]=t.sort; });
-  targets.sort((a,b)=>{ const ua=townUrg[a.district||'其他'],ub=townUrg[b.district||'其他']; if(ua!==ub)return ua-ub; const da=a.district||'其他',db=b.district||'其他'; if(da!==db)return da.localeCompare(db,'zh-Hant'); return a.sort-b.sort; });
-  const dayDates=days.map(wd=>addDays(start, wd===0?6:wd-1));
-  const cap=weekCfg.maxPerDay, totalSlots=dayDates.length*cap;
-  const scheduled=targets.slice(0,totalSlots), overflow=targets.slice(totalSlots);
-  const buckets=dayDates.map((d,i)=>({date:d, wd:days[i], items:[]}));
-  let bi=0; scheduled.forEach(t=>{ while(bi<buckets.length-1 && buckets[bi].items.length>=cap) bi++; buckets[bi].items.push(t); });
-  const overdue=targets.filter(t=>t.overdue).length;
-
-  let h=`<div class="sec-title"><span class="bar"></span>本週拜訪計畫</div><div class="card">`;
-  h+=drow('期間', `${start} ～ ${weekEnd}`);
-  h+=drow('總計', `${targets.length} 家（逾期 ${overdue}）｜排入 ${scheduled.length} 家／${buckets.filter(b=>b.items.length).length} 個出訪日`);
-  if(overflow.length) h+=drow('順延', `${overflow.length} 家本週排不完，可增加出訪日或每日家數，否則下週優先安排`);
-  h+=`</div>`;
-  buckets.forEach(b=>{
-    h+=`<div class="sec-title" style="margin-top:14px"><span class="bar"></span>週${WD_NAME[b.wd]}　${b.date.slice(5)}　(${b.items.length} 家)</div>`;
-    if(!b.items.length){ h+=`<div class="card empty" style="padding:16px">這天暫無安排</div>`; return; }
-    h+=`<div class="card" style="padding:4px 14px">`;
-    b.items.forEach((x,i)=>{
-      const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
-      const pill=`<span class="badge ${x.overdue?'pill-over':'pill-due'}">${esc(x.reason)}</span>`;
-      h+=`<div class="item" onclick="${x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`}">
-        <div class="avatar" style="background:${colorFor(x.name)}">${i+1}</div>
-        <div class="body"><div class="nm">${esc(x.name)}</div>
-          <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
-          <div class="tagline" style="margin-top:4px">${pill} <span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div>
-        <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}</div>
-      </div>`;
-    });
-    h+=`</div>`;
-    const addrs=b.items.filter(x=>x.address).map(x=>encodeURIComponent(x.address));
-    if(addrs.length){
-      const origin=(weekCfg.regions&&weekCfg.regions[0])||'';
-      const url=`https://www.google.com/maps/dir/?api=1&${origin?`origin=${encodeURIComponent(origin)}&`:''}destination=${addrs[addrs.length-1]}&travelmode=driving&waypoints=${addrs.slice(0,-1).join('%7C')}`;
-      h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`;
-    }
-  });
-  h+=`<div class="tagline" style="margin:10px 2px 0">排序原則：逾期/急迫優先、同鄉鎮集中同一天以減少往返。點任一家可進客戶頁；記錄拜訪後會自動排下次。</div>`;
-  weekCfg._last=h; resEl().innerHTML=h;
-  resEl().scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function renderCustomRoute(){
-  const regs = regionsSorted();
-  if(!Array.isArray(routeCfg.regions)) routeCfg.regions=[];
-  if(!routeCfg.regions.length){ const tn=regs.find(r=>normR(r).includes('臺南'))||regs[0]; if(tn)routeCfg.regions=[tn]; }
-  if(!routeCfg.rules||!routeCfg.rules.length) routeCfg.rules=[{status:'',channel:'',grade:'',n:5}];
-  let h=`<div class="info">可加多組條件(例如:陌生×肥料行 2 家 + 既有×農會 1 家),系統會分別挑選再合併排成一條順路路線。資料皆在本機計算。</div>`;
-  h+=`<div class="card"><div class="field"><label>區域（可複選）</label>${regionMultiHTML(routeCfg.regions,'toggleRouteRegion')}</div></div>`;
-  h+=`<div class="card">`;
-  h+=`<div class="field"><label>🤖 智慧輸入（用打的，自動拆成下面的組合）</label>
-      <input id="r-nl" value="${esc(routeCfg.nl)}" placeholder="例如：陌生農會1 陌生合作社2 陌生直接農民3 既有經銷商2"></div>`;
-  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="parseNL()">✨ 解析成組合</button></div>`;
-  h+=`<div class="tagline" style="margin-top:6px">看得懂：陌生／既有・農會／合作社／肥料行(經銷商)／有機農戶(直接農民)・可加 A~D 級・數字＝家數。完全離線、不外傳。</div>`;
-  h+=`</div>`;
-  h+=`<div class="sec-title"><span class="bar"></span>拜訪組合</div>`;
-  h+=`<div id="rules">${routeCfg.rules.map((r,i)=>ruleCard(r,i,routeCfg.rules.length>1)).join('')}</div>`;
-  h+=`<div class="more" onclick="addRule()">＋ 新增一組條件</div>`;
-  h+=`<div class="card">`;
-  h+=`<div class="field"><label>出發 / 返回地點</label><input id="r-home" value="${esc(routeCfg.home)}" placeholder="例如 台南市東區自家地址(留空則用區域中心)"></div>`;
-  h+=`<div class="field-2">
-      <div class="field"><label>出門時間</label><input type="time" id="r-start" value="${routeCfg.start}"></div>
-      <div class="field"><label>回家時間</label><input type="time" id="r-end" value="${routeCfg.end}"></div></div>`;
-  h+=`<div class="field"><label>每家停留(分)</label><input type="number" id="r-dwell" min="10" step="5" value="${routeCfg.dwell}"></div>`;
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planRoute()">🗺️ 產生路線</button></div>`;
-  h+=`</div><div id="route-result">${routeCfg._last||''}</div>`;
-  $('#route-body').innerHTML=h;
-}
 function readRules(){
   return [...document.querySelectorAll('#rules .rcard')].map(el=>({
     status:el.querySelector('.rr-status').value,
@@ -3010,89 +2907,13 @@ function readRules(){
   }));
 }
 function syncRoute(){
-  // 區域改為多選晶片，由 toggleRouteRegion 直接維護 routeCfg.regions
-  if(!Array.isArray(routeCfg.regions)) routeCfg.regions=[];
+  // 加料條件組合：只在加料展開時才有 DOM；缺欄位時不覆蓋既有設定
+  if(!Array.isArray(routeCfg.rules)) routeCfg.rules=[];
   const nlEl=$('#r-nl'); if(nlEl) routeCfg.nl=nlEl.value;
-  routeCfg.home=$('#r-home').value.trim();
-  routeCfg.start=$('#r-start').value||'08:00';
-  routeCfg.end=$('#r-end').value||'17:00';
-  routeCfg.dwell=Math.max(10,+$('#r-dwell').value||40);
-  routeCfg.rules=readRules();
+  if($('#rules')) routeCfg.rules=readRules();
 }
 function addRule(){ syncRoute(); routeCfg.rules.push({status:'',channel:'',grade:'',n:1}); renderRoute(); }
 function removeRule(i){ syncRoute(); routeCfg.rules.splice(i,1); if(!routeCfg.rules.length)routeCfg.rules=[{status:'',channel:'',grade:'',n:5}]; renderRoute(); }
-function planRoute(){
-  syncRoute();
-  const regs=routeCfg.regions||[];
-  const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
-  const exIds=existingProspectIds();
-  let pool=[];
-  customers.forEach(c=>{ if(!c.address)return; if(!cores.length || cores.some(core=>normR(c.address).includes(core)))
-    pool.push({kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type,status:'existing',grade:c.grade||'',address:c.address,phone:c.phone,district:district(c.address),due:dueInfo(c)}); });
-  SEED.forEach(p=>{ if(!p.address)return; if(!cores.length || regs.some(rg=>normR(p.region)===normR(rg)) || cores.some(core=>normR(p.address).includes(core)))
-    pool.push({kind:'prosp',id:p.id,name:p.name,channel:p.category,status:exIds.has(p.id)?'existing':'cold',grade:'',address:p.address,phone:p.phone,district:district(p.address),due:dueInfo(overlay[p.id])}); });
-  const dseen=new Set(); pool=pool.filter(x=>{const k=x.name+x.address; if(dseen.has(k))return false; dseen.add(k); return true;});
-  const byDue=(a,b)=>((a.due?a.due.sort:999)-(b.due?b.due.sort:999));
-  let pick=[]; const used=new Set();
-  routeCfg.rules.forEach(r=>{
-    pool.filter(x=>!used.has(x.name+x.address)
-        && (!r.status||x.status===r.status)
-        && (!r.channel||x.channel===r.channel)
-        && (!r.grade||x.grade===r.grade))
-      .sort(byDue).slice(0,r.n)
-      .forEach(x=>{ used.add(x.name+x.address); pick.push(x); });
-  });
-  if(!pick.length){ routeCfg._last=`<div class="card empty"><div class="big">📍</div>「${esc(regs.join('、')||'所選區域')}」找不到符合組合條件的對象。<br>放寬條件，或換個區域再試。</div>`; $('#route-result').innerHTML=routeCfg._last; return; }
-  pick.sort((a,b)=>(a.district||'').localeCompare(b.district||'','zh-Hant'));
-
-  const n=pick.length, toMin=t=>{const[a,b]=t.split(':').map(Number);return a*60+b;};
-  const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(m%60)).padStart(2,'0')}`;
-  const s=toMin(routeCfg.start), e=toMin(routeCfg.end), lunch=60;
-  const per=(e-s-lunch)/n, travel=Math.max(10,Math.round(per-routeCfg.dwell));
-  let t=s, lunchDone=false;
-  pick.forEach((x,i)=>{ if(!lunchDone && t>=12*60){ x._lunch=true; t+=lunch; lunchDone=true; } x.arrive=fmt(t); t+=routeCfg.dwell; x.leave=fmt(t); if(i<n-1)t+=travel; });
-  const back=t+travel;
-  let warn='';
-  if(per<routeCfg.dwell+10) warn=`時間偏緊:${n} 家 ×(停留${routeCfg.dwell}分+車程)可能塞不進 ${routeCfg.start}–${routeCfg.end},建議減少家數或縮短停留。`;
-  else if(back>e) warn=`依估算約 ${fmt(back)} 才到家,略晚於 ${routeCfg.end}。可縮短停留或少拜訪一家。`;
-
-  let h=`<div class="sec-title"><span class="bar"></span>建議路線(${n} 家)</div>`;
-  if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
-  h+=`<div class="card">`;
-  h+=drow('區域', esc(regs.join('、')||'全部'));
-  const stMap={'':'全部',cold:'陌生',existing:'既有'};
-  const ruleDesc=routeCfg.rules.map(r=>`${stMap[r.status]}・${r.channel||'全通路'}${r.grade?'・'+r.grade+'級':''} ×${r.n}`).join('　＋　');
-  h+=drow('組合', esc(ruleDesc)+`（共要 ${routeCfg.rules.reduce((a,r)=>a+r.n,0)} 家，實排 ${n} 家）`);
-  h+=drow('時程', `${routeCfg.start} 出發 → 預計 ${fmt(back)} 到家`);
-  h+=`</div>`;
-  h+=`<div class="card" style="padding:4px 14px">`;
-  pick.forEach((x,i)=>{
-    if(x._lunch) h+=`<div class="drow"><div class="k">🍱 午餐</div><div class="v">12:00–13:00 休息</div></div>`;
-    const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
-    h+=`<div class="item" style="cursor:default">
-      <div class="avatar" style="background:${colorFor(x.name)}">${i+1}</div>
-      <div class="body"><div class="nm">${esc(x.name)}</div>
-        <div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>
-        <div class="tagline" style="margin-top:4px">🕐 ${x.arrive}–${x.leave}　<span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}</div></div>
-      <div class="meta"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank">導航</a>${tel.length>=6?`<br><a href="tel:${tel}">電話</a>`:''}</div>
-    </div>`;
-  });
-  h+=`</div>`;
-  const origin=routeCfg.home||regs[0]||'';
-  const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(origin)}&travelmode=driving&waypoints=${pick.map(x=>encodeURIComponent(x.address)).join('%7C')}`;
-  h+=`<div class="btn-row"><a class="btn btn-pri" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開啟整條路線</a></div>`;
-  h+=`<div class="tagline" style="margin:8px 2px 0">時間為估算(午休約60分、各站車程約${travel}分);地圖會依實際道路顯示,順序可在地圖中拖曳微調。</div>`;
-  const tips=['出發前先電話確認對方在場;農會、合作社中午常有午休(約 12:00–13:30)。',
-    '帶齊型錄/DM、試用樣品、報價單與名片。',
-    '已成交客戶順道確認庫存、收票與票期。',
-    '偏遠農戶地址可能不精準,先用導航確認位置再出發。',
-    '每拜訪完立刻在 App 記一筆互動紀錄,避免回家忘記。',
-    '帶足現金/油資,留意當日天氣與道路狀況。'];
-  h+=`<div class="sec-title"><span class="bar"></span>注意事項</div><div class="card"><ul style="margin:0;padding-left:18px;line-height:1.9">${tips.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  routeCfg._last=h; $('#route-result').innerHTML=h;
-  $('#route-result').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
 // ========== 即時競品價格 ==========
 let compFilter = {q:'', region:''};
 function renderCompetitors(){
