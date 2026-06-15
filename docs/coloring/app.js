@@ -73,6 +73,40 @@ myCard.innerHTML = `
 myCard.querySelector('.theme-head').onclick = ()=> myCard.classList.toggle('open');
 wrap.appendChild(myCard);
 
+/* ===== 我的 Tomica 收藏（僅本機；公開網站沒有此檔會自動略過） ===== */
+(function loadTomica(){
+  const s=document.createElement('script');
+  s.src='tomica_local.js';
+  s.onload=()=>{ if(window.TOMICA_LOCAL && window.TOMICA_LOCAL.length) buildTomica(window.TOMICA_LOCAL); };
+  s.onerror=()=>{};            // 公開 GitHub 版沒有此檔，靜默略過
+  document.head.appendChild(s);
+})();
+function buildTomica(items){
+  items.forEach(it=>{ imgReg[it.uid]={name:it.name,data:it.data}; });
+  const lbl=document.createElement('div'); lbl.className='grp-label'; lbl.textContent='🚗 我的 Tomica 收藏（僅本機）';
+  wrap.insertBefore(lbl, myLbl);
+  const tid='tomica';
+  const el=document.createElement('div'); el.className='theme open'; el.dataset.tid=tid;
+  el.innerHTML=`
+    <div class="theme-head">
+      <span class="theme-emo">🚗</span>
+      <span class="theme-name">Tomica 著色（${items.length} 張）</span>
+      <span class="theme-badge" data-badge="${tid}">0</span>
+      <span class="theme-arrow">▼</span>
+    </div>
+    <div class="theme-body">
+      <div class="mini-bar">
+        <button class="mini-btn" data-act="all" data-tid="${tid}">全選</button>
+        <button class="mini-btn" data-act="rand" data-tid="${tid}">🎲 隨機 4 個</button>
+        <button class="mini-btn" data-act="none" data-tid="${tid}">清除</button>
+      </div>
+      <div class="chips">${items.map(it=>chipHTML('img',it.uid,it.name,'img:'+it.uid,it.data)).join('')}</div>
+    </div>`;
+  el.querySelector('.theme-head').onclick = e=>{ if(e.target.closest('.mini-btn'))return; el.classList.toggle('open'); };
+  wrap.insertBefore(el, myLbl);
+  refresh();
+}
+
 /* ===== chip HTML ===== */
 function chipHTML(type, id, name, key, data){
   const art = type==='svg' ? svgFor(id) : `<img src="${data}" alt="">`;
@@ -88,10 +122,11 @@ document.addEventListener('click', e=>{
   if(mb){ Sound.sfx(mb.dataset.act==='rand'?'rand':'click'); themeAction(mb.dataset.act, mb.dataset.tid); }
 });
 
+const imgReg={};   // uid -> {name, data}  （上傳圖、Tomica 收藏共用）
 function chipObj(chip){
   const key=chip.dataset.key, type=chip.dataset.type;
   if(type==='svg') return {key,type,id:chip.dataset.id};
-  const u=uploads.find(u=>'img:'+u.uid===key);
+  const u=imgReg[key.slice(4)];   // key = 'img:'+uid
   return {key,type,name:u?u.name:'圖片',data:u?u.data:''};
 }
 function toggleChip(chip){
@@ -145,6 +180,7 @@ document.getElementById('aiBtn').onclick = ()=>{
 function addUpload(name, data){
   const uid='u'+Date.now()+Math.random().toString(36).slice(2,5);
   uploads.push({uid,name,data});
+  imgReg[uid]={name,data};
   renderMyChips();
 }
 function renderMyChips(){
