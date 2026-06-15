@@ -44,8 +44,17 @@ const myLbl = document.createElement('div'); myLbl.className='grp-label'; myLbl.
 wrap.appendChild(myLbl);
 const myCard = document.createElement('div'); myCard.className='theme open';
 myCard.innerHTML = `
-  <div class="theme-head"><span class="theme-emo">📥</span><span class="theme-name">上傳 / 貼網址 / AI 生圖</span><span class="theme-arrow">▼</span></div>
+  <div class="theme-head"><span class="theme-emo">📥</span><span class="theme-name">從網站挑圖 / 上傳 / AI 生圖</span><span class="theme-arrow">▼</span></div>
   <div class="theme-body">
+    <div class="site-box">
+      <div class="site-title">🔎 從圖庫網站挑圖</div>
+      <div class="tool-row">
+        <a class="btn" href="https://www.supercoloring.com/zh-tw" target="_blank" rel="noopener">🎨 開 SuperColoring</a>
+        <a class="btn soft" href="https://www.pinterest.com/search/pins/?q=coloring%20page" target="_blank" rel="noopener">📌 開 Pinterest</a>
+      </div>
+      <p class="hint"><b>方法 1（最穩）</b>：在網站找到喜歡的圖 → 下載／儲存到手機 → 回來按下面「📂 從手機選圖」。<br>
+      <b>方法 2</b>：長按圖片 →「拷貝圖片位址」→ 貼到下面網址欄 → 加入。<span style="color:#c98">（部分網站擋外連，失敗請改用方法 1）</span></p>
+    </div>
     <div class="tool-row">
       <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
       <button class="btn soft" id="pickBtn">📂 從手機選圖</button>
@@ -58,7 +67,7 @@ myCard.innerHTML = `
       <input class="ipt" id="aiInput" placeholder="AI 生圖：描述內容，例如「可愛的小貓」">
       <button class="btn" id="aiBtn">✨ 生成</button>
     </div>
-    <p class="hint">想要 Tomica、寶可夢等卡通？把你手上的線稿圖<b>上傳</b>或<b>貼網址</b>即可加入。AI 生圖為免費服務、需連網，只能產生原創風格（不能生成版權角色），請描述一般內容。</p>
+    <p class="hint">想要 Tomica、寶可夢等卡通？把圖<b>下載後上傳</b>或<b>貼網址</b>加入（個人列印用）。AI 生圖免費、需連網，只能產生原創風格。</p>
     <div class="chips" id="myChips" style="margin-top:10px"></div>
   </div>`;
 myCard.querySelector('.theme-head').onclick = ()=> myCard.classList.toggle('open');
@@ -114,8 +123,12 @@ document.getElementById('fileInput').onchange = e=>{
 document.getElementById('urlBtn').onclick = ()=>{
   const v=document.getElementById('urlInput').value.trim();
   if(!/^https?:\/\//i.test(v)){ alert('請貼上 http(s) 開頭的圖片網址'); return; }
-  addUpload('網路圖片', v);
-  document.getElementById('urlInput').value='';
+  const btn=document.getElementById('urlBtn'); const old=btn.textContent;
+  btn.textContent='載入中…'; btn.disabled=true;
+  const img=new Image();
+  img.onload=()=>{ addUpload('網路圖片', v); document.getElementById('urlInput').value=''; btn.textContent=old; btn.disabled=false; };
+  img.onerror=()=>{ alert('這張圖無法直接載入（網站可能擋外連）。\n請改用方法 1：在網站把圖片下載到手機，再按「📂 從手機選圖」上傳。'); btn.textContent=old; btn.disabled=false; };
+  img.src=v;
 };
 document.getElementById('aiBtn').onclick = ()=>{
   const v=document.getElementById('aiInput').value.trim();
