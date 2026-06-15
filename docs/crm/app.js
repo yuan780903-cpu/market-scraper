@@ -21,30 +21,15 @@ let customProspects = LS.get('crm_prospects', []);
 customProspects.forEach(p=>{ if(p&&p.id&&!SEED.some(s=>s.id===p.id)) SEED.push(p); });
 const saveProspects = () => { LS.set('crm_prospects', customProspects); markDirty(); };
 
-// 戰鬥人員（戰情公仔）— 只存本機
-let soldier = LS.get('crm_soldier', {name:'', region:[], branch:'army', weapon:'rifle', photo:''});
-if(!Array.isArray(soldier.region)) soldier.region = [];   // region：所屬戰鬥區域(縣市，可複選)＝戰情地圖負責銷售區域
+// 負責銷售區域（縣市，可複選）— 只存本機，連動戰情地圖
+let soldier = LS.get('crm_soldier', {region:[]});
+if(!Array.isArray(soldier.region)) soldier.region = [];
 const saveSoldier = () => { LS.set('crm_soldier', soldier); markDirty(); };
 function getRegions(){ if(!Array.isArray(soldier.region)) soldier.region=[]; return soldier.region; }
 function toggleRegion(n){ const a=getRegions(), i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); saveSoldier(); }
 function clearRegions(){ soldier.region=[]; saveSoldier(); }
 // 縣市清單（北到南），供地圖與設定共用
 function countyNames(){ return window.TW_MAP ? Object.keys(window.TW_MAP.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x))) : []; }
-const BRANCHES = {
-  army:{label:'陸軍', emoji:'🪖', uni:'#586b3f', uni2:'#46552f', skin:'#ffd9b0'},
-  navy:{label:'海軍', emoji:'⚓', uni:'#23436b', uni2:'#172e4d', skin:'#ffd9b0'},
-  air :{label:'空軍', emoji:'✈️', uni:'#4f6f8f', uni2:'#3a5773', skin:'#ffd9b0'}
-};
-const WEAPONS = {
-  water  :{label:'水槍',  emoji:'💦'},
-  pistol :{label:'手槍',  emoji:'🔫'},
-  rifle  :{label:'步槍',  emoji:'🔫'},
-  mg     :{label:'機關槍',emoji:'🔥'},
-  tank   :{label:'坦克車',emoji:'🛡️'},
-  jet    :{label:'戰鬥機',emoji:'✈️'},
-  carrier:{label:'航空母艦',emoji:'🚢'}
-};
-const SOLDIER_LINES = ['報告長官！士氣高昂 💪','保證達成業績目標！','衝啊！拿下這張訂單！','碩成肥料・使命必達 🫡','今天也要努力跑客戶！','敵不動我不動，敵一動我成交！','一鼓作氣，攻下這區！','嘿嘿～再摸我會害羞 😆'];
 
 const CATS = ['農會','合作社','肥料行','有機農戶','競爭對手','驗證機構','友善團體','有機促進區'];
 const CUST_TYPES = ['農會','合作社','經銷商','直接農民','其他'];
@@ -267,7 +252,7 @@ function renderHome(){
 }
 function homeTile(icon,title,sum,onclick){
   return `<div class="item" onclick="${onclick}">
-    <div class="avatar" style="background:#5d6651;font-size:18px">${milIcon(icon)}</div>
+    <div class="avatar" style="background:#64748b;font-size:18px">${milIcon(icon)}</div>
     <div class="body"><div class="nm">${esc(title)}</div><div class="sub">${esc(sum||'')}</div></div>
     <div class="meta" style="color:var(--muted);font-size:20px">›</div></div>`;
 }
@@ -391,8 +376,8 @@ function renderMap(){
   }
   // 縣市清單（由北到南）
   const cNames=Object.keys(M.counties).sort((a,b)=>REGION_ORDER.findIndex(x=>normR(a).includes(x))-REGION_ORDER.findIndex(x=>normR(b).includes(x)));
-  // 戰情公仔（負責區域由公仔設定，地圖直接套用，不再重複選擇）
-  let h=soldierCardHTML();
+  // 負責銷售區域橫幅（地圖直接套用，不再重複選擇）
+  let h=mapRegionBanner();
   // 選取鄉鎮資訊卡
   if(mapState.town>=0 && M.towns[mapState.town]){
     const t=M.towns[mapState.town], k=townKey(t), lead=st.lead[k]||0, cu=st.cust[k]||0;
@@ -446,174 +431,23 @@ function mapToggleCounty(n){ toggleRegion(n); mapState.town=-1; renderMap(); win
 function mapClearCounties(){ clearRegions(); mapState.town=-1; renderMap(); window.scrollTo(0,0); }
 function mapTapTown(i){ mapState.town=i; renderMap(); window.scrollTo(0,0); }
 
-// ---------- 戰情公仔（Q版戰鬥娃娃）----------
-function starPath(cx,cy,r){ let p=''; for(let i=0;i<10;i++){ const a=Math.PI/5*i-Math.PI/2, rr=i%2?r*0.45:r; p+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1); } return p+'Z'; }
-// 帽子（依軍種）
-function dollHat(s){
-  const b=BRANCHES[s.branch]||BRANCHES.army;
-  if(s.branch==='navy') return `
-    <path d="M58 50 Q100 30 142 50 L142 56 Q100 38 58 56 Z" fill="#fff"/>
-    <ellipse cx="100" cy="46" rx="42" ry="15" fill="#fff"/>
-    <rect x="60" y="49" width="80" height="9" rx="4" fill="#16294a"/>
-    <circle cx="100" cy="46" r="5" fill="#c0392b"/>`;
-  if(s.branch==='air') return `
-    <path d="M58 56 Q58 28 100 28 Q142 28 142 56 Z" fill="#3a5773"/>
-    <rect x="56" y="52" width="88" height="7" rx="3" fill="#24384a"/>
-    <circle cx="84" cy="55" r="9" fill="#bfe6f2" stroke="#24384a" stroke-width="3"/>
-    <circle cx="116" cy="55" r="9" fill="#bfe6f2" stroke="#24384a" stroke-width="3"/>
-    <path d="${starPath(100,42,7)}" fill="#ffd84d"/>`;
-  // army helmet
-  return `
-    <path d="M60 58 Q60 24 100 24 Q140 24 140 58 Z" fill="${b.uni2}"/>
-    <rect x="56" y="56" width="88" height="9" rx="4" fill="#36421f"/>
-    <path d="${starPath(100,42,8)}" fill="#ffd84d"/>`;
-}
-// 臉（照片或卡通臉）
-function dollFace(s,id){
-  if(s.photo) return `
-    <clipPath id="fc${id}"><circle cx="100" cy="78" r="31"/></clipPath>
-    <circle cx="100" cy="78" r="34" fill="#ffd9b0"/>
-    <image href="${s.photo}" x="69" y="47" width="62" height="62" preserveAspectRatio="xMidYMid slice" clip-path="url(#fc${id})"/>
-    <circle cx="100" cy="78" r="31" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>`;
-  return `
-    <circle cx="100" cy="78" r="34" fill="#ffd9b0"/>
-    <ellipse cx="89" cy="78" rx="4" ry="5" fill="#3a2a1a"/><ellipse cx="111" cy="78" rx="4" ry="5" fill="#3a2a1a"/>
-    <circle cx="90.5" cy="76.5" r="1.3" fill="#fff"/><circle cx="112.5" cy="76.5" r="1.3" fill="#fff"/>
-    <circle cx="82" cy="88" r="5" fill="#ff9a9a" opacity=".5"/><circle cx="118" cy="88" r="5" fill="#ff9a9a" opacity=".5"/>
-    <path d="M91 90 Q100 98 109 90" stroke="#b5654a" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-}
-// 身體 + 手臂（pose: 'hold' 持武器 / 'stand' 立正）
-function dollBody(s,pose){
-  const b=BRANCHES[s.branch]||BRANCHES.army;
-  const arms = pose==='hold'
-    ? `<path d="M70 124 Q62 146 84 153" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
-       <path d="M130 124 Q138 146 116 153" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
-       <circle cx="84" cy="153" r="8" fill="${b.skin}"/><circle cx="116" cy="153" r="8" fill="${b.skin}"/>`
-    : `<path d="M70 124 Q58 152 70 176" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
-       <path d="M130 124 Q142 152 130 176" stroke="${b.uni}" stroke-width="15" fill="none" stroke-linecap="round"/>
-       <circle cx="70" cy="176" r="8" fill="${b.skin}"/><circle cx="130" cy="176" r="8" fill="${b.skin}"/>`;
-  return `
-    <rect x="84" y="174" width="14" height="34" rx="6" fill="${b.uni2}"/>
-    <rect x="102" y="174" width="14" height="34" rx="6" fill="${b.uni2}"/>
-    <ellipse cx="89" cy="210" rx="13" ry="7" fill="#2a2a2a"/><ellipse cx="111" cy="210" rx="13" ry="7" fill="#2a2a2a"/>
-    <rect x="64" y="108" width="72" height="76" rx="22" fill="${b.uni}"/>
-    <path d="M86 108 Q100 122 114 108" stroke="${b.uni2}" stroke-width="4" fill="none"/>
-    <rect x="96" y="112" width="8" height="58" rx="3" fill="${b.uni2}" opacity=".5"/>
-    ${arms}`;
-}
-// 手持武器
-function heldWeapon(w){
-  if(w==='water') return `
-    <rect x="78" y="145" width="54" height="14" rx="6" fill="#ff7a3c"/>
-    <rect x="92" y="131" width="30" height="15" rx="6" fill="#36c5e0"/>
-    <rect x="130" y="147" width="22" height="9" rx="3" fill="#36c5e0"/>
-    <rect x="86" y="157" width="11" height="16" rx="3" fill="#e85d27"/>
-    <circle cx="156" cy="151" r="3.5" fill="#9fe0f0"/><circle cx="163" cy="146" r="2.5" fill="#9fe0f0"/>`;
-  if(w==='pistol') return `
-    <rect x="94" y="146" width="36" height="12" rx="3" fill="#3b3b42"/>
-    <rect x="96" y="156" width="13" height="17" rx="3" fill="#2a2a30"/>
-    <rect x="128" y="148" width="8" height="6" rx="2" fill="#1e1e24"/>`;
-  if(w==='mg') return `
-    <rect x="56" y="146" width="98" height="11" rx="3" fill="#33332f"/>
-    <rect x="150" y="148" width="26" height="6" rx="2" fill="#222"/>
-    <rect x="96" y="157" width="12" height="16" rx="3" fill="#222"/>
-    <rect x="70" y="157" width="22" height="15" rx="3" fill="#4a4a44"/>
-    <path d="M150 156 l9 17 M160 156 l9 17" stroke="#222" stroke-width="3" stroke-linecap="round"/>
-    <path d="M92 164 q9 5 14 -1" stroke="#caa64a" stroke-width="3" fill="none"/>`;
-  // rifle (default)
-  return `
-    <rect x="62" y="147" width="86" height="9" rx="3" fill="#4a3a2a"/>
-    <rect x="148" y="149" width="18" height="5" rx="2" fill="#2a2a2a"/>
-    <rect x="54" y="144" width="14" height="15" rx="4" fill="#5a4632"/>
-    <rect x="100" y="156" width="11" height="14" rx="3" fill="#3a2e22"/>
-    <rect x="112" y="156" width="10" height="21" rx="3" fill="#2a2a2a"/>`;
-}
-// 載具（坦克／戰機／航母）+ 公仔擺放
-const VEHICLES = {
-  tank: { doll:'translate(45,46) scale(.55)', svg:`
-    <rect x="22" y="204" width="156" height="24" rx="12" fill="#2f3a22"/>
-    <circle cx="44" cy="216" r="8" fill="#16190f"/><circle cx="72" cy="216" r="8" fill="#16190f"/><circle cx="100" cy="216" r="8" fill="#16190f"/><circle cx="128" cy="216" r="8" fill="#16190f"/><circle cx="156" cy="216" r="8" fill="#16190f"/>
-    <rect x="34" y="178" width="132" height="32" rx="10" fill="#4f6336"/>
-    <rect x="76" y="158" width="56" height="26" rx="9" fill="#5b7040"/>
-    <rect x="128" y="166" width="66" height="9" rx="4" fill="#3a4a2a"/>
-    <rect x="190" y="164" width="6" height="13" rx="3" fill="#2f3a22"/>`},
-  jet: { doll:'translate(50,30) scale(.5)', svg:`
-    <path d="M16 196 Q70 178 160 184 L190 190 Q160 198 160 198 L70 210 Q30 206 16 196 Z" fill="#aebcc7"/>
-    <path d="M70 192 L42 224 L104 202 Z" fill="#8497a6"/>
-    <path d="M150 186 L170 160 L176 188 Z" fill="#8497a6"/>
-    <ellipse cx="126" cy="186" rx="17" ry="9" fill="#bfe6f2" stroke="#5c6b76" stroke-width="2"/>
-    <circle cx="22" cy="194" r="5" fill="#5c6b76"/>`},
-  carrier: { doll:'translate(50,86) scale(.5)', svg:`
-    <path d="M14 198 L186 198 L168 226 L32 226 Z" fill="#5a6470"/>
-    <rect x="18" y="190" width="166" height="10" rx="2" fill="#3f4750"/>
-    <rect x="40" y="193" width="22" height="3" fill="#d9c24a"/><rect x="78" y="193" width="22" height="3" fill="#d9c24a"/><rect x="116" y="193" width="22" height="3" fill="#d9c24a"/>
-    <rect x="146" y="166" width="24" height="26" rx="3" fill="#6b7682"/>
-    <rect x="156" y="150" width="4" height="18" fill="#6b7682"/>
-    <path d="M6 226 Q26 220 46 226 T86 226 T126 226 T166 226 T206 226 L206 240 L6 240 Z" fill="#7fa8c4" opacity=".7"/>`}
-};
-function soldierSVG(s, id){
-  const w=s.weapon||'rifle';
-  const veh=VEHICLES[w];
-  let inner;
-  if(veh){
-    inner = veh.svg + `<g transform="${veh.doll}">${dollBody(s,'stand')}${dollFace(s,id)}${dollHat(s)}</g>`;
-  } else {
-    inner = dollBody(s,'hold') + heldWeapon(w) + dollFace(s,id) + dollHat(s);
-  }
-  return `<svg viewBox="0 0 200 232" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
-}
-function soldierWrap(s,id){
-  return `<div class="doll-wrap" id="dollWrap" onclick="petSoldier()" title="點我互動">
-    <div class="doll-bubble" id="dollBubble"></div>
-    <div class="doll-fx" id="dollFx"></div>
-    ${soldierSVG(s,id)}
-  </div>`;
-}
-function soldierCardHTML(){
-  const s=soldier, b=BRANCHES[s.branch]||BRANCHES.army, w=WEAPONS[s.weapon]||WEAPONS.rifle;
-  const nm=s.name?esc(s.name):'未命名戰士';
+// ---------- 負責銷售區域橫幅（戰情地圖頁）----------
+function mapRegionBanner(){
   const regTxt=getRegions().join('、');
-  return `<div class="card soldier-card" style="padding:10px 13px 12px">
-    ${soldierWrap(s,'m')}
-    <div class="sol-name">${nm}</div>
-    <div class="sol-tags">
-      <span class="sol-badge" style="background:${b.uni}">${b.emoji} ${b.label}</span>
-      <span class="sol-badge wpn">${w.emoji} ${w.label}</span>
-      <span class="sol-badge reg">📍 ${regTxt?esc(regTxt):'全台灣'}</span>
+  return `<div class="card region-banner">
+    <div class="rb-row">
+      <div class="rb-ic">🗺️</div>
+      <div class="rb-main">
+        <div class="rb-label">負責銷售區域</div>
+        <div class="rb-val">${regTxt?esc(regTxt):'全台灣'}</div>
+      </div>
+      <button class="btn btn-out rb-btn" onclick="event.stopPropagation();go('settings')">⚙️ 設定</button>
     </div>
-    <div class="sol-hint">點公仔互動 👆 ・ <span class="sol-link" onclick="event.stopPropagation();go('settings')">⚙️ 設定戰鬥人員</span></div>
+    <div class="rb-hint">點下方縣市可加入／移除負責區，地圖會自動縮放顯示。</div>
   </div>`;
 }
-function petSoldier(){
-  const d=document.getElementById('dollWrap'); if(!d) return;
-  d.classList.remove('pet'); void d.offsetWidth; d.classList.add('pet');
-  const bub=document.getElementById('dollBubble');
-  if(bub){ bub.textContent=SOLDIER_LINES[Math.floor(Math.random()*SOLDIER_LINES.length)]; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
-  const fx=document.getElementById('dollFx');
-  if(fx){ const base=(soldier.weapon==='water')?['💦','💧','✨']:['❤️','⭐','✨','💥'];
-    for(let i=0;i<4;i++){ const sp=document.createElement('span'); sp.className='fxp'; sp.textContent=base[Math.floor(Math.random()*base.length)];
-      sp.style.left=(22+Math.random()*56)+'%'; sp.style.animationDelay=(i*70)+'ms'; fx.appendChild(sp); setTimeout(()=>sp.remove(),1200); } }
-}
-function setSoldierBranch(b){ soldier.branch=b; saveSoldier(); renderSettings(); }
-function setSoldierWeapon(w){ soldier.weapon=w; saveSoldier(); renderSettings(); }
 function setSoldierCounty(n){ toggleRegion(n); renderSettings(); }
 function clearSoldierCounties(){ clearRegions(); renderSettings(); }
-function saveSoldierSettings(){
-  const nm=document.getElementById('sol-name'); if(nm) soldier.name=nm.value.trim();
-  saveSoldier(); renderSettings(); toast('已儲存戰鬥人員設定 ✅');
-}
-function removeSoldierPhoto(){ soldier.photo=''; saveSoldier(); renderSettings(); }
-function uploadSoldierPhoto(input){
-  const f=input.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{ const img=new Image(); img.onload=()=>{
-    const sz=240, cv=document.createElement('canvas'); cv.width=sz; cv.height=sz; const ctx=cv.getContext('2d');
-    const scale=Math.max(sz/img.width, sz/img.height), dw=img.width*scale, dh=img.height*scale;
-    ctx.drawImage(img,(sz-dw)/2,(sz-dh)/2,dw,dh);
-    soldier.photo=cv.toDataURL('image/jpeg',0.85); saveSoldier(); toast('已更新戰鬥人員照片'); renderSettings();
-  }; img.onerror=()=>alert('圖片讀取失敗'); img.src=r.result; };
-  r.readAsDataURL(f); input.value='';
-}
 
 // ========== 名單 ==========
 function renderProspects(){
@@ -1217,7 +1051,7 @@ function renderCustResults(){
         byType[t].slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(c=>{
           const di=dueInfo(c);
           const gtag=c.grade?`<span class="badge grade-${c.grade}">${c.grade}</span>`:'';
-          const otag=c.org?`<span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:'';
+          const otag=c.org?`<span class="badge" style="background:#64748b;color:#fff">${esc(c.org)}</span>`:'';
           const itag=c.inactive?`<span class="badge" style="background:#9a9a8a;color:#fff">⏸️ 停用</span>`:'';
           const pill=(c.inactive?'':(di?`<span class="badge ${di.cls}">${di.txt}</span>`:''))+gtag+otag+itag;
           h+=itemRow({name:c.name,sub:pickPhone(c.phone)||'—',pill,onclick:`viewCustomer('${c.id}')`});
@@ -1250,7 +1084,7 @@ function orgManager(){
   customers.slice().sort((a,b)=>cityCmp(cityOf(a.address),cityOf(b.address))||a.name.localeCompare(b.name)).forEach(c=>{
     h+=`<label class="org-pick" data-name="${esc(c.name)}" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--line)">
       <input type="checkbox" value="${c.id}" style="width:18px;height:18px;flex:none">
-      <span style="flex:1;min-width:0"><b>${esc(c.name)}</b> <span style="color:var(--muted);font-size:12px">${esc(cityOf(c.address)||'')}</span>${c.org?` <span class="badge" style="background:#5d6651;color:#fff">${esc(c.org)}</span>`:''}</span></label>`;
+      <span style="flex:1;min-width:0"><b>${esc(c.name)}</b> <span style="color:var(--muted);font-size:12px">${esc(cityOf(c.address)||'')}</span>${c.org?` <span class="badge" style="background:#64748b;color:#fff">${esc(c.org)}</span>`:''}</span></label>`;
   });
   h+=`</div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick="assignOrg()">指派到組織</button></div>`;
@@ -1306,7 +1140,7 @@ function custSectionSummary(c,key){
 }
 function custTile(id,key,icon,title,sum,onclick){
   return `<div class="item" onclick="${onclick}">
-    <div class="avatar" style="background:#5d6651;font-size:19px">${icon}</div>
+    <div class="avatar" style="background:#64748b;font-size:19px">${icon}</div>
     <div class="body"><div class="nm">${esc(title)}</div><div class="sub">${esc(sum||'')}</div></div>
     <div class="meta" style="color:var(--muted);font-size:20px">›</div></div>`;
 }
@@ -1316,7 +1150,7 @@ function viewCustomer(id){
   let h=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
       <span class="badge b-${c.type}">${c.type}</span>
       ${c.inactive?`<span class="badge" style="background:#9a9a8a;color:#fff">⏸️ 已停用</span>`:''}
-      ${c.org?`<span class="badge" style="background:#5d6651;color:#fff">🏷️ ${esc(c.org)}</span>`:''}
+      ${c.org?`<span class="badge" style="background:#64748b;color:#fff">🏷️ ${esc(c.org)}</span>`:''}
       ${c.grade?`<span class="badge grade-${c.grade}">${esc(gradeText(c.grade))}</span>`:''}
       ${(!c.inactive&&di)?`<span class="badge ${di.cls}">下次：${di.txt}</span>`:''}</div>`;
   // 經銷 / 使用肥料區域（唯讀總覽，設定後可直接看到）
@@ -1573,12 +1407,12 @@ function buildCustPrintHTML(c){
   let body=`<h1>${esc(c.name)}</h1><div class="sub">${esc(c.type||'')}${c.inactive?'（已停用）':''} ｜ 碩成肥料 ｜ 列印日期 ${esc(todayStr())}</div>`;
   secs.forEach(s=>{ if(!s.rows.length) return; body+=`<h2>${esc(s.title)}</h2><table>`; s.rows.forEach(([k,v])=>{ body+=`<tr><th>${esc(k||'·')}</th><td>${esc(String(v))}</td></tr>`; }); body+=`</table>`; });
   return `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.name)}_客戶資料</title>
-<style>*{box-sizing:border-box}body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:#23271c;margin:18px;font-size:13px;line-height:1.55}
-h1{font-size:20px;margin:0 0 4px}.sub{color:#666;font-size:12px;margin-bottom:16px;border-bottom:2px solid #556b2f;padding-bottom:9px}
-h2{font-size:14px;color:#3c4d20;margin:15px 0 6px;border-left:4px solid #556b2f;padding-left:8px}
+<style>*{box-sizing:border-box}body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:#1f2937;margin:18px;font-size:13px;line-height:1.55}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#666;font-size:12px;margin-bottom:16px;border-bottom:2px solid #1b4d8f;padding-bottom:9px}
+h2{font-size:14px;color:#143a6e;margin:15px 0 6px;border-left:4px solid #1b4d8f;padding-left:8px}
 table{width:100%;border-collapse:collapse;margin-bottom:8px}
-th,td{border:1px solid #d8d8c8;padding:6px 8px;text-align:left;vertical-align:top;word-break:break-word}
-th{width:32%;background:#f2f2e6;font-weight:700;color:#3c4d20;white-space:nowrap}
+th,td{border:1px solid #d8dee8;padding:6px 8px;text-align:left;vertical-align:top;word-break:break-word}
+th{width:32%;background:#eef2f8;font-weight:700;color:#143a6e;white-space:nowrap}
 @page{margin:12mm}@media print{body{margin:0}}</style></head>
 <body>${body}<scr`+`ipt>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},350);};</scr`+`ipt></body></html>`;
 }
@@ -2027,27 +1861,15 @@ function interForm(cb){
 function renderSettings(){
   const size=((JSON.stringify(overlay).length+JSON.stringify(customers).length)/1024).toFixed(0);
   let h=`<div class="info">所有資料只存在這台裝置的瀏覽器中。換手機、清除瀏覽器資料前，請先「匯出備份」。</div>`;
-  // 戰鬥人員（戰情公仔）設定
-  h+=`<div class="sec-title"><span class="bar"></span>戰鬥人員設定（戰情公仔）</div><div class="card">`;
-  h+=soldierWrap(soldier,'s');
-  h+=`<div class="field"><label>戰鬥人員名稱</label><input id="sol-name" type="text" value="${esc(soldier.name||'')}" placeholder="例：莊政遠 中士" oninput="soldier.name=this.value;saveSoldier()"></div>`;
+  // 負責銷售區域（連動戰情地圖）
+  h+=`<div class="sec-title"><span class="bar"></span>負責銷售區域</div><div class="card">`;
   const _cN=countyNames(), _reg=getRegions();
-  h+=`<div class="field"><label>所屬戰鬥區域（可複選・連動戰情地圖）</label>`;
+  h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;line-height:1.7;margin-top:0">選擇你負責的縣市（可複選），會自動帶到「戰情地圖」並縮放顯示。</div>`;
   if(_cN.length){
-    h+=`<div class="chips chips-wrap"><button class="chip ${!_reg.length?'on':''}" onclick="clearSoldierCounties()">🌏 全台灣</button>`+
+    h+=`<div class="chips chips-wrap" style="margin-top:8px"><button class="chip ${!_reg.length?'on':''}" onclick="clearSoldierCounties()">🌏 全台灣</button>`+
       _cN.map(n=>`<button class="chip ${_reg.includes(n)?'on':''}" onclick="setSoldierCounty('${esc(n)}')">${esc(n)}</button>`).join('')+`</div>`;
-    h+=`<div class="hint" style="font-size:11px;color:var(--muted)">選好的區域會自動帶到「戰情地圖」並縮放顯示。${_reg.length?'已選 '+_reg.length+' 區':''}</div>`;
+    h+=`<div class="hint" style="font-size:11px;color:var(--muted);margin-top:6px">${_reg.length?'已選 '+_reg.length+' 區':'目前涵蓋全台灣'}</div>`;
   } else { h+=`<div class="hint" style="color:var(--muted)">地圖資料載入中，請稍候再設定。</div>`; }
-  h+=`</div>`;
-  h+=`<div class="rowsel"><span class="rowsel-l">軍種</span><div class="chips">`+
-    Object.entries(BRANCHES).map(([k,v])=>`<button class="chip ${soldier.branch===k?'on':''}" onclick="setSoldierBranch('${k}')">${v.emoji} ${v.label}</button>`).join('')+`</div></div>`;
-  h+=`<div class="rowsel" style="align-items:flex-start"><span class="rowsel-l">武器</span><div class="chips">`+
-    Object.entries(WEAPONS).map(([k,v])=>`<button class="chip ${soldier.weapon===k?'on':''}" onclick="setSoldierWeapon('${k}')">${v.emoji} ${v.label}</button>`).join('')+`</div></div>`;
-  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-out" onclick="document.getElementById('solphoto').click()">📷 上傳照片當公仔的臉</button></div>`;
-  h+=`<input type="file" id="solphoto" accept="image/*" style="display:none" onchange="uploadSoldierPhoto(this)">`;
-  if(soldier.photo) h+=`<div class="btn-row"><button class="btn btn-gray" onclick="removeSoldierPhoto()">🗑️ 移除照片（改用卡通臉）</button></div>`;
-  h+=`<div class="hint" style="margin-top:7px;color:var(--muted);font-size:11px">照片會自動縮圖、只存在你本機裝置，不會上傳。點公仔可以撫摸互動 😆</div>`;
-  h+=`<div class="btn-row" style="margin-top:10px"><button class="btn btn-pri" onclick="saveSoldierSettings()">💾 儲存戰鬥人員設定</button></div>`;
   h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>資料統計</div><div class="card">`;
   h+=drow('名單庫', SEED.length+' 筆（內建）');
@@ -2074,7 +1896,7 @@ function renderSettings(){
   h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="gdriveBackup('')">☁️ 立即備份到雲端</button></div>`;
   h+=`<div class="btn-row"><button class="btn btn-gray" onclick="gdriveRestore()">⬇️ 從雲端還原最新備份</button></div>`;
   h+=`<div class="hint" style="margin-top:6px;color:var(--muted);font-size:11px">上次雲端備份：${_glast?esc(new Date(_glast).toLocaleString('zh-TW')):'尚未備份'}</div>`;
-  h+=`<details style="margin-top:8px"><summary style="font-size:12.5px;color:#3a473f;cursor:pointer;font-weight:600">📋 一次性設定教學（換手機時也照這個做‧點開）</summary><div style="font-size:11.5px;line-height:1.9;color:#3a473f;margin-top:6px">
+  h+=`<details style="margin-top:8px"><summary style="font-size:12.5px;color:#475569;cursor:pointer;font-weight:600">📋 一次性設定教學（換手機時也照這個做‧點開）</summary><div style="font-size:11.5px;line-height:1.9;color:#475569;margin-top:6px">
     <b>建議用電腦操作。</b>到 <b>Google Cloud Console</b>（console.cloud.google.com）用你的 Google 帳號登入，沿用預設的「My First Project」即可。<br>
     <b>1.</b> 點「<b>Google Auth Platform</b>」（管理類別，說明寫 OAuth 設定和憑證）→「開始使用 / Get started」。<br>
     <b>2.</b> 填：應用程式名稱 <b>碩成CRM</b>、支援信箱選自己、<b>目標對象選「外部 External」</b>、聯絡信箱填自己 → 同意 → 建立。<br>
@@ -2090,7 +1912,7 @@ function renderSettings(){
   h+=`<input type="file" id="impxls" accept=".xls,.csv,.txt,.tsv" style="display:none" onchange="importCustomerFile(this)">`;
   h+=`<div class="hint" style="margin-top:8px;color:var(--muted);font-size:11.5px;line-height:1.7">支援 SAP「客戶/收貨人 ZSD29」匯出的 .xls 檔。會自動帶入<b>系統編號、名稱、電話、通訊地址、戶籍地址、統編、建檔日期</b>；已存在(同系統編號或同名)只補空欄、不覆蓋。檔案在你手機<b>本機</b>讀取，不會上傳。</div>`;
   h+=`</div>`;
-  h+=`<div class="sec-title"><span class="bar"></span>使用說明</div><div class="card" style="font-size:13px;line-height:1.7;color:#3a473f">
+  h+=`<div class="sec-title"><span class="bar"></span>使用說明</div><div class="card" style="font-size:13px;line-height:1.7;color:#475569">
     <b>📱 加到主畫面：</b>用 Safari/Chrome 開啟後，選「分享 → 加入主畫面」，即可像 App 一樣使用（離線可用）。<br>
     <b>🎯 名單：</b>3,547 筆全國農會／合作社／肥料行／有機農戶。可搜尋、依類別篩選，設定拜訪頻率後自動排程。<br>
     <b>⭐ 開發客戶：</b>名單中點「轉為我的客戶」即可補上完整資料。<br>
@@ -2234,9 +2056,19 @@ async function gdriveBackup(mode){
     if(mode!=='silent') toast('連結 Google 中…');
     const token=await getDriveToken(mode);
     const name=`碩成CRM備份_${todayStr()}.json`;
-    const ex=await driveFindFile(token,name);
-    await driveUpload(token,name,JSON.stringify(backupBundle()), ex&&ex.id);
+    const content=JSON.stringify(backupBundle());
+    // 查詢＋上傳加一次自動重試，避免偶發網路中斷造成備份失敗
+    let lastErr=null;
+    for(let attempt=0; attempt<2; attempt++){
+      try{
+        const ex=await driveFindFile(token,name);
+        await driveUpload(token,name,content, ex&&ex.id);
+        lastErr=null; break;
+      }catch(err){ lastErr=err; if(attempt===0) await new Promise(r=>setTimeout(r,800)); }
+    }
+    if(lastErr) throw lastErr;
     localStorage.setItem('crm_gdrive_last', new Date().toISOString());
+    _crmDirty=false;
     toast('✅ 已備份到 Google 雲端硬碟');
     if(tab==='settings') renderSettings();
   }catch(e){
@@ -2702,7 +2534,7 @@ function renderSmartRoute(){
       if(p.kind==='custom'){
         h+=`<div class="pk-row" data-k="${p.key}" style="padding:8px 0;border-bottom:1px solid var(--line);background:var(--amber-l);border-radius:8px;margin:2px 0;padding-left:8px;padding-right:8px">
           <div style="display:flex;align-items:center;gap:8px">
-            <div class="avatar" style="background:#7a6a3a;width:26px;height:26px;font-size:13px">📍</div>
+            <div class="avatar" style="background:#3b82f6;width:26px;height:26px;font-size:13px">📍</div>
             <div style="flex:1;min-width:0"><div class="nm" style="font-size:13px;color:var(--amber)">其他行程（非客戶）</div></div>
             <button class="rule-del" onclick="smartRemovePick('${p.key}')">✕</button></div>
           <div class="field" style="margin:6px 0 0"><label style="font-size:11px">做什麼事</label><input class="pk-name" value="${esc(p.name||'')}" placeholder="例如 加油 / 開會 / 取貨"></div>
@@ -2810,7 +2642,7 @@ function smartPlan(){
   else if(lateFix) warn=`部分約定客戶因前段時間排不下而略有延後，請現場彈性調整。`;
 
   let h=`<div class="sec-title"><span class="bar"></span>智慧安排結果（${stops.length} 家）`;
-  h+=online ? ` <span class="badge" style="background:#2f5d34;color:#dff0e0;float:right">✅ 線上路網校正</span>` : ` <span class="badge" style="background:#5a4a2a;color:#f0e6cf;float:right">離線估算</span>`;
+  h+=online ? ` <span class="badge" style="background:#1b4d8f;color:#dceaff;float:right">✅ 線上路網校正</span>` : ` <span class="badge" style="background:#64748b;color:#eef1f6;float:right">離線估算</span>`;
   h+=`</div>`;
   if(warn) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${esc(warn)}</div>`;
   h+=`<div class="card">`;
@@ -2821,8 +2653,8 @@ function smartPlan(){
   h+=`<div class="card" style="padding:4px 14px">`;
   let idx=0;
   result.forEach(x=>{
-    if(x.lunch){ h+=`<div class="item" style="background:#f3efe2">
-      <div class="avatar" style="background:#b08948">🍱</div>
+    if(x.lunch){ h+=`<div class="item" style="background:#fdf6e8">
+      <div class="avatar" style="background:#c4811b">🍱</div>
       <div class="body">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
           <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
@@ -2838,7 +2670,7 @@ function smartPlan(){
     const onclick=isCustom?'':(x.kind==='cust'?`viewCustomer('${x.id}')`:`viewProspect('${x.id}')`);
     const dwLabel=isCustom?'預計':'抵達・拜訪';
     h+=`<div class="item"${onclick?` onclick="${onclick}"`:''} style="${isCustom?'background:var(--amber-l)':''}">
-      <div class="avatar" style="background:${isCustom?'#7a6a3a':colorFor(x.name)}">${idx}</div>
+      <div class="avatar" style="background:${isCustom?'#3b82f6':colorFor(x.name)}">${idx}</div>
       <div class="body">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
           <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${x.arrive}</span>
@@ -2850,8 +2682,8 @@ function smartPlan(){
       <div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${(!isCustom&&tel.length>=6)?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}${(x.kind==='prosp'&&!custByProspect(x.id))?`<br><a href="javascript:void(0)" style="color:var(--amber)" onclick="event.stopPropagation();convertToCustomer('${x.id}')">⭐ 轉既有</a>`:''}</div>
     </div>`;
   });
-  h+=`<div class="item" style="background:#eef1e6">
-      <div class="avatar" style="background:#4c5a2e">🏁</div>
+  h+=`<div class="item" style="background:#e8f0fa">
+      <div class="avatar" style="background:#1b4d8f">🏁</div>
       <div class="body">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
           <span style="font-size:22px;font-weight:800;line-height:1.05;letter-spacing:.5px">${fmt(home)}</span>
@@ -2870,7 +2702,7 @@ function smartPlan(){
   // 今日拜訪客戶清單（可一鍵記錄成拜訪管理，流入週報；目標客戶會自動建/補到「我的客戶」）
   window._routeToday = stops.filter(x=>x.kind==='cust'||x.kind==='prosp').map(x=>({kind:x.kind,id:x.id,name:x.name}));
   if(window._routeToday.length){
-    h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-out" style="border-color:#4c5a2e;color:#3a4622" onclick="routeFinishToday()">✅ 完成今日拜訪（記錄 ${window._routeToday.length} 家並寫入週報）</button></div>`;
+    h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-out" style="border-color:#1b4d8f;color:#143a6e" onclick="routeFinishToday()">✅ 完成今日拜訪（記錄 ${window._routeToday.length} 家並寫入週報）</button></div>`;
     h+=`<div class="tagline" style="margin:2px 2px 0">按下後，今日這 ${window._routeToday.length} 家會各自新增一筆拜訪紀錄（你可逐家補內容）；目標客戶會自動寫進「我的客戶」卡片。完成後可到「拜訪週報」一鍵產生主管週報。</div>`;
   }
   h+=`<div class="tagline" style="margin:8px 2px 0">順序用「最近鄰＋2-opt」就近最佳化（自動消除來回繞路），並把你填的約定到達時間固定在該時段、其餘客戶排在前後。${online?'<b>站間車程已用線上 OSRM 實際路網校正</b>（只送鄉鎮中心座標，不含任何客戶地址/個資）。':'站間車程為離線估算（鄉鎮中心點直線距離×1.3 倍路程、依距離抓 24–88 km/h）；連上網路會自動用實際路網校正。'}實際會因路況、山路而異，僅供參考；點「用 Google 地圖開啟整條路線」可看實際時間。填了中午休息地點，會把上午最後一站→休息地點→下午第一站的車程一起算進去。</div>`;
@@ -3420,6 +3252,8 @@ function initApp(){
   go(valid.includes(hash)?hash:'map');
   showInAppWarning();
   maybeAutoBackup();
+  // 先把 Google 登入元件預先載入，避免第一次按備份時因元件還在下載、授權視窗在 await 之後才彈出被瀏覽器當成「非使用者點擊」擋掉
+  if(gdriveClientId()) loadGIS().catch(e=>console.log('GIS preload skip:', e.message));
   // 離開App時自動備份：開App先預熱無彈窗 token；切到背景或關閉時若資料有變更就靜默上傳
   prewarmDriveToken();
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') backupOnExit(); });
