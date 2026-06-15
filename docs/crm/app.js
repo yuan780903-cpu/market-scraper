@@ -641,7 +641,7 @@ function viewProspect(id){
   h+=followBlock('prosp', id, o.follow);
 
   // 互動紀錄
-  h+=interactionBlock(o.inter, `addProspectInter('${id}')`);
+  h+=interactionBlock(o.inter, `addProspectInter('${id}')`, 'prosp', id);
 
   if(exCust){
     h+=`<div class="btn-row"><button class="btn btn-pri" onclick="closeModal();viewCustomer('${exCust.id}')">👤 查看 / 編輯客戶資料</button></div>`;
@@ -902,18 +902,34 @@ function ssAdd(){
 
 function drow(k,v){ return `<div class="drow"><div class="k">${k}</div><div class="v">${v||'—'}</div></div>`; }
 
-function interactionBlock(inter, addFn){
+function interactionBlock(inter, addFn, kind, id){
   inter = inter||[];
+  const canDel = !!(kind && id);
   let h=`<div class="sec-title"><span class="bar"></span>互動紀錄 (${inter.length})</div><div class="card">`;
   h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="${addFn}">＋ 新增紀錄</button></div>`;
   if(inter.length){
     h+=`<div class="timeline" style="margin-top:12px">`;
-    [...inter].reverse().forEach(it=>{
-      h+=`<div class="tl"><div class="tl-h"><span>${esc(it.type||'紀錄')}</span><span>${esc(it.date)}</span></div><div class="tl-c">${esc(it.content)}</div></div>`;
+    [...inter].reverse().forEach((it,i)=>{
+      const oi=inter.length-1-i;  // 還原成原始索引（時間軸是反向顯示）
+      const tons=(it.tons!=null&&+it.tons>0)?` ・${(+it.tons)} 噸`:'';
+      const delBtn=canDel?`<button class="fdel" title="刪除這筆紀錄" onclick="delInterRecord('${kind}','${id}',${oi})">✕</button>`:'';
+      h+=`<div class="tl"><div class="tl-h"><span>${esc(it.type||'紀錄')}${tons}</span><span>${esc(it.date)}${delBtn}</span></div><div class="tl-c">${esc(it.content)}</div></div>`;
     });
     h+=`</div>`;
   } else { h+=`<div class="tagline" style="margin-top:10px">尚無紀錄</div>`; }
   h+=`</div>`; return h;
+}
+// 刪除單筆互動紀錄（修正誤記的拜訪），並重算 last/next 下次拜訪日
+function delInterRecord(kind,id,idx){
+  const hd=getHolder(kind,id); if(!hd||!hd.inter||!hd.inter[idx]) return;
+  const it=hd.inter[idx];
+  if(!confirm(`刪除這筆紀錄？\n${it.date||''}　${it.type||'紀錄'}｜${it.content||''}`)) return;
+  hd.inter.splice(idx,1);
+  const visitDates=hd.inter.filter(x=>!x.type||x.type==='拜訪').map(x=>x.date).filter(Boolean).sort();
+  hd.last = visitDates.length? visitDates[visitDates.length-1] : '';
+  hd.next = (hd.freq && hd.last)? addDays(hd.last,hd.freq) : (hd.last? hd.next : '');
+  saveHolder(kind); toast('已刪除紀錄');
+  kind==='cust'? custGroup(id,'mgmt') : viewProspect(id);
 }
 
 // ---------- 拜訪紀錄 + 後續跟進（目標客戶與既有客戶共用） ----------
@@ -924,6 +940,7 @@ function reopenDetail(kind,id){ kind==='cust'?custGroup(id,'mgmt'):viewProspect(
 function visitForm(kind,id){
   let h=`<div class="field"><label>拜訪日期</label>${rocDateInput('v-date',todayStr())}</div>`;
   h+=`<div class="field"><label>拜訪結果 / 內容</label><textarea id="v-content" placeholder="談了什麼、對方反應、結果…"></textarea></div>`;
+  h+=`<div class="field"><label>本次噸數（選填，成交 / 預估）</label><input id="v-tons" type="number" inputmode="decimal" step="0.1" min="0" placeholder="例如：2.6（噸），沒有可留空"></div>`;
   h+=`<div class="field"><label>後續跟進事項（選填）</label><input id="v-follow" placeholder="例如：下週二送試用樣品 / 補報價單"></div>`;
   h+=`<div class="field"><label>跟進期限（選填）</label>${rocDateInput('v-due','')}</div>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" id="v-save">儲存拜訪</button></div>`;
@@ -931,8 +948,9 @@ function visitForm(kind,id){
   $('#v-save').onclick=()=>{
     const date=$('#v-date').value||todayStr();
     const content=$('#v-content').value.trim()||'完成拜訪';
+    const tons=parseFloat($('#v-tons').value)||0;
     const hd=getHolder(kind,id); if(!hd){ toast('找不到資料'); return; }
-    hd.inter=hd.inter||[]; hd.inter.push({date,type:'拜訪',content});
+    hd.inter=hd.inter||[]; hd.inter.push(tons>0?{date,type:'拜訪',content,tons}:{date,type:'拜訪',content});
     hd.last=date; if(hd.freq) hd.next=addDays(date,hd.freq);
     const ft=$('#v-follow').value.trim();
     if(ft){ hd.follow=hd.follow||[]; hd.follow.push({id:'F'+Date.now(),text:ft,due:$('#v-due').value||'',done:false,created:date}); }
@@ -1295,7 +1313,7 @@ function custSection(id,key){
   } else if(key==='follow'){
     h+=followBlock('cust', id, c.follow);
   } else if(key==='inter'){
-    h+=interactionBlock(c.inter, `addCustInter('${id}')`);
+    h+=interactionBlock(c.inter, `addCustInter('${id}')`, 'cust', id);
   } else if(key==='notes'){
     h+=`<div class="card"><div class="field"><label>備註</label><textarea id="c-notes" placeholder="輸入備註…">${esc(c.notes||'')}</textarea></div>
         <div class="btn-row"><button class="btn btn-pri" onclick="saveCustNotes('${id}')">💾 儲存備註</button></div></div>`;
@@ -1385,7 +1403,7 @@ function custGroup(id,key){
     h+=`<div class="btn-row"><button class="btn btn-out" onclick="visitForm('cust','${id}')">📍 記錄拜訪</button>
         <button class="btn btn-pri" onclick="saveCustSchedule('${id}')">儲存排程</button></div></div>`;
     h+=followBlock('cust', id, c.follow);
-    h+=interactionBlock(c.inter, `addCustInter('${id}')`);
+    h+=interactionBlock(c.inter, `addCustInter('${id}')`, 'cust', id);
     openModal(`${c.name}・拜訪管理`, h);
   }
 }
@@ -2292,7 +2310,7 @@ let smartCfg = {
   startLoc:'', startTime:'08:00',
   endLoc:'', endTime:'17:00',
   lunchStart:'12:00', lunchEnd:'13:00', lunchLoc:'',
-  f:{ src:'', organic:'', regions:[], channel:'', area:'', grade:'' },
+  f:{ src:'', organic:'', regions:[], channel:'', area:'', grade:'', kw:'' },
   picks:[],   // {key,kind,id,name,channel,grade,address,phone,district,organic,area,dwell,fixed}
   _last:'', _inited:0, _poolOpen:0
 };
@@ -2437,6 +2455,7 @@ function smartPool(){
       pool.push({key:'p'+p.id,kind:'prosp',id:p.id,name:p.name,channel:p.category||'其他',status:exIds.has(p.id)?'existing':'cold',grade:(overlay[p.id]&&overlay[p.id].grade)||'',address:p.address||'',phone:p.phone||'',district:district(p.address),organic:p.category==='有機農戶'?'org':'non',area:areaVal(p),region:p.region});
     });
   }
+  const kw=(f.kw||'').trim().toLowerCase();
   return pool.filter(x=>{
     if(!x.address) return false;
     if(regs.length){ const okR=regs.some(rg=>x.region&&normR(x.region)===normR(rg))||cores.some(core=>normR(x.address).includes(core)); if(!okR)return false; }
@@ -2444,6 +2463,7 @@ function smartPool(){
     if(f.channel && x.channel!==f.channel) return false;
     if(f.grade){ if(f.grade==='none'){ if(x.grade)return false; } else if(x.grade!==f.grade)return false; }
     if(f.area){ const m=parseFloat(f.area); if(!isNaN(m)){ if(x.area==null||x.area<m)return false; } }
+    if(kw){ const hay=[x.name,x.address,x.phone,x.district,x.channel].filter(Boolean).join(' ').toLowerCase(); if(!hay.includes(kw)) return false; }
     return true;
   });
 }
@@ -2464,6 +2484,7 @@ function syncSmart(){
   if((v=g('sm-channel'))!==undefined) smartCfg.f.channel=v;
   if((v=g('sm-grade'))!==undefined) smartCfg.f.grade=v;
   if((v=g('sm-area'))!==undefined) smartCfg.f.area=v;
+  if((v=g('sm-kw'))!==undefined) smartCfg.f.kw=v;
   // pick rows (dwell + fixed time)
   document.querySelectorAll('#route-body .pk-row').forEach(el=>{
     const k=el.dataset.k, p=smartCfg.picks.find(x=>x.key===k); if(!p)return;
@@ -2549,6 +2570,11 @@ function renderSmartRoute(){
   // 篩選
   const orgOpts=[['','有機/非有機'],['org','🌱 有機'],['non','非有機']];
   h+=`<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>篩選客戶</div>`;
+  h+=`<div class="field"><label>關鍵字搜尋（名稱／地址／電話／通路）</label>
+      <div style="position:relative">
+        <input id="sm-kw" value="${esc(f.kw||'')}" placeholder="🔍 輸入關鍵字…例如 翁俊榮 / 義竹 / 農會" oninput="smartKwInput(this.value)" style="width:100%;box-sizing:border-box;padding-right:34px">
+        ${(f.kw||'')?`<button type="button" onclick="smartKwInput('')" title="清除" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer">✕</button>`:''}
+      </div></div>`;
   h+=`<div class="field-2">
       <div class="field"><label>客戶來源</label><select id="sm-src" onchange="syncSmart();renderRoute()">
         <option value="" ${f.src===''?'selected':''}>全部</option>
@@ -2620,7 +2646,10 @@ function renderSmartRoute(){
   h+=`<div class="btn-row" style="gap:8px"><button class="btn btn-out" onclick="smartAddCustom()">＋ 新增其他行程</button>${smartCfg.picks.length?`<button class="btn btn-pri" onclick="smartPlan()">🧠 智慧安排路線</button>`:''}</div>`;
   h+=`<div id="smart-result">${smartCfg._last||''}</div>`;
   $('#route-body').innerHTML=h;
+  if(smartCfg._kwFocus){ const el=$('#sm-kw'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); } smartCfg._kwFocus=false; }
 }
+// 關鍵字搜尋：輸入時即時篩選符合清單（自動展開），並保住輸入焦點
+function smartKwInput(v){ smartCfg.f.kw=v; if((v||'').trim()) smartCfg._poolOpen=1; smartCfg._kwFocus=true; renderRoute(); }
 function smartPlan(){
   syncSmart();
   const picks=smartCfg.picks;
@@ -3168,8 +3197,8 @@ function collectWeekVisits(){
   const mon=repMonday(), fri=addDays(mon,4);
   const inRange=d=>d&&d>=mon&&d<=fri;
   const out=[];
-  customers.forEach(c=>{ (c.inter||[]).forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:c.name,kind:'客戶',type:it.type||'拜訪',content:it.content||'',id:c.id,who:'cust'}); }); });
-  Object.keys(overlay).forEach(pid=>{ const o=overlay[pid]; if(!o||!o.inter) return; if(custByProspect(pid)) return; /* 已轉為我的客戶→紀錄改記在客戶卡片，避免重複 */ const p=SEED.find(x=>x.id===pid); const nm=p?p.name:'(名單)'; o.inter.forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:nm,kind:'名單',type:it.type||'拜訪',content:it.content||'',id:pid,who:'prospect'}); }); });
+  customers.forEach(c=>{ (c.inter||[]).forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:c.name,kind:'客戶',type:it.type||'拜訪',content:it.content||'',tons:+it.tons||0,id:c.id,who:'cust'}); }); });
+  Object.keys(overlay).forEach(pid=>{ const o=overlay[pid]; if(!o||!o.inter) return; if(custByProspect(pid)) return; /* 已轉為我的客戶→紀錄改記在客戶卡片，避免重複 */ const p=SEED.find(x=>x.id===pid); const nm=p?p.name:'(名單)'; o.inter.forEach(it=>{ if(inRange(it.date)) out.push({date:it.date,name:nm,kind:'名單',type:it.type||'拜訪',content:it.content||'',tons:+it.tons||0,id:pid,who:'prospect'}); }); });
   out.sort((a,b)=>a.date.localeCompare(b.date));
   return out;
 }
@@ -3184,8 +3213,12 @@ function weekAnalysis(){
   visits.forEach(v=>{ v.m=metaOf(v); });
   const names=new Set(visits.map(v=>v.name));
   const custVisits=visits.filter(v=>v.who==='cust'), prospVisits=visits.filter(v=>v.who==='prospect');
-  const byChan={}, byCounty={}, byGrade={};
-  visits.forEach(v=>{ byChan[v.m.chan]=(byChan[v.m.chan]||0)+1; byCounty[v.m.county]=(byCounty[v.m.county]||0)+1; if(v.m.grade)byGrade[v.m.grade]=(byGrade[v.m.grade]||0)+1; });
+  const byChan={}, byCounty={}, byGrade={}, tonsByCounty={}, famByCounty={}; let totalTons=0;
+  visits.forEach(v=>{
+    byChan[v.m.chan]=(byChan[v.m.chan]||0)+1; byCounty[v.m.county]=(byCounty[v.m.county]||0)+1; if(v.m.grade)byGrade[v.m.grade]=(byGrade[v.m.grade]||0)+1;
+    const t=+v.tons||0; totalTons+=t; tonsByCounty[v.m.county]=(tonsByCounty[v.m.county]||0)+t;
+    (famByCounty[v.m.county]=famByCounty[v.m.county]||new Set()).add(v.name);
+  });
   const newCust=[], seenNew=new Set();
   custVisits.forEach(v=>{ if(v.m.conv && !seenNew.has(v.id)){ seenNew.add(v.id); newCust.push(v.name); } });
   // 待跟進（未完成）
@@ -3198,7 +3231,7 @@ function weekAnalysis(){
   customers.forEach(c=>{ if(c.next&&c.next>=nwm&&c.next<=nwf) nextWk.push({name:c.name,due:c.next,grade:c.grade||''}); });
   Object.keys(overlay).forEach(pid=>{ if(custByProspect(pid))return; const o=overlay[pid]; const p=SEED.find(x=>x.id===pid); if(o&&o.next&&o.next>=nwm&&o.next<=nwf) nextWk.push({name:p?p.name:'(名單)',due:o.next,grade:(o&&o.grade)||''}); });
   nextWk.sort((a,b)=>a.due.localeCompare(b.due));
-  return {mon,fri,visits,names,custVisits,prospVisits,byChan,byCounty,byGrade,newCust,follows,nextWk};
+  return {mon,fri,visits,names,custVisits,prospVisits,byChan,byCounty,byGrade,newCust,follows,nextWk,totalTons,tonsByCounty,famByCounty};
 }
 function sortedKeys(obj){ return Object.keys(obj).sort((x,y)=>obj[y]-obj[x]); }
 function reportText(){
@@ -3233,54 +3266,99 @@ function copyReport(){
   else repFallbackCopy(t);
 }
 function repFallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('週報文字已複製'); }catch(e){ toast('複製失敗，請長按下方文字手動複製'); } document.body.removeChild(ta); }
+// 把本週彙整成「結構化資料表」陣列：單一資料源，供畫面表格、複製TSV、封存共用
+function reportTableData(a){
+  const fmtT=n=>{ n=+n||0; return n? (Math.round(n*10)/10).toString() : ''; };
+  const custN=new Set(a.custVisits.map(v=>v.id)).size, prospN=new Set(a.prospVisits.map(v=>v.id)).size;
+  const tables=[];
+  tables.push({title:'表1　本週執行摘要', headers:['項目','數值'], rows:[
+    ['拜訪次數', a.visits.length+' 次'],
+    ['接觸家數', a.names.size+' 家'],
+    ['既有客戶 / 目標開發', custN+' 家 / '+prospN+' 家'],
+    ['本週新轉入客戶', a.newCust.length? a.newCust.length+' 家（'+a.newCust.join('、')+'）' : '0 家'],
+    ['涵蓋縣市', Object.keys(a.byCounty).length+' 個'],
+    ['成交 / 預估噸數', (fmtT(a.totalTons)||'0')+' 噸'],
+  ]});
+  const counties=sortedKeys(a.byCounty);
+  const r2=counties.map(k=>[k, a.byCounty[k]+' 次', (a.famByCounty[k]?a.famByCounty[k].size:0)+' 家', fmtT(a.tonsByCounty[k])||'-']);
+  r2.push(['合計', a.visits.length+' 次', a.names.size+' 家', (fmtT(a.totalTons)||'0')+' 噸']);
+  tables.push({title:'表2　區域別彙整', headers:['縣市','拜訪次數','接觸家數','噸數'], rows:r2});
+  tables.push({title:'表3　通路別', headers:['通路','次數'], rows:sortedKeys(a.byChan).map(k=>[k, a.byChan[k]+' 次'])});
+  if(Object.keys(a.byGrade).length) tables.push({title:'表3-1　客戶分級', headers:['分級','次數'], rows:sortedKeys(a.byGrade).map(k=>[k+'級', a.byGrade[k]+' 次'])});
+  const r4=[];
+  for(let i=0;i<5;i++){ const d=addDays(a.mon,i); a.visits.filter(v=>v.date===d).forEach(v=>{ r4.push([d.slice(5)+' 週'+WD_NAME[new Date(d).getDay()], v.name, v.m.county||'', v.m.chan||'', v.m.grade?v.m.grade+'級':'', fmtT(v.tons)||'', v.content||'完成拜訪']); }); }
+  tables.push({title:'表4　每日拜訪明細', headers:['日期','客戶','縣市','通路','分級','噸數','洽談內容'], rows:r4});
+  if(a.follows.length) tables.push({title:'表5　待跟進事項', headers:['客戶','事項','期限'], rows:a.follows.slice(0,30).map(f=>[f.name, f.text, (f.due||'')+(f.due&&f.due<todayStr()?'（逾期）':'')])});
+  if(a.nextWk.length) tables.push({title:'表6　下週回訪規劃', headers:['日期','客戶','分級'], rows:a.nextWk.slice(0,30).map(x=>[x.due.slice(5), x.name, x.grade?x.grade+'級':''])});
+  return tables;
+}
+function rtblHTML(t, boldLast){
+  let h=`<div class="sec-title"><span class="bar"></span>${esc(t.title)}</div>`;
+  h+=`<table class="rtbl"><thead><tr>${t.headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>`;
+  if(!t.rows.length){ h+=`<tr><td colspan="${t.headers.length}" style="text-align:center;color:#8a8f7a">—</td></tr>`; }
+  t.rows.forEach((r,ri)=>{ const last=boldLast&&ri===t.rows.length-1; h+=`<tr${last?' style="font-weight:700;background:#eef0e4"':''}>${r.map(c=>`<td>${esc(String(c))}</td>`).join('')}</tr>`; });
+  h+=`</tbody></table>`; return h;
+}
+function copyText(t,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast(msg||'已複製')).catch(()=>repFallbackCopy(t)); } else repFallbackCopy(t); }
+function copyReportTable(){
+  const a=weekAnalysis();
+  if(!a.visits.length){ toast('本週尚無拜訪紀錄'); return; }
+  let t=`業務週報（數據表）　${a.mon} ～ ${a.fri}　業務員：莊政遠（碩成肥料・南區）\n`;
+  reportTableData(a).forEach(tb=>{ t+=`\n【${tb.title}】\n${tb.headers.join('\t')}\n`; tb.rows.forEach(r=>{ t+=r.map(c=>String(c)).join('\t')+'\n'; }); });
+  copyText(t, '數據表已複製，可貼進 Excel / LINE / Email');
+}
+// ---------- 每期封存（累積成週報 PPTX 素材） ----------
+function weekArchive(){ return LS.get('crm_week_archive',[]); }
+function archiveWeek(){
+  const a=weekAnalysis();
+  if(!a.visits.length){ toast('本週沒有拜訪紀錄，無法封存'); return; }
+  const arr=weekArchive();
+  const rec={ key:a.mon, mon:a.mon, fri:a.fri, savedAt:new Date().toISOString(),
+    visits:a.visits.length, names:a.names.size, totalTons:Math.round((a.totalTons||0)*10)/10,
+    byCounty:a.byCounty, tonsByCounty:Object.fromEntries(Object.entries(a.tonsByCounty).map(([k,v])=>[k,Math.round(v*10)/10])),
+    byChan:a.byChan, byGrade:a.byGrade, newCust:a.newCust, tables:reportTableData(a) };
+  const i=arr.findIndex(x=>x.key===rec.key);
+  if(i>=0){ if(!confirm('本週（'+a.mon+'）已封存過，要覆蓋更新嗎？')) return; arr[i]=rec; }
+  else arr.push(rec);
+  arr.sort((x,y)=>x.key.localeCompare(y.key)); LS.set('crm_week_archive',arr);
+  toast('已封存本期（累積 '+arr.length+' 期）'); renderReport();
+}
+function exportWeekArchive(){ const arr=weekArchive(); if(!arr.length){ toast('尚無封存資料'); return; } download('週紀要封存_'+todayStr()+'.json', JSON.stringify(arr,null,2), 'application/json'); toast('已匯出封存 JSON'); }
+function delWeekArchive(key){ if(!confirm('刪除這期封存？')) return; LS.set('crm_week_archive', weekArchive().filter(x=>x.key!==key)); toast('已刪除'); renderReport(); }
+function archiveListHTML(arr){
+  if(!arr||!arr.length) return '';
+  let h=`<div class="sec-title"><span class="bar"></span>已封存週紀要（${arr.length} 期）</div>`;
+  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-out" onclick="exportWeekArchive()">⤓ 匯出全部（JSON）</button></div>`;
+  h+=`<table class="rtbl"><thead><tr><th>週次</th><th>拜訪</th><th>家數</th><th>噸數</th><th></th></tr></thead><tbody>`;
+  [...arr].reverse().forEach(x=>{ h+=`<tr><td>${x.mon} ~ ${x.fri}</td><td class="num">${x.visits}</td><td class="num">${x.names}</td><td class="num">${x.totalTons||0}</td><td><button class="btn btn-ghost" style="padding:2px 8px;font-size:11px" onclick="delWeekArchive('${x.key}')">刪</button></td></tr>`; });
+  h+=`</tbody></table>`; return h;
+}
 function renderReport(){
   const a=weekAnalysis();
   const isThis=(repMonday()===thisMonday());
-  let h=`<div class="info">📊 自動把本週（週一～週五）拜訪彙整成可給主管看的<b>業務週報</b>，含摘要、結構分析、每日紀要、跟進與下週規劃。資料只存本機。在「拜訪路線」按「完成今日拜訪」會自動寫進這裡。</div>`;
+  const arr=weekArchive(); const archived=arr.some(x=>x.key===a.mon);
+  let h=`<style>
+.rtbl{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:12.5px;background:#fff;border-radius:8px;overflow:hidden}
+.rtbl th,.rtbl td{border:1px solid var(--line,#e2e0d5);padding:6px 8px;text-align:left;vertical-align:top;white-space:pre-wrap}
+.rtbl thead th{background:#4d5d2a;color:#fff;font-weight:700;white-space:nowrap}
+.rtbl tbody tr:nth-child(even){background:#f6f5ee}
+.rtbl td.num{text-align:right;white-space:nowrap}
+</style>`;
+  h+=`<div class="info">📊 把本週（週一～週五）拜訪自動<b>表格化</b>成可上呈業務副總的數據週報。資料只存本機。<br>跑完拜訪按「💾 封存本期」累積，集滿 2 週即為週報簡報素材。</div>`;
   h+=`<div class="seg"><button class="seg-b" onclick="shiftReportWeek(-1)">← 上一週</button>
       <button class="seg-b ${isThis?'on':''}" onclick="resetReportWeek()">本週</button>
       <button class="seg-b" onclick="shiftReportWeek(1)">下一週 →</button></div>`;
-  h+=`<div class="count">${a.mon} ～ ${a.fri}　·　拜訪 ${a.visits.length} 次　·　接觸 ${a.names.size} 家</div>`;
-  h+=`<div class="btn-row" style="margin-top:0"><button class="btn btn-pri" onclick="copyReport()">📋 複製主管週報（文字）</button></div>`;
-  if(!a.visits.length){ h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「拜訪路線」排行程，當日跑完按「完成今日拜訪」，<br>或在客戶/名單按「記錄拜訪」，這裡就會自動彙整。</div></div>`; viewHTML(h); return; }
-  const custN=new Set(a.custVisits.map(v=>v.id)).size, prospN=new Set(a.prospVisits.map(v=>v.id)).size;
-  // 一、摘要
-  h+=`<div class="sec-title"><span class="bar"></span>① 本週執行摘要</div><div class="card">`;
-  h+=drow('拜訪 / 接觸', `${a.visits.length} 次　·　${a.names.size} 家`);
-  h+=drow('既有 / 目標', `既有客戶 ${custN} 家　·　目標開發 ${prospN} 家`);
-  if(a.newCust.length) h+=drow('新轉入客戶', `⭐ ${esc(a.newCust.join('、'))}`);
-  h+=drow('縣市足跡', sortedKeys(a.byCounty).map(k=>`${esc(k)} ${a.byCounty[k]}`).join('　'));
-  h+=`</div>`;
-  // 二、結構分析
-  h+=`<div class="sec-title"><span class="bar"></span>② 拜訪結構分析</div><div class="card">`;
-  h+=drow('通路別', sortedKeys(a.byChan).map(k=>`<span class="badge b-${k}">${esc(k)} ${a.byChan[k]}</span>`).join(' '));
-  if(Object.keys(a.byGrade).length) h+=drow('客戶分級', sortedKeys(a.byGrade).map(k=>`<span class="badge grade-${k}">${k}級 ${a.byGrade[k]}</span>`).join(' '));
-  h+=`</div>`;
-  // 三、每日紀要
-  h+=`<div class="sec-title"><span class="bar"></span>③ 每日行程紀要</div>`;
-  for(let i=0;i<5;i++){
-    const d=addDays(a.mon,i); const dv=a.visits.filter(v=>v.date===d); if(!dv.length) continue;
-    h+=`<div class="sec-title" style="font-size:13px;margin-top:8px"><span class="bar"></span>${d.slice(5)}　週${WD_NAME[new Date(d).getDay()]}　(${dv.length})</div><div class="card">`;
-    dv.forEach(v=>{
-      const pill=`<span class="badge b-${v.kind==='客戶'?'農會':'其他'}">${v.kind}</span>`;
-      const click=v.who==='cust'?`viewCustomer('${v.id}')`:`viewProspect('${v.id}')`;
-      h+=itemRow({name:v.name,sub:[v.m.chan,v.m.region].filter(Boolean).join('・')+'｜'+(v.content||'完成拜訪'),pill,onclick:click});
-    });
-    h+=`</div>`;
+  h+=`<div class="count">${a.mon} ～ ${a.fri}　·　拜訪 ${a.visits.length} 次　·　接觸 ${a.names.size} 家　·　噸數 ${Math.round((a.totalTons||0)*10)/10}${archived?'　·　<span style="color:#4d5d2a;font-weight:700">✓ 已封存</span>':''}</div>`;
+  if(!a.visits.length){
+    h+=`<div class="card"><div class="empty"><div class="big">📝</div>本週尚無拜訪紀錄。<br>到「拜訪路線」排行程，當日跑完按「完成今日拜訪」，<br>或在客戶/名單按「記錄拜訪」（可填噸數），這裡就會自動彙整。</div></div>`;
+    h+=archiveListHTML(arr); viewHTML(h); return;
   }
-  // 四、跟進
-  if(a.follows.length){
-    h+=`<div class="sec-title"><span class="bar"></span>④ 待跟進事項（${a.follows.length}）</div><div class="card">`;
-    a.follows.slice(0,15).forEach(f=>{ const od=f.due&&f.due<todayStr(); h+=`<div class="drow"><div class="dk">${esc(f.name)}</div><div class="dv">${esc(f.text)}${f.due?` <span class="${od?'over':''}" style="color:${od?'var(--red)':'var(--muted)'}">📅${esc(f.due)}${od?'逾期':''}</span>`:''}</div></div>`; });
-    h+=`</div>`;
-  }
-  // 五、下週規劃
-  h+=`<div class="sec-title"><span class="bar"></span>${a.follows.length?'⑤':'④'} 下週工作規劃</div><div class="card">`;
-  if(a.nextWk.length){
-    h+=`<div class="tagline" style="margin:0 0 6px">依拜訪頻率，下週應回訪 ${a.nextWk.length} 家：</div>`;
-    a.nextWk.slice(0,15).forEach(x=>{ h+=`<div class="drow"><div class="dk">${esc(x.due.slice(5))}</div><div class="dv">${esc(x.name)}${x.grade?` <span class="badge grade-${x.grade}">${x.grade}級</span>`:''}</div></div>`; });
-  } else h+=`<div class="tagline" style="margin:0">下週無系統排定回訪，建議持續開發目標名單、深耕本週新接觸客戶。</div>`;
-  h+=`</div>`;
+  h+=`<div class="btn-row" style="margin-top:0;flex-wrap:wrap;gap:6px">
+      <button class="btn btn-pri" onclick="copyReportTable()">📋 複製數據表（給副總）</button>
+      <button class="btn btn-out" onclick="archiveWeek()">💾 ${archived?'更新封存':'封存本期'}</button>
+      <button class="btn btn-ghost" onclick="copyReport()">📄 複製文字稿</button></div>`;
+  reportTableData(a).forEach((t,i)=> h+=rtblHTML(t, i===1));
+  h+=archiveListHTML(arr);
   viewHTML(h);
 }
 
