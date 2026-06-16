@@ -3242,99 +3242,119 @@ function syncRoute(){
 }
 function addRule(){ syncRoute(); routeCfg.rules.push({status:'',channel:'',grade:'',n:1}); renderRoute(); }
 function removeRule(i){ syncRoute(); routeCfg.rules.splice(i,1); if(!routeCfg.rules.length)routeCfg.rules=[{status:'',channel:'',grade:'',n:5}]; renderRoute(); }
-// ========== 即時競品價格 ==========
+// ========== 競品價格（手動登記臉書社團／粉專看到的同業報價）==========
 let compFilter = {q:'', region:''};
+let compEdit = null;        // 正在編輯的報價 id；null＝新增
+const COMP_ITEMS = ['有機質肥料','雜項堆肥','禽畜糞堆肥','植物渣粕肥料','微生物肥料','有機質複合肥料','混合有機質肥料','骨粉','海鳥糞','液體肥料'];
 function renderCompetitors(){
   const regs = regionsSorted();
-  let h = `<div class="info">🔒 蒐集各地競爭對手報價，方便比價與訂價。資料只存在本機、不外傳。</div>`;
-  // 上網快查（本機無後端，改用瀏覽器開啟比價站即時查詢）
-  h += `<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>🔍 上網查競品價格</div>
-    <div class="field"><label>搜尋關鍵字</label><input id="comp-kw" value="有機質肥料 粒狀 20kg" placeholder="例如 有機質肥料 粒狀 20kg"></div>
-    <div class="btn-row" style="flex-wrap:wrap;gap:8px;margin-top:2px">
-      <button class="btn btn-out" onclick="compWeb('feebee')">飛比比價</button>
-      <button class="btn btn-out" onclick="compWeb('biggo')">BigGo</button>
-      <button class="btn btn-out" onclick="compWeb('shopee')">蝦皮</button>
-      <button class="btn btn-out" onclick="compWeb('momo')">momo</button>
-      <button class="btn btn-out" onclick="compWeb('afa')">農糧署品牌價</button>
-    </div>
-    <div class="tagline" style="margin-top:7px">點按鈕用瀏覽器開啟即時比價結果；看到合適報價，按下方「新增競品報價」記下來。</div></div>`;
-  h += `<div class="btn-row"><button class="btn btn-pri" onclick="editCompetitor(null,true)">➕ 新增競品報價</button></div>`;
-  h += `<div class="search"><input id="csearch" placeholder="🔍 搜尋公司 / 產品 / 地區" value="${esc(compFilter.q)}" oninput="onCompSearch(this.value)"></div>`;
-  h += `<div class="rowsel"><span class="rowsel-l">縣市</span><select class="regsel" onchange="compFilter.region=this.value;renderCompetitors()">
+  const c = compEdit ? (competitors.find(x=>x.id===compEdit)||{}) : {};
+  const editing = !!compEdit;
+  const sel=(arr,v)=>arr.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('');
+  let h = `<div class="info">🔒 同業多在臉書社團／粉專貼報價，看到就在這裡手動登記，方便比價與訂價。資料只存在本機、不外傳。</div>`;
+
+  // ── 登記表單 ──
+  h += `<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>📝 ${editing?'編輯競品報價':'登記競品報價'}</div>`;
+  h += `<div class="field"><label>日期</label>${rocDateInput('k-date',c.date||todayStr())}</div>`;
+  h += `<div class="field"><label>業者名稱</label><input id="k-company" value="${esc(c.company||'')}" placeholder="例如 ○○肥料行 / 臉書粉專名稱"></div>`;
+  h += `<div class="field"><label>廠牌</label><input id="k-brand" value="${esc(c.brand||c.product||'')}" placeholder="品牌 / 產品名"></div>`;
+  h += `<div class="field"><label>肥料品目</label><input id="k-item" list="comp-items" value="${esc(c.item||'')}" placeholder="例如 有機質肥料、雜項堆肥…">
+        <datalist id="comp-items">${COMP_ITEMS.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></div>`;
+  h += `<div class="field"><label>報價地區</label>
+        <div class="field-2"><select id="k-region"><option value="">縣市</option>${regs.map(r=>`<option ${c.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select>
+        <input id="k-town" value="${esc(c.town||'')}" placeholder="鄉鎮區（可空）"></div></div>`;
+  h += `<div class="field-2">
+        <div class="field"><label>價格(元)</label><input id="k-price" type="number" inputmode="decimal" value="${esc(c.price||'')}" placeholder="一包單價"></div>
+        <div class="field"><label>含運與否</label><select id="k-freight">${sel(FREIGHTS,c.freight||'含運')}</select></div></div>`;
+  h += `<div class="field"><label>備註</label><textarea id="k-note" placeholder="規格 / 重量 / 票期 / 來源連結 / 附帶條件…">${esc(c.note||'')}</textarea></div>`;
+  h += `<div class="btn-row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn btn-out" onclick="compAnalyze()">📊 數據分析</button>
+        <button class="btn btn-pri" onclick="saveCompetitor()">💾 ${editing?'更新存檔':'存檔'}</button>
+        ${editing?`<button class="btn btn-out" onclick="compCancelEdit()">取消編輯</button>`:''}</div></div>`;
+
+  // ── 篩選列（穩定不重建，避免中文輸入中斷）──
+  h += `<div class="search"><input id="csearch" placeholder="🔍 搜尋業者 / 廠牌 / 品目 / 地區" value="${esc(compFilter.q)}" oninput="onCompSearch(this.value)" autocomplete="off"></div>`;
+  h += `<div class="rowsel"><span class="rowsel-l">縣市</span><select class="regsel" onchange="compFilter.region=this.value;compRefreshList()">
         <option value="">全部地區</option>${regs.map(r=>`<option ${compFilter.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>`;
-  const q=compFilter.q.trim();
-  const res = competitors.filter(c=>{
-    if(compFilter.region && c.region!==compFilter.region) return false;
-    if(q){ const blob=[c.company,c.product,c.item,c.region,c.town,c.note].join(''); if(!blob.includes(q)) return false; }
-    return true;
-  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  h += `<div class="count">共 ${res.length} 筆競品報價</div>`;
-  if(!res.length){ h+=`<div class="card empty"><div class="big">🏷️</div>還沒有競品報價。<br>用上方「上網查」找價格，或按「新增競品報價」手動建立。</div>`; }
-  else { h += res.map(compCard).join(''); }
+  h += `<div id="comp-list">${compListHTML()}</div>`;
   viewHTML(h);
   const inp=$('#csearch'); if(inp&&compFilter._focus){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); compFilter._focus=false; }
 }
+function compFiltered(){
+  const q=compFilter.q.trim();
+  return competitors.filter(c=>{
+    if(compFilter.region && c.region!==compFilter.region) return false;
+    if(q){ const blob=[c.company,c.brand,c.product,c.item,c.region,c.town,c.note].join(''); if(!blob.includes(q)) return false; }
+    return true;
+  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function compListHTML(){
+  const res=compFiltered();
+  let h=`<div class="count">共 ${res.length} 筆競品報價</div>`;
+  if(!res.length){ h+=`<div class="card empty"><div class="big">🏷️</div>還沒有競品報價。<br>看到同業在臉書社團／粉專貼價格，就用上方表單登記下來。</div>`; }
+  else { h+=res.map(compCard).join(''); }
+  return h;
+}
+function compRefreshList(){ const el=$('#comp-list'); if(el) el.innerHTML=compListHTML(); else renderCompetitors(); }
+function onCompSearch(v){ compFilter.q=v; compRefreshList(); }   // 只更新清單，搜尋框不重建（中文 IME 安全）
 function compCard(c){
   const loc=[c.region,c.town].filter(Boolean).join(' ');
-  const spec=[c.form,c.weight?c.weight+'kg':''].filter(Boolean).join(' ');
+  const brand=c.brand||c.product||'';
   return `<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <div style="min-width:0"><div style="font-weight:700;font-size:15px">${esc(c.company||'競品')}</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:1px">${esc(c.product||'')}${c.item?`・${esc(c.item)}`:''}</div></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:1px">${esc(brand)}${c.item?`${brand?'・':''}${esc(c.item)}`:''}</div></div>
       <div style="text-align:right;flex:none"><div style="font-size:19px;font-weight:800;color:var(--red)">${c.price?'$'+esc(c.price):'—'}</div>
         <div style="font-size:11px;color:var(--muted)">${esc(c.freight||'')}</div></div></div>
     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
-      ${spec?`<span class="badge b-其他">${esc(spec)}</span>`:''}
       ${loc?`<span class="badge b-農會">📍 ${esc(loc)}</span>`:''}
-      ${c.checkPeriod?`<span class="badge b-合作社">${esc(c.checkPeriod)}</span>`:''}
       ${c.date?`<span class="badge b-其他">${esc(c.date)}</span>`:''}</div>
     ${c.note?`<div class="tagline" style="margin-top:7px">📝 ${esc(c.note)}</div>`:''}
     <div class="btn-row" style="margin-top:9px;gap:8px">
       <button class="btn btn-out" onclick="editCompetitor('${c.id}')">✏️ 編輯</button>
       <button class="btn btn-out" style="color:var(--red);border-color:var(--red)" onclick="delCompetitor('${c.id}')">🗑️ 刪除</button></div></div>`;
 }
-function compWeb(site){
-  const kw=(($('#comp-kw')||{}).value||'有機質肥料').trim(), e=encodeURIComponent(kw);
-  const url={ feebee:`https://feebee.com.tw/s/${e}/`, biggo:`https://biggo.com.tw/s/${e}`,
-    shopee:`https://shopee.tw/search?keyword=${e}`, momo:`https://www.momoshop.com.tw/search/searchShop.jsp?keyword=${e}`,
-    afa:`https://www.afa.gov.tw/cht/index.php?code=list&flag=detail&ids=2212` }[site];
-  if(url) window.open(url,'_blank');
-}
-function onCompSearch(v){ compFilter.q=v; compFilter._focus=true; renderCompetitors(); }
-function editCompetitor(id, isNew){
-  const c = isNew ? {id:'k'+Date.now(), date:todayStr(), form:'粒狀', freight:'含運'} : (competitors.find(x=>x.id===id)||{});
-  const regs=regionsSorted();
-  const sel=(arr,v)=>arr.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('');
-  let h='';
-  h+=`<div class="field-2">
-    <div class="field"><label>報價縣市</label><select id="k-region"><option value="">未設定</option>${regs.map(r=>`<option ${c.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
-    <div class="field"><label>鄉鎮區</label><input id="k-town" value="${esc(c.town||'')}" placeholder="例如 新化區"></div></div>`;
-  h+=`<div class="field"><label>公司名稱</label><input id="k-company" value="${esc(c.company||'')}" placeholder="競品公司 / 品牌"></div>`;
-  h+=`<div class="field"><label>產品名稱</label><input id="k-product" value="${esc(c.product||'')}" placeholder="競品產品名"></div>`;
-  h+=`<div class="field"><label>料品目</label><input id="k-item" value="${esc(c.item||'')}" placeholder="例如 雜項堆肥(5-11)"></div>`;
-  h+=`<div class="field-2">
-    <div class="field"><label>性狀</label><select id="k-form">${sel(FORMS,c.form||'粒狀')}</select></div>
-    <div class="field"><label>重量(kg)</label><input id="k-weight" type="number" inputmode="decimal" value="${esc(c.weight||'')}" placeholder="20"></div></div>`;
-  h+=`<div class="field-2">
-    <div class="field"><label>價格(元)</label><input id="k-price" type="number" inputmode="decimal" value="${esc(c.price||'')}" placeholder="一包單價"></div>
-    <div class="field"><label>是否含運</label><select id="k-freight">${sel(FREIGHTS,c.freight||'含運')}</select></div></div>`;
-  h+=checkPeriodHTML(c.checkPeriod||'');
-  h+=`<div class="field"><label>報價日期</label>${rocDateInput('k-date',c.date||todayStr())}</div>`;
-  h+=`<div class="field"><label>備註</label><textarea id="k-note" placeholder="來源、附帶條件、聯絡資訊…">${esc(c.note||'')}</textarea></div>`;
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="saveCompetitor('${c.id}',${isNew?'true':'false'})">💾 儲存</button></div>`;
-  openModal(isNew?'新增競品報價':'編輯競品報價', h);
-}
-function saveCompetitor(id, isAdd){
+function editCompetitor(id){ compEdit=id; renderCompetitors(); window.scrollTo(0,0); }
+function compCancelEdit(){ compEdit=null; renderCompetitors(); window.scrollTo(0,0); }
+function saveCompetitor(){
   const g=i=>{const e=$('#'+i); return e?e.value.trim():'';};
-  const obj={ id, region:$('#k-region').value, town:g('k-town'), company:g('k-company'), product:g('k-product'),
-    item:g('k-item'), form:$('#k-form').value, weight:g('k-weight'), price:g('k-price'),
-    freight:$('#k-freight').value, checkPeriod:readCheckPeriod(), date:g('k-date'), note:g('k-note') };
-  if(!obj.company && !obj.product){ toast('至少要填公司或產品名稱'); return; }
+  const id = compEdit || ('k'+Date.now());
+  const obj={ id, date:g('k-date'), company:g('k-company'), brand:g('k-brand'), item:g('k-item'),
+    region:$('#k-region').value, town:g('k-town'), price:g('k-price'), freight:$('#k-freight').value, note:g('k-note') };
+  if(!obj.company && !obj.brand){ toast('至少要填業者名稱或廠牌'); return; }
   const i=competitors.findIndex(x=>x.id===id);
   if(i>=0) competitors[i]=obj; else competitors.unshift(obj);
-  saveComp(); closeModal(); toast('已儲存競品報價'); renderCompetitors();
+  saveComp(); compEdit=null; toast(i>=0?'已更新存檔':'已存檔'); sfx('success'); renderCompetitors(); window.scrollTo(0,0);
 }
-function delCompetitor(id){ if(!confirm('確定刪除這筆競品報價？')) return; competitors=competitors.filter(x=>x.id!==id); saveComp(); toast('已刪除'); renderCompetitors(); }
+function delCompetitor(id){ if(!confirm('確定刪除這筆競品報價？')) return; competitors=competitors.filter(x=>x.id!==id); if(compEdit===id) compEdit=null; saveComp(); toast('已刪除'); renderCompetitors(); }
+// ── 數據分析：依肥料品目 / 廠牌 / 地區彙整均價、最低、最高 ──
+function compAnalyze(){
+  const data=competitors.map(c=>({...c, _p:parseFloat(String(c.price||'').replace(/[^\d.]/g,''))})).filter(c=>!isNaN(c._p)&&c._p>0);
+  if(!data.length){ openModal('📊 競品數據分析', `<div class="card empty"><div class="big">📊</div>還沒有可分析的報價（需要有填價格）。</div>`); return; }
+  const stat=arr=>{ const ps=arr.map(x=>x._p); return {n:arr.length, avg:Math.round(ps.reduce((a,b)=>a+b,0)/ps.length), min:Math.min(...ps), max:Math.max(...ps)}; };
+  const group=(key,label)=>{
+    const m={}; data.forEach(c=>{ const k=(c[key]||'').trim()||'（未填）'; (m[k]=m[k]||[]).push(c); });
+    const rows=Object.keys(m).map(k=>{ const s=stat(m[k]); return {k,...s}; }).sort((a,b)=>b.n-a.n);
+    let t=`<div class="sec-title"><span class="bar"></span>${label}</div>`;
+    t+=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px"><thead><tr style="color:var(--muted);text-align:left">
+      <th style="padding:4px 6px">${label.replace(/依|分析/g,'')}</th><th style="padding:4px 6px;text-align:right">筆數</th><th style="padding:4px 6px;text-align:right">均價</th><th style="padding:4px 6px;text-align:right">最低</th><th style="padding:4px 6px;text-align:right">最高</th></tr></thead><tbody>`;
+    rows.forEach(r=>{ t+=`<tr style="border-top:1px solid var(--line)"><td style="padding:5px 6px">${esc(r.k)}</td>
+      <td style="padding:5px 6px;text-align:right">${r.n}</td><td style="padding:5px 6px;text-align:right;font-weight:700">$${r.avg}</td>
+      <td style="padding:5px 6px;text-align:right;color:var(--green)">$${r.min}</td><td style="padding:5px 6px;text-align:right;color:var(--red)">$${r.max}</td></tr>`; });
+    t+=`</tbody></table>`;
+    return t;
+  };
+  const all=stat(data);
+  let h=`<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap;gap:8px">
+    <div><div style="font-size:11px;color:var(--muted)">總筆數</div><div style="font-size:20px;font-weight:800">${all.n}</div></div>
+    <div><div style="font-size:11px;color:var(--muted)">均價</div><div style="font-size:20px;font-weight:800">$${all.avg}</div></div>
+    <div><div style="font-size:11px;color:var(--muted)">最低</div><div style="font-size:20px;font-weight:800;color:var(--green)">$${all.min}</div></div>
+    <div><div style="font-size:11px;color:var(--muted)">最高</div><div style="font-size:20px;font-weight:800;color:var(--red)">$${all.max}</div></div></div></div>`;
+  h+=`<div class="card">${group('item','依肥料品目分析')}</div>`;
+  h+=`<div class="card" style="margin-top:10px">${group('brand','依廠牌分析')}</div>`;
+  h+=`<div class="card" style="margin-top:10px">${group('region','依報價地區分析')}</div>`;
+  openModal('📊 競品數據分析', h);
+}
 
 // ========== 拜訪週報（彙整本週拜訪紀錄；工作週＝週一～週五）==========
 let reportWeekStart=''; // 該週週一（空字串＝本週）
