@@ -2345,7 +2345,7 @@ function renderRoute(){
   h+=`<div class="field"><label>本週起始日（週一）</label>${rocDateInput('w-start',weekCfg.start)}</div>`;
   h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
   h+=`<div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>`;
-  h+=weekDDOne('mode','_ddMode','排程範圍',[{v:'all',t:'到期＋依分級建議（推薦）'},{v:'due',t:'只排已設下次拜訪日'}]);
+  h+=weekDDOne('mode','_ddMode','排程範圍',[{v:'all',t:'到期＋依分級建議（推薦）'},{v:'due',t:'只排已設下次拜訪日'},{v:'none',t:'無（逐日嚮導：只排我手動挑選的）'}]);
   // 篩選：點開打勾清單下拉複選（不選＝全部）
   h+=weekDD('custTypes','_ddType','客戶類型',[{v:'cust',t:'既有客戶'},{v:'prosp',t:'目標客戶'}]);
   h+=weekDD('regions','_ddRegion','區域',regionsSorted().map(r=>({v:r,t:r})));
@@ -2360,8 +2360,13 @@ function renderRoute(){
   // ── 出發/回家/時間（可收合，供每日智慧時間排序）──
   h+=renderLocCard();
   // ── 產生 ──
-  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planWeek()">📅 產生本週計畫</button></div>`;
-  h+=`<div id="week-result">${weekCfg.plan?renderPlanResult():(weekCfg._last||'')}</div>`;
+  if(weekCfg.mode==='none'){
+    // 逐日嚮導：手動挑選、一天一天存檔
+    h+=renderWizard();
+  }else{
+    h+=`<div class="btn-row"><button class="btn btn-pri" onclick="planWeek()">📅 產生本週計畫</button></div>`;
+    h+=`<div id="week-result">${weekCfg.plan?renderPlanResult():(weekCfg._last||'')}</div>`;
+  }
   viewHTML(h);
   if(smartCfg._kwFocus){ const el=$('#sm-kw'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); } smartCfg._kwFocus=false; }
 }
@@ -2393,6 +2398,25 @@ function renderAddOn(){
     }
   }
   h+=`</div>`;
+  // ⓪ 依目前篩選列出客戶，逐一/全選加入
+  {
+    const fp=weekFilterPool();
+    const pkset=new Set(smartCfg.picks.map(p=>p.key));
+    const unadded=fp.filter(x=>!pkset.has(x.key));
+    h+=`<div class="sec-title"><span class="bar"></span>依篩選列出客戶（${fp.length}）<button class="rule-del" style="float:right" onclick="weekToggleFlt()">${weekCfg._fltOpen?'▲ 收合':'▼ 展開'}</button></div>`;
+    if(!weekCfg._fltOpen){
+      h+=`<div class="card" style="padding:12px 14px;color:var(--muted);font-size:12.5px">依上方「客戶類型／區域／鄉鎮／通路／分級」列出符合的客戶，可逐一或全部加入本週計畫。${fp.length?`<br>目前符合 ${fp.length} 家。`:''}</div>`;
+    }else if(!fp.length){
+      h+=`<div class="card empty" style="padding:14px">沒有符合的客戶，請放寬上方篩選或先在「我的客戶／名單」設定。</div>`;
+    }else{
+      h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="weekAddAllFiltered()">＋ 全選加入（${unadded.length}）</button></div>`;
+      h+=`<div class="card" style="padding:4px 14px;max-height:320px;overflow:auto">`;
+      fp.slice(0,80).forEach(x=>{ const added=pkset.has(x.key);
+        h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
+      if(fp.length>80) h+=`<div class="tagline" style="padding:8px 2px">符合 ${fp.length}，僅顯示前 80，請縮小區域/鄉鎮。</div>`;
+      h+=`</div>`;
+    }
+  }
   // 指定清單
   if(smartCfg.picks.length){
     h+=`<div class="sec-title"><span class="bar"></span>已指定加入（${smartCfg.picks.length}）<button class="rule-del" style="float:right" onclick="smartClearPicks()">✕ 全部清除</button></div><div class="card" style="padding:8px 12px">`;
@@ -2518,7 +2542,7 @@ function planWeek(){
   if(!days.length){ toast('請至少選一個出訪日'); return; }
   const weekEnd=addDays(start,6);
   const includeGrade=weekCfg.mode==='all';
-  let targets=collectVisitTargets(weekCfg.regions,weekEnd,includeGrade);
+  let targets=weekCfg.mode==='none'?[]:collectVisitTargets(weekCfg.regions,weekEnd,includeGrade);
   const seen=new Set(); targets.forEach(t=>seen.add(t.name+t.address));
   const exIds=existingProspectIds();
   const regs=weekCfg.regions||[]; const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
@@ -2596,7 +2620,7 @@ function renderPlanResult(){
 }
 
 // 單日行程清單（今日行程卡與計畫結果共用）：時刻＋導航＋整條路線＋完成當日拜訪
-function dayStopsHTML(b, cfg, isToday){
+function dayStopsHTML(b, cfg, isToday, hideFinish){
   const stops=b.stops.filter(s=>!s.lunch);
   const toMin=t=>{const[a,c]=(t||'').split(':').map(Number);return (a||0)*60+(c||0);};
   let h='';
@@ -2615,7 +2639,7 @@ function dayStopsHTML(b, cfg, isToday){
   const mapStops=stops.filter(x=>x.address);
   if(mapStops.length){ const origin=(cfg&&cfg.startLoc)||mapStops[0].address; const dest=(cfg&&cfg.endLoc)||origin; const wp=mapStops.map(x=>encodeURIComponent(x.address)).join('%7C'); const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}&travelmode=driving&waypoints=${wp}`; h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`; }
   const recordable=stops.filter(x=>x.kind==='cust'||x.kind==='prosp');
-  if(recordable.length) h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-pri" onclick="weekFinishDay('${b.date}')">✅ 完成${isToday?'今日':'當日'}拜訪（記錄 ${recordable.length} 家 → 週報）</button></div>`;
+  if(recordable.length && !hideFinish) h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-pri" onclick="weekFinishDay('${b.date}')">✅ 完成${isToday?'今日':'當日'}拜訪（記錄 ${recordable.length} 家 → 週報）</button></div>`;
   return h;
 }
 
@@ -2653,6 +2677,116 @@ function weekFinishDay(date){
   window._routeToday=b.stops.filter(x=>!x.lunch && (x.kind==='cust'||x.kind==='prosp')).map(x=>({kind:x.kind,id:x.id,name:x.name}));
   if(!window._routeToday.length){ toast('這天沒有可記錄的客戶'); return; }
   routeFinishToday();
+}
+
+// ── 依篩選列出客戶（逐一/全選加入指定清單）──
+function weekFilterPool(){
+  const regs=weekCfg.regions||[]; const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
+  const exIds=existingProspectIds();
+  const types=weekCfg.custTypes||[], chans=weekCfg.channels||[], towns=weekCfg.towns||[], grades=weekCfg.grades||[];
+  const okType=k=>!types.length||types.includes(k);
+  const okChan=ch=>!chans.length||chans.includes(chanBucket(ch));
+  const okTown=d=>!towns.length||towns.includes(d);
+  const okGrade=g=>!grades.length||grades.includes(g||'none');
+  const out=[];
+  if(okType('cust')) customers.forEach(c=>{ if(c.inactive||!c.address)return; if(cores.length&&!cores.some(core=>normR(c.address).includes(core)))return; const ch=TYPE2CHAN[c.type]||c.type||'其他'; if(!okChan(ch))return; if(!okTown(district(c.address)))return; if(!okGrade(c.grade))return; out.push({key:'c'+c.id,kind:'cust',id:c.id,name:c.name,channel:ch,status:'existing',grade:c.grade||'',address:c.address,phone:c.phone||'',district:district(c.address)}); });
+  if(okType('prosp')) SEED.forEach(p=>{ if(!overlay[p.id]||!p.address)return; if(cores.length&&!(regs.some(rg=>normR(p.region||'')===normR(rg))||cores.some(core=>normR(p.address).includes(core))))return; if(!okChan(p.category||'其他'))return; if(!okTown(district(p.address)))return; const g=(overlay[p.id]&&overlay[p.id].grade)||''; if(!okGrade(g))return; out.push({key:'p'+p.id,kind:'prosp',id:p.id,name:p.name,channel:p.category||'其他',status:exIds.has(p.id)?'existing':'cold',grade:g,address:p.address,phone:p.phone||'',district:district(p.address)}); });
+  out.sort((a,b)=>(a.district||'').localeCompare(b.district||'','zh-Hant')||(a.name||'').localeCompare(b.name||'','zh-Hant'));
+  return out;
+}
+function weekToggleFlt(){ syncWeek(); syncSmart(); weekCfg._fltOpen=weekCfg._fltOpen?0:1; renderRoute(); }
+function weekAddAllFiltered(){ syncSmart(); const fp=weekFilterPool(); const have=new Set(smartCfg.picks.map(p=>p.key)); let n=0; fp.forEach(x=>{ if(have.has(x.key))return; smartCfg.picks.push(Object.assign({},x,{dwell:SMART_DWELL,fixed:''})); have.add(x.key); n++; }); if(n) sfx('success'); toast(n?`已加入 ${n} 家到指定清單`:'沒有可加入的客戶'); renderRoute(); }
+
+// ========== 逐日排程嚮導（排程範圍＝無）==========
+// 候選＝手動指定(picks)＋條件組合(rules)；逐日挑選、就近排好時刻、一天一天寫入存檔
+function wizCandidates(){
+  const exIds=existingProspectIds();
+  const regs=weekCfg.regions||[]; const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
+  const out=[]; const seen=new Set();
+  const addT=t=>{ const k=(t.name||'')+(t.address||''); if(seen.has(k))return; seen.add(k); t._k=t.kind+'|'+t.id; out.push(t); };
+  // 手動指定
+  smartCfg.picks.forEach(p=>{ addT({kind:p.kind,id:p.id,name:p.name,channel:p.channel||'其他',grade:p.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address||''),status:p.status||'',reason:'指定',sort:-1,overdue:false,dwell:p.dwell,fixed:p.fixed}); });
+  // 條件組合
+  if((routeCfg.rules||[]).some(r=>r.status||r.channel||r.grade)){
+    let pool=[];
+    customers.forEach(c=>{ if(c.inactive||!c.address)return; if(!cores.length||cores.some(core=>normR(c.address).includes(core))) pool.push({kind:'cust',id:c.id,name:c.name,channel:TYPE2CHAN[c.type]||c.type,status:'existing',grade:c.grade||'',address:c.address,phone:c.phone,district:district(c.address),due:dueInfo(c)}); });
+    SEED.forEach(p=>{ if(!p.address)return; if(!cores.length||regs.some(rg=>normR(p.region)===normR(rg))||cores.some(core=>normR(p.address).includes(core))) pool.push({kind:'prosp',id:p.id,name:p.name,channel:p.category,status:exIds.has(p.id)?'existing':'cold',grade:'',address:p.address,phone:p.phone,district:district(p.address),due:dueInfo(overlay[p.id])}); });
+    const used=new Set(); const byDue=(a,b)=>((a.due?a.due.sort:999)-(b.due?b.due.sort:999));
+    routeCfg.rules.forEach(r=>{ if(!(r.status||r.channel||r.grade))return;
+      pool.filter(x=>!used.has(x.name+x.address)&&!seen.has(x.name+x.address)&&(!r.status||x.status===r.status)&&(!r.channel||x.channel===r.channel)&&(!r.grade||x.grade===r.grade)).sort(byDue).slice(0,r.n).forEach(x=>{ used.add(x.name+x.address); addT(Object.assign({},x,{reason:'加料',sort:x.due?x.due.sort:998,overdue:x.due?x.due.sort<0:false})); }); });
+  }
+  return out;
+}
+function wizDates(){ const start=weekCfg.start||thisMonday(); const days=weekCfg.days.slice().sort((a,b)=>(a===0?7:a)-(b===0?7:b)); return days.map(wd=>({date:addDays(start, wd===0?6:wd-1), wd})); }
+function wizSavedCntByDate(){ const plan=loadWeekPlan(); const m={}; if(plan)(plan.buckets||[]).forEach(b=>{ m[b.date]=b.stops.filter(s=>!s.lunch).length; }); return m; }
+function wizAssignedKeys(){ const s=new Set(); Object.values(weekCfg.wizAssign||{}).forEach(arr=>arr.forEach(t=>s.add(t._k))); return s; }
+function wizSavedKeys(){ const plan=loadWeekPlan(); const s=new Set(); if(plan)(plan.buckets||[]).forEach(b=>b.stops.forEach(st=>{ if(!st.lunch&&(st.kind==='cust'||st.kind==='prosp')) s.add(st.kind+'|'+st.id); })); return s; }
+function wizAvailable(){ const used=wizAssignedKeys(), saved=wizSavedKeys(); return wizCandidates().filter(t=>!used.has(t._k)&&!saved.has(t._k)); }
+function wizCfg(){ return {startLoc:smartCfg.startLoc, endLoc:smartCfg.endLoc, startTime:smartCfg.startTime, endTime:smartCfg.endTime, lunchStart:smartCfg.lunchStart, lunchEnd:smartCfg.lunchEnd, lunchLoc:smartCfg.lunchLoc, dwell:weekCfg.dwell||SMART_DWELL}; }
+function wizBucket(d){ const arr=(weekCfg.wizAssign[d]||[]).map(t=>Object.assign({},t)); const cfg=wizCfg(); const sd=scheduleDayPlan(arr,cfg); return {date:d, wd:new Date(d).getDay(), stops:sd.result, home:sd.home, cfg}; }
+function wizSetDate(d){ weekCfg._wizDate=d; renderRoute(); }
+function wizAddToDay(i){ const t=(window._wizAvail||[])[i]; if(!t)return; const d=weekCfg._wizDate; (weekCfg.wizAssign[d]=weekCfg.wizAssign[d]||[]).push(t); renderRoute(); }
+function wizAddAllToDay(){ const d=weekCfg._wizDate; const arr=weekCfg.wizAssign[d]=weekCfg.wizAssign[d]||[]; const room=Math.max(0,(weekCfg.maxPerDay||6)-arr.length); const add=(window._wizAvail||[]).slice(0,room); if(!add.length){ toast('這天已達每日上限'); return; } add.forEach(t=>arr.push(t)); sfx('success'); renderRoute(); }
+function wizRemoveFromDay(i){ const d=weekCfg._wizDate; const arr=weekCfg.wizAssign[d]; if(arr){ arr.splice(i,1); if(!arr.length) delete weekCfg.wizAssign[d]; } renderRoute(); }
+function wizClearDay(){ delete weekCfg.wizAssign[weekCfg._wizDate]; renderRoute(); }
+function wizSaveDay(){
+  syncWeek(); syncSmart();
+  const d=weekCfg._wizDate; const arr=weekCfg.wizAssign[d]||[];
+  if(!arr.length){ toast('這天還沒加入客戶'); return; }
+  const bucket=wizBucket(d); const cfg=bucket.cfg;
+  const start=weekCfg.start||thisMonday(), weekEnd=addDays(start,6);
+  let plan=loadWeekPlan();
+  if(!plan || plan.start!==start) plan={start, weekEnd, days:weekCfg.days.slice(), cfg, overflow:[], buckets:[]};
+  plan.cfg=cfg; plan.savedAt=new Date().toISOString();
+  const slim=bucket.stops.map(s=> s.lunch ? {lunch:true,arrive:s.arrive,leave:s.leave,address:s.address||''}
+    : {kind:s.kind,id:s.id,name:s.name,channel:s.channel,grade:s.grade||'',address:s.address||'',phone:s.phone||'',district:s.district||'',reason:s.reason||'指定',status:s.status||'',arrive:s.arrive,leave:s.leave,_dur:s._dur||0,fixedMark:!!s.fixedMark,overdue:!!s.overdue});
+  plan.buckets=(plan.buckets||[]).filter(b=>b.date!==d);
+  plan.buckets.push({date:d, wd:bucket.wd, home:bucket.home, stops:slim});
+  plan.buckets.sort((a,b)=>a.date.localeCompare(b.date));
+  LS.set('crm_week_plan', plan);
+  delete weekCfg.wizAssign[d];
+  sfx('success'); toast(`已存檔 ${d.slice(5)} 行程`);
+  const dates=wizDates().map(x=>x.date); const savedNow=new Set((plan.buckets||[]).map(b=>b.date));
+  weekCfg._wizDate=dates.find(x=>!savedNow.has(x))||d;
+  renderRoute();
+}
+function renderWizard(){
+  const dates=wizDates();
+  if(!dates.length) return `<div class="card empty" style="padding:16px">請先在上方選「出訪日」。</div>`;
+  const savedCnt=wizSavedCntByDate();
+  if(!weekCfg._wizDate || !dates.some(x=>x.date===weekCfg._wizDate)){ const u=dates.find(x=>!(savedCnt[x.date]>0)); weekCfg._wizDate=(u||dates[0]).date; }
+  const d=weekCfg._wizDate;
+  let h=`<div class="sec-title" style="margin-top:6px"><span class="bar"></span>逐日排程嚮導</div>`;
+  h+=`<div class="info" style="background:#eef3fb;color:#143a6e">選一天 → 從候選加入要拜訪的客戶 → 系統就近排好時刻 → 按「存這天」→ 再排下一天。已存的天會出現在頁首「今日行程」。<br>候選來自上方「＋ 新增客戶」（搜尋／依篩選列出／條件組合）所加入的對象。</div>`;
+  // 日期晶片
+  h+=`<div class="field"><label>選擇日期</label><div class="wdays">`+dates.map(x=>{ const sc=savedCnt[x.date]||0; const as=(weekCfg.wizAssign[x.date]||[]).length; const on=x.date===d; return `<button type="button" class="chip ${on?'on':''}" onclick="wizSetDate('${x.date}')">週${WD_NAME[x.wd]} ${x.date.slice(5)}${sc?` ✅${sc}`:(as?` ・${as}`:'')}</button>`; }).join('')+`</div></div>`;
+  // 當日已加入
+  const arr=weekCfg.wizAssign[d]||[];
+  h+=`<div class="sec-title"><span class="bar"></span>${d.slice(5)}（週${WD_NAME[new Date(d).getDay()]}）已加入 ${arr.length} 家${savedCnt[d]?`　<span class="badge" style="background:#1b7a3a;color:#dfffe9">已存檔 ${savedCnt[d]} 家</span>`:''}</div>`;
+  if(!arr.length){ h+=`<div class="card empty" style="padding:14px">這天還沒加入客戶，從下方候選清單挑選。${savedCnt[d]?'（已存檔過，可再加新客戶覆蓋存檔）':''}</div>`; }
+  else{
+    h+=`<div class="card" style="padding:8px 12px">`;
+    arr.forEach((t,i)=>{ h+=`<div class="pk-row" style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px"><div class="avatar" style="background:${colorFor(t.name)};width:26px;height:26px;font-size:13px">${i+1}</div><div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(t.name)}</div><div class="sub" style="font-size:11.5px">${esc([t.district,t.channel].filter(Boolean).join(' · '))}</div></div><button class="rule-del" onclick="wizRemoveFromDay(${i})">✕</button></div>`; });
+    h+=`</div>`;
+    const bk=wizBucket(d);
+    h+=`<div class="sec-title"><span class="bar"></span>這天路線預覽</div>`;
+    h+=dayStopsHTML(bk, bk.cfg, false, true);
+  }
+  h+=`<div class="btn-row" style="gap:8px;margin-top:10px"><button class="btn btn-pri" onclick="wizSaveDay()">💾 存這天，排下一天</button>${arr.length?`<button class="btn btn-gray" onclick="wizClearDay()">清空這天</button>`:''}</div>`;
+  // 候選清單
+  const avail=wizAvailable(); window._wizAvail=avail;
+  h+=`<div class="sec-title" style="margin-top:14px"><span class="bar"></span>候選清單（${avail.length}）</div>`;
+  if(!avail.length){ h+=`<div class="card empty" style="padding:14px">沒有候選客戶了。請到上方「＋ 新增客戶」用搜尋、「依篩選列出客戶」或條件組合加入對象。</div>`; }
+  else{
+    const room=Math.max(0,(weekCfg.maxPerDay||6)-arr.length);
+    h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="wizAddAllToDay()">＋ 加入這天（最多 ${room} 家）</button></div>`;
+    h+=`<div class="card" style="padding:4px 14px;max-height:340px;overflow:auto">`;
+    avail.slice(0,80).forEach((t,i)=>{ h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(t.name)}</div><div class="sub">${esc([t.district,t.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${t.channel}">${esc(t.channel)}</span>${t.grade?` <span class="badge grade-${t.grade}">${t.grade}</span>`:''}${t.reason?` <span class="badge">${esc(t.reason)}</span>`:''}</div></div><div class="meta"><button class="btn btn-out" style="padding:4px 10px" onclick="wizAddToDay(${i})">＋ 這天</button></div></div>`; });
+    if(avail.length>80) h+=`<div class="tagline" style="padding:8px 2px">候選 ${avail.length}，僅顯示前 80。</div>`;
+    h+=`</div>`;
+  }
+  h+=`<div class="tagline" style="margin:8px 2px 0">每存一天就會寫入本週行程存檔，頁首「今日行程」會顯示當天。要全部重來可在頁首「✕ 清除存檔」。</div>`;
+  return h;
 }
 
 // ========== 智慧客戶拜訪路線安排 ==========
@@ -2967,8 +3101,9 @@ function routeFinishToday(){
 // ========== 每週拜訪資料/設定（整合路線頁使用）==========
 let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, regions:[], mode:'all',
   custTypes:[], channels:[], towns:[], grades:[], extras:[],
-  dwell:40, plan:null, _viewDay:'today', _addOpen:0, _extraOpen:0, _locOpen:0,
-  _ddType:0, _ddRegion:0, _ddTown:0, _ddChan:0, _ddGrade:0, _ddMode:0, _inited:0, _last:'' };
+  dwell:40, plan:null, _viewDay:'today', _addOpen:0, _extraOpen:0, _locOpen:0, _fltOpen:0,
+  _ddType:0, _ddRegion:0, _ddTown:0, _ddChan:0, _ddGrade:0, _ddMode:0,
+  _wizDate:'', wizAssign:{}, _inited:0, _last:'' };
 // 通路晶片（含「其他」吃掉非主通路），與 collectVisitTargets 的歸類一致
 const WEEK_CHANS = ['農會','合作社','肥料行','有機農戶','其他'];
 const chanBucket = ch => WEEK_CHANS.includes(ch) && ch!=='其他' ? ch : '其他';
