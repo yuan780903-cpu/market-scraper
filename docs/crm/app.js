@@ -1174,7 +1174,7 @@ function pickPhone(p){
   const mob=parts.find(x=>/^09\d{8}$/.test(x.replace(/[^\d]/g,'')));
   return mob||parts[0]||'';
 }
-let cFilter={q:'', grade:'', type:'', city:'', org:'', status:'active'};
+let cFilter={q:'', grade:'', type:'', city:'', town:'', org:'', status:'active'};
 // 依狀態取基底名單：使用中（隱藏停用）或 停用客戶
 function custStatusBase(){ return cFilter.status==='inactive' ? customers.filter(c=>c.inactive) : customers.filter(c=>!c.inactive); }
 function renderCustomers(){
@@ -1198,11 +1198,28 @@ function renderCustomers(){
         <option value="">全部通路</option>
         ${types.map(t=>`<option value="${esc(t)}" ${cFilter.type===t?'selected':''}>${esc(t)}（${tcnt[t]}）</option>`).join('')}</select></div></div>`;
   h+=`<div class="field-2">
-      <div class="field"><label>地區</label><select onchange="cFilter.city=this.value;renderCustResults()">
+      <div class="field"><label>地區</label><select onchange="setCCity(this.value)">
         <option value="">全部地區</option>${cities.map(ci=>`<option value="${esc(ci)}" ${cFilter.city===ci?'selected':''}>${esc(ci)}</option>`).join('')}</select></div>
       <div class="field"><label>組織</label><select onchange="cFilter.org=this.value;renderCustResults()">
         <option value="">全部組織</option>${orgs.map(o=>`<option value="${esc(o)}" ${cFilter.org===o?'selected':''}>${esc(o)}</option>`).join('')}
         <option value="__none" ${cFilter.org==='__none'?'selected':''}>（未分組）</option></select></div></div>`;
+  // 鄉鎮篩選：選了地區（縣市）才出現，依目前分級／通路／組織／地區動態列出有客戶的鄉鎮
+  if(cFilter.city){
+    const core=countyCore(cFilter.city);
+    const tc={};
+    base.forEach(c=>{ if((cFilter.grade==='none'?c.grade:(cFilter.grade&&c.grade!==cFilter.grade))) return;
+      if(cFilter.type&&(c.type||'其他')!==cFilter.type) return;
+      if(custCity(c)!==cFilter.city) return;
+      if(cFilter.org==='__none'?c.org:(cFilter.org&&(c.org||'')!==cFilter.org)) return;
+      const tn=matchTown(c.address,core); if(tn) tc[tn]=(tc[tn]||0)+1; });
+    const tl=Object.keys(tc).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    if(!tl.includes(cFilter.town)) cFilter.town='';
+    if(tl.length){
+      h+=`<div class="field"><label>鄉鎮</label><select onchange="setCTown(this.value)">
+          <option value="" ${cFilter.town===''?'selected':''}>全部鄉鎮</option>
+          ${tl.map(t=>`<option value="${esc(t)}" ${cFilter.town===t?'selected':''}>${esc(t)}（${tc[t]}）</option>`).join('')}</select></div>`;
+    }
+  } else if(cFilter.town){ cFilter.town=''; }
   h+=`<div class="field"><label>狀態</label><select onchange="cFilter.status=this.value;renderCustomers()">
         <option value="active" ${cFilter.status!=='inactive'?'selected':''}>✅ 使用中（${activeN}）</option>
         <option value="inactive" ${cFilter.status==='inactive'?'selected':''}>⏸️ 停用客戶（${inactiveN}）</option></select></div>`;
@@ -1217,17 +1234,25 @@ function renderCustResults(){
   const box=document.getElementById('cust-results'); if(!box) return;
   const q=cFilter.q.trim();
   const base=custStatusBase();
+  const tcore = cFilter.city ? countyCore(cFilter.city) : '';
   const res=base.filter(c=>{
     if(cFilter.grade==='none'){ if(c.grade) return false; }
     else if(cFilter.grade){ if(c.grade!==cFilter.grade) return false; }
     if(cFilter.type && (c.type||'其他')!==cFilter.type) return false;
     if(cFilter.city && custCity(c)!==cFilter.city) return false;
+    if(cFilter.town && matchTown(c.address,tcore)!==cFilter.town) return false;
     if(cFilter.org==='__none'){ if(c.org) return false; }
     else if(cFilter.org){ if((c.org||'')!==cFilter.org) return false; }
     return !q||(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q);
   });
-  const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.org||q;
+  const active = cFilter.grade||cFilter.type||cFilter.city||cFilter.town||cFilter.org||q;
   let h=`<div class="count">${cFilter.status==='inactive'?`⏸️ 停用客戶 ${base.length} 位`:`共 ${base.length} 位客戶`}${active?`，符合 ${res.length} 位`:''}</div>`;
+  // 篩選後可一鍵把這批客戶加進「拜訪行程」
+  const pickedKeys=new Set((smartCfg.picks||[]).map(x=>x.key));
+  const addable=res.filter(c=>!pickedKeys.has('c'+c.id) && c.address);
+  if(addable.length){
+    h+=`<div class="btn-row" style="margin:0 0 8px"><button class="btn btn-pri" onclick="custAddAllToRoute()">＋ 將篩選後 ${addable.length} 位加入拜訪行程</button></div>`;
+  }
   if(!res.length){
     h+=`<div class="card"><div class="empty"><div class="big">${cFilter.status==='inactive'?'⏸️':'👤'}</div>${cFilter.status==='inactive'?'目前沒有停用的客戶。':(customers.length?'找不到符合的客戶':'還沒有客戶。<br>點右下角 ＋ 新增，或到名單「轉為我的客戶」。')}</div></div>`;
   } else {
@@ -1252,7 +1277,13 @@ function renderCustResults(){
           const otag=c.org?`<span class="badge" style="background:#64748b;color:#fff">${esc(c.org)}</span>`:'';
           const itag=c.inactive?`<span class="badge" style="background:#9a9a8a;color:#fff">⏸️ 停用</span>`:'';
           const pill=(c.inactive?'':(di?`<span class="badge ${di.cls}">${di.txt}</span>`:''))+gtag+otag+itag;
-          h+=itemRow({name:c.name,sub:pickPhone(c.phone)||'—',pill,onclick:`viewCustomer('${c.id}')`});
+          const inRoute=pickedKeys.has('c'+c.id);
+          const addBtn = c.address ? `<button class="btn btn-out" style="flex:none;padding:6px 10px;font-size:13px;${inRoute?'color:var(--green);border-color:var(--green)':''}" onclick="event.stopPropagation();custAddToRoute('${c.id}')">${inRoute?'✅ 已加入':'＋ 行程'}</button>` : '';
+          h+=`<div class="item" onclick="viewCustomer('${c.id}')">
+            <div class="avatar" style="background:${colorFor(c.name)}">${esc((c.name||'?').trim().charAt(0))}</div>
+            <div class="body"><div class="nm">${esc(c.name)}</div><div class="sub">${esc(pickPhone(c.phone)||'—')}</div>${pill?`<div class="meta" style="margin-top:5px">${pill}</div>`:''}</div>
+            ${addBtn}
+          </div>`;
         });
       });
       h+=`</div>`;
@@ -1270,6 +1301,39 @@ function custSearch(){
 }
 function setCGrade(g){ cFilter.grade=g; renderCustomers(); }
 function setCType(t){ cFilter.type=t; renderCustomers(); }
+function setCCity(ci){ cFilter.city=ci; cFilter.town=''; renderCustomers(); }
+function setCTown(t){ cFilter.town=t; renderCustResults(); }
+// 把一位客戶做成「智慧拜訪規劃」的指定加入項目（與 smartPool 同結構）
+function custPickItem(c){
+  const chan=TYPE2CHAN[c.type]||c.type||'其他';
+  return {key:'c'+c.id, kind:'cust', id:c.id, name:c.name, channel:chan, status:'existing',
+    grade:c.grade||'', address:c.address||'', phone:c.phone||'', district:district(c.address),
+    organic:chan==='有機農戶'?'org':'non', area:custAreaHa(c), dwell:SMART_DWELL, fixed:''};
+}
+function custAddToRoute(id){
+  const c=findCust(id); if(!c) return;
+  if(!c.address){ toast('此客戶沒有地址，無法排入行程'); return; }
+  if(smartCfg.picks.some(x=>x.key==='c'+id)){ toast('已在拜訪行程名單中'); renderCustResults(); return; }
+  smartCfg.picks.push(custPickItem(c)); sfx('success'); toast('已加入拜訪行程：'+c.name); renderCustResults();
+}
+function custAddAllToRoute(){
+  const q=cFilter.q.trim();
+  const tcore=cFilter.city?countyCore(cFilter.city):'';
+  const exist=new Set(smartCfg.picks.map(x=>x.key));
+  let n=0;
+  custStatusBase().forEach(c=>{
+    if(cFilter.grade==='none'?c.grade:(cFilter.grade&&c.grade!==cFilter.grade)) return;
+    if(cFilter.type&&(c.type||'其他')!==cFilter.type) return;
+    if(cFilter.city&&custCity(c)!==cFilter.city) return;
+    if(cFilter.town&&matchTown(c.address,tcore)!==cFilter.town) return;
+    if(cFilter.org==='__none'?c.org:(cFilter.org&&(c.org||'')!==cFilter.org)) return;
+    if(q&&!(c.name+c.phone+c.address+(c.contact||'')+(c.org||'')).includes(q)) return;
+    if(!c.address||exist.has('c'+c.id)) return;
+    smartCfg.picks.push(custPickItem(c)); exist.add('c'+c.id); n++;
+  });
+  if(n){ sfx('success'); toast(`已加入 ${n} 位到拜訪行程，可到「排路線」排程`); } else toast('沒有可加入的客戶');
+  renderCustResults();
+}
 
 // ---------- 組織（批次歸戶）----------
 function orgManager(){
