@@ -48,6 +48,8 @@ const LOC_TYPES = ['住家','下貨位置','倉庫','田區','其他'];
 // 區域（依台灣由北到南排序）
 const REGION_ORDER = '基隆 臺北 新北 桃園 新竹 苗栗 臺中 彰化 南投 雲林 嘉義 臺南 高雄 屏東 宜蘭 花蓮 臺東 澎湖 金門 連江'.split(' ');
 const normR = s => (s||'').replace(/台/g,'臺');
+// 戰情地圖主要戰區（莊政遠主跑：宜蘭、花蓮、嘉義、臺南）— 未設負責區時預設聚焦這四區
+const MAP_FOCUS = ['宜蘭縣','花蓮縣','嘉義縣','台南市'];
 function regionsSorted(){
   // 只保留有效的台灣縣市（過濾掉名單裡誤填的數字、「全國」等雜訊）
   const set=[...new Set(SEED.map(p=>p.region).filter(Boolean))].filter(r=>countyCore(r));
@@ -422,11 +424,12 @@ function renderMap(){
   if(!window.TW_MAP){ viewHTML('<div class="card empty"><div class="big">🗺️</div>地圖資料載入失敗。</div>'); return; }
   const M=window.TW_MAP, st=computeTownStats();
   const sel=getRegions().filter(n=>M.counties[n]);
-  // viewBox：全島或縮放到所選負責區域（聯集）
+  // viewBox：縮放到所選負責區域（聯集）；未選時預設聚焦主要戰區四縣
+  const focus = sel.length ? sel : MAP_FOCUS.filter(n=>M.counties[n]);
   let vb=M.viewBox;
-  if(sel.length){
+  if(focus.length){
     let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-    sel.forEach(n=>{ const b=M.counties[n]; minX=Math.min(minX,b[0]); minY=Math.min(minY,b[1]); maxX=Math.max(maxX,b[0]+b[2]); maxY=Math.max(maxY,b[1]+b[3]); });
+    focus.forEach(n=>{ const b=M.counties[n]; minX=Math.min(minX,b[0]); minY=Math.min(minY,b[1]); maxX=Math.max(maxX,b[0]+b[2]); maxY=Math.max(maxY,b[1]+b[3]); });
     const w=maxX-minX, hh=maxY-minY, pad=Math.max(w,hh)*0.08;
     vb=`${minX-pad} ${minY-pad} ${w+pad*2} ${hh+pad*2}`;
   }
@@ -529,18 +532,32 @@ function mapTapTown(i){ mapState.town=i; renderMap(); window.scrollTo(0,0); }
 
 // ---------- 負責銷售區域橫幅（戰情地圖頁）----------
 function mapRegionBanner(){
-  const regTxt=getRegions().join('、');
+  const regs=getRegions();
+  const regTxt=regs.join('、');
+  // 是否正好聚焦在主要四區（用來標示按鈕作用中）
+  const focusKeys=MAP_FOCUS.filter(n=>!window.TW_MAP||window.TW_MAP.counties[n]);
+  const onFocus = regs.length===focusKeys.length && focusKeys.every(n=>regs.includes(n));
   return `<div class="card region-banner">
     <div class="rb-row">
       <div class="rb-ic">🗺️</div>
       <div class="rb-main">
         <div class="rb-label">負責銷售區域</div>
-        <div class="rb-val">${regTxt?esc(regTxt):'全台灣'}</div>
+        <div class="rb-val">${regTxt?esc(regTxt):'全台灣（預設聚焦：宜蘭、花蓮、嘉義、臺南）'}</div>
       </div>
       <button class="btn btn-out rb-btn" onclick="event.stopPropagation();go('settings')">⚙️ 設定</button>
     </div>
-    <div class="rb-hint">點下方縣市可加入／移除負責區，地圖會自動縮放顯示。</div>
+    <div class="btn-row" style="margin:8px 0 0;gap:8px"><button class="btn ${onFocus?'btn-pri':'btn-out'}" style="padding:6px 12px" onclick="event.stopPropagation();focusMainRegions()">🎯 聚焦主要四區（宜蘭・花蓮・嘉義・臺南）</button></div>
+    <div class="rb-hint">點下方縣市可加入／移除負責區，地圖會自動縮放顯示。未設定時預設聚焦你主跑的四區。</div>
   </div>`;
+}
+// 一鍵把負責區設為主要戰區四縣，地圖聚焦於此
+function focusMainRegions(){
+  soldier.region = MAP_FOCUS.filter(n=>!window.TW_MAP||window.TW_MAP.counties[n]);
+  saveSoldier();
+  mapState.town=-1;
+  sfx('success');
+  renderMap();
+  window.scrollTo(0,0);
 }
 function setSoldierCounty(n){ toggleRegion(n); renderSettings(); }
 function clearSoldierCounties(){ clearRegions(); renderSettings(); }
