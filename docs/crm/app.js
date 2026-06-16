@@ -3260,17 +3260,28 @@ function renderCompetitors(){
   h += `<div class="field"><label>廠牌</label><input id="k-brand" value="${esc(c.brand||c.product||'')}" placeholder="品牌 / 產品名"></div>`;
   h += `<div class="field"><label>肥料品目</label><input id="k-item" list="comp-items" value="${esc(c.item||'')}" placeholder="例如 有機質肥料、雜項堆肥…">
         <datalist id="comp-items">${COMP_ITEMS.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></div>`;
+  h += `<div class="field-2">
+        <div class="field"><label>性狀</label><select id="k-form">${sel(FORMS,c.form||'粒狀')}</select></div>
+        <div class="field"><label>含運與否</label><select id="k-freight">${sel(FREIGHTS,c.freight||'含運')}</select></div></div>`;
   h += `<div class="field"><label>報價地區</label>
         <div class="field-2"><select id="k-region"><option value="">縣市</option>${regs.map(r=>`<option ${c.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select>
         <input id="k-town" value="${esc(c.town||'')}" placeholder="鄉鎮區（可空）"></div></div>`;
-  h += `<div class="field-2">
-        <div class="field"><label>價格(元)</label><input id="k-price" type="number" inputmode="decimal" value="${esc(c.price||'')}" placeholder="一包單價"></div>
-        <div class="field"><label>含運與否</label><select id="k-freight">${sel(FREIGHTS,c.freight||'含運')}</select></div></div>`;
+  h += `<div class="field"><label>價格(元)</label><input id="k-price" type="number" inputmode="decimal" value="${esc(c.price||'')}" placeholder="一包單價"></div>`;
   h += `<div class="field"><label>備註</label><textarea id="k-note" placeholder="規格 / 重量 / 票期 / 來源連結 / 附帶條件…">${esc(c.note||'')}</textarea></div>`;
   h += `<div class="btn-row" style="gap:8px;flex-wrap:wrap">
         <button class="btn btn-out" onclick="compAnalyze()">📊 數據分析</button>
         <button class="btn btn-pri" onclick="saveCompetitor()">💾 ${editing?'更新存檔':'存檔'}</button>
         ${editing?`<button class="btn btn-out" onclick="compCancelEdit()">取消編輯</button>`:''}</div></div>`;
+
+  // ── 找臉書同業報價（同業多貼在 FB 社團／粉專；用瀏覽器開搜尋，看到就登記）──
+  h += `<div class="card"><div class="sec-title" style="margin-top:0"><span class="bar"></span>🔎 找臉書同業報價</div>
+    <div class="field"><label>搜尋關鍵字</label><input id="fb-kw" value="${esc(compFilter.fbkw||'有機質肥料 20kg 報價')}" placeholder="例如 有機質肥料 20kg 報價" oninput="compFilter.fbkw=this.value" autocomplete="off"></div>
+    <div class="btn-row" style="gap:8px;flex-wrap:wrap;margin-top:2px">
+      <button class="btn btn-out" onclick="fbSearch('posts')">臉書貼文</button>
+      <button class="btn btn-out" onclick="fbSearch('groups')">臉書社團</button>
+      <button class="btn btn-out" onclick="fbSearch('pages')">臉書粉專</button>
+      <button class="btn btn-out" onclick="fbSearch('google')">Google找FB貼文</button></div>
+    <div class="tagline" style="margin-top:7px">點按鈕用瀏覽器開臉書／Google 搜尋；找到同業報價，回到上方表單登記。<br>（臉書擋自動程式、貼文要登入才看得到，無法替你全自動抓取，故用搜尋帶你到貼文最實際。）</div></div>`;
 
   // ── 篩選列（穩定不重建，避免中文輸入中斷）──
   h += `<div class="search"><input id="csearch" placeholder="🔍 搜尋業者 / 廠牌 / 品目 / 地區" value="${esc(compFilter.q)}" oninput="onCompSearch(this.value)" autocomplete="off"></div>`;
@@ -3307,6 +3318,7 @@ function compCard(c){
       <div style="text-align:right;flex:none"><div style="font-size:19px;font-weight:800;color:var(--red)">${c.price?'$'+esc(c.price):'—'}</div>
         <div style="font-size:11px;color:var(--muted)">${esc(c.freight||'')}</div></div></div>
     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+      ${c.form?`<span class="badge b-其他">${esc(c.form)}</span>`:''}
       ${loc?`<span class="badge b-農會">📍 ${esc(loc)}</span>`:''}
       ${c.date?`<span class="badge b-其他">${esc(c.date)}</span>`:''}</div>
     ${c.note?`<div class="tagline" style="margin-top:7px">📝 ${esc(c.note)}</div>`:''}
@@ -3314,12 +3326,20 @@ function compCard(c){
       <button class="btn btn-out" onclick="editCompetitor('${c.id}')">✏️ 編輯</button>
       <button class="btn btn-out" style="color:var(--red);border-color:var(--red)" onclick="delCompetitor('${c.id}')">🗑️ 刪除</button></div></div>`;
 }
+function fbSearch(site){
+  const kw=(($('#fb-kw')||{}).value||'有機質肥料 報價').trim(), e=encodeURIComponent(kw);
+  const url={ posts:`https://www.facebook.com/search/posts/?q=${e}`,
+    groups:`https://www.facebook.com/search/groups/?q=${e}`,
+    pages:`https://www.facebook.com/search/pages/?q=${e}`,
+    google:`https://www.google.com/search?q=${encodeURIComponent('site:facebook.com '+kw)}` }[site];
+  if(url) window.open(url,'_blank');
+}
 function editCompetitor(id){ compEdit=id; renderCompetitors(); window.scrollTo(0,0); }
 function compCancelEdit(){ compEdit=null; renderCompetitors(); window.scrollTo(0,0); }
 function saveCompetitor(){
   const g=i=>{const e=$('#'+i); return e?e.value.trim():'';};
   const id = compEdit || ('k'+Date.now());
-  const obj={ id, date:g('k-date'), company:g('k-company'), brand:g('k-brand'), item:g('k-item'),
+  const obj={ id, date:g('k-date'), company:g('k-company'), brand:g('k-brand'), item:g('k-item'), form:$('#k-form').value,
     region:$('#k-region').value, town:g('k-town'), price:g('k-price'), freight:$('#k-freight').value, note:g('k-note') };
   if(!obj.company && !obj.brand){ toast('至少要填業者名稱或廠牌'); return; }
   const i=competitors.findIndex(x=>x.id===id);
@@ -3351,6 +3371,7 @@ function compAnalyze(){
     <div><div style="font-size:11px;color:var(--muted)">最低</div><div style="font-size:20px;font-weight:800;color:var(--green)">$${all.min}</div></div>
     <div><div style="font-size:11px;color:var(--muted)">最高</div><div style="font-size:20px;font-weight:800;color:var(--red)">$${all.max}</div></div></div></div>`;
   h+=`<div class="card">${group('item','依肥料品目分析')}</div>`;
+  h+=`<div class="card" style="margin-top:10px">${group('form','依性狀分析')}</div>`;
   h+=`<div class="card" style="margin-top:10px">${group('brand','依廠牌分析')}</div>`;
   h+=`<div class="card" style="margin-top:10px">${group('region','依報價地區分析')}</div>`;
   openModal('📊 競品數據分析', h);
