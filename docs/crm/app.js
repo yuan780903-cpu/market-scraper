@@ -155,7 +155,7 @@ function dueInfo(o){
 
 // ---------- 導覽 ----------
 let tab = 'map';
-let pFilter = {status:'', cat:'', region:'', q:'', area:'', organic:''};      // 名單篩選
+let pFilter = {status:'', cat:'', region:'', town:'', q:'', area:'', organic:''};      // 名單篩選
 function inOrganic(p,v){ if(!v) return true; return v==='org' ? p.category==='有機農戶' : p.category!=='有機農戶'; }
 // 經營面積級距（公頃）— 多為有機農戶；選了級距會排除無面積資料者
 const AREA_BANDS = [
@@ -373,6 +373,8 @@ function matchTown(addr, core){
   for(const t of list){ if(a.includes(t.n)) return t.raw; }
   return '';
 }
+// 目標名單某筆的鄉鎮名（先用 region，再退回 address）
+function prospTown(p, core){ core=core||countyCore(p.region)||countyCore(p.address); return matchTown(p.address,core)||matchTown(p.region,core); }
 // 計算各鄉鎮的「名單數 / 客戶數」（key = 縣市核心|官方鄉鎮名）
 function computeTownStats(){
   const lead={}, cust={}, dist={}, distNames={};
@@ -595,6 +597,22 @@ function renderProspects(){
         ${regionsSorted().map(r=>`<option value="${esc(r)}" ${pFilter.region===r?'selected':''}>${esc(r)}</option>`).join('')}
         </select></div>`;
 
+  // 鄉鎮篩選：選了區域才出現，依目前狀態／屬性／通路／區域動態列出有資料的鄉鎮
+  if(pFilter.region){
+    const core=countyCore(pFilter.region);
+    const townCounts={};
+    SEED.forEach(p=>{ if(!inStatus(p)||!inOrganic(p,pFilter.organic)||(pFilter.cat&&p.category!==pFilter.cat)||p.region!==pFilter.region) return;
+      const tn=prospTown(p,core); if(tn) townCounts[tn]=(townCounts[tn]||0)+1; });
+    const townList=Object.keys(townCounts).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    if(!townList.includes(pFilter.town)) pFilter.town='';   // 換區域後清掉不適用的鄉鎮
+    const effTown = pFilter.town;
+    if(townList.length){
+      h += `<div class="rowsel"><span class="rowsel-l">鄉鎮</span><select class="regsel" onchange="setPTown(this.value)">
+            <option value="" ${effTown===''?'selected':''}>全部鄉鎮</option>
+            ${townList.map(t=>`<option value="${esc(t)}" ${effTown===t?'selected':''}>${esc(t)} ${townCounts[t]}</option>`).join('')}</select></div>`;
+    }
+  } else if(pFilter.town){ pFilter.town=''; }
+
   // 面積級距：依目前狀態／通路／區域動態計算筆數，只在有面積資料時顯示
   const areaPool = SEED.filter(p=> inStatus(p) && inOrganic(p,pFilter.organic) && (!pFilter.cat||p.category===pFilter.cat) && (!pFilter.region||p.region===pFilter.region));
   const areaCounts={}; let areaTot=0;
@@ -607,16 +625,24 @@ function renderProspects(){
   }
 
   const q = pFilter.q.trim();
+  const core = pFilter.region ? countyCore(pFilter.region) : '';
   const res = SEED.filter(p=>{
     if(!inStatus(p)) return false;
     if(!inOrganic(p,pFilter.organic)) return false;
     if(pFilter.cat && p.category!==pFilter.cat) return false;
     if(pFilter.region && p.region!==pFilter.region) return false;
+    if(pFilter.town && prospTown(p,core)!==pFilter.town) return false;
     if(effArea && !inAreaBand(p,effArea)) return false;
     if(q){ const blob=(p.name+p.address+p.phone+p.contact+p.region); if(!blob.includes(q)) return false; }
     return true;
   });
+  // 篩選後可一鍵把這批名單加進「拜訪行程」（智慧拜訪規劃的指定加入清單）
+  const pickedKeys = new Set((smartCfg.picks||[]).map(x=>x.key));
+  const addable = res.filter(p=>!pickedKeys.has('p'+p.id) && p.address);
   h += `<div class="count">符合 ${res.length} 筆${res.length>pLimit?`（顯示前 ${pLimit} 筆，可搜尋縮小範圍）`:''}</div>`;
+  if(addable.length){
+    h += `<div class="btn-row" style="margin:0 0 8px"><button class="btn btn-pri" onclick="prospAddAllToRoute()">＋ 將篩選後 ${addable.length} 筆加入拜訪行程</button></div>`;
+  }
   h += `<div class="card">`;
   if(!res.length){ h+=`<div class="empty"><div class="big">🔍</div>找不到符合的名單</div>`; }
   else {
@@ -626,7 +652,13 @@ function renderProspects(){
       const av=areaVal(p);
       const areaTag = av!=null?`<span class="badge b-有機農戶">${av.toFixed(1)}公頃</span>`:'';
       const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${areaTag}${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${areaTag}${tag}`;
-      return itemRow({name:p.name, sub:[p.region,p.address].filter(Boolean).join(' · '), pill, onclick:`viewProspect('${p.id}')`});
+      const inRoute = pickedKeys.has('p'+p.id);
+      const addBtn = p.address ? `<button class="btn btn-out" style="flex:none;padding:6px 10px;font-size:13px;${inRoute?'color:var(--green);border-color:var(--green)':''}" onclick="event.stopPropagation();prospAddToRoute('${p.id}')">${inRoute?'✅ 已加入':'＋ 行程'}</button>` : '';
+      return `<div class="item" onclick="viewProspect('${p.id}')">
+        <div class="avatar" style="background:${colorFor(p.name)}">${esc((p.name||'?').trim().charAt(0))}</div>
+        <div class="body"><div class="nm">${esc(p.name)}</div><div class="sub">${esc([p.region,p.address].filter(Boolean).join(' · '))}</div><div class="meta" style="margin-top:5px">${pill}</div></div>
+        ${addBtn}
+      </div>`;
     }).join('');
   }
   h += `</div>`;
@@ -643,8 +675,43 @@ function setPCat(c){
   else if(c && c!=='有機農戶' && pFilter.organic==='org') pFilter.organic='';
   pLimit=60; renderProspects();
 }
-function setPRegion(r){ pFilter.region=r; pLimit=60; renderProspects(); }
+function setPRegion(r){ pFilter.region=r; pFilter.town=''; pLimit=60; renderProspects(); }
+function setPTown(t){ pFilter.town=t; pLimit=60; renderProspects(); }
 function setPArea(k){ pFilter.area=k; pLimit=60; renderProspects(); }
+// 把一筆目標名單做成「智慧拜訪規劃」的指定加入項目（與 smartPool 同結構）
+function prospPickItem(p){
+  const exIds=existingProspectIds();
+  return {key:'p'+p.id, kind:'prosp', id:p.id, name:p.name, channel:p.category||'其他',
+    status:exIds.has(p.id)?'existing':'cold', grade:(overlay[p.id]&&overlay[p.id].grade)||'',
+    address:p.address||'', phone:p.phone||'', district:district(p.address),
+    organic:p.category==='有機農戶'?'org':'non', area:areaVal(p), region:p.region, dwell:SMART_DWELL, fixed:''};
+}
+function prospAddToRoute(id){
+  const p=SEED.find(x=>x.id===id); if(!p) return;
+  if(!p.address){ toast('此名單沒有地址，無法排入行程'); return; }
+  if(smartCfg.picks.some(x=>x.key==='p'+id)){ toast('已在拜訪行程名單中'); renderProspects(); return; }
+  smartCfg.picks.push(prospPickItem(p)); sfx('success'); toast('已加入拜訪行程：'+p.name); renderProspects();
+}
+function prospAddAllToRoute(){
+  const core = pFilter.region ? countyCore(pFilter.region) : '';
+  const q = pFilter.q.trim();
+  const exist=new Set(smartCfg.picks.map(x=>x.key));
+  let n=0;
+  SEED.forEach(p=>{
+    if(!inStatus_pf(p)||!inOrganic(p,pFilter.organic)) return;
+    if(pFilter.cat && p.category!==pFilter.cat) return;
+    if(pFilter.region && p.region!==pFilter.region) return;
+    if(pFilter.town && prospTown(p,core)!==pFilter.town) return;
+    if(pFilter.area && !inAreaBand(p,pFilter.area)) return;
+    if(q){ const blob=(p.name+p.address+p.phone+p.contact+p.region); if(!blob.includes(q)) return; }
+    if(!p.address || exist.has('p'+p.id)) return;
+    smartCfg.picks.push(prospPickItem(p)); exist.add('p'+p.id); n++;
+  });
+  if(n){ sfx('success'); toast(`已加入 ${n} 筆到拜訪行程，可到「排路線」排程`); } else toast('沒有可加入的名單');
+  renderProspects();
+}
+// 與 renderProspects 內 inStatus 同邏輯（供 prospAddAllToRoute 使用）
+function inStatus_pf(p){ const ex=existingProspectIds().has(p.id); const st=ex?'existing':'cold'; return !pFilter.status || (pFilter.status==='visited' ? isContacted(p.id) : st===pFilter.status); }
 function setPOrganic(v){
   pFilter.organic=v;
   // 屬性與目前通路衝突時，放寬通路（保留通路篩選始終可用）
