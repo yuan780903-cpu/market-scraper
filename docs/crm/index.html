@@ -278,6 +278,22 @@
   .count{font-size:12.5px;color:var(--muted);margin:2px 2px 8px}
   .tagline{font-size:11px;color:var(--muted)}
   .info{background:var(--blue-l);color:var(--blue);border-radius:10px;padding:11px 13px;font-size:12.5px;margin-bottom:12px;line-height:1.6}
+  /* 點開打勾清單下拉複選 */
+  .dd{margin-bottom:11px}
+  .dd-bar{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px;font-size:15px;background:#fff;color:var(--ink);cursor:pointer;user-select:none}
+  .dd-bar.on{border-color:var(--green)}
+  .dd-bar .dd-lab{font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .dd-bar .dd-sum{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .dd-bar .dd-sum.all{color:var(--muted);font-weight:400}
+  .dd-bar .dd-arr{color:var(--muted);font-size:12px}
+  .dd-list{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;margin-top:-1px;
+    max-height:240px;overflow:auto;background:#fff}
+  .dd-opt{display:flex;align-items:center;gap:9px;padding:10px 13px;font-size:14.5px;cursor:pointer;border-top:1px solid var(--line)}
+  .dd-opt:first-child{border-top:0}
+  .dd-opt input{width:18px;height:18px;flex:none;accent-color:var(--green)}
+  .dd-opt.sel{background:var(--blue-l);font-weight:600}
+  .dd-empty{padding:11px 13px;font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -311,8 +327,8 @@
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="prospects.js?v=20260685"></script>
-<script src="map-data.js?v=20260685"></script>
-<script src="app.js?v=20260615b"></script>
+<script src="prospects.js?v=20260686"></script>
+<script src="map-data.js?v=20260686"></script>
+<script src="app.js?v=20260686"></script>
 </body>
 </html>
