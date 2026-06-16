@@ -2370,6 +2370,8 @@ function renderRoute(){
   h+=weekDD('channels','_ddChan','通路',WEEK_CHANS.map(c=>({v:c,t:c})));
   h+=weekDD('grades','_ddGrade','分級',[{v:'A',t:'A級'},{v:'B',t:'B級'},{v:'C',t:'C級'},{v:'D',t:'D級'},{v:'none',t:'未分級'}]);
   h+=`</div>`;
+  // ── 篩選後的客戶（依上方下拉條件即時列出，可逐一/全選加入）──
+  h+=renderFilteredList();
   // ── 新增客戶（指定加入）──
   h+=renderAddOn();
   // ── 額外行程（固定時段約訪）──
@@ -2401,39 +2403,9 @@ function renderAddOn(){
   // ① 關鍵字挑單一客戶（重用 smartPool / smartCfg.picks）── 放最前面，最常用
   const f=smartCfg.f;
   h+=`<div class="card"><div class="field"><label>🔍 搜尋客戶/名單加入（打名稱／地址／電話）</label>
-      <div style="position:relative"><input id="sm-kw" value="${esc(f.kw||'')}" placeholder="例如 翁俊榮 / 義竹 / 0912…" oninput="smartKwInput(this.value)" style="width:100%;box-sizing:border-box;padding-right:34px">${(f.kw||'')?`<button type="button" onclick="smartKwInput('')" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer">✕</button>`:''}</div></div>`;
-  const pool=smartPool(); const pickedKeys=new Set(smartCfg.picks.map(p=>p.key));
-  h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="smartTogglePool()">${smartCfg._poolOpen?'▲ 收合符合清單':`顯示符合清單（${pool.length}）`}</button></div>`;
-  if(smartCfg._poolOpen){
-    if(!pool.length) h+=`<div class="card empty" style="padding:14px">沒有符合的對象，放寬條件或換區域。</div>`;
-    else{
-      h+=`<div class="card" style="padding:4px 14px;max-height:300px;overflow:auto">`;
-      pool.slice(0,60).forEach(x=>{ const added=pickedKeys.has(x.key);
-        h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
-      if(pool.length>60) h+=`<div class="tagline" style="padding:8px 2px">符合 ${pool.length}，僅顯示前 60，請縮小關鍵字。</div>`;
-      h+=`</div>`;
-    }
-  }
+      <div style="position:relative"><input id="sm-kw" value="${esc(f.kw||'')}" placeholder="例如 翁俊榮 / 義竹 / 0912…" oninput="smartKwInput(this.value)" autocomplete="off" style="width:100%;box-sizing:border-box;padding-right:34px"><button type="button" id="sm-kw-clear" onclick="var i=document.getElementById('sm-kw');if(i){i.value='';i.focus();}smartKwInput('')" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:16px;color:var(--muted);cursor:pointer;display:${(f.kw||'').trim()?'block':'none'}">✕</button></div></div>`;
+  h+=`<div id="sm-pool">${smartPoolListHTML()}</div>`;
   h+=`</div>`;
-  // ⓪ 依目前篩選列出客戶，逐一/全選加入
-  {
-    const fp=weekFilterPool();
-    const pkset=new Set(smartCfg.picks.map(p=>p.key));
-    const unadded=fp.filter(x=>!pkset.has(x.key));
-    h+=`<div class="sec-title"><span class="bar"></span>依篩選列出客戶（${fp.length}）<button class="rule-del" style="float:right" onclick="weekToggleFlt()">${weekCfg._fltOpen?'▲ 收合':'▼ 展開'}</button></div>`;
-    if(!weekCfg._fltOpen){
-      h+=`<div class="card" style="padding:12px 14px;color:var(--muted);font-size:12.5px">依上方「客戶類型／區域／鄉鎮／通路／分級」列出符合的客戶，可逐一或全部加入本週計畫。${fp.length?`<br>目前符合 ${fp.length} 家。`:''}</div>`;
-    }else if(!fp.length){
-      h+=`<div class="card empty" style="padding:14px">沒有符合的客戶，請放寬上方篩選或先在「我的客戶／名單」設定。</div>`;
-    }else{
-      h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="weekAddAllFiltered()">＋ 全選加入（${unadded.length}）</button></div>`;
-      h+=`<div class="card" style="padding:4px 14px;max-height:320px;overflow:auto">`;
-      fp.slice(0,80).forEach(x=>{ const added=pkset.has(x.key);
-        h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
-      if(fp.length>80) h+=`<div class="tagline" style="padding:8px 2px">符合 ${fp.length}，僅顯示前 80，請縮小區域/鄉鎮。</div>`;
-      h+=`</div>`;
-    }
-  }
   // 指定清單
   if(smartCfg.picks.length){
     h+=`<div class="sec-title"><span class="bar"></span>已指定加入（${smartCfg.picks.length}）<button class="rule-del" style="float:right" onclick="smartClearPicks()">✕ 全部清除</button></div><div class="card" style="padding:8px 12px">`;
@@ -2712,6 +2684,25 @@ function weekFilterPool(){
   return out;
 }
 function weekToggleFlt(){ syncWeek(); syncSmart(); weekCfg._fltOpen=weekCfg._fltOpen?0:1; renderRoute(); }
+// 篩選後的客戶清單（依上方下拉條件即時列出）：放在篩選器正下方，逐一/全選加入
+function renderFilteredList(){
+  const fp=weekFilterPool();
+  const pkset=new Set(smartCfg.picks.map(p=>p.key));
+  const unadded=fp.filter(x=>!pkset.has(x.key));
+  let h=`<div class="sec-title" style="margin-top:6px"><span class="bar"></span>📋 篩選後的客戶（${fp.length}）<button class="rule-del" style="float:right" onclick="weekToggleFlt()">${weekCfg._fltOpen?'▲ 收合':'▼ 展開列出'}</button></div>`;
+  if(!weekCfg._fltOpen){
+    h+=`<div class="card" style="padding:12px 14px;color:var(--muted);font-size:12.5px">依上方「客戶類型／區域／鄉鎮／通路／分級」列出符合的客戶，點「▼ 展開列出」即可逐一或一次全部加入本週計畫。${fp.length?`<br>目前符合 <b style="color:var(--ink)">${fp.length}</b> 家。`:'<br>目前沒有符合的客戶，請放寬上方篩選。'}</div>`;
+    return h;
+  }
+  if(!fp.length){ h+=`<div class="card empty" style="padding:14px">沒有符合的客戶，請放寬上方篩選或先在「我的客戶／名單」設定。</div>`; return h; }
+  h+=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-pri" onclick="weekAddAllFiltered()">＋ 全選加入（${unadded.length}）</button></div>`;
+  h+=`<div class="card" style="padding:4px 14px;max-height:360px;overflow:auto">`;
+  fp.slice(0,80).forEach(x=>{ const added=pkset.has(x.key);
+    h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
+  if(fp.length>80) h+=`<div class="tagline" style="padding:8px 2px">符合 ${fp.length}，僅顯示前 80，請縮小區域/鄉鎮。</div>`;
+  h+=`</div>`;
+  return h;
+}
 function weekAddAllFiltered(){ syncSmart(); const fp=weekFilterPool(); const have=new Set(smartCfg.picks.map(p=>p.key)); let n=0; fp.forEach(x=>{ if(have.has(x.key))return; smartCfg.picks.push(Object.assign({},x,{dwell:SMART_DWELL,fixed:''})); have.add(x.key); n++; }); if(n) sfx('success'); toast(n?`已加入 ${n} 家到指定清單`:'沒有可加入的客戶'); renderRoute(); }
 
 // ========== 逐日排程嚮導（排程範圍＝無）==========
@@ -3055,9 +3046,32 @@ function smartLocateCustom(key){
 }
 function smartRemovePick(key){ syncSmart(); smartCfg.picks=smartCfg.picks.filter(p=>p.key!==key); renderRoute(); }
 function smartClearPicks(){ smartCfg.picks=[]; smartCfg._last=''; renderRoute(); }
-function smartTogglePool(){ syncSmart(); smartCfg._poolOpen=smartCfg._poolOpen?0:1; renderRoute(); }
+function smartTogglePool(){ syncSmart(); smartCfg._poolOpen=smartCfg._poolOpen?0:1; const el=$('#sm-pool'); if(el) el.innerHTML=smartPoolListHTML(); else renderRoute(); }
+// 符合清單（關鍵字搜尋結果）— 抽出來供原地更新，避免每次打字重繪整頁中斷中文輸入
+function smartPoolListHTML(){
+  const pool=smartPool(); const pickedKeys=new Set(smartCfg.picks.map(p=>p.key));
+  let h=`<div class="btn-row" style="flex-wrap:wrap;gap:8px"><button class="btn btn-out" onclick="smartTogglePool()">${smartCfg._poolOpen?'▲ 收合符合清單':`顯示符合清單（${pool.length}）`}</button></div>`;
+  if(smartCfg._poolOpen){
+    if(!pool.length) h+=`<div class="card empty" style="padding:14px">沒有符合的對象，放寬條件或換區域。</div>`;
+    else{
+      h+=`<div class="card" style="padding:4px 14px;max-height:300px;overflow:auto">`;
+      pool.slice(0,60).forEach(x=>{ const added=pickedKeys.has(x.key);
+        h+=`<div class="item" style="cursor:default"><div class="body"><div class="nm">${esc(x.name)}</div><div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div><div class="tagline" style="margin-top:4px"><span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${added?'<span style="color:var(--muted)">已加入</span>':`<button class="btn btn-out" style="padding:4px 10px" onclick="smartAddPick('${x.key}')">＋ 加入</button>`}</div></div>`; });
+      if(pool.length>60) h+=`<div class="tagline" style="padding:8px 2px">符合 ${pool.length}，僅顯示前 60，請縮小關鍵字。</div>`;
+      h+=`</div>`;
+    }
+  }
+  return h;
+}
 // 關鍵字搜尋：輸入時即時篩選符合清單（自動展開），並保住輸入焦點
-function smartKwInput(v){ smartCfg.f.kw=v; if((v||'').trim()) smartCfg._poolOpen=1; smartCfg._kwFocus=true; renderRoute(); }
+function smartKwInput(v){
+  smartCfg.f.kw=v;
+  if((v||'').trim()) smartCfg._poolOpen=1;
+  // 只原地更新符合清單，不重繪整頁 → 不會中斷注音/拼音組字
+  const el=$('#sm-pool');
+  if(el){ el.innerHTML=smartPoolListHTML(); const c=$('#sm-kw-clear'); if(c) c.style.display=(v||'').trim()?'block':'none'; }
+  else { smartCfg._kwFocus=true; renderRoute(); }
+}
 // ========== 完成今日拜訪：把今日路線上的客戶一次記成拜訪、寫入週報 ==========
 // 不開表單、直接把目標客戶補進「我的客戶」（個資欄位留空，可日後補）
 function convertProspectSilent(id, interItem){
