@@ -102,6 +102,42 @@ function daysBetween(a, b){ return Math.round((new Date(b)-new Date(a))/86400000
 function colorFor(name){ const c=['#43a047','#1e88e5','#8e24aa','#00897b','#fb8c00','#5e35b1','#d81b60','#3949ab']; let h=0; for(const ch of (name||'')) h=(h*31+ch.charCodeAt(0))>>>0; return c[h%c.length]; }
 let toastT;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1900); }
+
+// ---------- 互動音效（Web Audio 即時合成，無檔案、離線可用、可關閉） ----------
+let _sfxOn = LS.get('crm_sfx', true);
+let _ac = null;
+function _audioCtx(){ if(_ac) return _ac; try{ _ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ _ac=null; } return _ac; }
+function sfx(type){
+  if(!_sfxOn) return;
+  const ac=_audioCtx(); if(!ac) return;
+  if(ac.state==='suspended'){ try{ ac.resume(); }catch(e){} }
+  const now=ac.currentTime;
+  const tone=(freq,start,dur,vol,wave)=>{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=wave||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0, now+start);
+    g.gain.linearRampToValueAtTime(vol||0.05, now+start+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+start+dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(now+start); o.stop(now+start+dur+0.02);
+  };
+  switch(type){
+    case 'tap':    tone(660,0,0.055,0.045,'triangle'); break;
+    case 'toggle': tone(880,0,0.05,0.05,'square'); break;
+    case 'nav':    tone(523,0,0.05,0.045); tone(784,0.045,0.07,0.045); break;
+    case 'success':tone(660,0,0.08,0.055); tone(988,0.085,0.13,0.055); break;
+    case 'error':  tone(311,0,0.16,0.06,'sawtooth'); break;
+    default:       tone(660,0,0.05,0.045,'triangle');
+  }
+}
+function setSfx(on){ _sfxOn=!!on; LS.set('crm_sfx', _sfxOn); if(_sfxOn) sfx('toggle'); }
+// 全站互動音效：任何按鈕/晶片/分頁/下拉/連結點擊都發出簡短提示音
+document.addEventListener('click', e=>{
+  const t=e.target.closest('button,.chip,.tab,.nav button,.dd-bar,.dd-opt,.more,a.btn,.item[onclick],.fab');
+  if(!t) return;
+  if(t.closest('.nav')) sfx('nav');
+  else sfx('tap');
+}, true);
 function telLink(p){ const n=(p||'').split('/')[0].replace(/[^\d+]/g,''); return n.length>=6?`<a href="tel:${n}">${esc(p)}</a>`:esc(p)||'—'; }
 function mapLink(a){ return a?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}" target="_blank">${esc(a)} 🗺️</a>`:'—'; }
 
@@ -1949,6 +1985,11 @@ function renderSettings(){
     h+=`<div class="hint" style="font-size:11px;color:var(--muted);margin-top:6px">${_reg.length?'已選 '+_reg.length+' 區':'目前涵蓋全台灣'}</div>`;
   } else { h+=`<div class="hint" style="color:var(--muted)">地圖資料載入中，請稍候再設定。</div>`; }
   h+=`</div>`;
+  // 操作偏好（互動音效）
+  h+=`<div class="sec-title"><span class="bar"></span>操作偏好</div><div class="card">`;
+  h+=`<label style="display:flex;align-items:center;gap:8px;margin:2px;font-size:13px"><input type="checkbox" ${_sfxOn?'checked':''} onchange="setSfx(this.checked)" style="width:18px;height:18px">點按時播放簡短互動音效</label>`;
+  h+=`<div class="hint" style="margin:6px 2px 0;color:var(--muted);font-size:11px">按鈕、晶片、分頁、下拉選單等互動時發出輕音提示。完全在本機合成、不需網路、可隨時關閉。</div>`;
+  h+=`</div>`;
   h+=`<div class="sec-title"><span class="bar"></span>資料統計</div><div class="card">`;
   h+=drow('名單庫', SEED.length+' 筆（內建）');
   h+=drow('我的客戶', customers.length+' 位');
@@ -2303,13 +2344,14 @@ function renderRoute(){
   h+=`<div class="card">`;
   h+=`<div class="field"><label>本週起始日（週一）</label>${rocDateInput('w-start',weekCfg.start)}</div>`;
   h+=`<div class="field"><label>出訪日（可複選）</label><div class="wdays">${[1,2,3,4,5,6,0].map(wd=>`<button type="button" class="chip ${weekCfg.days.includes(wd)?'on':''}" onclick="toggleWeekDay(${wd})">週${WD_NAME[wd]}</button>`).join('')}</div></div>`;
-  h+=`<div class="field-2"><div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>
-      <div class="field"><label>排程範圍</label><select id="w-mode"><option value="all" ${weekCfg.mode==='all'?'selected':''}>到期＋依分級建議(推薦)</option><option value="due" ${weekCfg.mode==='due'?'selected':''}>只排已設下次拜訪日</option></select></div></div>`;
+  h+=`<div class="field"><label>每日最多家數</label><input type="number" id="w-max" min="1" max="12" value="${weekCfg.maxPerDay}"></div>`;
+  h+=weekDDOne('mode','_ddMode','排程範圍',[{v:'all',t:'到期＋依分級建議（推薦）'},{v:'due',t:'只排已設下次拜訪日'}]);
   // 篩選：點開打勾清單下拉複選（不選＝全部）
   h+=weekDD('custTypes','_ddType','客戶類型',[{v:'cust',t:'既有客戶'},{v:'prosp',t:'目標客戶'}]);
   h+=weekDD('regions','_ddRegion','區域',regionsSorted().map(r=>({v:r,t:r})));
   h+=weekDD('towns','_ddTown','鄉鎮',weekTownOptions(),'先選上方「區域」，才會列出鄉鎮。');
   h+=weekDD('channels','_ddChan','通路',WEEK_CHANS.map(c=>({v:c,t:c})));
+  h+=weekDD('grades','_ddGrade','分級',[{v:'A',t:'A級'},{v:'B',t:'B級'},{v:'C',t:'C級'},{v:'D',t:'D級'},{v:'none',t:'未分級'}]);
   h+=`</div>`;
   // ── 新增客戶（指定加入）──
   h+=renderAddOn();
@@ -2494,7 +2536,7 @@ function planWeek(){
     const k=(p.name||'')+(p.address||''); if(seen.has(k))return; seen.add(k);
     targets.push({kind:p.kind,id:p.id,name:p.name,channel:p.channel||'其他',grade:p.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address||''),reason:'指定',sort:-1,overdue:false,dwell:p.dwell,fixed:p.fixed});
   });
-  if(!targets.length){ weekCfg.plan=null; weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或指定的對象。<br>到「我的客戶／名單」設定分級或下次拜訪日，或放寬上方「客戶類型／通路」篩選，或用「＋新增客戶」加入特定對象。</div>`; renderRoute(); return; }
+  if(!targets.length){ weekCfg.plan=null; weekCfg._last=`<div class="card empty"><div class="big">📭</div>本週（${start} ～ ${weekEnd}）沒有到期或指定的對象。<br>到「我的客戶／名單」設定分級或下次拜訪日，或放寬上方「客戶類型／區域／鄉鎮／通路／分級」篩選，或用「＋新增客戶」加入特定對象。</div>`; renderRoute(); return; }
   // 依鄉鎮急迫度排序：同鄉鎮集中、急的先排
   const townUrg={}; targets.forEach(t=>{ const k=t.district||'其他'; if(!(k in townUrg)||t.sort<townUrg[k]) townUrg[k]=t.sort; });
   targets.sort((a,b)=>{ const ua=townUrg[a.district||'其他'],ub=townUrg[b.district||'其他']; if(ua!==ub)return ua-ub; const da=a.district||'其他',db=b.district||'其他'; if(da!==db)return da.localeCompare(db,'zh-Hant'); return a.sort-b.sort; });
@@ -2586,6 +2628,7 @@ function saveWeekPlan(){
       stops:b.stops.map(s=> s.lunch ? {lunch:true,arrive:s.arrive,leave:s.leave,address:s.address||''}
         : {kind:s.kind,id:s.id,name:s.name,channel:s.channel,grade:s.grade||'',address:s.address||'',phone:s.phone||'',district:s.district||'',reason:s.reason||'',status:s.status||'',arrive:s.arrive,leave:s.leave,_dur:s._dur||0,fixedMark:!!s.fixedMark,overdue:!!s.overdue}) }))};
   LS.set('crm_week_plan', slim);
+  sfx('success');
   toast('已寫入本週行程，每天打開頁首即見今日行程');
   renderRoute();
 }
@@ -2923,9 +2966,9 @@ function routeFinishToday(){
 
 // ========== 每週拜訪資料/設定（整合路線頁使用）==========
 let weekCfg = { start:'', days:[1,2,3,4,5], maxPerDay:6, regions:[], mode:'all',
-  custTypes:[], channels:[], towns:[], extras:[],
+  custTypes:[], channels:[], towns:[], grades:[], extras:[],
   dwell:40, plan:null, _viewDay:'today', _addOpen:0, _extraOpen:0, _locOpen:0,
-  _ddType:0, _ddRegion:0, _ddTown:0, _ddChan:0, _inited:0, _last:'' };
+  _ddType:0, _ddRegion:0, _ddTown:0, _ddChan:0, _ddGrade:0, _ddMode:0, _inited:0, _last:'' };
 // 通路晶片（含「其他」吃掉非主通路），與 collectVisitTargets 的歸類一致
 const WEEK_CHANS = ['農會','合作社','肥料行','有機農戶','其他'];
 const chanBucket = ch => WEEK_CHANS.includes(ch) && ch!=='其他' ? ch : '其他';
@@ -2957,6 +3000,15 @@ function weekDDToggle(openKey){ syncWeek(); syncSmart(); weekCfg[openKey]=!weekC
 function weekDDPick(key,v){ syncWeek(); syncSmart(); if(!Array.isArray(weekCfg[key]))weekCfg[key]=[]; const a=weekCfg[key]; const i=a.indexOf(v); if(i<0)a.push(v); else a.splice(i,1);
   if(key==='regions'){ smartCfg.f.regions=weekCfg.regions.slice(); pruneTowns(); }
   renderRoute(); }
+// 單選版下拉（樣式同 weekDD，挑一個就收合）
+function weekDDOne(key, openKey, label, options){
+  const cur=weekCfg[key], open=!!weekCfg[openKey];
+  const chosen=options.find(o=>o.v===cur)||options[0];
+  let h=`<div class="dd"><div class="dd-bar${open?' on':''}" onclick="weekDDToggle('${openKey}')"><span class="dd-lab">${esc(label)}</span><span class="dd-sum">${esc(chosen?chosen.t:'')}</span><span class="dd-arr">${open?'▲':'▼'}</span></div>`;
+  if(open){ h+=`<div class="dd-list">`+options.map(o=>{const on=o.v===cur;return `<label class="dd-opt${on?' sel':''}"><input type="radio" name="dd_${key}" ${on?'checked':''} onchange="weekDDSet('${key}','${esc(o.v)}','${openKey}')">${esc(o.t)}</label>`;}).join('')+`</div>`; }
+  return h+`</div>`;
+}
+function weekDDSet(key,v,openKey){ syncWeek(); syncSmart(); weekCfg[key]=v; weekCfg[openKey]=0; renderRoute(); }
 // 鄉鎮選項：依已選區域，從客戶＋已排程名單動態列出鄉鎮（沒選區域＝先提示）
 function weekTownOptions(){
   const regs=weekCfg.regions||[]; const cores=regs.map(r=>normR(r).replace(/[縣市]$/,'')).filter(Boolean);
@@ -2974,10 +3026,11 @@ function collectVisitTargets(regions, weekEnd, includeGrade){
   const exIds = existingProspectIds();
   const today = todayStr();
   // 客戶類型 / 通路 篩選（不選＝全部）
-  const types = weekCfg.custTypes||[], chans = weekCfg.channels||[], towns = weekCfg.towns||[];
+  const types = weekCfg.custTypes||[], chans = weekCfg.channels||[], towns = weekCfg.towns||[], grades = weekCfg.grades||[];
   const okType = kind => !types.length || types.includes(kind);
   const okChan = ch => !chans.length || chans.includes(chanBucket(ch));
   const okTown = d => !towns.length || towns.includes(d);
+  const okGrade = g => !grades.length || grades.includes(g||'none');
   const list=[];
   const push=(o, base)=>{
     let next=o.next||'';
@@ -2993,6 +3046,7 @@ function collectVisitTargets(regions, weekEnd, includeGrade){
     if(cores.length && !cores.some(core=>normR(c.address||'').includes(core))) return;
     const ch=TYPE2CHAN[c.type]||c.type||'其他'; if(!okChan(ch)) return;
     if(!okTown(district(c.address))) return;
+    if(!okGrade(c.grade)) return;
     push({next:c.next,last:c.last}, {kind:'cust',id:c.id,name:c.name,channel:ch,status:'existing',grade:c.grade||'',address:c.address||'',phone:c.phone||'',district:district(c.address)});
   });
   if(okType('prosp')) SEED.forEach(p=>{
@@ -3000,6 +3054,7 @@ function collectVisitTargets(regions, weekEnd, includeGrade){
     if(cores.length && !(regs.some(rg=>normR(p.region||'')===normR(rg)) || cores.some(core=>normR(p.address||'').includes(core)))) return;
     if(!okChan(p.category||'其他')) return;
     if(!okTown(district(p.address))) return;
+    if(!okGrade(o.grade)) return;
     push({next:o.next,last:o.last}, {kind:'prosp',id:p.id,name:p.name,channel:p.category||'其他',status:exIds.has(p.id)?'existing':'cold',grade:o.grade||'',address:p.address||'',phone:p.phone||'',district:district(p.address)});
   });
   const seen=new Set();
