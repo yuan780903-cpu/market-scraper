@@ -3156,8 +3156,15 @@ function smartMapPick(fieldId){
 // 貼上 Google 地圖網址時自動轉成精準座標
 function smartNormLoc(el){
   if(!el) return;
-  const gm=parseGmaps(el.value);
+  const v=(el.value||'').trim();
+  const gm=parseGmaps(v);
   if(gm){ el.value=gm[0].toFixed(6)+','+gm[1].toFixed(6); toast('已從地圖網址取得座標'); }
+  else if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(v)){
+    toast('⚠️ 這是 Google「分享短網址」，讀不到座標。請改用「複製座標」貼上(例如 23.03,120.25)，或貼完整地圖網址(含 @23.0,120.2)，或按 📍 取得目前位置');
+  }
+  else if(v && !smartLatLng(v)){
+    toast('⚠️ 此位置無法定位。請貼座標(23.03,120.25)或完整地圖網址，或按 📍');
+  }
   syncSmart();
 }
 function smartAddCustom(){
