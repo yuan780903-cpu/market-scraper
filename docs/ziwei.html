@@ -366,6 +366,43 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .attrcard .al{font-size:.76rem;color:var(--ink-faint);letter-spacing:2px;margin-bottom:6px}
 .attrcard .av{font-size:1.1rem;color:var(--gold-bright);letter-spacing:1px}
 
+/* ===== 姓名學 三才五格 ===== */
+.namechars{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
+.nchar{display:flex;flex-direction:column;align-items:center;gap:5px;background:linear-gradient(180deg,rgba(124,95,176,.16),rgba(13,16,36,.7));
+  border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:70px}
+.nchar .cz{font-family:"Ma Shan Zheng",serif;font-size:2.2rem;color:var(--gold-bright);line-height:1}
+.nchar .skin{width:58px;text-align:center;background:rgba(13,16,36,.85);border:1px solid var(--line-soft);border-radius:8px;
+  color:var(--gold);font-size:.95rem;padding:4px 2px;-moz-appearance:textfield}
+.nchar .skin::-webkit-outer-spin-button,.nchar .skin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nchar .cl{font-size:.7rem;color:var(--ink-faint)}
+.recalc{align-self:center;background:rgba(157,127,212,.18);border:1px solid var(--purple-glow);color:var(--gold-bright);
+  border-radius:22px;padding:9px 18px;font-size:.84rem;letter-spacing:1px;cursor:pointer;font-family:inherit}
+.recalc:hover{background:rgba(157,127,212,.32)}
+.grids{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:18px}
+.gridcard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px;border-left-width:3px}
+.gridcard.good{border-left-color:var(--jade)} .gridcard.mid{border-left-color:var(--gold)} .gridcard.bad{border-left-color:var(--rose)}
+.gridcard .gh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.gridcard .gn{color:var(--gold);letter-spacing:2px;font-size:1rem}
+.gridcard .gv{font-size:1.6rem;font-weight:800;color:var(--gold-bright)}
+.gridcard .gwx{font-size:.8rem;color:var(--ink-dim)}
+.gridcard.good .gwx b{color:var(--jade)} .gridcard.mid .gwx b{color:var(--gold)} .gridcard.bad .gwx b{color:var(--rose)}
+.gridcard .gsub{font-size:.72rem;color:var(--ink-faint);margin-top:6px}
+.gridcard .gph{font-size:.78rem;color:var(--ink-dim);margin-top:4px;line-height:1.6}
+.sancai{margin-top:18px;border-radius:16px;padding:20px 22px;border:1px solid var(--line-soft);
+  background:linear-gradient(180deg,rgba(31,35,71,.45),rgba(13,16,36,.7))}
+.sancai.good{border-color:var(--jade)} .sancai.bad{border-color:var(--rose)}
+.sancai .sch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.sancai .sch span:first-child{color:var(--gold);letter-spacing:2px}
+.sancai .sch b{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-bright);letter-spacing:4px}
+.scbadge{font-size:.8rem;padding:3px 14px;border-radius:20px;border:1px solid var(--line-soft)}
+.scbadge.good{color:var(--jade);border-color:var(--jade)} .scbadge.mid{color:var(--gold);border-color:var(--gold-deep)} .scbadge.bad{color:var(--rose);border-color:var(--rose)}
+.sancai p{color:var(--ink-dim);font-size:.9rem;line-height:1.85}
+.namecross{margin-top:18px;border:1px solid var(--purple-glow);border-radius:18px;padding:24px 26px;
+  background:linear-gradient(180deg,rgba(124,95,176,.14),rgba(13,16,36,.72))}
+.namecross h4{color:var(--purple-glow);letter-spacing:2px;font-size:1.1rem;margin-bottom:12px}
+.namecross p{color:var(--ink);font-size:.94rem;line-height:1.95;margin-bottom:10px}
+.namecross p:last-child{margin-bottom:0}
+
 @media(max-width:640px){
   .scorewrap{grid-template-columns:1fr}
   .fammember{grid-template-columns:1fr 1fr;gap:8px}
@@ -401,9 +438,11 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   #reportHead .rs{color:#666;font-size:.8rem;letter-spacing:3px;margin-top:6px}
   .sec-title{margin:18px 0 12px;page-break-after:avoid}
   .sec-title .cn{font-size:1.5rem}
-  .rcard,.gecard,.famcard,.dimcard,.synthesis,.famsum,.strength,.scoretotal,.triocard,.bigsign,.attrcard{
+  .rcard,.gecard,.famcard,.dimcard,.synthesis,.famsum,.strength,.scoretotal,.triocard,.bigsign,.attrcard,.gridcard,.sancai,.namecross{
     page-break-inside:avoid;break-inside:avoid}
-  .chart,.scorewrap,.tengods,.luckwrap{page-break-inside:avoid}
+  .chart,.scorewrap,.tengods,.luckwrap,.grids{page-break-inside:avoid}
+  .recalc{display:none!important}
+  .nchar .skin{border:none;color:#000;background:none}
   .reading{gap:12px}
   .star.main{color:#a9853a!important}
   *{box-shadow:none!important;text-shadow:none!important}
@@ -1096,6 +1135,150 @@ function familyAnalysis(self,selfXi,selfJi,members){
  return out;
 }
 
+/* ================= 姓名學 · 三才五格（康熙筆劃）================= */
+/* 康熙筆劃字典（常用姓氏＋常見名字用字）。未收錄之字以可校正輸入框補正。 */
+const STROKE={
+"王":5,"李":7,"張":11,"劉":15,"陳":16,"楊":13,"黃":12,"趙":14,"周":8,"吳":7,
+"徐":10,"孫":10,"朱":6,"馬":10,"胡":11,"郭":15,"林":8,"何":7,"高":10,"梁":11,
+"鄭":19,"羅":20,"宋":7,"謝":17,"唐":10,"韓":17,"曹":11,"許":11,"鄧":19,"蕭":19,
+"馮":12,"曾":12,"程":12,"蔡":17,"彭":12,"潘":16,"袁":10,"董":15,"余":7,"蘇":22,
+"葉":15,"呂":7,"魏":18,"蔣":17,"沈":8,"韋":9,"賈":13,"丁":2,"任":6,"姚":9,
+"盧":16,"傅":12,"鍾":17,"鐘":20,"姜":9,"崔":11,"譚":19,"廖":14,"范":11,"汪":8,
+"陸":16,"金":8,"石":5,"戴":18,"賴":16,"嚴":20,"江":7,"史":5,"邱":12,"段":9,
+"雷":13,"黎":15,"龔":22,"文":4,"顏":18,"方":4,"莊":13,"歐":15,"陽":17,"温":13,
+"溫":14,"卓":8,"翁":10,"游":13,"童":12,"巫":7,"駱":16,"塗":13,"涂":11,
+"政":9,"遠":17,"偉":11,"強":11,"明":8,"華":14,"志":7,"國":11,"軍":9,"建":9,
+"平":5,"安":6,"靜":16,"雅":12,"婷":12,"怡":9,"君":7,"玉":5,"美":9,"麗":19,
+"芳":10,"秀":7,"娟":10,"慧":15,"嘉":14,"宇":6,"軒":10,"豪":14,"傑":12,"哲":10,
+"浩":11,"翔":12,"宏":7,"銘":14,"家":10,"育":10,"子":3,"涵":12,"妍":7,"萱":15,
+"庭":10,"欣":8,"凱":12,"鈞":12,"維":14,"思":9,"雯":12,"心":4,"如":6,"雨":8,
+"晴":12,"語":14,"萍":14,"蓉":16,"琳":13,"瑩":16,"珊":10,"雲":12,"龍":16,"鳳":14,
+"鵬":19,"飛":9,"順":12,"利":7,"勝":12,"永":5,"昌":8,"隆":17,"發":12,"財":10,
+"富":12,"貴":12,"榮":14,"福":14,"壽":14,"喜":12,"樂":15,"康":11,"健":11,"信":9,
+"仁":4,"義":13,"禮":18,"智":12,"勇":9,"忠":8,"孝":7,"賢":15,"德":15,"成":7,
+"立":5,"中":4,"正":5,"大":3,"小":3,"天":4,"光":6,"輝":15,"俊":9,"傳":13,
+"祥":11,"瑞":14,"祺":13,"鴻":17,"博":12,"翰":16,"皓":12,"睿":14,"璿":18,"瀚":20,
+"庭":10,"芯":10,"妤":7,"昕":8,"宥":9,"恩":10,"芸":10,"綺":14,"晨":11,"曦":20,
+"彣":7,"彥":9,"霖":16,"沂":8,"佩":8,"珮":11,"琪":13,"瑋":14,"瑄":14,"蕓":18,
+"庭":10,"亭":9,"宜":8,"佳":8,"宛":8,"妮":8,"娣":10,"婕":11,"媛":12,"嬡":17,
+"于":3,"丞":6,"乃":2,"之":4,"也":3,"亦":6,"仲":6,"伯":7,"叔":8,"季":8,
+"映":9,"星":9,"月":4,"日":4,"春":9,"夏":10,"秋":9,"冬":5,"花":10,"草":12,
+"松":8,"柏":9,"梅":11,"蘭":23,"竹":6,"菊":14,"荷":13,"蓮":17,"桂":10,"楓":13,
+"海":11,"山":3,"川":3,"河":9,"湖":13,"溪":14,"泉":9,"波":9,"濤":18,"瀅":19,
+"恆":10,"恒":10,"惠":12,"慈":14,"愛":13,"敏":11,"靈":24,"穎":16,"潔":16,"淑":12,
+"貞":9,"純":10,"真":10,"善":12,"良":7,"溫":14,"柔":9,"和":8,"順":12,"謙":17
+};
+/* 81 數理吉凶（熊崎氏）：「評等 釋義」 */
+const SHULI81={
+1:"大吉 太極之數，萬物開泰",2:"凶 混沌未開，搖蕩不安",3:"大吉 三才之數，進取如意",
+4:"凶 凶變之數，破敗萬事",5:"大吉 五行俱權，福祿長壽",6:"吉 六爻之數，安穩餘慶",
+7:"吉 七政之數，剛毅果斷",8:"吉 八卦之數，堅剛志誠",9:"凶 大成之數，物極必反",
+10:"凶 終結之數，萬事終局",11:"大吉 旱苗逢雨，挽回家運",12:"凶 無理之數，薄弱孤立",
+13:"大吉 智略之數，智謀超群",14:"凶 破兆之數，淪落天涯",15:"大吉 福壽之數，福壽圓滿",
+16:"大吉 厚重之數，貴人相助",17:"吉 剛強之數，突破萬難",18:"吉 鐵鏡重磨，有志竟成",
+19:"凶 多難之數，風雲蔽日",20:"凶 屋下藏金，非業破運",21:"大吉 明月中天，獨立權威",
+22:"凶 秋草逢霜，懷才不遇",23:"大吉 壯麗之數，旭日東升",24:"大吉 掘藏得金，家門餘慶",
+25:"吉 榮俊之數，資性英敏",26:"凶帶吉 變怪之數，波瀾起伏",27:"半吉 增長之數，欲望無止",
+28:"凶 闊水浮萍，遭難之數",29:"吉 智謀之數，財官豐隆",30:"半吉 非運之數，吉凶參半",
+31:"大吉 智勇之數，名實兼備",32:"大吉 僥倖之數，貴人得助",33:"大吉 旭日升天，鸞鳳相會",
+34:"凶 破家之數，災禍頻臨",35:"吉 高樓望月，溫和平靜",36:"凶帶吉 波瀾之數，俠義風範",
+37:"大吉 猛虎出林，權威顯達",38:"半吉 薄弱之數，藝術成功",39:"大吉 富貴之數，雲開見月",
+40:"半吉 退安之數，知難而退",41:"大吉 有德之數，德望兼備",42:"半吉 寒蟬在柳，博達多能",
+43:"半吉 散財之數，外祥內苦",44:"凶 煩悶之數，破家亡身",45:"大吉 順風之數，新生泰和",
+46:"凶 羅網之數，載寶沉舟",47:"大吉 點金成玉，開花結果",48:"大吉 古松鶴鳴，德智兼備",
+49:"凶 轉變之數，吉凶難辨",50:"半吉 小舟入海，吉凶互見",51:"半吉 沉浮之數，盛衰交加",
+52:"大吉 達眼之數，先見之明",53:"半吉 曲卷之數，外觀隆昌",54:"凶 多難非運，憂悶煩苦",
+55:"半吉 善惡之數，外美內苦",56:"凶 浪裡淘金，缺乏實行",57:"吉 寒鶯出谷，努力向上",
+58:"半吉 半凶半吉，先苦後甘",59:"凶 寒蟬悲風，意志不堅",60:"凶 無謀之數，動搖不安",
+61:"吉帶凶 牡丹芙蓉，名利雙收",62:"凶 衰敗之數，內外不和",63:"大吉 富貴榮華，萬物化育",
+64:"凶 骨肉分離，孤獨破滅",65:"大吉 巨流歸海，富貴長壽",66:"凶 內外不和，進退維谷",
+67:"大吉 通達之數，家道昌隆",68:"吉 興家之數，發明智巧",69:"凶 非業之數，坐立不安",
+70:"凶 險惡之數，慘淡憂愁",71:"半吉 養神之數，貴人得助",72:"半吉 後凶之數，先甘後苦",
+73:"半吉 平安之數，安樂自然",74:"凶 殘菊逢霜，沉淪逆境",75:"半吉 守者吉，進者凶",
+76:"凶 傾覆之數，傾家損財",77:"半吉 半吉之數，前苦後甜",78:"半吉 晚苦之數，先吉後凶",
+79:"凶 終極之數，挽回乏力",80:"凶帶吉 遁吉避凶，靜守安穩",81:"大吉 還元之數，最大吉數"
+};
+function shuLook(n){let k=n;while(k>81)k-=80;if(k<1)k=1;const s=SHULI81[k]||"半吉 平和之數";const i=s.indexOf(" ");return {num:k,label:s.slice(0,i),phrase:s.slice(i+1)};}
+function shuClass(label){if(/帶吉|帶凶|半吉|參半|互見/.test(label))return "mid";if(/大吉|吉/.test(label))return "good";if(/凶/.test(label))return "bad";return "mid";}
+function shuliWx(n){const u=n%10;return u===1||u===2?"木":u===3||u===4?"火":u===5||u===6?"土":u===7||u===8?"金":"水";}
+const WEST2WX={火:"火",土:"土",風:"木",水:"水"};
+function nameAnalysis(name,override){
+ const chars=[...(name||"").replace(/\s/g,"")].filter(c=>/[㐀-鿿]/.test(c));
+ if(chars.length<2)return null;
+ const strokes=chars.map((c,i)=>(override&&override[i])?override[i]:(STROKE[c]||0));
+ const unknown=chars.filter((c,i)=>!((override&&override[i])||STROKE[c]));
+ const sum=a=>a.reduce((x,y)=>x+y,0);
+ const sName=strokes[0],given=strokes.slice(1);
+ const tian=sName+1;
+ const ren=sName+given[0];
+ const di=given.length>1?sum(given):given[0]+1;
+ const zong=sum(strokes);
+ let wai=zong-ren+1; if(chars.length===2)wai=2;
+ const grids=[["天格","祖運/長輩",tian],["人格","主運/個性",ren],["地格","前運/家庭",di],["外格","副運/社交",wai],["總格","後運/晚境",zong]];
+ const sancai=[shuliWx(tian),shuliWx(ren),shuliWx(di)];
+ const r=(a,b)=>{const i=WX_IDX[a],o=WX_IDX[b];if(i===o||(i+1)%5===o||(o+1)%5===i)return 1;return -1;};
+ const scSc=r(sancai[0],sancai[1])+r(sancai[1],sancai[2]);
+ const scCls=scSc>=2?"good":scSc<=-2?"bad":"mid";
+ const scLabel=scSc>=2?"大吉":scSc===1?"吉":scSc===0?"半吉":scSc===-1?"凶":"大凶";
+ const scText=scSc>=2?"三才（天人地）五行相生流暢、配置和諧，根基穩固、運途順遂，是極佳的姓名格局。"
+   :scSc>=0?"三才五行有生有制、互有調和，整體尚屬平穩，惟宜善用後天努力以補不足。"
+   :"三才五行相剋較重、配置欠和，運途易有起伏阻滯，宜以喜用神之色彩、方位、行業及修為調補化解。";
+ return {chars,strokes,unknown,grids,sancai,scLabel,scCls,scText,tian,ren,di,wai,zong,renWx:shuliWx(ren),zongWx:shuliWx(zong)};
+}
+function nameCrossLines(na,cross){
+ const rw=na.renWx,zw=na.zongWx,lines=[];
+ if(cross.xi){
+  const inXi=cross.xi.includes(rw)||cross.xi.includes(zw);
+  const inJi=cross.ji&&(cross.ji.includes(rw)||cross.ji.includes(zw));
+  if(inXi)lines.push(`您的姓名主運（人格 <b>${rw}</b>）／總運（總格 <b>${zw}</b>）五行，正落入命局<b style="color:var(--jade)">喜用神（${cross.xi.join("、")}）</b>——姓名能補先天命局之不足、助旺運勢，是難得相得益彰的好名。`);
+  else if(inJi)lines.push(`您的姓名五行偏向命局<b style="color:#d47f8f">忌神（${cross.ji.join("、")}）</b>，與先天喜用稍有落差。建議日常多親近喜用神 <b style="color:var(--jade)">${cross.xi.join("、")}</b> 之色彩、方位與行業以調和補強，化解姓名與命局的張力。`);
+  else lines.push(`您的姓名主運五行屬 <b>${rw}</b>，與命局喜用神（<b style="color:var(--jade)">${cross.xi.join("、")}</b>）關係中性——姓名平穩不損運，惟可多借喜用之氣（色彩、方位、貴人）為運勢加分。`);
+ }else{
+  const er=elementRel(cross.coreEl,rw);
+  lines.push(`您的姓名主運（人格）五行屬 <b>${rw}</b>，與${cross.sysName}核心（${cross.coreLabel}・五行 ${cross.coreEl}）為「<b>${er.t}</b>」之勢。${er.note}`);
+ }
+ const adv=na.scCls==="good"
+  ?`姓名三才（${na.sancai.join("・")}）配置佳，先天命格與後天名運相輔相成，宜把握此優勢、積極經營人生。`
+  :na.scCls==="mid"
+  ?`姓名三才（${na.sancai.join("・")}）平穩，建議多接觸 <b style="color:var(--jade)">${rw==="木"?"水、木":rw==="火"?"木、火":rw==="土"?"火、土":rw==="金"?"土、金":"金、水"}</b> 相生之氣，以名運順引命運、漸入佳境。`
+  :`姓名三才（${na.sancai.join("・")}）相剋偏重，宜以喜用神色彩、方位及修身養性化解，後天用功仍能轉運造命——「命好不如運好，運好不如心好」。`;
+ lines.push(adv);
+ return lines;
+}
+let _nameRaw="",_nameCross=null;
+function nameBody(name,override,cross){
+ const na=nameAnalysis(name,override);
+ if(!na)return `<p class="approxnote">※ 姓名學需中文姓名（兩字以上）方能排算三才五格，請於上方「姓名」欄填寫完整中文姓名。</p>`;
+ const charTiles=na.chars.map((c,i)=>`<div class="nchar"><span class="cz">${c}</span>
+   <input class="skin" type="number" min="1" max="50" value="${na.strokes[i]||1}" aria-label="${c} 筆劃">
+   <span class="cl">劃</span></div>`).join("");
+ const gridCards=na.grids.map(([gn,gd,v])=>{const s=shuLook(v);return `<div class="gridcard ${shuClass(s.label)}">
+   <div class="gh"><span class="gn">${gn}</span><span class="gv">${v}</span></div>
+   <div class="gwx">五行 ${shuliWx(v)}　·　<b>${s.label}</b></div>
+   <div class="gsub">${gd}</div><div class="gph">${s.phrase}</div></div>`;}).join("");
+ const cross_=cross||_nameCross;
+ const crossHTML=cross_?nameCrossLines(na,cross_).map(l=>`<p>${l}</p>`).join(""):"";
+ const unk=na.unknown.length?`<p class="approxnote" style="margin:10px auto 4px">※ 「${[...new Set(na.unknown)].join("、")}」未收錄於字典，已暫以 1 劃計，<b>請於上方校正筆劃後按「重新計算」</b>以求精準。姓名學以<b>康熙筆劃</b>為準（與電腦字筆劃常有出入，如氵作水4劃、艹作6劃、辶作7劃）。</p>`:`<p class="approxnote" style="margin:10px auto 4px">※ 姓名學以<b>康熙筆劃</b>排算（與一般筆劃略有不同）。如需校正，可直接修改上方筆劃數後按「重新計算」。</p>`;
+ return `<div class="namechars">${charTiles}<button class="recalc" onclick="recalcName()">↻ 重新計算</button></div>
+   ${unk}
+   <div class="grids">${gridCards}</div>
+   <div class="sancai ${na.scCls}">
+     <div class="sch"><span>三才配置</span><b>${na.sancai.join(" · ")}</b><span class="scbadge ${na.scCls}">${na.scLabel}</span></div>
+     <p>${na.scText}</p>
+   </div>
+   ${crossHTML?`<div class="namecross"><h4>◆ 姓名 × 命盤交叉分析</h4>${crossHTML}</div>`:""}`;
+}
+function nameSection(name,cross){
+ _nameRaw=name;_nameCross=cross;
+ return `<div class="sec-title"><span class="cn">姓名學 · 三才五格交叉分析</span><span class="en">Name Numerology</span></div>
+   <div id="nameSec">${nameBody(name,null,cross)}</div>`;
+}
+function recalcName(){
+ const box=document.getElementById("nameSec");if(!box)return;
+ const ov=[...box.querySelectorAll(".skin")].map(i=>Math.max(1,parseInt(i.value)||1));
+ box.innerHTML=nameBody(_nameRaw,ov,_nameCross);
+}
+
 /* ================= 介面 ================= */
 let gender="男";
 document.getElementById("genderSeg").addEventListener("click",e=>{
@@ -1274,7 +1457,8 @@ function renderWestern(name,gender,sol,sub){
     <div class="rcard"><h3><span class="ic">優</span>性格優勢</h3><div class="tags">${z.s.map(t=>`<span>${t}</span>`).join("")}</div></div>
     <div class="rcard"><h3><span class="ic">弱</span>成長課題</h3><div class="tags">${z.w.map(t=>`<span>${t}</span>`).join("")}</div></div>
     <div class="rcard wide"><h3><span class="ic">引</span>人生建議</h3><p>${z.a}</p></div>
-  </div>`;
+  </div>
+  ${nameSection(name,{sysName:"西洋占星",coreEl:WEST2WX[z.el],coreLabel:`${z.n}（${z.el}象）`})}`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1294,7 +1478,8 @@ function renderTarot(name,gender,sol,sub){
   <p class="approxnote">※ 生日本命牌以您出生年月日的數字學推算（西洋塔羅 Birth Card 正統算法），代表您此生的靈魂主題與人格原型，伴隨一生。</p>
   <div class="reading">
     <div class="rcard wide"><h3><span class="ic">牌</span>本命牌啟示 · ${c.n}</h3><p>${c.d}</p></div>
-  </div>`;
+  </div>
+  ${nameSection(name,{sysName:"塔羅本命牌",coreEl:shuliWx(idx),coreLabel:`${c.n}牌（數理 ${idx}）`})}`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1319,7 +1504,8 @@ function renderVedic(name,gender,sol,sub){
   <div class="reading">
     <div class="rcard"><h3><span class="ic">宮</span>恆星太陽宮 · ${RASHI[v.rashi]}</h3><p>您的吠陀太陽落於 ${v.el}象星座，主星為${v.lord}，主導能量屬 ${guna}。${v.el==="火"?"行動力與熱忱旺盛，宜開創進取。":v.el==="土"?"務實穩重、重視累積，宜踏實經營。":v.el==="風"?"思辨靈動、善於溝通，宜廣納新知。":"情感豐沛、直覺敏銳，宜修心養性。"}</p></div>
     <div class="rcard"><h3><span class="ic">宿</span>所屬月宿 · ${nak[0]}</h3><p>${nak[1]}（此為太陽黃經近似之星宿，象徵您靈魂的底蘊特質。）</p></div>
-  </div>`;
+  </div>
+  ${nameSection(name,{sysName:"印度吠陀",coreEl:WEST2WX[v.el],coreLabel:`${RASHI[v.rashi]}（${v.el}象）`})}`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1340,7 +1526,8 @@ function renderNum(name,gender,sol,sub){
   <div class="reading">
     <div class="rcard wide"><h3><span class="ic">數</span>生命靈數 ${lp} · 天賦與課題</h3><p>${nd.d}</p></div>
     <div class="rcard wide"><h3><span class="ic">年</span>2026 流年靈數 ${py}</h3><p>您 2026 年的個人年數字為 <b style="color:var(--gold)">${py}</b>（${pyd.t}）。本年宜順應此能量：${pyd.d}</p></div>
-  </div>`;
+  </div>
+  ${nameSection(name,{sysName:"生命靈數",coreEl:shuliWx(lp),coreLabel:`生命靈數 ${lp}`})}`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1610,6 +1797,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <p>${synthesis}</p>
     <div class="syn-foot">— 本論斷綜合子平八字（旺衰喜用、十神、大運）與紫微斗數（命盤十二宮、四化、大限、流年），融各家之長為 ${name} 量身而成 —</div>
   </div>
+
+  ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
   ${familySection(fam)}
   `;
