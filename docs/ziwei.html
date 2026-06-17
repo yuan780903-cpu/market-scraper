@@ -9,39 +9,97 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
 :root{
-  --night-0:#070912; --night-1:#0d1024; --night-2:#161a38; --night-3:#1f2347;
-  --gold:#d8b25e; --gold-bright:#f0d089; --gold-deep:#a9853a;
-  --ink:#e8e6f0; --ink-dim:#9b98b8; --ink-faint:#6b6890;
-  --purple:#7c5fb0; --purple-glow:#9d7fd4; --rose:#c98ba0; --jade:#7fb89a;
-  --line:rgba(216,178,94,.22); --line-soft:rgba(216,178,94,.1);
+  /* —— 中性（亮底）—— */
+  --ink:#2c2440; --ink-dim:#5e5775; --ink-faint:#9a93ad;
+  --night-0:#ffffff;            /* 強調色上的對比文字（保留舊名供 JS 用）*/
+  --card:rgba(255,255,255,.95); --card2:rgba(250,248,253,.9); --surface:#ffffff;
+  --shadow:rgba(70,50,110,.18);
+  --jade:#2f9b73; --rose:#c2576f;
+  --gwash:rgba(47,155,115,.12); --rwash:rgba(194,87,111,.12);
+  /* —— 主題色（東方紫微 · 金紫紅；其餘主題於 body[data-theme] 覆寫）—— */
+  --gold:#a9801c; --gold-bright:#c2941d; --gold-deep:#6f5210;
+  --purple:#7c5fb0; --purple-glow:#8a63c4;
+  --line:rgba(169,128,28,.30); --line-soft:rgba(120,100,60,.16);
+  --wash:rgba(245,225,170,.45); --pwash:rgba(138,99,196,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #fbe8c6 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #ece0fb 0%, transparent 52%),
+    linear-gradient(160deg,#fffbf2 0%,#fdf6e9 45%,#f6ecda 100%);
+  --head:linear-gradient(180deg,#6f5210 0%,#c2941d 50%,#a9801c 100%);
+}
+/* ===== 主題：西洋占星 · 星空藍紫 ===== */
+body[data-theme="west"]{
+  --gold:#4a54c0; --gold-bright:#5b66d4; --gold-deep:#333a86;
+  --purple:#7a5fd0; --purple-glow:#8b62d6;
+  --line:rgba(74,84,192,.28); --line-soft:rgba(80,90,160,.15);
+  --wash:rgba(190,200,250,.5); --pwash:rgba(139,98,214,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #d9e2fb 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #e7ddfb 0%, transparent 52%),
+    linear-gradient(160deg,#f4f7ff 0%,#eef2ff 45%,#e7ecfb 100%);
+  --head:linear-gradient(180deg,#333a86 0%,#5b66d4 50%,#4a54c0 100%);
+}
+/* ===== 主題：塔羅 · 神祕洋紅金 ===== */
+body[data-theme="tarot"]{
+  --gold:#a83478; --gold-bright:#c23f8d; --gold-deep:#751f4f;
+  --purple:#9a5fa8; --purple-glow:#cf9a2c;
+  --line:rgba(168,52,120,.28); --line-soft:rgba(150,70,120,.15);
+  --wash:rgba(245,205,232,.5); --pwash:rgba(207,154,44,.16);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #f7d9ec 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #efe0fb 0%, transparent 52%),
+    linear-gradient(160deg,#fff5fb 0%,#fdeef7 45%,#f7e6f1 100%);
+  --head:linear-gradient(180deg,#751f4f 0%,#c23f8d 50%,#a83478 100%);
+}
+/* ===== 主題：印度吠陀 · 橘紅薑黃 ===== */
+body[data-theme="vedic"]{
+  --gold:#c4651f; --gold-bright:#dd7a2a; --gold-deep:#8f4512;
+  --purple:#b0563a; --purple-glow:#c0392b;
+  --line:rgba(196,101,31,.30); --line-soft:rgba(170,110,60,.16);
+  --wash:rgba(250,222,185,.5); --pwash:rgba(192,57,43,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #fbe2c4 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #f8ddc9 0%, transparent 52%),
+    linear-gradient(160deg,#fff7ef 0%,#fdf0e2 45%,#f8e6d3 100%);
+  --head:linear-gradient(180deg,#8f4512 0%,#dd7a2a 50%,#c4651f 100%);
+}
+/* ===== 主題：生命靈數 · 青藍科技 ===== */
+body[data-theme="num"]{
+  --gold:#1591a8; --gold-bright:#1aa7c0; --gold-deep:#0e6677;
+  --purple:#4f63c4; --purple-glow:#5566d6;
+  --line:rgba(21,145,168,.28); --line-soft:rgba(60,130,150,.15);
+  --wash:rgba(190,235,242,.5); --pwash:rgba(85,102,214,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #cdeef4 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #dde6fb 0%, transparent 52%),
+    linear-gradient(160deg,#f1fbfd 0%,#eaf6f9 45%,#e2f1f4 100%);
+  --head:linear-gradient(180deg,#0e6677 0%,#1aa7c0 50%,#1591a8 100%);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
   font-family:"Noto Serif TC",serif;
-  background:var(--night-0);
+  background:var(--bg) fixed;
   color:var(--ink);
   line-height:1.75;
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
+  transition:background .6s ease;
 }
-/* ===== 星空背景 ===== */
-.sky{position:fixed;inset:0;z-index:-2;background:
-  radial-gradient(1200px 700px at 80% -10%, #1c1640 0%, transparent 55%),
-  radial-gradient(900px 600px at 10% 110%, #14213f 0%, transparent 50%),
-  linear-gradient(160deg,#070912 0%,#0b0e22 45%,#070912 100%);}
+/* ===== 背景裝飾 ===== */
+.sky{position:fixed;inset:0;z-index:-2;background:var(--bg);transition:background .6s ease}
 .stars,.stars2{position:fixed;inset:0;z-index:-1;pointer-events:none}
 .stars{background-image:
-  radial-gradient(1px 1px at 20% 30%,#fff,transparent),
-  radial-gradient(1px 1px at 70% 60%,#cdbff0,transparent),
-  radial-gradient(1px 1px at 40% 80%,#fff,transparent),
-  radial-gradient(1.4px 1.4px at 85% 20%,#f0d089,transparent),
-  radial-gradient(1px 1px at 55% 15%,#fff,transparent),
-  radial-gradient(1px 1px at 12% 65%,#bfa7e8,transparent),
-  radial-gradient(1.3px 1.3px at 90% 75%,#fff,transparent),
-  radial-gradient(1px 1px at 33% 48%,#fff,transparent);
-  background-repeat:no-repeat;opacity:.7;animation:twinkle 6s ease-in-out infinite alternate}
-@keyframes twinkle{from{opacity:.35}to{opacity:.85}}
+  radial-gradient(2px 2px at 20% 30%,var(--gold-bright),transparent),
+  radial-gradient(2px 2px at 70% 60%,var(--purple-glow),transparent),
+  radial-gradient(2px 2px at 40% 80%,var(--gold),transparent),
+  radial-gradient(2.4px 2.4px at 85% 20%,var(--gold-bright),transparent),
+  radial-gradient(2px 2px at 55% 15%,var(--purple-glow),transparent),
+  radial-gradient(2px 2px at 12% 65%,var(--gold),transparent),
+  radial-gradient(2.2px 2.2px at 90% 75%,var(--purple-glow),transparent),
+  radial-gradient(2px 2px at 33% 48%,var(--gold-bright),transparent);
+  background-repeat:no-repeat;opacity:.3;animation:twinkle 6s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.14}to{opacity:.42}}
 /* ===== 通用 ===== */
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
 .seal{display:inline-block;font-family:"Ma Shan Zheng",serif;color:var(--night-0);
@@ -52,7 +110,7 @@ body{
 .divider::before,.divider::after{content:"";height:1px;flex:1;
   background:linear-gradient(90deg,transparent,var(--line),transparent)}
 .divider span{font-family:"Ma Shan Zheng",serif;font-size:1.4rem;letter-spacing:4px;
-  background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
+  background:var(--head);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ===== Hero ===== */
 header{position:relative;text-align:center;padding:78px 24px 30px}
@@ -63,43 +121,43 @@ header{position:relative;text-align:center;padding:78px 24px 30px}
 @keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
 header .eyebrow{position:relative;letter-spacing:9px;color:var(--gold);font-size:.82rem;margin-bottom:18px}
 header h1{position:relative;font-size:clamp(2.6rem,7vw,4.6rem);font-weight:900;letter-spacing:8px;
-  background:linear-gradient(180deg,#fff 0%,var(--gold-bright) 55%,var(--gold-deep) 100%);
+  background:var(--head);
   -webkit-background-clip:text;background-clip:text;color:transparent;
-  text-shadow:0 0 60px rgba(216,178,94,.25);line-height:1.2}
+  filter:drop-shadow(0 6px 16px var(--shadow));line-height:1.2}
 header .sub{position:relative;color:var(--ink-dim);margin-top:16px;letter-spacing:3px;font-size:1.02rem}
 header .meta{position:relative;margin-top:26px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap;
   color:var(--ink-faint);font-size:.84rem;letter-spacing:2px}
 header .meta b{color:var(--gold);font-weight:500}
 
 /* ===== 輸入卡 ===== */
-.panel{background:linear-gradient(180deg,rgba(31,35,71,.7),rgba(13,16,36,.85));
+.panel{background:var(--card);
   border:1px solid var(--line);border-radius:20px;padding:34px 34px 38px;
-  box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);
+  box-shadow:0 30px 70px -34px var(--shadow),inset 0 1px 0 rgba(255,255,255,.6);
   position:relative;overflow:hidden;margin-top:24px}
-.panel::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
-.panel h2{font-size:1.35rem;letter-spacing:4px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.panel::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--head);opacity:.92}
+.panel h2{font-size:1.35rem;letter-spacing:4px;margin-bottom:6px;display:flex;align-items:center;gap:10px;color:var(--ink)}
 .panel h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
 .panel .hint{color:var(--ink-faint);font-size:.85rem;letter-spacing:1px;margin-bottom:24px}
 .grid-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px 22px}
 .field{display:flex;flex-direction:column;gap:8px}
-.field label{font-size:.82rem;color:var(--gold);letter-spacing:2px}
+.field label{font-size:.82rem;color:var(--gold);letter-spacing:2px;font-weight:600}
 .field input,.field select{
-  background:rgba(7,9,18,.7);border:1px solid var(--line-soft);color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);color:var(--ink);
   padding:13px 14px;border-radius:11px;font-family:inherit;font-size:1rem;letter-spacing:1px;
   transition:.25s;outline:none}
-.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(216,178,94,.12);background:rgba(7,9,18,.95)}
-.field select option{background:#0d1024}
-.seg{display:flex;gap:0;border:1px solid var(--line-soft);border-radius:11px;overflow:hidden}
-.seg button{flex:1;background:transparent;border:none;color:var(--ink-dim);padding:13px 0;
+.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--wash);background:#fff}
+.field select option{background:#fff;color:var(--ink)}
+.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.seg button{flex:1;background:var(--surface);border:none;color:var(--ink-dim);padding:13px 0;
   font-family:inherit;font-size:.96rem;letter-spacing:2px;cursor:pointer;transition:.25s}
 .seg button.on{background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));color:var(--night-0);font-weight:600}
 .cast{margin-top:30px;width:100%;border:none;cursor:pointer;
   background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));
   color:var(--night-0);font-family:inherit;font-weight:700;font-size:1.18rem;letter-spacing:8px;
   padding:18px;border-radius:13px;transition:.3s;position:relative;overflow:hidden;
-  box-shadow:0 14px 40px -12px rgba(216,178,94,.6)}
-.cast:hover{transform:translateY(-2px);box-shadow:0 20px 50px -12px rgba(216,178,94,.75)}
+  box-shadow:0 14px 34px -14px var(--gold)}
+.cast:hover{transform:translateY(-2px);box-shadow:0 20px 44px -14px var(--gold)}
 .cast:active{transform:translateY(0)}
 
 /* ===== 結果 ===== */
@@ -108,110 +166,110 @@ header .meta b{color:var(--gold);font-weight:500}
 @keyframes rise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 .sec-title{text-align:center;margin:54px 0 24px}
 .sec-title .cn{font-size:2rem;letter-spacing:6px;
-  background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
+  background:var(--head);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sec-title .en{display:block;color:var(--ink-faint);letter-spacing:5px;font-size:.72rem;margin-top:6px;text-transform:uppercase}
 
 /* 基本資訊條 */
 .idbar{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:8px}
-.idchip{background:rgba(31,35,71,.5);border:1px solid var(--line-soft);border-radius:30px;
-  padding:9px 20px;font-size:.9rem;letter-spacing:1px}
+.idchip{background:var(--card2);border:1px solid var(--line);border-radius:30px;
+  padding:9px 20px;font-size:.9rem;letter-spacing:1px;color:var(--ink)}
 .idchip b{color:var(--gold);font-weight:600;margin-left:6px}
 
 /* 八字四柱 */
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
-.pillar{background:linear-gradient(180deg,rgba(31,35,71,.6),rgba(13,16,36,.7));
-  border:1px solid var(--line);border-radius:16px;padding:22px 12px;text-align:center;position:relative;overflow:hidden}
-.pillar::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0,rgba(216,178,94,.12),transparent 70%)}
+.pillar{background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:22px 12px;text-align:center;position:relative;overflow:hidden;box-shadow:0 14px 30px -24px var(--shadow)}
+.pillar::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0,var(--wash),transparent 70%)}
 .pillar .ptag{color:var(--ink-faint);letter-spacing:3px;font-size:.8rem;margin-bottom:14px;position:relative}
 .pillar .gan,.pillar .zhi{font-size:2.7rem;font-weight:700;line-height:1.25;position:relative;
   font-family:"Noto Serif TC"}
-.pillar .gan{color:var(--gold-bright)}
+.pillar .gan{color:var(--gold-deep)}
 .pillar .zhi{color:var(--ink)}
 .pillar .ele{position:relative;margin-top:12px;font-size:.78rem;color:var(--ink-dim);letter-spacing:1px}
 .pillar .ele span{display:inline-block;padding:2px 8px;border-radius:20px;border:1px solid var(--line-soft);margin:2px}
 
 /* 五行能量 */
 .wuxing{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
-.wx{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:14px;padding:16px 10px;text-align:center}
+.wx{background:var(--card2);border:1px solid var(--line-soft);border-radius:14px;padding:16px 10px;text-align:center}
 .wx .nm{font-size:1.4rem;font-weight:700;margin-bottom:8px}
-.wx .bar{height:6px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:6px}
+.wx .bar{height:6px;border-radius:6px;background:rgba(0,0,0,.08);overflow:hidden;margin-bottom:6px}
 .wx .bar i{display:block;height:100%;border-radius:6px}
 .wx .ct{font-size:.78rem;color:var(--ink-dim)}
-.wx-木 .nm,.wx-木 .ct b{color:var(--jade)} .wx-木 .bar i{background:var(--jade)}
-.wx-火 .nm{color:#e08a7a} .wx-火 .bar i{background:#e08a7a}
-.wx-土 .nm{color:var(--gold)} .wx-土 .bar i{background:var(--gold)}
-.wx-金 .nm{color:#dcdce6} .wx-金 .bar i{background:#dcdce6}
-.wx-水 .nm{color:#7fa6d4} .wx-水 .bar i{background:#7fa6d4}
+.wx-木 .nm,.wx-木 .ct b{color:#2f9b58} .wx-木 .bar i{background:#2f9b58}
+.wx-火 .nm{color:#d9542f} .wx-火 .bar i{background:#d9542f}
+.wx-土 .nm{color:#b07d18} .wx-土 .bar i{background:#b07d18}
+.wx-金 .nm{color:#8a7a3c} .wx-金 .bar i{background:#b8a45a}
+.wx-水 .nm{color:#2f72c4} .wx-水 .bar i{background:#2f72c4}
 
 /* 紫微命盤 */
 .chart{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(130px,auto));
   gap:8px;margin-top:10px}
-.cell{background:linear-gradient(180deg,rgba(22,26,56,.72),rgba(11,14,34,.82));
+.cell{background:var(--card);
   border:1px solid var(--line-soft);border-radius:12px;padding:10px 10px 36px;position:relative;
-  min-height:130px;transition:.25s}
-.cell:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 12px 30px -12px rgba(216,178,94,.4);z-index:2}
-.cell.ming{background:linear-gradient(180deg,rgba(124,95,176,.32),rgba(40,28,72,.6));border-color:var(--purple-glow)}
-.cell.ming::before{content:"命";position:absolute;top:7px;right:8px;font-family:"Ma Shan Zheng";color:var(--purple-glow);font-size:1.1rem;opacity:.8}
-.cell.shen .sbadge{position:absolute;top:7px;right:8px;background:var(--jade);color:var(--night-0);font-size:.62rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
+  min-height:130px;transition:.25s;box-shadow:0 10px 24px -22px var(--shadow)}
+.cell:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 12px 30px -16px var(--shadow);z-index:2}
+.cell.ming{background:var(--pwash);border-color:var(--purple-glow)}
+.cell.ming::before{content:"命";position:absolute;top:7px;right:8px;font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.1rem;opacity:.85}
+.cell.shen .sbadge{position:absolute;top:7px;right:8px;background:var(--jade);color:#fff;font-size:.62rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
 .cell .pstars{display:flex;flex-wrap:wrap;gap:3px 8px;align-content:flex-start;width:100%}
 .star{font-size:.92rem;font-weight:600;letter-spacing:1px;white-space:nowrap}
-.star.main{color:var(--gold-bright)}
+.star.main{color:var(--gold-deep)}
 .star.aux{color:var(--ink-dim);font-size:.82rem;font-weight:400}
-.sihua{font-size:.58rem;color:var(--night-0);padding:0 3px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700}
-.sihua.lu{background:var(--jade)} .sihua.quan{background:#e0a85a} .sihua.ke{background:#7fa6d4} .sihua.ji{background:#d47f8f}
+.sihua{font-size:.58rem;color:#fff;padding:0 3px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700}
+.sihua.lu{background:#2f9b73} .sihua.quan{background:#d98a2a} .sihua.ke{background:#2f72c4} .sihua.ji{background:#c2576f}
 .cell .foot{position:absolute;left:10px;right:10px;bottom:8px;
   display:flex;justify-content:space-between;align-items:flex-end;
   border-top:1px solid var(--line-soft);padding-top:6px}
 .cell .pname{font-size:.92rem;color:var(--gold);letter-spacing:1px}
 .cell .gz{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px}
 .cell .daxian{font-size:.62rem;color:var(--ink-faint)}
-.center-info{grid-column:2/4;grid-row:2/4;background:linear-gradient(160deg,rgba(31,35,71,.5),rgba(11,14,34,.7));
+.center-info{grid-column:2/4;grid-row:2/4;background:var(--card2);
   border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;
   justify-content:center;align-items:center;text-align:center;padding:18px;gap:7px}
 .center-info .t{font-family:"Ma Shan Zheng";font-size:1.7rem;color:var(--gold);letter-spacing:3px}
 .center-info .row{font-size:.84rem;color:var(--ink-dim);letter-spacing:1px}
 .center-info .row b{color:var(--ink)}
-.center-info .ju{margin-top:4px;font-size:1rem;color:var(--purple-glow);letter-spacing:2px}
+.center-info .ju{margin-top:4px;font-size:1rem;color:var(--purple);letter-spacing:2px}
 
 /* 解析 */
 .reading{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:10px}
-.rcard{background:linear-gradient(180deg,rgba(31,35,71,.5),rgba(13,16,36,.7));
-  border:1px solid var(--line);border-radius:16px;padding:24px 26px;position:relative}
+.rcard{background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:24px 26px;position:relative;box-shadow:0 14px 34px -28px var(--shadow)}
 .rcard h3{font-size:1.15rem;letter-spacing:3px;color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:9px}
-.rcard h3 .ic{font-family:"Ma Shan Zheng";color:var(--purple-glow);font-size:1.3rem}
-.rcard .lead{color:var(--gold-bright);font-size:.92rem;letter-spacing:1px;margin-bottom:10px}
+.rcard h3 .ic{font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.3rem}
+.rcard .lead{color:var(--gold-deep);font-size:.92rem;letter-spacing:1px;margin-bottom:10px;font-weight:600}
 .rcard p{color:var(--ink-dim);font-size:.94rem;letter-spacing:.5px}
 .rcard .tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}
-.rcard .tags span{font-size:.76rem;border:1px solid var(--line-soft);color:var(--ink-dim);padding:4px 11px;border-radius:20px}
+.rcard .tags span{font-size:.76rem;border:1px solid var(--line);color:var(--gold-deep);padding:4px 11px;border-radius:20px;background:var(--wash)}
 .rcard.wide{grid-column:1/-1}
 
 /* 十神 / 納音（四柱） */
-.pillar .tg{font-size:.74rem;letter-spacing:1px;color:var(--purple-glow);margin-bottom:4px;position:relative}
+.pillar .tg{font-size:.74rem;letter-spacing:1px;color:var(--purple);margin-bottom:4px;position:relative}
 .pillar .tg.tgz{margin:6px 0 0;color:var(--ink-faint)}
 .pillar .nayin{position:relative;margin-top:10px;font-size:.72rem;letter-spacing:1px;color:var(--gold-deep);
   border-top:1px dashed var(--line-soft);padding-top:8px}
 
 /* 旺衰 喜用 */
-.strength{background:linear-gradient(180deg,rgba(31,35,71,.5),rgba(13,16,36,.7));border:1px solid var(--line-soft);
-  border-radius:18px;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.strength{background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;box-shadow:0 14px 34px -28px var(--shadow)}
 .slevel{font-family:"Ma Shan Zheng",serif;font-size:2.6rem;width:96px;height:96px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;border:2px solid;flex-shrink:0}
-.slevel.strong{color:#e08a7a;border-color:#e08a7a;box-shadow:0 0 26px -6px #e08a7a}
-.slevel.weak{color:#7fa6d4;border-color:#7fa6d4;box-shadow:0 0 26px -6px #7fa6d4}
-.slevel.mid{color:var(--jade);border-color:var(--jade);box-shadow:0 0 26px -6px var(--jade)}
+.slevel.strong{color:#d9542f;border-color:#d9542f;box-shadow:0 0 26px -10px #d9542f}
+.slevel.weak{color:#2f72c4;border-color:#2f72c4;box-shadow:0 0 26px -10px #2f72c4}
+.slevel.mid{color:var(--jade);border-color:var(--jade);box-shadow:0 0 26px -10px var(--jade)}
 .stext{color:var(--ink-dim);font-size:.95rem;line-height:1.85;letter-spacing:.5px}
 .stext b{color:var(--gold)}
 .xiji{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap}
 .xj{flex:1;min-width:160px;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line-soft)}
 .xj span{font-size:.82rem;letter-spacing:2px;color:var(--ink-faint)}
 .xj b{font-size:1.2rem;letter-spacing:3px}
-.xj.xi{background:rgba(127,184,154,.12)} .xj.xi b{color:var(--jade)}
-.xj.ji{background:rgba(212,127,143,.12)} .xj.ji b{color:#d47f8f}
+.xj.xi{background:var(--gwash)} .xj.xi b{color:var(--jade)}
+.xj.ji{background:var(--rwash)} .xj.ji b{color:var(--rose)}
 
 /* 十神卡 */
 .tengods{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.tgcard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:14px;padding:16px 12px;text-align:center}
-.tgcard .tgn{font-size:1.35rem;font-weight:700;color:var(--gold-bright);letter-spacing:2px}
+.tgcard{background:var(--card2);border:1px solid var(--line-soft);border-radius:14px;padding:16px 12px;text-align:center}
+.tgcard .tgn{font-size:1.35rem;font-weight:700;color:var(--gold-deep);letter-spacing:2px}
 .tgcard .tgp{font-size:.74rem;color:var(--ink-faint);margin:4px 0 8px;letter-spacing:2px}
 .tgcard .tgd{font-size:.78rem;color:var(--ink-dim);line-height:1.6}
 
@@ -219,51 +277,51 @@ header .meta b{color:var(--gold);font-weight:500}
 .lucksub{text-align:center;color:var(--ink-faint);font-size:.85rem;letter-spacing:1px;margin:-4px 0 14px}
 .luckwrap{overflow-x:auto;padding-bottom:6px}
 .luckrow{display:grid;grid-template-columns:repeat(8,minmax(86px,1fr));gap:10px;min-width:760px}
-.luckcol{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:12px;padding:14px 6px;text-align:center}
-.luckcol.on{border-color:var(--purple-glow);background:linear-gradient(180deg,rgba(124,95,176,.3),rgba(40,28,72,.5));box-shadow:0 0 0 1px var(--purple-glow)}
+.luckcol{background:var(--card2);border:1px solid var(--line-soft);border-radius:12px;padding:14px 6px;text-align:center}
+.luckcol.on{border-color:var(--purple-glow);background:var(--pwash);box-shadow:0 0 0 1px var(--purple-glow)}
 .luckcol .la{font-size:.78rem;color:var(--gold);letter-spacing:1px;margin-bottom:8px}
-.luckcol .lg{font-size:1.7rem;font-weight:700;color:var(--gold-bright);line-height:1.2}
+.luckcol .lg{font-size:1.7rem;font-weight:700;color:var(--gold-deep);line-height:1.2}
 .luckcol .lz{font-size:1.7rem;font-weight:700;color:var(--ink);line-height:1.2}
-.luckcol .ltg{font-size:.72rem;color:var(--purple-glow);margin-top:6px}
+.luckcol .ltg{font-size:.72rem;color:var(--purple);margin-top:6px}
 .luckcol .lny{font-size:.66rem;color:var(--ink-faint);margin-top:3px}
 
 /* 神煞 */
 .shensha{display:flex;flex-wrap:wrap;gap:12px}
-.sschip{background:linear-gradient(180deg,rgba(31,35,71,.5),rgba(13,16,36,.7));border:1px solid var(--line-soft);
-  border-radius:14px;padding:14px 16px;flex:1;min-width:200px}
-.sschip b{color:var(--gold-bright);font-size:1.05rem;letter-spacing:2px}
-.sschip span{font-size:.72rem;color:var(--purple-glow);margin-left:8px;border:1px solid var(--line-soft);padding:1px 7px;border-radius:10px}
+.sschip{background:var(--card);border:1px solid var(--line-soft);
+  border-radius:14px;padding:14px 16px;flex:1;min-width:200px;box-shadow:0 12px 28px -26px var(--shadow)}
+.sschip b{color:var(--gold-deep);font-size:1.05rem;letter-spacing:2px}
+.sschip span{font-size:.72rem;color:var(--purple);margin-left:8px;border:1px solid var(--line-soft);padding:1px 7px;border-radius:10px}
 .sschip i{display:block;font-style:normal;font-size:.8rem;color:var(--ink-dim);margin-top:8px;line-height:1.6}
 
 /* 命盤格局 */
 .gewrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.gecard{background:linear-gradient(180deg,rgba(124,95,176,.16),rgba(13,16,36,.7));border:1px solid var(--line-soft);
+.gecard{background:var(--pwash);border:1px solid var(--line-soft);
   border-radius:16px;padding:20px;position:relative;overflow:hidden}
-.gecard::before{content:"格";position:absolute;right:-6px;bottom:-14px;font-family:"Ma Shan Zheng";font-size:5rem;color:rgba(157,127,212,.12)}
-.gecard h4{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-bright);letter-spacing:3px;margin-bottom:10px}
+.gecard::before{content:"格";position:absolute;right:-6px;bottom:-14px;font-family:"Ma Shan Zheng";font-size:5rem;color:rgba(124,95,176,.16)}
+.gecard h4{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:3px;margin-bottom:10px}
 .gecard p{color:var(--ink-dim);font-size:.9rem;line-height:1.8;position:relative}
 
 /* 三方四正 */
 .triowrap{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.triocard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:14px;padding:16px 10px;text-align:center}
+.triocard{background:var(--card2);border:1px solid var(--line-soft);border-radius:14px;padding:16px 10px;text-align:center}
 .triocard .tl{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px;margin-bottom:8px}
 .triocard .tgz2{font-size:.92rem;color:var(--gold);letter-spacing:1px}
-.triocard .tsm{font-size:.92rem;color:var(--gold-bright);margin-top:8px;letter-spacing:1px;line-height:1.5}
+.triocard .tsm{font-size:.92rem;color:var(--gold-deep);margin-top:8px;letter-spacing:1px;line-height:1.5}
 .trionote{text-align:center;color:var(--ink-faint);font-size:.84rem;line-height:1.8;margin-top:14px;max-width:760px;margin-left:auto;margin-right:auto}
 
 /* 流年宮位徽章 / 當前大限 */
 .cell .frow{display:flex;justify-content:space-between;align-items:baseline}
 .cell .daxian{font-size:.62rem;color:var(--ink-faint);margin-top:3px}
-.cell .daxian.on{color:var(--purple-glow);font-weight:600}
+.cell .daxian.on{color:var(--purple);font-weight:600}
 .cell.curlim{box-shadow:inset 0 0 0 1px var(--purple-glow)}
-.lnbadge{position:absolute;top:7px;left:8px;background:#e08a7a;color:var(--night-0);font-size:.6rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
+.lnbadge{position:absolute;top:7px;left:8px;background:#d9542f;color:#fff;font-size:.6rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
 
 /* 綜合論斷 */
-.synthesis{background:linear-gradient(180deg,rgba(216,178,94,.1),rgba(13,16,36,.75));border:1px solid var(--gold-deep);
-  border-radius:20px;padding:34px 30px;position:relative;overflow:hidden}
-.synthesis .syn-mark{font-family:"Ma Shan Zheng";position:absolute;right:6px;top:-22px;font-size:8rem;color:rgba(216,178,94,.1)}
+.synthesis{background:var(--wash);border:1px solid var(--gold);
+  border-radius:20px;padding:34px 30px;position:relative;overflow:hidden;box-shadow:0 18px 40px -30px var(--shadow)}
+.synthesis .syn-mark{font-family:"Ma Shan Zheng";position:absolute;right:6px;top:-22px;font-size:8rem;color:rgba(0,0,0,.05)}
 .synthesis p{color:var(--ink);font-size:1rem;line-height:2.05;letter-spacing:.6px;position:relative}
-.synthesis p b{font-weight:600}
+.synthesis p b{font-weight:700;color:var(--gold-deep)}
 .synthesis .syn-foot{margin-top:22px;text-align:center;color:var(--ink-faint);font-size:.78rem;letter-spacing:1px;line-height:1.7}
 
 footer{text-align:center;padding:60px 24px 50px;color:var(--ink-faint);font-size:.8rem;letter-spacing:2px}
@@ -272,19 +330,19 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .field.full{margin-bottom:18px}
 
 /* 家庭成員輸入 */
-.famwrap{margin-top:20px;border:1px solid var(--line-soft);border-radius:13px;background:rgba(7,9,18,.4);overflow:hidden}
+.famwrap{margin-top:20px;border:1px solid var(--line-soft);border-radius:13px;background:var(--card2);overflow:hidden}
 .famwrap summary{cursor:pointer;padding:14px 18px;color:var(--gold);letter-spacing:2px;font-size:.95rem;list-style:none}
 .famwrap summary::-webkit-details-marker{display:none}
 .famwrap[open] summary{border-bottom:1px solid var(--line-soft)}
 .famhint{padding:12px 18px 4px;color:var(--ink-faint);font-size:.8rem;line-height:1.7}
 #famList{padding:6px 14px}
 .fammember{display:grid;grid-template-columns:1.1fr 1.2fr 1.3fr 1.1fr auto;gap:10px;align-items:end;
-  padding:12px;margin:10px 0;border:1px solid var(--line-soft);border-radius:11px;background:rgba(13,16,36,.5)}
+  padding:12px;margin:10px 0;border:1px solid var(--line-soft);border-radius:11px;background:var(--surface)}
 .fammember .field{gap:5px}.fammember label{font-size:.72rem}
 .fammember input,.fammember select{padding:9px 10px;font-size:.9rem;border-radius:9px}
-.fammember .rm{background:rgba(201,139,160,.15);border:1px solid var(--line-soft);color:var(--rose);
+.fammember .rm{background:var(--rwash);border:1px solid var(--line-soft);color:var(--rose);
   border-radius:9px;padding:9px 12px;cursor:pointer;font-family:inherit;height:fit-content}
-.addfam{margin:6px 14px 16px;background:rgba(124,95,176,.16);border:1px dashed var(--purple-glow);color:var(--purple-glow);
+.addfam{margin:6px 14px 16px;background:var(--pwash);border:1px dashed var(--purple-glow);color:var(--purple);
   border-radius:10px;padding:11px 18px;cursor:pointer;font-family:inherit;letter-spacing:2px;font-size:.9rem}
 
 /* 報告工具列 + PDF 按鈕 */
@@ -292,119 +350,148 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .toolbar.show{display:block}
 .pdfbtn{background:linear-gradient(135deg,var(--purple-glow),var(--purple));border:none;color:#fff;
   font-family:inherit;font-weight:600;font-size:1.02rem;letter-spacing:3px;padding:15px 36px;border-radius:12px;
-  cursor:pointer;box-shadow:0 12px 34px -12px var(--purple-glow);transition:.3s}
+  cursor:pointer;box-shadow:0 12px 30px -14px var(--purple-glow);transition:.3s}
 .pdfbtn:hover{transform:translateY(-2px)}
 .toolbar .tbnote{display:block;margin-top:10px;color:var(--ink-faint);font-size:.78rem;letter-spacing:1px}
 
 /* ===== 評分系統 ===== */
+.scorereveal{text-align:center;margin:8px 0 4px}
+.revealbtn{background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));color:var(--night-0);
+  border:none;font-family:inherit;font-weight:700;font-size:1.12rem;letter-spacing:6px;padding:17px 46px;border-radius:40px;
+  cursor:pointer;box-shadow:0 14px 34px -14px var(--gold);transition:.3s}
+.revealbtn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 20px 44px -14px var(--gold)}
+.revealbtn:active{transform:translateY(0) scale(1)}
+.revealbtn .ic{font-family:"Ma Shan Zheng",serif;margin-right:10px;font-size:1.3rem;vertical-align:-2px}
+.revhint{display:block;margin-top:12px;color:var(--ink-faint);font-size:.82rem;letter-spacing:1px}
+.scorebody{display:none}
+.scorebody.show{display:block;animation:rise .7s ease both}
 .scorewrap{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:center}
-.scoretotal{background:linear-gradient(180deg,rgba(216,178,94,.12),rgba(13,16,36,.7));border:1px solid var(--gold-deep);
+.scoretotal{background:var(--wash);border:1px solid var(--gold);
   border-radius:20px;padding:28px 20px;text-align:center}
 .scoretotal .ring{position:relative;width:180px;height:180px;margin:0 auto}
 .scoretotal .ring svg{transform:rotate(-90deg)}
 .scoretotal .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.scoretotal .ring .num b{font-size:3.2rem;font-weight:800;color:var(--gold-bright);line-height:1}
+.scoretotal .ring .num b{font-size:3.2rem;font-weight:800;color:var(--gold-deep);line-height:1}
 .scoretotal .ring .num span{font-size:.72rem;color:var(--ink-faint);letter-spacing:2px;margin-top:4px}
 .scoretotal .grade{margin-top:16px;font-family:"Ma Shan Zheng",serif;font-size:2rem;color:var(--gold);letter-spacing:4px}
 .scoretotal .gtext{color:var(--ink-dim);font-size:.85rem;line-height:1.7;margin-top:8px}
-.radarbox{background:rgba(13,16,36,.5);border:1px solid var(--line-soft);border-radius:20px;padding:20px;text-align:center}
+.radarbox{background:var(--card2);border:1px solid var(--line-soft);border-radius:20px;padding:20px;text-align:center}
 .dims{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}
-.dimcard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
+.dimcard{background:var(--card2);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
 .dimcard .dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
 .dimcard .dn{color:var(--gold);letter-spacing:2px;font-size:.95rem}
-.dimcard .dv{font-size:1.5rem;font-weight:800;color:var(--gold-bright)}
-.dimcard .dbar{height:7px;border-radius:7px;background:rgba(255,255,255,.07);overflow:hidden}
+.dimcard .dv{font-size:1.5rem;font-weight:800;color:var(--gold-deep)}
+.dimcard .dbar{height:7px;border-radius:7px;background:rgba(0,0,0,.08);overflow:hidden}
 .dimcard .dbar i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--purple-glow),var(--gold-bright))}
 .dimcard .dd{font-size:.76rem;color:var(--ink-dim);margin-top:9px;line-height:1.6}
 
 /* ===== 家庭分析 ===== */
 .famgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.famcard{background:linear-gradient(180deg,rgba(31,35,71,.5),rgba(13,16,36,.7));border:1px solid var(--line);
-  border-radius:16px;padding:20px 22px}
+.famcard{background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:20px 22px;box-shadow:0 14px 34px -28px var(--shadow)}
 .famcard .fh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.famcard .frel{font-size:1.05rem;color:var(--gold-bright);letter-spacing:2px}
+.famcard .frel{font-size:1.05rem;color:var(--gold-deep);letter-spacing:2px}
 .famcard .frel small{color:var(--ink-faint);font-size:.78rem;margin-left:8px;letter-spacing:1px}
 .famcard .fscore{font-size:.82rem;padding:3px 12px;border-radius:20px;border:1px solid var(--line-soft)}
 .famcard .fscore.good{color:var(--jade);border-color:var(--jade)}
-.famcard .fscore.mid{color:var(--gold);border-color:var(--gold-deep)}
+.famcard .fscore.mid{color:var(--gold);border-color:var(--gold)}
 .famcard .fscore.low{color:var(--rose);border-color:var(--rose)}
 .famcard .fbz{font-size:.82rem;color:var(--ink-faint);letter-spacing:1px;margin-bottom:10px}
 .famcard ul{list-style:none;margin:0;padding:0}
 .famcard li{font-size:.86rem;color:var(--ink-dim);line-height:1.7;padding-left:18px;position:relative;margin-bottom:5px}
 .famcard li::before{content:"·";position:absolute;left:4px;color:var(--gold);font-weight:700}
-.famsum{background:linear-gradient(180deg,rgba(127,184,154,.1),rgba(13,16,36,.72));border:1px solid var(--jade);
+.famsum{background:var(--gwash);border:1px solid var(--jade);
   border-radius:18px;padding:26px;margin-top:18px}
 .famsum h4{color:var(--jade);letter-spacing:3px;font-size:1.15rem;margin-bottom:12px}
 .famsum .frow{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
-.famsum .fcol h5{color:var(--gold);font-size:.9rem;letter-spacing:2px;margin-bottom:8px}
+.famsum .fcol h5{color:var(--gold-deep);font-size:.9rem;letter-spacing:2px;margin-bottom:8px}
 .famsum .fcol p{color:var(--ink-dim);font-size:.88rem;line-height:1.8}
 .famsum .fadvice{color:var(--ink);font-size:.94rem;line-height:1.95;border-top:1px solid var(--line-soft);padding-top:16px}
 
 /* ===== 西洋/塔羅/印度/靈數 ===== */
-.bigsign{text-align:center;background:linear-gradient(180deg,rgba(124,95,176,.18),rgba(13,16,36,.7));
+.bigsign{text-align:center;background:var(--pwash);
   border:1px solid var(--line);border-radius:22px;padding:38px 26px;margin-bottom:24px}
 .bigsign .glyph{font-size:5rem;line-height:1;margin-bottom:10px}
-.bigsign .sname{font-family:"Ma Shan Zheng",serif;font-size:2.6rem;color:var(--gold-bright);letter-spacing:5px}
+.bigsign .sname{font-family:"Ma Shan Zheng",serif;font-size:2.6rem;color:var(--gold-deep);letter-spacing:5px}
 .bigsign .seng{color:var(--ink-faint);letter-spacing:4px;font-size:.82rem;margin-top:6px;text-transform:uppercase}
 .bigsign .smeta{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
-.bigsign .smeta span{border:1px solid var(--line-soft);border-radius:20px;padding:6px 16px;font-size:.84rem;color:var(--ink-dim)}
+.bigsign .smeta span{border:1px solid var(--line);border-radius:20px;padding:6px 16px;font-size:.84rem;color:var(--ink-dim);background:var(--card)}
 .bigsign .smeta b{color:var(--gold)}
-.tarotcard{width:200px;margin:0 auto 22px;background:linear-gradient(160deg,#2a1f4a,#120b26);border:2px solid var(--gold-deep);
-  border-radius:16px;padding:24px 16px;text-align:center;box-shadow:0 20px 50px -16px rgba(124,95,176,.7)}
-.tarotcard .tnum{color:var(--gold);font-size:.9rem;letter-spacing:3px}
+.tarotcard{width:200px;margin:0 auto 22px;background:linear-gradient(160deg,#2a1f4a,#120b26);border:2px solid var(--gold);
+  border-radius:16px;padding:24px 16px;text-align:center;box-shadow:0 20px 44px -18px var(--purple-glow)}
+.tarotcard .tnum{color:#f0d089;font-size:.9rem;letter-spacing:3px}
 .tarotcard .tglyph{font-size:3.4rem;margin:10px 0}
-.tarotcard .tname{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-bright);letter-spacing:2px}
-.tarotcard .teng{color:var(--ink-faint);font-size:.72rem;letter-spacing:2px;margin-top:4px}
+.tarotcard .tname{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:#f0d089;letter-spacing:2px}
+.tarotcard .teng{color:#b6a8d8;font-size:.72rem;letter-spacing:2px;margin-top:4px}
 .numhero{text-align:center;margin-bottom:24px}
 .numhero .ncircle{width:150px;height:150px;margin:0 auto;border-radius:50%;border:3px solid var(--gold);
-  display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:800;color:var(--gold-bright);
-  box-shadow:0 0 40px -8px var(--gold)}
+  display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:800;color:var(--gold-deep);
+  box-shadow:0 0 40px -14px var(--gold)}
 .numhero .nlabel{margin-top:14px;color:var(--gold);letter-spacing:3px;font-size:1.1rem}
 .approxnote{text-align:center;color:var(--ink-faint);font-size:.8rem;line-height:1.7;margin:6px auto 22px;max-width:680px}
 .attrgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:18px}
-.attrcard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:13px;padding:16px;text-align:center}
+.attrcard{background:var(--card2);border:1px solid var(--line-soft);border-radius:13px;padding:16px;text-align:center}
 .attrcard .al{font-size:.76rem;color:var(--ink-faint);letter-spacing:2px;margin-bottom:6px}
-.attrcard .av{font-size:1.1rem;color:var(--gold-bright);letter-spacing:1px}
+.attrcard .av{font-size:1.1rem;color:var(--gold-deep);letter-spacing:1px}
 
 /* ===== 姓名學 三才五格 ===== */
 .namechars{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
-.nchar{display:flex;flex-direction:column;align-items:center;gap:5px;background:linear-gradient(180deg,rgba(124,95,176,.16),rgba(13,16,36,.7));
+.nchar{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--pwash);
   border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:70px}
-.nchar .cz{font-family:"Ma Shan Zheng",serif;font-size:2.2rem;color:var(--gold-bright);line-height:1}
-.nchar .skin{width:58px;text-align:center;background:rgba(13,16,36,.85);border:1px solid var(--line-soft);border-radius:8px;
-  color:var(--gold);font-size:.95rem;padding:4px 2px;-moz-appearance:textfield}
+.nchar .cz{font-family:"Ma Shan Zheng",serif;font-size:2.2rem;color:var(--gold-deep);line-height:1}
+.nchar .skin{width:58px;text-align:center;background:var(--surface);border:1px solid var(--line-soft);border-radius:8px;
+  color:var(--gold-deep);font-size:.95rem;padding:4px 2px;-moz-appearance:textfield}
 .nchar .skin::-webkit-outer-spin-button,.nchar .skin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .nchar .cl{font-size:.7rem;color:var(--ink-faint)}
-.recalc{align-self:center;background:rgba(157,127,212,.18);border:1px solid var(--purple-glow);color:var(--gold-bright);
+.recalc{align-self:center;background:var(--pwash);border:1px solid var(--purple-glow);color:var(--purple);
   border-radius:22px;padding:9px 18px;font-size:.84rem;letter-spacing:1px;cursor:pointer;font-family:inherit}
-.recalc:hover{background:rgba(157,127,212,.32)}
+.recalc:hover{background:var(--card)}
 .grids{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:18px}
-.gridcard{background:rgba(13,16,36,.6);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px;border-left-width:3px}
+.gridcard{background:var(--card2);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px;border-left-width:3px}
 .gridcard.good{border-left-color:var(--jade)} .gridcard.mid{border-left-color:var(--gold)} .gridcard.bad{border-left-color:var(--rose)}
 .gridcard .gh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .gridcard .gn{color:var(--gold);letter-spacing:2px;font-size:1rem}
-.gridcard .gv{font-size:1.6rem;font-weight:800;color:var(--gold-bright)}
+.gridcard .gv{font-size:1.6rem;font-weight:800;color:var(--gold-deep)}
 .gridcard .gwx{font-size:.8rem;color:var(--ink-dim)}
 .gridcard.good .gwx b{color:var(--jade)} .gridcard.mid .gwx b{color:var(--gold)} .gridcard.bad .gwx b{color:var(--rose)}
 .gridcard .gsub{font-size:.72rem;color:var(--ink-faint);margin-top:6px}
 .gridcard .gph{font-size:.78rem;color:var(--ink-dim);margin-top:4px;line-height:1.6}
 .sancai{margin-top:18px;border-radius:16px;padding:20px 22px;border:1px solid var(--line-soft);
-  background:linear-gradient(180deg,rgba(31,35,71,.45),rgba(13,16,36,.7))}
+  background:var(--card2)}
 .sancai.good{border-color:var(--jade)} .sancai.bad{border-color:var(--rose)}
 .sancai .sch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
 .sancai .sch span:first-child{color:var(--gold);letter-spacing:2px}
-.sancai .sch b{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-bright);letter-spacing:4px}
+.sancai .sch b{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:4px}
 .scbadge{font-size:.8rem;padding:3px 14px;border-radius:20px;border:1px solid var(--line-soft)}
-.scbadge.good{color:var(--jade);border-color:var(--jade)} .scbadge.mid{color:var(--gold);border-color:var(--gold-deep)} .scbadge.bad{color:var(--rose);border-color:var(--rose)}
+.scbadge.good{color:var(--jade);border-color:var(--jade)} .scbadge.mid{color:var(--gold);border-color:var(--gold)} .scbadge.bad{color:var(--rose);border-color:var(--rose)}
 .sancai p{color:var(--ink-dim);font-size:.9rem;line-height:1.85}
 .namecross{margin-top:18px;border:1px solid var(--purple-glow);border-radius:18px;padding:24px 26px;
-  background:linear-gradient(180deg,rgba(124,95,176,.14),rgba(13,16,36,.72))}
-.namecross h4{color:var(--purple-glow);letter-spacing:2px;font-size:1.1rem;margin-bottom:12px}
+  background:var(--pwash)}
+.namecross h4{color:var(--purple);letter-spacing:2px;font-size:1.1rem;margin-bottom:12px}
 .namecross p{color:var(--ink);font-size:.94rem;line-height:1.95;margin-bottom:10px}
 .namecross p:last-child{margin-bottom:0}
+/* 姓名學分數 + 優劣 */
+.namescore{display:grid;grid-template-columns:170px 1fr;gap:24px;align-items:center;margin-top:18px;
+  background:var(--card);border:1px solid var(--gold);border-radius:18px;padding:24px;box-shadow:0 14px 34px -28px var(--shadow)}
+.namescore .nsring{position:relative;width:150px;height:150px;margin:0 auto}
+.namescore .nsring svg{transform:rotate(-90deg)}
+.namescore .nsnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.namescore .nsnum b{font-size:2.7rem;font-weight:800;color:var(--gold-deep);line-height:1}
+.namescore .nsnum span{font-size:.66rem;color:var(--ink-faint);letter-spacing:2px;margin-top:3px}
+.namescore .nsgrade{text-align:center;margin-top:8px;font-family:"Ma Shan Zheng",serif;font-size:1.6rem;color:var(--gold);letter-spacing:3px}
+.nspro{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.nspro .nscol h5{font-size:.94rem;letter-spacing:2px;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.nspro .nscol.adv h5{color:var(--jade)} .nspro .nscol.dis h5{color:var(--rose)}
+.nspro .nscol ul{list-style:none;margin:0;padding:0}
+.nspro .nscol li{font-size:.85rem;color:var(--ink-dim);line-height:1.6;padding-left:18px;position:relative;margin-bottom:7px}
+.nspro .nscol.adv li::before{content:"▲";position:absolute;left:0;color:var(--jade);font-size:.66rem;top:4px}
+.nspro .nscol.dis li::before{content:"▼";position:absolute;left:0;color:var(--rose);font-size:.66rem;top:4px}
 
 @media(max-width:640px){
   .scorewrap{grid-template-columns:1fr}
+  .namescore{grid-template-columns:1fr;text-align:center}
+  .nspro{grid-template-columns:1fr;text-align:left}
+  .revealbtn{letter-spacing:4px;padding:15px 32px;font-size:1rem}
   .fammember{grid-template-columns:1fr 1fr;gap:8px}
   .fammember .rm{grid-column:1/-1}
   .famsum .frow{grid-template-columns:1fr}
@@ -438,9 +525,11 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   #reportHead .rs{color:#666;font-size:.8rem;letter-spacing:3px;margin-top:6px}
   .sec-title{margin:18px 0 12px;page-break-after:avoid}
   .sec-title .cn{font-size:1.5rem}
-  .rcard,.gecard,.famcard,.dimcard,.synthesis,.famsum,.strength,.scoretotal,.triocard,.bigsign,.attrcard,.gridcard,.sancai,.namecross{
+  .rcard,.gecard,.famcard,.dimcard,.synthesis,.famsum,.strength,.scoretotal,.triocard,.bigsign,.attrcard,.gridcard,.sancai,.namecross,.namescore{
     page-break-inside:avoid;break-inside:avoid}
   .chart,.scorewrap,.tengods,.luckwrap,.grids{page-break-inside:avoid}
+  .scorebody{display:block!important}
+  .scorereveal{display:none!important}
   .recalc{display:none!important}
   .nchar .skin{border:none;color:#000;background:none}
   .reading{gap:12px}
@@ -1245,6 +1334,53 @@ function nameCrossLines(na,cross){
  lines.push(adv);
  return lines;
 }
+function nameScore(na,cross){
+ const W={人格:25,總格:20,地格:12,外格:8,天格:5};
+ const fac={good:1,mid:.58,bad:.18};
+ const gm={};let gridSum=0;
+ na.grids.forEach(([gn,gd,v])=>{const s=shuLook(v),cl=shuClass(s.label);gm[gn]={v,label:s.label,cl};if(W[gn])gridSum+=W[gn]*fac[cl];});
+ const sanPts={good:20,mid:11,bad:3}[na.scCls];
+ let crossPts=5,cn="none";
+ if(cross){
+  if(cross.xi){
+   const rw=na.renWx,zw=na.zongWx;
+   const inXi=cross.xi.includes(rw)||cross.xi.includes(zw);
+   const inJi=cross.ji&&(cross.ji.includes(rw)||cross.ji.includes(zw));
+   if(inXi){crossPts=10;cn="xi";}else if(inJi){crossPts=1;cn="ji";}else{crossPts=5;cn="mid";}
+  }else if(cross.coreEl){
+   const sc=elementRel(cross.coreEl,na.renWx).sc;
+   crossPts=sc>=8?9:sc>=6?7:sc>=2?5:2; cn=crossPts>=7?"xi":crossPts<=2?"ji":"mid";
+  }
+ }
+ const total=Math.max(1,Math.min(100,Math.round(gridSum+sanPts+crossPts)));
+ const grade=total>=85?"上上":total>=75?"上吉":total>=65?"中上":total>=55?"中平":total>=45?"中下":"下下";
+ const cls=total>=70?"good":total>=50?"mid":"bad";
+ const POS={人格:"主運（人格）",總格:"後運（總格）",地格:"前運（地格）",外格:"社交（外格）",天格:"祖蔭（天格）"};
+ const adv=[],dis=[];
+ na.grids.forEach(([gn])=>{const g=gm[gn];if(!POS[gn])return;
+  if(g.cl==="good")adv.push(`${POS[gn]} <b>${g.v}</b> 數為「${g.label}」，根基有力、利於發揮。`);
+  else if(g.cl==="bad")dis.push(`${POS[gn]} <b>${g.v}</b> 數屬「${g.label}」，宜留意化解、後天補強。`);});
+ if(na.scCls==="good")adv.push(`三才（${na.sancai.join("·")}）五行相生、配置和諧，根基穩固。`);
+ else if(na.scCls==="bad")dis.push(`三才（${na.sancai.join("·")}）相剋偏重，運途易有起伏阻滯。`);
+ if(cn==="xi")adv.push(`姓名五行正合命局喜用，名運助旺先天命格，相得益彰。`);
+ else if(cn==="ji")dis.push(`姓名五行偏向命局忌神，宜多借喜用之色彩方位以調和。`);
+ if(!adv.length)adv.push(`五格平穩、無明顯破格，後天用功即可順引運勢。`);
+ if(!dis.length)dis.push(`整體配置良好，暫無明顯破綻，惟仍須持續努力經營。`);
+ return {total,grade,cls,adv,dis};
+}
+function nameScoreBlock(na,cross){
+ const ns=nameScore(na,cross);
+ return `<div class="namescore">
+   <div>
+     <div class="nsring">${nameRing(ns.total)}<div class="nsnum"><b>${ns.total}</b><span>姓名總分 / 100</span></div></div>
+     <div class="nsgrade">${ns.grade}</div>
+   </div>
+   <div class="nspro">
+     <div class="nscol adv"><h5>◤ 姓名優勢</h5><ul>${ns.adv.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+     <div class="nscol dis"><h5>◢ 待補課題</h5><ul>${ns.dis.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+   </div>
+ </div>`;
+}
 let _nameRaw="",_nameCross=null;
 function nameBody(name,override,cross){
  const na=nameAnalysis(name,override);
@@ -1266,6 +1402,7 @@ function nameBody(name,override,cross){
      <div class="sch"><span>三才配置</span><b>${na.sancai.join(" · ")}</b><span class="scbadge ${na.scCls}">${na.scLabel}</span></div>
      <p>${na.scText}</p>
    </div>
+   ${nameScoreBlock(na,cross_)}
    ${crossHTML?`<div class="namecross"><h4>◆ 姓名 × 命盤交叉分析</h4>${crossHTML}</div>`:""}`;
 }
 function nameSection(name,cross){
@@ -1291,9 +1428,12 @@ document.getElementById("castBtn").addEventListener("click",run);
 
 /* 系統切換：僅綜合命盤顯示家庭分析欄 */
 const sysSel=document.getElementById("system");
+function applyTheme(v){document.body.dataset.theme=v;}
 sysSel.addEventListener("change",()=>{
   document.getElementById("famwrap").style.display=sysSel.value==="comp"?"":"none";
+  applyTheme(sysSel.value);
 });
+applyTheme(sysSel.value);  /* 初始主題 */
 
 /* 家庭成員輸入 */
 let famSeq=0;
@@ -1380,25 +1520,34 @@ function radarSVG(dims){
   let grid="";
   [0.25,0.5,0.75,1].forEach(f=>{
     const p=dims.map((_,i)=>pt(i,R*f).join(",")).join(" ");
-    grid+=`<polygon points="${p}" fill="none" stroke="rgba(216,178,94,.18)" stroke-width="1"/>`;
+    grid+=`<polygon points="${p}" fill="none" stroke="rgba(0,0,0,.10)" stroke-width="1"/>`;
   });
-  let axes="";dims.forEach((dm,i)=>{const[x,y]=pt(i,R);axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(216,178,94,.15)"/>`;});
+  let axes="";dims.forEach((dm,i)=>{const[x,y]=pt(i,R);axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(0,0,0,.08)"/>`;});
   const dp=dims.map((dm,i)=>pt(i,R*dm.v/100).join(",")).join(" ");
-  let dots="";dims.forEach((dm,i)=>{const[x,y]=pt(i,R*dm.v/100);dots+=`<circle cx="${x}" cy="${y}" r="3.5" fill="#f0d089"/>`;});
+  let dots="";dims.forEach((dm,i)=>{const[x,y]=pt(i,R*dm.v/100);dots+=`<circle cx="${x}" cy="${y}" r="3.5" fill="var(--gold-deep)"/>`;});
   let labels="";dims.forEach((dm,i)=>{const[x,y]=pt(i,R+22);
-    labels+=`<text x="${x}" y="${y}" fill="#d8b25e" font-size="13" text-anchor="middle" dominant-baseline="middle">${dm.k}</text>`
-      +`<text x="${x}" y="${y+15}" fill="#9a9ab0" font-size="11" text-anchor="middle" dominant-baseline="middle">${dm.v}</text>`;});
+    labels+=`<text x="${x}" y="${y}" fill="var(--ink)" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="middle">${dm.k}</text>`
+      +`<text x="${x}" y="${y+15}" fill="var(--ink-faint)" font-size="11" text-anchor="middle" dominant-baseline="middle">${dm.v}</text>`;});
   return `<svg width="300" height="300" viewBox="0 0 300 300">${grid}${axes}
-    <polygon points="${dp}" fill="rgba(157,127,212,.32)" stroke="#9d7fd4" stroke-width="2"/>${dots}${labels}</svg>`;
+    <polygon points="${dp}" fill="rgba(124,95,176,.26)" stroke="var(--purple-glow)" stroke-width="2"/>${dots}${labels}</svg>`;
 }
 function scoreRing(total){
   const r=80,C=2*Math.PI*r,off=C*(1-total/100);
   return `<svg width="180" height="180" viewBox="0 0 180 180">
-    <circle cx="90" cy="90" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12"/>
+    <circle cx="90" cy="90" r="${r}" fill="none" stroke="rgba(0,0,0,.09)" stroke-width="12"/>
     <circle cx="90" cy="90" r="${r}" fill="none" stroke="url(#gg)" stroke-width="12" stroke-linecap="round"
       stroke-dasharray="${C}" stroke-dashoffset="${off}"/>
     <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9d7fd4"/><stop offset="1" stop-color="#f0d089"/></linearGradient></defs></svg>`;
+      <stop offset="0" stop-color="var(--purple-glow)"/><stop offset="1" stop-color="var(--gold-bright)"/></linearGradient></defs></svg>`;
+}
+function nameRing(total){
+  const r=62,C=2*Math.PI*r,off=C*(1-total/100);
+  return `<svg width="150" height="150" viewBox="0 0 150 150">
+    <circle cx="75" cy="75" r="${r}" fill="none" stroke="rgba(0,0,0,.09)" stroke-width="11"/>
+    <circle cx="75" cy="75" r="${r}" fill="none" stroke="url(#ng)" stroke-width="11" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${off}"/>
+    <defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="var(--purple-glow)"/><stop offset="1" stop-color="var(--gold-bright)"/></linearGradient></defs></svg>`;
 }
 function scoreSection(scores){
   const radar=radarSVG(scores.dims);
@@ -1407,15 +1556,27 @@ function scoreSection(scores){
     <div class="dbar"><i style="width:${dm.v}%"></i></div>
     <div class="dd">${dm.pal}宮坐 <b style="color:var(--gold)">${dm.star}</b> · ${dm.band}</div></div>`).join("");
   return `<div class="sec-title"><span class="cn">命盤綜合評分</span><span class="en">Destiny Score</span></div>
-  <div class="scorewrap">
-    <div class="scoretotal">
-      <div class="ring">${scoreRing(scores.total)}<div class="num"><b>${scores.total}</b><span>總分 / 100</span></div></div>
-      <div class="grade">${scores.grade}格</div>
-      <div class="gtext">${scores.gradeText}</div>
-    </div>
-    <div class="radarbox">${radar}</div>
+  <div class="scorereveal" id="scoreReveal">
+    <button class="revealbtn" onclick="revealScore()"><span class="ic">卜</span>看我的命盤分數</button>
+    <span class="revhint">點擊揭曉 — 系統即時演算你的命格總分與六大維度</span>
   </div>
-  <div class="dims">${dimcards}</div>`;
+  <div class="scorebody" id="scoreBody">
+    <div class="scorewrap">
+      <div class="scoretotal">
+        <div class="ring">${scoreRing(scores.total)}<div class="num"><b>${scores.total}</b><span>總分 / 100</span></div></div>
+        <div class="grade">${scores.grade}格</div>
+        <div class="gtext">${scores.gradeText}</div>
+      </div>
+      <div class="radarbox">${radar}</div>
+    </div>
+    <div class="dims">${dimcards}</div>
+  </div>`;
+}
+function revealScore(){
+  const b=document.getElementById("scoreBody"),r=document.getElementById("scoreReveal");
+  if(b)b.classList.add("show");
+  if(r)r.style.display="none";
+  if(b)b.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function familySection(fam){
   if(!fam||!fam.members.length)return "";
