@@ -183,6 +183,7 @@ function render(){ ({home:renderHome,map:renderMap,prospects:renderProspects,rou
 
 // ========== 掌握度統計（以名單為母體：開發=成交既有、接觸=拜訪過） ==========
 function isContacted(id){ const o=overlay[id]; return !!(o && (o.last || (o.inter&&o.inter.length))); }
+function isTracking(id){ const o=overlay[id]; return !!(o && o.tracking); }
 function computeCoverage(){
   const exIds=existingProspectIds();
   const region={}; let total=0, dev=0, con=0;
@@ -570,7 +571,13 @@ function renderProspects(){
   const statusOf = p => exIds.has(p.id) ? 'existing' : 'cold';
   const nEx = SEED.reduce((a,p)=>a+(statusOf(p)==='existing'?1:0),0);
   const nVisited = SEED.reduce((a,p)=>a+(isContacted(p.id)?1:0),0);
-  const inStatus = p => !pFilter.status || (pFilter.status==='visited' ? isContacted(p.id) : statusOf(p)===pFilter.status);
+  const nTracking = SEED.reduce((a,p)=>a+(isTracking(p.id)?1:0),0);
+  const inStatus = p => {
+    if(!pFilter.status) return true;
+    if(pFilter.status==='visited') return isContacted(p.id);
+    if(pFilter.status==='tracking') return isTracking(p.id);
+    return statusOf(p)===pFilter.status;
+  };
   // 有機屬性筆數（依目前狀態動態）
   const nOrg = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category==='有機農戶'?1:0),0);
   const nNon = SEED.reduce((a,p)=>a+(inStatus(p)&&p.category!=='有機農戶'?1:0),0);
@@ -583,6 +590,7 @@ function renderProspects(){
   h += `<div class="rowsel"><span class="rowsel-l">狀態</span><select class="regsel" onchange="setPStatus(this.value)">
         <option value="" ${pFilter.status===''?'selected':''}>全部 ${SEED.length}</option>
         <option value="cold" ${pFilter.status==='cold'?'selected':''}>陌生目標客戶 ${SEED.length-nEx}</option>
+        <option value="tracking" ${pFilter.status==='tracking'?'selected':''}>🎯 追蹤中 ${nTracking}</option>
         <option value="visited" ${pFilter.status==='visited'?'selected':''}>✅ 已拜訪目標客戶 ${nVisited}</option>
         <option value="existing" ${pFilter.status==='existing'?'selected':''}>既有客戶 ${nEx}</option></select></div>`;
   h += `<div class="rowsel"><span class="rowsel-l">屬性</span><select class="regsel" onchange="setPOrganic(this.value)">
@@ -649,9 +657,10 @@ function renderProspects(){
     h += res.slice(0,pLimit).map(p=>{
       const o=overlay[p.id]; const di=dueInfo(o); const ex=statusOf(p)==='existing';
       const tag = ex?`<span class="badge b-農會">既有</span>`:(isContacted(p.id)?`<span class="badge b-合作社">✅已拜訪</span>`:'');
+      const trackTag = (!ex&&isTracking(p.id))?`<span class="badge pill-due">🎯追蹤中</span>`:'';
       const av=areaVal(p);
       const areaTag = av!=null?`<span class="badge b-有機農戶">${av.toFixed(1)}公頃</span>`:'';
-      const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${areaTag}${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${areaTag}${tag}`;
+      const pill = di?`<span class="badge ${di.cls}">${di.txt}</span>${areaTag}${trackTag}${tag}`:`<span class="badge b-${p.category}">${p.category}</span>${areaTag}${trackTag}${tag}`;
       const inRoute = pickedKeys.has('p'+p.id);
       const addBtn = p.address ? `<button class="btn btn-out" style="flex:none;padding:6px 10px;font-size:13px;${inRoute?'color:var(--green);border-color:var(--green)':''}" onclick="event.stopPropagation();prospAddToRoute('${p.id}')">${inRoute?'✅ 已加入':'＋ 行程'}</button>` : '';
       return `<div class="item" onclick="viewProspect('${p.id}')">
@@ -711,7 +720,7 @@ function prospAddAllToRoute(){
   renderProspects();
 }
 // 與 renderProspects 內 inStatus 同邏輯（供 prospAddAllToRoute 使用）
-function inStatus_pf(p){ const ex=existingProspectIds().has(p.id); const st=ex?'existing':'cold'; return !pFilter.status || (pFilter.status==='visited' ? isContacted(p.id) : st===pFilter.status); }
+function inStatus_pf(p){ const ex=existingProspectIds().has(p.id); const st=ex?'existing':'cold'; if(!pFilter.status) return true; if(pFilter.status==='visited') return isContacted(p.id); if(pFilter.status==='tracking') return isTracking(p.id); return st===pFilter.status; }
 function setPOrganic(v){
   pFilter.organic=v;
   // 屬性與目前通路衝突時，放寬通路（保留通路篩選始終可用）
@@ -770,6 +779,9 @@ function viewProspect(id){
   if(exCust){
     h+=`<div class="btn-row"><button class="btn btn-pri" onclick="closeModal();viewCustomer('${exCust.id}')">👤 查看 / 編輯客戶資料</button></div>`;
   } else {
+    const tracking=!!o.tracking;
+    h+=`<div class="btn-row"><button class="btn ${tracking?'btn-gray':'btn-out'}" onclick="toggleProspectTracking('${id}')">${tracking?'✅ 追蹤中（點此移出管理）':'🎯 存入追蹤管理'}</button></div>`;
+    h+=`<div class="tagline" style="margin:-4px 0 8px">標記後可在「目標名單 ▸ 狀態 ▸ 🎯 追蹤中」一次檢視所有追蹤中的目標客戶。</div>`;
     h+=`<div class="btn-row"><button class="btn btn-pri" onclick="convertToCustomer('${id}')">⭐ 轉為我的客戶（+1 既有 / −1 陌生）</button></div>`;
   }
   if(p.custom){ h+=`<div class="btn-row"><button class="btn btn-out" onclick="editCustomProspect('${id}')">✏️ 編輯臨時資料</button></div>`; }
@@ -1205,6 +1217,16 @@ function saveProspectFert(id){
   };
   if(p.category==='合作社'){ f.members=g('ft-members'); f.totalArea=g('ft-totalArea'); }
   o.fert=f; overlay[id]=o; saveOverlay(); sfx('success'); toast('已儲存用肥情報'); viewProspect(id);
+}
+// 把目標客戶標記為「追蹤中」存入管理（可於名單狀態「🎯 追蹤中」檢視）
+function toggleProspectTracking(id){
+  const o=overlay[id]||{};
+  o.tracking=!o.tracking;
+  if(o.tracking) o.trackedAt=todayStr(); else delete o.trackedAt;
+  overlay[id]=o; saveOverlay();
+  if(o.tracking) sfx('success');
+  toast(o.tracking?'已存入追蹤管理':'已移出追蹤管理');
+  viewProspect(id); render();
 }
 
 function convertToCustomer(id){
