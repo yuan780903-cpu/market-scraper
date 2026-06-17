@@ -2481,7 +2481,17 @@ function ruleCard(r,i,canDel){
 // 依行程拜訪完按「完成今日拜訪」一鍵寫入週報。全程本機計算、不外傳。
 function renderRoute(){
   const regs=regionsSorted();
-  if(!weekCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); weekCfg.regions=tn?[tn]:[]; smartCfg.f.regions=tn?[tn]:[]; weekCfg._inited=1; }
+  if(!weekCfg._inited){ const tn=regs.find(r=>normR(r).includes('臺南')); weekCfg.regions=tn?[tn]:[]; smartCfg.f.regions=tn?[tn]:[]; weekCfg._inited=1;
+    // 還原上次存檔時用的出發/回家/時間設定（smartCfg 不落地，靠存檔的 cfg 帶回，重整後仍在）
+    const sp=loadWeekPlan(); if(sp && sp.cfg){ const c=sp.cfg;
+      if(!smartCfg.startLoc && c.startLoc) smartCfg.startLoc=c.startLoc;
+      if(!smartCfg.endLoc && c.endLoc) smartCfg.endLoc=c.endLoc;
+      if(!smartCfg.lunchLoc && c.lunchLoc) smartCfg.lunchLoc=c.lunchLoc;
+      if(c.startTime) smartCfg.startTime=c.startTime; if(c.endTime) smartCfg.endTime=c.endTime;
+      if(c.lunchStart) smartCfg.lunchStart=c.lunchStart; if(c.lunchEnd) smartCfg.lunchEnd=c.lunchEnd;
+      if(c.dwell) weekCfg.dwell=c.dwell;
+    }
+  }
   if(!weekCfg.date) weekCfg.date=todayStr();
   smartCfg.f.regions=weekCfg.regions;   // 加料關鍵字搜尋跟著當日區域
   let h='';
@@ -2611,7 +2621,8 @@ function renderLocCard(){
 }
 
 // 每日時間排序引擎（最近鄰＋2-opt 就近排序＋約定到達＋中午休息→估抵達時刻；離線/OSRM 皆可）
-function scheduleDayPlan(items, cfg){
+function scheduleDayPlan(items, cfg, opts){
+  const keepOrder = !!(opts && opts.keepOrder);
   const toMin=t=>{const[a,b]=(t||'').split(':').map(Number);return (a||0)*60+(b||0);};
   const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(Math.round(((m%60)+60)%60)).padStart(2,'0')}`;
   const startLoc=cfg.startLoc||'', endLoc=cfg.endLoc||startLoc;
@@ -2620,7 +2631,8 @@ function scheduleDayPlan(items, cfg){
   const ls=toMin(cfg.lunchStart||'12:00'), le=toMin(cfg.lunchEnd||'13:00');
   const lunchLoc=cfg.lunchLoc||'', lunchDur=Math.max(0,le-ls);
   const dwellOf=p=>Math.max(5,p.dwell||cfg.dwell||SMART_DWELL);
-  const free=optimizeFreeOrder(items.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_ll:smartLatLng(p.address)})), startLL, endLL);
+  const freeItems=items.filter(p=>!p.fixed).map(p=>Object.assign({},p,{_ll:smartLatLng(p.address)}));
+  const free=keepOrder?freeItems:optimizeFreeOrder(freeItems, startLL, endLL);
   const fixed=items.filter(p=>p.fixed).map(p=>Object.assign({},p,{_at:toMin(p.fixed)})).sort((a,b)=>a._at-b._at);
   const result=[]; let lunchDone=false, prevAddr=startLoc, t=s, lateFix=false;
   const hasPrev=()=>!!(result.length||startLoc);
@@ -2764,6 +2776,33 @@ function saveWeekPlan(){
   renderRoute();
 }
 function loadWeekPlan(){ return LS.get('crm_week_plan', null); }
+// 重新計算已存行程的時刻（用最新的出發地點/時間設定＋OSRM），但「不重排順序、不更動站別」
+function routeRefreshTimes(){
+  syncSmart(); syncWeek();
+  let plan=loadWeekPlan();
+  if(!plan || !Array.isArray(plan.buckets) || !plan.buckets.length){ toast('沒有已存的行程可重新計算'); return; }
+  const cfg={startLoc:smartCfg.startLoc, endLoc:smartCfg.endLoc, startTime:smartCfg.startTime, endTime:smartCfg.endTime, lunchStart:smartCfg.lunchStart, lunchEnd:smartCfg.lunchEnd, lunchLoc:smartCfg.lunchLoc, dwell:weekCfg.dwell||SMART_DWELL};
+  const rebuild=()=>{
+    plan.buckets=plan.buckets.map(b=>{
+      const items=b.stops.filter(s=>!s.lunch).map(s=>({kind:s.kind,id:s.id,name:s.name,channel:s.channel,grade:s.grade||'',address:s.address||'',phone:s.phone||'',district:s.district||'',reason:s.reason||'',status:s.status||'',dwell:s._dur||cfg.dwell,fixed:s.fixedMark?s.arrive:'',overdue:s.overdue}));
+      const sd=scheduleDayPlan(items,cfg,{keepOrder:true});
+      return {date:b.date, wd:b.wd, home:sd.home,
+        stops:sd.result.map(s=> s.lunch ? {lunch:true,arrive:s.arrive,leave:s.leave,address:s.address||''}
+          : {kind:s.kind,id:s.id,name:s.name,channel:s.channel,grade:s.grade||'',address:s.address||'',phone:s.phone||'',district:s.district||'',reason:s.reason||'',status:s.status||'',arrive:s.arrive,leave:s.leave,_dur:s._dur||0,fixedMark:!!s.fixedMark,overdue:!!s.overdue}) };
+    });
+    plan.cfg=cfg; plan.savedAt=new Date().toISOString();
+    LS.set('crm_week_plan', plan);
+  };
+  rebuild();
+  sfx('success'); toast('已用最新出發地點/設定重新計算時間（順序不變）');
+  renderRoute();
+  // 連網時再用 OSRM 實際路網校正一次（只送鄉鎮中心座標、不含個資）
+  if(navigator.onLine!==false){
+    const lls=[smartLatLng(cfg.startLoc),smartLatLng(cfg.endLoc),smartLatLng(cfg.lunchLoc)];
+    plan.buckets.forEach(b=>b.stops.forEach(s=>{ if(!s.lunch) lls.push(smartLatLng(s.address)); }));
+    osrmFillTable(lls.filter(Boolean)).then(ok=>{ if(ok){ rebuild(); renderRoute(); } }).catch(()=>{});
+  }
+}
 function clearWeekPlan(){ if(!confirm('清除已寫入的本週行程存檔？')) return; LS.set('crm_week_plan', null); toast('已清除存檔'); renderRoute(); }
 function renderTodayCard(){
   const plan=loadWeekPlan(); const today=todayStr();
@@ -2775,6 +2814,8 @@ function renderTodayCard(){
   let h=`<div class="sec-title" style="margin-top:0"><span class="bar"></span>📍 今日行程　${today.slice(5)}（週${WD_NAME[b.wd]}）<button class="rule-del" style="float:right" onclick="clearWeekPlan()">✕ 清除存檔</button></div>`;
   if(!stops.length){ h+=`<div class="card empty" style="padding:16px">今天沒有排定拜訪。</div>`; return h; }
   h+=dayStopsHTML(b, plan.cfg, true);
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-out" onclick="routeRefreshTimes()">🔄 重新計算時間（順序不變）</button></div>`;
+  h+=`<div class="tagline" style="margin:4px 2px 0">改了下方「出發・回家・時間」設定（例如重新定位出發地點）後，按這顆只會更新各站到達時刻，不會更動站別或順序。</div>`;
   return h;
 }
 function weekFinishDay(date){
