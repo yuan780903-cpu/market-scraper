@@ -283,8 +283,10 @@ function renderHome(){
   if(window.TW_MAP){ weakN=weakestTowns(computeTownStats(),8).length; }
 
   h += `<div class="sec-title"><span class="bar"></span>作戰快報 ・ 點卡片看內容</div><div class="card">`;
+  const trackN = getTrackingList().length;
   h += homeTile('people', '本週出擊任務', tasks.length?`${tasks.length} 個任務${overdue?`・逾期 ${overdue}`:''}`:'目前沒有排定的拜訪', 'openHomeTasks()');
   h += homeTile('target','待辦戰術跟進', fups.length?`${fups.length} 項待辦`:'沒有待辦的跟進事項', 'openHomeFollow()');
+  h += homeTile('tag', '🎯 追蹤中目標客戶', trackN?`${trackN} 家追蹤中`:'尚無追蹤中的目標客戶', 'openHomeTracking()');
   if(regs.length) h += homeTile('map', '各縣市戰況', `共 ${regs.length} 縣市・最待開發：${esc(weakCounty)}`, 'openHomeCounty()');
   if(weakN)       h += homeTile('route',  '優先攻佔鄉鎮', `名單多未開發 TOP ${weakN}`, 'openHomeTown()');
   h += `</div>`;
@@ -319,6 +321,23 @@ function openHomeTasks(){
         onclick: t.kind==='cust'?`viewCustomer('${t.ref.id}')`:`viewProspect('${t.ref.id}')` })).join('')+`</div>`
     : `<div class="card empty"><div class="big">📭</div>目前沒有排定的拜訪。<br>到「名單」或「我的客戶」設定拜訪頻率即可自動排程。</div>`;
   openModal('本週出擊任務', h);
+}
+function getTrackingList(){
+  const exIds=existingProspectIds(); const out=[];
+  Object.entries(overlay).forEach(([id,o])=>{ if(o&&o.tracking&&!exIds.has(id)){ const p=SEED.find(x=>x.id===id); if(p) out.push({p,o}); } });
+  out.sort((a,b)=>(b.o.trackedAt||'').localeCompare(a.o.trackedAt||''));
+  return out;
+}
+function openHomeTracking(){
+  const list=getTrackingList();
+  let h = list.length
+    ? `<div class="card">`+list.map(({p,o})=>{ const di=dueInfo(o);
+        const pill=di?`<span class="badge ${di.cls}">${di.txt}</span>`:`<span class="badge b-${p.category}">${esc(p.category)}</span>`;
+        return itemRow({ name:p.name, sub:[p.region,p.address].filter(Boolean).join(' · '), cat:p.category,
+          pill:`${pill}${o.trackedAt?` <span class="badge">📌 ${esc(o.trackedAt.slice(5))} 起追蹤</span>`:''}`,
+          onclick:`viewProspect('${p.id}')` }); }).join('')+`</div>`
+    : `<div class="card empty"><div class="big">🎯</div>尚無追蹤中的目標客戶。<br>到「目標名單」開啟客戶頁，按最下面「🎯 存入追蹤管理」即可。</div>`;
+  openModal('追蹤中目標客戶', h);
 }
 function openHomeFollow(){
   const fups=getFollowUps();
@@ -2208,6 +2227,10 @@ function saveCustomer(id, isAdd){
   if(base.freq && !base.next) base.next = addDays(todayStr(), base.freq);
   base.inter = base.inter||[];
   if(isAdd) customers.push(base);
+  // 由目標客戶轉成既有客戶後，自動把它移出「追蹤中」
+  if(base.fromProspect && overlay[base.fromProspect] && overlay[base.fromProspect].tracking){
+    delete overlay[base.fromProspect].tracking; delete overlay[base.fromProspect].trackedAt; saveOverlay();
+  }
   saveCust(); closeModal(); toast('已儲存'); go('customers');
 }
 
