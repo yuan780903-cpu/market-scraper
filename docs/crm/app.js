@@ -3153,14 +3153,47 @@ function smartMapPick(fieldId){
   window.open(url,'_blank');
   toast('在地圖找到位置後，複製座標或連結貼回欄位');
 }
+// 展開 Google 短網址取座標：透過使用者自有 Worker（或備援公用代理）連到 Google 把短網址展開，
+// 再從回應(展開後的地圖頁/網址)解析座標。只送出這條地圖連結本身，不含任何客戶個資。
+async function expandMapLink(url){
+  const saved=ssProxy();
+  const proxies=[
+    ...(saved?[u=>saved+(saved.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u)]:[]),
+    u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://api.codetabs.com/v1/proxy/?quest='+u
+  ];
+  const grab=tx=>{
+    let gm=parseGmaps(tx); if(gm) return gm;
+    const m=tx.match(/maps[^"'\s]*?@(-?\d+\.\d+),(-?\d+\.\d+)/) || tx.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || tx.match(/\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if(m){ const la=+m[1],ln=+m[2]; if(la>=20&&la<=27&&ln>=118&&ln<=123) return [la,ln]; }
+    return null;
+  };
+  for(const mk of proxies){
+    try{
+      const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
+      const r=await fetch(mk(url),{signal:ctl.signal}); clearTimeout(tm);
+      if(r && r.url){ const gu=grab(r.url); if(gu) return gu; }   // 代理若有跟轉，最終網址常含座標
+      if(!r.ok) continue;
+      let tx=await r.text();
+      if(tx && tx.charAt(0)==='{'){ try{ const j=JSON.parse(tx); tx=j.contents||tx; }catch(e){} }
+      const gu=grab(tx); if(gu) return gu;
+    }catch(e){}
+  }
+  return null;
+}
 // 貼上 Google 地圖網址時自動轉成精準座標
 function smartNormLoc(el){
   if(!el) return;
   const v=(el.value||'').trim();
   const gm=parseGmaps(v);
-  if(gm){ el.value=gm[0].toFixed(6)+','+gm[1].toFixed(6); toast('已從地圖網址取得座標'); }
-  else if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(v)){
-    toast('⚠️ 這是 Google「分享短網址」，讀不到座標。請改用「複製座標」貼上(例如 23.03,120.25)，或貼完整地圖網址(含 @23.0,120.2)，或按 📍 取得目前位置');
+  if(gm){ el.value=gm[0].toFixed(6)+','+gm[1].toFixed(6); toast('已從地圖網址取得座標'); syncSmart(); return; }
+  if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(v)){
+    toast('🔄 偵測到 Google 短網址，嘗試連線展開取得座標…');
+    expandMapLink(v).then(gm2=>{
+      if(gm2){ el.value=gm2[0].toFixed(6)+','+gm2[1].toFixed(6); syncSmart(); sfx&&sfx('success'); toast('✅ 已展開短網址並取得座標'); }
+      else toast('⚠️ 短網址展開失敗（可能離線或代理被擋）。請改貼座標(23.03,120.25)或完整地圖網址，或按 📍');
+    });
   }
   else if(v && !smartLatLng(v)){
     toast('⚠️ 此位置無法定位。請貼座標(23.03,120.25)或完整地圖網址，或按 📍');
