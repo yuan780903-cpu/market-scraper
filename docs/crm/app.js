@@ -758,6 +758,9 @@ function viewProspect(id){
       <button class="btn btn-gray" onclick="saveProspectSchedule('${id}')">儲存排程</button></div>`;
   h+=`</div>`;
 
+  // 種植・用肥情報
+  h+=fertCard(p, o);
+
   // 後續跟進
   h+=followBlock('prosp', id, o.follow);
 
@@ -1124,6 +1127,84 @@ function logProspectVisit(id){
 }
 function addProspectInter(id){
   interForm(it=>{ const o=overlay[id]||{}; o.inter=o.inter||[]; o.inter.push(it); overlay[id]=o; saveOverlay(); toast('已新增紀錄'); viewProspect(id); });
+}
+
+// ====== 目標客戶：種植・用肥情報（下拉可選，沒有的可自行新增並自動記錄） ======
+const FERT_BASE_OPTS = {
+  fertName: ['台肥','友嘉','英倍多','旺得富','沛豐','黑師傅'],
+  pinmu: ['粒狀複合肥','粉狀有機肥','有機質肥料','化學複合肥','液體肥料','水溶性肥料','尿素','過磷酸鈣'],
+  term: ['現金','貨到付款','月結30天','月結60天','月結90天','票期30天','票期60天','票期90天','票期120天'],
+  truck: ['自取','3.5噸貨車','8.5噸貨車','11噸貨車','21噸聯結車','宅配'],
+  freq: ['每月','每兩個月','每季','每半年','每年','一年兩次','一年三次','不定期'],
+  crop: ['水稻','茶葉','蔬菜','果樹','芒果','鳳梨','文旦柚','蓮霧','番茄','花卉','檳榔','咖啡']
+};
+function fertOpts(field){
+  const store=LS.get('crm_fert_opts',{}); const custom=Array.isArray(store[field])?store[field]:[];
+  const out=[], seen=new Set();
+  (FERT_BASE_OPTS[field]||[]).concat(custom).forEach(v=>{ if(v&&!seen.has(v)){ seen.add(v); out.push(v); } });
+  return out;
+}
+function fertAddOpt(field,val){
+  val=(val||'').trim(); if(!val) return;
+  const store=LS.get('crm_fert_opts',{}); const arr=Array.isArray(store[field])?store[field]:[];
+  if(!(FERT_BASE_OPTS[field]||[]).includes(val) && !arr.includes(val)){ arr.push(val); store[field]=arr; LS.set('crm_fert_opts',store); }
+}
+function fertSel(field,label,val){
+  const opts=fertOpts(field); const isNew=val && !opts.includes(val); const id='ft-'+field;
+  let h=`<div class="field"><label>${label}</label>`;
+  h+=`<select id="${id}" onchange="fertToggleNew('${field}')"><option value="">（未填）</option>`;
+  opts.forEach(o=>{ h+=`<option ${(!isNew&&val===o)?'selected':''}>${esc(o)}</option>`; });
+  h+=`<option value="__new__" ${isNew?'selected':''}>＋ 自行輸入（存檔後自動記錄）</option></select>`;
+  h+=`<input id="${id}-new" placeholder="輸入新項目" value="${isNew?esc(val):''}" style="margin-top:6px;display:${isNew?'block':'none'}"></div>`;
+  return h;
+}
+function fertToggleNew(field){ const s=$('#ft-'+field), i=$('#ft-'+field+'-new'); if(s&&i) i.style.display=(s.value==='__new__')?'block':'none'; }
+function fertReadSel(field){ const s=$('#ft-'+field); if(!s) return ''; if(s.value==='__new__'){ const i=$('#ft-'+field+'-new'); const v=i?i.value.trim():''; if(v) fertAddOpt(field,v); return v; } return s.value; }
+function fertMonthsRow(sel){
+  sel=sel||[]; let h=`<div class="field"><label>每年使用月份</label><div style="display:flex;flex-wrap:wrap;gap:6px">`;
+  for(let m=1;m<=12;m++){ const on=sel.includes(m); h+=`<label style="display:inline-flex;align-items:center;gap:3px;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:8px"><input type="checkbox" class="ft-month" value="${m}" ${on?'checked':''}>${m}月</label>`; }
+  h+=`</div></div>`; return h;
+}
+function fertReadMonths(){ return [...document.querySelectorAll('.ft-month:checked')].map(c=>+c.value); }
+function fertCard(p,o){
+  const f=o.fert||{}; const isCo=(p.category==='合作社');
+  let h=`<div class="sec-title"><span class="bar"></span>種植・用肥情報</div><div class="card">`;
+  h+=`<div class="tagline" style="margin-bottom:8px">拜訪時記下對方目前用肥狀況；下拉沒有的選「＋ 自行輸入」，存檔後會自動加入選單供下次選取。</div>`;
+  h+=fertSel('fertName','目前使用肥料名稱',f.fertName);
+  h+=`<div class="field-2">${fertSel('pinmu','肥料品目',f.pinmu)}${fertSel('term','票期',f.term)}</div>`;
+  h+=`<div class="field"><label>肥料價格</label><input id="ft-price" value="${esc(f.price||'')}" placeholder="例如 560 元/包、18000 元/噸"></div>`;
+  h+=`<div class="field-2">
+      <div class="field"><label>含運與否</label><select id="ft-freight"><option value="">（未填）</option>${['含運','不含運','自取'].map(x=>`<option ${f.freight===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      ${fertSel('truck','運輸車輛',f.truck)}</div>`;
+  h+=`<div class="field-2">${fertSel('freq','肥料使用頻率',f.freq)}
+      <div class="field"><label>用量噸數（每次／年）</label><input id="ft-tons" type="number" inputmode="decimal" value="${esc(f.tons||'')}" placeholder="噸"></div></div>`;
+  h+=fertMonthsRow(f.months);
+  h+=`<div class="field-2">
+      <div class="field"><label>種植面積（公頃）</label><input id="ft-area" type="number" inputmode="decimal" value="${esc(f.area||'')}" placeholder="公頃"></div>
+      ${fertSel('crop','種植作物',f.crop)}</div>`;
+  if(isCo){
+    h+=`<div class="field-2">
+        <div class="field"><label>班員人數</label><input id="ft-members" type="number" inputmode="numeric" value="${esc(f.members||'')}" placeholder="人"></div>
+        <div class="field"><label>總種植面積（公頃）</label><input id="ft-totalArea" type="number" inputmode="decimal" value="${esc(f.totalArea||'')}" placeholder="公頃"></div></div>`;
+  }
+  h+=`<div class="field"><label>目前使用肥料優劣勢</label><textarea id="ft-proscons" rows="3" placeholder="優勢：價格便宜… ／ 劣勢：肥效慢、不易溶…">${esc(f.prosCons||'')}</textarea></div>`;
+  h+=`<div class="field"><label>備註</label><textarea id="ft-note" rows="2" placeholder="其他補充">${esc(f.note||'')}</textarea></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" onclick="saveProspectFert('${p.id}')">💾 儲存用肥情報</button></div>`;
+  h+=`</div>`;
+  return h;
+}
+function saveProspectFert(id){
+  const o=overlay[id]||{}; const p=SEED.find(x=>x.id===id)||{};
+  const g=i=>{ const el=$('#'+i); return el?el.value.trim():''; };
+  const f={
+    fertName:fertReadSel('fertName'), pinmu:fertReadSel('pinmu'), price:g('ft-price'),
+    freight:($('#ft-freight')&&$('#ft-freight').value)||'', term:fertReadSel('term'),
+    truck:fertReadSel('truck'), freq:fertReadSel('freq'), tons:g('ft-tons'),
+    months:fertReadMonths(), area:g('ft-area'), crop:fertReadSel('crop'),
+    prosCons:g('ft-proscons'), note:g('ft-note')
+  };
+  if(p.category==='合作社'){ f.members=g('ft-members'); f.totalArea=g('ft-totalArea'); }
+  o.fert=f; overlay[id]=o; saveOverlay(); sfx('success'); toast('已儲存用肥情報'); viewProspect(id);
 }
 
 function convertToCustomer(id){
