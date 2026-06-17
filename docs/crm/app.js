@@ -11,6 +11,8 @@ const SEED = window.SEED_DATA || [];
 let overlay = LS.get('crm_overlay', {});      // { prospectId: {freq,last,next,note,inter:[],hidden} }
 let customers = LS.get('crm_customers', []);   // 我的客戶（含敏感欄位）
 let competitors = LS.get('crm_competitors', []); // 競品報價（本機）
+let _extraRec = LS.get('crm_extra_records', {}); // 額外行程拜訪紀錄（本機）{ exId:{date,content,tons,photos:[]} }
+const saveExtraRec = () => { LS.set('crm_extra_records', _extraRec); markDirty(); };
 let _crmDirty = false;               // 自上次雲端備份後資料是否有變更（供離開App時自動備份判斷）
 function markDirty(){ _crmDirty = true; }
 const saveOverlay = () => { LS.set('crm_overlay', overlay); markDirty(); };
@@ -97,6 +99,7 @@ const gradeText = g => g ? `${g}級・${GRADE_LABEL[g]}` : '';
 // ---------- 工具 ----------
 const $ = s => document.querySelector(s);
 const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jsq = s => String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[\r\n]/g,' ');
 const ymdLocal = d => { const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
 const todayStr = () => ymdLocal(new Date());
 function addDays(dstr, n){ const d=new Date(dstr); d.setDate(d.getDate()+n); return ymdLocal(d); }
@@ -1068,7 +1071,9 @@ function interactionBlock(inter, addFn, kind, id){
       const oi=inter.length-1-i;  // 還原成原始索引（時間軸是反向顯示）
       const tons=(it.tons!=null&&+it.tons>0)?` ・${(+it.tons)} 噸`:'';
       const delBtn=canDel?`<button class="fdel" title="刪除這筆紀錄" onclick="delInterRecord('${kind}','${id}',${oi})">✕</button>`:'';
-      h+=`<div class="tl"><div class="tl-h"><span>${esc(it.type||'紀錄')}${tons}</span><span>${esc(it.date)}${delBtn}</span></div><div class="tl-c">${esc(it.content)}</div></div>`;
+      const photoN=(it.photos&&it.photos.length)||0;
+      const photoLink=(photoN&&canDel)?`<div style="margin-top:4px"><a href="javascript:void(0)" onclick="viewInterPhotos('${kind}','${id}',${oi})" style="font-size:12.5px">📷 查看照片 ${photoN}</a></div>`:'';
+      h+=`<div class="tl"><div class="tl-h"><span>${esc(it.type||'紀錄')}${tons}${photoN?' 📷'+photoN:''}</span><span>${esc(it.date)}${delBtn}</span></div><div class="tl-c">${esc(it.content)}</div>${photoLink}</div>`;
     });
     h+=`</div>`;
   } else { h+=`<div class="tagline" style="margin-top:10px">尚無紀錄</div>`; }
@@ -1093,24 +1098,8 @@ function saveHolder(kind){ kind==='cust'?saveCust():saveOverlay(); }
 function reopenDetail(kind,id){ kind==='cust'?custGroup(id,'mgmt'):viewProspect(id); }
 // 點「記錄拜訪」：一次記下內容＋後續跟進，並自動往後排下次拜訪
 function visitForm(kind,id){
-  let h=`<div class="field"><label>拜訪日期</label>${rocDateInput('v-date',todayStr())}</div>`;
-  h+=`<div class="field"><label>拜訪結果 / 內容</label><textarea id="v-content" placeholder="談了什麼、對方反應、結果…"></textarea></div>`;
-  h+=`<div class="field"><label>本次噸數（選填，成交 / 預估）</label><input id="v-tons" type="number" inputmode="decimal" step="0.1" min="0" placeholder="例如：2.6（噸），沒有可留空"></div>`;
-  h+=`<div class="field"><label>後續跟進事項（選填）</label><input id="v-follow" placeholder="例如：下週二送試用樣品 / 補報價單"></div>`;
-  h+=`<div class="field"><label>跟進期限（選填）</label>${rocDateInput('v-due','')}</div>`;
-  h+=`<div class="btn-row"><button class="btn btn-pri" id="v-save">儲存拜訪</button></div>`;
-  openModal('記錄拜訪', h);
-  $('#v-save').onclick=()=>{
-    const date=$('#v-date').value||todayStr();
-    const content=$('#v-content').value.trim()||'完成拜訪';
-    const tons=parseFloat($('#v-tons').value)||0;
-    const hd=getHolder(kind,id); if(!hd){ toast('找不到資料'); return; }
-    hd.inter=hd.inter||[]; hd.inter.push(tons>0?{date,type:'拜訪',content,tons}:{date,type:'拜訪',content});
-    hd.last=date; if(hd.freq) hd.next=addDays(date,hd.freq);
-    const ft=$('#v-follow').value.trim();
-    if(ft){ hd.follow=hd.follow||[]; hd.follow.push({id:'F'+Date.now(),text:ft,due:$('#v-due').value||'',done:false,created:date}); }
-    saveHolder(kind); toast(ft?'已記錄拜訪並建立跟進':'已記錄拜訪'); reopenDetail(kind,id); render();
-  };
+  const nm = kind==='cust' ? ((findCust(id)||{}).name||'') : ((SEED.find(x=>x.id===id)||{}).name||'');
+  recordStop(kind, id, nm);
 }
 function addFollow(kind,id){
   let h=`<div class="field"><label>跟進事項</label><input id="nf-text" placeholder="例如：下週二送樣品"></div>`;
@@ -2316,7 +2305,7 @@ function download(name, content, type){
   const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function backupBundle(){ return {ver:2, exported:new Date().toISOString(), customers, overlay, competitors, soldier, prospects:customProspects}; }
+function backupBundle(){ return {ver:2, exported:new Date().toISOString(), customers, overlay, competitors, soldier, prospects:customProspects, extraRecords:_extraRec}; }
 function exportJSON(){
   download(`客戶管理備份_${todayStr()}.json`, JSON.stringify(backupBundle()), 'application/json');
   toast('已匯出備份');
@@ -2337,6 +2326,7 @@ function importJSON(input){
     if(Array.isArray(d.competitors)){ const cids=new Set(competitors.map(c=>c.id)); d.competitors.forEach(c=>{ if(!cids.has(c.id)) competitors.push(c); }); saveComp(); }
     if(d.soldier && typeof d.soldier==='object'){ Object.assign(soldier, d.soldier); saveSoldier(); }
     if(Array.isArray(d.prospects)){ const pids=new Set(customProspects.map(p=>p.id)); d.prospects.forEach(p=>{ if(p&&p.id&&!pids.has(p.id)){ customProspects.push(p); if(!SEED.some(s=>s.id===p.id)) SEED.push(p); } }); saveProspects(); }
+    if(d.extraRecords&&typeof d.extraRecords==='object'){ Object.assign(_extraRec, d.extraRecords); saveExtraRec(); }
     saveCust(); saveOverlay(); toast('已匯入還原'); render();
   }catch(e){ alert('檔案格式錯誤，無法匯入'); } };
   r.readAsText(f); input.value='';
@@ -2444,6 +2434,159 @@ async function driveUpload(token,name,content,existingId,keepalive){
   if(!r.ok){ const t=await r.text(); throw new Error('上傳失敗 '+r.status+' '+t.slice(0,100)); }
   return r.json();
 }
+// ---------- 拜訪照片：本機 IndexedDB 儲存（壓縮後 JPEG），雲端僅上傳到使用者自己的 Google Drive ----------
+let _photoDBp=null;
+function photoDB(){
+  return _photoDBp || (_photoDBp=new Promise((res,rej)=>{
+    const rq=indexedDB.open('crm_photos',1);
+    rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains('ph')) db.createObjectStore('ph'); };
+    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);
+  }));
+}
+async function photoPut(id,dataURL){ const db=await photoDB(); return new Promise((res,rej)=>{ const tx=db.transaction('ph','readwrite'); tx.objectStore('ph').put(dataURL,id); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function photoGet(id){ const db=await photoDB(); return new Promise((res,rej)=>{ const tx=db.transaction('ph','readonly'); const rq=tx.objectStore('ph').get(id); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error); }); }
+async function photoDel(id){ try{ const db=await photoDB(); return new Promise(res=>{ const tx=db.transaction('ph','readwrite'); tx.objectStore('ph').delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }catch(e){} }
+function compressImage(file, maxEdge=1280, quality=0.72){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{ const img=new Image(); img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(Math.max(w,h)>maxEdge){ const r=maxEdge/Math.max(w,h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      try{ res(cv.toDataURL('image/jpeg',quality)); }catch(e){ rej(e); }
+    }; img.onerror=()=>rej(new Error('圖片讀取失敗')); img.src=fr.result; };
+    fr.onerror=()=>rej(new Error('檔案讀取失敗')); fr.readAsDataURL(file);
+  });
+}
+function dataURLtoBlob(d){ const i=d.indexOf(','); const head=d.slice(0,i), b64=d.slice(i+1); const mime=(head.match(/:(.*?);/)||[])[1]||'image/jpeg'; const bin=atob(b64); const u=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++)u[k]=bin.charCodeAt(k); return new Blob([u],{type:mime}); }
+async function driveEnsureFolder(token,name){
+  const q=encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`,{headers:{Authorization:'Bearer '+token}});
+  if(r.ok){ const j=await r.json(); if(j.files&&j.files[0]) return j.files[0].id; }
+  const cr=await fetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({name,mimeType:'application/vnd.google-apps.folder'})});
+  if(!cr.ok) throw new Error('建立雲端資料夾失敗 '+cr.status);
+  const cj=await cr.json(); return cj.id;
+}
+async function driveUploadImage(token,name,blob,folderId){
+  const meta={name}; if(folderId) meta.parents=[folderId];
+  const boundary='crmimg'+Date.now();
+  const head=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: ${blob.type||'image/jpeg'}\r\n\r\n`;
+  const tail=`\r\n--${boundary}--`;
+  const body=new Blob([head, blob, tail],{type:'multipart/related; boundary='+boundary});
+  const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+token},body});
+  if(!r.ok){ const t=await r.text(); throw new Error('照片上傳失敗 '+r.status+' '+t.slice(0,80)); }
+  return r.json();
+}
+// 把尚未上傳的照片（metas）上傳到使用者自己的 Google 雲端硬碟資料夾「碩成CRM拜訪照片」
+async function uploadPhotosToDrive(metas, onProgress){
+  const token=await getDriveToken('');
+  const folderId=await driveEnsureFolder(token,'碩成CRM拜訪照片');
+  let done=0;
+  for(const m of metas){
+    if(m.driveId){ done++; if(onProgress)onProgress(done,metas.length); continue; }
+    const dataURL=await photoGet(m.id);
+    if(!dataURL){ done++; if(onProgress)onProgress(done,metas.length); continue; }
+    const res=await driveUploadImage(token, m.name||(m.id+'.jpg'), dataURLtoBlob(dataURL), folderId);
+    m.driveId=res.id; m.driveLink=res.webViewLink||'';
+    done++; if(onProgress)onProgress(done,metas.length);
+  }
+  return metas;
+}
+
+// ---------- 統一「記錄拜訪」表單（既有客戶 / 目標客戶 / 額外行程共用；含照片紀錄＋選擇性雲端上傳）----------
+function recordStop(kind,id,name){
+  window._recCtx={kind,id,name:name||''};
+  let pre={};
+  if(kind==='extra'){ pre=_extraRec[id]||{}; window._recPhotos=(pre.photos||[]).map(p=>Object.assign({},p)); }
+  else { window._recPhotos=[]; }
+  const titleName = name? '：'+name : '';
+  let h=`<div class="field"><label>拜訪日期</label>${rocDateInput('rec-date', pre.date||todayStr())}</div>`;
+  h+=`<div class="field"><label>拜訪結果 / 內容${kind==='extra'?'（選填）':''}</label><textarea id="rec-content" placeholder="談了什麼、對方反應、結果…">${esc(pre.content||'')}</textarea></div>`;
+  h+=`<div class="field"><label>本次噸數（選填，成交 / 預估）</label><input id="rec-tons" type="number" inputmode="decimal" step="0.1" min="0" placeholder="例如：2.6（噸），沒有可留空" value="${(pre.tons!=null&&+pre.tons>0)?(+pre.tons):''}"></div>`;
+  if(kind!=='extra'){
+    h+=`<div class="field"><label>後續跟進事項（選填）</label><input id="rec-follow" placeholder="例如：下週二送試用樣品 / 補報價單"></div>`;
+    h+=`<div class="field"><label>跟進期限（選填）</label>${rocDateInput('rec-due','')}</div>`;
+  }
+  h+=`<div class="field"><label>📷 照片紀錄（選填）</label>
+    <label class="btn btn-out" style="cursor:pointer;margin:0">＋ 拍照 / 選照片<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="recAddPhotos(this)"></label>
+    <div id="rec-photos" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+    <div class="tagline" style="margin-top:4px">照片預設只存在這支手機。可勾選下方一併備份到你自己的 Google 雲端硬碟。</div></div>`;
+  h+=`<label style="display:flex;align-items:center;gap:6px;margin:4px 2px"><input type="checkbox" id="rec-upload" ${gdriveClientId()?'':'disabled'}><span style="font-size:13px">儲存後同時上傳照片到我的 Google 雲端硬碟${gdriveClientId()?'':'（需先到設定填 Google 用戶端 ID）'}</span></label>`;
+  h+=`<div id="rec-uptip" class="tagline" style="font-size:12px;color:var(--muted)"></div>`;
+  h+=`<div class="btn-row"><button class="btn btn-pri" id="rec-save">儲存紀錄</button><button class="btn btn-gray" onclick="closeModal()">取消</button></div>`;
+  openModal('記錄拜訪'+titleName, h);
+  recRenderPhotos();
+  $('#rec-save').onclick=()=>saveStopRecord();
+}
+async function recAddPhotos(input){
+  const files=input&&input.files?[...input.files]:[]; if(input)input.value='';
+  if(!files.length) return;
+  const tip=$('#rec-uptip'); if(tip) tip.textContent='處理照片中…';
+  for(const f of files){
+    try{ const dataURL=await compressImage(f); const pid='ph'+Date.now()+Math.random().toString(36).slice(2,6);
+      await photoPut(pid,dataURL); (window._recPhotos=window._recPhotos||[]).push({id:pid, name:pid+'.jpg', ts:Date.now()}); }
+    catch(e){ console.log('photo skip', e&&e.message); }
+  }
+  if(tip) tip.textContent='';
+  recRenderPhotos();
+}
+async function recRenderPhotos(){
+  const box=$('#rec-photos'); if(!box) return;
+  const metas=window._recPhotos||[];
+  if(!metas.length){ box.innerHTML=`<span class="tagline" style="color:var(--muted)">尚無照片</span>`; return; }
+  box.innerHTML=metas.map(m=>`<div style="position:relative;width:74px;height:74px"><img data-pid="${m.id}" style="width:74px;height:74px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#f0f0f0"><button onclick="recDelPhoto('${m.id}')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#d9534f;color:#fff;font-size:12px;line-height:1;cursor:pointer">✕</button>${m.driveId?'<span style="position:absolute;bottom:2px;right:2px;font-size:12px">☁️</span>':''}</div>`).join('');
+  for(const m of metas){ const d=await photoGet(m.id); const img=box.querySelector(`img[data-pid="${m.id}"]`); if(img&&d) img.src=d; }
+}
+function recDelPhoto(pid){ window._recPhotos=(window._recPhotos||[]).filter(m=>m.id!==pid); photoDel(pid); recRenderPhotos(); }
+async function saveStopRecord(){
+  const ctx=window._recCtx||{}; const kind=ctx.kind, id=ctx.id;
+  const date=($('#rec-date')&&$('#rec-date').value)||todayStr();
+  const content=($('#rec-content')&&$('#rec-content').value.trim())||'';
+  const tons=parseFloat($('#rec-tons')&&$('#rec-tons').value)||0;
+  const metas=(window._recPhotos||[]).map(m=>({id:m.id,name:m.name,ts:m.ts,driveId:m.driveId,driveLink:m.driveLink}));
+  const doUpload=!!($('#rec-upload')&&$('#rec-upload').checked);
+  const saveBtn=$('#rec-save'); if(saveBtn) saveBtn.disabled=true;
+  let uploadErr=null;
+  if(doUpload && metas.length){
+    const tip=$('#rec-uptip'); if(tip) tip.textContent='上傳雲端中… 0/'+metas.length;
+    try{ await uploadPhotosToDrive(metas,(d,t)=>{ if(tip) tip.textContent=`上傳雲端中… ${d}/${t}`; }); if(tip) tip.textContent='✅ 已上傳雲端'; }
+    catch(e){ uploadErr=e; if(tip) tip.textContent='⚠️ 雲端上傳失敗（照片已存本機）'; }
+  }
+  if(kind==='extra'){
+    _extraRec[id]=Object.assign({}, _extraRec[id], {date, content, tons, name:ctx.name||(_extraRec[id]&&_extraRec[id].name)||'', photos:metas});
+    saveExtraRec();
+  } else {
+    const hd=getHolder(kind,id); if(!hd){ if(saveBtn)saveBtn.disabled=false; toast('找不到資料'); return; }
+    hd.inter=hd.inter||[];
+    const it={date,type:'拜訪',content:content||'完成拜訪'};
+    if(tons>0) it.tons=tons;
+    if(metas.length) it.photos=metas;
+    hd.inter.push(it);
+    hd.last=date; if(hd.freq) hd.next=addDays(date,hd.freq);
+    const ft=$('#rec-follow')?$('#rec-follow').value.trim():'';
+    if(ft){ hd.follow=hd.follow||[]; hd.follow.push({id:'F'+Date.now(),text:ft,due:($('#rec-due')?$('#rec-due').value:'')||'',done:false,created:date}); }
+    saveHolder(kind);
+  }
+  sfx('success');
+  toast(uploadErr? ('已存本機，雲端上傳失敗：'+uploadErr.message) : ('已記錄拜訪'+(doUpload&&metas.length?'（含雲端備份）':'')));
+  closeModal();
+  if(kind==='extra'){ renderRoute(); }
+  else { reopenDetail(kind,id); }
+  render();
+}
+// 檢視某筆紀錄的照片（本機有就顯示原圖；若僅有雲端連結則提供連結）
+async function viewPhotos(metas, title){
+  metas=metas||[]; if(!metas.length){ toast('這筆紀錄沒有照片'); return; }
+  let h=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  h+=metas.map(m=>`<div><img data-pid="${m.id}" alt="（此裝置無本機照片）" style="width:100%;border-radius:10px;border:1px solid var(--line);background:#f0f0f0">${m.driveLink?`<div style="text-align:right;margin-top:4px"><a href="${esc(m.driveLink)}" target="_blank" style="font-size:12px">☁️ 在 Google 雲端開啟</a></div>`:''}</div>`).join('');
+  h+=`</div>`;
+  openModal(title||'拜訪照片', h);
+  for(const m of metas){ const img=$('#m-body img[data-pid="'+m.id+'"]'); const d=await photoGet(m.id); if(img&&d) img.src=d; }
+}
+function viewInterPhotos(kind,id,idx){ const hd=getHolder(kind,id); const it=hd&&hd.inter&&hd.inter[idx]; viewPhotos(it&&it.photos, '拜訪照片'); }
+function viewExtraPhotos(exId){ const r=_extraRec[exId]; viewPhotos(r&&r.photos, '拜訪照片'); }
+
 async function gdriveBackup(mode){
   try{
     if(mode!=='silent') toast('連結 Google 中…');
@@ -2487,6 +2630,7 @@ async function gdriveRestore(){
     if(Array.isArray(d.competitors)){ competitors=d.competitors; saveComp(); }
     if(d.soldier&&typeof d.soldier==='object'){ Object.assign(soldier,d.soldier); saveSoldier(); }
     if(Array.isArray(d.prospects)){ customProspects=d.prospects; customProspects.forEach(p=>{ if(p&&p.id&&!SEED.some(s=>s.id===p.id)) SEED.push(p); }); saveProspects(); }
+    if(d.extraRecords&&typeof d.extraRecords==='object'){ _extraRec=d.extraRecords; saveExtraRec(); }
     toast('✅ 已從雲端還原'); render();
   }catch(e){ toast('還原失敗：'+e.message); }
 }
@@ -2869,13 +3013,16 @@ function dayStopsHTML(b, cfg, isToday, hideFinish){
     idx++;
     const tel=(x.phone||'').split('/')[0].replace(/[^\d+]/g,'');
     const onclick=x.kind==='cust'?`viewCustomer('${x.id}')`:(x.kind==='prosp'?`viewProspect('${x.id}')`:'');
-    h+=`<div class="item"${onclick?` onclick="${onclick}"`:''}><div class="avatar" style="background:${colorFor(x.name)}">${idx}</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${x.arrive}</span><span style="font-size:12px;color:var(--muted)">${x._dur?('停留 '+x._dur+' 分'):''}</span></div><div class="nm" style="margin-top:3px">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}</div>${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}<div class="tagline" style="margin-top:4px">${x.reason?`<span class="badge ${x.overdue?'pill-over':((x.reason==='加料'||x.reason==='指定')?'':'pill-due')}">${esc(x.reason)}</span> `:''}<span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}</div></div>`;
+    const recDone = x.kind==='extra' ? !!_extraRec[x.id] : false;
+    const recLink=`<br><a href="javascript:void(0)" onclick="event.stopPropagation();recordStop('${x.kind}','${x.id}','${jsq(x.name)}')">📝 記錄${recDone?' ✅':''}</a>`;
+    const extraMark = x.kind==='extra' ? ' <span class="badge">額外</span>' : '';
+    h+=`<div class="item"${onclick?` onclick="${onclick}"`:''}><div class="avatar" style="background:${colorFor(x.name)}">${idx}</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${x.arrive}</span><span style="font-size:12px;color:var(--muted)">${x._dur?('停留 '+x._dur+' 分'):''}</span></div><div class="nm" style="margin-top:3px">${esc(x.name)}${x.fixedMark?' <span class="badge pill-due">📌 約定</span>':''}${extraMark}</div>${(x.district||x.address)?`<div class="sub">${esc([x.district,x.address].filter(Boolean).join(' · '))}</div>`:''}<div class="tagline" style="margin-top:4px">${x.reason?`<span class="badge ${x.overdue?'pill-over':((x.reason==='加料'||x.reason==='指定')?'':'pill-due')}">${esc(x.reason)}</span> `:''}<span class="badge b-${x.channel}">${esc(x.channel)}</span>${x.grade?` <span class="badge grade-${x.grade}">${x.grade}</span>`:''}${x.status==='cold'?' <span class="badge">陌生</span>':''}</div></div><div class="meta">${x.address?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}" target="_blank" onclick="event.stopPropagation()">導航</a>`:''}${tel.length>=6?`<br><a href="tel:${tel}" onclick="event.stopPropagation()">電話</a>`:''}${onclick?`<br><a href="javascript:void(0)" onclick="event.stopPropagation();${onclick}">📋 拜訪管理</a>`:''}${recLink}</div></div>`;
   });
   if(stops.length) h+=`<div class="item" style="background:#e8f0fa"><div class="avatar" style="background:#1b4d8f">🏁</div><div class="body"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:800;line-height:1.05">${b.home||''}</span><span style="font-size:12px;color:var(--muted)">預估回家</span></div></div></div>`;
   h+=`</div>`;
   const mapStops=stops.filter(x=>x.address);
   if(mapStops.length){ const origin=(cfg&&cfg.startLoc)||mapStops[0].address; const dest=(cfg&&cfg.endLoc)||origin; const wp=mapStops.map(x=>encodeURIComponent(x.address)).join('%7C'); const url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}&travelmode=driving&waypoints=${wp}`; h+=`<div class="btn-row" style="margin-top:8px"><a class="btn btn-out" style="text-decoration:none" href="${url}" target="_blank">🚗 用 Google 地圖開這天路線</a></div>`; }
-  const recordable=stops.filter(x=>x.kind==='cust'||x.kind==='prosp');
+  const recordable=stops.filter(x=>x.kind==='cust'||x.kind==='prosp'||x.kind==='extra');
   if(recordable.length && !hideFinish) h+=`<div class="btn-row" style="margin-top:4px"><button class="btn btn-pri" onclick="weekFinishDay('${b.date}')">✅ 完成${isToday?'今日':'當日'}拜訪（記錄 ${recordable.length} 家 → 週報）</button></div>`;
   return h;
 }
@@ -2948,7 +3095,7 @@ function weekFinishDay(date){
   let plan=loadWeekPlan(); let b=plan && (plan.buckets||[]).find(x=>x.date===date);
   if(!b && weekCfg.plan && weekCfg.plan.bucket && weekCfg.plan.bucket.date===date) b=weekCfg.plan.bucket;
   if(!b){ toast('找不到該日行程'); return; }
-  window._routeToday=b.stops.filter(x=>!x.lunch && (x.kind==='cust'||x.kind==='prosp')).map(x=>({kind:x.kind,id:x.id,name:x.name}));
+  window._routeToday=b.stops.filter(x=>!x.lunch && (x.kind==='cust'||x.kind==='prosp'||x.kind==='extra')).map(x=>({kind:x.kind,id:x.id,name:x.name}));
   if(!window._routeToday.length){ toast('這天沒有可記錄的客戶'); return; }
   routeFinishToday();
 }
@@ -3431,7 +3578,7 @@ function routeFinishToday(){
     h+=`<div style="padding:7px 0;border-bottom:1px solid var(--line)">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" class="rf-on" data-i="${i}" checked>
-        <span class="nm" style="font-size:14px">${i+1}. ${esc(x.name)}${x.kind==='prosp'?' <span class="badge">目標</span>':''}</span></label>
+        <span class="nm" style="font-size:14px">${i+1}. ${esc(x.name)}${x.kind==='prosp'?' <span class="badge">目標</span>':''}${x.kind==='extra'?' <span class="badge">額外</span>':''}</span></label>
       <input class="rf-note" data-i="${i}" placeholder="這家談了什麼／結果（可空）" style="margin-top:5px;width:100%;box-sizing:border-box">
     </div>`;
   });
@@ -3447,7 +3594,9 @@ function routeFinishToday(){
       if(!cb.checked) return;
       const x=list[idx]; const content=(notes[idx]&&notes[idx].value.trim())||'完成拜訪';
       const it={date,type:'拜訪',content};
-      if(x.kind==='cust'){
+      if(x.kind==='extra'){
+        _extraRec[x.id]=Object.assign({}, _extraRec[x.id], {date, content, name:x.name||(_extraRec[x.id]&&_extraRec[x.id].name)||'', photos:(_extraRec[x.id]&&_extraRec[x.id].photos)||[]}); n++;
+      }else if(x.kind==='cust'){
         const c=findCust(x.id); if(!c)return; c.inter=c.inter||[]; c.inter.push(it); c.last=date; if(c.freq)c.next=addDays(date,c.freq); n++;
       }else{
         const ex=custByProspect(x.id);
@@ -3456,7 +3605,7 @@ function routeFinishToday(){
         n++;
       }
     });
-    saveCust(); saveOverlay();
+    saveCust(); saveOverlay(); saveExtraRec();
     closeModal();
     toast(`已記錄 ${n} 家拜訪${visP?`，${visP} 家目標客戶已進入「已拜訪」清單`:''}`);
     go('report');
