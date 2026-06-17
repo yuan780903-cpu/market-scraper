@@ -2597,6 +2597,9 @@ function renderLocCard(){
     return h;
   }
   h+=`<div class="card">`;
+  const badStart = smartCfg.startLoc && !smartLatLng(smartCfg.startLoc);
+  const badEnd = smartCfg.endLoc && !smartLatLng(smartCfg.endLoc);
+  if(badStart||badEnd) h+=`<div class="info" style="background:var(--amber-l);color:var(--amber)">⚠️ ${badStart?'出發位置':''}${badStart&&badEnd?'、':''}${badEnd?'回家位置':''}無法定位（找不到鄉鎮）。請按右側 📍 取得目前位置，或貼上 Google 地圖網址／座標（例如 23.03,120.25），否則第一站車程會估得太短、時間不準。</div>`;
   h+=locFieldRow('sm-startloc','出發位置（家／公司）',smartCfg.startLoc);
   h+=locFieldRow('sm-endloc','回家位置（留空＝同出發）',smartCfg.endLoc);
   h+=`<div class="field-2"><div class="field"><label>出發時間</label><input type="time" id="sm-start" value="${esc(smartCfg.startTime||'08:00')}"></div><div class="field"><label>希望回到家</label><input type="time" id="sm-end" value="${esc(smartCfg.endTime||'17:00')}"></div></div>`;
@@ -2974,6 +2977,10 @@ function smartLatLng(addr){
   const C=smartTownCentroids(); const core=countyCore(addr);
   if(core){
     const tn=matchTown(addr,core); if(tn&&C[core+'|'+tn]) return C[core+'|'+tn];
+    // 退一步：用鄉鎮「基底名」（去掉區/鄉/鎮/市）比對，例如「台南永康砲校」→ 永康區
+    const a2=normR(addr); const list=townsByCore()[core]||[]; let best='',bl=0;
+    for(const t of list){ const base=t.n.replace(/[區鄉鎮市]$/,''); if(base.length>=2 && a2.includes(base) && base.length>bl){ best=t.raw; bl=base.length; } }
+    if(best&&C[core+'|'+best]) return C[core+'|'+best];
     return C['#'+core]||null;   // 只知縣市→用縣市中心
   }
   // 沒有縣市字樣→用鄉鎮市區名稱比對（例如「楠西7-11」→ 楠西）
@@ -3019,7 +3026,10 @@ async function osrmFillTable(lls){
 function smartTravel(a,b){
   const pa=smartLatLng(a), pb=smartLatLng(b);
   if(pa&&pb){ const od=osrmLookup(pa,pb); if(od!=null)return od; return driveMin(kmBetween(pa,pb)); }
-  if(!a||!b)return 15; const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10;
+  if(!a||!b)return 15;
+  // 只有一端能定位：無法量距，給保守值（避免把無法定位的出發點誤當成就在隔壁，低估車程）
+  if((pa&&!pb)||(!pa&&pb)) return 25;
+  const ca=countyCore(a),cb=countyCore(b); if(ca&&cb&&ca!==cb)return 35; const da=district(a),db=district(b); if(da&&db&&da!==db)return 18; return 10;
 }
 // 兩座標間的車程（分鐘）：有 OSRM 用實際路網，否則用離線估算
 function travelMinLL(a,b){ if(!a||!b)return null; const od=osrmLookup(a,b); if(od!=null)return od; return driveMin(kmBetween(a,b)); }
