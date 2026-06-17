@@ -554,7 +554,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 </header>
 
 <div class="wrap">
-  <div id="reportHead"><div class="rt">政遠大師 · 個人命盤專業報告</div><div class="rs" id="reportSub"></div></div>
+  <div id="reportHead"><div class="rt" id="reportTitle">政遠大師 · 個人命盤專業報告</div><div class="rs" id="reportSub"></div></div>
   <div class="panel">
     <h2><span class="dot"></span>排盤資料</h2>
     <div class="hint">請以「國曆（陽曆）」輸入出生年月日；時辰請填出生當下的時鐘時間。資料僅在本機瀏覽器運算，不會上傳。</div>
@@ -1467,11 +1467,20 @@ function readFamMembers(){
   return arr;
 }
 
+const REPORT_TITLE={
+  comp:"政遠大師 · 紫微斗數命盤專業報告",
+  west:"政遠大師 · 西洋占星專業報告",
+  tarot:"政遠大師 · 塔羅本命牌專業報告",
+  vedic:"政遠大師 · 印度吠陀占星專業報告",
+  num:"政遠大師 · 生命靈數專業報告"
+};
 function finishRender(subText){
   const res=document.getElementById("result");
   res.classList.add("show");
   document.getElementById("toolbar").classList.add("show");
   document.getElementById("reportSub").textContent=subText;
+  const sys=document.getElementById("system").value;
+  document.getElementById("reportTitle").textContent=REPORT_TITLE[sys]||"政遠大師 · 個人命盤專業報告";
   document.documentElement.style.scrollBehavior="auto";
   res.scrollIntoView({block:"start"});
 }
@@ -1618,8 +1627,7 @@ function renderWestern(name,gender,sol,sub){
     <div class="rcard"><h3><span class="ic">優</span>性格優勢</h3><div class="tags">${z.s.map(t=>`<span>${t}</span>`).join("")}</div></div>
     <div class="rcard"><h3><span class="ic">弱</span>成長課題</h3><div class="tags">${z.w.map(t=>`<span>${t}</span>`).join("")}</div></div>
     <div class="rcard wide"><h3><span class="ic">引</span>人生建議</h3><p>${z.a}</p></div>
-  </div>
-  ${nameSection(name,{sysName:"西洋占星",coreEl:WEST2WX[z.el],coreLabel:`${z.n}（${z.el}象）`})}`;
+  </div>`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1639,8 +1647,7 @@ function renderTarot(name,gender,sol,sub){
   <p class="approxnote">※ 生日本命牌以您出生年月日的數字學推算（西洋塔羅 Birth Card 正統算法），代表您此生的靈魂主題與人格原型，伴隨一生。</p>
   <div class="reading">
     <div class="rcard wide"><h3><span class="ic">牌</span>本命牌啟示 · ${c.n}</h3><p>${c.d}</p></div>
-  </div>
-  ${nameSection(name,{sysName:"塔羅本命牌",coreEl:shuliWx(idx),coreLabel:`${c.n}牌（數理 ${idx}）`})}`;
+  </div>`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1665,8 +1672,7 @@ function renderVedic(name,gender,sol,sub){
   <div class="reading">
     <div class="rcard"><h3><span class="ic">宮</span>恆星太陽宮 · ${RASHI[v.rashi]}</h3><p>您的吠陀太陽落於 ${v.el}象星座，主星為${v.lord}，主導能量屬 ${guna}。${v.el==="火"?"行動力與熱忱旺盛，宜開創進取。":v.el==="土"?"務實穩重、重視累積，宜踏實經營。":v.el==="風"?"思辨靈動、善於溝通，宜廣納新知。":"情感豐沛、直覺敏銳，宜修心養性。"}</p></div>
     <div class="rcard"><h3><span class="ic">宿</span>所屬月宿 · ${nak[0]}</h3><p>${nak[1]}（此為太陽黃經近似之星宿，象徵您靈魂的底蘊特質。）</p></div>
-  </div>
-  ${nameSection(name,{sysName:"印度吠陀",coreEl:WEST2WX[v.el],coreLabel:`${RASHI[v.rashi]}（${v.el}象）`})}`;
+  </div>`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
@@ -1687,8 +1693,7 @@ function renderNum(name,gender,sol,sub){
   <div class="reading">
     <div class="rcard wide"><h3><span class="ic">數</span>生命靈數 ${lp} · 天賦與課題</h3><p>${nd.d}</p></div>
     <div class="rcard wide"><h3><span class="ic">年</span>2026 流年靈數 ${py}</h3><p>您 2026 年的個人年數字為 <b style="color:var(--gold)">${py}</b>（${pyd.t}）。本年宜順應此能量：${pyd.d}</p></div>
-  </div>
-  ${nameSection(name,{sysName:"生命靈數",coreEl:shuliWx(lp),coreLabel:`生命靈數 ${lp}`})}`;
+  </div>`;
   document.getElementById("result").innerHTML=html;
   finishRender(sub);
 }
