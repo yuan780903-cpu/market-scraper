@@ -2303,7 +2303,7 @@ function timeLabel(h){
    全程在瀏覽器離線運算、不上傳任何資料。 */
 const LC_PUB={"kty":"EC","x":"VhIPhXoV9qKtQnC2-kaTW8CerMVRDjDFa40pSERhakY","y":"s7H-QIzEoBd5t2M9jXi0MRmnSUuVeLf_eFid5yIzsH4","crv":"P-256"};
 const LC_PRICE="NT$ 168";   // ← 想改價格改這裡
-const LC_CONTACT="完成付款後，請將「姓名・國曆生日・出生時間・性別」以 LINE 傳給 政遠大師（LINE ID：@yourid），即可取得專屬解鎖碼。";  // ← 改成你的聯絡方式
+const LC_CONTACT="完成付款後，請將「姓名・國曆生日・出生時間・性別」以 LINE 傳給 政遠大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬解鎖碼。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
 }
