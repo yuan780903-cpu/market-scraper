@@ -164,7 +164,10 @@ header .meta b{color:var(--gold);font-weight:500}
 .feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 18px;
   box-shadow:0 18px 44px -28px var(--shadow);transition:transform .2s ease,box-shadow .2s ease}
 .feat:hover{transform:translateY(-4px);box-shadow:0 22px 50px -24px var(--shadow)}
-.feat .fic{font-size:1.8rem;line-height:1;margin-bottom:10px}
+.feat .fic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;
+  border:1.5px solid var(--gold);background:var(--wash);color:var(--gold-deep);
+  font-size:1.35rem;font-weight:700;line-height:1;margin-bottom:13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .feat h4{margin:0 0 8px;color:var(--gold-bright);font-size:1.04rem;letter-spacing:1px}
 .feat p{margin:0;color:var(--ink-dim);font-size:.88rem;line-height:1.8}
 .introdetail{max-width:880px;margin:22px auto 0;background:var(--card);border:1px solid var(--line);
@@ -820,6 +823,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 @media print{.zwmodal{display:none!important}}
 .taphint{display:inline-block;margin-top:5px;font-size:.74rem;color:var(--purple);background:var(--pwash);
   border:1px dashed var(--purple);border-radius:12px;padding:2px 12px;letter-spacing:.5px}
+.taphint::before{content:"▸ ";font-weight:700}
 @media print{.taphint{display:none!important}}
 /* ===== 付費解鎖牆 ===== */
 #premZone.locked{position:relative;max-height:560px;overflow:hidden;
@@ -828,7 +832,9 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #premZone.locked>*{filter:blur(7px);pointer-events:none;user-select:none}
 .paywall{margin:26px 0 10px;padding:26px 24px;border:2px solid var(--gold);border-radius:20px;
   background:linear-gradient(165deg,#fffdf8,#fdf4e0);box-shadow:0 14px 40px rgba(0,0,0,.14);text-align:center}
-.paywall .pwlock{font-size:2.4rem;line-height:1}
+.paywall .pwlock{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;
+  border:1.5px solid var(--gold);background:var(--wash);color:var(--gold-deep);font-size:1.5rem;font-weight:700;line-height:1;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .paywall h3{margin:8px 0 4px;color:var(--gold-deep);font-size:1.4rem;letter-spacing:1px}
 .paywall .pwsub{color:var(--ink-faint);font-size:.86rem;margin-bottom:14px}
 .paywall .pwlist{list-style:none;padding:0;margin:0 auto 16px;max-width:430px;text-align:left}
@@ -869,10 +875,10 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 <section class="intro">
   <p class="introlead">打破傳統命理框架，以「<b>斗數十二宮 × 四柱八字</b>」雙軌並行為核心，將傳承千年的玄學智慧與客觀邏輯的大數據精算結合，為您打造最具實用價值的命格解析。</p>
   <div class="featgrid">
-    <div class="feat"><div class="fic">⚖️</div><h4>雙系統交叉比對</h4><p>北派紫微宮位推演＋子平八字五行生剋，雙重驗證、排除單一系統盲區，解析更深更準。</p></div>
-    <div class="feat"><div class="fic">📅</div><h4>高精度曆法引擎</h4><p>內建農曆、節氣、干支精算（西元 1900–2100），每一筆生辰轉換毫釐不差，忠實還原命格。</p></div>
-    <div class="feat"><div class="fic">🧭</div><h4>從宿命到造命</h4><p>不談令人恐懼的宿命論，而是一份客觀的人生策略指南——讓您在對的時間，做對的決定。</p></div>
-    <div class="feat"><div class="fic">👨‍👩‍👧</div><h4>家人加入交叉分析</h4><p>可將家人一同排盤，分析彼此五行生剋與相處之道，是市面少見的家庭命理特色功能。</p></div>
+    <div class="feat"><div class="fic">雙</div><h4>雙系統交叉比對</h4><p>北派紫微宮位推演＋子平八字五行生剋，雙重驗證、排除單一系統盲區，解析更深更準。</p></div>
+    <div class="feat"><div class="fic">曆</div><h4>高精度曆法引擎</h4><p>內建農曆、節氣、干支精算（西元 1900–2100），每一筆生辰轉換毫釐不差，忠實還原命格。</p></div>
+    <div class="feat"><div class="fic">造</div><h4>從宿命到造命</h4><p>不談令人恐懼的宿命論，而是一份客觀的人生策略指南——讓您在對的時間，做對的決定。</p></div>
+    <div class="feat"><div class="fic">家</div><h4>家人加入交叉分析</h4><p>可將家人一同排盤，分析彼此五行生剋與相處之道，是市面少見的家庭命理特色功能。</p></div>
   </div>
   <details class="introdetail">
     <summary>展開完整說明 — 為什麼你需要這本「人生說明書」</summary>
@@ -1007,7 +1013,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">🖨　下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
 </div>
@@ -1022,7 +1028,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
 <footer>
   <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。</div>
-  <div>©️ 2026 人生實用說明書系統．政遠大師 版權所有 · 願君順遂 · ☯</div>
+  <div>© 2026 人生實用說明書系統．政遠大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
 <script>
@@ -1542,28 +1548,28 @@ function sunSign(m,d){const t=m*100+d;
 
 /* ================= 塔羅生日本命牌 ================= */
 const TAROT=[
- {n:"愚者",e:"The Fool",g:"🃏",d:"純真無畏、勇於冒險、相信無限可能，順從直覺輕裝啟程。你的人生主題是保持赤子之心，勇敢踏出未知的第一步。"},
- {n:"魔術師",e:"The Magician",g:"🪄",d:"創造力與意志力的化身，善於整合資源、化想法為現實。你天生具備心想事成的能量，關鍵在於專注與行動。"},
- {n:"女祭司",e:"The High Priestess",g:"🌙",d:"直覺、智慧與神秘的守護者，內在聲音格外清晰。你的力量來自靜定與洞察，宜信任潛意識的指引。"},
- {n:"皇后",e:"The Empress",g:"👑",d:"豐饒、母性與創造之愛，懂得滋養人事物。你帶來富足與溫暖，宜善用美感與包容成就豐盛人生。"},
- {n:"皇帝",e:"The Emperor",g:"🏛",d:"權威、結構與領導之力，善於建立秩序與規則。你是天生的領導者，宜以穩健與責任打造堅實基業。"},
- {n:"教皇",e:"The Hierophant",g:"📜",d:"傳統、信仰與教導的傳遞者，重視精神與道德。你適合成為引導者與傳承者，宜在信念中找到歸屬。"},
- {n:"戀人",e:"The Lovers",g:"💕",d:"愛、選擇與價值的結合，重視關係與和諧。你的課題是忠於內心的選擇，在愛與抉擇中成長。"},
- {n:"戰車",e:"The Chariot",g:"🛡",d:"意志、勝利與掌控之力，勇往直前不畏挑戰。你具備克服阻礙的決心，宜以自律駕馭方向、贏得勝利。"},
- {n:"力量",e:"Strength",g:"🦁",d:"勇氣、耐心與以柔克剛，內在力量勝過蠻力。你能以溫柔與堅定馴服困境，宜培養內在的篤定。"},
- {n:"隱者",e:"The Hermit",g:"🕯",d:"內省、智慧與獨處之光，善於探尋真理。你的智慧來自沉澱與自省，宜在獨處中找到方向，再照亮他人。"},
- {n:"命運之輪",e:"Wheel of Fortune",g:"🎡",d:"轉機、循環與機運，人生起伏皆有時。你善於把握轉機、順應變化，宜以豁達迎接命運的流轉。"},
- {n:"正義",e:"Justice",g:"⚖️",d:"公正、平衡與因果，誠實面對一切。你重視公平與責任，宜以理性與誠信行事，種善因得善果。"},
- {n:"吊人",e:"The Hanged Man",g:"🙃",d:"犧牲、轉念與放下，換個角度看世界。你的成長來自轉念與等待，宜在沉潛中領悟、以退為進。"},
- {n:"死神",e:"Death",g:"🦋",d:"結束與重生、蛻變與更新。你善於放下舊我、迎接新生，宜擁抱改變，破繭而出方見蝶舞。"},
- {n:"節制",e:"Temperance",g:"🍶",d:"平衡、調和與耐心，中庸之道的藝術。你懂得調節與整合，宜以耐心與節制，調出生命的和諧。"},
- {n:"惡魔",e:"The Devil",g:"⛓",d:"慾望、束縛與執著，覺察內在的陰影。你的課題是認清慾望與框限，宜覺察並掙脫束縛，重獲自由。"},
- {n:"高塔",e:"The Tower",g:"⚡",d:"劇變、覺醒與重建，打破虛假的安穩。你能在劇變中覺醒重生，宜以彈性面對突發，於破中立新。"},
- {n:"星星",e:"The Star",g:"⭐",d:"希望、療癒與靈感，黑暗中的指引之光。你帶來希望與療癒，宜懷抱信念、追隨內心的光，必有所成。"},
- {n:"月亮",e:"The Moon",g:"🌕",d:"潛意識、直覺與未知，面對內心的迷霧。你直覺敏銳、富想像力，宜釐清幻象與真實，勇敢面對未知。"},
- {n:"太陽",e:"The Sun",g:"☀️",d:"喜悅、成功與活力，光明圓滿的能量。你自帶光芒、充滿生命力，宜以樂觀與真誠，照亮自己與他人。"},
- {n:"審判",e:"Judgement",g:"📯",d:"覺醒、召喚與重生，回應內在的呼喚。你善於自省與更新，宜傾聽內在召喚，做出蛻變的關鍵抉擇。"},
- {n:"世界",e:"The World",g:"🌍",d:"圓滿、成就與整合，旅程的完成與新章。你終能整合一切、成就圓滿，宜以全局視野，迎向更高的階段。"}
+ {n:"愚者",e:"The Fool",g:"0",d:"純真無畏、勇於冒險、相信無限可能，順從直覺輕裝啟程。你的人生主題是保持赤子之心，勇敢踏出未知的第一步。"},
+ {n:"魔術師",e:"The Magician",g:"I",d:"創造力與意志力的化身，善於整合資源、化想法為現實。你天生具備心想事成的能量，關鍵在於專注與行動。"},
+ {n:"女祭司",e:"The High Priestess",g:"II",d:"直覺、智慧與神秘的守護者，內在聲音格外清晰。你的力量來自靜定與洞察，宜信任潛意識的指引。"},
+ {n:"皇后",e:"The Empress",g:"III",d:"豐饒、母性與創造之愛，懂得滋養人事物。你帶來富足與溫暖，宜善用美感與包容成就豐盛人生。"},
+ {n:"皇帝",e:"The Emperor",g:"IV",d:"權威、結構與領導之力，善於建立秩序與規則。你是天生的領導者，宜以穩健與責任打造堅實基業。"},
+ {n:"教皇",e:"The Hierophant",g:"V",d:"傳統、信仰與教導的傳遞者，重視精神與道德。你適合成為引導者與傳承者，宜在信念中找到歸屬。"},
+ {n:"戀人",e:"The Lovers",g:"VI",d:"愛、選擇與價值的結合，重視關係與和諧。你的課題是忠於內心的選擇，在愛與抉擇中成長。"},
+ {n:"戰車",e:"The Chariot",g:"VII",d:"意志、勝利與掌控之力，勇往直前不畏挑戰。你具備克服阻礙的決心，宜以自律駕馭方向、贏得勝利。"},
+ {n:"力量",e:"Strength",g:"VIII",d:"勇氣、耐心與以柔克剛，內在力量勝過蠻力。你能以溫柔與堅定馴服困境，宜培養內在的篤定。"},
+ {n:"隱者",e:"The Hermit",g:"IX",d:"內省、智慧與獨處之光，善於探尋真理。你的智慧來自沉澱與自省，宜在獨處中找到方向，再照亮他人。"},
+ {n:"命運之輪",e:"Wheel of Fortune",g:"X",d:"轉機、循環與機運，人生起伏皆有時。你善於把握轉機、順應變化，宜以豁達迎接命運的流轉。"},
+ {n:"正義",e:"Justice",g:"XI",d:"公正、平衡與因果，誠實面對一切。你重視公平與責任，宜以理性與誠信行事，種善因得善果。"},
+ {n:"吊人",e:"The Hanged Man",g:"XII",d:"犧牲、轉念與放下，換個角度看世界。你的成長來自轉念與等待，宜在沉潛中領悟、以退為進。"},
+ {n:"死神",e:"Death",g:"XIII",d:"結束與重生、蛻變與更新。你善於放下舊我、迎接新生，宜擁抱改變，破繭而出方見蝶舞。"},
+ {n:"節制",e:"Temperance",g:"XIV",d:"平衡、調和與耐心，中庸之道的藝術。你懂得調節與整合，宜以耐心與節制，調出生命的和諧。"},
+ {n:"惡魔",e:"The Devil",g:"XV",d:"慾望、束縛與執著，覺察內在的陰影。你的課題是認清慾望與框限，宜覺察並掙脫束縛，重獲自由。"},
+ {n:"高塔",e:"The Tower",g:"XVI",d:"劇變、覺醒與重建，打破虛假的安穩。你能在劇變中覺醒重生，宜以彈性面對突發，於破中立新。"},
+ {n:"星星",e:"The Star",g:"XVII",d:"希望、療癒與靈感，黑暗中的指引之光。你帶來希望與療癒，宜懷抱信念、追隨內心的光，必有所成。"},
+ {n:"月亮",e:"The Moon",g:"XVIII",d:"潛意識、直覺與未知，面對內心的迷霧。你直覺敏銳、富想像力，宜釐清幻象與真實，勇敢面對未知。"},
+ {n:"太陽",e:"The Sun",g:"XIX",d:"喜悅、成功與活力，光明圓滿的能量。你自帶光芒、充滿生命力，宜以樂觀與真誠，照亮自己與他人。"},
+ {n:"審判",e:"Judgement",g:"XX",d:"覺醒、召喚與重生，回應內在的呼喚。你善於自省與更新，宜傾聽內在召喚，做出蛻變的關鍵抉擇。"},
+ {n:"世界",e:"The World",g:"XXI",d:"圓滿、成就與整合，旅程的完成與新章。你終能整合一切、成就圓滿，宜以全局視野，迎向更高的階段。"}
 ];
 function tarotBirth(y,m,d){
  const sd=n=>String(n).split('').reduce((a,c)=>a+ +c,0);
@@ -2102,7 +2108,7 @@ function run(){
 const CAST_CFG={
   comp:{center:"☯",orbit:["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"],title:"大師正在為您排紫微命盤",sub:"ZIWEI DOUSHU · 紫微斗數"},
   west:{center:"☉",orbit:["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"],title:"正在為您繪製星盤",sub:"WESTERN ASTROLOGY"},
-  vedic:{center:"🕉",orbit:["☉","☽","♂","☿","♃","♀","♄","☊","☋"],title:"大師正在推演吠陀星盤",sub:"VEDIC JYOTISH"},
+  vedic:{center:"ॐ",orbit:["☉","☽","♂","☿","♃","♀","♄","☊","☋"],title:"大師正在推演吠陀星盤",sub:"VEDIC JYOTISH"},
   num:{center:"✦",orbit:["1","2","3","4","5","6","7","8","9","11","22","33"],title:"正在演算您的生命靈數",sub:"NUMEROLOGY · LIFE PATH"},
   mige:{center:"米",orbit:["乾","兌","離","震","巽","坎","艮","坤"],title:"虔心撒米 · 大師正在起卦",sub:"MEIHUA · 米卦梅花易數"},
   guigua:{center:"龜",orbit:["☰","☱","☲","☳","☴","☵","☶","☷"],title:"搖動龜殼 · 大師正在卜卦",sub:"LIU YAO · 烏龜金錢卦"},
@@ -2485,7 +2491,7 @@ function renderTarot(name,gender,sol,sub){
   const html=`
   <div class="sec-title"><span class="cn">塔羅 · 生日本命牌</span><span class="en">Tarot Birth Card</span></div>
   <div class="tarotcard">
-    <div class="tnum">${idx===0?"0":idx} · MAJOR ARCANA</div>
+    <div class="tnum">MAJOR ARCANA</div>
     <div class="tglyph">${c.g}</div>
     <div class="tname">${c.n}</div>
     <div class="teng">${c.e}</div>
@@ -2506,7 +2512,7 @@ function renderVedic(name,gender,sol,sub){
   const html=`
   <div class="sec-title"><span class="cn">印度吠陀 · 星座與月宿</span><span class="en">Vedic Jyotish</span></div>
   <div class="bigsign">
-    <div class="glyph" style="color:var(--gold-bright)">🕉</div>
+    <div class="glyph" style="color:var(--gold-bright)">ॐ</div>
     <div class="sname">${RASHI[v.rashi]}</div>
     <div class="seng">Rāśi · 恆星太陽宮</div>
     <div class="smeta">
@@ -2564,7 +2570,7 @@ document.getElementById("pdfBtn").addEventListener("click",()=>{
   const note=document.getElementById('pdfNote');
   if(isInAppBrowser()){
     // 內建瀏覽器（LINE/FB/IG 等）會封鎖列印，導致「按了沒反應」。引導改用系統瀏覽器。
-    if(note){note.innerHTML='⚠️ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';note.style.color='#c2576f';}
+    if(note){note.innerHTML='※ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';note.style.color='#c2576f';}
     try{navigator.clipboard&&navigator.clipboard.writeText(location.href);}catch(e){}
     return;
   }
@@ -2955,18 +2961,18 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
 
   <div class="sec-title"><span class="cn">子平八字 · 四柱</span><span class="en">Four Pillars of Destiny</span></div>
-  <div class="lucksub"><span class="taphint">👆 點選任一柱，看年月日時柱的含義與十神白話解說</span></div>
+  <div class="lucksub"><span class="taphint">點選任一柱，看年月日時柱的含義與十神白話解說</span></div>
   <div class="pillars">${pillarHTML}</div>
   <div class="divider"><span>五行能量</span></div>
-  <div class="lucksub"><span class="taphint">👆 點選任一五行，看其旺弱含義、開運色彩方位與舉例</span></div>
+  <div class="lucksub"><span class="taphint">點選任一五行，看其旺弱含義、開運色彩方位與舉例</span></div>
   <div class="wuxing">${wxHTML}</div>
 
   <div class="divider"><span>大運流轉（每柱十年）</span></div>
-  <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運<br><span class="taphint">👆 點選任一柱大運，看該十年運勢白話解說</span></div>
+  <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運<br><span class="taphint">點選任一柱大運，看該十年運勢白話解說</span></div>
   <div class="luckwrap"><div class="luckrow">${luckHTML}</div></div>
 
   <div class="sec-title"><span class="cn">紫微斗數 · 命盤十二宮</span><span class="en">Zi Wei Dou Shu · Twelve Palaces</span></div>
-  <div class="lucksub"><span class="taphint">👆 點選任一宮位，看該宮星曜與宮職的白話解說</span></div>
+  <div class="lucksub"><span class="taphint">點選任一宮位，看該宮星曜與宮職的白話解說</span></div>
   <div class="chart">${chartCells}${centerHTML}</div>
   <div class="chartnote">
     <span><b class="cs">主星</b> 十四主星（紫微·天府兩系）</span>
@@ -2977,7 +2983,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
 
   <div id="paywall" class="paywall">
-    <div class="pwlock">🔒</div>
+    <div class="pwlock">鎖</div>
     <h3>解鎖 ${name} 的完整命理精析</h3>
     <div class="pwsub">以上命盤十二宮、八字四柱與大運流轉皆可免費瀏覽；以下為深度付費內容</div>
     <ul class="pwlist">
@@ -2995,14 +3001,14 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <button onclick="lcUnlock()">解鎖</button>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
-    <div class="pwnote">🔒 萬用碼為一次性，使用後即失效，全世界只能用一次；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
+    <div class="pwnote">萬用碼為一次性，使用後即失效，全世界只能用一次；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
   <div id="premZone" class="locked">
   ${scoreSection(scores)}
 
   <div class="divider"><span>日主旺衰 · 喜用神</span></div>
-  <div class="lucksub"><span class="taphint">👆 點此看「身強／身弱」白話解說與喜用神生活應用</span></div>
+  <div class="lucksub"><span class="taphint">點此看「身強／身弱」白話解說與喜用神生活應用</span></div>
   <div class="strength tap" onclick="zwStrength()">
     <div class="slevel ${st.level==='身強'?'strong':st.level==='身弱'?'weak':'mid'}">${st.level}</div>
     <div class="stext">${strengthTxt}</div>
@@ -3169,7 +3175,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="rp-adv">${ppAdvice}</ul>
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
-    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　©️ 2026 人生實用說明書系統．政遠大師 版權所有</div>
+    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
   </div>`;
   const rp=document.getElementById("reportPrint");
   if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
