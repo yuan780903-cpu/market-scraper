@@ -857,6 +857,17 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .lcmsg{min-height:20px;font-size:.88rem;margin-top:6px}
 .paywall .lcmsg.err{color:#c2576f}.paywall .lcmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
+.paywall .lpwrap{margin:10px auto 2px;max-width:430px}
+.paywall .lpbtn{display:inline-flex;align-items:center;gap:9px;justify-content:center;width:100%;
+  padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1.06rem;font-weight:800;
+  color:#fff;background:#06C755;box-shadow:0 8px 20px rgba(6,199,85,.35);transition:.2s;letter-spacing:.5px}
+.paywall .lpbtn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(6,199,85,.45)}
+.paywall .lpbtn:active{transform:translateY(0)}
+.paywall .lpbtn .lpmark{background:#fff;color:#06C755;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem}
+.paywall .lpsec{font-size:.74rem;color:var(--ink-faint);margin-top:7px}
+.paywall .pwor{position:relative;text-align:center;margin:16px auto 12px;max-width:430px;color:var(--ink-faint);font-size:.78rem}
+.paywall .pwor::before{content:"";position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--line-soft)}
+.paywall .pwor span{position:relative;background:#fdf6e6;padding:0 12px}
 .toolbar.lockpdf .pdfbtn{opacity:.6}
 @media print{.paywall{display:none!important}#premZone.locked{display:none!important}}
 </style>
@@ -2639,6 +2650,78 @@ async function lcUnlock(){
   }
 }
 
+/* ===== LINE Pay 自動解鎖 =====
+   流程：前端送出 key(報告識別) + ret(返回網址) → Worker 建立付款 → 導向 LINE Pay；
+   付款成功後 LINE Pay 導回 Worker /linepay/confirm，確認後 302 回本頁帶 ?lpok=訂單號；
+   本頁向 /linepay/state 確認該訂單已付款 → 寫入本機解鎖 → 自動重排該命盤。 */
+const LP_FORM_KEYS=['system','date','time','name','city'];
+let __lpInfo=undefined; // 快取 /linepay/ready 結果
+async function lpReady(){
+  if(__lpInfo!==undefined)return __lpInfo;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/linepay/ready',{cache:'no-store'});
+    const j=await r.json();__lpInfo=(j&&j.enabled)?j:null;
+  }catch(e){__lpInfo=null;}
+  return __lpInfo;
+}
+async function lpMaybeShowButton(){
+  const info=await lpReady();if(!info)return;
+  const w=document.getElementById('lpBtnWrap'),d=document.getElementById('lpDiv');
+  if(w)w.style.display='';if(d)d.style.display='';
+  if(info.mode==='sandbox'){
+    const sec=w&&w.querySelector('.lpsec');
+    if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為 LINE Pay 沙盒測試模式，非真實扣款）</div>');}
+  }
+}
+async function lcStartLinePay(){
+  const msg=document.getElementById('lcMsg');
+  if(!window.__LC){return;}
+  const key=await lcKey(window.__LC.payload);
+  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
+  form.gender=gender;
+  try{localStorage.setItem('zw_lp_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
+  if(msg){msg.textContent='正在前往 LINE Pay 付款頁…';msg.className='lcmsg';}
+  const ret=location.origin+location.pathname;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/linepay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.paymentUrl){location.href=j.paymentUrl;}
+    else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請改用萬用碼或稍後再試。';msg.className='lcmsg err';}
+  }catch(e){if(msg){msg.textContent='✗ 無法連線付款伺服器，請稍後再試。';msg.className='lcmsg err';}}
+}
+async function lpHandleReturn(){
+  const p=new URLSearchParams(location.search);
+  const ok=p.get('lpok'),fail=p.get('lpfail'),cancel=p.get('lpcancel');
+  if(!ok&&!fail&&!cancel)return false;
+  const clean=()=>{try{history.replaceState(null,'',location.origin+location.pathname);}catch(e){}};
+  let pend=null;try{pend=JSON.parse(localStorage.getItem('zw_lp_pending')||'null');}catch(e){}
+  if(ok&&pend){
+    try{
+      const r=await fetch(LC_API.replace(/\/+$/,'')+'/linepay/state?order='+encodeURIComponent(ok),{cache:'no-store'});
+      const j=await r.json();
+      if(j&&j.paid&&j.key===pend.key){
+        try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
+        localStorage.removeItem('zw_lp_pending');clean();
+        lpRestoreAndRender(pend.form);return true;
+      }
+    }catch(e){}
+    localStorage.removeItem('zw_lp_pending');clean();
+    alert('付款驗證未通過。若您已被扣款，請聯絡 政遠大師（LINE：yuan780903）協助處理。');return true;
+  }
+  if(fail){localStorage.removeItem('zw_lp_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
+  if(cancel){localStorage.removeItem('zw_lp_pending');clean();return true;}
+  return false;
+}
+function lpRestoreAndRender(form){
+  if(!form)return;
+  LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el&&form[id]!=null)el.value=form[id];});
+  if(form.gender){gender=form.gender;document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x.dataset.g===form.gender));}
+  const sysSel2=document.getElementById('system');
+  if(sysSel2){const fw=document.getElementById('famwrap');if(fw)fw.style.display=sysSel2.value==='comp'?'':'none';document.body.dataset.theme=sysSel2.value;}
+  run();
+  setTimeout(()=>{const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});},2600);
+}
+
 /* ===== 觸控彈窗：宮位／大運白話解說 ===== */
 function zwOpenModal(tag,title,sub,bodyHTML){
   document.getElementById("zwmTag").textContent=tag;
@@ -3001,6 +3084,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </ul>
     <div class="pworig">原價 <s>${LC_ORIG}</s></div>
     <div class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="lpBtnWrap" class="lpwrap" style="display:none">
+      <button id="lpBtn" class="lpbtn" onclick="lcStartLinePay()"><span class="lpmark">LINE</span>Pay 付款・付完自動解鎖</button>
+      <div class="lpsec">透過 LINE Pay 安全付款，完成後立即自動開啟完整報告，免輸入任何代碼。</div>
+    </div>
+    <div id="lpDiv" class="pwor" style="display:none"><span>或　輸入萬用碼</span></div>
     <div class="pwbuy">${LC_CONTACT}</div>
     <div class="pwform">
       <input id="lcInput" type="text" inputmode="numeric" placeholder="在此輸入萬用碼（例如 0123）" autocomplete="off" spellcheck="false">
@@ -3188,7 +3276,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   finishRender(subText);
   lcRefresh();
+  lpMaybeShowButton();
 }
+
+/* 進站時處理 LINE Pay 付款返回（?lpok / ?lpfail / ?lpcancel） */
+lpHandleReturn();
 </script>
 </body>
 </html>
