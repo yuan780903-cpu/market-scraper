@@ -667,6 +667,54 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .hexcard .hexlevel{padding:2px 12px;border:1.5px solid;border-radius:18px;font-weight:700}
 @media(max-width:480px){.ighero,.guiwrap{padding:16px 12px;gap:14px}.ighglyph{font-size:3.6rem}
   .yaodiagram{width:108px}.yao.yang .bar{width:98px}.yao .dot{right:-18px}}
+/* ===== 可觸控宮位／大運 ===== */
+.cell.tap,.luckcol.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease,box-shadow .2s ease,border-color .2s ease}
+.cell.tap:hover,.luckcol.tap:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.16);border-color:var(--gold)}
+.cell.tap:active,.luckcol.tap:active{transform:translateY(-1px) scale(.99)}
+.cell.tap::after{content:"點我看解說";position:absolute;left:50%;bottom:6px;transform:translateX(-50%);
+  font-size:.5rem;letter-spacing:1px;color:var(--gold-deep);background:var(--head);border:1px solid var(--line-soft);
+  padding:1px 7px;border-radius:10px;opacity:0;transition:opacity .2s ease;pointer-events:none;white-space:nowrap}
+.cell.tap:hover::after{opacity:.92}
+.luckcol.tap{position:relative}
+.luckcol.tap::after{content:"➜";position:absolute;top:6px;right:8px;font-size:.6rem;color:var(--gold);opacity:.5}
+/* 彈窗 */
+.zwmodal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;
+  background:rgba(20,12,30,.55);backdrop-filter:blur(4px);padding:18px}
+.zwmodal.on{display:flex;animation:zwfade .25s ease}
+@keyframes zwfade{from{opacity:0}to{opacity:1}}
+.zwmcard{position:relative;width:min(560px,94vw);max-height:86vh;overflow-y:auto;
+  background:linear-gradient(165deg,var(--head),var(--wash));border:1px solid var(--gold);
+  border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.4);padding:26px 26px 28px;animation:zwpop .3s cubic-bezier(.2,1,.36,1)}
+@keyframes zwpop{from{transform:translateY(24px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.zwmclose{position:absolute;top:12px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:var(--wash);color:var(--gold-deep);font-size:1.4rem;line-height:1;cursor:pointer;transition:.2s}
+.zwmclose:hover{background:var(--gold);color:#fff;transform:rotate(90deg)}
+.zwmhead{border-bottom:1px solid var(--line-soft);padding-bottom:14px;margin-bottom:16px;padding-right:34px}
+.zwmtag{display:inline-block;font-size:.66rem;letter-spacing:2px;color:var(--purple);border:1px solid var(--purple);
+  border-radius:12px;padding:2px 12px;margin-bottom:9px}
+.zwmhead h3{margin:0;font-size:1.5rem;color:var(--gold-bright);letter-spacing:2px}
+.zwmsub{margin-top:6px;font-size:.84rem;color:var(--ink-faint);letter-spacing:1px}
+.zwmbody{font-size:.96rem;line-height:1.85;color:var(--ink)}
+.zwmbody .zwsec{margin:16px 0 6px;font-weight:700;color:var(--gold-deep);font-size:.92rem;
+  display:flex;align-items:center;gap:7px}
+.zwmbody .zwsec::before{content:"";width:5px;height:16px;background:var(--gold);border-radius:3px}
+.zwmbody p{margin:4px 0 10px}
+.zwmbody .zwstar{border:1px solid var(--line-soft);border-radius:12px;padding:11px 14px;margin:8px 0;background:rgba(0,0,0,.025)}
+.zwmbody .zwstar b{color:var(--gold-bright);font-size:1.02rem}
+.zwmbody .zwstar .zwst{display:block;color:var(--purple);font-size:.78rem;margin:2px 0 5px}
+.zwmbody .zwbadges{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.zwmbody .zwb{font-size:.72rem;padding:2px 11px;border-radius:11px;font-weight:700;color:#fff}
+.zwmbody .zwb.ming{background:#9a6cc0}.zwmbody .zwb.shen{background:#3f9b73}
+.zwmbody .zwb.lim{background:#c08a3a}.zwmbody .zwb.ln{background:#d0674a}
+.zwmbody .zwkv{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}
+.zwmbody .zwkv span{font-size:.82rem;background:var(--wash);border:1px solid var(--line-soft);border-radius:10px;padding:3px 11px}
+.zwmbody .zwkv b{color:var(--gold-deep)}
+.zwmbody .zwtags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.zwmbody .zwtag2{font-size:.72rem;color:var(--gold-deep);border:1px dashed var(--gold);border-radius:10px;padding:1px 9px}
+@media print{.zwmodal{display:none!important}}
+.taphint{display:inline-block;margin-top:5px;font-size:.74rem;color:var(--purple);background:var(--pwash);
+  border:1px dashed var(--purple);border-radius:12px;padding:2px 12px;letter-spacing:.5px}
+@media print{.taphint{display:none!important}}
 </style>
 </head>
 <body>
@@ -740,6 +788,14 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
   <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">🖨　下載 PDF 專業報告</button><span class="tbnote">將開啟列印視窗，選擇「另存為 PDF」即可</span></div>
   <div id="result"></div>
+</div>
+
+<div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
+  <div class="zwmcard" role="dialog" aria-modal="true">
+    <button class="zwmclose" onclick="zwCloseModal()" aria-label="關閉">×</button>
+    <div class="zwmhead"><span class="zwmtag" id="zwmTag"></span><h3 id="zwmTitle"></h3><div class="zwmsub" id="zwmSub"></div></div>
+    <div class="zwmbody" id="zwmBody"></div>
+  </div>
 </div>
 
 <footer>
@@ -1141,19 +1197,47 @@ const STAR_DESC={
  武曲:{t:"財帛之星 · 剛毅務實",d:"武曲為財星，主剛毅、果決與行動。命坐武曲者意志堅定、執行力強，擅理財經商，重承諾、講效率。性情略剛，宜柔以濟剛；財由勤中得，腳踏實地者最得其利。",tags:["財星","剛毅","實幹","理財"]},
  天同:{t:"福德之星 · 溫和享福",d:"天同為福星，主溫和、享受與情感。命坐天同者性情敦厚、知足樂天，人緣佳、富同情心，懂得生活情趣。福澤深厚惟易安逸，宜立定目標、激發進取，福中更添成就。",tags:["福星","溫和","知足","人緣"]},
  廉貞:{t:"次桃花 · 才華權謀",d:"廉貞主才華、情感與權變，性格剛柔並濟、極富魅力。命坐廉貞者重情重義、做事用心，多才多藝亦帶幾分叛逆。情感豐沛宜善加駕馭，化激情為專注，事業情場皆能出色。",tags:["才華","魅力","重情","權變"]},
- 天府:{t:"庫藏之星 · 穩重持家",d:"天府為財庫，主穩重、包容與守成。命坐天府者temperament穩健大方、善於管理積蓄，重視安全感與生活品質，是天生的守成之才。宜在穩中求進，避免過於保守而失良機。",tags:["財庫","穩重","包容","守成"]},
+ 天府:{t:"庫藏之星 · 穩重持家",d:"天府為財庫，主穩重、包容與守成。命坐天府者性情穩健大方、善於管理積蓄，重視安全感與生活品質，是天生的守成之才。宜在穩中求進，避免過於保守而失良機。",tags:["財庫","穩重","包容","守成"]},
  太陰:{t:"月華之星 · 細膩內斂",d:"太陰主柔美、財富與母性，象徵潔淨內斂之美。命坐太陰者心思細膩、重感情、富藝術氣質，善體人意、宜近水近財。夜生人尤吉。情感豐富易感傷，宜開朗以養其光。",tags:["柔美","細膩","藏富","藝術"]},
  貪狼:{t:"桃花之星 · 多才慾旺",d:"貪狼主慾望、才藝與交際，是斗數第一桃花。命坐貪狼者多才多藝、八面玲瓏，慾望強而企圖心旺，喜新奇、善交際應酬。能量旺盛宜善導，化慾為志，則動能無窮、成就斐然。",tags:["多才","交際","企圖心","桃花"]},
- 巨門:{t:"暗曜之星 · 口才思辨",d:"巨門主口舌、思辨與鑽研。命坐巨門者口才便給、analytical善分析，適合以口為業（律師、業務、教學、傳播）。言詞犀利易生是非，宜修口德、以誠待人，化辯才為信譽。",tags:["口才","思辨","專研","傳播"]},
+ 巨門:{t:"暗曜之星 · 口才思辨",d:"巨門主口舌、思辨與鑽研。命坐巨門者口才便給、擅長分析思辨，適合以口為業（律師、業務、教學、傳播）。言詞犀利易生是非，宜修口德、以誠待人，化辯才為信譽。",tags:["口才","思辨","專研","傳播"]},
  天相:{t:"印星 · 端正輔佐",d:"天相為印星，主誠信、輔佐與服務。命坐天相者相貌端正、處事公允，重衣食體面、樂於助人，是極佳的副手與協調者。宜培養主見與決斷，於輔佐中亦能展現自身價值。",tags:["誠信","輔佐","公允","體面"]},
  天梁:{t:"蔭星 · 化厄庇佑",d:"天梁為蔭星，主庇佑、原則與長者風範。命坐天梁者正直有原則、好施好義，逢凶能化、遇難呈祥，宜醫卜、公職、監察之業。喜照顧他人、略帶說教，宜外圓內方，福蔭更廣。",tags:["庇佑","正直","逢凶化吉","長者"]},
  七殺:{t:"將星 · 果敢開創",d:"七殺為將星，主威猛、開創與獨立。命坐七殺者性格剛烈、勇於任事，喜獨當一面、開疆闢土，人生多起伏而能愈挫愈勇。宜剛中帶柔、謀定後動，將衝勁化為持久的開創之力。",tags:["將星","果敢","獨立","開創"]},
  破軍:{t:"耗星 · 破舊立新",d:"破軍主變革、衝撞與開創。命坐破軍者敢衝敢拚、勇於突破舊局，不畏變動、富開拓精神，宜創業、變革、外勤之路。能量強而耗，宜把握方向、量力而為，於破舊中立新方為大用。",tags:["變革","開拓","突破","衝勁"]},
  空宮:{t:"借星安命 · 包容多元",d:"命宮無主星，謂之「空宮」，須借對宮星曜論命。此格者性格較具彈性與包容，受環境與際遇影響大，宜多方歷練、確立志向。空宮非弱，反主多元發展、晚成大器，定性者最能成就。",tags:["彈性","包容","多元","晚成"]}
 };
+/* 十二宮職掌（白話） */
+const PALACE_DESC={
+ 命宮:"一生命格的核心，代表個性、才華、外貌與人生格局的總方向，是看一個人「先天本質」的第一宮。命宮的星曜，最能說明你天生是什麼樣的人。",
+ 兄弟:"看兄弟姊妹、同事朋友、合夥人之間的緣分厚薄與助力多寡，也反映你與平輩相處、合作共事的關係。",
+ 夫妻:"看婚姻感情、配偶的個性與相處模式，是觀察你感情生活、另一半樣貌與夫妻互動的關鍵宮位。",
+ 子女:"看子女緣分、子女的個性與親子關係，也代表你的創造力、桃花情慾，以及對晚輩部屬的緣分。",
+ 財帛:"看一生的財富來源、理財方式與賺錢能力，是觀察「正財運與用錢觀念」的主宮。",
+ 疾厄:"看健康體質、容易出狀況的身體部位與情緒壓力，是觀測身心健康與抗壓能力的宮位。",
+ 遷移:"看出外運、遠行、搬遷與在外的人際際遇，你適合「動」還是「守」、出外有無貴人，都看此宮。",
+ 交友:"看朋友、部屬、人脈的品質與助力，反映你的社交圈、貴人與小人，以及領導下屬的緣分。",
+ 官祿:"看事業、工作、地位與功名，是觀察職涯發展方向、工作型態與成就高低的事業主宮。",
+ 田宅:"看不動產、居家環境與家庭運勢，也代表「財庫」的守藏能力——能不能存得住錢看此宮。",
+ 福德:"看精神生活、興趣嗜好、福分享受與內在的安定感，反映你的心靈品質與晚年福澤。",
+ 父母:"看與父母長輩的緣分、受到的庇蔭與相處狀況，也代表長官提攜、文書、名譽與學業。"
+};
+/* 大運十神 · 十年運勢白話 */
+const LUCK_TG={
+ 比肩:"這十年主自立與競爭。靠自己打拼、培養實力的階段，適合與人並肩共事，但要慎防為財與兄弟朋友傷和氣，凡事量力而為、站穩腳步。",
+ 劫財:"這十年財來財去、競爭加劇。利於合夥衝刺卻也易破財拆夥，切忌為人作保、盲目投資，守財、守成是這十年的功課。",
+ 食神:"這十年才華洋溢、口福享受。適合發揮專長、輕鬆生財，身心愉快、貴人緣佳，是相對順遂安逸的十年，宜把握展現才藝的機會。",
+ 傷官:"這十年聰明外顯、表現慾旺。利於創作、技藝與突破舊框，但容易頂撞長官、招惹口舌是非，宜守口德、收斂鋒芒，才氣方能化為助力。",
+ 偏財:"這十年機會財旺、人脈活絡。利於業務、投資與副業，財源多元、異性緣與交際也佳，惟財來財去，懂得落袋為安才是真得利。",
+ 正財:"這十年務實穩健、正財豐收。適合本業深耕、置產儲蓄，是踏實累積財富的好時機，感情婚姻也趨向穩定踏實。",
+ 七殺:"這十年充滿開創與挑戰。事業多變動與競爭壓力，宜化壓力為動力、勇於任事，能闖出一番格局，但要留意健康與一時衝動。",
+ 正官:"這十年主名位與責任。利於升遷、考試、求取地位功名，宜守法自律、按部就班；女命此運多主感情婚姻之機緣。",
+ 偏印:"這十年心思敏銳、偏好鑽研。適合深耕專業、宗教身心與冷門學問，但易顯孤獨多慮、人際疏離，宜主動social、保持積極。",
+ 正印:"這十年得貴人庇蔭、利於學識。適合進修考試、受長輩提攜，名譽聲望提升，是修養身心、廣結善緣、穩中向上的十年。"
+};
 const DAYMASTER_DESC={
  甲:"甲木為棟梁之木，仁厚正直、積極向上，具開創力與責任感，如參天大樹般頂天立地，惟有時略顯固執，宜柔順以應變。",
- 乙:"乙木為花草之木，柔韌靈巧、temperament溫和細膩，善於變通、適應力強，外柔內韌，如藤蔓般百折不撓，宜增果決之氣。",
+ 乙:"乙木為花草之木，柔韌靈巧、性情溫和細膩，善於變通、適應力強，外柔內韌，如藤蔓般百折不撓，宜增果決之氣。",
  丙:"丙火為太陽之火，熱情開朗、光明磊落，充滿活力與感染力，樂於付出、不藏私，惟須收斂急躁，蓄光以致遠。",
  丁:"丁火為燈燭之火，溫暖細膩、思慮周密，外靜內熱、富奉獻精神，如明燈照人，宜堅定信念，勿因多思而搖擺。",
  戊:"戊土為高山之土，敦厚穩重、誠信可靠，包容力強、處變不驚，是值得信賴的中流砥柱，宜增靈活，免於過於保守。",
@@ -2176,6 +2260,69 @@ function timeLabel(h){
   return ZHI[z]+"時";
 }
 
+/* ===== 觸控彈窗：宮位／大運白話解說 ===== */
+function zwOpenModal(tag,title,sub,bodyHTML){
+  document.getElementById("zwmTag").textContent=tag;
+  document.getElementById("zwmTitle").textContent=title;
+  document.getElementById("zwmSub").textContent=sub||"";
+  document.getElementById("zwmBody").innerHTML=bodyHTML;
+  const m=document.getElementById("zwModal");m.classList.add("on");
+  m.querySelector(".zwmcard").scrollTop=0;
+  document.body.style.overflow="hidden";
+}
+function zwCloseModal(){const m=document.getElementById("zwModal");if(m){m.classList.remove("on");}document.body.style.overflow="";}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")zwCloseModal();});
+
+function zwPalace(b){
+  const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name;
+  const pname=zw.palaceName[b], gz=zw.palaceGan[b]+ZHI[b];
+  const lim=adv.limits.limits[b];
+  const isMing=b===zw.ming,isShen=b===zw.shen,isCurLim=b===adv.limits.curBranch,isLn=b===D.liunian;
+  const stars=(zw.stars[b]||[]);
+  const mainStars=stars.filter(s=>s.type==="main");
+  const auxStars=stars.filter(s=>s.type!=="main");
+  const xage=(zw.xiaoXian[b]||[]).slice(0,8).join("、")||"—";
+  let badges="";
+  if(isMing)badges+='<span class="zwb ming">命宮</span>';
+  if(isShen)badges+='<span class="zwb shen">身宮</span>';
+  if(isCurLim)badges+='<span class="zwb lim">現行大限</span>';
+  if(isLn)badges+='<span class="zwb ln">2026流年</span>';
+  let starHTML;
+  if(mainStars.length){
+    starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
+      return d?`<div class="zwstar"><b>${s.name}</b><span class="zwst">${d.t}</span>${d.d}<div class="zwtags">${d.tags.map(t=>`<span class="zwtag2">${t}</span>`).join("")}</div></div>`
+              :`<div class="zwstar"><b>${s.name}</b></div>`;}).join("");
+  }else{const d=STAR_DESC["空宮"];starHTML=`<div class="zwstar"><b>本宮無主星（空宮）</b><span class="zwst">${d.t}</span>${d.d}</div>`;}
+  const auxTxt=auxStars.length?auxStars.map(s=>s.name+(s.hua?`（化${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}）`:"")).join("、"):"無";
+  let summary=`對 ${name} 而言，「${pname}」這一宮坐落在 ${gz}。`;
+  if(isMing)summary+="此處正是您的命宮，是全盤核心，最能代表您的本性與一生格局走向。";
+  if(isCurLim)summary+=`您目前的大限（${lim.start}–${lim.end} 歲）正行經此宮，這十年的人生重心、機運與課題，便以此宮星性為主軸。`;
+  if(isLn)summary+="2026 丙午流年亦行入此宮，今年運勢起伏與此宮關係密切。";
+  summary+="可將上方星曜特質，對照「這一宮看什麼」所代表的人生領域，相互參詳。";
+  const body=`
+    ${badges?`<div class="zwbadges">${badges}</div>`:""}
+    <div class="zwkv"><span>宮位干支 <b>${gz}</b></span><span>大限 <b>${lim.start}–${lim.end} 歲</b></span><span>小限 <b>${xage}</b></span></div>
+    <div class="zwsec">這一宮看什麼</div><p>${PALACE_DESC[pname]||""}</p>
+    <div class="zwsec">坐守星曜</div>${starHTML}
+    <div class="zwsec">輔曜・雜曜</div><p>${auxTxt}</p>
+    <div class="zwsec">白話總評</div><p>${summary}</p>`;
+  zwOpenModal("紫微斗數 · 十二宮",pname.endsWith("宮")?pname:pname+" 宮",gz,body);
+}
+
+function zwLuck(i){
+  const D=window.__ZW;if(!D)return;const lk=D.lk,dm=D.dm,adv=D.adv,name=D.name;
+  const p=lk.list[i];if(!p)return;
+  const tg=tenGod(dm,p.gan), ny=naYin(p.gan,p.zhi);
+  const cur=adv.curAge>=p.age&&adv.curAge<p.age+10, step=i+1;
+  const body=`
+    ${cur?'<div class="zwbadges"><span class="zwb lim">您正行此運</span></div>':""}
+    <div class="zwkv"><span>年齡 <b>${p.age}–${p.age+9} 歲</b></span><span>干支 <b>${p.gan}${p.zhi}</b></span><span>主十神 <b>${tg}</b></span><span>納音 <b>${ny}</b></span></div>
+    <div class="zwsec">這十年的主軸（${tg}運）</div><p>${LUCK_TG[tg]||TENGOD_DESC[tg]||""}</p>
+    <div class="zwsec">十神「${tg}」的含義</div><p>${TENGOD_DESC[tg]||""}大運天干為「${p.gan}」，相對於您的日主「${dm}」而言即為此十神，是這十年運勢的主要色彩。</p>
+    <div class="zwsec">白話總評</div><p>這是 ${name} 的第 ${step} 步大運（${p.age} 歲起運），干支 ${p.gan}${p.zhi}、納音「${ny}」。${cur?"您目前正走在這步大運之中，上述特質正於生活裡上演，順勢而為、把握當下最為要緊。":p.age>adv.curAge?"這是未來將走到的運程，可預先準備、提早佈局。":"這是已走過的運程，回顧過往可印證軌跡，作為前行參照。"}</p>`;
+  zwOpenModal("子平八字 · 大運",`第 ${step} 步大運 · ${p.gan}${p.zhi}`,`${p.age}–${p.age+9} 歲 · ${tg}`,body);
+}
+
 function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const res=document.getElementById("result");
   const leapTxt=lunar.isLeap?"閏":"";
@@ -2229,7 +2376,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       return `<span class="star ${s.type}">${s.name}${hua}</span>`;
     }).join("");
     const xage=(zw.xiaoXian[b]||[]).slice(0,7).join(" ");
-    chartCells+=`<div class="cell ${isMing?'ming':''} ${isShen?'shen':''} ${isCurLim?'curlim':''}" style="grid-row:${r};grid-column:${c}">
+    chartCells+=`<div class="cell tap ${isMing?'ming':''} ${isShen?'shen':''} ${isCurLim?'curlim':''}" style="grid-row:${r};grid-column:${c}" onclick="zwPalace(${b})">
       ${isShen?'<span class="sbadge">身</span>':''}
       ${isLiunian?'<span class="lnbadge">流年</span>':''}
       <div class="pstars">${starsHTML||'<span class="star aux" style="opacity:.4">—</span>'}</div>
@@ -2287,9 +2434,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   // ===== 大運 =====
   const lk=adv.luck;
-  const luckHTML=lk.list.map(p=>{
+  const luckHTML=lk.list.map((p,i)=>{
     const cur=adv.curAge>=p.age&&adv.curAge<p.age+10;
-    return `<div class="luckcol ${cur?'on':''}">
+    return `<div class="luckcol tap ${cur?'on':''}" onclick="zwLuck(${i})">
       <div class="la">${p.age}歲</div>
       <div class="lg">${p.gan}</div><div class="lz">${p.zhi}</div>
       <div class="ltg">${tenGod(dm,p.gan)}</div>
@@ -2325,6 +2472,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     +`流年 2026 丙午，行運落於 <b style="color:#e08a7a">${lnPalaceName}</b>（坐 ${lnStars}），丙干引動 <b style="color:var(--jade)">${lnSihua[0]}化祿</b>、<b style="color:#e0a85a">${lnSihua[1]}化權</b>、<b style="color:#7fa6d4">${lnSihua[2]}化科</b>、<b style="color:#d47f8f">${lnSihua[3]}化忌</b>——把握祿權科之機、留心化忌之宮，趨吉避凶。`
     +`綜合而言，命主宜揚 ${GAN_WX[dm]} 性之長，補喜用 ${st.xi.join("、")} 之氣；待人以誠、處事以恆，循四化之引、應大限之機，自能將先天之命，化為後天之運。`;
 
+  // 存全域供觸控彈窗讀取
+  window.__ZW={zw,adv,bz,dm,name,gender,lk,liunian:liunianBranch};
+
   const html=`
   <div class="sec-title"><span class="cn">命格總覽</span><span class="en">Natal Chart Overview</span></div>
   <div class="idbar">
@@ -2356,13 +2506,14 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="tengods">${tgHTML}</div>
 
   <div class="divider"><span>大運流轉（每柱十年）</span></div>
-  <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運</div>
+  <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運<br><span class="taphint">👆 點選任一柱大運，看該十年運勢白話解說</span></div>
   <div class="luckwrap"><div class="luckrow">${luckHTML}</div></div>
 
   <div class="divider"><span>命帶神煞</span></div>
   <div class="shensha">${ssHTML}</div>
 
   <div class="sec-title"><span class="cn">紫微斗數 · 命盤十二宮</span><span class="en">Zi Wei Dou Shu · Twelve Palaces</span></div>
+  <div class="lucksub"><span class="taphint">👆 點選任一宮位，看該宮星曜與宮職的白話解說</span></div>
   <div class="chart">${chartCells}${centerHTML}</div>
   <div class="chartnote">
     <span><b class="cs">主星</b> 十四主星（紫微·天府兩系）</span>
