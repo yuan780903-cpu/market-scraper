@@ -205,31 +205,44 @@ header .meta b{color:var(--gold);font-weight:500}
 .chart{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(130px,auto));
   gap:8px;margin-top:10px}
 .cell{background:var(--card);
-  border:1px solid var(--line-soft);border-radius:12px;padding:10px 10px 36px;position:relative;
-  min-height:130px;transition:.25s;box-shadow:0 10px 24px -22px var(--shadow)}
+  border:1px solid var(--line-soft);border-radius:12px;padding:8px;position:relative;
+  min-height:158px;display:flex;flex-direction:column;transition:.25s;box-shadow:0 10px 24px -22px var(--shadow)}
 .cell:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 12px 30px -16px var(--shadow);z-index:2}
 .cell.ming{background:var(--pwash);border-color:var(--purple-glow)}
-.cell.ming::before{content:"命";position:absolute;top:7px;right:8px;font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.1rem;opacity:.85}
-.cell.shen .sbadge{position:absolute;top:7px;right:8px;background:var(--jade);color:#fff;font-size:.62rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
-.cell .pstars{display:flex;flex-wrap:wrap;gap:3px 8px;align-content:flex-start;width:100%}
-.star{font-size:.92rem;font-weight:600;letter-spacing:1px;white-space:nowrap}
+.cell.ming::before{content:"命";position:absolute;top:6px;right:7px;font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.05rem;opacity:.85}
+.cell.shen .sbadge{position:absolute;top:6px;right:7px;background:var(--jade);color:#fff;font-size:.6rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
+.cell .pstars{display:flex;flex-wrap:wrap;gap:2px 7px;align-content:flex-start;width:100%;flex:1}
+.star{font-size:.9rem;font-weight:600;letter-spacing:.5px;white-space:nowrap}
 .star.main{color:var(--gold-deep)}
-.star.aux{color:var(--ink-dim);font-size:.82rem;font-weight:400}
-.sihua{font-size:.58rem;color:#fff;padding:0 3px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700}
+.star.aux{color:var(--ink-dim);font-size:.74rem;font-weight:400}
+.sihua{font-size:.56rem;color:#fff;padding:0 3px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700}
 .sihua.lu{background:#2f9b73} .sihua.quan{background:#d98a2a} .sihua.ke{background:#2f72c4} .sihua.ji{background:#c2576f}
-.cell .foot{position:absolute;left:10px;right:10px;bottom:8px;
-  display:flex;justify-content:space-between;align-items:flex-end;
-  border-top:1px solid var(--line-soft);padding-top:6px}
-.cell .pname{font-size:.92rem;color:var(--gold);letter-spacing:1px}
-.cell .gz{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px}
-.cell .daxian{font-size:.62rem;color:var(--ink-faint)}
+.cell .foot{margin-top:6px;border-top:1px solid var(--line-soft);padding-top:5px}
+.cell .gods{display:flex;gap:2px;margin-bottom:3px}
+.cell .gods span{flex:1;text-align:center;font-size:.56rem;color:var(--ink-faint);letter-spacing:0;white-space:nowrap;
+  border-right:1px solid var(--line-soft)}
+.cell .gods span:last-child{border-right:none}
+.cell .xiaoxian{font-size:.54rem;color:var(--purple);opacity:.85;letter-spacing:.5px;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .frow{display:flex;justify-content:space-between;align-items:baseline}
+.cell .pname{font-size:.9rem;color:var(--gold);letter-spacing:1px}
+.cell .gz{font-size:.76rem;color:var(--ink-faint);letter-spacing:1px}
+.cell .daxian{font-size:.6rem;color:var(--ink-faint);margin-top:2px}
 .center-info{grid-column:2/4;grid-row:2/4;background:var(--card2);
   border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;text-align:center;padding:18px;gap:7px}
-.center-info .t{font-family:"Ma Shan Zheng";font-size:1.7rem;color:var(--gold);letter-spacing:3px}
-.center-info .row{font-size:.84rem;color:var(--ink-dim);letter-spacing:1px}
+  justify-content:center;align-items:center;text-align:center;padding:16px;gap:5px}
+.center-info .t{font-family:"Ma Shan Zheng";font-size:1.5rem;color:var(--gold);letter-spacing:2px}
+.center-info .row{font-size:.82rem;color:var(--ink-dim);letter-spacing:1px}
 .center-info .row b{color:var(--ink)}
-.center-info .ju{margin-top:4px;font-size:1rem;color:var(--purple);letter-spacing:2px}
+.center-info .pillars b{color:var(--gold-deep);letter-spacing:2px}
+.center-info .ju{margin-top:2px;font-size:1.05rem;color:var(--purple);letter-spacing:2px}
+.center-info .zhurow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:.78rem;color:var(--ink-faint)}
+.center-info .zhurow b{color:var(--gold-deep);letter-spacing:1px}
+.chartnote{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:center;
+  font-size:.78rem;color:var(--ink-faint);letter-spacing:.5px;line-height:1.8}
+.chartnote b{color:var(--ink-dim)}
+.chartnote b.cs{color:var(--gold-deep)} .chartnote b.ax{color:var(--ink-dim)}
+.chartnote .sihua{position:static;vertical-align:baseline;margin:0 1px}
 
 /* 解析 */
 .reading{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:10px}
@@ -941,9 +954,11 @@ const SIHUA={ // 年干四化：[祿,權,科,忌]
 
 const PALACE_NAMES=["命宮","兄弟","夫妻","子女","財帛","疾厄","遷移","交友","官祿","田宅","福德","父母"];
 
-function calcZiwei(lunar,hour,yearGan){
+function calcZiwei(lunar,hour,yearGan,yearZhi,gender){
   const lm=lunar.month, ld=lunar.day;
   const hZhi=Math.floor(((hour+1)%24)/2)%12; // 時支 子=0
+  const yZhi=ZHI.indexOf(yearZhi);           // 年支 index
+  const male=(gender!=="女");
   // 命宮、身宮
   const ming=((2+(lm-1)-hZhi)%12+12)%12;
   const shen=((2+(lm-1)+hZhi)%12+12)%12;
@@ -978,28 +993,79 @@ function calcZiwei(lunar,hour,yearGan){
   put(F(5),"天梁","main");
   put(F(6),"七殺","main");
   put(F(10),"破軍","main");
-  // 輔星：文昌文曲（依時支）、左輔右弼（依月）、祿存擎羊陀羅（依年干）
+  // ===== 六吉星 =====
   const wenchang=((10-hZhi)%12+12)%12; // 戌起逆數時
   const wenqu=((4+hZhi)%12)%12;        // 辰起順數時
   put(wenchang,"文昌","aux"); put(wenqu,"文曲","aux");
-  const zuofu=((4+(lm-1))%12); const youbi=((10-(lm-1))%12+12)%12;
+  const zuofu=((4+(lm-1))%12); const youbi=((10-(lm-1))%12+12)%12; // 左輔辰/右弼戌起依月
   put(zuofu,"左輔","aux"); put(youbi,"右弼","aux");
-  // 祿存（年干）
+  const KUI={甲:1,戊:1,庚:1,乙:0,己:0,丙:11,丁:11,辛:6,壬:3,癸:3};      // 天魁(陽貴)
+  const YUE={甲:7,戊:7,庚:7,乙:8,己:8,丙:9,丁:9,辛:2,壬:5,癸:5};        // 天鉞(陰貴)
+  put(KUI[yearGan],"天魁","aux"); put(YUE[yearGan],"天鉞","aux");
+  // ===== 六煞星 =====
   const LUCUN={甲:2,乙:3,丙:5,丁:6,戊:5,己:6,庚:8,辛:9,壬:11,癸:0};
   const lc=LUCUN[yearGan];
-  put(lc,"祿存","aux");
-  put((lc+1)%12,"擎羊","aux");
-  put((lc-1+12)%12,"陀羅","aux");
-  // 天馬（年支三合，簡化依年支）— 用命宮資料外略
-  // 四化標記
+  put(lc,"祿存","aux"); put((lc+1)%12,"擎羊","aux"); put((lc-1+12)%12,"陀羅","aux");
+  const HUOLING={寅:[1,3],午:[1,3],戌:[1,3],申:[2,10],子:[2,10],辰:[2,10],巳:[3,10],酉:[3,10],丑:[3,10],亥:[9,10],卯:[9,10],未:[9,10]};
+  const [hs,ls]=HUOLING[yearZhi]; put((hs+hZhi)%12,"火星","aux"); put((ls+hZhi)%12,"鈴星","aux");
+  put((11+hZhi)%12,"地劫","aux"); put(((11-hZhi)%12+12)%12,"地空","aux");
+  // ===== 其餘吉曜雜曜 =====
+  const MA={申:2,子:2,辰:2,寅:8,午:8,戌:8,巳:11,酉:11,丑:11,亥:5,卯:5,未:5};
+  put(MA[yearZhi],"天馬","aux");
+  const hong=((3-yZhi)%12+12)%12; put(hong,"紅鸞","aux"); put((hong+6)%12,"天喜","aux");
+  put((9+(lm-1))%12,"天刑","aux"); put((1+(lm-1))%12,"天姚","aux");
+  const GUGUA={寅:[5,1],卯:[5,1],辰:[5,1],巳:[8,4],午:[8,4],未:[8,4],申:[11,7],酉:[11,7],戌:[11,7],亥:[2,10],子:[2,10],丑:[2,10]};
+  const [gu,gua]=GUGUA[yearZhi]; put(gu,"孤辰","aux"); put(gua,"寡宿","aux");
+  const HUAGAI={寅:10,午:10,戌:10,申:4,子:4,辰:4,巳:1,酉:1,丑:1,亥:7,卯:7,未:7};
+  put(HUAGAI[yearZhi],"華蓋","aux");
+  const XIANCHI={寅:3,午:3,戌:3,申:9,子:9,辰:9,巳:6,酉:6,丑:6,亥:0,卯:0,未:0};
+  put(XIANCHI[yearZhi],"咸池","aux");
+  put((zuofu+(ld-1))%12,"三台","aux"); put(((youbi-(ld-1))%12+1200)%12,"八座","aux");
+  put(((wenchang+(ld-1)-1)%12+1200)%12,"恩光","aux"); put(((wenqu+(ld-1)-1)%12+1200)%12,"天貴","aux");
+  put((6+hZhi)%12,"台輔","aux"); put((2+hZhi)%12,"封誥","aux");
+  put((4+yZhi)%12,"龍池","aux"); put(((10-yZhi)%12+12)%12,"鳳閣","aux");
+  put(((6-yZhi)%12+12)%12,"天哭","aux"); put((6+yZhi)%12,"天虛","aux");
+  // ===== 四化標記 =====
   const sh=SIHUA[yearGan];
   const huaMap={};
   if(sh){huaMap[sh[0]]="lu";huaMap[sh[1]]="quan";huaMap[sh[2]]="ke";huaMap[sh[3]]="ji";}
   for(const b in stars)stars[b].forEach(s=>{if(huaMap[s.name])s.hua=huaMap[s.name];});
-  // 宮名分配
+  // ===== 宮名分配 =====
   const palaceName={};
   for(let b=0;b<12;b++){const idx=((ming-b)%12+12)%12;palaceName[b]=PALACE_NAMES[idx];}
-  return {ming,shen,ju,juName:JU_NAME[ju],palaceGan,palaceName,stars,mingGZ};
+  // ===== 陰陽男女 順逆 =====
+  const yangYear=(GAN.indexOf(yearGan)%2===0);
+  const forward=(yangYear&&male)||(!yangYear&&!male); // 陽男陰女順、陰男陽女逆
+  // 博士十二神（祿存起，順逆同命）
+  const BOSHI=["博士","力士","青龍","小耗","將軍","奏書","飛廉","喜神","病符","大耗","伏兵","官府"];
+  const boShi={};
+  for(let k=0;k<12;k++){boShi[((lc+(forward?k:-k))%12+12)%12]=BOSHI[k];}
+  // 長生十二神（依五行局起，陽男陰女順）
+  const CHANGSTART={2:8,3:11,4:5,5:8,6:2};
+  const CHANGSHENG=["長生","沐浴","冠帶","臨官","帝旺","衰","病","死","墓","絕","胎","養"];
+  const changSheng={};
+  for(let k=0;k<12;k++){changSheng[((CHANGSTART[ju]+(forward?k:-k))%12+12)%12]=CHANGSHENG[k];}
+  // 將前十二神（將星起，恆順）
+  const JIANGSTAR={寅:6,午:6,戌:6,申:0,子:0,辰:0,巳:9,酉:9,丑:9,亥:3,卯:3,未:3};
+  const JIANGPRE=["將星","攀鞍","歲驛","息神","華蓋","劫煞","災煞","天煞","指背","咸池","月煞","亡神"];
+  const jiangPre={};
+  for(let k=0;k<12;k++){jiangPre[(JIANGSTAR[yearZhi]+k)%12]=JIANGPRE[k];}
+  // 歲前十二神（太歲起，恆順）
+  const SUIPRE=["歲建","晦氣","喪門","貫索","官符","小耗","大耗","龍德","白虎","天德","弔客","病符"];
+  const suiPre={};
+  for(let k=0;k<12;k++){suiPre[(yZhi+k)%12]=SUIPRE[k];}
+  // 小限（年支三合起宮，男順女逆，每歲一宮）
+  const XIAOSTART={寅:4,午:4,戌:4,申:10,子:10,辰:10,巳:7,酉:7,丑:7,亥:1,卯:1,未:1};
+  const xiaoXian={}; for(let b=0;b<12;b++)xiaoXian[b]=[];
+  for(let age=1;age<=84;age++){xiaoXian[((XIAOSTART[yearZhi]+(male?1:-1)*(age-1))%12+12)%12].push(age);}
+  // 命主、身主、斗君
+  const MINGZHU=["貪狼","巨門","祿存","文曲","廉貞","武曲","破軍","武曲","廉貞","文曲","祿存","巨門"];
+  const SHENZHU=["火星","天相","天梁","天同","文昌","天機","鈴星","天相","天梁","天同","文昌","天機"];
+  const mingZhu=MINGZHU[ming], shenZhu=SHENZHU[yZhi];
+  const douJun=((2-(lm-1)+hZhi)%12+12)%12;
+  return {ming,shen,ju,juName:JU_NAME[ju],palaceGan,palaceName,stars,mingGZ,
+    boShi,changSheng,jiangPre,suiPre,xiaoXian,mingZhu,shenZhu,douJun,
+    yinYang:(yangYear?"陽":"陰")+(male?"男":"女")};
 }
 
 /* ================= 解析文字 ================= */
@@ -1566,7 +1632,7 @@ function run(){
 
     const lunar=solar2lunar(y,m,d);
     const bz=calcBazi(y,m,d,hh);
-    const zw=calcZiwei(lunar,hh,bz.year.gan);
+    const zw=calcZiwei(lunar,hh,bz.year.gan,bz.year.zhi,gender);
     const wx=wuxingCount(bz);
     const curAge=2026-y+1;                          // 虛歲
     const adv={
@@ -1866,23 +1932,29 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       const hua=s.hua?`<span class="sihua ${s.hua}">${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}</span>`:"";
       return `<span class="star ${s.type}">${s.name}${hua}</span>`;
     }).join("");
+    const xage=(zw.xiaoXian[b]||[]).slice(0,7).join(" ");
     chartCells+=`<div class="cell ${isMing?'ming':''} ${isShen?'shen':''} ${isCurLim?'curlim':''}" style="grid-row:${r};grid-column:${c}">
       ${isShen?'<span class="sbadge">身</span>':''}
       ${isLiunian?'<span class="lnbadge">流年</span>':''}
       <div class="pstars">${starsHTML||'<span class="star aux" style="opacity:.4">—</span>'}</div>
       <div class="foot">
+        <div class="gods"><span title="長生十二神">${zw.changSheng[b]}</span><span title="博士十二神">${zw.boShi[b]}</span><span title="將前十二神">${zw.jiangPre[b]}</span><span title="歲前十二神">${zw.suiPre[b]}</span></div>
+        <div class="xiaoxian">小限 ${xage}</div>
         <div class="frow"><span class="pname">${zw.palaceName[b]}</span>
         <span class="gz">${zw.palaceGan[b]}${ZHI[b]}</span></div>
         <div class="daxian ${isCurLim?'on':''}">大限 ${lim.start}-${lim.end}</div>
       </div>
     </div>`;
   }
+  const fourPillars=`${bz.year.gan}${bz.year.zhi} ${bz.month.gan}${bz.month.zhi} ${bz.day.gan}${bz.day.zhi} ${bz.hour.gan}${bz.hour.zhi}`;
   const centerHTML=`<div class="center-info">
-    <div class="t">${name} · ${gender}</div>
+    <div class="t">${name} · ${gender} · ${zw.yinYang}</div>
     <div class="row">國曆 <b>${sol.y}/${sol.m}/${sol.d}</b> ${String(sol.hh).padStart(2,'0')}:${String(sol.mm).padStart(2,'0')}</div>
-    <div class="row">農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]}</b></div>
-    <div class="row">${bz.year.gan}${bz.year.zhi}年 · 屬${shengxiao} · ${timeLabel(sol.hh)}</div>
-    <div class="ju">${zw.juName} · 命主${dm}（${GAN_WX[dm]}）</div>
+    <div class="row">農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]}</b> · 屬${shengxiao}</div>
+    <div class="row pillars">生年八字 <b>${fourPillars}</b></div>
+    <div class="ju">${zw.juName}</div>
+    <div class="zhurow"><span>命主 <b>${zw.mingZhu}</b></span><span>身主 <b>${zw.shenZhu}</b></span><span>斗君 <b>${ZHI[zw.douJun]}</b></span></div>
+    <div class="zhurow"><span>命宮 <b>${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}</b></span><span>身宮 <b>${zw.palaceName[zw.shen]}</b></span></div>
   </div>`;
 
   // 命宮主星解析
@@ -1996,6 +2068,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   <div class="sec-title"><span class="cn">紫微斗數 · 命盤十二宮</span><span class="en">Zi Wei Dou Shu · Twelve Palaces</span></div>
   <div class="chart">${chartCells}${centerHTML}</div>
+  <div class="chartnote">
+    <span><b class="cs">主星</b> 十四主星（紫微·天府兩系）</span>
+    <span><b class="ax">輔曜</b> 六吉六煞·祿馬·桃花雜曜</span>
+    <span><span class="sihua lu">祿</span><span class="sihua quan">權</span><span class="sihua ke">科</span><span class="sihua ji">忌</span> 生年四化</span>
+    <span>宮格下排：<b>長生·博士·將前·歲前</b> 四套十二神 → 小限歲數 → 宮名干支 → 大限</span>
+    <span>中宮：命主／身主／斗君／五行局／生年八字／陰陽男女</span>
+  </div>
 
   <div class="sec-title"><span class="cn">命格精析</span><span class="en">Destiny Interpretation</span></div>
   <div class="reading">
