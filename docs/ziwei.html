@@ -581,6 +581,67 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   #castStage{display:none!important}
 }
 
+/* ===== 雙面 A4 精華報告版型 ===== */
+#reportPrint{display:none}
+#reportPrint.rp-show{display:block;max-width:794px;margin:24px auto;background:#fff;padding:18mm 16mm;box-shadow:0 10px 40px rgba(0,0,0,.18);font-family:"Noto Serif TC","PingFang TC",serif;color:#2a2110}
+#reportPrint .rp-page{position:relative}
+#reportPrint .rp-page+.rp-page{margin-top:30px;border-top:2px dashed #ddd;padding-top:20px}
+#reportPrint .rp-head{text-align:center;border-bottom:2px solid #a9853a;padding-bottom:8px;margin-bottom:10px}
+#reportPrint .rp-head .b{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:26px;color:#8a6a14;letter-spacing:6px}
+#reportPrint .rp-head .s{font-size:9px;color:#888;letter-spacing:1px;margin-top:4px}
+#reportPrint .rp-head2{text-align:center;font-size:11px;color:#8a6a14;border-bottom:1px solid #d9c7a0;padding-bottom:6px;margin-bottom:8px;letter-spacing:2px}
+#reportPrint .rp-id{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px}
+#reportPrint .rp-id span{border:1px solid #d9c7a0;border-radius:6px;padding:2px 9px;font-size:10px;color:#5a4a28}
+#reportPrint .rp-id b{color:#8a6a14}
+#reportPrint .rp-sec{font-weight:700;color:#8a6a14;border-left:4px solid #c2a14a;padding-left:8px;margin:11px 0 6px;font-size:13px}
+#reportPrint .rp-chart{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(76px,1fr));gap:4px}
+#reportPrint .pp{border:1px solid #d9c7a0;border-radius:6px;padding:5px 6px;display:flex;flex-direction:column;justify-content:space-between;min-height:0;overflow:hidden}
+#reportPrint .pp.mg{border-color:#a9853a;background:#fbf2db}
+#reportPrint .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a}
+#reportPrint .ppn{font-weight:700;font-size:11px;color:#8a6a14}
+#reportPrint .pps{font-size:11px;color:#2a2110;flex:1;margin:3px 0;line-height:1.4}
+#reportPrint .pps i{color:#aaa;font-style:normal}
+#reportPrint .ppg{font-size:8.5px;color:#999}
+#reportPrint .ppc{grid-row:2/4;grid-column:2/4;border:1px solid #c2a14a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fdf8ec;text-align:center;gap:3px}
+#reportPrint .ppcn{font-size:18px;font-weight:800;color:#8a6a14;letter-spacing:2px}
+#reportPrint .ppci{font-size:9.5px;color:#666}
+#reportPrint .rp-score{display:flex;align-items:center;gap:16px;margin-top:4px}
+#reportPrint .rp-grade{flex:0 0 auto;text-align:center;border:2px solid #c2a14a;border-radius:10px;padding:6px 14px;background:#fbf2db}
+#reportPrint .rp-grade .g{font-size:24px;font-weight:800;color:#8a6a14;line-height:1}
+#reportPrint .rp-grade .t{font-size:26px;font-weight:800;color:#c2576f;line-height:1.1}
+#reportPrint .rp-bars{flex:1}
+#reportPrint .db{display:flex;align-items:center;gap:7px;margin:3px 0}
+#reportPrint .dbn{flex:0 0 34px;font-size:10px;color:#5a4a28}
+#reportPrint .dbt{flex:1;height:8px;background:#eee;border-radius:5px;overflow:hidden}
+#reportPrint .dbt i{display:block;height:100%;background:linear-gradient(90deg,#d9b85a,#8a6a14)}
+#reportPrint .dbv{flex:0 0 22px;text-align:right;font-size:10px;font-weight:700;color:#8a6a14}
+#reportPrint .rp-fp{display:flex;gap:6px}
+#reportPrint .fp{flex:1;border:1px solid #d9c7a0;border-radius:6px;text-align:center;padding:5px 2px}
+#reportPrint .fpl{font-size:8.5px;color:#999}
+#reportPrint .fpg{font-size:17px;font-weight:800;color:#8a6a14}
+#reportPrint .fpz{font-size:17px;font-weight:800;color:#2a2110}
+#reportPrint .fpn{font-size:8px;color:#999;margin-top:2px}
+#reportPrint .rp-wx{margin-top:6px;font-size:10.5px;color:#5a4a28}
+#reportPrint .wxc{display:inline-block;border:1px solid #d9c7a0;border-radius:5px;padding:1px 8px;margin:2px;font-size:10px}
+#reportPrint .rp-row{margin:5px 0;font-size:10.5px;color:#3a2c12;line-height:1.5}
+#reportPrint .gc{display:inline-block;background:#f2e8cf;border-radius:5px;padding:2px 9px;margin:2px;font-size:10.5px;color:#8a6a14;font-weight:700}
+#reportPrint .rp-adv{margin:4px 0;padding-left:18px}
+#reportPrint .rp-adv li{margin:4px 0;font-size:10.5px;line-height:1.55;color:#3a2c12}
+#reportPrint .rp-syn{background:#fbf4e3;border:1px solid #e3d3a6;border-radius:8px;padding:8px 11px;font-size:10.5px;line-height:1.7;margin-top:5px;color:#3a2c12}
+#reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
+@media print{
+  body.rp-on #result,body.rp-on #reportHead{display:none!important}
+  body.rp-on .sky,body.rp-on .stars,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on footer{display:none!important}
+  body.rp-on #reportPrint{display:block!important;max-width:100%;margin:0;padding:0;box-shadow:none}
+  body.rp-on .wrap{max-width:100%;padding:0;margin:0}
+  #reportPrint .rp-page{page-break-after:always}
+  #reportPrint .rp-page:last-child{page-break-after:auto}
+  #reportPrint .rp-page+.rp-page{margin-top:0;border-top:none;padding-top:0}
+  #reportPrint *{box-shadow:none!important}
+  #reportPrint .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a!important}
+  #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(70px,82px))}
+}
+
 /* ===== 演算動畫 / 抽牌 · 大師排盤 ===== */
 #castStage{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
   background:radial-gradient(circle at 50% 38%,var(--wash),var(--bg) 72%)}
@@ -804,6 +865,71 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
           <button type="button" data-g="女">坤造 · 女</button>
         </div>
       </div>
+      <div class="field full">
+        <label>出生地點（真太陽時校正・選填）</label>
+        <select id="city">
+          <option value="">不校正 · 直接用時鐘時間</option>
+          <optgroup label="── 臺灣 ──">
+            <option value="121.56,120">臺北</option>
+            <option value="121.46,120">新北</option>
+            <option value="121.74,120">基隆</option>
+            <option value="121.30,120">桃園</option>
+            <option value="120.97,120">新竹</option>
+            <option value="120.82,120">苗栗</option>
+            <option value="120.68,120">臺中</option>
+            <option value="120.54,120">彰化</option>
+            <option value="120.69,120">南投</option>
+            <option value="120.43,120">雲林</option>
+            <option value="120.45,120">嘉義</option>
+            <option value="120.21,120">臺南</option>
+            <option value="120.31,120">高雄</option>
+            <option value="120.49,120">屏東</option>
+            <option value="121.75,120">宜蘭</option>
+            <option value="121.61,120">花蓮</option>
+            <option value="121.14,120">臺東</option>
+            <option value="119.57,120">澎湖</option>
+            <option value="118.32,120">金門</option>
+            <option value="119.95,120">馬祖</option>
+          </optgroup>
+          <optgroup label="── 中國大陸 ──">
+            <option value="116.41,120">北京</option>
+            <option value="121.47,120">上海</option>
+            <option value="117.20,120">天津</option>
+            <option value="106.55,120">重慶</option>
+            <option value="113.26,120">廣州</option>
+            <option value="114.06,120">深圳</option>
+            <option value="104.07,120">成都</option>
+            <option value="114.30,120">武漢</option>
+            <option value="108.95,120">西安</option>
+            <option value="118.80,120">南京</option>
+            <option value="120.15,120">杭州</option>
+            <option value="118.09,120">廈門</option>
+            <option value="119.30,120">福州</option>
+            <option value="123.43,120">瀋陽</option>
+            <option value="126.53,120">哈爾濱</option>
+            <option value="102.83,120">昆明</option>
+            <option value="87.62,120">烏魯木齊</option>
+          </optgroup>
+          <optgroup label="── 港澳 ──">
+            <option value="114.17,120">香港</option>
+            <option value="113.54,120">澳門</option>
+          </optgroup>
+          <optgroup label="── 海外 ──">
+            <option value="103.82,120">新加坡</option>
+            <option value="101.69,120">吉隆坡</option>
+            <option value="100.50,105">曼谷</option>
+            <option value="139.69,135">東京</option>
+            <option value="126.98,135">首爾</option>
+            <option value="151.21,150">雪梨</option>
+            <option value="-0.13,0">倫敦</option>
+            <option value="-74.01,-75">紐約</option>
+            <option value="-118.24,-120">洛杉磯</option>
+            <option value="-122.42,-120">舊金山</option>
+            <option value="-123.12,-120">溫哥華</option>
+            <option value="-79.38,-75">多倫多</option>
+          </optgroup>
+        </select>
+      </div>
     </div>
 
     <details class="famwrap" id="famwrap">
@@ -819,6 +945,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
   <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">🖨　下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
   <div id="result"></div>
+  <div id="reportPrint" aria-hidden="true"></div>
 </div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
@@ -1792,6 +1919,20 @@ function finishRender(subText){
   res.scrollIntoView({block:"start"});
 }
 
+/* ===== 真太陽時校正（經度差 + 均時差） ===== */
+function eqOfTime(y,m,d){
+  // 均時差（分鐘）近似公式
+  const N=Math.floor((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/86400000);
+  const B=2*Math.PI*(N-81)/364;
+  return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+}
+function trueSolarTime(y,m,d,hh,mm,lng,std){
+  const corr=Math.round(4*(lng-std)+eqOfTime(y,m,d)); // 分鐘
+  const t=new Date(y,m-1,d,hh,mm,0);
+  t.setMinutes(t.getMinutes()+corr);
+  return {y:t.getFullYear(),m:t.getMonth()+1,d:t.getDate(),hh:t.getHours(),mm:t.getMinutes(),corr};
+}
+
 function run(){
   const err=document.getElementById("err"); err.style.display="none";
   const system=document.getElementById("system").value;
@@ -1806,7 +1947,21 @@ function run(){
   const mm=tv?Number(tv.split(":")[1]):0;
   const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${tv||"（時辰未填）"}　·　製表 2026`;
 
+  // 真太陽時校正：依出生地經度與時區中央經線，修正出生時刻供四柱／命宮排盤
+  const cityEl=document.getElementById("city");
+  const cityVal=cityEl?cityEl.value:"";
+  let cy=y,cm=m,cd=d,chh=hh,cmm=mm,solarInfo=null;
+  if(cityVal){
+    const [lng,std]=cityVal.split(",").map(Number);
+    const ts=trueSolarTime(y,m,d,hh,mm,lng,std);
+    cy=ts.y;cm=ts.m;cd=ts.d;chh=ts.hh;cmm=ts.mm;
+    solarInfo={corr:ts.corr,city:cityEl.selectedOptions[0].textContent.trim(),
+      time:String(chh).padStart(2,"0")+":"+String(cmm).padStart(2,"0")};
+  }
+
   const dispatch=()=>{
+    document.body.classList.remove("rp-on");
+    const rp0=document.getElementById("reportPrint"); if(rp0)rp0.innerHTML="";
     if(system==="mige"){renderMige(name,gender,{y,m,d,tv},subText);return;}
     if(system==="guigua"){renderGuigua(name,gender,{y,m,d,tv},subText);return;}
     if(system==="west"){renderWestern(name,gender,{y,m,d,tv},subText);return;}
@@ -1814,14 +1969,14 @@ function run(){
     if(system==="vedic"){renderVedic(name,gender,{y,m,d,tv},subText);return;}
     if(system==="num"){renderNum(name,gender,{y,m,d,tv},subText);return;}
 
-    const lunar=solar2lunar(y,m,d);
-    const bz=calcBazi(y,m,d,hh);
-    const zw=calcZiwei(lunar,hh,bz.year.gan,bz.year.zhi,gender);
+    const lunar=solar2lunar(cy,cm,cd);
+    const bz=calcBazi(cy,cm,cd,chh);
+    const zw=calcZiwei(lunar,chh,bz.year.gan,bz.year.zhi,gender);
     const wx=wuxingCount(bz);
     const curAge=2026-y+1;                          // 虛歲
     const adv={
       strength:dayStrength(bz),
-      luck:calcLuck(y,m,d,bz,gender),
+      luck:calcLuck(cy,cm,cd,bz,gender),
       ss:shenSha(bz),
       limits:bigLimits(zw,bz,gender,curAge),
       ge:detectGe(zw),
@@ -1829,7 +1984,7 @@ function run(){
     };
     const scores=calcScores(zw,bz,wx,adv);
     const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
-    render(name,gender,{y,m,d,hh,mm},lunar,bz,zw,wx,adv,scores,fam,subText);
+    render(name,gender,{y,m,d,hh,mm,solar:solarInfo},lunar,bz,zw,wx,adv,scores,fam,subText);
   };
 
   let revealGlyph=null;
@@ -2500,6 +2655,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const centerHTML=`<div class="center-info">
     <div class="t">${name} · ${gender} · ${zw.yinYang}</div>
     <div class="row">國曆 <b>${sol.y}/${sol.m}/${sol.d}</b> ${String(sol.hh).padStart(2,'0')}:${String(sol.mm).padStart(2,'0')}</div>
+    ${sol.solar?`<div class="row" style="font-size:.7rem;color:var(--ink-faint)">真太陽時 <b>${sol.solar.city} ${sol.solar.time}</b>（${sol.solar.corr>=0?'+':''}${sol.solar.corr}分・已校正排盤）</div>`:''}
     <div class="row">農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]}</b> · 屬${shengxiao}</div>
     <div class="row pillars">生年八字 <b>${fourPillars}</b></div>
     <div class="ju">${zw.juName}</div>
@@ -2736,6 +2892,81 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
   `;
   res.innerHTML=html;
+
+  // ===== 雙面 A4 精華報告（列印 / PDF 專用） =====
+  const _hua=h=>h?({lu:'祿',quan:'權',ke:'科',ji:'忌'})[h]:'';
+  let ppCells="";
+  for(let b=0;b<12;b++){
+    const [r,c]=cellPos[b];
+    const isMing=b===zw.ming,isShen=b===zw.shen,isLim=b===adv.limits.curBranch;
+    const ms=(zw.stars[b]||[]).filter(s=>s.type==="main");
+    const msTxt=ms.length?ms.map(s=>s.name+_hua(s.hua)).join("　"):'<i>空宮</i>';
+    ppCells+=`<div class="pp${isMing?' mg':''}${isLim?' lm':''}" style="grid-row:${r};grid-column:${c}">
+      <div class="ppn">${zw.palaceName[b]}${isMing?'·命':''}${isShen?'·身':''}</div>
+      <div class="pps">${msTxt}</div>
+      <div class="ppg">${zw.palaceGan[b]}${ZHI[b]}　限${adv.limits.limits[b].start}-${adv.limits.limits[b].end}</div>
+    </div>`;
+  }
+  const ppCenter=`<div class="ppc">
+    <div class="ppcn">${name}</div>
+    <div class="ppci">${gender} · ${zw.yinYang} · 屬${shengxiao}</div>
+    <div class="ppci">${zw.juName} · 日主 ${dm}（${GAN_WX[dm]}）</div>
+    <div class="ppci">命主 ${zw.mingZhu} · 身主 ${zw.shenZhu}</div>
+  </div>`;
+  const ppBars=scores.dims.map(x=>`<div class="db"><span class="dbn">${x.k}</span><span class="dbt"><i style="width:${x.v}%"></i></span><span class="dbv">${x.v}</span></div>`).join("");
+  const ppFp=["年","月","日","時"].map((lab,i)=>{const p=[bz.year,bz.month,bz.day,bz.hour][i];
+    return `<div class="fp"><div class="fpl">${lab}柱</div><div class="fpg">${p.gan}</div><div class="fpz">${p.zhi}</div><div class="fpn">${naYin(p.gan,p.zhi)}</div></div>`;}).join("");
+  const ppWx=wxOrder.map(k=>`<span class="wxc">${k} ${wx[k]}</span>`).join("");
+  const ppGe=adv.ge.map(g=>`<span class="gc">${g.n}</span>`).join("");
+  const dimsSorted=[...scores.dims].sort((a,b)=>b.v-a.v);
+  const topDim=dimsSorted[0], lowDim=dimsSorted[dimsSorted.length-1];
+  const ppAdvice=[
+    `<b>發揮所長</b>　命中「${topDim.k}」最強（${topDim.v}分），宜以此為人生主軸全力發揮，事半功倍、最易出彩。`,
+    `<b>補強留意</b>　「${lowDim.k}」相對較弱（${lowDim.v}分），平日多用心經營、預作準備，循序漸進可化弱為穩。`,
+    `<b>五行調候</b>　命局喜 <b>${st.xi.join("、")}</b>，宜親近相關方位色系與行業；忌 <b>${st.ji.join("、")}</b>，遇之以喜用神化解。`,
+    `<b>當前大限</b>　現行虛歲 ${adv.curAge}，正走「${curLimName}」大限（起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運），宜順此宮位星性佈局十年重心。`,
+    `<b>2026 流年</b>　行運入「${lnPalaceName}」，把握 ${lnSihua[0]}化祿之機、慎防 ${lnSihua[3]}化忌之耗，趨吉避凶、穩中求進。`
+  ].map(t=>`<li>${t}</li>`).join("");
+  const printHTML=`
+  <div class="rp-page">
+    <div class="rp-head"><div class="b">政遠大師 · 命理精析</div>
+      <div class="s">紫微斗數 ＋ 子平八字 · 個人專屬命書 · ZIWEI &amp; BAZI DESTINY REPORT</div></div>
+    <div class="rp-id">
+      <span>命主 <b>${name} · ${gender}</b></span>
+      <span>國曆 <b>${sol.y}/${sol.m}/${sol.d} ${String(sol.hh).padStart(2,'0')}:${String(sol.mm).padStart(2,'0')}</b></span>
+      <span>農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]}</b></span>
+      ${sol.solar?`<span>真太陽時 <b>${sol.solar.city} ${sol.solar.time}</b></span>`:''}
+      <span>命宮 <b>${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}·${mingStarTxt}</b></span>
+    </div>
+    <div class="rp-sec">紫微命盤 · 十二宮</div>
+    <div class="rp-chart">${ppCells}${ppCenter}</div>
+    <div class="rp-sec">命盤總評 · ${scores.grade}格（${scores.total}分）</div>
+    <div class="rp-score">
+      <div class="rp-grade"><div class="g">${scores.grade}</div><div class="t">${scores.total}</div><div style="font-size:8px;color:#888">綜合分數</div></div>
+      <div class="rp-bars">${ppBars}</div>
+    </div>
+    <div class="rp-row" style="color:#555">${scores.gradeText}</div>
+  </div>
+  <div class="rp-page">
+    <div class="rp-head2">政遠大師 · 命理精析　—　${name} · ${gender}（續・第二頁）</div>
+    <div class="rp-sec">子平八字 · 四柱五行</div>
+    <div class="rp-fp">${ppFp}</div>
+    <div class="rp-wx">五行能量：${ppWx}　·　最旺 <b>${strongest}</b>、最弱 <b>${weakest}</b></div>
+    <div class="rp-row"><b>日主旺衰</b>：${st.level}　·　喜用神 <b>${st.xi.join("、")}</b>　·　忌神 <b>${st.ji.join("、")}</b></div>
+    <div class="rp-sec">命盤格局</div>
+    <div>${ppGe}</div>
+    <div class="rp-sec">逐宮精要</div>
+    <div class="rp-row"><b>命宮</b>（${mingStarTxt}）　${pd.t}。${pd.tags.join("·")}。</div>
+    <div class="rp-row"><b>財帛</b> ${palaceOf("財帛")}　|　<b>官祿</b> ${palaceOf("官祿")}　|　<b>夫妻</b> ${palaceOf("夫妻")}　|　<b>遷移</b> ${palaceOf("遷移")}　|　<b>福德</b> ${palaceOf("福德")}</div>
+    <div class="rp-sec">個人化開運建議</div>
+    <ul class="rp-adv">${ppAdvice}</ul>
+    <div class="rp-sec">綜合論斷</div>
+    <div class="rp-syn">${synthesis}</div>
+    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　政遠大師 © 2026</div>
+  </div>`;
+  const rp=document.getElementById("reportPrint");
+  if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
+
   finishRender(subText);
   lcRefresh();
 }
