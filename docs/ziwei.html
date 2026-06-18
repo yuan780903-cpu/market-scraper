@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light only">
-<title>政遠大師 · 紫微斗數命盤 — 生辰八字精算</title>
+<title>人生實用說明書系統 · 您的專屬人生導航 — 斗數十二宮 × 四柱八字</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -154,6 +154,24 @@ header .sub{position:relative;color:var(--ink-dim);margin-top:16px;letter-spacin
 header .meta{position:relative;margin-top:26px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap;
   color:var(--ink-faint);font-size:.84rem;letter-spacing:2px}
 header .meta b{color:var(--gold);font-weight:500}
+
+/* ===== 特色介紹 ===== */
+.intro{max-width:1180px;margin:6px auto 8px;padding:0 24px}
+.intro .introlead{text-align:center;max-width:840px;margin:0 auto 22px;color:var(--ink-dim);
+  font-size:1.02rem;line-height:2;letter-spacing:1px}
+.intro .introlead b{color:var(--gold-deep)}
+.featgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:0 auto}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 18px;
+  box-shadow:0 18px 44px -28px var(--shadow);transition:transform .2s ease,box-shadow .2s ease}
+.feat:hover{transform:translateY(-4px);box-shadow:0 22px 50px -24px var(--shadow)}
+.feat .fic{font-size:1.8rem;line-height:1;margin-bottom:10px}
+.feat h4{margin:0 0 8px;color:var(--gold-bright);font-size:1.04rem;letter-spacing:1px}
+.feat p{margin:0;color:var(--ink-dim);font-size:.88rem;line-height:1.8}
+.intro .introcta{text-align:center;margin:22px auto 0;max-width:760px;color:var(--purple);
+  font-size:.98rem;letter-spacing:1px;font-weight:600}
+@media(max-width:860px){.featgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.featgrid{grid-template-columns:1fr}}
+@media print{.intro{display:none!important}}
 
 /* ===== 輸入卡 ===== */
 .panel{background:var(--card);
@@ -828,9 +846,9 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
 <header>
   <div class="bagua"></div>
-  <div class="eyebrow">紫微斗數 · 子平八字 · 五行命理</div>
-  <h1>政遠大師</h1>
-  <div class="sub">輸入生辰，演算先天命格 — 斗數十二宮 × 四柱八字</div>
+  <div class="eyebrow">紫微斗數 × 子平八字 · 雙軌並行</div>
+  <h1>人生實用說明書系統</h1>
+  <div class="sub">您的專屬人生導航 — 看懂自己這本「人生說明書」，精準掌握人生方向盤</div>
   <div class="meta">
     <div>曆法引擎 <b>農曆/節氣/干支精算</b></div>
     <div>命盤系統 <b>北派紫微斗數</b></div>
@@ -838,8 +856,19 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   </div>
 </header>
 
+<section class="intro">
+  <p class="introlead">打破傳統命理框架，以「<b>斗數十二宮 × 四柱八字</b>」雙軌並行為核心，將傳承千年的玄學智慧與客觀邏輯的大數據精算結合，為您打造最具實用價值的命格解析。</p>
+  <div class="featgrid">
+    <div class="feat"><div class="fic">⚖️</div><h4>雙系統交叉比對</h4><p>北派紫微宮位推演＋子平八字五行生剋，雙重驗證、排除單一系統盲區，解析更深更準。</p></div>
+    <div class="feat"><div class="fic">📅</div><h4>高精度曆法引擎</h4><p>內建農曆、節氣、干支精算（西元 1900–2100），每一筆生辰轉換毫釐不差，忠實還原命格。</p></div>
+    <div class="feat"><div class="fic">🧭</div><h4>從宿命到造命</h4><p>不談令人恐懼的宿命論，而是一份客觀的人生策略指南——讓您在對的時間，做對的決定。</p></div>
+    <div class="feat"><div class="fic">👨‍👩‍👧</div><h4>家人加入交叉分析</h4><p>可將家人一同排盤，分析彼此五行生剋與相處之道，是市面少見的家庭命理特色功能。</p></div>
+  </div>
+  <p class="introcta">現在就輸入生辰，開啟您的專屬說明書，一起趨吉避凶、活出最順遂精彩的自己。</p>
+</section>
+
 <div class="wrap">
-  <div id="reportHead"><div class="rt" id="reportTitle">政遠大師 · 個人命盤專業報告</div><div class="rs" id="reportSub"></div></div>
+  <div id="reportHead"><div class="rt" id="reportTitle">人生實用說明書系統 · 個人命盤專業報告</div><div class="rs" id="reportSub"></div></div>
   <div class="panel">
     <h2><span class="dot"></span>排盤資料</h2>
     <div class="hint">請以「國曆（陽曆）」輸入出生年月日；時辰請填出生當下的時鐘時間。資料僅在本機瀏覽器運算，不會上傳。</div>
@@ -971,8 +1000,8 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 </div>
 
 <footer>
-  <div class="disc">政遠大師採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。</div>
-  <div>政遠大師 · 願君順遂 · ☯</div>
+  <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。</div>
+  <div>©️ 2026 人生實用說明書系統．政遠大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
 <script>
@@ -1956,13 +1985,13 @@ function readFamMembers(){
 }
 
 const REPORT_TITLE={
-  comp:"政遠大師 · 紫微斗數命盤專業報告",
-  mige:"政遠大師 · 米卦梅花易數專業報告",
-  guigua:"政遠大師 · 烏龜卦金錢六爻專業報告",
-  west:"政遠大師 · 西洋占星專業報告",
-  tarot:"政遠大師 · 塔羅本命牌專業報告",
-  vedic:"政遠大師 · 印度吠陀占星專業報告",
-  num:"政遠大師 · 生命靈數專業報告"
+  comp:"人生實用說明書系統 · 紫微斗數命盤專業報告",
+  mige:"人生實用說明書系統 · 米卦梅花易數專業報告",
+  guigua:"人生實用說明書系統 · 烏龜卦金錢六爻專業報告",
+  west:"人生實用說明書系統 · 西洋占星專業報告",
+  tarot:"人生實用說明書系統 · 塔羅本命牌專業報告",
+  vedic:"人生實用說明書系統 · 印度吠陀占星專業報告",
+  num:"人生實用說明書系統 · 生命靈數專業報告"
 };
 function finishRender(subText){
   const res=document.getElementById("result");
@@ -1970,7 +1999,7 @@ function finishRender(subText){
   document.getElementById("toolbar").classList.add("show");
   document.getElementById("reportSub").textContent=subText;
   const sys=document.getElementById("system").value;
-  document.getElementById("reportTitle").textContent=REPORT_TITLE[sys]||"政遠大師 · 個人命盤專業報告";
+  document.getElementById("reportTitle").textContent=REPORT_TITLE[sys]||"人生實用說明書系統 · 個人命盤專業報告";
   document.documentElement.style.scrollBehavior="auto";
   res.scrollIntoView({block:"start"});
 }
@@ -3086,7 +3115,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ].map(t=>`<li>${t}</li>`).join("");
   const printHTML=`
   <div class="rp-page">
-    <div class="rp-head"><div class="b">政遠大師 · 命理精析</div>
+    <div class="rp-head"><div class="b">人生實用說明書系統 · 命理精析</div>
       <div class="s">紫微斗數 ＋ 子平八字 · 個人專屬命書 · ZIWEI &amp; BAZI DESTINY REPORT</div></div>
     <div class="rp-id">
       <span>命主 <b>${name} · ${gender}</b></span>
@@ -3105,7 +3134,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-row" style="color:#555">${scores.gradeText}</div>
   </div>
   <div class="rp-page">
-    <div class="rp-head2">政遠大師 · 命理精析　—　${name} · ${gender}（續・第二頁）</div>
+    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（續・第二頁）</div>
     <div class="rp-sec">子平八字 · 四柱五行</div>
     <div class="rp-fp">${ppFp}</div>
     <div class="rp-wx">五行能量：${ppWx}　·　最旺 <b>${strongest}</b>、最弱 <b>${weakest}</b></div>
@@ -3119,7 +3148,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="rp-adv">${ppAdvice}</ul>
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
-    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　政遠大師 © 2026</div>
+    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　©️ 2026 人生實用說明書系統．政遠大師 版權所有</div>
   </div>`;
   const rp=document.getElementById("reportPrint");
   if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
