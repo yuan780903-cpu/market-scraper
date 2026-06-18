@@ -2322,6 +2322,11 @@ function renderSettings(){
   h+=`<input type="file" id="imp" accept="application/json,.json" style="display:none" onchange="importJSON(this)">`;
   h+=`<div class="hint" style="margin-top:8px;color:var(--muted);font-size:11px">匯入會合併客戶與排程；同名客戶會新增為另一筆。</div>`;
   h+=`</div>`;
+  // 與 LINE 訂貨平台整合：匯出客戶產品價格
+  h+=`<div class="sec-title"><span class="bar"></span>與 LINE 訂貨平台整合</div><div class="card">`;
+  h+=`<div class="hint" style="color:var(--muted);font-size:11.5px;line-height:1.7;margin-top:0">把客戶的「💰 產品報價」價格送到 LINE 訂貨平台的客戶產品價目表。<br>點下方按鈕複製後，到訂貨平台價目表頁〔📥 從客戶管理系統匯入〕貼上即可。<b>訂貨平台已存在的客戶不會被覆蓋</b>。</div>`;
+  h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" onclick="exportPricesForBot()">💰 匯出價格給訂貨平台</button></div>`;
+  h+=`</div>`;
   // Google 雲端硬碟備份
   const _gcid=gdriveClientId(), _glast=gdriveLast();
   h+=`<div class="sec-title"><span class="bar"></span>Google 雲端硬碟備份</div><div class="card">`;
@@ -2373,6 +2378,24 @@ function exportCSV(){
   const rows=customers.map(c=>cols.map(([k])=>`"${String(fmt(c,k)).replace(/"/g,'""')}"`).join(','));
   download(`我的客戶_${todayStr()}.csv`, '﻿'+head+'\n'+rows.join('\n'), 'text/csv');
   toast('已匯出 CSV');
+}
+function exportPricesForBot(){
+  const rows=[];
+  (customers||[]).forEach(c=>{
+    const nm=(c.name||'').trim(); if(!nm) return;
+    (c.products||[]).forEach(p=>{
+      const pn=(p.name||'').trim(); if(!pn) return;
+      rows.push({ customer:nm, name:pn, form:(p.form||'').trim(),
+                  weight:String(p.weight||'').trim(), price:String(p.price||'').trim() });
+    });
+  });
+  if(!rows.length){ toast('沒有可匯出的產品報價，請先在客戶的「💰 產品報價」填價格'); return; }
+  const txt=JSON.stringify(rows);
+  copyText(txt, `已複製 ${rows.length} 筆價格，請到訂貨平台價目表貼上`);
+  const custN=new Set(rows.map(r=>r.customer)).size;
+  openModal('匯出價格給訂貨平台', `<div class="info">已複製 <b>${rows.length}</b> 筆產品報價（${custN} 位客戶）到剪貼簿。<br>到 LINE 訂貨平台「客戶產品價目表」頁 →〔📥 從客戶管理系統匯入〕→ 貼上 →〔開始匯入〕。<br>訂貨平台已存在的客戶會自動跳過、不覆蓋。</div>
+    <div class="field" style="margin-top:8px"><label>若沒自動複製，點下框全選後手動複製：</label><textarea rows="6" style="width:100%;font-size:11px" onclick="this.select()" readonly>${esc(txt)}</textarea></div>
+    <div class="btn-row"><button class="btn btn-out" onclick='copyText(${JSON.stringify(txt)},"已複製")'>📋 再複製一次</button></div>`);
 }
 function importJSON(input){
   const f=input.files[0]; if(!f)return; const r=new FileReader();
