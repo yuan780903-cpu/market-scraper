@@ -75,6 +75,30 @@ body[data-theme="num"]{
     linear-gradient(160deg,#f1fbfd 0%,#eaf6f9 45%,#e2f1f4 100%);
   --head:linear-gradient(180deg,#0e6677 0%,#1aa7c0 50%,#1591a8 100%);
 }
+/* ===== 主題：米卦 · 稻穀金黃 ===== */
+body[data-theme="mige"]{
+  --gold:#b9881a; --gold-bright:#d3a022; --gold-deep:#7a5810;
+  --purple:#3f8f5e; --purple-glow:#4caa6f;
+  --line:rgba(185,136,26,.30); --line-soft:rgba(140,120,50,.16);
+  --wash:rgba(248,232,178,.5); --pwash:rgba(76,170,111,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #fbeec2 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #def2e0 0%, transparent 52%),
+    linear-gradient(160deg,#fffdf2 0%,#fdf7e3 45%,#f6efd5 100%);
+  --head:linear-gradient(180deg,#7a5810 0%,#d3a022 50%,#b9881a 100%);
+}
+/* ===== 主題：烏龜卦 · 玄龜墨綠古銅 ===== */
+body[data-theme="guigua"]{
+  --gold:#8a6d2f; --gold-bright:#a8853c; --gold-deep:#5c4818;
+  --purple:#2f6b54; --purple-glow:#3d8467;
+  --line:rgba(138,109,47,.30); --line-soft:rgba(90,110,90,.16);
+  --wash:rgba(222,228,200,.5); --pwash:rgba(61,132,103,.14);
+  --bg:
+    radial-gradient(1100px 680px at 82% -8%, #e4e6cf 0%, transparent 55%),
+    radial-gradient(900px 620px at 8% 108%, #d4e6d8 0%, transparent 52%),
+    linear-gradient(160deg,#f7f8ee 0%,#eef2e2 45%,#e6ecdb 100%);
+  --head:linear-gradient(180deg,#5c4818 0%,#3d8467 50%,#8a6d2f 100%);
+}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
@@ -608,6 +632,41 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .tface.tback::after{content:"✦";color:#f0d089;font-size:2rem}
 .tface.tfront{background:linear-gradient(160deg,#3a2a5e,#1a1030);color:#f0d089;font-size:3.6rem;transform:rotateY(180deg)}
 @media(max-width:480px){.castscene{width:200px;height:200px}.castscene .orbit span{transform:rotate(var(--a)) translateY(-100px)}}
+/* ===== 易卦（米卦／烏龜卦）卦象視覺 ===== */
+.ighero{display:flex;gap:22px;align-items:center;flex-wrap:wrap;justify-content:center;
+  margin:18px auto;padding:20px 24px;max-width:680px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(160deg,var(--pwash),var(--wash));box-shadow:inset 0 0 30px rgba(0,0,0,.12)}
+.ighex{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:150px}
+.ighglyph{font-size:4.4rem;line-height:1;color:var(--gold-bright);text-shadow:0 0 18px var(--gold-glow,rgba(212,175,90,.5))}
+.ighname{font-size:1.25rem;font-weight:700;color:var(--gold-bright);letter-spacing:1px}
+.ighlevel{display:inline-block;padding:2px 14px;border:1.5px solid;border-radius:20px;font-weight:700;font-size:.95rem}
+.igmeta{display:flex;flex-direction:column;gap:8px;flex:1;min-width:220px}
+.igrow{font-size:1rem;color:var(--head);border-bottom:1px dashed var(--line-soft);padding-bottom:6px}
+.igrow b{color:var(--gold-bright);font-weight:700}
+/* 烏龜卦：本卦→變卦 並排 */
+.guiwrap{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;
+  margin:18px auto;padding:22px;max-width:680px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(160deg,var(--pwash),var(--wash));box-shadow:inset 0 0 30px rgba(0,0,0,.12)}
+.guihex{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:160px;
+  padding:14px 16px;border:1px solid var(--line-soft);border-radius:14px;background:rgba(0,0,0,.04)}
+.guiarrow{font-weight:700;color:var(--gold-bright);font-size:1.05rem;text-align:center;letter-spacing:1px}
+/* 六爻圖（自下而上） */
+.yaodiagram{display:flex;flex-direction:column;gap:7px;width:128px;margin:4px 0 6px}
+.yao{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;height:16px}
+.yao .bar{height:14px;background:var(--gold);border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.yao.yang .bar{width:118px}
+.yao.yin .bar{width:50px}
+.yao.yin .gap{width:14px}
+.yao.mv .bar{background:var(--purple-glow,#c2576f);box-shadow:0 0 10px var(--purple-glow,#c2576f)}
+.yao .dot{position:absolute;right:-22px;font-size:.9rem;font-weight:700;color:var(--purple-glow,#c2576f)}
+/* hexBlock 備用樣式 */
+.hexcard{display:flex;flex-direction:column;gap:6px;align-items:center;padding:16px;
+  border:1px solid var(--line);border-radius:14px;background:var(--wash)}
+.hexcard .hexglyph{font-size:3.4rem;color:var(--gold-bright)}
+.hexcard .hexname{font-weight:700;color:var(--gold-bright)}
+.hexcard .hexlevel{padding:2px 12px;border:1.5px solid;border-radius:18px;font-weight:700}
+@media(max-width:480px){.ighero,.guiwrap{padding:16px 12px;gap:14px}.ighglyph{font-size:3.6rem}
+  .yaodiagram{width:108px}.yao.yang .bar{width:98px}.yao .dot{right:-18px}}
 </style>
 </head>
 <body>
@@ -633,11 +692,17 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="field full">
       <label>命理系統</label>
       <select id="system">
-        <option value="comp">綜合命盤 · 紫微斗數＋子平八字（含評分・家庭分析）</option>
-        <option value="west">西洋占星 · 太陽星座</option>
-        <option value="tarot">塔羅 · 生日本命牌</option>
-        <option value="vedic">印度吠陀 · 星座與月宿</option>
-        <option value="num">西洋數字學 · 生命靈數</option>
+        <optgroup label="── 東方命理 ──">
+          <option value="comp">綜合命盤 · 紫微斗數＋子平八字（含評分・家庭分析）</option>
+          <option value="mige">米卦 · 梅花易數（隨機起卦・體用斷吉凶）</option>
+          <option value="guigua">烏龜卦 · 金錢六爻（搖卦・本卦變卦）</option>
+        </optgroup>
+        <optgroup label="── 西洋／印度 ──">
+          <option value="west">西洋占星 · 太陽星座</option>
+          <option value="tarot">塔羅 · 生日本命牌</option>
+          <option value="vedic">印度吠陀 · 星座與月宿</option>
+          <option value="num">西洋數字學 · 生命靈數</option>
+        </optgroup>
       </select>
     </div>
     <div class="grid-in">
@@ -1594,6 +1659,8 @@ function readFamMembers(){
 
 const REPORT_TITLE={
   comp:"政遠大師 · 紫微斗數命盤專業報告",
+  mige:"政遠大師 · 米卦梅花易數專業報告",
+  guigua:"政遠大師 · 烏龜卦金錢六爻專業報告",
   west:"政遠大師 · 西洋占星專業報告",
   tarot:"政遠大師 · 塔羅本命牌專業報告",
   vedic:"政遠大師 · 印度吠陀占星專業報告",
@@ -1625,6 +1692,8 @@ function run(){
   const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${tv||"（時辰未填）"}　·　製表 2026`;
 
   const dispatch=()=>{
+    if(system==="mige"){renderMige(name,gender,{y,m,d,tv},subText);return;}
+    if(system==="guigua"){renderGuigua(name,gender,{y,m,d,tv},subText);return;}
     if(system==="west"){renderWestern(name,gender,{y,m,d,tv},subText);return;}
     if(system==="tarot"){renderTarot(name,gender,{y,m,d,tv},subText);return;}
     if(system==="vedic"){renderVedic(name,gender,{y,m,d,tv},subText);return;}
@@ -1659,6 +1728,8 @@ const CAST_CFG={
   west:{center:"☉",orbit:["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"],title:"正在為您繪製星盤",sub:"WESTERN ASTROLOGY"},
   vedic:{center:"🕉",orbit:["☉","☽","♂","☿","♃","♀","♄","☊","☋"],title:"大師正在推演吠陀星盤",sub:"VEDIC JYOTISH"},
   num:{center:"✦",orbit:["1","2","3","4","5","6","7","8","9","11","22","33"],title:"正在演算您的生命靈數",sub:"NUMEROLOGY · LIFE PATH"},
+  mige:{center:"米",orbit:["乾","兌","離","震","巽","坎","艮","坤"],title:"虔心撒米 · 大師正在起卦",sub:"MEIHUA · 米卦梅花易數"},
+  guigua:{center:"龜",orbit:["☰","☱","☲","☳","☴","☵","☶","☷"],title:"搖動龜殼 · 大師正在卜卦",sub:"LIU YAO · 烏龜金錢卦"},
   tarot:{title:"大師正在為您抽牌",sub:"TAROT BIRTH CARD"}
 };
 function playCast(sys,revealGlyph,done){
@@ -1779,6 +1850,231 @@ function familySection(fam){
     </div>
     <div class="fadvice"><b style="color:var(--jade)">整體建議：</b>${s.advice}</div>
   </div>`;
+}
+
+/* ================= 易經 · 米卦 / 烏龜卦 引擎 ================= */
+// 八卦（先天序：乾1兌2離3震4巽5坎6艮7坤8）— lines 自下而上，1陽0陰
+const TRIGRAMS=[
+  {n:"乾",s:"☰",e:"天",wx:"金",lines:[1,1,1]},
+  {n:"兌",s:"☱",e:"澤",wx:"金",lines:[1,1,0]},
+  {n:"離",s:"☲",e:"火",wx:"火",lines:[1,0,1]},
+  {n:"震",s:"☳",e:"雷",wx:"木",lines:[1,0,0]},
+  {n:"巽",s:"☴",e:"風",wx:"木",lines:[0,1,1]},
+  {n:"坎",s:"☵",e:"水",wx:"水",lines:[0,1,0]},
+  {n:"艮",s:"☶",e:"山",wx:"土",lines:[0,0,1]},
+  {n:"坤",s:"☷",e:"地",wx:"土",lines:[0,0,0]}
+];
+// 上卦(列)×下卦(行) → 文王六十四卦序（先天序排列）
+const KINGWEN=[
+ [1,43,14,34,9,5,26,11],
+ [10,58,38,54,61,60,41,19],
+ [13,49,30,55,37,63,22,36],
+ [25,17,21,51,42,3,27,24],
+ [44,28,50,32,57,48,18,46],
+ [6,47,64,40,59,29,4,7],
+ [33,31,56,62,53,39,52,15],
+ [12,45,35,16,20,8,23,2]
+];
+// 六十四卦：name 卦名、j 卦辭、z 占斷、k 吉凶級(5大吉…1大凶)
+const HEX={
+1:{n:"乾為天",j:"元、亨、利、貞。",z:"剛健中正、自強不息，大吉之象。宜積極進取、把握主導，惟戒驕亢自滿。",k:5},
+2:{n:"坤為地",j:"元亨，利牝馬之貞。",z:"厚德載物、柔順包容。宜守靜順勢、踏實配合，諸事漸成。",k:4},
+3:{n:"水雷屯",j:"元亨利貞，勿用有攸往。",z:"萬事起頭難，如草木初生。宜守正待時、穩紮根基，勿急進。",k:3},
+4:{n:"山水蒙",j:"亨。匪我求童蒙，童蒙求我。",z:"蒙昧未明之象。宜虛心啟蒙學習、誠心求教，撥雲見日。",k:3},
+5:{n:"水天需",j:"有孚，光亨，貞吉，利涉大川。",z:"需者待也。時機未到宜耐心等待、蓄勢養力，終得亨通。",k:4},
+6:{n:"天水訟",j:"有孚窒惕，中吉，終凶。",z:"爭訟之象。宜退讓和解、勿興爭端，強爭到底反致凶。",k:2},
+7:{n:"地水師",j:"貞，丈人吉，無咎。",z:"興師動眾之象。宜守紀律、得良將賢助，師出有名則吉。",k:3},
+8:{n:"水地比",j:"吉。原筮元永貞，無咎。",z:"親比相輔之象。宜團結合作、擇善而從，得人助則吉。",k:4},
+9:{n:"風天小畜",j:"亨。密雲不雨，自我西郊。",z:"小有積蓄、力量尚微。宜養精蓄銳、暫忍待時而發。",k:3},
+10:{n:"天澤履",j:"履虎尾，不咥人，亨。",z:"如履虎尾，謹慎則安。宜循禮守分、謙慎篤行，化險為夷。",k:3},
+11:{n:"地天泰",j:"小往大來，吉亨。",z:"天地交泰、上下通達，大吉之象。諸事順遂、把握良時。",k:5},
+12:{n:"天地否",j:"否之匪人，不利君子貞。",z:"天地不交、閉塞不通。宜守正待變、潛藏自固，勿妄動。",k:2},
+13:{n:"天火同人",j:"同人于野，亨，利涉大川。",z:"與人和同、志同道合。宜開誠合作、廣結善緣，同心則利。",k:4},
+14:{n:"火天大有",j:"元亨。",z:"大有收穫、豐盛富足，大吉之象。宜順勢而為、謙以持盈。",k:5},
+15:{n:"地山謙",j:"亨，君子有終。",z:"謙謙君子、虛懷若谷。諸事得宜、有始有終，福報自來。",k:4},
+16:{n:"雷地豫",j:"利建侯行師。",z:"和樂順動、預備而行。宜順勢振作、未雨綢繆，防樂極生悲。",k:4},
+17:{n:"澤雷隨",j:"元亨利貞，無咎。",z:"隨順時勢、擇善而從。宜隨機應變、順理而行則吉。",k:4},
+18:{n:"山風蠱",j:"元亨，利涉大川。",z:"積弊待整之象。宜革除舊弊、整頓振作，先勞而後成。",k:3},
+19:{n:"地澤臨",j:"元亨利貞。至于八月有凶。",z:"陽氣漸長、臨事而治。宜把握良機積極進取，惟防後變。",k:4},
+20:{n:"風地觀",j:"盥而不薦，有孚顒若。",z:"觀察省思之象。宜審時度勢、靜觀其變，謀定而後動。",k:3},
+21:{n:"火雷噬嗑",j:"亨。利用獄。",z:"如咬合除梗。宜明斷果決、排除障礙與阻梗，事乃通。",k:3},
+22:{n:"山火賁",j:"亨。小利有攸往。",z:"文飾之象。宜修飾外表、注重形象與內涵，小事可成。",k:3},
+23:{n:"山地剝",j:"不利有攸往。",z:"剝落衰危之象。宜守不宜進、保存實力，靜待時機轉機。",k:1},
+24:{n:"地雷復",j:"亨。出入無疾，朋來無咎。",z:"一陽來復、否極泰來。宜把握轉機、漸進重生，前景轉明。",k:4},
+25:{n:"天雷無妄",j:"元亨利貞。其匪正有眚。",z:"無妄而為、順其自然。宜守正不妄求，安分則意外可避。",k:3},
+26:{n:"山天大畜",j:"利貞，不家食吉，利涉大川。",z:"大有蓄養、厚積待發。宜進德修業、蓄而後用，前程遠大。",k:4},
+27:{n:"山雷頤",j:"貞吉。觀頤，自求口實。",z:"頤養之象。宜慎言節食、修養身心，自食其力、養正則吉。",k:3},
+28:{n:"澤風大過",j:"棟橈，利有攸往，亨。",z:"陽盛過甚、負荷過重。宜量力行非常之事、戒過防傾，方安。",k:2},
+29:{n:"坎為水",j:"習坎，有孚，維心亨，行有尚。",z:"重險之象。宜守誠信、戒慎恐懼，險中沉著求進可脫困。",k:2},
+30:{n:"離為火",j:"利貞，亨。畜牝牛，吉。",z:"光明附麗之象。宜依附正道、明察柔順，附麗得人則亨。",k:4},
+31:{n:"澤山咸",j:"亨，利貞，取女吉。",z:"感應交通之象，婚戀大吉。宜真誠相感、兩情相悅、水到渠成。",k:4},
+32:{n:"雷風恆",j:"亨，無咎，利貞，利有攸往。",z:"恆久之道。宜持之以恆、守常不變、立場堅定則無咎。",k:4},
+33:{n:"天山遯",j:"亨，小利貞。",z:"退避之象。宜急流勇退、避害遠禍，以退為進保全自身。",k:3},
+34:{n:"雷天大壯",j:"利貞。",z:"陽剛壯盛之象。宜守正用壯、循禮而行，戒躁進與恃強。",k:4},
+35:{n:"火地晉",j:"康侯用錫馬蕃庶，晝日三接。",z:"晉升光明之象。宜積極上進、求名得名，前途光明，吉。",k:4},
+36:{n:"地火明夷",j:"利艱貞。",z:"光明受損之象。宜韜光養晦、守正避禍，忍辱負重待時機。",k:2},
+37:{n:"風火家人",j:"利女貞。",z:"家道齊整之象。宜正家睦親、各盡其分，內外有別則吉。",k:4},
+38:{n:"火澤睽",j:"小事吉。",z:"乖違背離之象。宜求同存異、小事可成，大事宜緩勿強合。",k:2},
+39:{n:"水山蹇",j:"利西南，不利東北，利見大人。",z:"險阻難行之象。宜止而思變、待援待時，勿強行涉險。",k:2},
+40:{n:"雷水解",j:"利西南。其來復吉。有攸往夙吉。",z:"險難消解之象。宜把握緩解之機、迅速行動解困，宜早不宜遲。",k:4},
+41:{n:"山澤損",j:"有孚，元吉，無咎，可貞。",z:"減損之象，先損後益。宜誠心節制、損己利人，終得回報。",k:3},
+42:{n:"風雷益",j:"利有攸往，利涉大川。",z:"增益之象，損上益下，大吉。宜積極進取、行善積德、廣施得助。",k:5},
+43:{n:"澤天夬",j:"揚于王庭，孚號有厲。",z:"決斷之象。宜果決除惡、光明正大，惟防小人反撲，剛而不躁。",k:3},
+44:{n:"天風姤",j:"女壯，勿用取女。",z:"不期而遇之象。宜謹慎防誘、戒色防小人，勿輕信外來之利。",k:2},
+45:{n:"澤地萃",j:"亨。王假有廟，利見大人。",z:"薈萃聚合之象。宜聚集人氣、誠心團結，群策群力則亨通。",k:4},
+46:{n:"地風升",j:"元亨，用見大人，勿恤，南征吉。",z:"上升之象。宜循序漸進、積小成大，求進得進，步步高升。",k:4},
+47:{n:"澤水困",j:"亨，貞，大人吉，無咎。",z:"困頓窮厄之象。宜守正自固、處困不失其志，靜待時來脫困。",k:1},
+48:{n:"水風井",j:"改邑不改井，無喪無得。",z:"養而不窮之象。宜修德養人、守正待汲，貴在恆心勿半途廢。",k:3},
+49:{n:"澤火革",j:"巳日乃孚，元亨利貞，悔亡。",z:"變革之象。宜順時改革、除舊布新，把握時機順勢而變則吉。",k:4},
+50:{n:"火風鼎",j:"元吉，亨。",z:"鼎新之象，穩重圖新，大吉。宜安定圖成、納賢養才、革故鼎新。",k:5},
+51:{n:"震為雷",j:"亨。震來虩虩，笑言啞啞。",z:"震動驚惕之象。宜臨危不亂、戒懼修省，動中能定則無咎。",k:3},
+52:{n:"艮為山",j:"艮其背，不獲其身，無咎。",z:"靜止之象。宜適可而止、安靜自守，動靜得宜、知止不殆。",k:3},
+53:{n:"風山漸",j:"女歸吉，利貞。",z:"循序漸進之象，婚嫁吉。宜按部就班、穩健漸成，欲速則不達。",k:4},
+54:{n:"雷澤歸妹",j:"征凶，無攸利。",z:"失序躁進之象。宜守正自重、勿妄動苟合，感情婚戀尤須謹慎。",k:2},
+55:{n:"雷火豐",j:"亨，王假之，勿憂，宜日中。",z:"豐大鼎盛之象。宜把握盛時、明察決斷，惟須防盛極而衰。",k:4},
+56:{n:"火山旅",j:"小亨，旅貞吉。",z:"行旅在外之象。宜謹慎柔順、隨遇而安，守分寡言、勿生是非。",k:3},
+57:{n:"巽為風",j:"小亨，利有攸往，利見大人。",z:"謙順入微之象。宜柔順申命、漸進滲透，順勢而為則通。",k:3},
+58:{n:"兌為澤",j:"亨，利貞。",z:"和悅之象。宜以和待人、言談得宜，喜悅相感、和氣生財，吉。",k:4},
+59:{n:"風水渙",j:"亨。王假有廟，利涉大川。",z:"渙散之象。宜聚散有道、化解渙散，凝聚人心、共渡難關。",k:3},
+60:{n:"水澤節",j:"亨。苦節不可貞。",z:"節制之象。宜適度節制、守禮有度，過猶不及、節而能通。",k:3},
+61:{n:"風澤中孚",j:"豚魚吉，利涉大川，利貞。",z:"誠信之象。宜以誠感人、信實守中，至誠則涉險亦吉。",k:4},
+62:{n:"雷山小過",j:"亨利貞，可小事，不可大事。",z:"小有過越之象。宜守常謹慎，可做小事不宜大事，戒高飛貪大。",k:3},
+63:{n:"水火既濟",j:"亨小，利貞，初吉終亂。",z:"事已成之象。宜守成防變、慎終如始，防樂極生憂、盛極而亂。",k:4},
+64:{n:"火水未濟",j:"亨。小狐汔濟，濡其尾。",z:"事未竟之象。宜慎始慎終、持續努力，曙光在前、終可成功。",k:3}
+};
+const KLEVEL={5:["大吉","#2f9b5e"],4:["吉","#3f9b73"],3:["中平","#b9881a"],2:["凶","#cf7a3a"],1:["大凶","#c2576f"]};
+const WX_GEN={木:"火",火:"土",土:"金",金:"水",水:"木"};
+const WX_KE ={木:"土",土:"水",水:"火",火:"金",金:"木"};
+function tiyong(eWx,uWx){
+  if(eWx===uWx)return {r:"體用比和",ji:"吉",c:"#3f9b73",d:"體用同氣、彼此和諧，所求之事多能如願，貴在堅持守成。"};
+  if(WX_GEN[uWx]===eWx)return {r:"用生體",ji:"大吉",c:"#2f9b5e",d:"外來生助、貴人相扶，所謀順遂得力，乃最為吉利之象。"};
+  if(WX_KE[eWx]===uWx)return {r:"體剋用",ji:"小吉",c:"#b9881a",d:"我能掌控全局，雖須費心經營，事終可成，宜主動進取。"};
+  if(WX_GEN[eWx]===uWx)return {r:"體生用",ji:"小凶",c:"#cf7a3a",d:"洩耗精力、付出較多而回報有限，宜量力而為、勿過度消耗。"};
+  return {r:"用剋體",ji:"凶",c:"#c2576f",d:"外力相剋、阻力較大，宜守不宜進、謹慎防損，待時而動。"};
+}
+function triIdx(a){return TRIGRAMS.findIndex(t=>t.lines[0]===a[0]&&t.lines[1]===a[1]&&t.lines[2]===a[2]);}
+function hexNo(L){return KINGWEN[triIdx(L.slice(0,3))][triIdx(L.slice(3,6))];}
+function hexGlyph(no){return String.fromCodePoint(0x4DC0+(no-1));}
+// 六爻圖（自下而上）。marks: 動爻 index 陣列
+function yaoDiagram(lines,marks){
+  let rows="";
+  for(let i=5;i>=0;i--){
+    const yang=lines[i]===1;
+    const mv=marks&&marks.includes(i);
+    rows+=`<div class="yao ${yang?'yang':'yin'} ${mv?'mv':''}">`+
+      (yang?'<span class="bar"></span>':'<span class="bar"></span><span class="gap"></span><span class="bar"></span>')+
+      (mv?`<span class="dot">${yang?'○':'✕'}</span>`:'')+`</div>`;
+  }
+  return `<div class="yaodiagram">${rows}</div>`;
+}
+function hexBlock(no,label){
+  const h=HEX[no],kl=KLEVEL[h.k];
+  const up=TRIGRAMS[triIdx([0,0,0])]; // placeholder unused
+  const L=[]; // reconstruct trigram names
+  return `<div class="hexcard">
+    <div class="hexlabel">${label}</div>
+    <div class="hexglyph">${hexGlyph(no)}</div>
+    <div class="hexname">第${no}卦 · ${h.n}</div>
+    <div class="hexlevel" style="color:${kl[1]};border-color:${kl[1]}">${kl[0]}</div>
+    <div class="hexjudge">卦辭：${h.j}</div>
+    <div class="hexzhan">${h.z}</div>
+  </div>`;
+}
+function trigPair(no){
+  // 由卦序反推上下卦（掃描 KINGWEN）
+  for(let u=0;u<8;u++)for(let l=0;l<8;l++)if(KINGWEN[u][l]===no)return [u,l];
+  return [0,0];
+}
+
+/* ===== 米卦（梅花易數 · 體用斷） ===== */
+function renderMige(name,gender,sol,sub){
+  // 撒米三撮（隨機米粒數）
+  const c1=18+Math.floor(Math.random()*100), c2=18+Math.floor(Math.random()*100), c3=18+Math.floor(Math.random()*100);
+  const up=(c1%8)||8, lo=(c2%8)||8;          // 先天卦數 1-8
+  const dong=((c1+c2+c3)%6)||6;               // 動爻 1-6
+  const upT=TRIGRAMS[up-1], loT=TRIGRAMS[lo-1];
+  const benNo=KINGWEN[lo-1][up-1], ben=HEX[benNo];
+  const lines=[...loT.lines,...upT.lines];     // 自下而上 1-6
+  const bianLines=lines.slice(); bianLines[dong-1]=bianLines[dong-1]?0:1;
+  const bianNo=hexNo(bianLines), bian=HEX[bianNo];
+  // 體用：動爻在下卦(1-3)→用下體上；在上卦(4-6)→用上體下
+  const dongInLower=dong<=3;
+  const yongT=dongInLower?loT:upT, tiT=dongInLower?upT:loT;
+  const ty=tiyong(tiT.wx,yongT.wx);
+  const klB=KLEVEL[ben.k];
+
+  const html=`
+  <div class="sec-title"><span class="cn">米卦 · 梅花易數</span><span class="en">Plum Blossom · Rice Divination</span></div>
+  <div class="ighero">
+    <div class="ighex"><div class="ighglyph">${hexGlyph(benNo)}</div>
+      <div class="ighname">${ben.n}</div>
+      <div class="ighlevel" style="color:${klB[1]};border-color:${klB[1]}">${klB[0]}</div></div>
+    <div class="igmeta">
+      <div class="igrow">上卦 <b>${upT.s} ${upT.n}（${upT.e}·${upT.wx}）</b></div>
+      <div class="igrow">下卦 <b>${loT.s} ${loT.n}（${loT.e}·${loT.wx}）</b></div>
+      <div class="igrow">動爻 <b>第 ${dong} 爻</b>（${dongInLower?'下卦動':'上卦動'}）</div>
+      <div class="igrow">三撮米數 <b>${c1} · ${c2} · ${c3}</b></div>
+    </div>
+  </div>
+  <p class="approxnote">※ 米卦取法《梅花易數》：虔心拈米三撮，首撮定上卦、次撮定下卦、合數定動爻；以「體用生剋」斷吉凶。一事一占、心誠則靈。</p>
+  <div class="reading">
+    <div class="rcard wide"><h3><span class="ic">卦</span>本卦 · ${ben.n}（第${benNo}卦）</h3>
+      <div class="lead">卦辭：${ben.j}</div><p>${ben.z}</p></div>
+    <div class="rcard"><h3><span class="ic">體</span>體用生剋 · ${ty.r}</h3>
+      <div class="lead" style="color:${ty.c}">論斷：${ty.ji}</div>
+      <p>體卦為「${tiT.n}（${tiT.wx}）」代表自身與事之主體；用卦為「${yongT.n}（${yongT.wx}）」代表外應與所問之事。${ty.d}</p></div>
+    <div class="rcard"><h3><span class="ic">變</span>變卦 · ${bian.n}（第${bianNo}卦）</h3>
+      <div class="lead">卦辭：${bian.j}</div>
+      <p>動爻引動，本卦化為變卦，主事情之終局與趨向：${bian.z}</p></div>
+    <div class="rcard wide"><h3><span class="ic">斷</span>綜合論斷</h3>
+      <p>${name}所占之事，現況顯為「<b style="color:var(--gold)">${ben.n}</b>」（${klB[0]}），體用之間呈「<b style="color:${ty.c}">${ty.r}</b>」之勢，故主<b style="color:${ty.c}">${ty.ji}</b>。動於第${dong}爻，事態將朝「<b style="color:var(--gold)">${bian.n}</b>」演變。${ty.ji==="大吉"||ty.ji==="吉"?"整體氣機順遂，宜把握時機、積極經營，所求可成。":ty.ji==="小吉"?"事雖可成惟須用心經營，宜主動進取、穩健行事。":ty.ji==="小凶"?"付出與收穫未必相稱，宜量力而為、調整步調，勿強求。":"當前阻力較大，宜守不宜進、靜待時機，謹慎自保為上。"}—— 卦象僅示天時人事之機，趨吉避凶仍在己身修為。</p></div>
+  </div>`;
+  document.getElementById("result").innerHTML=html;
+  finishRender(sub);
+}
+
+/* ===== 烏龜卦（金錢六爻 · 本卦變卦） ===== */
+function renderGuigua(name,gender,sol,sub){
+  // 搖卦六次，每次三錢：6老陰 7少陽 8少陰 9老陽
+  const vals=[]; for(let i=0;i<6;i++){let v=0;for(let k=0;k<3;k++)v+=(Math.random()<0.5?2:3); vals.push(v);}
+  const ben=vals.map(v=>(v===7||v===9)?1:0);
+  const marks=[]; vals.forEach((v,i)=>{if(v===6||v===9)marks.push(i);});
+  const bian=ben.map((b,i)=>vals[i]===6?1:(vals[i]===9?0:b));
+  const benNo=hexNo(ben), bianNo=hexNo(bian);
+  const H=HEX[benNo], B=HEX[bianNo];
+  const klB=KLEVEL[H.k], klV=KLEVEL[B.k];
+  const moving=marks.length;
+  const [bu,bl]=trigPair(benNo);
+  // 占斷主軸（朱熹變占法簡化）
+  let verdict;
+  if(moving===0) verdict=`六爻安靜，無動爻，純以<b>本卦</b>卦辭斷之：${H.z}`;
+  else if(moving===6) verdict=`六爻皆動，乾坤之變極矣，當以<b>變卦</b>為主、剛柔全轉：${B.z}`;
+  else verdict=`本卦為當前處境，變卦為事之趨向結局。現況「<b style="color:var(--gold)">${H.n}</b>」（${klB[0]}），動 ${moving} 爻後，將演為「<b style="color:var(--gold)">${B.n}</b>」（${klV[0]}）。${B.k>=H.k?"卦氣由弱轉強、漸入佳境，宜順勢而為、把握轉機。":B.k<H.k?"卦氣由盛轉衰，宜守成防變、見好就收、謹慎為上。":"前後卦氣相當，事態平穩，宜持守正道、按部就班。"}`;
+
+  const html=`
+  <div class="sec-title"><span class="cn">烏龜卦 · 金錢六爻</span><span class="en">Turtle Shell · Six-Line Casting</span></div>
+  <div class="guiwrap">
+    <div class="guihex">${yaoDiagram(ben,marks)}
+      <div class="ighglyph">${hexGlyph(benNo)}</div>
+      <div class="ighname">本卦 · ${H.n}</div>
+      <div class="ighlevel" style="color:${klB[1]};border-color:${klB[1]}">${klB[0]}</div></div>
+    <div class="guiarrow">${moving?'→ 動 '+moving+' 爻 →':'安靜卦'}</div>
+    <div class="guihex">${yaoDiagram(bian,[])}
+      <div class="ighglyph">${hexGlyph(bianNo)}</div>
+      <div class="ighname">變卦 · ${B.n}</div>
+      <div class="ighlevel" style="color:${klV[1]};border-color:${klV[1]}">${klV[0]}</div></div>
+  </div>
+  <p class="approxnote">※ 烏龜卦取法古「龜卜」遺意，以金錢三枚入龜殼搖六次成卦：兩背一字為少陽、兩字一背為少陰、三字老陰(✕動)、三背老陽(○動)；動爻變出變卦。一事一占、心誠則靈。</p>
+  <div class="reading">
+    <div class="rcard wide"><h3><span class="ic">本</span>本卦 · ${H.n}（第${benNo}卦）</h3>
+      <div class="lead">卦辭：${H.j}</div><p>${H.z}</p></div>
+    <div class="rcard wide"><h3><span class="ic">變</span>變卦 · ${B.n}（第${bianNo}卦）</h3>
+      <div class="lead">卦辭：${B.j}</div><p>${B.z}</p></div>
+    <div class="rcard wide"><h3><span class="ic">斷</span>${name} · 綜合論斷</h3>
+      <p>${verdict}<br>—— 卦者，時也機也；吉凶悔吝，皆隨人事之動而生。把握當下、修身積德，自能轉禍為福。</p></div>
+  </div>`;
+  document.getElementById("result").innerHTML=html;
+  finishRender(sub);
 }
 
 /* ===== 西洋占星 ===== */
