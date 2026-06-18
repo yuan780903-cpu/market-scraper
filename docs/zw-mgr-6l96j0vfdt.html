@@ -40,6 +40,19 @@
   .pill.used{background:#f5e8ea;color:#a83a3a;text-decoration:line-through}
   .tip{font-size:.76rem;color:#8a7a52;line-height:1.8;margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
   code{background:#f3e6c8;padding:1px 5px;border-radius:5px}
+  /* 手機版：窄螢幕讓欄位與按鈕堆疊、加大點擊區 */
+  @media(max-width:480px){
+    body{padding:16px 10px}
+    .wrap{padding:20px 16px 24px;border-radius:16px}
+    h1{font-size:1.14rem;line-height:1.4}
+    .sub{font-size:.82rem}
+    .row{flex-wrap:wrap}
+    .row>div:last-child{flex:1 1 100% !important;align-items:stretch !important}
+    .row>div:last-child button{width:100%;margin-top:6px}
+    button{padding:13px 16px}
+    .codeout{font-size:2rem;letter-spacing:6px;padding:18px 10px}
+    .listbox{max-height:46vh}
+  }
 </style>
 </head>
 <body>
