@@ -817,7 +817,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">🖨　下載 PDF 專業報告</button><span class="tbnote">將開啟列印視窗，選擇「另存為 PDF」即可</span></div>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">🖨　下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
   <div id="result"></div>
 </div>
 
@@ -2284,6 +2284,14 @@ function renderNum(name,gender,sol,sub){
 }
 
 /* ===== PDF 列印 ===== */
+function isInAppBrowser(){
+  const ua=navigator.userAgent||"";
+  if(/\b(Line|FBAN|FBAV|FB_IAB|FBIOS|Instagram|MicroMessenger|Twitter|TikTok|Snapchat|KAKAOTALK)\b/i.test(ua))return true;
+  const iOS=/iPhone|iPad|iPod/i.test(ua);
+  if(iOS && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua))return true; // iOS WebView
+  if(/Android/i.test(ua) && /;\s*wv\b/i.test(ua))return true;                   // Android WebView
+  return false;
+}
 document.getElementById("pdfBtn").addEventListener("click",()=>{
   const z=document.getElementById('premZone');
   if(z&&z.classList.contains('locked')){
@@ -2292,7 +2300,15 @@ document.getElementById("pdfBtn").addEventListener("click",()=>{
     const msg=document.getElementById('lcMsg');if(msg){msg.textContent='完整 PDF 專業報告為付費內容，請先輸入萬用碼解鎖。';msg.className='lcmsg err';}
     return;
   }
-  window.print();
+  const note=document.getElementById('pdfNote');
+  if(isInAppBrowser()){
+    // 內建瀏覽器（LINE/FB/IG 等）會封鎖列印，導致「按了沒反應」。引導改用系統瀏覽器。
+    if(note){note.innerHTML='⚠️ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';note.style.color='#c2576f';}
+    try{navigator.clipboard&&navigator.clipboard.writeText(location.href);}catch(e){}
+    return;
+  }
+  if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。手機若沒反應，請改用 Safari／Chrome 開啟本頁。';}
+  try{window.print();}catch(e){if(note){note.textContent='✗ 此瀏覽器不支援直接列印，請改用 Safari／Chrome 開啟本頁再下載。';note.style.color='#c2576f';}}
 });
 
 function timeLabel(h){
