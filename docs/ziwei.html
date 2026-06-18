@@ -167,6 +167,16 @@ header .meta b{color:var(--gold);font-weight:500}
 .feat .fic{font-size:1.8rem;line-height:1;margin-bottom:10px}
 .feat h4{margin:0 0 8px;color:var(--gold-bright);font-size:1.04rem;letter-spacing:1px}
 .feat p{margin:0;color:var(--ink-dim);font-size:.88rem;line-height:1.8}
+.introdetail{max-width:880px;margin:22px auto 0;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden}
+.introdetail summary{cursor:pointer;padding:14px 20px;color:var(--gold-deep);font-weight:600;
+  letter-spacing:1px;font-size:.95rem;list-style:none;display:flex;align-items:center;gap:8px}
+.introdetail summary::-webkit-details-marker{display:none}
+.introdetail summary::before{content:"▸";color:var(--gold);transition:transform .2s ease}
+.introdetail[open] summary::before{transform:rotate(90deg)}
+.introdetail .introbody{padding:2px 22px 18px}
+.introdetail .introbody p{margin:10px 0;color:var(--ink-dim);font-size:.92rem;line-height:2;letter-spacing:.5px}
+.introdetail .introbody b{color:var(--gold-deep)}
 .intro .introcta{text-align:center;margin:22px auto 0;max-width:760px;color:var(--purple);
   font-size:.98rem;letter-spacing:1px;font-weight:600}
 @media(max-width:860px){.featgrid{grid-template-columns:repeat(2,1fr)}}
@@ -864,6 +874,17 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="feat"><div class="fic">🧭</div><h4>從宿命到造命</h4><p>不談令人恐懼的宿命論，而是一份客觀的人生策略指南——讓您在對的時間，做對的決定。</p></div>
     <div class="feat"><div class="fic">👨‍👩‍👧</div><h4>家人加入交叉分析</h4><p>可將家人一同排盤，分析彼此五行生剋與相處之道，是市面少見的家庭命理特色功能。</p></div>
   </div>
+  <details class="introdetail">
+    <summary>展開完整說明 — 為什麼你需要這本「人生說明書」</summary>
+    <div class="introbody">
+      <p>每個人的人生旅途中，難免會有迷惘、徘徊與不知所措的時刻。我們時常在十字路口猶豫，不知下一步該往哪裡走。但其實，當你真正閱讀並了解專屬於自己的「人生實用說明書」之後，相信你將更懂得如何為自己導航，精準掌握人生的方向盤。</p>
+      <p>本系統打破傳統命理的框架，以「<b>斗數十二宮 × 四柱八字</b>」雙軌並行為核心，將傳承千年的「傳統玄學」智慧，與強調客觀邏輯的「大數據精算」完美結合，為您打造最具科學性與實用價值的命格解析：</p>
+      <p><b>・雙系統交叉比對，精準無死角：</b>結合北派紫微斗數的細膩宮位推演，以及子平八字的五行生剋運算。透過雙重驗證，排除單一命理系統的盲區，讓命盤解析達到前所未有的深度與準度。</p>
+      <p><b>・高精度曆法引擎，還原真實命格：</b>內建精密的農曆、節氣與干支精算技術（適用西元 1900–2100 年），確保每一個生辰數據的轉換都毫釐不差，忠實呈現您的先天命格與流年軌跡。</p>
+      <p><b>・從宿命到造命的實用指南：</b>我們不談令人恐懼的宿命論，而是為您提供一份客觀的「人生策略指南」。幫助您看清自身的潛賦與盲點，讓您在事業、財富與人際關係中，都能在對的時間、做對的決定。</p>
+      <p>這不僅僅是一次命理排盤，更是您重新認識自己、優化人生路徑的起點。現在就輸入生辰，開啟您的專屬說明書，讓我們陪您一起趨吉避凶，活出最順遂、最精彩的自己！</p>
+    </div>
+  </details>
   <p class="introcta">現在就輸入生辰，開啟您的專屬說明書，一起趨吉避凶、活出最順遂精彩的自己。</p>
 </section>
 
