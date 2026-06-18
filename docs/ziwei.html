@@ -746,6 +746,12 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .cell.tap:hover::after{opacity:.92}
 .luckcol.tap{position:relative}
 .luckcol.tap::after{content:"➜";position:absolute;top:6px;right:8px;font-size:.6rem;color:var(--gold);opacity:.5}
+.pillar.tap,.wx.tap,.strength.tap,.triocard.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .15s ease,box-shadow .2s ease,border-color .2s ease}
+.pillar.tap:hover,.wx.tap:hover,.strength.tap:hover,.triocard.tap:hover{
+  transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.14);border-color:var(--gold)}
+.pillar.tap:active,.wx.tap:active,.strength.tap:active,.triocard.tap:active{transform:translateY(-1px) scale(.99)}
+@media print{.pillar.tap,.wx.tap,.strength.tap,.triocard.tap{cursor:default}}
 /* 彈窗 */
 .zwmodal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;
   background:rgba(20,12,30,.55);backdrop-filter:blur(4px);padding:18px}
@@ -780,6 +786,9 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .zwmbody .zwkv b{color:var(--gold-deep)}
 .zwmbody .zwtags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
 .zwmbody .zwtag2{font-size:.72rem;color:var(--gold-deep);border:1px dashed var(--gold);border-radius:10px;padding:1px 9px}
+.zwmbody .zwlist{margin:4px 0 10px;padding-left:20px}
+.zwmbody .zwlist li{margin:4px 0;line-height:1.7}
+.zwmbody .zwlist li b{color:var(--gold-deep)}
 @media print{.zwmodal{display:none!important}}
 .taphint{display:inline-block;margin-top:5px;font-size:.74rem;color:var(--purple);background:var(--pwash);
   border:1px dashed var(--purple);border-radius:12px;padding:2px 12px;letter-spacing:.5px}
@@ -1416,6 +1425,48 @@ const WX_ADVICE={
  土:"土主信、主厚實。土旺者宜疏通流動、避免淤滯；土弱者宜培土固本，重承諾、講信用，穩中求進。",
  金:"金主義、主肅殺。金旺者宜以火煉、以水洩其銳；金弱者宜增剛健果決，重原則、講效率，化柔為剛。",
  水:"水主智、主流通。水旺者宜以土制、以木洩其勢；水弱者宜增流動與智巧，多親近水、保持心思靈活。"
+};
+
+/* 五行白話精解（含舉例）——供互動彈窗 */
+const WX_MEAN={
+ 木:{key:"仁・生發・成長",body:"肝、膽、筋骨、神經、眼睛",
+   per:"木代表「仁慈與成長」。木旺的人多半正直善良、有上進心、做事有條理，像大樹一樣積極向上、講求規劃與成長。",
+   ex:"舉例來說：木旺的人通常喜歡學習進修、富同情心、樂於照顧人；但木太旺則容易固執、想太多、鑽牛角尖。木太弱則做事缺乏衝勁與條理、容易半途而廢。"},
+ 火:{key:"禮・光明・熱情",body:"心臟、小腸、血液、眼睛、血壓",
+   per:"火代表「熱情與禮節」。火旺的人開朗熱情、有活力與感染力、講究面子與禮數，像太陽一樣外放、樂於表現。",
+   ex:"舉例來說：火旺的人通常活潑外向、人緣好、行動快；但火太旺容易急躁衝動、虎頭蛇尾、坐不住。火太弱則顯得冷淡被動、缺乏熱情與自信。"},
+ 土:{key:"信・厚實・包容",body:"脾、胃、消化系統、肌肉",
+   per:"土代表「誠信與穩重」。土旺的人敦厚老實、重承諾、有包容力，像大地一樣穩定可靠、不輕易動搖。",
+   ex:"舉例來說：土旺的人通常踏實守信、是值得信賴的中流砥柱；但土太旺容易固執保守、反應慢、放不開。土太弱則缺乏安全感、做事飄忽、難以堅持。"},
+ 金:{key:"義・果決・原則",body:"肺、大腸、呼吸道、皮膚、骨骼",
+   per:"金代表「義氣與果決」。金旺的人重義氣、講原則、行動力強、決斷明快，像刀劍一樣銳利、敢做敢當。",
+   ex:"舉例來說：金旺的人通常重承諾、講效率、有正義感；但金太旺容易剛硬好強、不留情面、易與人衝突。金太弱則優柔寡斷、缺乏魄力與執行力。"},
+ 水:{key:"智・流通・應變",body:"腎、膀胱、泌尿、生殖、耳朵",
+   per:"水代表「智慧與變通」。水旺的人聰明靈活、反應快、足智多謀，像流水一樣懂得隨機應變、八面玲瓏。",
+   ex:"舉例來說：水旺的人通常頭腦靈活、口才好、人脈廣；但水太旺容易心思浮動、想法多而不專、隨波逐流。水太弱則思路不夠靈活、應變與彈性不足。"}
+};
+/* 五行開運生活應用（含舉例）*/
+const WX_LIFE={
+ 木:{色:"綠色、青色",方:"東方",業:"教育、文化、出版、園藝、木材、紡織、中醫、文具",物:"多接觸花草樹木與綠色植物、飲食多蔬果、書房朝東"},
+ 火:{色:"紅色、紫色、橙色",方:"南方",業:"餐飲、能源、美容、電子3C、演藝、照明、光電、餐飲",物:"多曬太陽、保持運動與熱情、紅色系飾品、明亮空間"},
+ 土:{色:"黃色、咖啡色、米色",方:"中央、本地",業:"房地產、營建、農牧、陶瓷、保險、仲介、管理顧問",物:"親近大地、登山陶藝、黃色系飾品、居處求穩不宜常搬"},
+ 金:{色:"白色、金色、銀色",方:"西方",業:"金融、機械、五金、科技、軍警、珠寶、汽車、會計",物:"配戴金銀金屬飾品、居家金屬材質、整潔明亮空間"},
+ 水:{色:"黑色、藍色、灰色",方:"北方",業:"貿易、運輸、水產、旅遊、傳播、流通、業務、物流",物:"多親近水、保持流動與彈性、藍黑色系、座位可朝北"}
+};
+/* 四柱含義（含人生階段舉例）*/
+const PILLAR_MEANING={
+ 年:{rep:"祖上・父母・少年（1～16歲）・外在形象",
+   d:"年柱代表你的祖先根基、出身背景、童年少年時期（約 1～16 歲）的運勢，以及你給人的第一印象。年柱配置好，多主出身有蔭、少年安順。",
+   gan:"年干：看祖父、長輩與你和上一代的緣分。",zhi:"年支：看祖蔭、家世與童年成長環境。"},
+ 月:{rep:"父母・兄弟・事業根基・青年（17～32歲）",
+   d:"月柱是八字的核心，代表父母、兄弟手足、青年時期（約 17～32 歲）與事業根基，最能反映你的性格與成長環境。其中「月支（月令）」更是判斷整個命局旺衰、取喜用神最關鍵的一柱。",
+   gan:"月干：看父母、長官與青年運勢。",zhi:"月支（月令）：判斷日主強弱、定喜用神的第一關鍵，等於整盤的「氣候總開關」。"},
+ 日:{rep:"自己・配偶・婚姻・中年（33～48歲）",
+   d:"日柱是論命的核心。「日干」就是你本人（日主），「日支」代表配偶與婚姻宮，也主中年（約 33～48 歲）的運勢。日支與日主相生相合者，多主夫妻和諧、中年得力。",
+   gan:"日干：就是你本人（日主），是整張命盤的基準點。",zhi:"日支：夫妻宮，看配偶緣分、另一半特質與婚姻品質。"},
+ 時:{rep:"子女・部屬・晚年（49歲後）・成就格局",
+   d:"時柱代表子女、晚輩部屬、晚年（約 49 歲以後）的運勢，以及人生最終的成就與收成。時柱配置好，多主子女有成、晚景安康、收穫豐厚。",
+   gan:"時干：看子女、晚年志向與人生後段的格局。",zhi:"時支：看子女緣分、部屬助力與晚年安頓。"}
 };
 
 /* ================= 西洋占星（太陽星座） ================= */
@@ -2590,6 +2641,104 @@ function zwLuck(i){
   zwOpenModal("子平八字 · 大運",`第 ${step} 步大運 · ${p.gan}${p.zhi}`,`${p.age}–${p.age+9} 歲 · ${tg}`,body);
 }
 
+/* 五行能量白話彈窗 */
+function zwWuxing(el){
+  const D=window.__ZW;if(!D||!D.wx)return;const wx=D.wx,name=D.name,st=D.adv.strength;
+  const v=wx[el]; const order=["木","火","土","金","水"];
+  const avg=order.reduce((s,k)=>s+wx[k],0)/5;
+  const sorted=[...order].sort((a,b)=>wx[b]-wx[a]);
+  const rank=sorted.indexOf(el)+1;
+  let lvl,lvlTxt;
+  if(v>=avg*1.4){lvl="偏旺";lvlTxt=`您命中「${el}」的能量明顯偏多（${v} 數，全局排第 ${rank}），是命局裡較強勢的一股力量。`;}
+  else if(v<=avg*0.6){lvl="偏弱";lvlTxt=`您命中「${el}」的能量明顯偏少（${v} 數，全局排第 ${rank}），是命局裡較欠缺、需要留意補強的一環。`;}
+  else{lvl="平和";lvlTxt=`您命中「${el}」的能量大致平和（${v} 數，全局排第 ${rank}），分布均勻、不偏不倚。`;}
+  const m=WX_MEAN[el], life=WX_LIFE[el];
+  const isXi=st.xi.includes(el), isJi=st.ji.includes(el);
+  let xj="";
+  if(isXi)xj=`<div class="zwsec">與您的喜用神</div><p>「${el}」正是您命局的<b style="color:var(--jade)">喜用神</b>——多親近、多運用此五行的色彩、方位與行業，最能補您命局之不足、助旺運勢。</p>`;
+  else if(isJi)xj=`<div class="zwsec">與您的忌神</div><p>「${el}」屬您命局的<b style="color:#d47f8f">忌神</b>——日常宜適度節制此五行過旺之氣，多借喜用神（${st.xi.join("、")}）來調和平衡。</p>`;
+  const body=`
+    <div class="zwkv"><span>命中數量 <b>${v} 數</b></span><span>強弱 <b>${lvl}</b></span><span>主管 <b>${m.key}</b></span></div>
+    <div class="zwsec">「${el}」代表什麼</div><p>${m.per}</p>
+    <div class="zwsec">您命中的「${el}」</div><p>${lvlTxt}${m.ex}</p>
+    <div class="zwsec">對應身體部位</div><p>${m.body}——此五行過旺或過弱時，相關部位較易有狀況，宜留心保養。</p>
+    <div class="zwsec">開運生活應用</div>
+    <div class="zwkv"><span>幸運色 <b>${life.色}</b></span><span>方位 <b>${life.方}</b></span></div>
+    <p><b>適性行業</b>：${life.業}。<br><b>開運做法</b>：${life.物}。</p>
+    ${xj}`;
+  zwOpenModal("子平八字 · 五行能量",`${el} · ${lvl}`,`命中 ${v} 數 · ${m.key}`,body);
+}
+
+/* 四柱白話彈窗 */
+function zwPillar(i){
+  const D=window.__ZW;if(!D)return;const bz=D.bz,dm=D.dm,name=D.name;
+  const labs=["年","月","日","時"]; const lab=labs[i];
+  const p=[bz.year,bz.month,bz.day,bz.hour][i];
+  const pm=PILLAR_MEANING[lab];
+  const isDay=lab==="日";
+  const tgGan=isDay?"日主（您本人）":tenGod(dm,p.gan);
+  const hid=ZHI_HID[p.zhi];
+  const hidTxt=hid.map((g,idx)=>`${g}（${tenGod(dm,g)}）`).join("、");
+  const ny=naYin(p.gan,p.zhi);
+  const ganDesc=isDay?DAYMASTER_DESC[p.gan]:`天干「${p.gan}」相對於您的日主「${dm}」為<b>${tgGan}</b>——${TENGOD_DESC[tgGan]||""}`;
+  const body=`
+    <div class="zwkv"><span>干支 <b>${p.gan}${p.zhi}</b></span><span>五行 <b>${GAN_WX[p.gan]}·${ZHI_WX[p.zhi]}</b></span><span>納音 <b>${ny}</b></span></div>
+    <div class="zwsec">這一柱看什麼</div><p>${pm.d}</p>
+    <div class="zwsec">天干 ${p.gan}（${GAN_WX[p.gan]}）</div><p>${pm.gan}<br>${ganDesc}</p>
+    <div class="zwsec">地支 ${p.zhi}（${ZHI_WX[p.zhi]}，藏 ${hidTxt}）</div><p>${pm.zhi}<br>地支裡藏著的天干，代表這一柱深層、暗藏的力量；括號內為相對日主的十神。</p>
+    <div class="zwsec">納音「${ny}」</div><p>納音是古法以干支配五行的另一種說法，可作為這一柱整體氣質的補充參考。</p>
+    <div class="zwsec">白話總評</div><p>這是 ${name} 八字的「${lab}柱」，主管「${pm.rep}」。${isDay?"日柱的天干就是您本人，是整張命盤評斷的核心基準。":`此柱天干為${tgGan}，對照上方說明，即可看出這個人生面向的特質與課題。`}</p>`;
+  zwOpenModal("子平八字 · 四柱",`${lab}柱 · ${p.gan}${p.zhi}`,pm.rep,body);
+}
+
+/* 日主旺衰・喜用神白話彈窗 */
+function zwStrength(){
+  const D=window.__ZW;if(!D)return;const st=D.adv.strength,dm=D.dm,name=D.name;
+  const lvl=st.level;
+  let explain;
+  if(lvl==="身強")explain="「身強」是指代表你本人的日主，得到很多同類五行的幫襯，元氣旺盛、力量強。身強的人多半自主性高、有主見、抗壓性強，缺點是有時太過自我、不易聽勸。身強之命，反而要用「會消耗、會剋制」你的五行來疏導這股旺氣，才能把能量用在正途、成就事業。";
+  else if(lvl==="身弱")explain="「身弱」是指代表你本人的日主，缺少同類五行的幫襯、力量偏虛。身弱的人多半較體貼、配合度高、懂得借力，缺點是有時自信不足、容易受環境左右。身弱之命，需要用「生你、幫你」的五行來扶持壯大，得到幫助時運勢就會轉強。";
+  else explain="「中和」是指日主強弱恰到好處、不偏不倚，這是八字裡最難得的格局。中和之人個性較圓融、能屈能伸，一生多能逢凶化吉。喜用神以「調候補弱、維持平衡」為原則。";
+  const xiLife=st.xi.map(el=>{const L=WX_LIFE[el];return `<li><b>${el}</b>：幸運色 ${L.色}、利方位 ${L.方}；適性行業如 ${L.業}。</li>`;}).join("");
+  const body=`
+    <div class="zwkv"><span>日主 <b>${dm}（${GAN_WX[dm]}）</b></span><span>旺衰 <b>${lvl}</b></span></div>
+    <div class="zwsec">什麼是「日主旺衰」</div><p>日主就是代表「你本人」的那個字（八字日柱的天干）。算出它在命局中是強是弱，是論八字最重要的第一步——強弱不同，該補該洩的五行（喜用神）就完全相反。</p>
+    <div class="zwsec">您的情況：${lvl}</div><p>${explain}</p>
+    <div class="zwsec">喜用神是什麼、怎麼用</div><p>喜用神就是「對你最有幫助、最該多親近」的五行。您的喜用神是 <b style="color:var(--jade)">${st.xi.join("、")}</b>，在日常生活中可以這樣運用：</p>
+    <ul class="zwlist">${xiLife}</ul>
+    <div class="zwsec">忌神要注意什麼</div><p>忌神是 <b style="color:#d47f8f">${st.ji.join("、")}</b>——不是說它一定不好，而是這股力量對您而言容易「過頭」。日常宜適度節制其色彩、方位與相關行業的過度投入，多用喜用神來平衡，運勢就會更順。</p>
+    <div class="zwsec">白話總評</div><p>對 ${name} 而言，順著喜用神（${st.xi.join("、")}）的方向經營人生——選對行業、用對顏色方位、結交相生貴人，就是後天「造命」最實用的方法。</p>`;
+  zwOpenModal("子平八字 · 旺衰喜用",`日主 ${dm} · ${lvl}`,`喜用 ${st.xi.join("、")} · 忌 ${st.ji.join("、")}`,body);
+}
+
+/* 三方四正白話彈窗 */
+function zwTrio(b,i){
+  const D=window.__ZW;if(!D)return;const zw=D.zw,name=D.name;
+  const labels=["本命宮","三合（財帛）","三合（官祿）","對宮（遷移）"];
+  const pname=zw.palaceName[b], gz=zw.palaceGan[b]+ZHI[b];
+  const stars=(zw.stars[b]||[]);
+  const mainStars=stars.filter(s=>s.type==="main");
+  let starHTML;
+  if(mainStars.length){
+    starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
+      return d?`<div class="zwstar"><b>${s.name}</b><span class="zwst">${d.t}</span>${d.d}</div>`
+              :`<div class="zwstar"><b>${s.name}</b></div>`;}).join("");
+  }else{const d=STAR_DESC["空宮"];starHTML=`<div class="zwstar"><b>本宮無主星（空宮）</b><span class="zwst">${d.t}</span>${d.d}</div>`;}
+  const roleTxt={
+    0:"這是您的<b>本命宮</b>，是三方四正的中心，代表您的本性與一生格局主軸。",
+    1:"這是命宮的<b>三合宮（財帛）</b>，主一生財祿來源；它與命宮「三合拱照」，會把這裡的星性力量送進命宮，影響您的財運與賺錢方式。",
+    2:"這是命宮的<b>三合宮（官祿）</b>，主事業功名；它與命宮三合拱照，深刻影響您的事業格局與發展方向。",
+    3:"這是命宮的<b>對宮（遷移）</b>，正對命宮，力量最直接；主出外際遇與人脈，常反映您在外的表現與貴人運。"
+  }[i];
+  const body=`
+    <div class="zwkv"><span>宮位 <b>${pname}</b></span><span>干支 <b>${gz}</b></span></div>
+    <div class="zwsec">什麼是「三方四正」</div><p>論紫微斗數有一句口訣：「不以一宮論斷」。看命宮時，必須連同它的「三方」（財帛、官祿兩個三合宮）與「四正」（正對面的遷移宮）一起參看——這四個宮位互相拱照、彼此影響，合稱三方四正。主星得正又會合吉星，才算真正的好格局。</p>
+    <div class="zwsec">這一宮的角色</div><p>${roleTxt}</p>
+    <div class="zwsec">這一宮看什麼</div><p>${PALACE_DESC[pname]||""}</p>
+    <div class="zwsec">坐守星曜</div>${starHTML}`;
+  zwOpenModal("紫微斗數 · 三方四正",labels[i]+" · "+pname,gz,body);
+}
+
 function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const res=document.getElementById("result");
   const leapTxt=lunar.isLeap?"閏":"";
@@ -2607,7 +2756,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     const p=[bz.year,bz.month,bz.day,bz.hour][i];
     const tgGan=lab==="日"?"日主":tenGod(dm,p.gan);
     const tgZhi=tenGod(dm,ZHI_HID[p.zhi][0]);
-    return `<div class="pillar">
+    return `<div class="pillar tap" onclick="zwPillar(${i})">
       <div class="ptag">${lab}柱</div>
       <div class="tg">${tgGan}</div>
       <div class="gan">${p.gan}</div>
@@ -2622,7 +2771,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 五行 HTML
   const wxHTML=wxOrder.map(k=>{
     const v=wx[k]; const pct=Math.min(100,Math.round(v/maxWx*100));
-    return `<div class="wx wx-${k}"><div class="nm">${k}</div>
+    return `<div class="wx wx-${k} tap" onclick="zwWuxing('${k}')"><div class="nm">${k}</div>
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="ct"><b>${v}</b> 數</div></div>`;
   }).join("");
@@ -2724,7 +2873,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const trioLabels=["本命宮","三合(財帛)","三合(官祿)","對宮(遷移)"];
   const trioHTML=trioBranches.map((b,i)=>{
     const ms=(zw.stars[b]||[]).map(s=>s.name).join("、")||"空宮";
-    return `<div class="triocard"><div class="tl">${trioLabels[i]}</div><div class="tgz2">${zw.palaceGan[b]}${ZHI[b]}</div><div class="tsm">${ms}</div></div>`;
+    return `<div class="triocard tap" onclick="zwTrio(${b},${i})"><div class="tl">${trioLabels[i]}</div><div class="tgz2">${zw.palaceGan[b]}${ZHI[b]}</div><div class="tsm">${ms}</div></div>`;
   }).join("");
 
   // ===== 流年 2026 丙午 =====
@@ -2741,7 +2890,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     +`綜合而言，命主宜揚 ${GAN_WX[dm]} 性之長，補喜用 ${st.xi.join("、")} 之氣；待人以誠、處事以恆，循四化之引、應大限之機，自能將先天之命，化為後天之運。`;
 
   // 存全域供觸控彈窗讀取
-  window.__ZW={zw,adv,bz,dm,name,gender,lk,liunian:liunianBranch};
+  window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch};
   // 付費解鎖身分（姓名｜生日｜時間｜性別）
   window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender)};
 
@@ -2756,8 +2905,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
 
   <div class="sec-title"><span class="cn">子平八字 · 四柱</span><span class="en">Four Pillars of Destiny</span></div>
+  <div class="lucksub"><span class="taphint">👆 點選任一柱，看年月日時柱的含義與十神白話解說</span></div>
   <div class="pillars">${pillarHTML}</div>
   <div class="divider"><span>五行能量</span></div>
+  <div class="lucksub"><span class="taphint">👆 點選任一五行，看其旺弱含義、開運色彩方位與舉例</span></div>
   <div class="wuxing">${wxHTML}</div>
 
   <div class="divider"><span>大運流轉（每柱十年）</span></div>
@@ -2801,7 +2952,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${scoreSection(scores)}
 
   <div class="divider"><span>日主旺衰 · 喜用神</span></div>
-  <div class="strength">
+  <div class="lucksub"><span class="taphint">👆 點此看「身強／身弱」白話解說與喜用神生活應用</span></div>
+  <div class="strength tap" onclick="zwStrength()">
     <div class="slevel ${st.level==='身強'?'strong':st.level==='身弱'?'weak':'mid'}">${st.level}</div>
     <div class="stext">${strengthTxt}</div>
     <div class="xiji">
