@@ -2286,7 +2286,7 @@ document.getElementById("pdfBtn").addEventListener("click",()=>{
   if(z&&z.classList.contains('locked')){
     const pw=document.getElementById('paywall');
     if(pw){pw.style.display='';pw.scrollIntoView({behavior:'smooth',block:'center'});}
-    const msg=document.getElementById('lcMsg');if(msg){msg.textContent='完整 PDF 專業報告為付費內容，請先輸入解鎖碼。';msg.className='lcmsg err';}
+    const msg=document.getElementById('lcMsg');if(msg){msg.textContent='完整 PDF 專業報告為付費內容，請先輸入萬用碼解鎖。';msg.className='lcmsg err';}
     return;
   }
   window.print();
@@ -2297,30 +2297,20 @@ function timeLabel(h){
   return ZHI[z]+"時";
 }
 
-/* ===== 付費解鎖機制（離線・公鑰驗章・專屬解鎖碼） =====
-   原理：每份報告以「姓名｜生日｜時間｜性別」為身分，由你本機的「發碼工具」
-   用私鑰簽出專屬解鎖碼；本頁僅內含公鑰，只能「驗章」不能「偽造」，
-   全程在瀏覽器離線運算、不上傳任何資料。 */
-const LC_PUB={"kty":"EC","x":"VhIPhXoV9qKtQnC2-kaTW8CerMVRDjDFa40pSERhakY","y":"s7H-QIzEoBd5t2M9jXi0MRmnSUuVeLf_eFid5yIzsH4","crv":"P-256"};
+/* ===== 付費解鎖機制（一次性萬用碼・真正全球單次核銷） =====
+   原理：你用本機「萬用碼工具」發出 0001~9999 的萬用碼，存進 Cloudflare
+   Worker（免費）的 KV；客戶在此輸入萬用碼，本頁向 Worker 核銷：未用過→解鎖
+   並把該碼標記為已用，全世界只能用一次；16888 為無限次「超級萬用碼」。
+   命理計算全程在本機，不上傳任何個資；只把「4 位數字的碼」送去驗證。 */
+const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
 const LC_PRICE="NT$ 168";   // ← 想改價格改這裡
-const LC_CONTACT="完成付款後，請將「姓名・國曆生日・出生時間・性別」以 LINE 傳給 政遠大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬解鎖碼。";  // ← 改成你的聯絡方式
+const LC_CONTACT="完成付款後，請以 LINE 告知 政遠大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
-}
-function lcB64urlToBuf(s){
-  s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
-  const bin=atob(s),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;
 }
 async function lcKey(p){
   const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
   return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
-}
-async function lcVerify(code,p){
-  try{
-    const pub=await crypto.subtle.importKey('jwk',LC_PUB,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
-    const sig=lcB64urlToBuf(code.trim().replace(/\s+/g,''));
-    return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},pub,sig,new TextEncoder().encode(p));
-  }catch(e){return false;}
 }
 async function lcIsUnlocked(p){try{return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
 async function lcRefresh(){
@@ -2330,20 +2320,31 @@ async function lcRefresh(){
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
 }
+async function lcRedeem(code){
+  const r=await fetch(LC_API.replace(/\/+$/,'')+'/redeem?code='+encodeURIComponent(code),{method:'GET',cache:'no-store'});
+  return await r.json();
+}
 async function lcUnlock(){
   const inp=document.getElementById('lcInput'),msg=document.getElementById('lcMsg');
   if(!inp||!window.__LC)return;
-  const code=inp.value.trim();
-  if(!code){msg.textContent='請貼上解鎖碼。';msg.className='lcmsg err';return;}
+  const code=inp.value.trim().replace(/\s+/g,'');
+  if(!/^\d{4,5}$/.test(code)){msg.textContent='請輸入正確的萬用碼（4 位數字）。';msg.className='lcmsg err';return;}
   msg.textContent='驗證中…';msg.className='lcmsg';
-  const ok=await lcVerify(code,window.__LC.payload);
-  if(ok){
+  let res;
+  try{res=await lcRedeem(code);}
+  catch(e){msg.textContent='✗ 無法連線驗證伺服器，請確認網路後再試一次。';msg.className='lcmsg err';return;}
+  if(res&&res.ok){
     try{localStorage.setItem('zw_lic_'+await lcKey(window.__LC.payload),'1');}catch(e){}
-    msg.textContent='✓ 解鎖成功，完整精析已開啟！';msg.className='lcmsg ok';
+    msg.textContent=res.super?'✓ 超級萬用碼驗證成功，完整精析已開啟！':'✓ 解鎖成功，完整精析已開啟！';
+    msg.className='lcmsg ok';
     await lcRefresh();
     const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});
   }else{
-    msg.textContent='✗ 解鎖碼無效，請確認姓名／生日／時間／性別與購買時完全一致。';msg.className='lcmsg err';
+    const reason=res?res.reason:'';
+    msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
+                  :reason==='invalid'?'✗ 萬用碼無效或尚未發出，請向 政遠大師確認。'
+                  :'✗ 解鎖失敗，請稍後再試。';
+    msg.className='lcmsg err';
   }
 }
 
@@ -2609,11 +2610,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="pwprice">${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div class="pwbuy">${LC_CONTACT}</div>
     <div class="pwform">
-      <input id="lcInput" type="text" placeholder="在此貼上專屬解鎖碼" autocomplete="off" spellcheck="false">
+      <input id="lcInput" type="text" inputmode="numeric" placeholder="在此輸入萬用碼（例如 0123）" autocomplete="off" spellcheck="false">
       <button onclick="lcUnlock()">解鎖</button>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
-    <div class="pwnote">🔒 解鎖碼僅在本機驗證、不上傳任何資料；解鎖後此裝置將永久記住。</div>
+    <div class="pwnote">🔒 萬用碼為一次性，使用後即失效，全世界只能用一次；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
   <div id="premZone" class="locked">
