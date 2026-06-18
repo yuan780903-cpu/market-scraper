@@ -2652,6 +2652,7 @@ async function lcUnlock(){
     const reason=res?res.reason:'';
     msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
                   :reason==='invalid'?'✗ 萬用碼無效或尚未發出，請向 政遠大師確認。'
+                  :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 政遠大師索取新碼。'
                   :'✗ 解鎖失敗，請稍後再試。';
     msg.className='lcmsg err';
   }
