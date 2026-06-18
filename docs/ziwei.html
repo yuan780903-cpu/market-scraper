@@ -840,7 +840,11 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .pwlist{list-style:none;padding:0;margin:0 auto 16px;max-width:430px;text-align:left}
 .paywall .pwlist li{padding:6px 0 6px 26px;position:relative;font-size:.94rem;color:var(--ink);border-bottom:1px dashed var(--line-soft)}
 .paywall .pwlist li::before{content:"✦";position:absolute;left:4px;color:var(--gold)}
-.paywall .pwprice{font-size:1.7rem;font-weight:800;color:var(--gold-bright);margin:8px 0 2px}
+.paywall .pworig{font-size:.95rem;color:var(--ink-faint);margin-top:8px}
+.paywall .pworig s{color:#c2576f;text-decoration-thickness:1.5px}
+.paywall .pwprice{font-size:1.7rem;font-weight:800;color:var(--gold-bright);margin:2px 0 2px}
+.paywall .pwprice em{font-style:normal;font-size:.92rem;font-weight:700;color:var(--purple);margin-right:4px;
+  background:var(--pwash);border-radius:8px;padding:2px 8px;vertical-align:middle}
 .paywall .pwprice span{font-size:.84rem;font-weight:400;color:var(--ink-faint)}
 .paywall .pwbuy{font-size:.84rem;color:var(--purple);background:var(--pwash);border:1px dashed var(--purple);
   border-radius:12px;padding:9px 14px;margin:10px auto 14px;max-width:470px;line-height:1.75}
@@ -2589,7 +2593,8 @@ function timeLabel(h){
    並把該碼標記為已用，全世界只能用一次；16888 為無限次「超級萬用碼」。
    命理計算全程在本機，不上傳任何個資；只把「4 位數字的碼」送去驗證。 */
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
-const LC_PRICE="NT$ 168";   // ← 想改價格改這裡
+const LC_PRICE="88 元";   // ← 想改價格改這裡（結緣價）
+const LC_ORIG="888 元";    // ← 原價（顯示刪除線）
 const LC_CONTACT="完成付款後，請以 LINE 告知 政遠大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
@@ -2994,7 +2999,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>2026 流年運程 ・ 綜合個人化論斷</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
-    <div class="pwprice">${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div class="pworig">原價 <s>${LC_ORIG}</s></div>
+    <div class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div class="pwbuy">${LC_CONTACT}</div>
     <div class="pwform">
       <input id="lcInput" type="text" inputmode="numeric" placeholder="在此輸入萬用碼（例如 0123）" autocomplete="off" spellcheck="false">
