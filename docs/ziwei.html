@@ -354,6 +354,9 @@ header .meta b{color:var(--gold);font-weight:500}
 .luckcol .lz{font-size:1.7rem;font-weight:700;color:var(--ink);line-height:1.2}
 .luckcol .ltg{font-size:.72rem;color:var(--purple);margin-top:6px}
 .luckcol .lny{font-size:.66rem;color:var(--ink-faint);margin-top:3px}
+.lnrow{display:grid;grid-template-columns:repeat(10,minmax(80px,1fr));gap:10px;min-width:900px}
+.lncol .la{font-size:.92rem;font-weight:700;letter-spacing:0;color:var(--gold-deep)}
+.lncol .ltg{font-weight:700;color:var(--purple)}
 
 /* 神煞 */
 .shensha{display:flex;flex-wrap:wrap;gap:12px}
@@ -2793,6 +2796,37 @@ function zwLuck(i){
   zwOpenModal("子平八字 · 大運",`第 ${step} 步大運 · ${p.gan}${p.zhi}`,`${p.age}–${p.age+9} 歲 · ${tg}`,body);
 }
 
+/* 批流年白話彈窗 */
+function zwLiunian(Y){
+  const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name,birthYear=D.birthYear;
+  const gi=((Y-4)%10+10)%10, zi=((Y-4)%12+12)%12;
+  const gan=GAN[gi], zhi=ZHI[zi], sx=SHENGXIAO[zhi];
+  const age=Y-birthYear+1, isCur=Y===2026;
+  const branch=zi, pname=zw.palaceName[branch], gz=zw.palaceGan[branch]+ZHI[branch];
+  const mainStars=(zw.stars[branch]||[]).filter(s=>s.type==="main").map(s=>s.name);
+  const starTxt=mainStars.length?mainStars.join("、"):"空宮（借對宮論）";
+  const sh=SIHUA[gan];
+  let limName="—",limRange="";
+  for(let b=0;b<12;b++){const L=adv.limits.limits[b];if(age>=L.start&&age<=L.end){limName=zw.palaceName[b];limRange=`${L.start}–${L.end} 歲`;break;}}
+  const body=`
+    ${isCur?'<div class="zwbadges"><span class="zwb ln">今年流年</span></div>':""}
+    <div class="zwkv"><span>干支 <b>${gan}${zhi}</b></span><span>生肖 <b>${sx}年</b></span><span>虛歲 <b>${age} 歲</b></span></div>
+    <div class="zwsec">流年命宮 · ${pname}（${gz}）</div>
+    <p>${Y} 年（${gan}${zhi}）流年命宮落在您本命的「<b style="color:var(--gold)">${pname}</b>」，坐星 <b>${starTxt}</b>。${PALACE_DESC[pname]||""}這一年的運勢主軸，便以此宮的星性與人生領域為核心。</p>
+    <div class="zwsec">流年四化（${gan}干引動）</div>
+    <p>
+      <b style="color:var(--jade)">${sh[0]}化祿</b>（這一年財福機緣所在，宜積極把握）、
+      <b style="color:#e0a85a">${sh[1]}化權</b>（掌握主導、增能擔當之處）、
+      <b style="color:#7fa6d4">${sh[2]}化科</b>（名聲、文書、貴人之喜）、
+      <b style="color:#d47f8f">${sh[3]}化忌</b>（須謹慎、宜守不宜攻之處）。
+      流年逢化祿之宮可進取，逢化忌之宮宜低調防耗、化解糾結。</p>
+    <div class="zwsec">這一年的大限背景</div>
+    <p>虛歲 ${age} 落在「<b style="color:var(--purple-glow)">${limName}</b>」大限（${limRange}）之中——大限定十年基調、流年定當年起伏，兩者須合參。</p>
+    <div class="zwsec">白話總評</div>
+    <p>${isCur?`${Y} 年正是 ${name} 當前的流年。`:`展望 ${Y} 年，`}流年行入「${pname}」、坐 ${starTxt}，${gan}干引動四化如上。把握化祿化權之機、留意化忌之宮，順勢經營此宮所主的人生領域，這一年自能趨吉避凶、穩中求進。</p>`;
+  zwOpenModal("紫微斗數 · 批流年",`${Y} 年 · ${gan}${zhi}（${sx}年）`,`虛歲 ${age} · 流年入${pname}`,body);
+}
+
 /* 五行能量白話彈窗 */
 function zwWuxing(el){
   const D=window.__ZW;if(!D||!D.wx)return;const wx=D.wx,name=D.name,st=D.adv.strength;
@@ -3012,6 +3046,20 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="lny">${naYin(p.gan,p.zhi)}</div></div>`;
   }).join("");
 
+  // ===== 批流年（現年起未來十年）=====
+  const PLN_START=2026, PLN_SPAN=10;
+  const liunianHTML=Array.from({length:PLN_SPAN},(_,k)=>{
+    const yy=PLN_START+k;
+    const gi=((yy-4)%10+10)%10, zi=((yy-4)%12+12)%12;
+    const gan=GAN[gi], zhi=ZHI[zi], pcBranch=zi, pcName=zw.palaceName[pcBranch];
+    const age=yy-sol.y+1, cur=yy===PLN_START;
+    return `<div class="luckcol lncol tap ${cur?'on':''}" onclick="zwLiunian(${yy})">
+      <div class="la">${yy}</div>
+      <div class="lg">${gan}</div><div class="lz">${zhi}</div>
+      <div class="ltg">${pcName}</div>
+      <div class="lny">${age}歲・${SHENGXIAO[zhi]}</div></div>`;
+  }).join("");
+
   // ===== 神煞 =====
   const ssHTML=adv.ss.length
     ?adv.ss.map(s=>`<div class="sschip" title="${s.desc}"><b>${s.name}</b><span>${s.at}柱</span><i>${s.desc}</i></div>`).join("")
@@ -3042,7 +3090,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     +`綜合而言，命主宜揚 ${GAN_WX[dm]} 性之長，補喜用 ${st.xi.join("、")} 之氣；待人以誠、處事以恆，循四化之引、應大限之機，自能將先天之命，化為後天之運。`;
 
   // 存全域供觸控彈窗讀取
-  window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch};
+  window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch,birthYear:sol.y};
   // 付費解鎖身分（姓名｜生日｜時間｜性別）
   window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender)};
 
@@ -3066,6 +3114,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="divider"><span>大運流轉（每柱十年）</span></div>
   <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運<br><span class="taphint">點選任一柱大運，看該十年運勢白話解說</span></div>
   <div class="luckwrap"><div class="luckrow">${luckHTML}</div></div>
+
+  <div class="divider"><span>批流年（流年運勢一覽）</span></div>
+  <div class="lucksub">${PLN_START} 年起未來十年 · 流年命宮逐年推移、每年四化各異<br><span class="taphint">點選任一年，看該年流年命宮、坐星、四化與運勢白話解說</span></div>
+  <div class="luckwrap"><div class="lnrow">${liunianHTML}</div></div>
 
   <div class="sec-title"><span class="cn">紫微斗數 · 命盤十二宮</span><span class="en">Zi Wei Dou Shu · Twelve Palaces</span></div>
   <div class="lucksub"><span class="taphint">點選任一宮位，看該宮星曜與宮職的白話解說</span></div>
