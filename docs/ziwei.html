@@ -418,7 +418,10 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .bigsign .smeta span{border:1px solid var(--line);border-radius:20px;padding:6px 16px;font-size:.84rem;color:var(--ink-dim);background:var(--card)}
 .bigsign .smeta b{color:var(--gold)}
 .tarotcard{width:200px;margin:0 auto 22px;background:linear-gradient(160deg,#2a1f4a,#120b26);border:2px solid var(--gold);
-  border-radius:16px;padding:24px 16px;text-align:center;box-shadow:0 20px 44px -18px var(--purple-glow)}
+  border-radius:16px;padding:24px 16px;text-align:center;box-shadow:0 20px 44px -18px var(--purple-glow);
+  animation:cardflip 1s cubic-bezier(.4,0,.2,1) both}
+@keyframes cardflip{0%{transform:perspective(900px) rotateY(96deg) scale(.9);opacity:0}
+  60%{transform:perspective(900px) rotateY(-8deg) scale(1.02)}100%{transform:none;opacity:1}}
 .tarotcard .tnum{color:#f0d089;font-size:.9rem;letter-spacing:3px}
 .tarotcard .tglyph{font-size:3.4rem;margin:10px 0}
 .tarotcard .tname{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:#f0d089;letter-spacing:2px}
@@ -535,7 +538,63 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   .reading{gap:12px}
   .star.main{color:#a9853a!important}
   *{box-shadow:none!important;text-shadow:none!important}
+  #castStage{display:none!important}
 }
+
+/* ===== 演算動畫 / 抽牌 · 大師排盤 ===== */
+#castStage{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%,var(--wash),var(--bg) 72%)}
+#castStage.on{display:flex;animation:castIn .4s ease}
+#castStage.out{animation:castOut .55s ease forwards}
+@keyframes castIn{from{opacity:0}to{opacity:1}}
+@keyframes castOut{to{opacity:0;visibility:hidden}}
+.caststage-inner{position:relative;text-align:center;width:min(92vw,470px);padding:10px}
+.cast-title{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:1.7rem;color:var(--gold-deep);
+  letter-spacing:4px;margin-top:34px;opacity:0;animation:castUp .8s ease .35s forwards}
+.cast-sub{color:var(--ink-faint);font-size:.78rem;letter-spacing:3px;margin-top:9px;opacity:0;animation:castUp .8s ease .6s forwards}
+@keyframes castUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.cast-dots{display:inline-block;width:1.3em;text-align:left}
+.cast-dots::after{content:"";animation:castDots 1.3s steps(4,end) infinite}
+@keyframes castDots{0%{content:"·"}25%{content:"··"}50%{content:"···"}75%,100%{content:""}}
+.caststars{position:absolute;inset:-30px;pointer-events:none}
+.caststars i{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--gold-bright);
+  box-shadow:0 0 9px var(--gold-bright);opacity:0;animation:twk 2.2s ease infinite}
+@keyframes twk{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:.95;transform:scale(1)}}
+
+/* 通用 羅盤 / 星盤 場景 */
+.castscene{width:236px;height:236px;margin:0 auto;position:relative}
+.castscene .ring{position:absolute;border-radius:50%}
+.castscene .ring.a{inset:0;border:2px solid var(--gold);animation:spin 12s linear infinite}
+.castscene .ring.b{inset:30px;border:1.5px dashed var(--purple-glow);animation:spin 8s linear infinite reverse}
+.castscene .ring.c{inset:64px;border:1.5px solid var(--gold-bright);animation:spin 16s linear infinite}
+.castscene .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:3.7rem;color:var(--gold-deep);text-shadow:0 0 22px var(--purple-glow);animation:pulse 2.2s ease infinite}
+.castscene .orbit{position:absolute;inset:0;animation:spin 20s linear infinite}
+.castscene .orbit span{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--gold-deep);
+  transform:rotate(var(--a)) translateY(-118px)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.13);opacity:1}}
+
+/* 塔羅抽牌 場景 */
+.tdraw{width:240px;height:210px;margin:0 auto;position:relative;perspective:1000px}
+.tdcard{position:absolute;left:50%;top:50%;width:98px;height:152px;margin:-76px -49px;border-radius:11px;
+  background:linear-gradient(160deg,#2a1f4a,#120b26);border:2px solid var(--gold);box-shadow:0 12px 30px rgba(0,0,0,.32)}
+.tdcard.p1{animation:tfan1 1.7s cubic-bezier(.22,1,.36,1) forwards}
+.tdcard.p2{animation:tfan2 1.7s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes tfan1{0%{transform:none}60%,100%{transform:translateX(-74px) rotate(-15deg)}}
+@keyframes tfan2{0%{transform:none}60%,100%{transform:translateX(74px) rotate(15deg)}}
+.tdcard.p3{background:none;border:none;box-shadow:none;transform-style:preserve-3d;animation:trise 1.7s ease}
+@keyframes trise{0%{transform:translateY(22px) scale(.92)}60%,100%{transform:none}}
+.tdcard.p3 .tin{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(0);
+  animation:tflip 1s cubic-bezier(.5,0,.2,1) 1s forwards}
+@keyframes tflip{to{transform:rotateY(180deg)}}
+.tface{position:absolute;inset:0;border-radius:11px;border:2px solid var(--gold);backface-visibility:hidden;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.32)}
+.tface.tback{background:linear-gradient(160deg,#2a1f4a,#120b26)}
+.tface.tback::after{content:"✦";color:#f0d089;font-size:2rem}
+.tface.tfront{background:linear-gradient(160deg,#3a2a5e,#1a1030);color:#f0d089;font-size:3.6rem;transform:rotateY(180deg)}
+@media(max-width:480px){.castscene{width:200px;height:200px}.castscene .orbit span{transform:rotate(var(--a)) translateY(-100px)}}
 </style>
 </head>
 <body>
@@ -1499,27 +1558,76 @@ function run(){
   const mm=tv?Number(tv.split(":")[1]):0;
   const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${tv||"（時辰未填）"}　·　製表 2026`;
 
-  if(system==="west"){renderWestern(name,gender,{y,m,d,tv},subText);return;}
-  if(system==="tarot"){renderTarot(name,gender,{y,m,d,tv},subText);return;}
-  if(system==="vedic"){renderVedic(name,gender,{y,m,d,tv},subText);return;}
-  if(system==="num"){renderNum(name,gender,{y,m,d,tv},subText);return;}
+  const dispatch=()=>{
+    if(system==="west"){renderWestern(name,gender,{y,m,d,tv},subText);return;}
+    if(system==="tarot"){renderTarot(name,gender,{y,m,d,tv},subText);return;}
+    if(system==="vedic"){renderVedic(name,gender,{y,m,d,tv},subText);return;}
+    if(system==="num"){renderNum(name,gender,{y,m,d,tv},subText);return;}
 
-  const lunar=solar2lunar(y,m,d);
-  const bz=calcBazi(y,m,d,hh);
-  const zw=calcZiwei(lunar,hh,bz.year.gan);
-  const wx=wuxingCount(bz);
-  const curAge=2026-y+1;                          // 虛歲
-  const adv={
-    strength:dayStrength(bz),
-    luck:calcLuck(y,m,d,bz,gender),
-    ss:shenSha(bz),
-    limits:bigLimits(zw,bz,gender,curAge),
-    ge:detectGe(zw),
-    curAge
+    const lunar=solar2lunar(y,m,d);
+    const bz=calcBazi(y,m,d,hh);
+    const zw=calcZiwei(lunar,hh,bz.year.gan);
+    const wx=wuxingCount(bz);
+    const curAge=2026-y+1;                          // 虛歲
+    const adv={
+      strength:dayStrength(bz),
+      luck:calcLuck(y,m,d,bz,gender),
+      ss:shenSha(bz),
+      limits:bigLimits(zw,bz,gender,curAge),
+      ge:detectGe(zw),
+      curAge
+    };
+    const scores=calcScores(zw,bz,wx,adv);
+    const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
+    render(name,gender,{y,m,d,hh,mm},lunar,bz,zw,wx,adv,scores,fam,subText);
   };
-  const scores=calcScores(zw,bz,wx,adv);
-  const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
-  render(name,gender,{y,m,d,hh,mm},lunar,bz,zw,wx,adv,scores,fam,subText);
+
+  let revealGlyph=null;
+  if(system==="tarot"){ try{revealGlyph=TAROT[tarotBirth(y,m,d)].g;}catch(e){} }
+  playCast(system,revealGlyph,dispatch);
+}
+
+/* ===== 演算動畫：大師排盤 / 抽牌 ===== */
+const CAST_CFG={
+  comp:{center:"☯",orbit:["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"],title:"大師正在為您排紫微命盤",sub:"ZIWEI DOUSHU · 紫微斗數"},
+  west:{center:"☉",orbit:["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"],title:"正在為您繪製星盤",sub:"WESTERN ASTROLOGY"},
+  vedic:{center:"🕉",orbit:["☉","☽","♂","☿","♃","♀","♄","☊","☋"],title:"大師正在推演吠陀星盤",sub:"VEDIC JYOTISH"},
+  num:{center:"✦",orbit:["1","2","3","4","5","6","7","8","9","11","22","33"],title:"正在演算您的生命靈數",sub:"NUMEROLOGY · LIFE PATH"},
+  tarot:{title:"大師正在為您抽牌",sub:"TAROT BIRTH CARD"}
+};
+function playCast(sys,revealGlyph,done){
+  const cfg=CAST_CFG[sys]||CAST_CFG.comp;
+  let stage=document.getElementById("castStage");
+  if(!stage){stage=document.createElement("div");stage.id="castStage";document.body.appendChild(stage);}
+  let scene;
+  if(sys==="tarot"){
+    scene=`<div class="tdraw">
+      <div class="tdcard p1"></div><div class="tdcard p2"></div>
+      <div class="tdcard p3"><div class="tin">
+        <div class="tface tback"></div>
+        <div class="tface tfront">${revealGlyph||"✦"}</div>
+      </div></div>
+    </div>`;
+  }else{
+    const n=cfg.orbit.length;
+    const orbit=cfg.orbit.map((g,i)=>`<span style="--a:${(i*360/n).toFixed(1)}deg">${g}</span>`).join("");
+    scene=`<div class="castscene">
+      <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
+      <div class="orbit">${orbit}</div><div class="core">${cfg.center}</div></div>`;
+  }
+  let stars="";for(let i=0;i<16;i++){stars+=`<i style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;animation-delay:${(Math.random()*2).toFixed(2)}s"></i>`;}
+  stage.innerHTML=`<div class="caststage-inner"><div class="caststars">${stars}</div>
+    ${scene}
+    <div class="cast-title">${cfg.title}<span class="cast-dots"></span></div>
+    <div class="cast-sub">${cfg.sub}</div></div>`;
+  stage.className="on";
+  document.body.dataset.theme=sys;
+  const DUR=sys==="tarot"?2300:1800;
+  setTimeout(()=>{
+    try{done();}catch(e){const er=document.getElementById("err");if(er){er.textContent="演算發生錯誤："+e.message;er.style.display="block";}}
+    stage.classList.add("out");
+    setTimeout(()=>{stage.className="";stage.innerHTML="";},560);
+  },DUR);
 }
 
 /* ===== 評分 / 雷達圖 ===== */
