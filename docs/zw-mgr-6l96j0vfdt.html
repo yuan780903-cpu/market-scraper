@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>政遠大師 · 萬用碼管理工具（私用）</title>
+<style>
+  :root{--gold:#b58a20;--gold2:#8a6a14;--ink:#3a2c12;--line:#e3d3a6;--bg:#fbf4e3}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:linear-gradient(160deg,#fdf8ec,#f3e6c8);color:var(--ink);min-height:100vh;
+    display:flex;align-items:flex-start;justify-content:center;padding:30px 16px}
+  .wrap{width:min(620px,96vw);background:#fffdf8;border:2px solid var(--gold);border-radius:20px;
+    box-shadow:0 18px 50px rgba(0,0,0,.16);padding:26px 24px 28px}
+  h1{font-size:1.32rem;margin:0 0 4px;color:var(--gold2);letter-spacing:1px}
+  .sub{font-size:.84rem;color:#8a7a52;margin-bottom:16px}
+  .warn{background:#fdeaea;border:1px solid #e6b3b3;color:#a83a3a;border-radius:12px;
+    padding:9px 13px;font-size:.8rem;line-height:1.7;margin-bottom:16px}
+  label{display:block;font-size:.82rem;font-weight:700;color:var(--gold2);margin:12px 0 4px}
+  input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+    font-size:1rem;background:#fff;color:var(--ink)}
+  .row{display:flex;gap:10px}.row>div{flex:1}
+  .card{border:1px dashed var(--line);border-radius:14px;padding:14px 14px 16px;margin-top:16px;background:#fffefb}
+  .card h2{font-size:.95rem;margin:0 0 8px;color:var(--gold2)}
+  button{margin-top:10px;padding:11px 16px;border:none;border-radius:11px;cursor:pointer;
+    font-size:.96rem;font-weight:800;color:#fff;letter-spacing:1px;
+    background:linear-gradient(135deg,#d9a93a,#8a6a14);box-shadow:0 6px 16px rgba(0,0,0,.16);transition:.15s}
+  button:hover{transform:translateY(-1px)}
+  button.ghost{background:linear-gradient(135deg,#7a8aa0,#4a5a72)}
+  button.warnbtn{background:linear-gradient(135deg,#c2576f,#8a2f44)}
+  .codeout{margin-top:12px;background:#2a2010;color:#ffe39a;border-radius:12px;padding:16px;
+    font-family:ui-monospace,Menlo,monospace;font-size:1.6rem;font-weight:800;letter-spacing:4px;
+    text-align:center;user-select:all;cursor:pointer;display:none}
+  .codeout.show{display:block}
+  .msg{font-size:.86rem;margin-top:8px;min-height:18px;line-height:1.6}
+  .msg.ok{color:#2f9b5e;font-weight:700}.msg.err{color:#c2576f}
+  .listbox{margin-top:10px;font-family:ui-monospace,Menlo,monospace;font-size:.84rem;line-height:1.8;
+    max-height:220px;overflow:auto;background:#fbf4e3;border:1px solid var(--line);border-radius:10px;padding:10px 12px;word-break:break-all}
+  .pill{display:inline-block;padding:1px 8px;border-radius:8px;margin:2px;background:#e8f5ec;color:#2f7a4e}
+  .pill.used{background:#f5e8ea;color:#a83a3a;text-decoration:line-through}
+  .tip{font-size:.76rem;color:#8a7a52;line-height:1.8;margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
+  code{background:#f3e6c8;padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔑 政遠大師 · 萬用碼管理工具</h1>
+  <div class="sub">發出／查詢 0001~9999 一次性萬用碼。16888 為無限超級碼，無需發出。</div>
+  <div class="warn">⚠️ 此頁本身不含密碼，但能「發碼」。發碼的唯一鑰匙是你輸入的<b>管理密碼（ADMIN_SECRET）</b>。<b>切勿把管理密碼告訴任何人</b>；密碼請用夠長夠隨機的字串。</div>
+
+  <label>Worker 網址（API）</label>
+  <input id="api" placeholder="https://ziwei-lic.yuan780903.workers.dev">
+  <label>管理密碼（ADMIN_SECRET）</label>
+  <input id="secret" type="password" placeholder="你在 Worker 設定的 ADMIN_SECRET">
+
+  <div class="card">
+    <h2>① 發出下一個碼（最常用）</h2>
+    <div class="sub" style="margin:0 0 4px">系統自動挑出尚未使用的最小號碼發給你，直接傳給客戶即可。</div>
+    <button onclick="nextCode()">產生下一個萬用碼</button>
+    <div class="codeout" id="codeout" onclick="selAll(this)"></div>
+    <div class="msg" id="m1"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 指定 / 批次發碼</h2>
+    <div class="row">
+      <div><label>單一碼</label><input id="one" placeholder="例如 0123" maxlength="4"></div>
+      <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button onclick="issueOne()">發此碼</button></div>
+    </div>
+    <div class="row">
+      <div><label>批次：從</label><input id="from" type="number" placeholder="1" min="1" max="9999"></div>
+      <div><label>到</label><input id="to" type="number" placeholder="100" min="1" max="9999"></div>
+      <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button onclick="issueBatch()">批次發碼</button></div>
+    </div>
+    <div class="msg" id="m2"></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 查詢狀態</h2>
+    <button class="ghost" onclick="status()">重新整理清單</button>
+    <div class="msg" id="m3"></div>
+    <div class="listbox" id="listbox" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <h2>④ 作廢一組碼</h2>
+    <div class="row">
+      <div><label>要作廢的碼</label><input id="rev" placeholder="例如 0123" maxlength="4"></div>
+      <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button class="warnbtn" onclick="revoke()">作廢</button></div>
+    </div>
+    <div class="msg" id="m4"></div>
+  </div>
+
+  <div class="tip">
+    流程：① 客戶看免費命盤、付款 → ② 你按「產生下一個萬用碼」拿到一組碼 → ③ 把碼傳給客戶 → ④ 客戶在網站輸入即解鎖。<br>
+    ※ 每組碼全世界只能用一次；客戶要看別人的報告需另給一組碼。<code>16888</code> 可無限次解鎖（自用 / 展示用）。
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+// 記住設定
+["api","secret"].forEach(k=>{
+  const v=localStorage.getItem("zwadmin_"+k);if(v)$(k).value=v;
+  $(k).addEventListener("input",()=>localStorage.setItem("zwadmin_"+k,$(k).value.trim()));
+});
+function base(){return $("api").value.trim().replace(/\/+$/,"");}
+function sec(){return encodeURIComponent($("secret").value.trim());}
+function need(){ if(!base()){alert("請先填 Worker 網址");return false;} if(!$("secret").value.trim()){alert("請先填管理密碼");return false;} return true; }
+async function api(pathq){const r=await fetch(base()+pathq);return await r.json();}
+function setMsg(id,t,ok){const e=$(id);e.textContent=t;e.className="msg "+(ok?"ok":"err");}
+function selAll(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);}
+
+async function nextCode(){
+  if(!need())return; setMsg("m1","產生中…",true);$("codeout").classList.remove("show");
+  try{
+    const j=await api("/next?secret="+sec());
+    if(j.ok){$("codeout").textContent=j.code;$("codeout").classList.add("show");setMsg("m1","✓ 已發出，點一下可全選複製，傳給客戶。",true);}
+    else setMsg("m1","✗ "+errText(j),false);
+  }catch(e){setMsg("m1","✗ 連線失敗，請確認網址與網路。",false);}
+}
+async function issueOne(){
+  if(!need())return; const c=$("one").value.trim().padStart(4,"0");
+  if(!/^\d{4}$/.test(c)){setMsg("m2","請輸入 4 位數字（0001~9999）。",false);return;}
+  setMsg("m2","發碼中…",true);
+  try{const j=await api("/issue?code="+c+"&secret="+sec());
+    setMsg("m2",j.ok?("✓ 已發出 "+j.code+"，可傳給客戶。"):("✗ "+errText(j)),j.ok);}
+  catch(e){setMsg("m2","✗ 連線失敗。",false);}
+}
+async function issueBatch(){
+  if(!need())return; const f=+$("from").value,t=+$("to").value;
+  if(!(f>=1&&t>=f&&t<=9999)){setMsg("m2","範圍不正確（1~9999，且 從≤到）。",false);return;}
+  if(t-f>499){setMsg("m2","一次最多 500 組，請分批。",false);return;}
+  setMsg("m2","批次發碼中…",true);
+  try{const j=await api("/issueBatch?from="+f+"&to="+t+"&secret="+sec());
+    setMsg("m2",j.ok?("✓ 成功發出 "+j.count+" 組（"+($("from").value).padStart(4,"0")+"~"+($("to").value).padStart(4,"0")+"）。"):("✗ "+errText(j)),j.ok);
+    if(j.ok)status();}
+  catch(e){setMsg("m2","✗ 連線失敗。",false);}
+}
+async function status(){
+  if(!need())return; setMsg("m3","查詢中…",true);$("listbox").style.display="none";
+  try{const j=await api("/status?secret="+sec());
+    if(!j.ok){setMsg("m3","✗ "+errText(j),false);return;}
+    setMsg("m3","可用 "+j.activeCount+" 組 ・ 已用 "+j.usedCount+" 組",true);
+    const box=$("listbox");
+    box.innerHTML="<b>可用（未使用）：</b><br>"+(j.active.length?j.active.map(c=>'<span class="pill">'+c+'</span>').join(""):"（無）")
+      +"<br><br><b>已使用：</b><br>"+(j.used.length?j.used.map(c=>'<span class="pill used">'+c+'</span>').join(""):"（無）");
+    box.style.display="block";
+  }catch(e){setMsg("m3","✗ 連線失敗。",false);}
+}
+async function revoke(){
+  if(!need())return; const c=$("rev").value.trim().padStart(4,"0");
+  if(!/^\d{4}$/.test(c)){setMsg("m4","請輸入 4 位數字。",false);return;}
+  if(!confirm("確定作廢 "+c+"？此碼將立即失效。"))return;
+  setMsg("m4","作廢中…",true);
+  try{const j=await api("/revoke?code="+c+"&secret="+sec());
+    setMsg("m4",j.ok?("✓ 已作廢 "+c):("✗ "+errText(j)),j.ok);}
+  catch(e){setMsg("m4","✗ 連線失敗。",false);}
+}
+function errText(j){
+  return ({forbidden:"管理密碼錯誤",badcode:"碼格式錯誤",used:"此碼已被使用",range:"範圍錯誤",
+    exhausted:"0001~9999 已全數發出",kv_unbound:"Worker 尚未綁定 KV",secret_unset:"Worker 尚未設定 ADMIN_SECRET"})[j.reason]||(j.reason||"未知錯誤");
+}
+</script>
+</body>
+</html>
