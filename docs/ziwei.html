@@ -426,6 +426,19 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   cursor:pointer;box-shadow:0 12px 30px -14px var(--purple-glow);transition:.3s}
 .pdfbtn:hover{transform:translateY(-2px)}
 .toolbar .tbnote{display:block;margin-top:10px;color:var(--ink-faint);font-size:.78rem;letter-spacing:1px}
+.pdffab{position:fixed;right:16px;bottom:18px;z-index:90;display:none;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
+.pdffab.show{display:flex}
+.pdffabbtn{pointer-events:auto;background:linear-gradient(135deg,var(--purple-glow),var(--purple));border:none;color:#fff;
+  font-family:inherit;font-weight:700;font-size:.95rem;letter-spacing:2px;padding:14px 22px;border-radius:999px;
+  cursor:pointer;box-shadow:0 14px 32px -10px var(--purple-glow),0 0 0 4px rgba(255,255,255,.55);transition:.25s}
+.pdffabbtn:hover{transform:translateY(-2px)}
+.pdffabbtn::before{content:"⤓ ";font-weight:700}
+.pdffab.lockpdf .pdffabbtn{opacity:.85}
+.pdffab.lockpdf .pdffabbtn::before{content:"鎖 "}
+.pdffabmsg{pointer-events:auto;display:none;max-width:min(78vw,320px);background:var(--card);border:1px solid var(--line-soft);
+  border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:var(--ink);box-shadow:0 12px 30px -14px var(--shadow)}
+.pdffabmsg.show{display:block}
+.pdffabmsg.err{border-color:#c2576f;color:#c2576f}
 
 /* ===== 評分系統 ===== */
 .scorereveal{text-align:center;margin:8px 0 4px}
@@ -596,7 +609,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   @page{size:A4;margin:14mm}
   html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .sky,.stars,.bagua{display:none!important}
-  header,.panel,.toolbar,footer{display:none!important}
+  header,.panel,.toolbar,.pdffab,footer{display:none!important}
   .wrap{max-width:100%;padding:0;margin:0}
   #result{display:block!important;margin:0}
   #reportHead{display:block;text-align:center;margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid var(--gold-deep)}
@@ -670,7 +683,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
-  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on footer{display:none!important}
+  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on footer{display:none!important}
   html:has(body.rp-on),body.rp-on,body.rp-on .wrap{background:#fff!important;background-image:none!important}
   body.rp-on #reportPrint{display:block!important;max-width:100%;margin:0;padding:0;box-shadow:none;background:#fff!important}
   body.rp-on .wrap{max-width:100%;padding:0;margin:0}
@@ -1035,6 +1048,11 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
+</div>
+
+<div id="pdfFab" class="pdffab">
+  <button id="pdfFabBtn" class="pdffabbtn" type="button">下載 PDF 報告</button>
+  <div id="pdfFabMsg" class="pdffabmsg"></div>
 </div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
@@ -2043,6 +2061,7 @@ function finishRender(subText){
   const res=document.getElementById("result");
   res.classList.add("show");
   document.getElementById("toolbar").classList.add("show");
+  document.getElementById("pdfFab").classList.add("show");
   document.getElementById("reportSub").textContent=subText;
   const sys=document.getElementById("system").value;
   document.getElementById("reportTitle").textContent=REPORT_TITLE[sys]||"人生實用說明書系統 · 個人命盤專業報告";
@@ -2583,25 +2602,39 @@ function expTimeStr(){
   const ampm=d.getHours()<12?'上午':'下午';let h=d.getHours()%12;if(h===0)h=12;
   return `輸出時間 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${ampm}${h}時${p(d.getMinutes())}分${p(d.getSeconds())}秒`;
 }
-document.getElementById("pdfBtn").addEventListener("click",()=>{
+function runPdfExport(fromFab){
+  const note=document.getElementById('pdfNote');
+  const fmsg=document.getElementById('pdfFabMsg');
+  const showFabMsg=(html,isErr)=>{if(!fmsg)return;fmsg.innerHTML=html;fmsg.className='pdffabmsg show'+(isErr?' err':'');};
+  const hideFabMsg=()=>{if(fmsg){fmsg.className='pdffabmsg';}};
   const z=document.getElementById('premZone');
   if(z&&z.classList.contains('locked')){
     const pw=document.getElementById('paywall');
     if(pw){pw.style.display='';pw.scrollIntoView({behavior:'smooth',block:'center'});}
     const msg=document.getElementById('lcMsg');if(msg){msg.textContent='完整 PDF 專業報告為付費內容，請先輸入萬用碼解鎖。';msg.className='lcmsg err';}
+    if(fromFab)showFabMsg('完整 PDF 報告為付費內容，已為您捲到解鎖區，請先輸入萬用碼解鎖。',true);
     return;
   }
-  const note=document.getElementById('pdfNote');
+  hideFabMsg();
   if(isInAppBrowser()){
     // 內建瀏覽器（LINE/FB/IG 等）會封鎖列印，導致「按了沒反應」。引導改用系統瀏覽器。
-    if(note){note.innerHTML='※ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';note.style.color='#c2576f';}
+    const warn='※ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';
+    if(note){note.innerHTML=warn;note.style.color='#c2576f';}
+    if(fromFab)showFabMsg(warn,true);
     try{navigator.clipboard&&navigator.clipboard.writeText(location.href);}catch(e){}
     return;
   }
   const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
   if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。手機若沒反應，請改用 Safari／Chrome 開啟本頁。';}
-  try{window.print();}catch(e){if(note){note.textContent='✗ 此瀏覽器不支援直接列印，請改用 Safari／Chrome 開啟本頁再下載。';note.style.color='#c2576f';}}
-});
+  try{window.print();}
+  catch(e){
+    const err='✗ 此瀏覽器不支援直接列印，請改用 Safari／Chrome 開啟本頁再下載。';
+    if(note){note.textContent=err;note.style.color='#c2576f';}
+    if(fromFab)showFabMsg(err,true);
+  }
+}
+document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
+document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
 
 function timeLabel(h){
   const z=Math.floor(((h+1)%24)/2)%12;
@@ -2631,6 +2664,7 @@ async function lcRefresh(){
   z.classList.toggle('locked',!unlocked);
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
+  const fab=document.getElementById('pdfFab');if(fab){fab.classList.toggle('lockpdf',!unlocked);const fm=document.getElementById('pdfFabMsg');if(fm&&unlocked)fm.className='pdffabmsg';}
 }
 async function lcRedeem(code){
   const r=await fetch(LC_API.replace(/\/+$/,'')+'/redeem?code='+encodeURIComponent(code),{method:'GET',cache:'no-store'});
