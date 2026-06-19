@@ -462,6 +462,13 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .mpopt.cur::before{content:"▸ ";opacity:1}
 .mpopt.mpoff{color:var(--ink-faint);border-top:1px solid var(--line-soft);margin-top:4px;border-radius:0 0 9px 9px}
 .mpopt.mpoff::before{content:"✕ ";color:var(--ink-faint);opacity:.7}
+.musichint{position:absolute;left:0;bottom:calc(100% + 10px);width:max-content;max-width:200px;
+  background:linear-gradient(135deg,var(--purple),var(--purple-glow));color:#fff;font-size:.78rem;line-height:1.5;
+  letter-spacing:.5px;text-align:center;padding:10px 14px;border-radius:14px;box-shadow:0 18px 40px -18px var(--shadow);
+  opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s;pointer-events:none;display:none}
+.musichint::after{content:"";position:absolute;left:22px;top:100%;border:7px solid transparent;border-top-color:var(--purple-glow)}
+.musichint.show{display:block;opacity:1;transform:translateY(0);animation:hintBob 2.2s ease-in-out infinite}
+@keyframes hintBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
 /* ===== 評分系統 ===== */
 .scorereveal{text-align:center;margin:8px 0 4px}
@@ -1093,6 +1100,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="自然之聲背景音樂・點按選擇">
     <span class="micon">♪</span><span class="mtxt">背景音樂</span>
   </button>
+  <div id="musicHint" class="musichint">輕觸畫面任一處<br>開啟背景自然音 ♪</div>
 </div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
@@ -3606,14 +3614,23 @@ function updateMusicUI(){
   }));
   // 點面板外處關閉選單
   document.addEventListener('click',e=>{ if(wrap&&wrap.classList.contains('open')&&!wrap.contains(e.target))wrap.classList.remove('open'); });
-  // 預設進站即播放：瀏覽器規定需使用者互動才能出聲，故於首次互動（點擊／滑動／按鍵）自動開始
+  // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
+  // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
+  const hint=document.getElementById('musicHint');
   let want='1',choice='rain';
   try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'rain';}catch(e){}
   if(want!=='0'){
-    const kick=()=>{ if(!__musicOn)playSound(choice); cleanup(); };
-    const cleanup=()=>['pointerdown','touchstart','keydown','wheel'].forEach(ev=>window.removeEventListener(ev,kick,true));
-    ['pointerdown','touchstart','keydown','wheel'].forEach(ev=>window.addEventListener(ev,kick,true));
-    try{ __ensureCtx(); if(__acx.state==='running'){ playSound(choice); cleanup(); } }catch(e){}
+    const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
+    const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
+    const kick=()=>{
+      if(__musicOn){cleanup();return;}
+      try{ __ensureCtx(); }catch(e){}      // 一定在使用者手勢內建立／喚醒 AudioContext（iOS 必要）
+      playSound(choice); hideHint(); cleanup();
+    };
+    const cleanup=()=>EVTS.forEach(ev=>window.removeEventListener(ev,kick,true));
+    EVTS.forEach(ev=>window.addEventListener(ev,kick,true));
+    // 顯示「輕觸開啟」提示；首次互動或 12 秒後自動消失
+    if(hint){ setTimeout(()=>{ if(!__musicOn)hint.classList.add('show'); },900); setTimeout(hideHint,12000); }
   }
   updateMusicUI();
 })();
