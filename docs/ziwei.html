@@ -439,6 +439,15 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:var(--ink);box-shadow:0 12px 30px -14px var(--shadow)}
 .pdffabmsg.show{display:block}
 .pdffabmsg.err{border-color:#c2576f;color:#c2576f}
+.musicfab{position:fixed;left:16px;bottom:18px;z-index:90;display:inline-flex;align-items:center;gap:7px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line-soft);border-radius:999px;
+  padding:10px 15px;font-family:inherit;font-size:.84rem;letter-spacing:1px;cursor:pointer;
+  box-shadow:0 12px 30px -16px var(--shadow);transition:.25s}
+.musicfab:hover{transform:translateY(-2px)}
+.musicfab .micon{font-size:1.05rem;color:var(--purple);line-height:1;transition:.25s}
+.musicfab.on{border-color:var(--purple-glow);background:var(--pwash);color:var(--purple)}
+.musicfab.on .micon{color:var(--purple-glow);animation:musicPulse 2.4s ease-in-out infinite}
+@keyframes musicPulse{0%,100%{opacity:.45}50%{opacity:1}}
 
 /* ===== 評分系統 ===== */
 .scorereveal{text-align:center;margin:8px 0 4px}
@@ -609,7 +618,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   @page{size:A4;margin:14mm}
   html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .sky,.stars,.bagua{display:none!important}
-  header,.panel,.toolbar,.pdffab,footer{display:none!important}
+  header,.panel,.toolbar,.pdffab,.musicfab,footer{display:none!important}
   .wrap{max-width:100%;padding:0;margin:0}
   #result{display:block!important;margin:0}
   #reportHead{display:block;text-align:center;margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid var(--gold-deep)}
@@ -683,7 +692,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
-  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on footer{display:none!important}
+  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicfab,body.rp-on footer{display:none!important}
   html:has(body.rp-on),body.rp-on,body.rp-on .wrap{background:#fff!important;background-image:none!important}
   body.rp-on #reportPrint{display:block!important;max-width:100%;margin:0;padding:0;box-shadow:none;background:#fff!important}
   body.rp-on .wrap{max-width:100%;padding:0;margin:0}
@@ -1054,6 +1063,10 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   <button id="pdfFabBtn" class="pdffabbtn" type="button">下載 PDF 報告</button>
   <div id="pdfFabMsg" class="pdffabmsg"></div>
 </div>
+
+<button id="musicFab" class="musicfab" type="button" aria-label="冥想背景音樂開關" title="輕柔冥想背景音樂・點按開啟／關閉">
+  <span class="micon">♪</span><span class="mtxt">冥想音樂</span>
+</button>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
   <div class="zwmcard" role="dialog" aria-modal="true">
@@ -3376,6 +3389,77 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
 /* 進站時處理 LINE Pay 付款返回（?lpok / ?lpfail / ?lpcancel） */
 lpHandleReturn();
+
+/* ===== 冥想背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
+let __acx=null, __musicOn=false, __musicNodes=null, __bellTimer=null;
+function startMusic(){
+  try{
+    if(!__acx)__acx=new (window.AudioContext||window.webkitAudioContext)();
+    if(__acx.state==='suspended')__acx.resume();
+  }catch(e){return;}
+  const acx=__acx, now=acx.currentTime;
+  // 主音量（輕柔）＋暖色低通＋空間延遲
+  const master=acx.createGain();
+  master.gain.setValueAtTime(0.0001,now);
+  master.gain.linearRampToValueAtTime(0.16, now+5);   // 緩緩淡入
+  const lp=acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1100; lp.Q.value=0.4;
+  const delay=acx.createDelay(2.0); delay.delayTime.value=0.5;
+  const fb=acx.createGain(); fb.gain.value=0.32;
+  const wet=acx.createGain(); wet.gain.value=0.22;
+  delay.connect(fb); fb.connect(delay);
+  lp.connect(master);
+  lp.connect(delay); delay.connect(wet); wet.connect(master);
+  master.connect(acx.destination);
+  // 持續和聲墊（C2・C3・G3・C4——純五度／八度，最安定）
+  const base=130.81; const freqs=[base/2, base, base*1.5, base*2];
+  const oscs=[];
+  freqs.forEach((f,i)=>{
+    const o=acx.createOscillator(); o.type='sine'; o.frequency.value=f;
+    const det=acx.createOscillator(); det.type='sine'; det.frequency.value=f*1.004; // 微離調・合唱感
+    const g=acx.createGain(); g.gain.setValueAtTime(0.075,now);
+    const lfo=acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.05+i*0.012; // 呼吸般起伏
+    const lfoG=acx.createGain(); lfoG.gain.value=0.05;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    o.connect(g); det.connect(g); g.connect(lp);
+    o.start(now); det.start(now); lfo.start(now);
+    oscs.push(o,det,lfo);
+  });
+  // 偶發頌缽／五聲音階單音（長放長收，禪意）
+  const scale=[523.25,587.33,659.25,783.99,880.00]; // C5 D5 E5 G5 A5
+  function bell(){
+    if(!__musicOn)return;
+    const f=scale[Math.floor(Math.random()*scale.length)], t=acx.currentTime;
+    const o=acx.createOscillator(); o.type='sine'; o.frequency.value=f;
+    const o2=acx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2.01;
+    const g=acx.createGain(); g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.09, t+0.9);          // 柔和起音
+    g.gain.exponentialRampToValueAtTime(0.0001, t+6.5);   // 長尾收音
+    const g2=acx.createGain(); g2.gain.value=0.28;
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp);
+    o.start(t); o2.start(t); o.stop(t+7); o2.stop(t+7);
+    __bellTimer=setTimeout(bell, 7000+Math.random()*9000);
+  }
+  __bellTimer=setTimeout(bell, 3500);
+  __musicNodes={master,oscs};
+  __musicOn=true;
+}
+function stopMusic(){
+  __musicOn=false;
+  if(__bellTimer){clearTimeout(__bellTimer);__bellTimer=null;}
+  if(__musicNodes&&__acx){
+    const now=__acx.currentTime, m=__musicNodes.master, oscs=__musicNodes.oscs;
+    try{m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(0.0001,now+1.5);}catch(e){}
+    setTimeout(()=>{oscs.forEach(o=>{try{o.stop();}catch(e){}});},1700);
+    __musicNodes=null;
+  }
+}
+function updateMusicBtn(){
+  const b=document.getElementById('musicFab'); if(!b)return;
+  b.classList.toggle('on',__musicOn);
+  const t=b.querySelector('.mtxt'); if(t)t.textContent=__musicOn?'音樂播放中':'冥想音樂';
+}
+function toggleMusic(){ if(__musicOn)stopMusic(); else startMusic(); updateMusicBtn(); }
+(function(){const b=document.getElementById('musicFab'); if(b)b.addEventListener('click',toggleMusic);})();
 </script>
 </body>
 </html>
