@@ -439,7 +439,8 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:var(--ink);box-shadow:0 12px 30px -14px var(--shadow)}
 .pdffabmsg.show{display:block}
 .pdffabmsg.err{border-color:#c2576f;color:#c2576f}
-.musicfab{position:fixed;left:16px;bottom:18px;z-index:90;display:inline-flex;align-items:center;gap:7px;
+.musicwrap{position:fixed;left:16px;bottom:18px;z-index:90}
+.musicfab{display:inline-flex;align-items:center;gap:7px;
   background:var(--card);color:var(--ink);border:1px solid var(--line-soft);border-radius:999px;
   padding:10px 15px;font-family:inherit;font-size:.84rem;letter-spacing:1px;cursor:pointer;
   box-shadow:0 12px 30px -16px var(--shadow);transition:.25s}
@@ -448,6 +449,19 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .musicfab.on{border-color:var(--purple-glow);background:var(--pwash);color:var(--purple)}
 .musicfab.on .micon{color:var(--purple-glow);animation:musicPulse 2.4s ease-in-out infinite}
 @keyframes musicPulse{0%,100%{opacity:.45}50%{opacity:1}}
+.musicpanel{position:absolute;left:0;bottom:calc(100% + 10px);min-width:160px;background:var(--card);
+  border:1px solid var(--line-soft);border-radius:14px;padding:8px;box-shadow:0 18px 40px -18px var(--shadow);
+  display:none;flex-direction:column;gap:2px}
+.musicwrap.open .musicpanel{display:flex}
+.musicpanel .mphead{font-size:.72rem;color:var(--ink-faint);letter-spacing:1px;padding:6px 10px 8px;border-bottom:1px solid var(--line-soft);margin-bottom:4px}
+.mpopt{text-align:left;background:none;border:none;color:var(--ink);font-family:inherit;font-size:.86rem;letter-spacing:1px;
+  padding:9px 12px;border-radius:9px;cursor:pointer;transition:.18s}
+.mpopt::before{content:"♪ ";color:var(--purple);opacity:.6}
+.mpopt:hover{background:var(--pwash)}
+.mpopt.cur{background:var(--pwash);color:var(--purple);font-weight:700}
+.mpopt.cur::before{content:"▸ ";opacity:1}
+.mpopt.mpoff{color:var(--ink-faint);border-top:1px solid var(--line-soft);margin-top:4px;border-radius:0 0 9px 9px}
+.mpopt.mpoff::before{content:"✕ ";color:var(--ink-faint);opacity:.7}
 
 /* ===== 評分系統 ===== */
 .scorereveal{text-align:center;margin:8px 0 4px}
@@ -618,7 +632,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   @page{size:A4;margin:14mm}
   html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .sky,.stars,.bagua{display:none!important}
-  header,.panel,.toolbar,.pdffab,.musicfab,footer{display:none!important}
+  header,.panel,.toolbar,.pdffab,.musicwrap,footer{display:none!important}
   .wrap{max-width:100%;padding:0;margin:0}
   #result{display:block!important;margin:0}
   #reportHead{display:block;text-align:center;margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid var(--gold-deep)}
@@ -692,7 +706,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
-  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicfab,body.rp-on footer{display:none!important}
+  body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicwrap,body.rp-on footer{display:none!important}
   html:has(body.rp-on),body.rp-on,body.rp-on .wrap{background:#fff!important;background-image:none!important}
   body.rp-on #reportPrint{display:block!important;max-width:100%;margin:0;padding:0;box-shadow:none;background:#fff!important}
   body.rp-on .wrap{max-width:100%;padding:0;margin:0}
@@ -1064,9 +1078,22 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   <div id="pdfFabMsg" class="pdffabmsg"></div>
 </div>
 
-<button id="musicFab" class="musicfab" type="button" aria-label="冥想背景音樂開關" title="輕柔冥想背景音樂・點按開啟／關閉">
-  <span class="micon">♪</span><span class="mtxt">冥想音樂</span>
-</button>
+<div id="musicWrap" class="musicwrap">
+  <div id="musicPanel" class="musicpanel" role="menu">
+    <div class="mphead">背景音樂・自然之聲</div>
+    <button class="mpopt" type="button" data-snd="rain">雨聲</button>
+    <button class="mpopt" type="button" data-snd="ocean">海浪潮汐</button>
+    <button class="mpopt" type="button" data-snd="stream">溪流潺潺</button>
+    <button class="mpopt" type="button" data-snd="forest">森林鳥鳴</button>
+    <button class="mpopt" type="button" data-snd="wind">微風</button>
+    <button class="mpopt" type="button" data-snd="night">夜晚蟲鳴</button>
+    <button class="mpopt" type="button" data-snd="bowls">頌缽冥想</button>
+    <button class="mpopt mpoff" type="button" data-snd="off">關閉音樂</button>
+  </div>
+  <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="自然之聲背景音樂・點按選擇">
+    <span class="micon">♪</span><span class="mtxt">背景音樂</span>
+  </button>
+</div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
   <div class="zwmcard" role="dialog" aria-modal="true">
@@ -3390,76 +3417,206 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 /* 進站時處理 LINE Pay 付款返回（?lpok / ?lpfail / ?lpcancel） */
 lpHandleReturn();
 
-/* ===== 冥想背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
-let __acx=null, __musicOn=false, __musicNodes=null, __bellTimer=null;
-function startMusic(){
-  try{
-    if(!__acx)__acx=new (window.AudioContext||window.webkitAudioContext)();
-    if(__acx.state==='suspended')__acx.resume();
-  }catch(e){return;}
+/* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
+let __acx=null, __master=null, __musicOn=false, __curSound=null, __soundNodes=[], __soundTimers=[], __noiseBuf=null;
+const SND_NAME={rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴',wind:'微風',night:'夜晚蟲鳴',bowls:'頌缽冥想'};
+function __ensureCtx(){
+  if(!__acx){
+    __acx=new (window.AudioContext||window.webkitAudioContext)();
+    __master=__acx.createGain(); __master.gain.value=0.0001; __master.connect(__acx.destination);
+  }
+  if(__acx.state==='suspended'){try{__acx.resume();}catch(e){}}
+}
+function __noise(){
+  if(!__noiseBuf){
+    const len=__acx.sampleRate*4, buf=__acx.createBuffer(1,len,__acx.sampleRate), d=buf.getChannelData(0);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<len;i++){const w=Math.random()*2-1;
+      b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
+      b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
+      d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
+    __noiseBuf=buf;
+  }
+  const s=__acx.createBufferSource(); s.buffer=__noiseBuf; s.loop=true; return s;
+}
+function __dc(v){const c=__acx.createConstantSource();c.offset.value=v;return c;}
+function sndRain(){
+  const out=__acx.createGain(); out.gain.value=0.85; out.connect(__master);
+  const s=__noise(), hp=__acx.createBiquadFilter(), lp=__acx.createBiquadFilter();
+  hp.type='highpass'; hp.frequency.value=420; lp.type='lowpass'; lp.frequency.value=4500; lp.Q.value=0.3;
+  s.connect(hp); hp.connect(lp); lp.connect(out); s.start();
+  __soundNodes.push(s);
+}
+function sndOcean(){
+  const out=__acx.createGain(); out.gain.value=0; out.connect(__master);
+  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=0; lp.Q.value=0.6;
+  s.connect(lp); lp.connect(out); s.start();
+  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.09;
+  const lg=__acx.createGain(); lg.gain.value=0.45; const base=__dc(0.45);
+  lfo.connect(lg); lg.connect(out.gain); base.connect(out.gain);
+  const lf2=__acx.createOscillator(); lf2.type='sine'; lf2.frequency.value=0.09;
+  const lg2=__acx.createGain(); lg2.gain.value=350; const fb=__dc(620);
+  lf2.connect(lg2); lg2.connect(lp.frequency); fb.connect(lp.frequency);
+  lfo.start();base.start();lf2.start();fb.start();
+  __soundNodes.push(s,lfo,base,lf2,fb);
+}
+function sndStream(){
+  const out=__acx.createGain(); out.gain.value=0.6; out.connect(__master);
+  const s=__noise(), hp=__acx.createBiquadFilter(), bp=__acx.createBiquadFilter();
+  hp.type='highpass'; hp.frequency.value=800; bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value=0.7;
+  s.connect(hp); hp.connect(bp); bp.connect(out); s.start();
+  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.8;
+  const lg=__acx.createGain(); lg.gain.value=300; lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
+  __soundNodes.push(s,lfo);
+}
+function sndWind(){
+  const out=__acx.createGain(); out.gain.value=0; out.connect(__master);
+  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=0; lp.Q.value=3;
+  s.connect(lp); lp.connect(out); s.start();
+  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.13;
+  const lg=__acx.createGain(); lg.gain.value=0.3; const base=__dc(0.4);
+  lfo.connect(lg); lg.connect(out.gain); base.connect(out.gain);
+  const lf2=__acx.createOscillator(); lf2.type='sine'; lf2.frequency.value=0.07;
+  const lg2=__acx.createGain(); lg2.gain.value=320; const fb=__dc(560);
+  lf2.connect(lg2); lg2.connect(lp.frequency); fb.connect(lp.frequency);
+  lfo.start();base.start();lf2.start();fb.start();
+  __soundNodes.push(s,lfo,base,lf2,fb);
+}
+function sndForest(){
+  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
+  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=850;
+  const bed=__acx.createGain(); bed.gain.value=0.22; s.connect(lp); lp.connect(bed); bed.connect(out); s.start();
+  __soundNodes.push(s);
+  (function chirp(){
+    if(__curSound!=='forest')return;
+    const t=__acx.currentTime, n=1+Math.floor(Math.random()*3);
+    for(let k=0;k<n;k++){
+      const ct=t+k*0.13, f0=1900+Math.random()*1700;
+      const o=__acx.createOscillator(); o.type='sine';
+      o.frequency.setValueAtTime(f0,ct);
+      o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),ct+0.05);
+      o.frequency.exponentialRampToValueAtTime(f0*0.9,ct+0.11);
+      const g=__acx.createGain(); g.gain.setValueAtTime(0.0001,ct);
+      g.gain.exponentialRampToValueAtTime(0.16,ct+0.02); g.gain.exponentialRampToValueAtTime(0.0001,ct+0.13);
+      o.connect(g); g.connect(out); o.start(ct); o.stop(ct+0.16);
+    }
+    __soundTimers.push(setTimeout(chirp,1300+Math.random()*3600));
+  })();
+}
+function sndNight(){
+  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
+  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=280;
+  const bed=__acx.createGain(); bed.gain.value=0.28; s.connect(lp); lp.connect(bed); bed.connect(out); s.start();
+  const o=__acx.createOscillator(); o.type='sine'; o.frequency.value=4200;
+  const am=__acx.createGain(); am.gain.value=0;
+  const trill=__acx.createOscillator(); trill.type='square'; trill.frequency.value=42;
+  const tg=__acx.createGain(); tg.gain.value=0; trill.connect(tg); tg.connect(am.gain);
+  o.connect(am); am.connect(out); o.start(); trill.start();
+  __soundNodes.push(s,o,trill);
+  (function pulse(){
+    if(__curSound!=='night')return;
+    const t=__acx.currentTime;
+    tg.gain.cancelScheduledValues(t); tg.gain.setValueAtTime(0.03,t);
+    tg.gain.setValueAtTime(0.03,t+0.55); tg.gain.setValueAtTime(0,t+0.57);
+    __soundTimers.push(setTimeout(pulse,950+Math.random()*450));
+  })();
+}
+function sndBowls(){
   const acx=__acx, now=acx.currentTime;
-  // 主音量（輕柔）＋暖色低通＋空間延遲
-  const master=acx.createGain();
-  master.gain.setValueAtTime(0.0001,now);
-  master.gain.linearRampToValueAtTime(0.16, now+5);   // 緩緩淡入
+  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
   const lp=acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1100; lp.Q.value=0.4;
   const delay=acx.createDelay(2.0); delay.delayTime.value=0.5;
-  const fb=acx.createGain(); fb.gain.value=0.32;
-  const wet=acx.createGain(); wet.gain.value=0.22;
-  delay.connect(fb); fb.connect(delay);
-  lp.connect(master);
-  lp.connect(delay); delay.connect(wet); wet.connect(master);
-  master.connect(acx.destination);
-  // 持續和聲墊（C2・C3・G3・C4——純五度／八度，最安定）
-  const base=130.81; const freqs=[base/2, base, base*1.5, base*2];
-  const oscs=[];
+  const fb=acx.createGain(); fb.gain.value=0.32; const wet=acx.createGain(); wet.gain.value=0.22;
+  delay.connect(fb); fb.connect(delay); lp.connect(out); lp.connect(delay); delay.connect(wet); wet.connect(out);
+  const base=130.81, freqs=[base/2,base,base*1.5,base*2];
   freqs.forEach((f,i)=>{
-    const o=acx.createOscillator(); o.type='sine'; o.frequency.value=f;
-    const det=acx.createOscillator(); det.type='sine'; det.frequency.value=f*1.004; // 微離調・合唱感
-    const g=acx.createGain(); g.gain.setValueAtTime(0.075,now);
-    const lfo=acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.05+i*0.012; // 呼吸般起伏
-    const lfoG=acx.createGain(); lfoG.gain.value=0.05;
-    lfo.connect(lfoG); lfoG.connect(g.gain);
-    o.connect(g); det.connect(g); g.connect(lp);
-    o.start(now); det.start(now); lfo.start(now);
-    oscs.push(o,det,lfo);
+    const o=acx.createOscillator();o.type='sine';o.frequency.value=f;
+    const det=acx.createOscillator();det.type='sine';det.frequency.value=f*1.004;
+    const g=acx.createGain();g.gain.setValueAtTime(0.075,now);
+    const lfo=acx.createOscillator();lfo.type='sine';lfo.frequency.value=0.05+i*0.012;
+    const lg=acx.createGain();lg.gain.value=0.05;lfo.connect(lg);lg.connect(g.gain);
+    o.connect(g);det.connect(g);g.connect(lp);o.start(now);det.start(now);lfo.start(now);
+    __soundNodes.push(o,det,lfo);
   });
-  // 偶發頌缽／五聲音階單音（長放長收，禪意）
-  const scale=[523.25,587.33,659.25,783.99,880.00]; // C5 D5 E5 G5 A5
-  function bell(){
-    if(!__musicOn)return;
-    const f=scale[Math.floor(Math.random()*scale.length)], t=acx.currentTime;
-    const o=acx.createOscillator(); o.type='sine'; o.frequency.value=f;
-    const o2=acx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2.01;
-    const g=acx.createGain(); g.gain.setValueAtTime(0.0001,t);
-    g.gain.linearRampToValueAtTime(0.09, t+0.9);          // 柔和起音
-    g.gain.exponentialRampToValueAtTime(0.0001, t+6.5);   // 長尾收音
-    const g2=acx.createGain(); g2.gain.value=0.28;
-    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp);
-    o.start(t); o2.start(t); o.stop(t+7); o2.stop(t+7);
-    __bellTimer=setTimeout(bell, 7000+Math.random()*9000);
+  const scale=[523.25,587.33,659.25,783.99,880.00];
+  (function bell(){
+    if(__curSound!=='bowls')return;
+    const f=scale[Math.floor(Math.random()*scale.length)],t=acx.currentTime;
+    const o=acx.createOscillator();o.type='sine';o.frequency.value=f;
+    const o2=acx.createOscillator();o2.type='sine';o2.frequency.value=f*2.01;
+    const g=acx.createGain();g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.09,t+0.9);g.gain.exponentialRampToValueAtTime(0.0001,t+6.5);
+    const g2=acx.createGain();g2.gain.value=0.28;
+    o.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);
+    o.start(t);o2.start(t);o.stop(t+7);o2.stop(t+7);
+    __soundTimers.push(setTimeout(bell,7000+Math.random()*9000));
+  })();
+}
+const __SND={rain:sndRain,ocean:sndOcean,stream:sndStream,forest:sndForest,wind:sndWind,night:sndNight,bowls:sndBowls};
+function __clearSound(){
+  __soundTimers.forEach(t=>clearTimeout(t)); __soundTimers=[];
+  const nodes=__soundNodes; __soundNodes=[];
+  nodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});
+}
+function playSound(choice){
+  __ensureCtx();
+  const build=()=>{
+    __clearSound(); __curSound=choice;
+    (__SND[choice]||sndRain)();
+    const now=__acx.currentTime;
+    __master.gain.cancelScheduledValues(now);
+    __master.gain.setValueAtTime(Math.max(0.0001,__master.gain.value),now);
+    __master.gain.linearRampToValueAtTime(0.55, now+2.5);   // 緩緩淡入・輕柔音量
+    __musicOn=true;
+    try{localStorage.setItem('zw_sound',choice);localStorage.setItem('zw_music','1');}catch(e){}
+    updateMusicUI();
+  };
+  if(__musicOn && __curSound && __acx){      // 切換時先快速淡出避免爆音
+    const now=__acx.currentTime;
+    __master.gain.cancelScheduledValues(now);
+    __master.gain.setValueAtTime(__master.gain.value,now);
+    __master.gain.linearRampToValueAtTime(0.0001, now+0.25);
+    setTimeout(build,300);
+  } else build();
+}
+function stopSound(){
+  __musicOn=false; __curSound=null;
+  if(__acx&&__master){
+    const now=__acx.currentTime;
+    __master.gain.cancelScheduledValues(now);
+    __master.gain.setValueAtTime(__master.gain.value,now);
+    __master.gain.linearRampToValueAtTime(0.0001, now+1.2);
   }
-  __bellTimer=setTimeout(bell, 3500);
-  __musicNodes={master,oscs};
-  __musicOn=true;
+  setTimeout(()=>{ if(!__musicOn) __clearSound(); },1400);
+  try{localStorage.setItem('zw_music','0');}catch(e){}
+  updateMusicUI();
 }
-function stopMusic(){
-  __musicOn=false;
-  if(__bellTimer){clearTimeout(__bellTimer);__bellTimer=null;}
-  if(__musicNodes&&__acx){
-    const now=__acx.currentTime, m=__musicNodes.master, oscs=__musicNodes.oscs;
-    try{m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(0.0001,now+1.5);}catch(e){}
-    setTimeout(()=>{oscs.forEach(o=>{try{o.stop();}catch(e){}});},1700);
-    __musicNodes=null;
+function updateMusicUI(){
+  const fab=document.getElementById('musicFab');
+  if(fab){fab.classList.toggle('on',__musicOn);const t=fab.querySelector('.mtxt');if(t)t.textContent=__musicOn?(SND_NAME[__curSound]||'背景音樂'):'背景音樂';}
+  document.querySelectorAll('.mpopt').forEach(b=>{const s=b.getAttribute('data-snd');
+    b.classList.toggle('cur',(__musicOn&&s===__curSound)||(!__musicOn&&s==='off'));});
+}
+(function initMusic(){
+  const fab=document.getElementById('musicFab'), wrap=document.getElementById('musicWrap');
+  if(fab&&wrap)fab.addEventListener('click',e=>{e.stopPropagation();wrap.classList.toggle('open');});
+  document.querySelectorAll('.mpopt').forEach(b=>b.addEventListener('click',()=>{
+    const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s);
+    if(wrap)wrap.classList.remove('open');
+  }));
+  // 點面板外處關閉選單
+  document.addEventListener('click',e=>{ if(wrap&&wrap.classList.contains('open')&&!wrap.contains(e.target))wrap.classList.remove('open'); });
+  // 預設進站即播放：瀏覽器規定需使用者互動才能出聲，故於首次互動（點擊／滑動／按鍵）自動開始
+  let want='1',choice='rain';
+  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'rain';}catch(e){}
+  if(want!=='0'){
+    const kick=()=>{ if(!__musicOn)playSound(choice); cleanup(); };
+    const cleanup=()=>['pointerdown','touchstart','keydown','wheel'].forEach(ev=>window.removeEventListener(ev,kick,true));
+    ['pointerdown','touchstart','keydown','wheel'].forEach(ev=>window.addEventListener(ev,kick,true));
+    try{ __ensureCtx(); if(__acx.state==='running'){ playSound(choice); cleanup(); } }catch(e){}
   }
-}
-function updateMusicBtn(){
-  const b=document.getElementById('musicFab'); if(!b)return;
-  b.classList.toggle('on',__musicOn);
-  const t=b.querySelector('.mtxt'); if(t)t.textContent=__musicOn?'音樂播放中':'冥想音樂';
-}
-function toggleMusic(){ if(__musicOn)stopMusic(); else startMusic(); updateMusicBtn(); }
-(function(){const b=document.getElementById('musicFab'); if(b)b.addEventListener('click',toggleMusic);})();
+  updateMusicUI();
+})();
 </script>
 </body>
 </html>
