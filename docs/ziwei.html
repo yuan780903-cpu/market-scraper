@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light only">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src https://*.line.me; base-uri 'self'; form-action 'self' https://*.line.me; object-src 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src https://*.line.me; base-uri 'self'; form-action 'self' https://*.line.me; object-src 'none'; frame-ancestors 'none'">
 <title>人生實用說明書系統 · 您的專屬人生導航 — 斗數十二宮 × 四柱八字</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -308,7 +308,7 @@ header .meta b{color:var(--gold);font-weight:500}
 .rcard{background:var(--card);
   border:1px solid var(--line);border-radius:16px;padding:24px 26px;position:relative;box-shadow:0 14px 34px -28px var(--shadow)}
 .rcard h3{font-size:1.15rem;letter-spacing:3px;color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:9px}
-.rcard h3 .ic{font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.3rem}
+.rcard h3 .ic{font-family:inherit;color:var(--purple);font-size:1.3rem}
 .rcard .lead{color:var(--gold-deep);font-size:.92rem;letter-spacing:1px;margin-bottom:10px;font-weight:600}
 .rcard p{color:var(--ink-dim);font-size:.94rem;letter-spacing:.5px}
 .rcard .tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}
@@ -464,6 +464,9 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .mpopt.cur::before{content:"▸ ";opacity:1}
 .mpopt.mpoff{color:var(--ink-faint);border-top:1px solid var(--line-soft);margin-top:4px;border-radius:0 0 9px 9px}
 .mpopt.mpoff::before{content:"✕ ";color:var(--ink-faint);opacity:.7}
+.mpvol{display:flex;align-items:center;gap:8px;padding:8px 12px 4px;border-top:1px solid var(--line-soft);margin-top:4px}
+.mpvol .mpvl{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px;flex:0 0 auto}
+.mpvol .mpvr{flex:1;accent-color:var(--purple);cursor:pointer;height:4px}
 .musichint{position:absolute;left:0;bottom:calc(100% + 10px);width:max-content;max-width:200px;
   background:linear-gradient(135deg,var(--purple),var(--purple-glow));color:#fff;font-size:.78rem;line-height:1.5;
   letter-spacing:.5px;text-align:center;padding:10px 14px;border-radius:14px;box-shadow:0 18px 40px -18px var(--shadow);
@@ -479,7 +482,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   cursor:pointer;box-shadow:0 14px 34px -14px var(--gold);transition:.3s}
 .revealbtn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 20px 44px -14px var(--gold)}
 .revealbtn:active{transform:translateY(0) scale(1)}
-.revealbtn .ic{font-family:"Ma Shan Zheng",serif;margin-right:10px;font-size:1.3rem;vertical-align:-2px}
+.revealbtn .ic{font-family:inherit;margin-right:10px;font-size:1.3rem;vertical-align:-2px}
 .revhint{display:block;margin-top:12px;color:var(--ink-faint);font-size:.82rem;letter-spacing:1px}
 .scorebody{display:none}
 .scorebody.show{display:block;animation:rise .7s ease both}
@@ -518,6 +521,11 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .famcard ul{list-style:none;margin:0;padding:0}
 .famcard li{font-size:.86rem;color:var(--ink-dim);line-height:1.7;padding-left:18px;position:relative;margin-bottom:5px}
 .famcard li::before{content:"·";position:absolute;left:4px;color:var(--gold);font-weight:700}
+.famcard .frole{font-size:.82rem;color:var(--ink-faint);line-height:1.7;margin-bottom:10px;padding-left:12px;border-left:2px solid var(--line-soft);font-style:italic}
+.famcard .fadv{margin-top:12px;font-size:.85rem;color:var(--ink-dim);line-height:1.8;background:var(--gwash);border-radius:12px;padding:12px 14px}
+.famcard .fadv b{display:block;color:var(--jade);font-style:normal;letter-spacing:1px;margin-bottom:4px;font-size:.82rem}
+.famcard .ftip{margin-top:8px;font-size:.8rem;color:var(--gold-deep);line-height:1.7;padding-left:18px;position:relative}
+.famcard .ftip::before{content:"◆";position:absolute;left:2px;font-size:.7rem;top:3px}
 .famsum{background:var(--gwash);border:1px solid var(--jade);
   border-radius:18px;padding:26px;margin-top:18px}
 .famsum h4{color:var(--jade);letter-spacing:3px;font-size:1.15rem;margin-bottom:12px}
@@ -582,7 +590,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .sancai.good{border-color:var(--jade)} .sancai.bad{border-color:var(--rose)}
 .sancai .sch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
 .sancai .sch span:first-child{color:var(--gold);letter-spacing:2px}
-.sancai .sch b{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:4px}
+.sancai .sch b{font-family:inherit;font-size:1.2rem;color:var(--gold-deep);letter-spacing:4px}
 .scbadge{font-size:.8rem;padding:3px 14px;border-radius:20px;border:1px solid var(--line-soft)}
 .scbadge.good{color:var(--jade);border-color:var(--jade)} .scbadge.mid{color:var(--gold);border-color:var(--gold)} .scbadge.bad{color:var(--rose);border-color:var(--rose)}
 .sancai p{color:var(--ink-dim);font-size:.9rem;line-height:1.85}
@@ -713,6 +721,14 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-adv li{margin:4px 0;font-size:10.5px;line-height:1.55;color:#3a2c12}
 #reportPrint .rp-syn{background:#fbf4e3;border:1px solid #e3d3a6;border-radius:8px;padding:8px 11px;font-size:10.5px;line-height:1.7;margin-top:5px;color:#3a2c12}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
+#reportPrint .rp-fbadge{display:inline-block;border:1.5px solid #c2a14a;border-radius:18px;padding:2px 14px;font-size:12px;font-weight:700;color:#8a6a14;background:#fbf2db}
+#reportPrint .rp-fbadge.good{border-color:#3f8a5a;color:#2e6b43}
+#reportPrint .rp-fbadge.low{border-color:#c2576f;color:#a83d56}
+#reportPrint .rp-frole{font-size:10.5px;color:#5a4a28;line-height:1.6;font-style:italic;border-left:3px solid #d9c7a0;padding-left:9px;margin:4px 0}
+#reportPrint .rp-fsum{background:#f3f8f3;border:1px solid #bcd6c2;border-radius:8px;padding:9px 12px;margin-top:4px}
+#reportPrint .rp-fsum .ft{color:#2e6b43;font-weight:700;font-size:11.5px;letter-spacing:1px;margin-bottom:5px}
+#reportPrint .rp-fsum .fr{font-size:10.5px;color:#3a2c12;line-height:1.6;margin:3px 0}
+#reportPrint .rp-fsum .fr b{color:#2e6b43}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
   body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicwrap,body.rp-on footer{display:none!important}
@@ -1120,6 +1136,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <button class="mpopt" type="button" data-snd="wind">微風</button>
     <button class="mpopt" type="button" data-snd="night">夜晚蟲鳴</button>
     <button class="mpopt" type="button" data-snd="bowls">頌缽冥想</button>
+    <div class="mpvol"><span class="mpvl">音量</span><input id="mpVol" class="mpvr" type="range" min="0" max="100" value="70" aria-label="音量"></div>
     <button class="mpopt mpoff" type="button" data-snd="off">關閉音樂</button>
   </div>
   <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="自然之聲背景音樂・點按選擇">
@@ -1823,6 +1840,42 @@ function elementRel(selfWx,otherWx){
  if((i+2)%5===o)return {t:"我剋對方",sc:2,note:`${selfWx}剋${otherWx}，您於關係中較主導，宜以柔濟剛。`};
  return {t:"對方剋我",sc:-4,note:`${otherWx}剋${selfWx}，對方常給您壓力或約束，宜化剋為督促成長之力。`};
 }
+/* 各關係別的相處心法（依合盤分數高/中/低給出對應建議） */
+const REL_GUIDE={
+ 夫妻:{role:"夫妻是命中相伴最久的同盤之人，一榮俱榮、一損俱損，最重五行互補與情緒共振。",
+   good:"兩人緣分深厚、五行相生，是天作之合。宜珍惜這份默契，於事業與家庭上分工互補、彼此成就，把好運共同放大。",
+   mid:"感情根基穩健，惟個性各有稜角。相處貴在『求同存異』，少爭對錯、多談感受，把日常的小體貼累積成長久的安穩。",
+   low:"兩人五行或生肖有所沖剋，易因觀念差異起摩擦。切忌情緒高張時硬碰硬，宜冷靜後再溝通，並善用共同興趣與旅行重建連結。",
+   tip:"婚姻長久之道在『一柔一剛』。當對方為您忌神時，更要學會把要求轉化為欣賞，把抱怨轉化為請求。"},
+ 兒女:{role:"兒女是您氣運的延伸與晚年的依靠，親子合盤重在『因材施教』與情感的雙向流通。",
+   good:"親子緣分深、磁場契合，孩子天生與您投緣。宜順其天賦多加栽培、給予信任與舞台，您也將從中收穫莫大的福報與成就感。",
+   mid:"親子關係平實溫和，孩子有自己的步調。教養上宜多傾聽、少命令，把『我為你好』換成『我懂你』，緣分自會更加緊密。",
+   low:"親子五行或生肖較不相合，管教易生衝突或疏離。宜放下控制、改以陪伴與身教，給孩子空間，緣淺者更需用心經營、靜待花開。",
+   tip:"親子之道貴在『放手而不放心』。孩子若屬您的喜用神，是來旺您的福星；若為忌神，則是來磨練您耐性的善知識。"},
+ 父母:{role:"父母是您此生最大的庇蔭與根源，與父母合盤反映受蔭厚薄與孝親相處之道。",
+   good:"與父母緣深情厚、五行相生，自幼多得庇蔭與貴助。宜常懷感恩、勤於陪伴，把這份福氣化為孝行回報，福澤更綿長。",
+   mid:"與父母相處和睦，惟兩代觀念偶有落差。宜多些耐心傾聽長輩心聲、報喜亦報憂，讓關心雙向流動，親情自然溫潤。",
+   low:"與父母五行或生肖較有沖剋，相處易有代溝或心結。宜主動釋出善意、避免翻舊帳，以柔軟態度化解，孝心放在當下最為珍貴。",
+   tip:"孝親之道在『順氣不順事』。父母若為您喜用神，是您一生的貴人靠山；縱為忌神，亦是渡您成長的因緣，宜以感恩化之。"},
+ 兄弟姊妹:{role:"兄弟姊妹是您平輩中最親的同氣連枝，合盤看手足助力與合作緣分。",
+   good:"手足緣分佳、志同道合，是您人生路上難得的戰友與後盾。宜彼此扶持、適度合作，同心則家業興旺、福氣加倍。",
+   mid:"手足關係平和，各有各的生活重心。宜常保聯繫、互通有無，於關鍵時刻彼此補位，淡淡的親情也能細水長流。",
+   low:"手足五行或生肖有所沖害，易因利益或個性生嫌隙。最忌金錢往來不清、舊事重提，宜親兄弟明算帳、保持界線反更長久。",
+   tip:"手足之道在『親而有間』。合得來者可合夥共事；沖剋者則宜各自精彩、君子之交，避免在錢財與是非上糾纏。"},
+ 其他:{role:"這位至親與您有著特別的緣分，合盤看彼此磁場的契合與相互的影響。",
+   good:"兩人緣分相投、五行互補，是彼此生命中的助緣與貴人。宜珍惜這份難得的契合，相互扶持、共創美好。",
+   mid:"彼此關係平和自然，緣分需要主動經營。宜多些真誠互動與陪伴，把平淡的相處用心經營成深厚的情誼。",
+   low:"兩人五行或生肖較不相合，相處需要更多包容與磨合。宜以同理心化解差異，求同存異，把摩擦轉化為彼此成長的養分。",
+   tip:"相處之道在『以誠相待、以和為貴』。對方若為您喜用神則是助力；若為忌神，則宜以包容化剋為督促成長之力。"}
+};
+function relKey(rel){
+ if(!rel)return"其他";
+ if(rel.indexOf("夫")>=0||rel.indexOf("妻")>=0||rel.indexOf("配偶")>=0)return"夫妻";
+ if(rel.indexOf("兒")>=0||rel.indexOf("女")>=0||rel.indexOf("子")>=0)return"兒女";
+ if(rel.indexOf("父")>=0||rel.indexOf("母")>=0)return"父母";
+ if(rel.indexOf("兄")>=0||rel.indexOf("弟")>=0||rel.indexOf("姊")>=0||rel.indexOf("妹")>=0||rel.indexOf("手足")>=0)return"兄弟姊妹";
+ return"其他";
+}
 function familyAnalysis(self,selfXi,selfJi,members){
  const selfDmWx=GAN_WX[self.dayMaster];
  const out={members:[],summary:null};
@@ -1843,14 +1896,20 @@ function familyAnalysis(self,selfXi,selfJi,members){
   else xiNote=`對方日主屬${otherDmWx}，與您命局關係中性，相處貴在用心經營。`;
   score=Math.max(42,Math.min(98,Math.round(score)));
   const bandc=score>=80?"good":score>=65?"mid":"low";
+  const tier=bandc; // good / mid / low
   totalScore+=score;
-  const relTxt=zr.t;
   if(zr.sc>=12||er.sc>=10)goodRel.push(`${mem.rel}${mem.name?`（${mem.name}）`:""}`);
   if(zr.sc<0)badRel.push(`${mem.rel}${mem.name?`（${mem.name}）`:""}（生肖${zr.t}）`);
+  const rk=relKey(mem.rel);
+  const guide=REL_GUIDE[rk]||REL_GUIDE["其他"];
   out.members.push({
-   rel:mem.rel,name:mem.name,
+   rel:mem.rel,name:mem.name,relKind:rk,
    bzStr:`${bz.year.gan}${bz.year.zhi}年 · 屬${SHENGXIAO[bz.year.zhi]} · 日主${bz.dayMaster}（${otherDmWx}）`,
-   score,band:bandc,
+   score,band:bandc,tier,tgName:tg,
+   zodiac:zr.t,elem:er.t,
+   relRole:guide.role,
+   relAdvice:guide[tier],
+   relTip:guide.tip,
    bullets:[
     `生肖關係：您屬${SHENGXIAO[self.year.zhi]}、對方屬${SHENGXIAO[bz.year.zhi]} → <b>${zr.t}</b>。${zr.note}`,
     `五行日主：${er.t}。${er.note}`,
@@ -2331,7 +2390,11 @@ function familySection(fam){
     <div class="fh"><span class="frel">${mb.rel}${mb.name?`<small>${mb.name}</small>`:""}</span>
       <span class="fscore ${mb.band}">合盤 ${mb.score}</span></div>
     <div class="fbz">${mb.bzStr}</div>
-    <ul>${mb.bullets.map(b=>`<li>${b}</li>`).join("")}</ul></div>`).join("");
+    ${mb.relRole?`<div class="frole">${mb.relRole}</div>`:""}
+    <ul>${mb.bullets.map(b=>`<li>${b}</li>`).join("")}</ul>
+    ${mb.relAdvice?`<div class="fadv"><b>相處心法（${mb.relKind}）</b>${mb.relAdvice}</div>`:""}
+    ${mb.relTip?`<div class="ftip">${mb.relTip}</div>`:""}
+  </div>`).join("");
   const s=fam.summary;
   return `<div class="sec-title"><span class="cn">家庭成員交叉分析</span><span class="en">Family Synastry</span></div>
   <div class="famgrid">${cards}</div>
@@ -3489,6 +3552,41 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     `<b>當前大限</b>　現行虛歲 ${adv.curAge}，正走「${curLimName}」大限（起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運），宜順此宮位星性佈局十年重心。`,
     `<b>2026 流年</b>　行運入「${lnPalaceName}」，把握 ${lnSihua[0]}化祿之機、慎防 ${lnSihua[3]}化忌之耗，趨吉避凶、穩中求進。`
   ].map(t=>`<li>${t}</li>`).join("");
+  // 家庭成員交叉分析報告頁（每位親人一張單面 A4）
+  let famPages="";
+  if(fam&&fam.members&&fam.members.length){
+    const fs=fam.summary;
+    famPages=fam.members.map((mb,idx)=>{
+      const overview=(idx===0&&fs)?`
+        <div class="rp-sec">家庭整體合盤 · 平均 ${fs.avg} 分</div>
+        <div class="rp-fsum">
+          <div class="ft">家庭優勢</div>
+          <div class="fr">${fs.strengths.join("<br>")}</div>
+          <div class="ft" style="margin-top:8px">潛在課題</div>
+          <div class="fr">${fs.weaknesses.join("<br>")}</div>
+          <div class="fr" style="margin-top:8px;border-top:1px dashed #bcd6c2;padding-top:7px"><b>整體建議：</b>${fs.advice}</div>
+        </div>`:"";
+      const bullets=mb.bullets.map(b=>`<li>${b}</li>`).join("");
+      return `<div class="rp-page">
+        <div class="rp-head2">人生實用說明書系統 · 家庭合盤交叉分析　—　命主 ${name} 與 ${mb.rel}${mb.name?`（${mb.name}）`:""}</div>
+        <div class="rp-id">
+          <span>命主 <b>${name} · ${gender}</b></span>
+          <span>對象 <b>${mb.rel}${mb.name?` · ${mb.name}`:""}</b></span>
+          <span>${mb.bzStr}</span>
+          <span>合盤 <b class="rp-fbadge ${mb.band}">${mb.score} 分</b></span>
+        </div>
+        ${overview}
+        <div class="rp-sec">關係定位 · ${mb.relKind}</div>
+        <div class="rp-frole">${mb.relRole}</div>
+        <div class="rp-sec">四維合盤剖析（生肖 · 五行 · 十神 · 喜忌）</div>
+        <ul class="rp-adv">${bullets}</ul>
+        <div class="rp-sec">相處心法</div>
+        <div class="rp-syn">${mb.relAdvice}</div>
+        <div class="rp-row" style="color:#8a6a14"><b>◆ 命理提點：</b>${mb.relTip}</div>
+        <div class="rp-foot">本頁為命主與「${mb.rel}${mb.name?`・${mb.name}`:""}」之八字合盤交叉分析，依生肖六合三合沖害、五行日主生剋、十神定位與喜用神互補綜合演算而成。親緣吉凶皆為趨勢、貴在用心經營。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+      </div>`;
+    }).join("");
+  }
   const printHTML=`
   <div class="rp-page">
     <div class="rp-time" id="rpTime"></div>
@@ -3526,7 +3624,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
-  </div>`;
+  </div>${famPages}`;
   const rp=document.getElementById("reportPrint");
   if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
 
@@ -3541,178 +3639,206 @@ lpHandleReturn();
 ecHandleReturn();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
-let __acx=null, __master=null, __musicOn=false, __curSound=null, __soundNodes=[], __soundTimers=[], __noiseBuf=null;
+/* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
+   重點：iOS（iPhone）的「靜音/響鈴」實體開關會把 Web Audio 合成音「靜音」，
+   但透過 <audio> 媒體元素播放則不受靜音開關影響（與聽音樂、看影片同一條音訊路徑）。
+   因此這裡改為：用 OfflineAudioContext 在瀏覽器端「離線合成」一段約 20 秒的自然音 WAV，
+   產生 Blob 後交給 <audio loop> 播放 → 手機（即使靜音）也聽得到、且完全離線、免外部音檔。 */
+let __musicOn=false, __curSound=null, __vol=0.7, __fadeTimer=null;
+let __audioEl=null, __unlocked=false;
+const __wavCache={};   // choice -> blob URL（首次播放才合成，之後沿用）
 const SND_NAME={rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴',wind:'微風',night:'夜晚蟲鳴',bowls:'頌缽冥想'};
-function __ensureCtx(){
-  if(!__acx){
-    __acx=new (window.AudioContext||window.webkitAudioContext)();
-    __master=__acx.createGain(); __master.gain.value=0.0001; __master.connect(__acx.destination);
+const __DUR={rain:18,ocean:24,stream:20,forest:24,wind:24,night:22,bowls:28};
+
+function __getAudioEl(){
+  if(!__audioEl){
+    __audioEl=document.getElementById('bgAudio');
+    if(!__audioEl){__audioEl=document.createElement('audio');__audioEl.id='bgAudio';document.body.appendChild(__audioEl);}
+    __audioEl.loop=true; __audioEl.setAttribute('playsinline','');
   }
-  if(__acx.state==='suspended'){try{__acx.resume();}catch(e){}}
+  return __audioEl;
 }
-function __noise(){
-  if(!__noiseBuf){
-    const len=__acx.sampleRate*4, buf=__acx.createBuffer(1,len,__acx.sampleRate), d=buf.getChannelData(0);
-    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
-    for(let i=0;i<len;i++){const w=Math.random()*2-1;
-      b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
-      b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
-      d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
-    __noiseBuf=buf;
+function __wavURI(samples,sr){            // Float32Array → WAV(16bit mono) → data/blob
+  const n=samples.length, ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  let o=44;for(let i=0;i<n;i++){let x=Math.max(-1,Math.min(1,samples[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+function __silentSrc(){const ab=__wavURI(new Float32Array(800),8000);let s='',b=new Uint8Array(ab);for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return 'data:audio/wav;base64,'+btoa(s);}
+function __ensureCtx(){   // 必須在「使用者手勢」當下呼叫：先用無聲音檔解鎖 <audio>（iOS 之後才允許程式控制播放）
+  const a=__getAudioEl();
+  if(!__unlocked){
+    try{ a.src=__silentSrc(); a.volume=0; const p=a.play(); if(p&&p.catch)p.catch(()=>{}); __unlocked=true; }catch(e){}
   }
-  const s=__acx.createBufferSource(); s.buffer=__noiseBuf; s.loop=true; return s;
 }
-function __dc(v){const c=__acx.createConstantSource();c.offset.value=v;return c;}
-function sndRain(){
-  const out=__acx.createGain(); out.gain.value=0.85; out.connect(__master);
-  const s=__noise(), hp=__acx.createBiquadFilter(), lp=__acx.createBiquadFilter();
-  hp.type='highpass'; hp.frequency.value=420; lp.type='lowpass'; lp.frequency.value=4500; lp.Q.value=0.3;
-  s.connect(hp); hp.connect(lp); lp.connect(out); s.start();
-  __soundNodes.push(s);
+/* ---- 離線合成用工具 ---- */
+function __obNoise(ctx,dur){
+  const len=Math.ceil(ctx.sampleRate*dur), buf=ctx.createBuffer(1,len,ctx.sampleRate), d=buf.getChannelData(0);
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;
+    b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
+    b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
+    d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
+  const s=ctx.createBufferSource(); s.buffer=buf; s.loop=true; return s;
 }
-function sndOcean(){
-  const out=__acx.createGain(); out.gain.value=0; out.connect(__master);
-  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=0; lp.Q.value=0.6;
-  s.connect(lp); lp.connect(out); s.start();
-  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.09;
-  const lg=__acx.createGain(); lg.gain.value=0.45; const base=__dc(0.45);
-  lfo.connect(lg); lg.connect(out.gain); base.connect(out.gain);
-  const lf2=__acx.createOscillator(); lf2.type='sine'; lf2.frequency.value=0.09;
-  const lg2=__acx.createGain(); lg2.gain.value=350; const fb=__dc(620);
-  lf2.connect(lg2); lg2.connect(lp.frequency); fb.connect(lp.frequency);
-  lfo.start();base.start();lf2.start();fb.start();
-  __soundNodes.push(s,lfo,base,lf2,fb);
-}
-function sndStream(){
-  const out=__acx.createGain(); out.gain.value=0.6; out.connect(__master);
-  const s=__noise(), hp=__acx.createBiquadFilter(), bp=__acx.createBiquadFilter();
-  hp.type='highpass'; hp.frequency.value=800; bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value=0.7;
-  s.connect(hp); hp.connect(bp); bp.connect(out); s.start();
-  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.8;
-  const lg=__acx.createGain(); lg.gain.value=300; lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
-  __soundNodes.push(s,lfo);
-}
-function sndWind(){
-  const out=__acx.createGain(); out.gain.value=0; out.connect(__master);
-  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=0; lp.Q.value=3;
-  s.connect(lp); lp.connect(out); s.start();
-  const lfo=__acx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.13;
-  const lg=__acx.createGain(); lg.gain.value=0.3; const base=__dc(0.4);
-  lfo.connect(lg); lg.connect(out.gain); base.connect(out.gain);
-  const lf2=__acx.createOscillator(); lf2.type='sine'; lf2.frequency.value=0.07;
-  const lg2=__acx.createGain(); lg2.gain.value=320; const fb=__dc(560);
-  lf2.connect(lg2); lg2.connect(lp.frequency); fb.connect(lp.frequency);
-  lfo.start();base.start();lf2.start();fb.start();
-  __soundNodes.push(s,lfo,base,lf2,fb);
-}
-function sndForest(){
-  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
-  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=850;
-  const bed=__acx.createGain(); bed.gain.value=0.22; s.connect(lp); lp.connect(bed); bed.connect(out); s.start();
-  __soundNodes.push(s);
-  (function chirp(){
-    if(__curSound!=='forest')return;
-    const t=__acx.currentTime, n=1+Math.floor(Math.random()*3);
-    for(let k=0;k<n;k++){
-      const ct=t+k*0.13, f0=1900+Math.random()*1700;
-      const o=__acx.createOscillator(); o.type='sine';
-      o.frequency.setValueAtTime(f0,ct);
-      o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),ct+0.05);
-      o.frequency.exponentialRampToValueAtTime(f0*0.9,ct+0.11);
-      const g=__acx.createGain(); g.gain.setValueAtTime(0.0001,ct);
-      g.gain.exponentialRampToValueAtTime(0.16,ct+0.02); g.gain.exponentialRampToValueAtTime(0.0001,ct+0.13);
-      o.connect(g); g.connect(out); o.start(ct); o.stop(ct+0.16);
+function __obDc(ctx,val){const c=ctx.createConstantSource();c.offset.value=val;return c;}
+const __OB={
+  rain(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0.85;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),hp=ctx.createBiquadFilter(),lp=ctx.createBiquadFilter();
+    hp.type='highpass';hp.frequency.value=420;lp.type='lowpass';lp.frequency.value=4500;lp.Q.value=0.3;
+    s.connect(hp);hp.connect(lp);lp.connect(out);s.start();
+  },
+  ocean(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=0;lp.Q.value=0.6;
+    s.connect(lp);lp.connect(out);s.start();
+    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.09;
+    const lg=ctx.createGain();lg.gain.value=0.45;const base=__obDc(ctx,0.45);
+    lfo.connect(lg);lg.connect(out.gain);base.connect(out.gain);
+    const lf2=ctx.createOscillator();lf2.type='sine';lf2.frequency.value=0.09;
+    const lg2=ctx.createGain();lg2.gain.value=350;const fb=__obDc(ctx,620);
+    lf2.connect(lg2);lg2.connect(lp.frequency);fb.connect(lp.frequency);
+    lfo.start();base.start();lf2.start();fb.start();
+  },
+  stream(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0.6;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),hp=ctx.createBiquadFilter(),bp=ctx.createBiquadFilter();
+    hp.type='highpass';hp.frequency.value=800;bp.type='bandpass';bp.frequency.value=1800;bp.Q.value=0.7;
+    s.connect(hp);hp.connect(bp);bp.connect(out);s.start();
+    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.8;
+    const lg=ctx.createGain();lg.gain.value=300;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
+  },
+  wind(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=0;lp.Q.value=3;
+    s.connect(lp);lp.connect(out);s.start();
+    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.13;
+    const lg=ctx.createGain();lg.gain.value=0.3;const base=__obDc(ctx,0.4);
+    lfo.connect(lg);lg.connect(out.gain);base.connect(out.gain);
+    const lf2=ctx.createOscillator();lf2.type='sine';lf2.frequency.value=0.07;
+    const lg2=ctx.createGain();lg2.gain.value=320;const fb=__obDc(ctx,560);
+    lf2.connect(lg2);lg2.connect(lp.frequency);fb.connect(lp.frequency);
+    lfo.start();base.start();lf2.start();fb.start();
+  },
+  forest(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=850;
+    const bed=ctx.createGain();bed.gain.value=0.22;s.connect(lp);lp.connect(bed);bed.connect(out);s.start();
+    let t=0.5;
+    while(t<dur-0.3){
+      const n=1+Math.floor(Math.random()*3);
+      for(let k=0;k<n;k++){
+        const ct=t+k*0.13;if(ct>=dur-0.2)break;
+        const f0=1900+Math.random()*1700;
+        const o=ctx.createOscillator();o.type='sine';
+        o.frequency.setValueAtTime(f0,ct);
+        o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),ct+0.05);
+        o.frequency.exponentialRampToValueAtTime(f0*0.9,ct+0.11);
+        const g=ctx.createGain();g.gain.setValueAtTime(0.0001,ct);
+        g.gain.exponentialRampToValueAtTime(0.16,ct+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ct+0.13);
+        o.connect(g);g.connect(out);o.start(ct);o.stop(ct+0.16);
+      }
+      t+=1.3+Math.random()*3.6;
     }
-    __soundTimers.push(setTimeout(chirp,1300+Math.random()*3600));
-  })();
+  },
+  night(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=280;
+    const bed=ctx.createGain();bed.gain.value=0.28;s.connect(lp);lp.connect(bed);bed.connect(out);s.start();
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=4200;
+    const am=ctx.createGain();am.gain.value=0;
+    const trill=ctx.createOscillator();trill.type='square';trill.frequency.value=42;
+    const tg=ctx.createGain();tg.gain.value=0;trill.connect(tg);tg.connect(am.gain);
+    o.connect(am);am.connect(out);o.start();trill.start();
+    let t=0.3;
+    while(t<dur-0.6){
+      tg.gain.setValueAtTime(0.03,t);tg.gain.setValueAtTime(0.03,t+0.55);tg.gain.setValueAtTime(0,t+0.57);
+      t+=0.95+Math.random()*0.45;
+    }
+  },
+  bowls(ctx,dur){
+    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=0.4;
+    const delay=ctx.createDelay(2.0);delay.delayTime.value=0.5;
+    const fb=ctx.createGain();fb.gain.value=0.32;const wet=ctx.createGain();wet.gain.value=0.22;
+    delay.connect(fb);fb.connect(delay);lp.connect(out);lp.connect(delay);delay.connect(wet);wet.connect(out);
+    const base=130.81,freqs=[base/2,base,base*1.5,base*2];
+    freqs.forEach((f,i)=>{
+      const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+      const det=ctx.createOscillator();det.type='sine';det.frequency.value=f*1.004;
+      const g=ctx.createGain();g.gain.setValueAtTime(0.075,0);
+      const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.05+i*0.012;
+      const lg=ctx.createGain();lg.gain.value=0.05;lfo.connect(lg);lg.connect(g.gain);
+      o.connect(g);det.connect(g);g.connect(lp);o.start(0);det.start(0);lfo.start(0);
+    });
+    const scale=[523.25,587.33,659.25,783.99,880.00];
+    let t=0.5;
+    while(t<dur-1){
+      const f=scale[Math.floor(Math.random()*scale.length)];
+      const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+      const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=f*2.01;
+      const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);
+      g.gain.linearRampToValueAtTime(0.09,t+0.9);g.gain.exponentialRampToValueAtTime(0.0001,Math.min(dur,t+6.5));
+      const g2=ctx.createGain();g2.gain.value=0.28;
+      o.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);
+      o.start(t);o2.start(t);o.stop(Math.min(dur,t+7));o2.stop(Math.min(dur,t+7));
+      t+=7+Math.random()*9;
+    }
+  }
+};
+async function __renderWav(choice){
+  if(__wavCache[choice])return __wavCache[choice];
+  const dur=__DUR[choice]||20, sr=22050;
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  const ctx=new OAC(1,Math.ceil(sr*dur),sr);
+  (__OB[choice]||__OB.rain)(ctx,dur);
+  const rendered=await ctx.startRendering();
+  const url=URL.createObjectURL(new Blob([__wavURI(rendered.getChannelData(0),sr)],{type:'audio/wav'}));
+  __wavCache[choice]=url;
+  return url;
 }
-function sndNight(){
-  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
-  const s=__noise(), lp=__acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=280;
-  const bed=__acx.createGain(); bed.gain.value=0.28; s.connect(lp); lp.connect(bed); bed.connect(out); s.start();
-  const o=__acx.createOscillator(); o.type='sine'; o.frequency.value=4200;
-  const am=__acx.createGain(); am.gain.value=0;
-  const trill=__acx.createOscillator(); trill.type='square'; trill.frequency.value=42;
-  const tg=__acx.createGain(); tg.gain.value=0; trill.connect(tg); tg.connect(am.gain);
-  o.connect(am); am.connect(out); o.start(); trill.start();
-  __soundNodes.push(s,o,trill);
-  (function pulse(){
-    if(__curSound!=='night')return;
-    const t=__acx.currentTime;
-    tg.gain.cancelScheduledValues(t); tg.gain.setValueAtTime(0.03,t);
-    tg.gain.setValueAtTime(0.03,t+0.55); tg.gain.setValueAtTime(0,t+0.57);
-    __soundTimers.push(setTimeout(pulse,950+Math.random()*450));
-  })();
+function __fadeTo(target,ms){
+  const a=__getAudioEl();
+  if(__fadeTimer){clearInterval(__fadeTimer);__fadeTimer=null;}
+  target=Math.max(0,Math.min(1,target));
+  if(!ms){a.volume=target;if(target===0){try{a.pause();}catch(e){}}return;}
+  const start=a.volume,t0=(performance.now?performance.now():Date.now());
+  __fadeTimer=setInterval(()=>{
+    const k=Math.min(1,((performance.now?performance.now():Date.now())-t0)/ms);
+    a.volume=Math.max(0,Math.min(1,start+(target-start)*k));
+    if(k>=1){clearInterval(__fadeTimer);__fadeTimer=null;if(target===0){try{a.pause();}catch(e){}}}
+  },40);
 }
-function sndBowls(){
-  const acx=__acx, now=acx.currentTime;
-  const out=__acx.createGain(); out.gain.value=0.5; out.connect(__master);
-  const lp=acx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1100; lp.Q.value=0.4;
-  const delay=acx.createDelay(2.0); delay.delayTime.value=0.5;
-  const fb=acx.createGain(); fb.gain.value=0.32; const wet=acx.createGain(); wet.gain.value=0.22;
-  delay.connect(fb); fb.connect(delay); lp.connect(out); lp.connect(delay); delay.connect(wet); wet.connect(out);
-  const base=130.81, freqs=[base/2,base,base*1.5,base*2];
-  freqs.forEach((f,i)=>{
-    const o=acx.createOscillator();o.type='sine';o.frequency.value=f;
-    const det=acx.createOscillator();det.type='sine';det.frequency.value=f*1.004;
-    const g=acx.createGain();g.gain.setValueAtTime(0.075,now);
-    const lfo=acx.createOscillator();lfo.type='sine';lfo.frequency.value=0.05+i*0.012;
-    const lg=acx.createGain();lg.gain.value=0.05;lfo.connect(lg);lg.connect(g.gain);
-    o.connect(g);det.connect(g);g.connect(lp);o.start(now);det.start(now);lfo.start(now);
-    __soundNodes.push(o,det,lfo);
-  });
-  const scale=[523.25,587.33,659.25,783.99,880.00];
-  (function bell(){
-    if(__curSound!=='bowls')return;
-    const f=scale[Math.floor(Math.random()*scale.length)],t=acx.currentTime;
-    const o=acx.createOscillator();o.type='sine';o.frequency.value=f;
-    const o2=acx.createOscillator();o2.type='sine';o2.frequency.value=f*2.01;
-    const g=acx.createGain();g.gain.setValueAtTime(0.0001,t);
-    g.gain.linearRampToValueAtTime(0.09,t+0.9);g.gain.exponentialRampToValueAtTime(0.0001,t+6.5);
-    const g2=acx.createGain();g2.gain.value=0.28;
-    o.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);
-    o.start(t);o2.start(t);o.stop(t+7);o2.stop(t+7);
-    __soundTimers.push(setTimeout(bell,7000+Math.random()*9000));
-  })();
-}
-const __SND={rain:sndRain,ocean:sndOcean,stream:sndStream,forest:sndForest,wind:sndWind,night:sndNight,bowls:sndBowls};
-function __clearSound(){
-  __soundTimers.forEach(t=>clearTimeout(t)); __soundTimers=[];
-  const nodes=__soundNodes; __soundNodes=[];
-  nodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});
-}
-function playSound(choice){
+async function playSound(choice){
   __ensureCtx();
-  const build=()=>{
-    __clearSound(); __curSound=choice;
-    (__SND[choice]||sndRain)();
-    const now=__acx.currentTime;
-    __master.gain.cancelScheduledValues(now);
-    __master.gain.setValueAtTime(Math.max(0.0001,__master.gain.value),now);
-    __master.gain.linearRampToValueAtTime(0.55, now+2.5);   // 緩緩淡入・輕柔音量
-    __musicOn=true;
-    try{localStorage.setItem('zw_sound',choice);localStorage.setItem('zw_music','1');}catch(e){}
-    updateMusicUI();
-  };
-  if(__musicOn && __curSound && __acx){      // 切換時先快速淡出避免爆音
-    const now=__acx.currentTime;
-    __master.gain.cancelScheduledValues(now);
-    __master.gain.setValueAtTime(__master.gain.value,now);
-    __master.gain.linearRampToValueAtTime(0.0001, now+0.25);
-    setTimeout(build,300);
-  } else build();
+  __curSound=choice; __musicOn=true;
+  try{localStorage.setItem('zw_sound',choice);localStorage.setItem('zw_music','1');}catch(e){}
+  updateMusicUI();
+  const a=__getAudioEl();
+  let url;
+  try{ url=await __renderWav(choice); }catch(e){ return; }
+  if(__curSound!==choice||!__musicOn)return;   // 合成期間使用者已切換／關閉
+  try{
+    a.src=url; a.loop=true; a.currentTime=0; a.volume=0;
+    const p=a.play(); if(p&&p.catch)p.catch(()=>{});
+    __fadeTo(__vol,1800);
+  }catch(e){}
 }
 function stopSound(){
   __musicOn=false; __curSound=null;
-  if(__acx&&__master){
-    const now=__acx.currentTime;
-    __master.gain.cancelScheduledValues(now);
-    __master.gain.setValueAtTime(__master.gain.value,now);
-    __master.gain.linearRampToValueAtTime(0.0001, now+1.2);
-  }
-  setTimeout(()=>{ if(!__musicOn) __clearSound(); },1400);
+  __fadeTo(0,900);
   try{localStorage.setItem('zw_music','0');}catch(e){}
   updateMusicUI();
+}
+function setVolume(v){
+  __vol=Math.max(0,Math.min(1,v));
+  try{localStorage.setItem('zw_vol',String(Math.round(__vol*100)));}catch(e){}
+  if(__musicOn)__fadeTo(__vol,0);
 }
 function updateMusicUI(){
   const fab=document.getElementById('musicFab');
@@ -3734,6 +3860,12 @@ function updateMusicUI(){
     const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s);
     if(wrap)wrap.classList.remove('open');
   }));
+  // 音量滑桿（讀回上次設定）
+  const vr=document.getElementById('mpVol');
+  try{const sv=localStorage.getItem('zw_vol');if(sv!=null){__vol=Math.max(0,Math.min(1,(+sv)/100));}}catch(e){}
+  if(vr){vr.value=Math.round(__vol*100);
+    vr.addEventListener('input',()=>setVolume((+vr.value)/100));
+    vr.addEventListener('click',e=>e.stopPropagation());}
   // 點面板外處關閉選單
   document.addEventListener('click',e=>{ if(wrap&&wrap.classList.contains('open')&&!wrap.contains(e.target))wrap.classList.remove('open'); });
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
