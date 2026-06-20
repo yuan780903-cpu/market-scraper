@@ -1020,7 +1020,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="feat"><div class="fic">雙</div><h4>雙系統交叉比對</h4><p>北派紫微宮位推演＋子平八字五行生剋，雙重驗證、排除單一系統盲區，解析更深更準。</p></div>
     <div class="feat"><div class="fic">曆</div><h4>高精度曆法引擎</h4><p>內建農曆、節氣、干支精算（西元 1900–2100），每一筆生辰轉換毫釐不差，忠實還原命格。</p></div>
     <div class="feat"><div class="fic">造</div><h4>從宿命到造命</h4><p>不談令人恐懼的宿命論，而是一份客觀的人生策略指南——讓您在對的時間，做對的決定。</p></div>
-    <div class="feat"><div class="fic">家</div><h4>家人加入交叉分析</h4><p>可將家人一同排盤，分析彼此五行生剋與相處之道，是市面少見的家庭命理特色功能。</p></div>
+    <div class="feat"><div class="fic">緣</div><h4>人際加入交叉分析</h4><p>可將家人、職場長官／平輩／下屬，乃至生意合夥人一同排盤，分析彼此五行生剋與相處、合作之道，是市面少見的特色功能。</p></div>
   </div>
   <details class="introdetail">
     <summary>展開完整說明 — 為什麼你需要這本「人生說明書」</summary>
@@ -1145,10 +1145,10 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     </div>
 
     <details class="famwrap" id="famwrap">
-      <summary>＋ 家庭成員交叉分析（選填 · 夫妻／兒女／父母）</summary>
-      <div class="famhint">加入家人生辰，系統將以八字五行、生肖、日主十神交叉比對，產出家庭整體優劣勢與相處建議。（僅綜合命盤模式適用）</div>
+      <summary>＋ 人際交叉分析（選填 · 家人／職場長官・平輩・下屬／生意合夥人）</summary>
+      <div class="famhint">加入家人、職場長官／平輩／下屬，或生意合夥人的生辰，系統將以八字五行、生肖、日主十神交叉比對，產出彼此合盤分數與相處、合作之道。（僅綜合命盤模式適用）</div>
       <div id="famList"></div>
-      <button type="button" class="addfam" id="addFamBtn">＋ 新增一位家庭成員</button>
+      <button type="button" class="addfam" id="addFamBtn">＋ 新增一位對象</button>
     </details>
 
     <button class="cast" id="castBtn">演 算 命 盤</button>
@@ -1960,7 +1960,27 @@ const REL_GUIDE={
    mid:"手足關係平和，各有各的生活重心。宜常保聯繫、互通有無，於關鍵時刻彼此補位，淡淡的親情也能細水長流。",
    low:"手足五行或生肖有所沖害，易因利益或個性生嫌隙。最忌金錢往來不清、舊事重提，宜親兄弟明算帳、保持界線反更長久。",
    tip:"手足之道在『親而有間』。合得來者可合夥共事；沖剋者則宜各自精彩、君子之交，避免在錢財與是非上糾纏。"},
- 其他:{role:"這位至親與您有著特別的緣分，合盤看彼此磁場的契合與相互的影響。",
+ 職場長官:{role:"長官是您職涯中的提攜者與資源樞紐，合盤看上司緣分、受賞識的程度與向上溝通之道。",
+   good:"您與這位長官氣場相生、磁場契合，易得賞識與重用。宜主動匯報、把握表現舞台，順勢借其資源與人脈，是您事業向上的重要貴人。",
+   mid:"與長官相處平實，緣分仍需經營。宜讀懂其做事風格、把話說在重點上，多補位少邀功，日久自能贏得信任與機會。",
+   low:"與長官五行或生肖較有沖剋，理念易生落差或誤解。切忌正面頂撞，宜以結果與數據說話，先順其意再求其變，保護好自己也累積實力。",
+   tip:"向上管理之道在『懂他要什麼、補他缺什麼』。長官若為您喜用神，是您事業的靠山；縱為忌神，亦是磨練您格局的試金石。"},
+ 職場平輩:{role:"平輩同事是您日常並肩作戰的夥伴，合盤看合作緣分、競合分寸與人和厚薄。",
+   good:"您與這位同事志同道合、五行相生，是難得的工作戰友。宜真誠互助、資源共享，攜手把餅做大，於團隊中形成穩固的同盟。",
+   mid:"彼此關係平和，合作中各有立場。宜公私分明、界線清楚，多換位思考、少捲入是非，把競爭化為良性的彼此砥礪。",
+   low:"與對方五行或生肖有所沖害，易因利益或風格生嫌隙。最忌背後較勁與功勞之爭，宜對事不對人、把分工講清楚，保持距離反更長久。",
+   tip:"同儕相處在『合作不結黨、競爭不結怨』。合得來者可結盟共贏；沖剋者則君子之交、各自精彩。"},
+ 職場下屬:{role:"下屬是您領導力的延伸與團隊戰力的根基，合盤看帶人緣分、向心力與授權之道。",
+   good:"您與這位部屬磁場契合、五行相生，是能為您所用的得力幹將。宜給予舞台與信任、適度授權、論功行賞，他將成為您最穩的左右手。",
+   mid:"與部屬相處平實，帶心仍需用心。宜把目標說清楚、把標準訂明確，多給回饋與成長機會，恩威並濟，團隊自會逐步到位。",
+   low:"與部屬五行或生肖較有沖剋，管理上易生摩擦或陽奉陰違。切忌情緒化責備，宜以制度與目標管理代替壓制，賞罰分明、就事論事，化阻力為助力。",
+   tip:"帶人之道在『帶心更帶路』。部屬若為您喜用神，是旺您事業的福將；若為忌神，則是磨練您領導格局的功課。"},
+ 生意合夥人:{role:"合夥人是與您財運共振、利益與共的事業夥伴，合盤看合作緣分、互補程度與聚財之道。",
+   good:"您與這位合夥人五行互補、生肖相合，是聚財興業的黃金搭檔。宜分工互補、權責清楚，把彼此的長處發揮到極致，同心則利市倍增。",
+   mid:"合作緣分平穩，惟理念與步調各有不同。宜事先把出資、分潤與權責白紙黑字寫清楚，定期對帳溝通，把醜話說在前頭，合作反更長久。",
+   low:"與對方五行或生肖較有沖剋，易因金錢與決策起爭執。最忌口頭承諾與帳目不清，務必立約為憑、設好退場機制，謀定而後合，方能保全情誼與資產。",
+   tip:"合夥之道在『親兄弟明算帳』。對方若為您喜用神，是旺您財庫的貴人；若為忌神，則更需以制度與契約把風險框住。"},
+ 其他:{role:"這位對象與您有著特別的緣分，合盤看彼此磁場的契合與相互的影響。",
    good:"兩人緣分相投、五行互補，是彼此生命中的助緣與貴人。宜珍惜這份難得的契合，相互扶持、共創美好。",
    mid:"彼此關係平和自然，緣分需要主動經營。宜多些真誠互動與陪伴，把平淡的相處用心經營成深厚的情誼。",
    low:"兩人五行或生肖較不相合，相處需要更多包容與磨合。宜以同理心化解差異，求同存異，把摩擦轉化為彼此成長的養分。",
@@ -1968,6 +1988,10 @@ const REL_GUIDE={
 };
 function relKey(rel){
  if(!rel)return"其他";
+ if(rel.indexOf("長官")>=0||rel.indexOf("主管")>=0||rel.indexOf("上司")>=0||rel.indexOf("老闆")>=0)return"職場長官";
+ if(rel.indexOf("下屬")>=0||rel.indexOf("部屬")>=0||rel.indexOf("屬下")>=0||rel.indexOf("部下")>=0)return"職場下屬";
+ if(rel.indexOf("平輩")>=0||rel.indexOf("同事")>=0||rel.indexOf("同僚")>=0)return"職場平輩";
+ if(rel.indexOf("合夥")>=0||rel.indexOf("夥伴")>=0||rel.indexOf("合作")>=0||rel.indexOf("股東")>=0)return"生意合夥人";
  if(rel.indexOf("夫")>=0||rel.indexOf("妻")>=0||rel.indexOf("配偶")>=0)return"夫妻";
  if(rel.indexOf("兒")>=0||rel.indexOf("女")>=0||rel.indexOf("子")>=0)return"兒女";
  if(rel.indexOf("父")>=0||rel.indexOf("母")>=0)return"父母";
@@ -2021,16 +2045,16 @@ function familyAnalysis(self,selfXi,selfJi,members){
  const richEl=elemArr[0][0],poorEl=elemArr[elemArr.length-1][0];
  const avg=members.length?Math.round(totalScore/members.length):0;
  const strengths=[];const weaknesses=[];
- if(goodRel.length)strengths.push(`與 ${[...new Set(goodRel)].join("、")} 之間生肖六合或五行相生，是家中和諧凝聚的核心力量。`);
- strengths.push(`家庭五行以「${richEl}」最為充沛，宜善用其特質——${WX_ADVICE[richEl].split("。")[0]}。`);
- if(avg>=78)strengths.push("整體合盤分數偏高，家庭氣場融洽、向心力強，是彼此的福地。");
+ if(goodRel.length)strengths.push(`與 ${[...new Set(goodRel)].join("、")} 之間生肖六合或五行相生，是彼此和諧互助、凝聚向心的核心力量。`);
+ strengths.push(`整體五行以「${richEl}」最為充沛，宜善用其特質——${WX_ADVICE[richEl].split("。")[0]}。`);
+ if(avg>=78)strengths.push("整體合盤分數偏高，眾人氣場融洽、向心力強，彼此互為助力。");
  if(badRel.length)weaknesses.push(`與 ${[...new Set(badRel)].join("、")} 生肖有沖害，易因個性差異起摩擦，需要更多耐心與溝通。`);
- weaknesses.push(`家庭五行較缺「${poorEl}」，整體在此面向能量偏弱——${WX_ADVICE[poorEl].split("。")[1]||WX_ADVICE[poorEl].split("。")[0]}。`);
- if(avg<65)weaknesses.push("部分成員合盤分數偏低，相處上需要更主動的包容與調適。");
- const advice=`整體而言，這個家庭的核心優勢在於「${richEl}」氣的充盈與成員間的相生緣分；`
-  +`建議日常多安排${poorEl==="木"?"親近自然綠意、共同學習成長":poorEl==="火"?"溫暖的相聚、戶外活動與鼓勵讚美":poorEl==="土"?"穩定的家庭儀式、共食與信任累積":poorEl==="金"?"明確的分工與原則、共同的目標規劃":"開放的溝通、旅行與情感交流"}的活動，以補「${poorEl}」之不足。`
-  +(badRel.length?`對於生肖相沖的成員，避免在情緒高張時硬碰硬，可借由第三位「六合」成員居中緩衝；`:``)
-  +`彼此以喜用神相補、以包容化沖剋，這個家庭便能五行流通、福氣綿長。`;
+ weaknesses.push(`整體五行較缺「${poorEl}」，在此面向能量偏弱——${WX_ADVICE[poorEl].split("。")[1]||WX_ADVICE[poorEl].split("。")[0]}。`);
+ if(avg<65)weaknesses.push("部分對象合盤分數偏低，相處或合作上需要更主動的包容與調適。");
+ const advice=`整體而言，這個圈子的核心優勢在於「${richEl}」氣的充盈與彼此間的相生緣分；`
+  +`建議平日多借重${poorEl==="木"?"成長學習、開拓創新":poorEl==="火"?"熱情激勵、主動表達與肯定":poorEl==="土"?"穩定的制度、信任累積與務實落地":poorEl==="金"?"明確的分工與原則、共同的目標規劃":"開放的溝通、彈性與情感交流"}之力，以補「${poorEl}」之不足。`
+  +(badRel.length?`對於生肖相沖的對象，避免在情緒高張時硬碰硬，可借由第三位「六合」之人居中緩衝；`:``)
+  +`彼此以喜用神相補、以包容化沖剋，這個圈子便能五行流通、合作順遂、福氣綿長。`;
  out.summary={avg,richEl,poorEl,strengths,weaknesses,advice};
  return out;
 }
@@ -2254,7 +2278,7 @@ function addFamMember(){
   div.className="fammember";
   div.innerHTML=`
     <div class="field"><label>關係</label>
-      <select class="f-rel"><option>夫妻</option><option>兒女</option><option>父母</option><option>兄弟姊妹</option><option>其他</option></select></div>
+      <select class="f-rel"><optgroup label="家庭"><option>夫妻</option><option>兒女</option><option>父母</option><option>兄弟姊妹</option></optgroup><optgroup label="職場・生意"><option>職場長官</option><option>職場平輩</option><option>職場下屬</option><option>生意合夥人</option></optgroup><option>其他</option></select></div>
     <div class="field"><label>稱呼（選填）</label><input class="f-name" type="text" placeholder="如：太太"></div>
     <div class="field"><label>出生日期（國曆）</label><input class="f-date" type="date"></div>
     <div class="field"><label>時間（選填）</label><input class="f-time" type="time"></div>
@@ -2514,12 +2538,12 @@ function familySection(fam){
     ${mb.relTip?`<div class="ftip">${mb.relTip}</div>`:""}
   </div>`).join("");
   const s=fam.summary;
-  return `<div class="sec-title"><span class="cn">家庭成員交叉分析</span><span class="en">Family Synastry</span></div>
+  return `<div class="sec-title"><span class="cn">人際交叉分析</span><span class="en">Relationship Synastry</span></div>
   <div class="famgrid">${cards}</div>
   <div class="famsum">
-    <h4>◆ 家庭整體合盤 · 平均 ${s.avg} 分</h4>
+    <h4>◆ 整體合盤 · 平均 ${s.avg} 分</h4>
     <div class="frow">
-      <div class="fcol"><h5>家庭優勢</h5><p>${s.strengths.join("<br>")}</p></div>
+      <div class="fcol"><h5>整體優勢</h5><p>${s.strengths.join("<br>")}</p></div>
       <div class="fcol"><h5>潛在課題</h5><p>${s.weaknesses.join("<br>")}</p></div>
     </div>
     <div class="fadvice"><b style="color:var(--jade)">整體建議：</b>${s.advice}</div>
@@ -3730,9 +3754,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     const fs=fam.summary;
     famPages=fam.members.map((mb,idx)=>{
       const overview=(idx===0&&fs)?`
-        <div class="rp-sec">家庭整體合盤 · 平均 ${fs.avg} 分</div>
+        <div class="rp-sec">整體合盤 · 平均 ${fs.avg} 分</div>
         <div class="rp-fsum">
-          <div class="ft">家庭優勢</div>
+          <div class="ft">整體優勢</div>
           <div class="fr">${fs.strengths.join("<br>")}</div>
           <div class="ft" style="margin-top:8px">潛在課題</div>
           <div class="fr">${fs.weaknesses.join("<br>")}</div>
@@ -3740,7 +3764,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         </div>`:"";
       const bullets=mb.bullets.map(b=>`<li>${b}</li>`).join("");
       return `<div class="rp-page">
-        <div class="rp-head2">人生實用說明書系統 · 家庭合盤交叉分析　—　命主 ${name} 與 ${mb.rel}${mb.name?`（${mb.name}）`:""}</div>
+        <div class="rp-head2">人生實用說明書系統 · 人際合盤交叉分析　—　命主 ${name} 與 ${mb.rel}${mb.name?`（${mb.name}）`:""}</div>
         <div class="rp-id">
           <span>命主 <b>${name} · ${gender}</b></span>
           <span>對象 <b>${mb.rel}${mb.name?` · ${mb.name}`:""}</b></span>
@@ -3755,7 +3779,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         <div class="rp-sec">相處心法</div>
         <div class="rp-syn">${mb.relAdvice}</div>
         <div class="rp-row" style="color:#8a6a14"><b>◆ 命理提點：</b>${mb.relTip}</div>
-        <div class="rp-foot">本頁為命主與「${mb.rel}${mb.name?`・${mb.name}`:""}」之八字合盤交叉分析，依生肖六合三合沖害、五行日主生剋、十神定位與喜用神互補綜合演算而成。親緣吉凶皆為趨勢、貴在用心經營。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+        <div class="rp-foot">本頁為命主與「${mb.rel}${mb.name?`・${mb.name}`:""}」之八字合盤交叉分析，依生肖六合三合沖害、五行日主生剋、十神定位與喜用神互補綜合演算而成。緣分吉凶皆為趨勢、貴在用心經營。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
       </div>`;
     }).join("");
   }
