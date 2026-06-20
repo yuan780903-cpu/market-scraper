@@ -948,6 +948,17 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .pwform button:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.24)}
 .paywall .lcmsg{min-height:20px;font-size:.88rem;margin-top:6px}
 .paywall .lcmsg.err{color:#c2576f}.paywall .lcmsg.ok{color:#2f9b5e;font-weight:700}
+.paywall .pwprice del{color:var(--ink-faint);font-size:1.05rem;font-weight:600;margin-right:8px;text-decoration-thickness:1.5px}
+.paywall .pwprice .pwfinal{color:#c2576f}
+.paywall .discwrap{margin:10px auto 2px;max-width:380px}
+.paywall .discrow{display:flex;gap:8px;justify-content:center}
+.paywall .discinput{flex:1;min-width:0;padding:10px 13px;border:1px solid var(--line);border-radius:11px;
+  font-size:.95rem;letter-spacing:1px;background:#fff;color:#3a2a10;text-transform:uppercase}
+.paywall .discbtn{flex:0 0 auto;padding:10px 18px;border:none;border-radius:11px;cursor:pointer;
+  font-size:.92rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#7a8aa0,#4a5a72);transition:.18s}
+.paywall .discbtn:hover{transform:translateY(-1px)}
+.paywall .discmsg{min-height:18px;font-size:.82rem;margin-top:6px;line-height:1.6}
+.paywall .discmsg.err{color:#c2576f}.paywall .discmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
 .supermask{position:fixed;inset:0;z-index:9999;background:rgba(20,12,30,.62);backdrop-filter:blur(3px);
   display:flex;align-items:center;justify-content:center;padding:20px;animation:supfade .18s ease}
@@ -2900,6 +2911,35 @@ async function lcKey(p){
   return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
 }
 async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
+/* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay／綠界付款解鎖 ===== */
+let __disc=null;   // {code,amount,reuse,base,final}
+function updatePriceUI(){
+  const el=document.getElementById('pwPriceLine');if(!el)return;
+  if(__disc){
+    el.innerHTML='<em>折扣後應付</em> <del>'+__disc.base+' 元</del><span class="pwfinal">'+__disc.final+' 元</span> <span>／ 單份完整報告</span>';
+  }else{
+    el.innerHTML='<em>人生航路結緣價</em> '+LC_PRICE+' <span>／ 單份完整報告</span>';
+  }
+}
+async function discApply(){
+  const inp=document.getElementById('discInput'),msg=document.getElementById('discMsg');
+  const code=(inp?inp.value:'').trim().toUpperCase();
+  if(!code){__disc=null;updatePriceUI();if(msg){msg.textContent='';msg.className='discmsg';}return;}
+  if(msg){msg.textContent='查詢中…';msg.className='discmsg';}
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/discCheck?code='+encodeURIComponent(code),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok){
+      __disc={code,amount:j.amount,reuse:j.reuse,base:j.base,final:j.final};
+      updatePriceUI();
+      if(msg){msg.textContent='✓ 已套用折扣碼，折抵 '+j.amount+' 元，應付 '+j.final+' 元。';msg.className='discmsg ok';}
+    }else{
+      __disc=null;updatePriceUI();
+      const why=({used:'此折扣碼已使用過',invalid:'折扣碼不存在或已失效'})[j&&j.reason]||'折扣碼無效';
+      if(msg){msg.textContent='✗ '+why+'。';msg.className='discmsg err';}
+    }
+  }catch(e){__disc=null;updatePriceUI();if(msg){msg.textContent='✗ 無法連線，請稍後再試。';msg.className='discmsg err';}}
+}
 async function lcRefresh(){
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
   const unlocked=await lcIsUnlocked(window.__LC.payload);
@@ -2989,6 +3029,7 @@ async function lpMaybeShowButton(){
   const info=await lpReady();if(!info)return;
   const w=document.getElementById('lpBtnWrap');
   if(w)w.style.display='';
+  const dw=document.getElementById('discWrap');if(dw)dw.style.display='';
   if(info.mode==='sandbox'){
     const sec=w&&w.querySelector('.lpsec');
     if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為 LINE Pay 沙盒測試模式，非真實扣款）</div>');}
@@ -3003,8 +3044,9 @@ async function lcStartLinePay(){
   try{localStorage.setItem('zw_lp_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往 LINE Pay 付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname;
+  const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
   try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/linepay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret),{cache:'no-store'});
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/linepay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.ok&&j.paymentUrl){location.href=j.paymentUrl;}
     else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請改用萬用碼或稍後再試。';msg.className='lcmsg err';}
@@ -3060,6 +3102,7 @@ async function ecMaybeShowButton(){
   const info=await ecReady();if(!info)return;
   const w=document.getElementById('ecBtnWrap');
   if(w)w.style.display='';
+  const dw=document.getElementById('discWrap');if(dw)dw.style.display='';
   if(info.mode==='stage'){
     const sec=w&&w.querySelector('.lpsec');
     if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為綠界測試模式，請用測試卡號，非真實扣款）</div>');}
@@ -3074,7 +3117,8 @@ async function lcStartECPay(){
   try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname;
-  location.href=LC_API.replace(/\/+$/,'')+'/ecpay/create?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret);
+  const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
+  location.href=LC_API.replace(/\/+$/,'')+'/ecpay/create?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ;
 }
 async function ecHandleReturn(){
   const p=new URLSearchParams(location.search);
@@ -3523,7 +3567,14 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div class="pworig">原價 <s>${LC_ORIG}</s></div>
-    <div class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="discWrap" class="discwrap" style="display:none">
+      <div class="discrow">
+        <input id="discInput" class="discinput" placeholder="折扣碼（選填）" maxlength="16" autocomplete="off" spellcheck="false">
+        <button id="discBtn" class="discbtn" onclick="discApply()">套用</button>
+      </div>
+      <div id="discMsg" class="discmsg"></div>
+    </div>
     <div id="lpBtnWrap" class="lpwrap" style="display:none">
       <button id="lpBtn" class="lpbtn" onclick="lcStartLinePay()"><span class="lpmark">LINE</span>Pay 付款・付完自動解鎖</button>
       <div class="lpsec">透過 LINE Pay 安全付款，完成後立即自動開啟完整報告，免輸入任何代碼。</div>
