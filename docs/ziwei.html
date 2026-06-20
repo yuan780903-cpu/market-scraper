@@ -3038,6 +3038,10 @@ function zwPalace(b){
     <div class="zwsec">這一宮看什麼</div><p>${PALACE_DESC[pname]||""}</p>
     <div class="zwsec">坐守星曜</div>${starHTML}
     <div class="zwsec">輔曜・雜曜</div><p>${auxTxt}</p>
+    <div class="zwsec">大限・小限 是什麼（白話）</div>
+    <p><b style="color:var(--purple-glow)">大限</b>就是<b>「十年大運」</b>：人生每十年會輪流走進一個宮位，這十年的整體基調、機運與功課，就由所走到那一宮的星曜來主導。本宮的大限是 <b>${lim.start}–${lim.end} 歲</b>——代表您在這個年齡區間，人生重心會落在「${pname}」所主管的領域。<br>
+    <b style="color:var(--gold)">小限</b>則是<b>「逐年細運」</b>：每過一歲就輪值一個宮位，用來看「<b>那一年</b>」的吉凶起伏，比大限更細。本宮輪到小限的虛歲有 <b>${xage}</b>；在這些年份，當年的運勢就要參看本宮的星性。<br>
+    <span style="color:var(--ink-faint)">一句話記：<b>大限管十年的大方向、小限管單一年的細節</b>，大限＋小限＋流年三者合看，吉凶最準。</span></p>
     <div class="zwsec">白話總評</div><p>${summary}</p>`;
   zwOpenModal("紫微斗數 · 十二宮",pname.endsWith("宮")?pname:pname+" 宮",gz,body);
 }
@@ -3387,6 +3391,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <span><b class="ax">輔曜</b> 六吉六煞·祿馬·桃花雜曜</span>
     <span><span class="sihua lu">祿</span><span class="sihua quan">權</span><span class="sihua ke">科</span><span class="sihua ji">忌</span> 生年四化</span>
     <span>宮格下排：<b>長生·博士·將前·歲前</b> 四套十二神 → 小限歲數 → 宮名干支 → 大限</span>
+    <span><b>大限</b>＝十年大運（每宮主十年大方向）；<b>小限</b>＝逐年細運（標示輪到該宮的虛歲，看單一年）。點宮位看完整白話</span>
     <span>中宮：命主／身主／斗君／五行局／生年八字／陰陽男女</span>
   </div>
 
