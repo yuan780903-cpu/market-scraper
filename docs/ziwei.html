@@ -501,7 +501,29 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .scoretotal .ring .num span{font-size:.72rem;color:var(--ink-faint);letter-spacing:2px;margin-top:4px}
 .scoretotal .grade{margin-top:16px;font-family:"Ma Shan Zheng",serif;font-size:2rem;color:var(--gold);letter-spacing:4px}
 .scoretotal .gtext{color:var(--ink-dim);font-size:.85rem;line-height:1.7;margin-top:8px}
+.scoretotal .prbadge{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:20px;background:var(--purple-soft,rgba(120,80,180,.12));border:1px solid var(--purple-glow);color:var(--purple-glow);font-weight:800;font-size:1.05rem}
+.scoretotal .prbadge small{font-weight:400;font-size:.66rem;color:var(--ink-faint);letter-spacing:0}
 .radarbox{background:var(--card2);border:1px solid var(--line-soft);border-radius:20px;padding:20px;text-align:center}
+/* 等距級制對照表 */
+.gradescale{margin-top:22px;background:var(--card2);border:1px solid var(--line-soft);border-radius:14px;padding:16px 18px}
+.gradescale .gst{font-size:.92rem;color:var(--ink-dim);margin-bottom:10px;letter-spacing:1px}
+.gradescale .gst b{color:var(--gold-deep)}
+.gstab{width:100%;border-collapse:collapse;font-size:.8rem}
+.gstab th{text-align:left;color:var(--ink-faint);font-weight:600;padding:6px 10px;border-bottom:2px solid var(--line-soft);white-space:nowrap}
+.gstab td{padding:7px 10px;border-bottom:1px solid var(--line-soft);color:var(--ink-dim);line-height:1.5}
+.gstab td:first-child{color:var(--gold-deep);font-weight:700;white-space:nowrap}
+.gstab td:nth-child(2),.gstab td:nth-child(3){white-space:nowrap;font-variant-numeric:tabular-nums}
+.gstab tr.cur td{background:rgba(180,140,60,.13);color:var(--ink-dim);font-weight:600}
+.gstab tr.cur td:first-child{color:var(--gold-bright)}
+.gsnote{font-size:.72rem;color:var(--ink-faint);margin-top:9px;line-height:1.6}
+.dimnote{font-size:.78rem;color:var(--ink-dim);margin-top:14px;line-height:1.7;padding:10px 14px;background:var(--card2);border:1px dashed var(--line-soft);border-radius:11px}
+.dimnote b.up{color:var(--jade)} .dimnote b.fix{color:var(--rose)}
+/* 維度改善建議 */
+.dadv{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line-soft);font-size:.74rem;line-height:1.6}
+.dadv-tag{display:inline-block;font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:12px;margin-bottom:5px}
+.dadv.up .dadv-tag{color:var(--jade);background:rgba(40,150,110,.12);border:1px solid var(--jade)}
+.dadv.fix .dadv-tag{color:var(--rose);background:rgba(190,70,90,.1);border:1px solid var(--rose)}
+.dadv-t{display:block;color:var(--ink-dim)}
 .dims{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}
 .dimcard{background:var(--card2);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
 .dimcard .dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
@@ -1822,6 +1844,39 @@ function palaceMain(zw,name){
  const ms=(zw.stars[b]||[]).filter(s=>s.type==="main").map(s=>s.name);
  return ms.length?ms.join("、"):"空宮";
 }
+/* 分數→百分等級 PR（以全體命盤約略常態分佈 μ=70、σ=12 推估，邏輯斯近似常態 CDF）
+   PR=78 即「贏過約 78% 的命盤、屬前 22%」 */
+function scoreToPR(v){
+ const z=(v-70)/12, cdf=1/(1+Math.exp(-1.702*z));
+ return Math.max(1,Math.min(99,Math.round(cdf*100)));
+}
+/* 等距級制：每 10 分一級（90-100 / 80-89 / 70-79 / 60-69 / 50-59 / <50） */
+const GRADE_SCALE=[
+ {min:90,g:"上上",tier:"S",pr:"95–99",t:"天賦異稟，命格清貴，宜把握先天優勢、積極進取。"},
+ {min:80,g:"上",  tier:"A",pr:"80–94",t:"格局俊秀，諸事得宜，順勢而為自能成就一番事業。"},
+ {min:70,g:"中上",tier:"B",pr:"50–79",t:"根基良好，吉多於憂，用心經營便能步步高昇。"},
+ {min:60,g:"中",  tier:"C",pr:"20–49",t:"命格平穩中和，腳踏實地、循序漸進最為得力。"},
+ {min:50,g:"中平",tier:"D",pr:"6–19", t:"起伏之中見韌性，宜補強弱項、廣結善緣以開運。"},
+ {min:0, g:"平",  tier:"E",pr:"1–5",  t:"先天稍有挑戰，然「命由己造」，後天努力與修為可大幅扭轉。"}
+];
+function gradeOf(total){return GRADE_SCALE.find(x=>total>=x.min)||GRADE_SCALE[GRADE_SCALE.length-1];}
+/* 六大維度（七項）：強項如何錦上添花(up)、弱項如何轉弱為強(fix) */
+const DIM_ADVICE={
+ 事業:{up:"事業星曜得力，是天生強項。欲更上層樓：主動爭取主導性專案、建立個人專業品牌，趁大限走旺時果斷擴張，把先天格局轉成實際職位與名望。",
+       fix:"事業根基較需經營。轉強之道：選與喜用神五行相合的行業、跟對貴人、深耕一技之長勝過頻繁轉換；逢化祿化權流年再衝刺，可補先天不足。"},
+ 財運:{up:"財路順暢。更進一步：將正財分流為穩健投資與被動收入，趁旺運置產或佈局長線資產，讓錢替您工作，而非只靠勞力。",
+       fix:"財運起伏較大。改善關鍵：先開源節流、建立記帳與緊急備用金，避免投機與替人作保；偏財宜小不宜大，靠專業價值累積正財最穩妥。"},
+ 感情:{up:"感情和諧，是您的福分。經營得更好：主動表達欣賞、共創回憶，把好緣分升級為長久承諾與共同目標，莫因順遂而疏於用心。",
+       fix:"感情較有功課。轉好方法：先修身、提升溝通與情緒管理，擇偶宜找生肖六合三合、五行能補己之人；遇沖剋多包容、給彼此空間，緣分需耐心灌溉。"},
+ 人際:{up:"人脈是您的資產。放大優勢：從廣結善緣進一步深耕關鍵人脈、建立互惠網絡，主動為他人創造價值，貴人自然環繞。",
+       fix:"人際較須用心。改善之道：真誠待人、守信重諾，從小圈子穩固經營勝過盲目擴張；學會傾聽與適度付出，質量重於數量，口碑會慢慢累積。"},
+ 健康:{up:"體質是本錢。保養更好：維持規律作息與運動、定期健檢防患未然，順應四季調養，把好底子長久守住。",
+       fix:"健康須多留意。調理方向：依喜用神的顏色、方位、作息調養，補強偏弱五行對應的臟腑；作息規律、情緒平穩，預防勝於治療。"},
+ 智慧:{up:"思辨力強。發揮更好：持續學習與輸出、把聰明用在對的領域，將天賦轉為專業深度與決策智慧，避免聰明反被聰明誤。",
+       fix:"智慧潛能待開發。提升方法：建立閱讀與思考習慣、向高人請教，把知識化為實作；昌曲、天機流年是進修考試的好時機，勤學可大幅補強。"},
+ 福德:{up:"內心安定有福報。增福之道：保持感恩與布施、培養興趣與信仰寄託，福報愈分享愈深厚，晚年尤其受用。",
+       fix:"福德較須涵養。開運方法：修心養性、減少焦慮與比較、多行善積德、培養正向嗜好；心安則命安，內在平靜是改運的根本。"}
+};
 function calcScores(zw,bz,wx,adv){
  const vals=Object.values(wx);const mean=vals.reduce((a,b)=>a+b,0)/5;
  const variance=vals.reduce((a,b)=>a+(b-mean)*(b-mean),0)/5;
@@ -1846,13 +1901,8 @@ function calcScores(zw,bz,wx,adv){
  const wt={事業:1.2,財運:1.2,感情:1.0,人際:0.9,健康:1.1,智慧:1.0,福德:0.9};
  let sw=0,tw=0;dims.forEach(x=>{sw+=x.v*wt[x.k];tw+=wt[x.k];});
  const total=Math.round(sw/tw);
- const grade=total>=92?["上上","天賦異稟，命格清貴，宜把握先天優勢、積極進取。"]:
-  total>=85?["上","格局俊秀，諸事得宜，順勢而為自能成就一番事業。"]:
-  total>=77?["中上","根基良好，吉多於憂，用心經營便能步步高昇。"]:
-  total>=68?["中","命格平穩中和，腳踏實地、循序漸進最為得力。"]:
-  total>=60?["中平","起伏之中見韌性，宜補強弱項、廣結善緣以開運。"]:
-  ["平","先天稍有挑戰，然「命由己造」，後天努力與修為可大幅扭轉。"];
- return {dims,total,balance,grade:grade[0],gradeText:grade[1]};
+ const go=gradeOf(total);
+ return {dims,total,balance,grade:go.g,gradeTier:go.tier,gradePR:go.pr,gradeText:go.t,pr:scoreToPR(total)};
 }
 
 /* ================= 家庭成員交叉分析 ================= */
@@ -2393,10 +2443,23 @@ function nameRing(total){
 }
 function scoreSection(scores){
   const radar=radarSVG(scores.dims);
-  const dimcards=scores.dims.map(dm=>`<div class="dimcard">
-    <div class="dh"><span class="dn">${dm.k}</span><span class="dv">${dm.v}</span></div>
+  const dimcards=scores.dims.map(dm=>{
+    const ad=DIM_ADVICE[dm.k]||{};
+    const strong=dm.v>=77;
+    const tag=strong?'<span class="dadv-tag up">強項 · 錦上添花</span>':'<span class="dadv-tag fix">弱項 · 轉弱為強</span>';
+    const advtxt=strong?(ad.up||""):(ad.fix||"");
+    const advhtml=advtxt?`<div class="dadv ${strong?'up':'fix'}">${tag}<span class="dadv-t">${advtxt}</span></div>`:"";
+    return `<div class="dimcard">
+    <div class="dh"><span class="dn">${dm.k}</span><span class="dv">${dm.v}<small>　PR ${scoreToPR(dm.v)}</small></span></div>
     <div class="dbar"><i style="width:${dm.v}%"></i></div>
-    <div class="dd">${dm.pal}宮坐 <b style="color:var(--gold)">${dm.star}</b> · ${dm.band}</div></div>`).join("");
+    <div class="dd">${dm.pal}宮坐 <b style="color:var(--gold)">${dm.star}</b> · ${dm.band}</div>
+    ${advhtml}</div>`;}).join("");
+  const userTier=gradeOf(scores.total);
+  const scaleRows=GRADE_SCALE.map(s=>{
+    const hi=s.min>=90?100:(s.min===0?49:s.min+9), lo=s.min===0?40:s.min;
+    const cur=s.tier===userTier.tier;
+    return `<tr class="${cur?'cur':''}"><td><b>${s.tier}</b> ${s.g}格</td><td>${lo}–${hi}</td><td>PR ${s.pr}</td><td>${s.t}</td></tr>`;
+  }).join("");
   return `<div class="sec-title"><span class="cn">命盤綜合評分</span><span class="en">Destiny Score</span></div>
   <div class="scorereveal" id="scoreReveal">
     <button class="revealbtn" onclick="revealScore()"><span class="ic">卜</span>看我的命盤分數</button>
@@ -2406,12 +2469,19 @@ function scoreSection(scores){
     <div class="scorewrap">
       <div class="scoretotal">
         <div class="ring">${scoreRing(scores.total)}<div class="num"><b>${scores.total}</b><span>總分 / 100</span></div></div>
-        <div class="grade">${scores.grade}格</div>
+        <div class="grade">${scores.gradeTier} · ${scores.grade}格</div>
+        <div class="prbadge">PR ${scores.pr}　<small>百分等級 · 約勝過全體命盤 ${scores.pr}%（屬前 ${100-scores.pr}%）</small></div>
         <div class="gtext">${scores.gradeText}</div>
       </div>
       <div class="radarbox">${radar}</div>
     </div>
+    <div class="gradescale">
+      <div class="gst">等距級制對照（每 10 分一級）・你的位置：<b>${userTier.tier} ${userTier.g}格・PR ${scores.pr}</b></div>
+      <table class="gstab"><thead><tr><th>等級</th><th>分數區間</th><th>百分等級</th><th>說明</th></tr></thead><tbody>${scaleRows}</tbody></table>
+      <div class="gsnote">※ PR（百分等級）以全體命盤約略常態分佈推估，PR ${scores.pr} 代表分數高於約 ${scores.pr}% 的人。命格定先天起點，後天努力可移動 PR。</div>
+    </div>
     <div class="dims">${dimcards}</div>
+    <div class="dimnote">每項維度標示分數與 PR：<b class="up">強項（PR 高）</b> 給「錦上添花」更上層樓之法；<b class="fix">弱項（PR 低）</b> 給「轉弱為強」改善之道——命由己造，弱項正是開運著力處。</div>
   </div>`;
 }
 function revealScore(){
@@ -3651,12 +3721,16 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </div>
     <div class="rp-sec">紫微命盤 · 十二宮</div>
     <div class="rp-chart">${ppCells}${ppCenter}</div>
-    <div class="rp-sec">命盤總評 · ${scores.grade}格（${scores.total}分）</div>
+    <div class="rp-sec">命盤總評 · ${scores.gradeTier} ${scores.grade}格（${scores.total}分・PR ${scores.pr}）</div>
     <div class="rp-score">
-      <div class="rp-grade"><div class="g">${scores.grade}</div><div class="t">${scores.total}</div><div style="font-size:8px;color:#888">綜合分數</div></div>
+      <div class="rp-grade"><div class="g">${scores.gradeTier}・${scores.grade}</div><div class="t">${scores.total}</div><div style="font-size:8px;color:#888">綜合分數 · PR ${scores.pr}</div></div>
       <div class="rp-bars">${ppBars}</div>
     </div>
     <div class="rp-row" style="color:#555">${scores.gradeText}</div>
+    <div class="rp-row" style="color:#777;font-size:9px">等距級制（每10分一級）：S上上90+ · A上80+ · B中上70+ · C中60+ · D中平50+ · E平&lt;50；PR ${scores.pr}＝約勝過全體 ${scores.pr}% 命盤（屬前 ${100-scores.pr}%）。</div>
+    ${(()=>{const ds=[...scores.dims].sort((a,b)=>b.v-a.v);const top=ds[0],bot=ds[ds.length-1];const ta=(DIM_ADVICE[top.k]||{}).up||"",ba=(DIM_ADVICE[bot.k]||{}).fix||"";return `<div class="rp-sec">強弱項提點 · 好還要更好，弱也能轉強</div>
+    <div class="rp-row"><b style="color:#2a8a5e">最強項 ${top.k}（${top.v}分・PR ${scoreToPR(top.v)}）錦上添花</b>：${ta}</div>
+    <div class="rp-row"><b style="color:#bf4660">最弱項 ${bot.k}（${bot.v}分・PR ${scoreToPR(bot.v)}）轉弱為強</b>：${ba}</div>`;})()}
   </div>
   <div class="rp-page">
     <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（續・第二頁）</div>
