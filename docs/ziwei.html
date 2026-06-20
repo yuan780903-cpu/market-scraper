@@ -1169,7 +1169,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="自然之聲背景音樂・點按選擇">
     <span class="micon">♪</span><span class="mtxt">背景音樂</span>
   </button>
-  <div id="musicHint" class="musichint">輕觸畫面任一處<br>開啟背景自然音 ♪</div>
+  <div id="musicHint" class="musichint">輕觸畫面任一處<br>開啟冥想背景音 ♪</div>
 </div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
@@ -3995,8 +3995,8 @@ function updateMusicUI(){
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
   // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
   const hint=document.getElementById('musicHint');
-  let want='1',choice='rain';
-  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'rain';}catch(e){}
+  let want='1',choice='bowls';
+  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'bowls';}catch(e){}
   if(want!=='0'){
     const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
     const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
