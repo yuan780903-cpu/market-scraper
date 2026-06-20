@@ -276,6 +276,11 @@ header .meta b{color:var(--gold);font-weight:500}
 .star.aux{color:var(--ink-dim);font-size:.74rem;font-weight:400}
 .sihua{font-size:.56rem;color:#fff;padding:0 3px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700}
 .sihua.lu{background:#2f9b73} .sihua.quan{background:#d98a2a} .sihua.ke{background:#2f72c4} .sihua.ji{background:#c2576f}
+.brq{font-size:.54rem;padding:0 2px;border-radius:3px;margin-left:1px;vertical-align:super;font-weight:700;line-height:1.4}
+.brq.b-a{background:#c2576f;color:#fff} .brq.b-b{background:#d98a2a;color:#fff} .brq.b-c{background:#e9e2cf;color:#7a6a44} .brq.b-d{background:#9aa3ad;color:#fff}
+.brq2{display:inline-block;font-size:.7rem;padding:1px 6px;border-radius:5px;font-weight:700;margin:0 4px;vertical-align:middle}
+.brq2.b-a{background:#c2576f;color:#fff} .brq2.b-b{background:#d98a2a;color:#fff} .brq2.b-c{background:#e9e2cf;color:#7a6a44} .brq2.b-d{background:#9aa3ad;color:#fff}
+.brw{font-size:.78rem;color:var(--ink-faint);margin-left:2px}
 .cell .foot{margin-top:6px;border-top:1px solid var(--line-soft);padding-top:5px}
 .cell .gods{display:flex;gap:2px;margin-bottom:3px}
 .cell .gods span{flex:1;text-align:center;font-size:.56rem;color:var(--ink-faint);letter-spacing:0;white-space:nowrap;
@@ -1506,6 +1511,8 @@ function calcZiwei(lunar,hour,yearGan,yearZhi,gender){
   const huaMap={};
   if(sh){huaMap[sh[0]]="lu";huaMap[sh[1]]="quan";huaMap[sh[2]]="ke";huaMap[sh[3]]="ji";}
   for(const b in stars)stars[b].forEach(s=>{if(huaMap[s.name])s.hua=huaMap[s.name];});
+  // ===== 廟旺利陷（星耀亮度）=====
+  for(const b in stars){const bi=+b;stars[b].forEach(s=>{const arr=BRIGHT[s.name];if(arr&&arr[bi])s.bright=arr[bi];});}
   // ===== 宮名分配 =====
   const palaceName={};
   for(let b=0;b<12;b++){const idx=((ming-b)%12+12)%12;palaceName[b]=PALACE_NAMES[idx];}
@@ -1543,6 +1550,35 @@ function calcZiwei(lunar,hour,yearGan,yearZhi,gender){
     boShi,changSheng,jiangPre,suiPre,xiaoXian,mingZhu,shenZhu,douJun,
     yinYang:(yangYear?"陽":"陰")+(male?"男":"女")};
 }
+
+/* ===== 星曜廟旺利陷（亮度）表 =====
+   資料來源：開源紫微函式庫 iztro（MIT 授權）之 STARS_INFO.brightness，
+   原始陣列以「寅」為首，此處已轉為本系統地支序（子丑寅卯辰巳午未申酉戌亥）。
+   等級：廟＞旺＞得＞利＞平＞不＞陷；空字串＝該宮不安此星（如擎羊不入四馬地）。 */
+const BRIGHT={
+ 紫微:["平","廟","旺","旺","得","旺","廟","廟","旺","旺","得","旺"],
+ 天機:["廟","陷","得","旺","利","平","廟","陷","得","旺","利","平"],
+ 太陽:["陷","不","旺","廟","旺","旺","旺","得","得","陷","不","陷"],
+ 武曲:["旺","廟","得","利","廟","平","旺","廟","得","利","廟","平"],
+ 天同:["旺","不","利","平","平","廟","陷","不","旺","平","平","廟"],
+ 廉貞:["平","利","廟","平","利","陷","平","利","廟","平","利","陷"],
+ 天府:["廟","廟","廟","得","廟","得","旺","廟","得","旺","廟","得"],
+ 太陰:["廟","廟","旺","陷","陷","陷","不","不","利","不","旺","廟"],
+ 貪狼:["旺","廟","平","利","廟","陷","旺","廟","平","利","廟","陷"],
+ 巨門:["旺","不","廟","廟","陷","旺","旺","不","廟","廟","陷","旺"],
+ 天相:["廟","廟","廟","陷","得","得","廟","得","廟","陷","得","得"],
+ 天梁:["廟","旺","廟","廟","廟","陷","廟","旺","陷","得","廟","陷"],
+ 七殺:["旺","廟","廟","旺","廟","平","旺","廟","廟","廟","廟","平"],
+ 破軍:["廟","旺","得","陷","旺","平","廟","旺","得","陷","旺","平"],
+ 文昌:["得","廟","陷","利","得","廟","陷","利","得","廟","陷","利"],
+ 文曲:["得","廟","平","旺","得","廟","陷","旺","得","廟","陷","旺"],
+ 火星:["陷","得","廟","利","陷","得","廟","利","陷","得","廟","利"],
+ 鈴星:["陷","得","廟","利","陷","得","廟","利","陷","得","廟","利"],
+ 擎羊:["陷","廟","","陷","廟","","陷","廟","","陷","廟",""],
+ 陀羅:["","廟","陷","","廟","陷","","廟","陷","","廟","陷"]
+};
+const BRIGHT_TIER={廟:"a",旺:"a",得:"b",利:"b",平:"c",不:"d",陷:"d"}; // a強 b佳 c平 d弱
+const BRIGHT_WORD={廟:"入廟・最得力",旺:"旺地・力強",得:"得地・有力",利:"得利・平順",平:"平和・中庸",不:"不得地・力弱",陷:"落陷・待勉力"};
 
 /* ================= 解析文字 ================= */
 const STAR_DESC={
@@ -3023,10 +3059,12 @@ function zwPalace(b){
   let starHTML;
   if(mainStars.length){
     starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
-      return d?`<div class="zwstar"><b>${s.name}</b><span class="zwst">${d.t}</span>${d.d}<div class="zwtags">${d.tags.map(t=>`<span class="zwtag2">${t}</span>`).join("")}</div></div>`
-              :`<div class="zwstar"><b>${s.name}</b></div>`;}).join("");
+      const br=s.bright?`<span class="brq2 b-${BRIGHT_TIER[s.bright]||'c'}">${s.bright}</span><span class="brw">${BRIGHT_WORD[s.bright]||""}</span>`:"";
+      return d?`<div class="zwstar"><b>${s.name}</b>${br}<span class="zwst">${d.t}</span>${d.d}<div class="zwtags">${d.tags.map(t=>`<span class="zwtag2">${t}</span>`).join("")}</div></div>`
+              :`<div class="zwstar"><b>${s.name}</b>${br}</div>`;}).join("");
   }else{const d=STAR_DESC["空宮"];starHTML=`<div class="zwstar"><b>本宮無主星（空宮）</b><span class="zwst">${d.t}</span>${d.d}</div>`;}
-  const auxTxt=auxStars.length?auxStars.map(s=>s.name+(s.hua?`（化${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}）`:"")).join("、"):"無";
+  const auxTxt=auxStars.length?auxStars.map(s=>s.name+(s.bright?`(${s.bright})`:"")+(s.hua?`（化${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}）`:"")).join("、"):"無";
+  const hasBright=mainStars.some(s=>s.bright)||auxStars.some(s=>s.bright);
   let summary=`對 ${name} 而言，「${pname}」這一宮坐落在 ${gz}。`;
   if(isMing)summary+="此處正是您的命宮，是全盤核心，最能代表您的本性與一生格局走向。";
   if(isCurLim)summary+=`您目前的大限（${lim.start}–${lim.end} 歲）正行經此宮，這十年的人生重心、機運與課題，便以此宮星性為主軸。`;
@@ -3038,6 +3076,10 @@ function zwPalace(b){
     <div class="zwsec">這一宮看什麼</div><p>${PALACE_DESC[pname]||""}</p>
     <div class="zwsec">坐守星曜</div>${starHTML}
     <div class="zwsec">輔曜・雜曜</div><p>${auxTxt}</p>
+    ${hasBright?`<div class="zwsec">廟旺利陷 是什麼（白話）</div>
+    <p>每顆星坐進不同宮位，會有強弱之分，這就是<b>「廟旺利陷」</b>——好比同一個人，放對位置如魚得水，放錯位置處處受限。由強到弱共七級：<br>
+    <span class="brq2 b-a">廟</span><span class="brq2 b-a">旺</span> 力量最足，星性的優點充分發揮；<span class="brq2 b-b">得</span><span class="brq2 b-b">利</span> 表現良好、平順有力；<span class="brq2 b-c">平</span> 中庸持平；<span class="brq2 b-d">不</span><span class="brq2 b-d">陷</span> 較不得力，需多費心經營、或借助其他吉星扶持。<br>
+    <span style="color:var(--ink-faint)">同一顆星「入廟」與「落陷」，吉時更吉、凶時更須留意，看星先看亮度，是論盤的基本功。</span></p>`:""}
     <div class="zwsec">大限・小限 是什麼（白話）</div>
     <p><b style="color:var(--purple-glow)">大限</b>就是<b>「十年大運」</b>：人生每十年會輪流走進一個宮位，這十年的整體基調、機運與功課，就由所走到那一宮的星曜來主導。本宮的大限是 <b>${lim.start}–${lim.end} 歲</b>——代表您在這個年齡區間，人生重心會落在「${pname}」所主管的領域。<br>
     <b style="color:var(--gold)">小限</b>則是<b>「逐年細運」</b>：每過一歲就輪值一個宮位，用來看「<b>那一年</b>」的吉凶起伏，比大限更細。本宮輪到小限的虛歲有 <b>${xage}</b>；在這些年份，當年的運勢就要參看本宮的星性。<br>
@@ -3171,8 +3213,9 @@ function zwTrio(b,i){
   let starHTML;
   if(mainStars.length){
     starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
-      return d?`<div class="zwstar"><b>${s.name}</b><span class="zwst">${d.t}</span>${d.d}</div>`
-              :`<div class="zwstar"><b>${s.name}</b></div>`;}).join("");
+      const br=s.bright?`<span class="brq2 b-${BRIGHT_TIER[s.bright]||'c'}">${s.bright}</span><span class="brw">${BRIGHT_WORD[s.bright]||""}</span>`:"";
+      return d?`<div class="zwstar"><b>${s.name}</b>${br}<span class="zwst">${d.t}</span>${d.d}</div>`
+              :`<div class="zwstar"><b>${s.name}</b>${br}</div>`;}).join("");
   }else{const d=STAR_DESC["空宮"];starHTML=`<div class="zwstar"><b>本宮無主星（空宮）</b><span class="zwst">${d.t}</span>${d.d}</div>`;}
   const roleTxt={
     0:"這是您的<b>本命宮</b>，是三方四正的中心，代表您的本性與一生格局主軸。",
@@ -3239,7 +3282,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     const stars=(zw.stars[b]||[]).sort((a,b)=>(a.type==="main"?0:1)-(b.type==="main"?0:1));
     const starsHTML=stars.map(s=>{
       const hua=s.hua?`<span class="sihua ${s.hua}">${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}</span>`:"";
-      return `<span class="star ${s.type}">${s.name}${hua}</span>`;
+      const br=s.bright?`<span class="brq b-${BRIGHT_TIER[s.bright]||'c'}">${s.bright}</span>`:"";
+      return `<span class="star ${s.type}">${s.name}${br}${hua}</span>`;
     }).join("");
     const xage=(zw.xiaoXian[b]||[]).slice(0,7).join(" ");
     chartCells+=`<div class="cell tap ${isMing?'ming':''} ${isShen?'shen':''} ${isCurLim?'curlim':''}" style="grid-row:${r};grid-column:${c}" onclick="zwPalace(${b})">
@@ -3390,6 +3434,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <span><b class="cs">主星</b> 十四主星（紫微·天府兩系）</span>
     <span><b class="ax">輔曜</b> 六吉六煞·祿馬·桃花雜曜</span>
     <span><span class="sihua lu">祿</span><span class="sihua quan">權</span><span class="sihua ke">科</span><span class="sihua ji">忌</span> 生年四化</span>
+    <span><span class="brq b-a">廟</span><span class="brq b-b">得</span><span class="brq b-c">平</span><span class="brq b-d">陷</span> 星耀亮度（廟旺＞得利＞平＞不陷），星名右上標示</span>
     <span>宮格下排：<b>長生·博士·將前·歲前</b> 四套十二神 → 小限歲數 → 宮名干支 → 大限</span>
     <span><b>大限</b>＝十年大運（每宮主十年大方向）；<b>小限</b>＝逐年細運（標示輪到該宮的虛歲，看單一年）。點宮位看完整白話</span>
     <span>中宮：命主／身主／斗君／五行局／生年八字／陰陽男女</span>
