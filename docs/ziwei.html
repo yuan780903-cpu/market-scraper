@@ -381,6 +381,22 @@ header .meta b{color:var(--gold);font-weight:500}
 .gecard h4{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:3px;margin-bottom:10px}
 .gecard p{color:var(--ink-dim);font-size:.9rem;line-height:1.8;position:relative}
 
+/* 八字格局（月令取格） */
+.baziGewrap{margin-top:4px}
+.bgcard{background:linear-gradient(135deg,var(--pwash),var(--card2));border:1px solid var(--line-soft);
+  border-radius:16px;padding:22px 22px 18px;position:relative;overflow:hidden;cursor:pointer;transition:.18s}
+.bgcard:hover{border-color:var(--gold);box-shadow:0 6px 22px rgba(124,95,176,.14)}
+.bgcard::before{content:"格";position:absolute;right:8px;bottom:-18px;font-family:"Ma Shan Zheng";font-size:6rem;color:rgba(176,141,87,.13)}
+.bgname{font-family:"Ma Shan Zheng",serif;font-size:1.9rem;color:var(--gold-deep);letter-spacing:4px}
+.bgmeta{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px;margin:6px 0 12px}
+.bgmeta b{color:var(--gold)}
+.bgcard .bgd{color:var(--ink-dim);font-size:.92rem;line-height:1.85;position:relative;margin-bottom:10px}
+.bgcard .bgyong,.bgcard .bgcb{position:relative;font-size:.86rem;line-height:1.8;color:var(--ink-dim);
+  padding:9px 12px;border-radius:10px;margin-top:8px}
+.bgcard .bgyong{background:rgba(47,155,115,.08);border-left:3px solid var(--jade)}
+.bgcard .bgcb{background:rgba(124,95,176,.07);border-left:3px solid var(--purple-glow)}
+.bgcard .bgyong span,.bgcard .bgcb span{display:inline-block;font-weight:700;color:var(--gold-deep);margin-right:6px}
+
 /* 三方四正 */
 .triowrap{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .triocard{background:var(--card2);border:1px solid var(--line-soft);border-radius:14px;padding:16px 10px;text-align:center}
@@ -1428,24 +1444,69 @@ function bigLimits(zw,bz,gender,curAge){
   return {limits,curBranch,forward};
 }
 
-/* 格局偵測 */
+/* 格局偵測（紫微） */
 function detectGe(zw){
   const ming=zw.ming;
-  const set=b=>(zw.stars[b]||[]).filter(s=>s.type==="main").map(s=>s.name);
-  const mingStars=set(ming);
+  const palStars=b=>(zw.stars[b]||[]);
+  const mainOf=b=>palStars(b).filter(s=>s.type==="main").map(s=>s.name);
+  const mingStars=mainOf(ming);
   const trio=[ming,(ming+4)%12,(ming+8)%12,(ming+6)%12];
-  const all=new Set();trio.forEach(b=>set(b).forEach(s=>all.add(s)));
+  const all=new Set(),hua=new Set();
+  trio.forEach(b=>palStars(b).forEach(s=>{all.add(s.name);if(s.hua)hua.add(s.hua);}));
   const has=n=>all.has(n);
   const ges=[];
+  // —— 主星格局 ——
   if(mingStars.includes("紫微")&&mingStars.includes("天府"))ges.push({n:"紫府同宮",d:"帝座與財庫同坐，主尊貴穩重、一生衣食無虞，具領導與守成之全才。"});
   if(has("七殺")||has("破軍")||has("貪狼"))ges.push({n:"殺破狼格",d:"主開創變動、人生大起大落而能愈挫愈勇，宜把握變局、開疆闢土。"});
   if(has("天機")&&(has("太陰")||has("天同")||has("天梁")))ges.push({n:"機月同梁格",d:"主智慧穩健、適公職幕僚與專業之路，宜安穩中求發展。"});
   if(has("天府")&&has("天相"))ges.push({n:"府相朝垣",d:"財庫與印星拱照命宮，主一生富足、地位穩固、貴顯之格。"});
-  if((mingStars.includes("紫微"))&&(has("左輔")||has("右弼")))ges.push({n:"君臣慶會",d:"帝星得輔弼相佐，主貴氣逼人、得力助手相隨，易居要津。"});
+  if(mingStars.includes("巨門")&&(ming===0||ming===6))ges.push({n:"石中隱玉",d:"巨門居子午，口才辯才出眾，主大器晚成、以專業口碑與一技之長致富貴。"});
   if(mingStars.includes("太陽")&&(ming===5||ming===6))ges.push({n:"日麗中天",d:"太陽居旺，光明磊落、名揚四海，主貴顯與崇高聲望。"});
   if(mingStars.includes("太陰")&&ming===11)ges.push({n:"月朗天門",d:"太陰居亥得位，主清貴富足、心思澄澈、晚景尤豐。"});
+  // —— 主星＋輔煞星格局 ——
+  if(has("貪狼")&&has("火星"))ges.push({n:"火貪格",d:"貪狼遇火星，主突發橫財、際遇暴發，能於關鍵時刻一鳴驚人，宜把握機遇、見好就收。"});
+  if(has("貪狼")&&has("鈴星"))ges.push({n:"鈴貪格",d:"貪狼遇鈴星，主意外際遇、爆發力強，逢機則發、財來迅猛，宜穩中求進、莫貪過甚。"});
+  if(has("武曲")&&has("貪狼"))ges.push({n:"武貪格",d:"武曲財星會貪狼，主先勤後發、中晚年大發，宜厚積薄發、靜待時機到位。"});
+  if(has("太陽")&&has("天梁")&&(has("文昌")||has("祿存")||hua.has("lu")))ges.push({n:"陽梁昌祿",d:"太陽天梁會文昌祿星，主科甲功名、考運亨通，利學術考試與專業聲望之路。"});
+  if(has("文昌")&&has("文曲"))ges.push({n:"文星拱命",d:"昌曲拱照命宮，主聰穎博學、文采風流，利文教、考試與名望之路。"});
+  if(mingStars.includes("紫微")&&(has("左輔")||has("右弼")))ges.push({n:"君臣慶會",d:"帝星得輔弼相佐，主貴氣逼人、得力助手相隨，易居要津。"});
+  else if(has("左輔")&&has("右弼"))ges.push({n:"輔弼拱主",d:"左輔右弼齊會，主得力助手、貴人扶持，處事左右逢源、易居領導之位。"});
+  if((has("祿存")||hua.has("lu"))&&has("天馬"))ges.push({n:"祿馬交馳",d:"祿存（化祿）會天馬，主動中生財、奔波得利，宜外出發展、把握流動機緣。"});
+  // —— 四化格局 ——
+  if(hua.has("lu")&&hua.has("quan")&&hua.has("ke"))ges.push({n:"三奇加會",d:"化祿化權化科三吉齊會命垣，主名利雙收、際遇非凡，乃大富大貴之上格。"});
+  // —— 特殊 ——
   if(mingStars.length===0)ges.push({n:"命無正曜",d:"命宮借對宮安星，主彈性多元、際遇影響大，定性立志者可大器晚成。"});
-  return ges.length?ges:[{n:"格局平和",d:"命格主星調和，主平穩務實，貴在腳踏實地、循序漸進以成其功。"}];
+  const seen=new Set(),uniq=ges.filter(g=>seen.has(g.n)?false:(seen.add(g.n),true));
+  return uniq.length?uniq.slice(0,6):[{n:"格局平和",d:"命格主星調和，主平穩務實，貴在腳踏實地、循序漸進以成其功。"}];
+}
+
+/* 格局偵測（八字 · 月令取格） */
+const BAZI_GE={
+ 正官格:{d:"以月令正官為格，主名譽地位、循規蹈矩、自律守法，天生具管理與承擔之才。",yong:"喜財生官、印護官以成其貴；忌傷官見官、刑沖破格。利公職、管理、法務與制度性事業。"},
+ 七殺格:{d:"以月令七殺（偏官）為格，主魄力威權、開創競爭，性剛而有擔當，能成大事業。",yong:"喜食神制殺、或印星化殺為權；最忌身弱殺重無制。利武職、業務、競爭性與權威性事業。"},
+ 正財格:{d:"以月令正財為格，主務實理財、勤儉踏實、重承諾守信，財祿穩定、善守成。",yong:"喜身強任財、食傷生財；忌比劫奪財、身弱不勝財。利財經、實業、穩健經營之路。"},
+ 偏財格:{d:"以月令偏財為格，主活絡慷慨、善經營流動財與機會財，人緣佳、手面闊。",yong:"喜身強、食傷生財；忌比劫爭奪。利商貿、業務、多元收入與投資理財。"},
+ 食神格:{d:"以月令食神為格，主才華福壽、溫和有藝術涵養，口福佳、性情雅。",yong:"喜身強洩秀、財星流通；忌梟印奪食。利文藝、餐飲、教育與專業技藝。"},
+ 傷官格:{d:"以月令傷官為格，主聰明才氣、表現慾強、不拘世俗，創意縱橫。",yong:"喜傷官生財、或傷官佩印；忌傷官見官。利創作、表演、技術創新，宜守口德。"},
+ 正印格:{d:"以月令正印為格，主學識涵養、貴人庇蔭、仁慈重名，心性寬厚。",yong:"喜官殺生印、身弱得印；忌財星壞印。利學術、教育、文化清貴之路。"},
+ 偏印格:{d:"以月令偏印（梟神）為格，主機巧多思、偏門才智，近玄學、研究與冷門專業。",yong:"喜身弱得生、食神有制；忌梟旺奪食。利研究、技術、心靈與專業冷門領域。"},
+ 建祿格:{d:"月令臨官、日主得祿，主自立自強、白手成家，靠真本事打拚有成。",yong:"喜財官顯達、食傷吐秀以洩其旺；忌比劫過旺分奪。一生靠自己，宜自創或專業立身。"},
+ 陽刃格:{d:"月令逢刃、氣勢剛強，主魄力果決、敢衝敢拚，能於逆境中突圍。",yong:"喜官殺制刃、化刃為權；忌刃旺無制而剛過易折。宜武職、競爭性事業，剛中宜濟柔。"}
+};
+function detectBaziGe(bz){
+  const dm=bz.dayMaster,mZhi=bz.month.zhi,hidden=ZHI_HID[mZhi];
+  const benTg=tenGod(dm,hidden[0]);   // 月令本氣十神
+  let geKey,picked=hidden[0];
+  if(benTg==="比肩"){geKey="建祿格";}
+  else if(benTg==="劫財"){geKey="陽刃格";}
+  else{
+    const stems=[bz.year.gan,bz.month.gan,bz.hour.gan];  // 天干（不含日主）
+    if(stems.includes(hidden[0]))picked=hidden[0];        // 本氣透出優先
+    else{const t=hidden.slice(1).find(g=>stems.includes(g));picked=t||hidden[0];}
+    const map={正官:"正官格",七殺:"七殺格",正財:"正財格",偏財:"偏財格",食神:"食神格",傷官:"傷官格",正印:"正印格",偏印:"偏印格",比肩:"建祿格",劫財:"陽刃格"};
+    geKey=map[tenGod(dm,picked)]||"建祿格";
+  }
+  return Object.assign({name:geKey,gan:picked,benqi:hidden[0]},BAZI_GE[geKey]);
 }
 
 /* ================= 紫微斗數 ================= */
@@ -2384,6 +2445,7 @@ function run(){
       ss:shenSha(bz),
       limits:bigLimits(zw,bz,gender,curAge),
       ge:detectGe(zw),
+      baziGe:detectBaziGe(bz),
       curAge
     };
     const scores=calcScores(zw,bz,wx,adv);
@@ -3342,6 +3404,20 @@ function zwStrength(){
   zwOpenModal("子平八字 · 旺衰喜用",`日主 ${dm} · ${lvl}`,`喜用 ${st.xi.join("、")} · 忌 ${st.ji.join("、")}`,body);
 }
 
+/* 八字格局白話彈窗 */
+function zwBaziGe(){
+  const D=window.__ZW;if(!D)return;const bg=D.adv.baziGe,st=D.adv.strength,bz=D.bz,dm=D.dm,name=D.name;
+  const tg=tenGod(dm,bg.gan);
+  const body=`
+    <div class="zwkv"><span>格局 <b>${bg.name}</b></span><span>月令 <b>${bz.month.zhi}</b></span><span>取格 <b>${bg.gan}（${tg}）</b></span></div>
+    <div class="zwsec">什麼是「八字格局」</div><p>論八字最講究「以月令取格」——月支（出生那個月）藏的天干，是整張命盤氣勢最強的地方。把它相對於您日主（${dm}）的「十神」拿出來，就定出您這一生的<b>格局主軸</b>，等於一個人天生的「人生劇本類型」。</p>
+    <div class="zwsec">您的格局：${bg.name}</div><p>您生於 <b>${bz.month.zhi}</b> 月，月令取 <b>${bg.gan}（${GAN_WX[bg.gan]}）</b> 為用，相對日主為「<b>${tg}</b>」，故定為「<b style="color:var(--gold)">${bg.name}</b>」。${bg.d}</p>
+    <div class="zwsec">用神趨吉</div><p>${bg.yong}</p>
+    <div class="zwsec">您的成格之機</div><p>命盤日主為<b>${st.level}</b>。${(function(){const wrap=document.querySelector('.bgcb');return wrap?wrap.textContent.replace('成格之機',''):'';})()}</p>
+    <div class="zwsec">白話總評</div><p>對 ${name} 而言，「${bg.name}」是您先天的人生劇本——順著用神（${st.xi.join("、")}）的方向選行業、結貴人、補命局之不足，就是把先天格局演成後天成就的最實用方法。</p>`;
+  zwOpenModal("子平八字 · 月令格局",`${bg.name} · 日主 ${st.level}`,`月令 ${bz.month.zhi} · 取 ${bg.gan}（${tg}）`,body);
+}
+
 /* 三方四正白話彈窗 */
 function zwTrio(b,i){
   const D=window.__ZW;if(!D)return;const zw=D.zw,name=D.name;
@@ -3515,6 +3591,23 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // ===== 格局 =====
   const geHTML=adv.ge.map(g=>`<div class="gecard"><h4>${g.n}</h4><p>${g.d}</p></div>`).join("");
 
+  // ===== 八字格局（月令取格） =====
+  const bg=adv.baziGe;
+  const bgChengbai=st.level==="中和"
+    ?`日主${st.level}、五行調勻，本格根基平穩，順喜用神（${st.xi.join("、")}）之氣經營，最易成格顯達。`
+    :(["建祿格","陽刃格"].includes(bg.name)
+        ?(st.level==="身強"?`日主偏強，${bg.name}氣勢足而宜洩宜剋——走喜用神（${st.xi.join("、")}）之運，能化旺氣為事功，最忌再逢比劫助旺。`:`日主偏弱，${bg.name}雖見根氣仍須扶持——得喜用神（${st.xi.join("、")}）相助則自立有成。`)
+        :(["正官格","七殺格","正財格","偏財格","傷官格","食神格"].includes(bg.name)
+            ?(st.level==="身強"?`日主身強足以任此格，行喜用神（${st.xi.join("、")}）之運，財官食傷皆能為我所用，成格有望、富貴可期。`:`日主身弱，恐難勝任本格之洩耗——須先補喜用神（${st.xi.join("、")}）扶身，待身旺再求發越，方能成格。`)
+            :(st.level==="身弱"?`日主身弱得印格相生，正合所需——多親近喜用神（${st.xi.join("、")}），貴人學識皆能助您轉強顯達。`:`日主已強而再逢印格生扶，宜防過旺——取喜用神（${st.xi.join("、")}）洩秀通關，方不致壅滯。`)));
+  const baziGeHTML=`<div class="bgcard tap" onclick="zwBaziGe()">
+      <div class="bgname">${bg.name}</div>
+      <div class="bgmeta">月令 <b>${bz.month.zhi}</b> · 取 <b>${bg.gan}（${GAN_WX[bg.gan]}・${tenGod(dm,bg.gan)}）</b> 為格</div>
+      <p class="bgd">${bg.d}</p>
+      <p class="bgyong"><span>用神趨吉</span>${bg.yong}</p>
+      <p class="bgcb"><span>成格之機</span>${bgChengbai}</p>
+    </div>`;
+
   // ===== 三方四正 =====
   const trioBranches=[zw.ming,(zw.ming+4)%12,(zw.ming+8)%12,(zw.ming+6)%12];
   const trioLabels=["本命宮","三合(財帛)","三合(官祿)","對宮(遷移)"];
@@ -3531,7 +3624,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   // ===== 綜合個人化論斷 =====
   const dirTxt=lk.forward?"順行":"逆行";
-  const synthesis=`綜觀 <b>${name}</b> 之命：日主 <b style="color:var(--gold)">${dm}（${GAN_WX[dm]}）</b>，${st.level}之格，喜 <b style="color:var(--jade)">${st.xi.join("、")}</b>、忌 <b style="color:#d47f8f">${st.ji.join("、")}</b>。命宮坐 <b style="color:var(--gold)">${mingStarTxt}</b> 於 ${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}，配 <b>${zw.juName}</b>，本命格局以「<b style="color:var(--gold)">${adv.ge[0].n}</b>」為主軸。`
+  const synthesis=`綜觀 <b>${name}</b> 之命：日主 <b style="color:var(--gold)">${dm}（${GAN_WX[dm]}）</b>，${st.level}之格，喜 <b style="color:var(--jade)">${st.xi.join("、")}</b>、忌 <b style="color:#d47f8f">${st.ji.join("、")}</b>；八字以月令取「<b style="color:var(--gold)">${adv.baziGe.name}</b>」為格，乃先天人生劇本之主軸。命宮坐 <b style="color:var(--gold)">${mingStarTxt}</b> 於 ${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}，配 <b>${zw.juName}</b>，紫微格局以「<b style="color:var(--gold)">${adv.ge[0].n}</b>」相映。`
     +`大運自 <b>${lk.startAge}</b> 歲起運、${dirTxt}排佈，現行 <b>${adv.curAge}</b> 虛歲，正值 <b style="color:var(--purple-glow)">${curLimName}</b> 大限，宜順此宮位星性經營人生重心。`
     +`流年 2026 丙午，行運落於 <b style="color:#e08a7a">${lnPalaceName}</b>（坐 ${lnStars}），丙干引動 <b style="color:var(--jade)">${lnSihua[0]}化祿</b>、<b style="color:#e0a85a">${lnSihua[1]}化權</b>、<b style="color:#7fa6d4">${lnSihua[2]}化科</b>、<b style="color:#d47f8f">${lnSihua[3]}化忌</b>——把握祿權科之機、留心化忌之宮，趨吉避凶。`
     +`綜合而言，命主宜揚 ${GAN_WX[dm]} 性之長，補喜用 ${st.xi.join("、")} 之氣；待人以誠、處事以恆，循四化之引、應大限之機，自能將先天之命，化為後天之運。`;
@@ -3586,7 +3679,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="pwlist">
       <li>命盤綜合評分（整體 ＋ 六大維度）</li>
       <li>日主旺衰・喜用神・十神格局</li>
-      <li>命帶神煞・命盤格局・三方四正</li>
+      <li>八字月令格局・成格之機・用神趨吉</li>
+      <li>命帶神煞・紫微格局・三方四正</li>
       <li>命宮主星精析・財官婚遷福德 逐宮論斷</li>
       <li>2026 流年運程 ・ 綜合個人化論斷</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
@@ -3628,6 +3722,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   <div class="divider"><span>十神格局</span></div>
   <div class="tengods">${tgHTML}</div>
+
+  <div class="divider"><span>八字格局 · 月令取格</span></div>
+  <div class="baziGewrap">${baziGeHTML}</div>
 
   <div class="divider"><span>命帶神煞</span></div>
   <div class="shensha">${ssHTML}</div>
@@ -3814,7 +3911,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-fp">${ppFp}</div>
     <div class="rp-wx">五行能量：${ppWx}　·　最旺 <b>${strongest}</b>、最弱 <b>${weakest}</b></div>
     <div class="rp-row"><b>日主旺衰</b>：${st.level}　·　喜用神 <b>${st.xi.join("、")}</b>　·　忌神 <b>${st.ji.join("、")}</b></div>
-    <div class="rp-sec">命盤格局</div>
+    <div class="rp-sec">八字格局 · 月令取格</div>
+    <div class="rp-row"><b>${adv.baziGe.name}</b>（月令 ${bz.month.zhi}・取 ${adv.baziGe.gan} 為格）。${adv.baziGe.d}<br>${adv.baziGe.yong}</div>
+    <div class="rp-sec">紫微格局</div>
     <div>${ppGe}</div>
     <div class="rp-sec">逐宮精要</div>
     <div class="rp-row"><b>命宮</b>（${mingStarTxt}）　${pd.t}。${pd.tags.join("·")}。</div>
