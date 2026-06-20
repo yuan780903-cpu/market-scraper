@@ -450,7 +450,8 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .musicfab{display:inline-flex;align-items:center;gap:7px;
   background:var(--card);color:var(--ink);border:1px solid var(--line-soft);border-radius:999px;
   padding:10px 15px;font-family:inherit;font-size:.84rem;letter-spacing:1px;cursor:pointer;
-  box-shadow:0 12px 30px -16px var(--shadow);transition:.25s}
+  box-shadow:0 12px 30px -16px var(--shadow);transition:.25s;
+  touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .musicfab:hover{transform:translateY(-2px)}
 .musicfab .micon{font-size:1.05rem;color:var(--purple);line-height:1;transition:.25s}
 .musicfab.on{border-color:var(--purple-glow);background:var(--pwash);color:var(--purple)}
@@ -4023,14 +4024,21 @@ function updateMusicUI(){
 }
 (function initMusic(){
   const fab=document.getElementById('musicFab'), wrap=document.getElementById('musicWrap');
-  let __tapN=0,__tapT=0;
-  if(fab&&wrap)fab.addEventListener('click',e=>{
-    e.stopPropagation();
-    const now=Date.now();
-    __tapN=(now-__tapT<1500)?__tapN+1:1;__tapT=now;
-    if(__tapN>=7){__tapN=0;wrap.classList.remove('open');superOpen();return;}
-    wrap.classList.toggle('open');
-  });
+  let __tapN=0,__tapT=0,__supSkipClick=false;
+  // 計數用 pointerdown：手機快速連點時，click 常被「雙擊縮放」吃掉而漏算；
+  // pointerdown 每次觸碰都會觸發，較可靠。連點 7 下（每下間隔 < 2.5 秒）開啟全能開通。
+  if(fab&&wrap){
+    fab.addEventListener('pointerdown',()=>{
+      const now=Date.now();
+      __tapN=(now-__tapT<2500)?__tapN+1:1;__tapT=now;
+      if(__tapN>=7){__tapN=0;__supSkipClick=true;wrap.classList.remove('open');superOpen();}
+    });
+    fab.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(__supSkipClick){__supSkipClick=false;return;}  // 第 7 下：只開全能開通，不順手切換音樂面板
+      wrap.classList.toggle('open');
+    });
+  }
   document.querySelectorAll('.mpopt').forEach(b=>b.addEventListener('click',()=>{
     const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s);
     if(wrap)wrap.classList.remove('open');
