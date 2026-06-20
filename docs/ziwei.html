@@ -906,6 +906,23 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .lcmsg{min-height:20px;font-size:.88rem;margin-top:6px}
 .paywall .lcmsg.err{color:#c2576f}.paywall .lcmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
+.supermask{position:fixed;inset:0;z-index:9999;background:rgba(20,12,30,.62);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:supfade .18s ease}
+@keyframes supfade{from{opacity:0}to{opacity:1}}
+.superbox{position:relative;width:100%;max-width:340px;background:var(--card,#fff);border-radius:18px;
+  padding:26px 22px 22px;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center}
+.superx{position:absolute;top:10px;right:12px;border:none;background:none;font-size:1.5rem;line-height:1;
+  color:var(--ink-faint,#999);cursor:pointer;padding:4px 8px}
+.supertt{font-size:1.18rem;font-weight:800;color:var(--purple,#6a3fb5);margin-bottom:6px}
+.supersub{font-size:.82rem;color:var(--ink-faint,#888);margin-bottom:16px;line-height:1.5}
+.superinp{width:100%;padding:12px 14px;border:1px solid var(--line,#ddd);border-radius:12px;
+  font-size:1.05rem;text-align:center;letter-spacing:.18em;box-sizing:border-box;margin-bottom:12px}
+.superinp:focus{outline:none;border-color:var(--purple,#6a3fb5)}
+.superbtn{width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:1.02rem;font-weight:800;
+  color:#fff;background:linear-gradient(135deg,#8a5fd0,#6a3fb5);transition:transform .12s,box-shadow .12s}
+.superbtn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.24)}
+.supermsg{min-height:20px;font-size:.86rem;margin-top:10px}
+.supermsg.err{color:#c2576f}.supermsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .lpwrap{margin:10px auto 2px;max-width:430px}
 .paywall .lpbtn{display:inline-flex;align-items:center;gap:9px;justify-content:center;width:100%;
   padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1.06rem;font-weight:800;
@@ -2713,7 +2730,7 @@ async function lcKey(p){
   const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
   return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
 }
-async function lcIsUnlocked(p){try{return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
+async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
 async function lcRefresh(){
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
   const unlocked=await lcIsUnlocked(window.__LC.payload);
@@ -2751,6 +2768,40 @@ async function lcUnlock(){
   }
 }
 
+/* ===== 隱藏全能開通（連點背景音樂鈕 7 下觸發）=====
+   流程：彈出「全能萬用密碼」輸入框 → 送後端 /redeem 驗證 → 後端回 super:true
+   → 寫入本機全站旗標 zw_lic_super=1 → 全站永久開通（不消耗、不過期）。 */
+function superOpen(){
+  if(document.getElementById('superMask'))return;
+  const m=document.createElement('div');m.id='superMask';m.className='supermask';
+  m.innerHTML='<div class="superbox" role="dialog" aria-label="全能開通"><button class="superx" type="button" aria-label="關閉">×</button><div class="supertt">全能開通</div><div class="supersub">請輸入全能萬用密碼以開通整站完整功能。</div><input id="superInput" class="superinp" type="password" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼"><button id="superGo" class="superbtn" type="button">開通</button><div id="superMsg" class="supermsg"></div></div>';
+  document.body.appendChild(m);
+  const close=()=>{m.remove();};
+  m.addEventListener('click',e=>{if(e.target===m)close();});
+  m.querySelector('.superx').addEventListener('click',close);
+  const inp=m.querySelector('#superInput');
+  m.querySelector('#superGo').addEventListener('click',()=>superActivate(inp.value));
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')superActivate(inp.value);});
+  setTimeout(()=>inp.focus(),30);
+}
+async function superActivate(val){
+  const msg=document.getElementById('superMsg');
+  const code=String(val||'').trim().replace(/\s+/g,'');
+  if(!code){if(msg){msg.textContent='請輸入全能萬用密碼。';msg.className='supermsg err';}return;}
+  if(msg){msg.textContent='驗證中…';msg.className='supermsg';}
+  let res;
+  try{res=await lcRedeem(code);}
+  catch(e){if(msg){msg.textContent='✗ 無法連線驗證伺服器，請確認網路後再試一次。';msg.className='supermsg err';}return;}
+  if(res&&res.ok&&res.super){
+    try{localStorage.setItem('zw_lic_super','1');}catch(e){}
+    if(msg){msg.textContent='✓ 全能開通成功，整站完整功能已永久開啟！';msg.className='supermsg ok';}
+    await lcRefresh();
+    setTimeout(()=>{const mk=document.getElementById('superMask');if(mk)mk.remove();},1100);
+  }else{
+    if(msg){msg.textContent='✗ 密碼錯誤，無法開通。';msg.className='supermsg err';}
+  }
+}
+
 /* ===== LINE Pay 自動解鎖 =====
    流程：前端送出 key(報告識別) + ret(返回網址) → Worker 建立付款 → 導向 LINE Pay；
    付款成功後 LINE Pay 導回 Worker /linepay/confirm，確認後 302 回本頁帶 ?lpok=訂單號；
@@ -2767,8 +2818,8 @@ async function lpReady(){
 }
 async function lpMaybeShowButton(){
   const info=await lpReady();if(!info)return;
-  const w=document.getElementById('lpBtnWrap'),d=document.getElementById('lpDiv');
-  if(w)w.style.display='';if(d)d.style.display='';
+  const w=document.getElementById('lpBtnWrap');
+  if(w)w.style.display='';
   if(info.mode==='sandbox'){
     const sec=w&&w.querySelector('.lpsec');
     if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為 LINE Pay 沙盒測試模式，非真實扣款）</div>');}
@@ -2838,8 +2889,8 @@ async function ecReady(){
 }
 async function ecMaybeShowButton(){
   const info=await ecReady();if(!info)return;
-  const w=document.getElementById('ecBtnWrap'),d=document.getElementById('lpDiv');
-  if(w)w.style.display='';if(d)d.style.display='';
+  const w=document.getElementById('ecBtnWrap');
+  if(w)w.style.display='';
   if(info.mode==='stage'){
     const sec=w&&w.querySelector('.lpsec');
     if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為綠界測試模式，請用測試卡號，非真實扣款）</div>');}
@@ -3298,14 +3349,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <button id="ecBtn" class="ecbtn" onclick="lcStartECPay()"><span class="ecmark">卡</span>信用卡 / ATM 付款・付完自動解鎖</button>
       <div class="lpsec">透過綠界 ECPay 安全付款（信用卡／ATM／超商），完成後立即自動開啟完整報告。</div>
     </div>
-    <div id="lpDiv" class="pwor" style="display:none"><span>或　輸入萬用碼</span></div>
-    <div class="pwbuy">${LC_CONTACT}</div>
-    <div class="pwform">
-      <input id="lcInput" type="text" inputmode="numeric" placeholder="在此輸入萬用碼（例如 0123）" autocomplete="off" spellcheck="false">
-      <button onclick="lcUnlock()">解鎖</button>
-    </div>
     <div id="lcMsg" class="lcmsg"></div>
-    <div class="pwnote">萬用碼為一次性，使用後即失效，全世界只能用一次；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
+    <div class="pwnote">付款完成後系統將自動驗證並開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
   <div id="premZone" class="locked">
@@ -3677,7 +3722,14 @@ function updateMusicUI(){
 }
 (function initMusic(){
   const fab=document.getElementById('musicFab'), wrap=document.getElementById('musicWrap');
-  if(fab&&wrap)fab.addEventListener('click',e=>{e.stopPropagation();wrap.classList.toggle('open');});
+  let __tapN=0,__tapT=0;
+  if(fab&&wrap)fab.addEventListener('click',e=>{
+    e.stopPropagation();
+    const now=Date.now();
+    __tapN=(now-__tapT<1500)?__tapN+1:1;__tapT=now;
+    if(__tapN>=7){__tapN=0;wrap.classList.remove('open');superOpen();return;}
+    wrap.classList.toggle('open');
+  });
   document.querySelectorAll('.mpopt').forEach(b=>b.addEventListener('click',()=>{
     const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s);
     if(wrap)wrap.classList.remove('open');
