@@ -1344,21 +1344,21 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
 <div id="musicWrap" class="musicwrap">
   <div id="musicPanel" class="musicpanel" role="menu">
-    <div class="mphead">背景音樂・自然之聲</div>
+    <div class="mphead">身心靈輕音樂・安定歡愉</div>
+    <button class="mpopt" type="button" data-snd="dawn">晨曦暖陽</button>
+    <button class="mpopt" type="button" data-snd="calm">靜心放鬆</button>
+    <button class="mpopt" type="button" data-snd="dream">療癒星空</button>
     <button class="mpopt" type="button" data-snd="rain">雨聲</button>
     <button class="mpopt" type="button" data-snd="ocean">海浪潮汐</button>
     <button class="mpopt" type="button" data-snd="stream">溪流潺潺</button>
     <button class="mpopt" type="button" data-snd="forest">森林鳥鳴</button>
-    <button class="mpopt" type="button" data-snd="wind">微風</button>
-    <button class="mpopt" type="button" data-snd="night">夜晚蟲鳴</button>
-    <button class="mpopt" type="button" data-snd="bowls">頌缽冥想</button>
     <div class="mpvol"><span class="mpvl">音量</span><input id="mpVol" class="mpvr" type="range" min="0" max="100" value="70" aria-label="音量"></div>
     <button class="mpopt mpoff" type="button" data-snd="off">關閉音樂</button>
   </div>
-  <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="自然之聲背景音樂・點按選擇">
+  <button id="musicFab" class="musicfab" type="button" aria-label="背景音樂選單" title="身心靈輕音樂・點按選擇">
     <span class="micon">♪</span><span class="mtxt">背景音樂</span>
   </button>
-  <div id="musicHint" class="musichint">輕觸畫面任一處<br>開啟冥想背景音 ♪</div>
+  <div id="musicHint" class="musichint">輕觸畫面任一處<br>開啟療癒輕音樂 ♪</div>
 </div>
 
 <div id="zwModal" class="zwmodal" onclick="if(event.target===this)zwCloseModal()">
@@ -4733,8 +4733,8 @@ ecHandleReturn();
 let __musicOn=false, __curSound=null, __vol=0.7, __fadeTimer=null;
 let __audioEl=null, __unlocked=false;
 const __wavCache={};   // choice -> blob URL（首次播放才合成，之後沿用）
-const SND_NAME={rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴',wind:'微風',night:'夜晚蟲鳴',bowls:'頌缽冥想'};
-const __DUR={rain:18,ocean:24,stream:20,forest:24,wind:24,night:22,bowls:28};
+const SND_NAME={dawn:'晨曦暖陽',calm:'靜心放鬆',dream:'療癒星空',rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴'};
+const __DUR={dawn:30,calm:32,dream:28,rain:18,ocean:24,stream:20,forest:24};
 
 function __getAudioEl(){
   if(!__audioEl){
@@ -4772,6 +4772,43 @@ function __obNoise(ctx,dur){
   const s=ctx.createBufferSource(); s.buffer=buf; s.loop=true; return s;
 }
 function __obDc(ctx,val){const c=ctx.createConstantSource();c.offset.value=val;return c;}
+/* ---- 身心靈輕音樂 合成工具（溫暖・安定・歡愉，五聲音階保證無不和諧） ---- */
+function __obReverb(ctx){            // 柔和殘響（雙延遲回授＋低通）→ 直接連到 destination，回傳送音節點
+  const send=ctx.createGain();send.gain.value=1;
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;
+  const d1=ctx.createDelay(1.5);d1.delayTime.value=0.21;
+  const f1=ctx.createGain();f1.gain.value=0.42;
+  const d2=ctx.createDelay(1.5);d2.delayTime.value=0.38;
+  const f2=ctx.createGain();f2.gain.value=0.36;
+  const wet=ctx.createGain();wet.gain.value=0.30;
+  send.connect(d1);d1.connect(f1);f1.connect(d1);d1.connect(lp);
+  send.connect(d2);d2.connect(f2);f2.connect(d2);d2.connect(lp);
+  lp.connect(wet);wet.connect(ctx.destination);
+  return send;
+}
+function __obPad(ctx,out,freqs,vol){   // 持續襯底和弦（暖 sine＋八度 triangle，極緩顫音）→ 安定感
+  const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.06;
+  const lg=ctx.createGain();lg.gain.value=vol*0.16;lfo.connect(lg);
+  freqs.forEach(f=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+    const o2=ctx.createOscillator();o2.type='triangle';o2.frequency.value=f*2.001;
+    const g=ctx.createGain();g.gain.value=vol;lg.connect(g.gain);
+    const g2=ctx.createGain();g2.gain.value=vol*0.22;
+    o.connect(g);o2.connect(g2);g.connect(out);g2.connect(out);
+    o.start(0);o2.start(0);
+  });
+  lfo.start(0);
+}
+function __obChime(ctx,out,f,t,len,vol){  // 溫柔鐘聲（多泛音、緩起緩落）→ 歡愉感
+  const parts=[[1,1],[2,0.45],[3,0.2],[4.2,0.08]];
+  parts.forEach(p=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
+    const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*p[1]),t+0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+    o.connect(g);g.connect(out);o.start(t);o.stop(t+len+0.05);
+  });
+}
 const __OB={
   rain(ctx,dur){
     const out=ctx.createGain();out.gain.value=0.85;out.connect(ctx.destination);
@@ -4799,17 +4836,45 @@ const __OB={
     const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.8;
     const lg=ctx.createGain();lg.gain.value=300;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
   },
-  wind(ctx,dur){
-    const out=ctx.createGain();out.gain.value=0;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=0;lp.Q.value=3;
-    s.connect(lp);lp.connect(out);s.start();
-    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.13;
-    const lg=ctx.createGain();lg.gain.value=0.3;const base=__obDc(ctx,0.4);
-    lfo.connect(lg);lg.connect(out.gain);base.connect(out.gain);
-    const lf2=ctx.createOscillator();lf2.type='sine';lf2.frequency.value=0.07;
-    const lg2=ctx.createGain();lg2.gain.value=320;const fb=__obDc(ctx,560);
-    lf2.connect(lg2);lg2.connect(lp.frequency);fb.connect(lp.frequency);
-    lfo.start();base.start();lf2.start();fb.start();
+  dawn(ctx,dur){          // 晨曦暖陽：C 大調，溫暖明亮、上揚歡愉
+    const rv=__obReverb(ctx);
+    const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
+    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
+    __obPad(ctx,bus,[130.81,196.00,329.63],0.06);              // C3 + G3 + E4 暖和弦
+    const scale=[523.25,587.33,659.25,783.99,880.00,1046.50];  // C5 D5 E5 G5 A5 C6 大調五聲
+    let t=0.6,prev=2;
+    while(t<dur-2.5){
+      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>2);prev=i;
+      __obChime(ctx,bus,scale[i],t,3.2,0.12);
+      if(Math.random()<0.4)__obChime(ctx,bus,scale[Math.min(scale.length-1,i+2)],t+0.12,2.6,0.06);
+      t+=1.6+Math.random()*1.8;
+    }
+  },
+  calm(ctx,dur){          // 靜心放鬆：F 大調，低緩柔和、深層安定
+    const rv=__obReverb(ctx);
+    const dry=ctx.createGain();dry.gain.value=0.85;dry.connect(ctx.destination);
+    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
+    __obPad(ctx,bus,[174.61,261.63,349.23],0.07);              // F3 + C4 + F4 暖和弦
+    const scale=[349.23,392.00,440.00,523.25,587.33];          // F4 G4 A4 C5 D5 大調五聲
+    let t=1.2,prev=1;
+    while(t<dur-4){
+      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>2);prev=i;
+      __obChime(ctx,bus,scale[i],t,4.5,0.10);
+      t+=2.8+Math.random()*2.6;
+    }
+  },
+  dream(ctx,dur){         // 療癒星空：A 大調，空靈閃爍、夢幻療癒
+    const rv=__obReverb(ctx);
+    const dry=ctx.createGain();dry.gain.value=0.8;dry.connect(ctx.destination);
+    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
+    __obPad(ctx,bus,[110.00,164.81,220.00],0.06);              // A2 + E3 + A3 暖和弦
+    const scale=[440.00,493.88,554.37,659.25,739.99,880.00,1108.73]; // A4 B4 C#5 E5 F#5 A5 C#6 大調五聲
+    let t=0.5,prev=3;
+    while(t<dur-2){
+      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>3);prev=i;
+      __obChime(ctx,bus,scale[i],t,2.4,0.085);
+      t+=0.9+Math.random()*1.3;
+    }
   },
   forest(ctx,dur){
     const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
@@ -4830,50 +4895,6 @@ const __OB={
         o.connect(g);g.connect(out);o.start(ct);o.stop(ct+0.16);
       }
       t+=1.3+Math.random()*3.6;
-    }
-  },
-  night(ctx,dur){
-    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=280;
-    const bed=ctx.createGain();bed.gain.value=0.28;s.connect(lp);lp.connect(bed);bed.connect(out);s.start();
-    const o=ctx.createOscillator();o.type='sine';o.frequency.value=4200;
-    const am=ctx.createGain();am.gain.value=0;
-    const trill=ctx.createOscillator();trill.type='square';trill.frequency.value=42;
-    const tg=ctx.createGain();tg.gain.value=0;trill.connect(tg);tg.connect(am.gain);
-    o.connect(am);am.connect(out);o.start();trill.start();
-    let t=0.3;
-    while(t<dur-0.6){
-      tg.gain.setValueAtTime(0.03,t);tg.gain.setValueAtTime(0.03,t+0.55);tg.gain.setValueAtTime(0,t+0.57);
-      t+=0.95+Math.random()*0.45;
-    }
-  },
-  bowls(ctx,dur){
-    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
-    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=0.4;
-    const delay=ctx.createDelay(2.0);delay.delayTime.value=0.5;
-    const fb=ctx.createGain();fb.gain.value=0.32;const wet=ctx.createGain();wet.gain.value=0.22;
-    delay.connect(fb);fb.connect(delay);lp.connect(out);lp.connect(delay);delay.connect(wet);wet.connect(out);
-    const base=130.81,freqs=[base/2,base,base*1.5,base*2];
-    freqs.forEach((f,i)=>{
-      const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
-      const det=ctx.createOscillator();det.type='sine';det.frequency.value=f*1.004;
-      const g=ctx.createGain();g.gain.setValueAtTime(0.075,0);
-      const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.05+i*0.012;
-      const lg=ctx.createGain();lg.gain.value=0.05;lfo.connect(lg);lg.connect(g.gain);
-      o.connect(g);det.connect(g);g.connect(lp);o.start(0);det.start(0);lfo.start(0);
-    });
-    const scale=[523.25,587.33,659.25,783.99,880.00];
-    let t=0.5;
-    while(t<dur-1){
-      const f=scale[Math.floor(Math.random()*scale.length)];
-      const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
-      const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=f*2.01;
-      const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);
-      g.gain.linearRampToValueAtTime(0.09,t+0.9);g.gain.exponentialRampToValueAtTime(0.0001,Math.min(dur,t+6.5));
-      const g2=ctx.createGain();g2.gain.value=0.28;
-      o.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);
-      o.start(t);o2.start(t);o.stop(Math.min(dur,t+7));o2.stop(Math.min(dur,t+7));
-      t+=7+Math.random()*9;
     }
   }
 };
@@ -4964,8 +4985,9 @@ function updateMusicUI(){
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
   // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
   const hint=document.getElementById('musicHint');
-  let want='1',choice='bowls';
-  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'bowls';}catch(e){}
+  let want='1',choice='dawn';
+  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'dawn';}catch(e){}
+  if(!SND_NAME[choice])choice='dawn';   // 舊版偏好（頌缽/微風/夜晚蟲鳴）已移除，自動改用輕音樂
   if(want!=='0'){
     const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
     const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
