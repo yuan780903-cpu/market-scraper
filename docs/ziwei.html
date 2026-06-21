@@ -896,6 +896,24 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .hexcard .hexlevel{padding:2px 12px;border:1.5px solid;border-radius:18px;font-weight:700}
 @media(max-width:480px){.ighero,.guiwrap{padding:16px 12px;gap:14px}.ighglyph{font-size:3.6rem}
   .yaodiagram{width:108px}.yao.yang .bar{width:98px}.yao .dot{right:-18px}}
+/* ===== 黃曆擇日 ===== */
+.hlhero{display:flex;gap:22px;align-items:center;flex-wrap:wrap;justify-content:space-between;
+  margin:18px auto;padding:22px 26px;max-width:680px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(160deg,var(--pwash),var(--wash));box-shadow:inset 0 0 30px rgba(0,0,0,.12)}
+.hldate .hldnum{font-size:1.6rem;font-weight:700;color:var(--gold-bright);letter-spacing:1px}
+.hldate .hldsub{font-size:.95rem;color:var(--head);margin-top:6px}
+.hlgz{display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.hlgzrow{font-size:.95rem;color:var(--head)}
+.hlgzrow span{color:var(--ink-faint);font-size:.8rem;margin-right:6px}
+.hlgzrow b{color:var(--gold-bright);font-weight:700}
+.hlrank{margin-top:4px;padding:3px 18px;border-radius:20px;font-weight:700;font-size:1rem;border:1.5px solid}
+.hlrank.good,.hlrk.good{color:var(--jade);border-color:var(--jade)}
+.hlrank.bad,.hlrk.bad{color:#c2576f;border-color:#c2576f}
+.hlrank.mid,.hlrk.mid{color:var(--gold);border-color:var(--gold)}
+.hlrk{padding:1px 10px;border:1.5px solid;border-radius:14px}
+.hl-yiji .hlyi{color:var(--jade);font-size:1.02rem;line-height:1.9;font-weight:600}
+.hl-yiji .hlji{color:#c2576f;font-size:1.02rem;line-height:1.9;font-weight:600}
+@media(max-width:480px){.hlhero{padding:16px 14px}.hldate .hldnum{font-size:1.3rem}.hlgz{align-items:flex-start}}
 /* ===== 可觸控宮位／大運 ===== */
 .cell.tap,.luckcol.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease,box-shadow .2s ease,border-color .2s ease}
 .cell.tap:hover,.luckcol.tap:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.16);border-color:var(--gold)}
@@ -1084,6 +1102,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
           <option value="comp">綜合命盤 · 紫微斗數＋子平八字（含評分・家庭分析）</option>
           <option value="mige">米卦 · 梅花易數（隨機起卦・體用斷吉凶）</option>
           <option value="guigua">烏龜卦 · 金錢六爻（搖卦・本卦變卦）</option>
+          <option value="huangli">黃曆擇日 · 每日宜忌（建除・黃道・沖煞）</option>
         </optgroup>
         <optgroup label="── 西洋／印度 ──">
           <option value="west">西洋占星 · 太陽星座</option>
@@ -2481,6 +2500,7 @@ function run(){
     const rp0=document.getElementById("reportPrint"); if(rp0)rp0.innerHTML="";
     if(system==="mige"){renderMige(name,gender,{y,m,d,tv},subText);return;}
     if(system==="guigua"){renderGuigua(name,gender,{y,m,d,tv},subText);return;}
+    if(system==="huangli"){renderHuangli(name,gender,{y,m,d,tv},subText);return;}
     if(system==="west"){renderWestern(name,gender,{y,m,d,tv},subText);return;}
     if(system==="tarot"){renderTarot(name,gender,{y,m,d,tv},subText);return;}
     if(system==="vedic"){renderVedic(name,gender,{y,m,d,tv},subText);return;}
@@ -2796,6 +2816,92 @@ function trigPair(no){
   // 由卦序反推上下卦（掃描 KINGWEN）
   for(let u=0;u<8;u++)for(let l=0;l<8;l++)if(KINGWEN[u][l]===no)return [u,l];
   return [0,0];
+}
+
+/* ===== 黃曆 · 每日宜忌 · 擇日 ===== */
+const JIANCHU=[
+ {n:"建",lv:"次吉",cls:"mid",yi:"出行、上任、求職、見貴、赴任",ji:"動土、開倉、掘井、安葬"},
+ {n:"除",lv:"吉",cls:"good",yi:"除舊佈新、療病求醫、掃舍、解除、出行",ji:"嫁娶、開市、上樑"},
+ {n:"滿",lv:"吉",cls:"good",yi:"祭祀、祈福、開市、立券、交易、納財",ji:"動土、安葬、求醫服藥"},
+ {n:"平",lv:"平",cls:"mid",yi:"修造、嫁娶、安床、平路、塗泥",ji:"開渠、栽種、置產"},
+ {n:"定",lv:"吉",cls:"good",yi:"冠帶、嫁娶、納采、安床、入學、簽約、修造",ji:"訴訟、出行、就醫"},
+ {n:"執",lv:"次吉",cls:"mid",yi:"造作、嫁娶、收斂、捕捉、立券",ji:"開市、移徙、出行、開倉"},
+ {n:"破",lv:"凶",cls:"bad",yi:"破屋壞垣、求醫治病（取其破舊）",ji:"嫁娶、開市、簽約、出行、動土（諸事不宜）"},
+ {n:"危",lv:"次凶",cls:"bad",yi:"祭祀、祈福、安機械",ji:"登高、行船、冒險、出行、安葬"},
+ {n:"成",lv:"大吉",cls:"good",yi:"開市、入學、結婚、立券、開業、動土、出行（百事可成）",ji:"訴訟、爭執"},
+ {n:"收",lv:"吉",cls:"good",yi:"納財、進人口、嫁娶、栽種、收成、納畜",ji:"放債、出行、安葬、開市"},
+ {n:"開",lv:"大吉",cls:"good",yi:"開市、開業、修造、動土、入學、出行、求職、祈福",ji:"安葬、放水"},
+ {n:"閉",lv:"凶",cls:"bad",yi:"築堤、埋穴、收斂、填補、安葬",ji:"開市、出行、求醫、開光"}
+];
+const HUANGDAO_START={子:"申",午:"申",丑:"戌",未:"戌",寅:"子",申:"子",卯:"寅",酉:"寅",辰:"辰",戌:"辰",巳:"午",亥:"午"};
+const HUANGDAO_SEQ=[
+ {n:"青龍",ji:true},{n:"明堂",ji:true},{n:"天刑",ji:false},{n:"朱雀",ji:false},
+ {n:"金匱",ji:true},{n:"天德",ji:true},{n:"白虎",ji:false},{n:"玉堂",ji:true},
+ {n:"天牢",ji:false},{n:"玄武",ji:false},{n:"司命",ji:true},{n:"勾陳",ji:false}];
+const XISHEN={甲:"東北",己:"東北",乙:"西北",庚:"西北",丙:"西南",辛:"西南",丁:"正南",壬:"正南",戊:"東南",癸:"東南"};
+const PENGZU_GAN={甲:"甲不開倉財物耗散",乙:"乙不栽植千株不長",丙:"丙不修灶必見災殃",丁:"丁不剃頭頭必生瘡",戊:"戊不受田田主不祥",己:"己不破券二比並亡",庚:"庚不經絡織機虛張",辛:"辛不合醬主人不嘗",壬:"壬不汲水更難提防",癸:"癸不詞訟理弱敵強"};
+const PENGZU_ZHI={子:"子不問卜自惹禍殃",丑:"丑不冠帶主不還鄉",寅:"寅不祭祀神鬼不嘗",卯:"卯不穿井水泉不香",辰:"辰不哭泣必主重喪",巳:"巳不遠行財物伏藏",午:"午不苫蓋屋主更張",未:"未不服藥毒氣入腸",申:"申不安床鬼祟入房",酉:"酉不會客醉坐顛狂",戌:"戌不吃犬作怪上床",亥:"亥不嫁娶不利新郎"};
+function renderHuangli(name,gender,sol,sub){
+  const y=sol.y,m=sol.m,d=sol.d;
+  const bz=calcBazi(y,m,d,12);
+  const dGan=bz.day.gan,dZhi=bz.day.zhi;
+  const lunar=solar2lunar(y,m,d);
+  const ny=naYin(dGan,dZhi), sx=SHENGXIAO[dZhi];
+  const zIdx=ZHI.indexOf(dZhi);
+  const chongZhi=ZHI[(zIdx+6)%12], chongSx=SHENGXIAO[chongZhi];
+  const SHA={申:"南",子:"南",辰:"南",寅:"北",午:"北",戌:"北",巳:"東",酉:"東",丑:"東",亥:"西",卯:"西",未:"西"};
+  const shaFang=SHA[dZhi];
+  const jcIdx=((zIdx-ZHI.indexOf(bz.month.zhi))%12+12)%12, jc=JIANCHU[jcIdx];
+  const hdIdx=((zIdx-ZHI.indexOf(HUANGDAO_START[bz.month.zhi]))%12+12)%12, hd=HUANGDAO_SEQ[hdIdx];
+  const xishen=XISHEN[dGan];
+  const wk=["日","一","二","三","四","五","六"][new Date(y,m-1,d).getDay()];
+  const lunarTxt=`${lunar.isLeap?"閏":""}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]}`;
+  // 綜合吉凶
+  const dayGood=(jc.cls==="good"&&hd.ji), dayBad=(jc.cls==="bad"&&!hd.ji);
+  const dayRank=dayGood?"吉日":dayBad?"凶日":(jc.cls==="good"||hd.ji)?"小吉":(jc.cls==="bad"||!hd.ji)?"小凶":"平";
+  const rankCls=dayRank==="吉日"?"good":dayRank==="凶日"?"bad":dayRank==="小吉"?"good":dayRank==="小凶"?"bad":"mid";
+
+  const html=`
+  <div class="sec-title"><span class="cn">黃曆 · 每日宜忌 · 擇日</span><span class="en">Chinese Almanac</span></div>
+  <div class="hlhero">
+    <div class="hldate">
+      <div class="hldnum">${y} 年 ${m} 月 ${d} 日</div>
+      <div class="hldsub">星期${wk}　·　農曆 ${lunarTxt}</div>
+    </div>
+    <div class="hlgz">
+      <div class="hlgzrow"><span>日柱干支</span><b>${dGan}${dZhi}（${sx}日）</b></div>
+      <div class="hlgzrow"><span>本日納音</span><b>${ny}</b></div>
+      <div class="hlrank ${rankCls}">${dayRank}</div>
+    </div>
+  </div>
+  <p class="approxnote">※ 本黃曆採傳統「建除十二神・黃道黑道・彭祖百忌」推算，以節氣定月建、日支定吉凶，供擇日參考；宜忌乃通則，重大事仍宜綜合命主八字喜用合參。</p>
+  <div class="reading">
+    <div class="rcard wide hl-yiji">
+      <h3><span class="ic">宜</span>今日所宜</h3>
+      <p class="hlyi">${jc.yi}</p>
+      <h3 style="margin-top:14px"><span class="ic">忌</span>今日所忌</h3>
+      <p class="hlji">${jc.ji}</p>
+    </div>
+    <div class="rcard"><h3><span class="ic">神</span>建除十二神 · ${jc.n}日</h3>
+      <div class="lead">本日為「<b style="color:var(--gold)">${jc.n}</b>」日（${jc.lv}）</div>
+      <p>「建除十二神」以節氣月建為基、循環推移，是傳統擇日定宜忌的根本。今值「${jc.n}」，宜忌如上。</p></div>
+    <div class="rcard"><h3><span class="ic">道</span>黃道黑道 · ${hd.n}</h3>
+      <div class="lead" style="color:${hd.ji?'var(--jade)':'#c2576f'}">本日值「${hd.n}」· ${hd.ji?"黃道吉日":"黑道凶日"}</div>
+      <p>黃道（青龍、明堂、金匱、天德、玉堂、司命）諸事較宜；黑道（天刑、朱雀、白虎、天牢、玄武、勾陳）則宜謹慎、守成為上。</p></div>
+    <div class="rcard"><h3><span class="ic">沖</span>本日沖煞</h3>
+      <div class="lead">沖 <b style="color:#c2576f">${chongSx}</b>（${chongZhi}）· 煞 <b>${shaFang}</b>方</div>
+      <p>屬「<b>${chongSx}</b>」者今日諸事宜避其鋒、勿動大事；行事亦宜避開「${shaFang}」方動土遠行。沖煞乃傳統避忌，平常心看待、趨吉避凶即可。</p></div>
+    <div class="rcard"><h3><span class="ic">位</span>本日喜神方位</h3>
+      <div class="lead">喜神 <b style="color:var(--jade)">${xishen}</b>方</div>
+      <p>喜神方位由本日天干（${dGan}）依五合定位。祈福、談事、開工、面談可朝向喜神方位（${xishen}）以納吉氣、助順遂。方位之說取其心安與專注，誠敬為要。</p></div>
+    <div class="rcard wide"><h3><span class="ic">忌</span>彭祖百忌</h3>
+      <p>${PENGZU_GAN[dGan]}；<br>${PENGZU_ZHI[dZhi]}。</p>
+      <p style="color:var(--ink-faint);font-size:.82rem;margin-top:6px">彭祖百忌為古人按日干支歸納之生活避忌口訣，輕鬆參考即可，不必拘泥。</p></div>
+    <div class="rcard wide"><h3><span class="ic">斷</span>擇日綜評</h3>
+      <p>${y}/${m}/${d}（${dGan}${dZhi}日・${jc.n}日・值${hd.n}），綜合判為「<b class="hlrk ${rankCls}">${dayRank}</b>」。${dayRank==="吉日"?"今日建除與黃道俱吉，宜把握辦理上述所宜之事，順勢而為、多得助力。":dayRank==="小吉"?"今日吉中帶平，辦理所宜之事大致順遂，留意所忌即可。":dayRank==="平"?"今日平平，宜順其自然、按部就班，不宜勉強行大事。":dayRank==="小凶"?"今日略有不順，重大事項宜緩、宜守，待吉日再行為上。":"今日建除黃道俱不利，重大事項（嫁娶、開市、動土、簽約）宜另擇吉日，平日作息如常即可。"}　欲擇吉辦事，可逐日切換日期比較，挑「吉日／成日／開日」且避開沖煞生肖者最佳。</p></div>
+  </div>`;
+  document.getElementById("result").innerHTML=html;
+  finishRender(sub);
 }
 
 /* ===== 米卦（梅花易數 · 體用斷） ===== */
