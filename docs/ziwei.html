@@ -372,6 +372,11 @@ header .meta b{color:var(--gold);font-weight:500}
 .sschip b{color:var(--gold-deep);font-size:1.05rem;letter-spacing:2px}
 .sschip span{font-size:.72rem;color:var(--purple);margin-left:8px;border:1px solid var(--line-soft);padding:1px 7px;border-radius:10px}
 .sschip i{display:block;font-style:normal;font-size:.8rem;color:var(--ink-dim);margin-top:8px;line-height:1.6}
+.sschip.ji{border-color:rgba(47,155,115,.4);background:linear-gradient(135deg,rgba(47,155,115,.07),var(--card))}
+.sschip.ji b{color:var(--jade)}
+.sschip.ji b::after{content:"吉";font-size:.6rem;color:#fff;background:var(--jade);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle;letter-spacing:0}
+.sschip.sha{border-color:rgba(196,87,111,.35)}
+.sschip.sha b::after{content:"煞";font-size:.6rem;color:#fff;background:#c2576f;border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle;letter-spacing:0}
 
 /* 命盤格局 */
 .gewrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
@@ -396,6 +401,21 @@ header .meta b{color:var(--gold);font-weight:500}
 .bgcard .bgyong{background:rgba(47,155,115,.08);border-left:3px solid var(--jade)}
 .bgcard .bgcb{background:rgba(124,95,176,.07);border-left:3px solid var(--purple-glow)}
 .bgcard .bgyong span,.bgcard .bgcb span{display:inline-block;font-weight:700;color:var(--gold-deep);margin-right:6px}
+
+/* 流月一覽（批流年彈窗內） */
+.lmgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:4px 0 6px}
+.lmcell{border:1px solid var(--line-soft);border-radius:10px;padding:8px 4px;text-align:center;background:var(--card)}
+.lmcell .lmm{font-size:.72rem;color:var(--ink-faint)}
+.lmcell .lmgz{font-size:.92rem;color:var(--gold-deep);letter-spacing:1px;margin-top:2px}
+.lmcell .lmtg{font-size:.66rem;color:var(--purple);margin-top:2px}
+.lmcell .lmmk{font-size:.66rem;margin-top:4px;border-radius:8px;padding:1px 0;font-weight:700}
+.lmcell.lmgood{border-color:rgba(47,155,115,.4);background:linear-gradient(135deg,rgba(47,155,115,.09),var(--card))}
+.lmcell.lmgood .lmmk{color:var(--jade)}
+.lmcell.lmbad{border-color:rgba(196,87,111,.35);background:linear-gradient(135deg,rgba(196,87,111,.07),var(--card))}
+.lmcell.lmbad .lmmk{color:#c2576f}
+.lmcell.lmmid .lmmk{color:var(--ink-faint)}
+.lmnote{font-size:.78rem;color:var(--ink-dim);line-height:1.7;margin-top:4px}
+@media(max-width:520px){.lmgrid{grid-template-columns:repeat(4,1fr)}}
 
 /* 三方四正 */
 .triowrap{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -1409,24 +1429,56 @@ function calcLuck(y,m,d,bz,gender){
 }
 
 /* 神煞 */
+const SHENSHA_JI=new Set(["天乙貴人","文昌貴人","金輿","月德貴人","天德貴人","紅鸞","天喜","學堂"]); // 吉神
+const SHENSHA_SHA=new Set(["劫煞","亡神","羊刃","孤辰","寡宿","紅艷"]); // 煞星（桃花/驛馬/華蓋/將星屬中性）
+function ssTier(name){return SHENSHA_JI.has(name)?"ji":SHENSHA_SHA.has(name)?"sha":"mid";}
 function shenSha(bz){
   const branches=[bz.year.zhi,bz.month.zhi,bz.day.zhi,bz.hour.zhi];
+  const stems=[bz.year.gan,bz.month.gan,bz.day.gan,bz.hour.gan];
   const labels=["年","月","日","時"];
-  const find=t=>{const i=branches.indexOf(t);return i>=0?labels[i]:null;};
+  const findB=t=>{if(!t)return null;const i=branches.indexOf(t);return i>=0?labels[i]:null;};
+  const findS=t=>{if(!t)return null;const i=stems.indexOf(t);return i>=0?labels[i]:null;};
   const out=[];
+  const pushB=(name,target,desc)=>{const at=findB(target);if(at)out.push({name,at,desc,tier:ssTier(name)});};
+  const pushS=(name,target,desc)=>{const at=findS(target);if(at)out.push({name,at,desc,tier:ssTier(name)});};
+  const dg=bz.day.gan, yz=bz.year.zhi, mz=bz.month.zhi, dz=bz.day.zhi;
+  // —— 日干系 ——
   const TIANYI={甲:["丑","未"],戊:["丑","未"],庚:["丑","未"],乙:["子","申"],己:["子","申"],丙:["亥","酉"],丁:["亥","酉"],壬:["卯","巳"],癸:["卯","巳"],辛:["寅","午"]};
   const WENCHANG={甲:"巳",乙:"午",丙:"申",戊:"申",丁:"酉",己:"酉",庚:"亥",辛:"子",壬:"寅",癸:"卯"};
+  const JINYU={甲:"辰",乙:"巳",丙:"未",丁:"申",戊:"未",己:"申",庚:"戌",辛:"亥",壬:"丑",癸:"寅"};
+  const XUETANG={甲:"亥",乙:"午",丙:"寅",丁:"酉",戊:"寅",己:"酉",庚:"巳",辛:"子",壬:"申",癸:"卯"};
+  const HONGYAN={甲:"午",乙:"午",丙:"寅",丁:"未",戊:"辰",己:"辰",庚:"戌",辛:"酉",壬:"子",癸:"申"};
+  const YANGREN={甲:"卯",丙:"午",戊:"午",庚:"酉",壬:"子"}; // 陽干羊刃
+  (TIANYI[dg]||[]).forEach(t=>pushB("天乙貴人",t,"逢凶化吉、得貴人提攜之最上吉星。"));
+  pushB("文昌貴人",WENCHANG[dg],"主聰明科甲、文采學業、考試功名。");
+  pushB("金輿",JINYU[dg],"主富貴清吉、配偶賢良，常得意外提攜與助力。");
+  pushB("學堂",XUETANG[dg],"主聰穎好學、利讀書考試與專業進修，文星之吉。");
+  pushB("紅艷",HONGYAN[dg],"主多情風流、異性緣濃、魅力出眾，宜善守分寸。");
+  pushB("羊刃",YANGREN[dg],"主剛烈果決、衝勁十足，能成大事亦須防衝動與血光。");
+  // —— 三合局系（以日支定局）——
   const SANHE={申:"水",子:"水",辰:"水",寅:"火",午:"火",戌:"火",巳:"金",酉:"金",丑:"金",亥:"木",卯:"木",未:"木"};
+  const g=SANHE[dz];
   const TAOHUA={水:"酉",火:"卯",金:"午",木:"子"},YIMA={水:"寅",火:"申",金:"亥",木:"巳"},
-        HUAGAI={水:"辰",火:"戌",金:"丑",木:"未"},JIANGXING={水:"子",火:"午",金:"酉",木:"卯"};
-  const g=SANHE[bz.day.zhi];
-  const push=(name,target,desc)=>{const at=find(target);if(at)out.push({name,at,desc});};
-  (TIANYI[bz.day.gan]||[]).forEach(t=>push("天乙貴人",t,"逢凶化吉、得貴人提攜之最上吉星。"));
-  push("文昌貴人",WENCHANG[bz.day.gan],"主聰明科甲、文采學業、考試功名。");
-  push("桃花",TAOHUA[g],"主人緣魅力、異性緣與藝術才情。");
-  push("驛馬",YIMA[g],"主奔波遷動、外出發展、變動求財。");
-  push("華蓋",HUAGAI[g],"主才藝聰慧、孤高，近藝術宗教玄學。");
-  push("將星",JIANGXING[g],"主掌權領導、威儀，宜居要職。");
+        HUAGAI={水:"辰",火:"戌",金:"丑",木:"未"},JIANGXING={水:"子",火:"午",金:"酉",木:"卯"},
+        JIESHA={水:"巳",火:"亥",金:"寅",木:"申"},WANGSHEN={水:"亥",火:"巳",金:"申",木:"寅"};
+  pushB("桃花",TAOHUA[g],"主人緣魅力、異性緣與藝術才情。");
+  pushB("驛馬",YIMA[g],"主奔波遷動、外出發展、變動求財。");
+  pushB("華蓋",HUAGAI[g],"主才藝聰慧、孤高，近藝術宗教玄學。");
+  pushB("將星",JIANGXING[g],"主掌權領導、威儀，宜居要職。");
+  pushB("劫煞",JIESHA[g],"主競爭破耗、外來阻力，宜守成防失、轉煞為機。");
+  pushB("亡神",WANGSHEN[g],"主謀略內斂、得失之間，宜光明行事、莫存僥倖。");
+  // —— 年支系 ——
+  const yzi=ZHI.indexOf(yz);
+  const hong=ZHI[((3-yzi)%12+12)%12], xi=ZHI[((3-yzi+6)%12+12)%12];
+  pushB("紅鸞",hong,"主婚姻喜慶、桃花姻緣，逢之多有成家添喜之事。");
+  pushB("天喜",xi,"主喜慶吉事、添丁進財，性情開朗得人緣。");
+  const GROUP=zz=>("亥子丑".includes(zz)?0:"寅卯辰".includes(zz)?1:"巳午未".includes(zz)?2:3);
+  const GU=["寅","巳","申","亥"],GUA=["戌","丑","辰","未"];
+  pushB("孤辰",GU[GROUP(yz)],"主性情孤高、獨立自處，宜廣結善緣、調和人際。");
+  pushB("寡宿",GUA[GROUP(yz)],"主清冷自守、緣分較淡，宜主動經營親密關係。");
+  // —— 月支系 ——
+  const YUEDE={火:"丙",水:"壬",木:"甲",金:"庚"};
+  pushS("月德貴人",YUEDE[SANHE[mz]],"主慈祥福厚、逢凶化吉，一生少病災、多蔭德。");
   // 去重
   const seen=new Set();return out.filter(o=>{const k=o.name+o.at;if(seen.has(k))return false;seen.add(k);return true;});
 }
@@ -3305,10 +3357,19 @@ function zwLuck(i){
 
 /* 批流年白話彈窗 */
 function zwLiunian(Y){
-  const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name,birthYear=D.birthYear;
+  const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name,birthYear=D.birthYear,dm=D.dm,st=D.adv.strength;
   const gi=((Y-4)%10+10)%10, zi=((Y-4)%12+12)%12;
   const gan=GAN[gi], zhi=ZHI[zi], sx=SHENGXIAO[zhi];
   const age=Y-birthYear+1, isCur=Y===2026;
+  // 流月（五虎遁・年上起月）
+  const baseM=[2,4,6,8,0][gi%5];   // 正月(寅)月干起點
+  const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
+  const lmHTML=Array.from({length:12},(_,k)=>{
+    const mg=GAN[(baseM+k)%10], mzh=ZHI[(2+k)%12], mwx=GAN_WX[mg], mtg=tenGod(dm,mg);
+    const isXi=st.xi.includes(mwx), isJi=st.ji.includes(mwx);
+    const mark=isXi?"吉":isJi?"留意":"平", cls=isXi?"lmgood":isJi?"lmbad":"lmmid";
+    return `<div class="lmcell ${cls}"><div class="lmm">${lmLabels[k]}月</div><div class="lmgz">${mg}${mzh}</div><div class="lmtg">${mtg}</div><div class="lmmk">${mark}</div></div>`;
+  }).join("");
   const branch=zi, pname=zw.palaceName[branch], gz=zw.palaceGan[branch]+ZHI[branch];
   const mainStars=(zw.stars[branch]||[]).filter(s=>s.type==="main").map(s=>s.name);
   const starTxt=mainStars.length?mainStars.join("、"):"空宮（借對宮論）";
@@ -3329,6 +3390,9 @@ function zwLiunian(Y){
       流年逢化祿之宮可進取，逢化忌之宮宜低調防耗、化解糾結。</p>
     <div class="zwsec">這一年的大限背景</div>
     <p>虛歲 ${age} 落在「<b style="color:var(--purple-glow)">${limName}</b>」大限（${limRange}）之中——大限定十年基調、流年定當年起伏，兩者須合參。</p>
+    <div class="zwsec">流月運勢一覽（${Y} 年・逐月）</div>
+    <div class="lmgrid">${lmHTML}</div>
+    <p class="lmnote">流月以節氣交接為界（約當國曆次月）。逢喜用神（<b style="color:var(--jade)">${st.xi.join("、")}</b>）之月，五行得氣、諸事較順，宜進取佈局；逢忌神（<b style="color:#d47f8f">${st.ji.join("、")}</b>）之月宜守成緩進、穩中防耗。每月干支相對日主之十神，亦提示該月之事務重心。</p>
     <div class="zwsec">白話總評</div>
     <p>${isCur?`${Y} 年正是 ${name} 當前的流年。`:`展望 ${Y} 年，`}流年行入「${pname}」、坐 ${starTxt}，${gan}干引動四化如上。把握化祿化權之機、留意化忌之宮，順勢經營此宮所主的人生領域，這一年自能趨吉避凶、穩中求進。</p>`;
   zwOpenModal("紫微斗數 · 批流年",`${Y} 年 · ${gan}${zhi}（${sx}年）`,`虛歲 ${age} · 流年入${pname}`,body);
@@ -3585,7 +3649,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   // ===== 神煞 =====
   const ssHTML=adv.ss.length
-    ?adv.ss.map(s=>`<div class="sschip" title="${s.desc}"><b>${s.name}</b><span>${s.at}柱</span><i>${s.desc}</i></div>`).join("")
+    ?adv.ss.map(s=>`<div class="sschip ${s.tier}" title="${s.desc}"><b>${s.name}</b><span>${s.at}柱</span><i>${s.desc}</i></div>`).join("")
     :`<div class="sschip"><b>命局清純</b><i>命中神煞平和，貴在自身用功積德。</i></div>`;
 
   // ===== 格局 =====
