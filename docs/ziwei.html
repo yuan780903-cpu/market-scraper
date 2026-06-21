@@ -425,6 +425,48 @@ header .meta b{color:var(--gold);font-weight:500}
 .triocard .tsm{font-size:.92rem;color:var(--gold-deep);margin-top:8px;letter-spacing:1px;line-height:1.5}
 .trionote{text-align:center;color:var(--ink-faint);font-size:.84rem;line-height:1.8;margin-top:14px;max-width:760px;margin-left:auto;margin-right:auto}
 
+/* ===== 四化飛星 · 飛線盤 ===== */
+.flywrap{margin-top:6px}
+.flyctrl{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:14px}
+.flybtn{background:var(--card2);border:1px solid var(--line-soft);color:var(--ink-dim);
+  border-radius:9px;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:.84rem;letter-spacing:1px;transition:.25s}
+.flybtn:hover{border-color:var(--gold);color:var(--gold-deep)}
+.flybtn.on{background:linear-gradient(135deg,var(--purple-glow),var(--purple));color:#fff;border-color:transparent;box-shadow:0 8px 20px -12px var(--purple-glow)}
+.flybtn.syn{border-style:dashed}
+.flyboard{position:relative;max-width:660px;margin:0 auto}
+.flychart{position:relative;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(78px,auto));gap:5px;z-index:1}
+.flycell{background:var(--card2);border:1px solid var(--line-soft);border-radius:11px;padding:8px 7px 6px;
+  display:flex;flex-direction:column;text-align:center;transition:.25s;position:relative}
+.flycell .fpn{font-size:.8rem;color:var(--gold-deep);letter-spacing:1px}
+.flycell .fpg{font-size:.68rem;color:var(--ink-faint);margin:2px 0 4px}
+.flycell .fps{font-size:.74rem;color:var(--ink-dim);line-height:1.5;letter-spacing:.5px;margin-top:auto}
+.flycell.src{border-color:var(--purple);box-shadow:inset 0 0 0 1px var(--purple),0 10px 24px -16px var(--purple-glow)}
+.flycell.tgt{border-color:var(--gold)}
+.flycell.zihua{border-color:#d47f8f;box-shadow:inset 0 0 0 1px #d47f8f}
+.flycell .fzh{position:absolute;top:5px;right:6px;font-size:.6rem;color:#fff;background:#d47f8f;border-radius:4px;padding:1px 4px;letter-spacing:1px}
+.flycell .ftag{position:absolute;top:5px;left:6px;font-size:.62rem;color:#fff;border-radius:4px;padding:1px 5px;letter-spacing:1px}
+.ftag.lu{background:#3a9e6a}.ftag.quan{background:#d68a32}.ftag.ke{background:#5a86c4}.ftag.ji{background:#c45a6e}
+.flysvg{position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
+.flycenter{grid-row:2/4;grid-column:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--wash);border:1px dashed var(--gold);border-radius:14px;padding:10px;text-align:center}
+.flycenter .fct{font-size:.82rem;color:var(--gold-deep);letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.flycenter .fcl{font-size:.7rem;color:var(--ink-dim);line-height:1.7}
+.flycenter .fcl .lu{color:#2f8a5b;font-weight:700}.flycenter .fcl .quan{color:#bf7a22;font-weight:700}
+.flycenter .fcl .ke{color:#3f6fb0;font-weight:700}.flycenter .fcl .ji{color:#b8485e;font-weight:700}
+.flyinfo{max-width:660px;margin:16px auto 0;background:var(--card2);border:1px solid var(--line-soft);border-radius:13px;padding:14px 16px}
+.flyinfo .fih{font-size:.9rem;color:var(--gold-deep);letter-spacing:1px;margin-bottom:9px;text-align:center}
+.flyrow{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-top:1px dashed var(--line-soft);font-size:.84rem;line-height:1.7;color:var(--ink-dim)}
+.flyrow:first-of-type{border-top:none}
+.flyrow .fb{flex:none;width:22px;height:22px;border-radius:6px;color:#fff;font-size:.72rem;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.fb.lu{background:#3a9e6a}.fb.quan{background:#d68a32}.fb.ke{background:#5a86c4}.fb.ji{background:#c45a6e}
+.flyrow b{color:var(--gold-deep)}
+.flynote{text-align:center;color:var(--ink-faint);font-size:.82rem;line-height:1.8;margin-top:12px;max-width:720px;margin-left:auto;margin-right:auto}
+@media(max-width:640px){
+  .flychart{grid-template-rows:repeat(4,minmax(62px,auto));gap:4px}
+  .flycell{padding:6px 4px 5px}.flycell .fpn{font-size:.72rem}.flycell .fps{font-size:.64rem}
+  .flybtn{padding:6px 9px;font-size:.76rem}
+}
+
 /* 流年宮位徽章 / 當前大限 */
 .cell .frow{display:flex;justify-content:space-between;align-items:baseline}
 .cell .daxian{font-size:.62rem;color:var(--ink-faint);margin-top:3px}
@@ -3617,6 +3659,102 @@ function zwTrio(b,i){
   zwOpenModal("紫微斗數 · 三方四正",labels[i]+" · "+pname,gz,body);
 }
 
+/* ===== 四化飛星 · 飛線盤 ===== */
+const FLY_COLORS={lu:"#3a9e6a",quan:"#d68a32",ke:"#5a86c4",ji:"#c45a6e"};
+const FLY_LABEL={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+const FLY_KEYS=["lu","quan","ke","ji"];
+const FLY_MEAN={
+  lu:"財祿、福分、機緣順遂之氣流入",
+  quan:"權柄、能力、主導掌控之力灌注",
+  ke:"聲名、貴人、文書科甲之喜映照",
+  ji:"執著、糾結、耗損牽掛之力沖擊，宜留意化解"
+};
+function _flyStarLoc(zw){const m={};for(let b=0;b<12;b++)(zw.stars[b]||[]).forEach(s=>{m[s.name]=b;});return m;}
+function _flyPt(el,cr){const r=el.getBoundingClientRect();return {x:r.left+r.width/2-cr.left,y:r.top+r.height/2-cr.top};}
+function _flyClear(){
+  document.querySelectorAll('.flycell').forEach(c=>{c.classList.remove('src','tgt','zihua');c.querySelectorAll('.ftag,.fzh').forEach(t=>t.remove());});
+}
+function _flyDraw(segs){
+  const svg=document.getElementById('flySvg'),chart=document.getElementById('flyChart');
+  if(!svg||!chart)return;
+  const cr=chart.getBoundingClientRect();
+  let defs='<defs>';
+  FLY_KEYS.forEach(k=>{defs+=`<marker id="fa-${k}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${FLY_COLORS[k]}"/></marker>`;});
+  defs+='</defs>';
+  let body='';
+  segs.forEach(s=>{
+    const fe=document.getElementById(s.fromId),te=document.getElementById(s.toId);
+    if(!fe||!te)return;
+    const a=_flyPt(fe,cr),b=_flyPt(te,cr);
+    const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+    const sx=a.x+dx/len*12,sy=a.y+dy/len*12,ex=b.x-dx/len*16,ey=b.y-dy/len*16;
+    body+=`<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${FLY_COLORS[s.type]}" stroke-width="2.3" opacity="0.82" marker-end="url(#fa-${s.type})"/>`;
+    const mx=(sx+ex)/2,my=(sy+ey)/2;
+    body+=`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="9" fill="#fff" stroke="${FLY_COLORS[s.type]}" stroke-width="1.4"/><text x="${mx.toFixed(1)}" y="${(my+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${FLY_COLORS[s.type]}">${FLY_LABEL[s.type]}</text>`;
+  });
+  svg.innerHTML=defs+body;
+}
+function zwFly(b){
+  const D=window.__ZW;if(!D)return;const zw=D.zw;
+  if(!document.getElementById('flyChart'))return;
+  window.__FLY={sel:b};
+  document.querySelectorAll('.flybtn').forEach(x=>x.classList.remove('on'));
+  const btn=document.getElementById('flybtn-'+b);if(btn)btn.classList.add('on');
+  _flyClear();
+  const loc=_flyStarLoc(zw),stem=zw.palaceGan[b],arr=SIHUA[stem];
+  const src=document.getElementById('fly-cell-'+b);if(src)src.classList.add('src');
+  const segs=[],rows=[];let zihua=0;
+  FLY_KEYS.forEach((k,i)=>{
+    const star=arr[i],tb=loc[star];
+    if(tb===undefined){rows.push({type:k,txt:`<b>${star}化${FLY_LABEL[k]}</b> ——本盤未見此星入宮，${FLY_MEAN[k]}懸而未顯。`});return;}
+    const tc=document.getElementById('fly-cell-'+tb);
+    if(tb===b){
+      zihua++;
+      if(tc){tc.classList.add('zihua');const z=document.createElement('span');z.className='fzh';z.textContent='自化'+FLY_LABEL[k];tc.appendChild(z);}
+      rows.push({type:k,txt:`<b>${star} 自化${FLY_LABEL[k]}</b>（飛回本宮）——本宮${FLY_MEAN[k]}，能量自給自消、來去較快。`});
+    }else{
+      if(tc){tc.classList.add('tgt');const t=document.createElement('span');t.className='ftag '+k;t.textContent=FLY_LABEL[k];tc.appendChild(t);}
+      segs.push({fromId:'fly-cell-'+b,toId:'fly-cell-'+tb,type:k});
+      rows.push({type:k,txt:`<b>${star}化${FLY_LABEL[k]}</b> 飛入【${zw.palaceName[tb]}】（${zw.palaceGan[tb]}${ZHI[tb]}）——${FLY_MEAN[k]}此宮所主之事。`});
+    }
+  });
+  _flyDraw(segs);
+  const info=document.getElementById('flyInfo');
+  if(info){info.innerHTML=`<div class="fih">【${zw.palaceName[b]}】宮干「${stem}」飛化　—　看此宮如何牽動其他人生面向</div>`
+    +rows.map(r=>`<div class="flyrow"><span class="fb ${r.type}">${FLY_LABEL[r.type]}</span><div>${r.txt}</div></div>`).join("")
+    +(zihua?`<div class="flynote" style="margin-top:10px">本宮出現 ${zihua} 個「自化」：四化飛回本宮，主能量自給自消、變化快速，吉凶來得直接。</div>`:"");}
+}
+function zwFlySyn(){
+  const D=window.__ZW;if(!D)return;const zw=D.zw,bz=D.bz;
+  if(!document.getElementById('flyChart'))return;
+  window.__FLY={sel:'syn'};
+  document.querySelectorAll('.flybtn').forEach(x=>x.classList.remove('on'));
+  const btn=document.getElementById('flybtn-syn');if(btn)btn.classList.add('on');
+  _flyClear();
+  const loc=_flyStarLoc(zw),stem=bz.year.gan,arr=SIHUA[stem];
+  const segs=[],rows=[];
+  FLY_KEYS.forEach((k,i)=>{
+    const star=arr[i],tb=loc[star];
+    if(tb===undefined){rows.push({type:k,txt:`<b>${star}化${FLY_LABEL[k]}</b> ——本盤未見此星入宮。`});return;}
+    const tc=document.getElementById('fly-cell-'+tb);
+    if(tc){tc.classList.add('tgt');const t=document.createElement('span');t.className='ftag '+k;t.textContent=FLY_LABEL[k];tc.appendChild(t);}
+    segs.push({fromId:'flyCenter',toId:'fly-cell-'+tb,type:k});
+    rows.push({type:k,txt:`<b>${star}化${FLY_LABEL[k]}</b> 坐【${zw.palaceName[tb]}】（${zw.palaceGan[tb]}${ZHI[tb]}）——先天注定，${FLY_MEAN[k]}此宮，是一生${k==='ji'?'最須留意化解':'最易得力'}之處。`});
+  });
+  _flyDraw(segs);
+  const info=document.getElementById('flyInfo');
+  if(info){info.innerHTML=`<div class="fih">生年四化（${stem}干）落宮　—　與生俱來的四股能量，定錨於這四個人生面向</div>`
+    +rows.map(r=>`<div class="flyrow"><span class="fb ${r.type}">${FLY_LABEL[r.type]}</span><div>${r.txt}</div></div>`).join("");}
+}
+let _flyResizeBound=false;
+function _flyBindResize(){
+  if(_flyResizeBound)return;_flyResizeBound=true;
+  let t;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{
+    const F=window.__FLY;if(!F||!document.getElementById('flyChart'))return;
+    if(F.sel==='syn')zwFlySyn();else if(typeof F.sel==='number')zwFly(F.sel);
+  },180);});
+}
+
 function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const res=document.getElementById("result");
   const leapTxt=lunar.isLeap?"閏":"";
@@ -3786,6 +3924,28 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     return `<div class="triocard tap" onclick="zwTrio(${b},${i})"><div class="tl">${trioLabels[i]}</div><div class="tgz2">${zw.palaceGan[b]}${ZHI[b]}</div><div class="tsm">${ms}</div></div>`;
   }).join("");
 
+  // ===== 四化飛星 · 飛線盤 =====
+  const flyCells=(function(){
+    let cells="";
+    for(let b=0;b<12;b++){
+      const [r,c]=cellPos[b];
+      const mss=(zw.stars[b]||[]).filter(s=>s.type==="main");
+      const msTxt=mss.length?mss.map(s=>{
+        const h=s.hua?`<span class="sihua ${s.hua}">${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}</span>`:"";
+        return s.name+h;
+      }).join("　"):'<i style="opacity:.45">空宮</i>';
+      cells+=`<div class="flycell" id="fly-cell-${b}" data-branch="${b}" style="grid-row:${r};grid-column:${c}">
+        <div class="fpn">${zw.palaceName[b]}</div>
+        <div class="fpg">${zw.palaceGan[b]}${ZHI[b]}</div>
+        <div class="fps">${msTxt}</div>
+      </div>`;
+    }
+    return cells;
+  })();
+  const flyBtns=Array.from({length:12},(_,b)=>
+    `<button class="flybtn ${b===zw.ming?'on':''}" id="flybtn-${b}" onclick="zwFly(${b})">${zw.palaceName[b]}<small style="opacity:.6;margin-left:3px">${zw.palaceGan[b]}</small></button>`
+  ).join("")+`<button class="flybtn syn" id="flybtn-syn" onclick="zwFlySyn()">生年四化（${bz.year.gan}干）</button>`;
+
   // ===== 流年 2026 丙午 =====
   const lnSihua=SIHUA["丙"];
   const lnBranch=6, lnPalaceName=zw.palaceName[lnBranch];
@@ -3953,6 +4113,24 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="triowrap">${trioHTML}</div>
   <p class="trionote">命宮與其三方（財帛、官祿）四正（遷移）相互拱照，論命須三方並參——主星得正、會吉則吉，是斗數「不以一宮論斷」之精要。</p>
 
+  <div class="sec-title"><span class="cn">四化飛星 · 飛線盤</span><span class="en">Si Hua Flying Star</span></div>
+  <div class="lucksub"><span class="taphint">點選任一宮位，看該宮「宮干」飛出的祿權科忌四線落入哪些宮位（飛星派核心）；或看生年四化的落宮</span></div>
+  <div class="flywrap">
+    <div class="flyctrl">${flyBtns}</div>
+    <div class="flyboard">
+      <div class="flychart" id="flyChart">
+        ${flyCells}
+        <div class="flycenter" id="flyCenter">
+          <div class="fct">四化飛星</div>
+          <div class="fcl"><span class="lu">祿</span>福財順遂　<span class="quan">權</span>權柄能力<br><span class="ke">科</span>聲名貴人　<span class="ji">忌</span>執著耗損</div>
+        </div>
+        <svg class="flysvg" id="flySvg"></svg>
+      </div>
+    </div>
+    <div class="flyinfo" id="flyInfo"></div>
+    <p class="flynote">「飛星紫微斗數」以每一宮的<b>宮干</b>飛出四化、串起十二宮之間的能量流動：祿入之宮為得力受益處，忌入之宮為牽掛耗損處，祿忌相沖則成「破」。若四化飛回本宮，稱「自化」，主能量自我消長、來得快去得也快。此為進階玩法，僅供命理愛好者參研，重大事仍以三方四正與本命格局為本。</p>
+  </div>
+
   <div class="sec-title"><span class="cn">流年運程 · 2026 丙午</span><span class="en">Annual Forecast</span></div>
   <div class="reading">
     <div class="rcard wide">
@@ -4101,6 +4279,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   lcRefresh();
   lpMaybeShowButton();
   ecMaybeShowButton();
+  // 四化飛星飛線盤：初次預設顯示命宮飛化
+  _flyBindResize();
+  requestAnimationFrame(()=>{if(document.getElementById('flyChart'))zwFly(zw.ming);});
 }
 
 /* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel；綠界：?ecok/?ecfail） */
