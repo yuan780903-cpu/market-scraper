@@ -513,6 +513,21 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   cursor:pointer;box-shadow:0 12px 30px -14px var(--purple-glow);transition:.3s}
 .pdfbtn:hover{transform:translateY(-2px)}
 .toolbar .tbnote{display:block;margin-top:10px;color:var(--ink-faint);font-size:.78rem;letter-spacing:1px}
+.tbrow2{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.tbbtn2{background:#fff;border:1.5px solid var(--purple-glow);color:var(--purple);font-family:inherit;font-weight:600;font-size:.92rem;letter-spacing:1.5px;padding:12px 22px;border-radius:11px;cursor:pointer;transition:.25s;display:inline-flex;align-items:center;gap:8px}
+.tbbtn2:hover{background:var(--purple);color:#fff;border-color:var(--purple);transform:translateY(-2px)}
+.tbbtn2 .ic{font-weight:700;font-size:.95em}
+.toolbar #tbnote2{max-width:620px;margin-left:auto;margin-right:auto;line-height:1.7;letter-spacing:.3px}
+@media(max-width:520px){.tbbtn2{font-size:.85rem;padding:11px 16px;letter-spacing:.5px}.tbrow2{gap:9px}}
+/* ===== AI 文本輸出 modal ===== */
+.aiexp{display:flex;flex-direction:column;gap:13px}
+.aiexp textarea{width:100%;box-sizing:border-box;min-height:300px;max-height:50vh;font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-size:.8rem;line-height:1.75;color:var(--ink);background:#faf7f1;border:1px solid #e6ddcd;border-radius:10px;padding:14px;resize:vertical;letter-spacing:.2px;-webkit-overflow-scrolling:touch}
+.aiexp .aibtns{display:flex;gap:10px;flex-wrap:wrap}
+.aiexp .aibtn{flex:1;min-width:140px;background:linear-gradient(135deg,var(--purple-glow),var(--purple));color:#fff;border:none;font-family:inherit;font-weight:600;font-size:.94rem;letter-spacing:1px;padding:13px;border-radius:10px;cursor:pointer;transition:.2s}
+.aiexp .aibtn:hover{transform:translateY(-1px)}
+.aiexp .aibtn.sec{background:#fff;color:var(--purple);border:1.5px solid var(--purple-glow)}
+.aiexp .aihint{font-size:.78rem;color:var(--ink-faint);line-height:1.7}
+.aiexp .aiok{font-size:.84rem;color:var(--jade);font-weight:600;min-height:1.1em;text-align:center}
 .pdffab{position:fixed;right:16px;bottom:18px;z-index:90;display:none;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
 .pdffab.show{display:flex}
 .pdffabbtn{pointer-events:auto;background:linear-gradient(135deg,var(--purple-glow),var(--purple));border:none;color:#fff;
@@ -1273,7 +1288,13 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span></div>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span>
+    <div class="tbrow2">
+      <button id="aiExpBtn" class="tbbtn2" type="button"><span class="ic">✦</span>輸出 AI 分析文本</button>
+      <button id="calExpBtn" class="tbbtn2" type="button"><span class="ic">◆</span>加入個人農民曆</button>
+    </div>
+    <span class="tbnote" id="tbnote2">「AI 分析文本」可一鍵複製命盤結構化文字，貼到 ChatGPT 等 AI 深入解讀。「個人農民曆」下載 .ics 行事曆檔，內含流月吉凶與流年提醒，匯入手機行事曆即可隨時提醒。</span>
+  </div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
 </div>
@@ -3230,6 +3251,224 @@ function runPdfExport(fromFab){
 document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
 document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
 
+/* ===== 一鍵輸出 AI 結構化命盤文本 ===== */
+const _AIHUA={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+function _aiStars(zw,b){
+  const arr=zw.stars[b]||[];
+  if(!arr.length)return "（空宮）";
+  return arr.map(s=>{
+    let t=s.name;
+    if(s.bright)t+="("+s.bright+")";
+    if(s.hua)t+="化"+_AIHUA[s.hua];
+    if(s.type!=="main")t+="·輔";
+    return t;
+  }).join("、");
+}
+function buildAIText(){
+  const D=window.__ZW;if(!D)return "";
+  const zw=D.zw,adv=D.adv,bz=D.bz,dm=D.dm,name=D.name,gender=D.gender,wx=D.wx,lk=D.lk,st=adv.strength,by=D.birthYear,sol=D.sol,lunar=D.lunar;
+  const L=[],P=s=>L.push(s);
+  P("【人生實用說明書系統 · 結構化命盤文本（供 AI 分析）】");
+  P("");
+  P("一、命主基本資料");
+  P("姓名："+name+"　性別："+gender);
+  if(sol)P("國曆："+sol.y+" 年 "+sol.m+" 月 "+sol.d+" 日 "+String(sol.hh).padStart(2,"0")+":"+String(sol.mm).padStart(2,"0"));
+  if(lunar)P("農曆："+lunar.year+" 年 "+(lunar.isLeap?"閏":"")+lunar.month+" 月 "+lunar.day+" 日");
+  P("生肖："+SHENGXIAO[bz.year.zhi]+"　日主："+dm+"（"+GAN_WX[dm]+GAN_YY[dm]+"）　五行局："+zw.juName);
+  P("命宮："+zw.palaceGan[zw.ming]+ZHI[zw.ming]+"　身宮："+zw.palaceGan[zw.shen]+ZHI[zw.shen]+"　命主："+zw.mingZhu+"　身主："+zw.shenZhu);
+  P("");
+  P("二、子平八字（四柱）");
+  [["年",bz.year],["月",bz.month],["日",bz.day],["時",bz.hour]].forEach(function(e){
+    const lab=e[0],p=e[1];
+    const tg=lab==="日"?"日主":tenGod(dm,p.gan);
+    P(lab+"柱："+p.gan+p.zhi+"（天干十神："+tg+"　地支藏干："+ZHI_HID[p.zhi].join("、")+"　納音："+naYin(p.gan,p.zhi)+"）");
+  });
+  P("");
+  P("三、日主旺衰與喜用神");
+  P("旺衰："+st.level);
+  P("喜用神："+st.xi.join("、")+"　忌神："+st.ji.join("、"));
+  P("");
+  P("四、五行能量分布");
+  P(["木","火","土","金","水"].map(function(k){return k+" "+wx[k];}).join("　"));
+  P("");
+  P("五、格局");
+  P("八字月令格局："+adv.baziGe.name+"。"+(adv.baziGe.d||""));
+  P("紫微格局："+adv.ge.map(function(g){return g.n;}).join("、"));
+  P("");
+  P("六、神煞");
+  P(adv.ss.length?adv.ss.map(function(s){return s.name+"("+s.at+"柱)";}).join("、"):"無顯著神煞");
+  P("");
+  P("七、紫微斗數 · 命盤十二宮");
+  for(let b=0;b<12;b++){
+    const lim=adv.limits.limits[b];
+    P(zw.palaceName[b]+"（"+zw.palaceGan[b]+ZHI[b]+"，大限 "+lim.start+"–"+lim.end+" 歲）："+_aiStars(zw,b));
+  }
+  P("");
+  P("八、命宮三方四正");
+  [[zw.ming,"本宮·命宮"],[(zw.ming+6)%12,"對宮·遷移"],[(zw.ming+4)%12,"三合"],[(zw.ming+8)%12,"三合"]].forEach(function(e){
+    const b=e[0];P(e[1]+" "+zw.palaceName[b]+"（"+zw.palaceGan[b]+ZHI[b]+"）："+_aiStars(zw,b));
+  });
+  P("");
+  P("九、生年四化（"+bz.year.gan+"干引動）");
+  const loc=_flyStarLoc(zw),syh=SIHUA[bz.year.gan];
+  ["祿","權","科","忌"].forEach(function(k,i){
+    const star=syh[i],tb=loc[star];
+    P("化"+k+"："+star+(tb!=null?(" → 入【"+zw.palaceName[tb]+"】"):""));
+  });
+  P("");
+  P("十、大運（每柱十年）");
+  P("起運 "+lk.startAge+" 歲・"+(lk.forward?"順行":"逆行"));
+  lk.list.forEach(function(p,i){
+    P("第"+(i+1)+"步 "+p.age+"–"+(p.age+9)+" 歲："+p.gan+p.zhi+"（十神 "+tenGod(dm,p.gan)+"，納音 "+naYin(p.gan,p.zhi)+"）");
+  });
+  P("");
+  P("十一、流年（近六年・含四化）");
+  for(let Y=2026;Y<2032;Y++){
+    const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12;
+    const gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];
+    P(Y+" "+gan+zhi+"（虛歲 "+(Y-by+1)+"）流年命宮："+zw.palaceName[zi]+"　四化："+sh[0]+"祿、"+sh[1]+"權、"+sh[2]+"科、"+sh[3]+"忌");
+  }
+  P("");
+  P("──────────");
+  P("【建議分析指令】");
+  P("請依以上紫微斗數與子平八字命盤資料，為命主提供：1) 性格特質與天賦優勢；2) 事業與財運方向建議；3) 感情與人際課題；4) 今年（2026）與未來大運的重點提醒及趨吉避凶之道；5) 喜用神在生活中的開運應用（適合的顏色、方位、行業屬性）。請以白話、具體、正向務實的方式逐項說明。");
+  return L.join("\n");
+}
+function runAIExport(){
+  const D=window.__ZW;
+  if(!D){zwOpenModal("AI 分析文本","尚未排盤","",'<div class="aiexp"><p class="aihint">請先於上方輸入生辰並按「開始排盤」，產生命盤後再輸出 AI 分析文本。</p></div>');return;}
+  const txt=buildAIText();
+  const body='<div class="aiexp">'
+    +'<p class="aihint">下方為您的命盤結構化文字。按「複製全部」後，貼到 ChatGPT、Claude、Gemini 等 AI 對話框，即可請 AI 為您深入解讀。</p>'
+    +'<textarea id="aiExpArea" readonly>'+txt.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+'</textarea>'
+    +'<div class="aibtns"><button class="aibtn" id="aiCopyBtn" type="button">複製全部</button><button class="aibtn sec" id="aiDlBtn" type="button">下載文字檔</button></div>'
+    +'<div class="aiok" id="aiCopyOk"></div></div>';
+  zwOpenModal("一鍵輸出 · AI 分析文本",D.name+" · 命盤結構化文本","供 ChatGPT／Claude 等 AI 深入解讀",body);
+  const okEl=document.getElementById("aiCopyOk");
+  document.getElementById("aiCopyBtn").addEventListener("click",function(){
+    const ta=document.getElementById("aiExpArea");
+    const done=function(){okEl.textContent="✓ 已複製，貼到 AI 對話框即可。";};
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){ta.focus();ta.select();document.execCommand("copy");done();});}
+      else{ta.focus();ta.select();document.execCommand("copy");done();}
+    }catch(e){ta.focus();ta.select();okEl.textContent="請長按選取後手動複製。";}
+  });
+  document.getElementById("aiDlBtn").addEventListener("click",function(){
+    _downloadFile((D.name||"命盤")+"_AI分析文本.txt",txt,"text/plain;charset=utf-8");
+    okEl.textContent="✓ 已下載文字檔。";
+  });
+}
+document.getElementById("aiExpBtn").addEventListener("click",runAIExport);
+
+/* ===== 一鍵帶入行事曆 · 個人農民曆（.ics） ===== */
+function _downloadFile(fname,content,mime){
+  try{
+    const blob=new Blob([content],{type:mime||"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=fname;
+    document.body.appendChild(a);a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},400);
+  }catch(e){}
+}
+function _icsDate(y,m,d){return String(y)+String(m).padStart(2,"0")+String(d).padStart(2,"0");}
+function _icsEsc(s){return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");}
+function buildICS(){
+  const D=window.__ZW;if(!D)return "";
+  const zw=D.zw,adv=D.adv,bz=D.bz,dm=D.dm,name=D.name,lk=D.lk,st=adv.strength,by=D.birthYear;
+  const now=new Date();
+  const stamp=now.getUTCFullYear()+String(now.getUTCMonth()+1).padStart(2,"0")+String(now.getUTCDate()).padStart(2,"0")+"T"+String(now.getUTCHours()).padStart(2,"0")+String(now.getUTCMinutes()).padStart(2,"0")+String(now.getUTCSeconds()).padStart(2,"0")+"Z";
+  let uid=0;
+  const ev=[];
+  // 一筆 VEVENT（全天事件 + 前一天提醒）
+  function add(y,m,d,title,desc){
+    uid++;
+    const nd=new Date(Date.UTC(y,m-1,d)+86400000);
+    ev.push(
+      "BEGIN:VEVENT",
+      "UID:zw-"+by+"-"+stamp+"-"+uid+"@life-manual",
+      "DTSTAMP:"+stamp,
+      "DTSTART;VALUE=DATE:"+_icsDate(y,m,d),
+      "DTEND;VALUE=DATE:"+_icsDate(nd.getUTCFullYear(),nd.getUTCMonth()+1,nd.getUTCDate()),
+      "SUMMARY:"+_icsEsc(title),
+      "DESCRIPTION:"+_icsEsc(desc),
+      "TRANSP:TRANSPARENT",
+      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+_icsEsc(title),"TRIGGER:-P1D","END:VALARM",
+      "END:VEVENT"
+    );
+  }
+  const Y=2026; // 流月以當前流年為準
+  const gi=((Y-4)%10+10)%10;
+  const baseM=[2,4,6,8,0][gi%5];
+  const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
+  // 12 個月建對應的「節」氣序號（立春=2,驚蟄=4...大雪=22,小寒=0次年）
+  const jieIdx=[2,4,6,8,10,12,14,16,18,20,22,0];
+  for(let k=0;k<12;k++){
+    const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg],mtg=tenGod(dm,mg);
+    const isXi=st.xi.includes(mwx),isJi=st.ji.includes(mwx);
+    const mark=isXi?"吉":isJi?"留意":"平";
+    // 節氣定月：冬月(k=10)在當年大雪、臘月(k=11)在次年小寒
+    let ey=Y,en=jieIdx[k];
+    if(k===11){ey=Y+1;} // 小寒在國曆1月
+    const monthNo=Math.floor(en/2)+1; // 該節氣所在國曆月
+    const day=sTerm(ey,en);
+    const title="流月｜"+lmLabels[k]+"月 "+mg+mzh+"（"+mark+"）";
+    const advTxt=isXi?("逢喜用神（"+mwx+"）之月，五行得氣、諸事較順，宜進取佈局、把握機緣。")
+      :isJi?("逢忌神（"+mwx+"）之月，宜守成緩進、穩中防耗，凡事多思而後行。")
+      :("五行持平之月，按部就班、穩健經營即可。");
+    add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 政遠大師．人生實用說明書系統");
+  }
+  // 近六年流年提醒（每年立春當天）
+  for(let yy=2026;yy<2032;yy++){
+    const ygi=((yy-4)%10+10)%10,yzi=((yy-4)%12+12)%12;
+    const ygan=GAN[ygi],yzhi=ZHI[yzi],sh=SIHUA[ygan];
+    const pname=zw.palaceName[yzi];
+    const lc=sTerm(yy,2); // 立春日
+    const title="流年｜"+yy+" "+ygan+yzhi+"年 入"+pname;
+    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-by+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 政遠大師．人生實用說明書系統");
+  }
+  // 未來大運切換里程碑（起運後各步，落在未來者）
+  const curAge=adv.curAge;
+  lk.list.forEach(function(p,i){
+    if(p.age<=curAge)return; // 只記未來尚未到的大運起點
+    const startYear=by+p.age-1; // 虛歲 age 對應之國曆年
+    if(startYear>2055)return;
+    const tg=tenGod(dm,p.gan);
+    const lc=sTerm(startYear,2);
+    add(startYear,2,lc,"大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起）","虛歲 "+p.age+" 進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。新運開啟，宜順此干支之性重新佈局十年重心。　— 政遠大師．人生實用說明書系統");
+  });
+  const lines=[
+    "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//人生實用說明書系統//個人農民曆//ZH-TW",
+    "CALSCALE:GREGORIAN","METHOD:PUBLISH",
+    "X-WR-CALNAME:"+_icsEsc(name+" · 個人農民曆"),
+    "X-WR-TIMEZONE:Asia/Taipei"
+  ].concat(ev).concat(["END:VCALENDAR"]);
+  // RFC5545：CRLF 換行
+  return lines.join("\r\n");
+}
+function runCalExport(){
+  const D=window.__ZW;
+  if(!D){zwOpenModal("個人農民曆","尚未排盤","",'<div class="aiexp"><p class="aihint">請先於上方輸入生辰並按「開始排盤」，產生命盤後再下載個人農民曆。</p></div>');return;}
+  const ics=buildICS();
+  _downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
+  const body='<div class="aiexp">'
+    +'<p class="aihint">已為您產生 <b>'+(D.name||"命主")+" · 個人農民曆.ics</b> 行事曆檔，內含：<br>"
+    +'・<b>2026 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
+    +'・<b>近六年流年提醒</b>（每年立春當天，含當年四化重點）<br>'
+    +'・<b>未來大運切換</b>里程碑<br>'
+    +'每筆皆設前一天彈出提醒，匯入後即成為您隨身的個人農民曆。</p>'
+    +'<div class="aihint" style="background:#faf7f1;border:1px solid #e6ddcd;border-radius:10px;padding:12px 14px;line-height:1.85">'
+    +'<b>如何匯入：</b><br>'
+    +'<b>iPhone</b>：點下載的 .ics 檔 →「加入全部」到行事曆。<br>'
+    +'<b>Android／Google 日曆</b>：電腦開 Google 日曆 → 設定 → 匯入與匯出 → 選此 .ics 檔。<br>'
+    +'<b>電腦</b>：雙擊 .ics 檔，由系統行事曆（行事曆 / Outlook）匯入即可。</div>'
+    +'<div class="aibtns"><button class="aibtn" id="calReDlBtn" type="button">重新下載 .ics</button></div>'
+    +'<div class="aiok" id="calOk">✓ 已開始下載，請於下載資料夾開啟匯入行事曆。</div></div>';
+  zwOpenModal("一鍵帶入 · 個人農民曆",D.name+" · 個人農民曆","流月吉凶 + 流年 + 大運．匯入手機隨時提醒",body);
+  const re=document.getElementById("calReDlBtn");
+  if(re)re.addEventListener("click",function(){_downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");document.getElementById("calOk").textContent="✓ 已重新下載。";});
+}
+document.getElementById("calExpBtn").addEventListener("click",runCalExport);
+
 function timeLabel(h){
   const z=Math.floor(((h+1)%24)/2)%12;
   return ZHI[z]+"時";
@@ -4014,7 +4253,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     +`綜合而言，命主宜揚 ${GAN_WX[dm]} 性之長，補喜用 ${st.xi.join("、")} 之氣；待人以誠、處事以恆，循四化之引、應大限之機，自能將先天之命，化為後天之運。`;
 
   // 存全域供觸控彈窗讀取
-  window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch,birthYear:sol.y};
+  window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch,birthYear:sol.y,sol,lunar};
   // 付費解鎖身分（姓名｜生日｜時間｜性別）
   window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender)};
 
