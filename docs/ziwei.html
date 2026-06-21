@@ -739,10 +739,48 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .nspro .nscol.adv li::before{content:"▲";position:absolute;left:0;color:var(--jade);font-size:.66rem;top:4px}
 .nspro .nscol.dis li::before{content:"▼";position:absolute;left:0;color:var(--rose);font-size:.66rem;top:4px}
 
+/* ===== 命運落差解析（先天命 vs 後天運） ===== */
+.gapwrap{margin-top:18px}
+.gapcompare{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin-bottom:18px}
+.gapcard{background:var(--card);border:1px solid var(--gold);border-radius:16px;padding:18px 14px;text-align:center;box-shadow:0 14px 34px -28px var(--shadow);display:flex;flex-direction:column;justify-content:center}
+.gapcard .gct{font-size:.8rem;color:var(--ink-faint);letter-spacing:2px}
+.gapcard .gcn{font-size:2.6rem;font-weight:800;color:var(--gold-deep);line-height:1.1;margin:6px 0 2px}
+.gapcard .gcs{font-size:.76rem;color:var(--ink-dim);letter-spacing:1px;line-height:1.5}
+.gapcard.na .gcn{font-size:1.2rem;color:var(--ink-faint);margin:14px 0}
+.gapvs{display:flex;align-items:center;justify-content:center;font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--purple)}
+.gapverdict{background:var(--wash);border:1px solid var(--gold);border-radius:16px;padding:18px 22px;margin-bottom:18px;line-height:1.95;font-size:.94rem;color:var(--ink)}
+.gapverdict b{color:var(--gold-deep)}
+.gaphd{font-size:.92rem;letter-spacing:2px;color:var(--ink-dim);margin:0 0 12px;text-align:center}
+.gapfactors{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.gapf{border:1px solid var(--line);border-radius:14px;padding:15px 17px;background:var(--card)}
+.gapf .gfh{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.gapf .gfdot{width:11px;height:11px;border-radius:50%;flex:none}
+.gapf.warn{border-color:var(--rose)} .gapf.warn .gfdot{background:var(--rose)}
+.gapf.ok{border-color:var(--jade)} .gapf.ok .gfdot{background:var(--jade)}
+.gapf.lever{border-color:var(--purple-glow)} .gapf.lever .gfdot{background:var(--purple-glow)}
+.gapf .gfn{font-weight:700;letter-spacing:1px;color:var(--ink);font-size:.95rem}
+.gapf .gfs{font-size:.68rem;letter-spacing:1px;padding:2px 9px;border-radius:999px;margin-left:auto;white-space:nowrap}
+.gapf.warn .gfs{background:rgba(194,87,111,.12);color:var(--rose)}
+.gapf.ok .gfs{background:rgba(47,155,115,.14);color:var(--jade)}
+.gapf.lever .gfs{background:rgba(138,99,196,.14);color:var(--purple)}
+.gapf p{font-size:.85rem;color:var(--ink-dim);line-height:1.75;margin:0}
+.gapaction{margin-top:18px;border:1px solid var(--purple-glow);border-radius:18px;padding:22px 24px;background:var(--card)}
+.gapaction h4{color:var(--purple);letter-spacing:2px;font-size:1.06rem;margin:0 0 12px}
+.gapaction ol{margin:0;padding-left:20px}
+.gapaction li{font-size:.9rem;color:var(--ink);line-height:1.85;margin-bottom:9px}
+.gapaction li:last-child{margin-bottom:0}
+.gapaction li b{color:var(--gold-deep)}
+.gapmotto{text-align:center;font-family:"Ma Shan Zheng",serif;font-size:1.35rem;color:var(--gold);letter-spacing:3px;margin:18px 0 2px}
+
 @media(max-width:640px){
   .scorewrap{grid-template-columns:1fr}
   .namescore{grid-template-columns:1fr;text-align:center}
   .nspro{grid-template-columns:1fr;text-align:left}
+  .gapcompare{grid-template-columns:1fr;gap:10px}
+  .gapvs{transform:rotate(90deg);font-size:1.2rem;margin:-2px 0}
+  .gapcard .gcn{font-size:2.3rem}
+  .gapfactors{grid-template-columns:1fr}
+  .gapaction{padding:20px 18px}
   .revealbtn{letter-spacing:4px;padding:15px 32px;font-size:1rem}
   .fammember{grid-template-columns:1fr 1fr;gap:8px}
   .fammember .rm{grid-column:1/-1}
@@ -2465,6 +2503,109 @@ function recalcName(){
  const box=document.getElementById("nameSec");if(!box)return;
  const ov=[...box.querySelectorAll(".skin")].map(i=>Math.max(1,parseInt(i.value)||1));
  box.innerHTML=nameBody(_nameRaw,ov,_nameCross);
+}
+
+/* ================= 命運落差解析（先天命 vs 後天運） ================= */
+function destinyGapSection(scores,name,dm,st,lk,adv,zw){
+ const mingScore=scores.total;
+ // —— 姓名分數（後天造命之一）——
+ const na=nameAnalysis(name);
+ let nameTotal=null,nameGrade="",nameWxXi=false,nameWxJi=false,nameRw="",nameDrag=false;
+ if(na){
+  const cross={sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:"日主"+dm,xi:st.xi,ji:st.ji};
+  const ns=nameScore(na,cross);
+  nameTotal=ns.total;nameGrade=ns.grade;nameRw=na.renWx;
+  nameWxXi=st.xi.includes(na.renWx)||st.xi.includes(na.zongWx);
+  nameWxJi=st.ji.includes(na.renWx)||st.ji.includes(na.zongWx);
+  nameDrag=(nameTotal<60)||nameWxJi||(mingScore-nameTotal>=20);
+ }
+ // —— 現行大運（時機）——
+ let luckP=null;for(let i=0;i<lk.list.length;i++){const p=lk.list[i];if(adv.curAge>=p.age&&adv.curAge<p.age+10){luckP=p;break;}}
+ let luckWx="",luckXi=false,luckJi=false,luckTg="";
+ if(luckP){luckWx=GAN_WX[luckP.gan];luckXi=st.xi.includes(luckWx);luckJi=st.ji.includes(luckWx);luckTg=tenGod(dm,luckP.gan);}
+ // —— 流年 2026 丙午（火）——
+ const lnXi=st.xi.includes("火"),lnJi=st.ji.includes("火");
+ // —— 落差總評 ——
+ const sources=[];
+ if(luckJi)sources.push("正行的大運走到忌神、時機未到");
+ if(lnJi)sources.push("今年流年五行偏忌");
+ if(nameDrag)sources.push("姓名後天能量未能助旺好命");
+ const highMing=mingScore>=72;
+ let verdict;
+ if(highMing&&sources.length){
+  verdict="您的先天命盤達 <b>"+mingScore+" 分</b>，格局確實不錯——這代表您「天生拿到一手好牌」。但命盤只是<b>先天的潛力起跑點</b>，真正的人生成就還要乘上後天諸多變數。以您目前的盤來看，落差可能來自："+sources.join("、")+"。好消息是，這些後天因素<b>大多操之在己、可以調整</b>，下方逐項為您拆解。";
+ }else if(highMing){
+  verdict="您的先天命盤達 <b>"+mingScore+" 分</b>，且現階段後天條件大致順遂。若仍感覺人生不如命盤所示，往往是「<b>喜用神未刻意經營、心性與環境尚有提升空間</b>」——命好更要懂得運作，下方提點如何把好牌打到滿分。";
+ }else{
+  verdict="您的先天命盤為 <b>"+mingScore+" 分</b>。命盤分數高低只定「先天起點」，<b>不等於人生的終點</b>——歷史上無數命盤平平卻大成就者，靠的正是後天的運勢時機、姓名、風水、心性與努力。下方逐項拆解您可以著力的後天槓桿。";
+ }
+ // —— 六大後天因素 ——
+ const fct=[];
+ // 1 時機（大運流年）
+ if(luckJi||lnJi){
+  fct.push({cls:"warn",badge:"可能拖累",n:"後天運勢時機（大運・流年）",
+   t:(luckJi?("您現行大運天干「"+luckP.gan+"」五行屬<b>"+luckWx+"</b>，正落命局忌神——如同好馬未逢伯樂，<b>英雄暫無用武之地</b>，宜守不宜攻、養精蓄銳；待大運轉入喜用，先天好命自會發力。"):"")
+     +(lnJi?(" 今年（丙午）流年五行偏火，亦非您的喜用，宜低調穩健、不躁進。"):"")});
+ }else if(luckXi){
+  fct.push({cls:"ok",badge:"大致無虞",n:"後天運勢時機（大運・流年）",
+   t:"您現行大運天干「"+luckP.gan+"」屬<b>"+luckWx+"</b>，正合命局喜用——時機正好，是先天好命最能發揮的階段，宜積極進取、把握機運。"});
+ }else{
+  fct.push({cls:"lever",badge:"中性・可順勢",n:"後天運勢時機（大運・流年）",
+   t:"您現行大運（"+(luckP?luckP.gan+luckP.zhi:"—")+"）五行中性，運勢平穩無大助大阻。此時最考驗後天努力——穩紮穩打、為下一步旺運佈局。"});
+ }
+ // 2 姓名
+ if(na){
+  if(nameDrag){
+   fct.push({cls:"warn",badge:"可能拖累",n:"姓名能量（後天造命）",
+    t:"您的姓名分數 <b>"+nameTotal+" 分</b>（"+nameGrade+"）"+(mingScore-nameTotal>=20?("，明顯低於命盤的 "+mingScore+" 分"):"")+(nameWxJi?("，且姓名主運五行屬<b>"+nameRw+"</b>偏命局忌神"):"")+"。名字是天天被呼喚的後天磁場，會潛移默化影響人際第一印象與運勢引導；<b>名不助命</b>正是常見的落差來源之一。可考慮以喜用神色彩、別名／英文名、印鑑調整補強，或諮詢專業改名。"});
+  }else{
+   fct.push({cls:"ok",badge:"大致無虞",n:"姓名能量（後天造命）",
+    t:"您的姓名分數 <b>"+nameTotal+" 分</b>（"+nameGrade+"）"+(nameWxXi?"，且姓名五行正合命局喜用，名運助旺先天好命、相得益彰":"，與命局大致相輔、不拖累運勢")+"。這一項您不必擔心。"});
+  }
+ }else{
+  fct.push({cls:"lever",badge:"待補資料",n:"姓名能量（後天造命）",
+   t:"尚未輸入完整中文姓名（需兩字以上），無法評估名運。姓名是重要的後天造命因素，建議於上方「姓名」欄填入完整中文姓名，系統即可分析名字是否助旺或拖累您的好命。"});
+ }
+ // 3 喜用神是否到位
+ const xi0=st.xi[0]||"木",life=WX_LIFE[xi0]||{色:"—",方:"—",業:"—"};
+ fct.push({cls:"lever",badge:"操之在己",n:"喜用神是否到位（開運調補）",
+  t:"您的喜用神為 <b style=\"color:var(--jade)\">"+st.xi.join("、")+"</b>、忌神為 <b style=\"color:#c2576f\">"+st.ji.join("、")+"</b>。多數人從未刻意在生活中補喜用、避忌神——這是<b>最容易自我調整的開運槓桿</b>。例如多用「"+life.色+"」、多朝「"+life.方+"」方位、選與喜用相合的行業，日積月累便能補先天之不足。"});
+ // 4 心性德行
+ fct.push({cls:"lever",badge:"操之在己",n:"心性與德行",
+  t:"古云「命好不如運好，運好不如<b>心好</b>」。同一張好命盤，心存善念、樂於助人、情緒穩定者，往往把好牌越打越旺；反之刻薄急躁，則自損福報。<b>積陰德、修心性</b>，是改命最根本也最有效的一環。"});
+ // 5 風水環境
+ fct.push({cls:"lever",badge:"操之在己",n:"風水與環境",
+  t:"「一命、二運、三<b>風水</b>」——居住、工作與睡眠的環境氣場，會持續影響身心與運勢。保持居處整潔通風、採光良好、座向合宜（可參酌喜用神方位），讓好環境承載您的好命。"});
+ // 6 努力選擇
+ fct.push({cls:"lever",badge:"操之在己",n:"努力與選擇（讀書・行業）",
+  t:"「四積陰德、五<b>讀書</b>」——再好的命也要靠後天的學習與正確選擇來兌現。行業是否選對（合喜用神）、是否持續精進一技之長、關鍵抉擇是否順勢，都決定您能把先天潛力發揮幾成。"});
+
+ const cards=fct.map(f=>'<div class="gapf '+f.cls+'"><div class="gfh"><span class="gfdot"></span><span class="gfn">'+f.n+'</span><span class="gfs">'+f.badge+'</span></div><p>'+f.t+'</p></div>').join("");
+
+ // —— 行動建議 ——
+ const acts=[];
+ if(luckJi)acts.push("<b>順時養運：</b>現行大運非喜用，這幾年以「守成、蓄力、佈局」為主，避免重大冒進；把力氣放在累積實力與人脈，待旺運到來再全力出擊。");
+ else if(luckXi)acts.push("<b>把握旺運：</b>現正走喜用大運，是衝刺的黃金期，宜果斷擴張、主動爭取，趁勢將先天好命變現。");
+ acts.push("<b>補喜用神：</b>日常多用「"+life.色+"」色系、座向／睡向朝「"+life.方+"」、職涯與投資傾向喜用相關領域（"+(life.業||"").split("、").slice(0,4).join("、")+"），長期調補命局。");
+ if(na&&nameDrag)acts.push("<b>調整名運：</b>姓名後天能量偏弱，可先以別名、英文名、常用署名或印鑑導入喜用五行；若影響顯著，再考慮專業改名。");
+ acts.push("<b>修心積德：</b>持善念、穩情緒、行好事——這是改命最根本的一步，好心性能把任何一張命盤越養越旺。");
+ acts.push("<b>務實精進：</b>選對方向、深耕一技、把握關鍵抉擇；命盤定潛力上限，努力決定您能逼近上限幾分。");
+
+ return '<div class="sec-title"><span class="cn">命運落差解析</span><span class="en">Destiny vs. Reality Gap</span></div>'
+  +'<div class="lucksub"><span class="taphint">為何命盤分數高、人生卻不如預期？先天命 × 後天運的落差拆解</span></div>'
+  +'<div class="gapwrap">'
+  +'<div class="gapcompare">'
+  +'<div class="gapcard"><div class="gct">先天命盤分</div><div class="gcn">'+mingScore+'</div><div class="gcs">天生的牌・潛力上限</div></div>'
+  +'<div class="gapvs">vs</div>'
+  +(na?('<div class="gapcard"><div class="gct">後天姓名分</div><div class="gcn">'+nameTotal+'</div><div class="gcs">'+nameGrade+'・後天造命之一</div></div>')
+      :('<div class="gapcard na"><div class="gct">後天姓名分</div><div class="gcn">待輸入姓名</div><div class="gcs">後天造命之一</div></div>'))
+  +'</div>'
+  +'<div class="gapverdict">'+verdict+'</div>'
+  +'<p class="gaphd">為什麼會有落差？六大後天因素逐項診斷</p>'
+  +'<div class="gapfactors">'+cards+'</div>'
+  +'<div class="gapaction"><h4>◆ 如何縮小落差 · 後天造命行動</h4><ol>'+acts.map(a=>"<li>"+a+"</li>").join("")+'</ol>'
+  +'<div class="gapmotto">命由天定，運靠己造</div></div>'
+  +'</div>';
 }
 
 /* ================= 介面 ================= */
@@ -4446,6 +4587,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
+
+  ${destinyGapSection(scores,name,dm,st,lk,adv,zw)}
 
   ${familySection(fam)}
   </div>
