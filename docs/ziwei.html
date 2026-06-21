@@ -211,6 +211,8 @@ header .meta b{color:var(--gold);font-weight:500}
 .seg button{flex:1;background:var(--surface);border:none;color:var(--ink-dim);padding:13px 0;
   font-family:inherit;font-size:.96rem;letter-spacing:2px;cursor:pointer;transition:.25s}
 .seg button.on{background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep));color:var(--night-0);font-weight:600}
+.seg.seg-time button{padding:9px 0;font-size:.84rem;letter-spacing:1px}
+.fieldtip{font-size:.74rem;color:var(--ink-faint);line-height:1.6;letter-spacing:.3px}
 .cast{margin-top:30px;width:100%;border:none;cursor:pointer;
   background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));
   color:var(--night-0);font-family:inherit;font-weight:700;font-size:1.18rem;letter-spacing:8px;
@@ -1165,7 +1167,26 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
       </div>
       <div class="field">
         <label>出生時間</label>
+        <div class="seg seg-time" id="timeMode">
+          <button type="button" data-m="clock" class="on">時鐘時間</button>
+          <button type="button" data-m="shichen">只記得時辰</button>
+        </div>
         <input id="time" type="time" value="12:00">
+        <select id="shichen" style="display:none" aria-label="出生時辰">
+          <option value="0">子時 · 23–01（夜半）</option>
+          <option value="2">丑時 · 01–03（雞鳴）</option>
+          <option value="4">寅時 · 03–05（平旦）</option>
+          <option value="6">卯時 · 05–07（日出）</option>
+          <option value="8">辰時 · 07–09（食時）</option>
+          <option value="10">巳時 · 09–11（隅中）</option>
+          <option value="12" selected>午時 · 11–13（日中）</option>
+          <option value="14">未時 · 13–15（日昳）</option>
+          <option value="16">申時 · 15–17（晡時）</option>
+          <option value="18">酉時 · 17–19（日入）</option>
+          <option value="20">戌時 · 19–21（黃昏）</option>
+          <option value="22">亥時 · 21–23（人定）</option>
+        </select>
+        <span class="fieldtip" id="shichenTip" style="display:none">不確定確切時間？選出生那個時段即可，系統取時辰中點換算排盤。</span>
       </div>
       <div class="field">
         <label>性別</label>
@@ -2433,6 +2454,30 @@ document.getElementById("genderSeg").addEventListener("click",e=>{
   b.classList.add("on"); gender=b.dataset.g;
 });
 
+/* 出生時間輸入模式：時鐘時間 / 只記得時辰 */
+let timeMode="clock";
+document.getElementById("timeMode").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  document.querySelectorAll("#timeMode button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); timeMode=b.dataset.m;
+  const isSC=timeMode==="shichen";
+  document.getElementById("time").style.display=isSC?"none":"";
+  document.getElementById("shichen").style.display=isSC?"":"none";
+  document.getElementById("shichenTip").style.display=isSC?"":"none";
+});
+/* 取得出生時間（依模式）→ {tv:"HH:MM", hh, mm, label} */
+function getBirthTime(){
+  if(timeMode==="shichen"){
+    const sel=document.getElementById("shichen");
+    const hh=Number(sel.value), mm=0;
+    const tv=String(hh).padStart(2,"0")+":00";
+    return {tv,hh,mm,label:sel.selectedOptions[0].textContent.trim()};
+  }
+  const tv=document.getElementById("time").value;
+  if(!tv)return {tv:"",hh:12,mm:0,label:""};
+  return {tv,hh:Number(tv.split(":")[0]),mm:Number(tv.split(":")[1]),label:""};
+}
+
 document.getElementById("castBtn").addEventListener("click",run);
 
 /* 系統切換：僅綜合命盤顯示家庭分析欄 */
@@ -2455,7 +2500,15 @@ function addFamMember(){
       <select class="f-rel"><optgroup label="家庭"><option>夫妻</option><option>兒女</option><option>父母</option><option>兄弟姊妹</option></optgroup><optgroup label="職場・生意"><option>職場長官</option><option>職場平輩</option><option>職場下屬</option><option>生意合夥人</option></optgroup><option>其他</option></select></div>
     <div class="field"><label>稱呼（選填）</label><input class="f-name" type="text" placeholder="如：太太"></div>
     <div class="field"><label>出生日期（國曆）</label><input class="f-date" type="date"></div>
-    <div class="field"><label>時間（選填）</label><input class="f-time" type="time"></div>
+    <div class="field"><label>時辰（選填）</label><select class="f-time">
+      <option value="">不確定（預設午時）</option>
+      <option value="0">子時 23–01</option><option value="2">丑時 01–03</option>
+      <option value="4">寅時 03–05</option><option value="6">卯時 05–07</option>
+      <option value="8">辰時 07–09</option><option value="10">巳時 09–11</option>
+      <option value="12">午時 11–13</option><option value="14">未時 13–15</option>
+      <option value="16">申時 15–17</option><option value="18">酉時 17–19</option>
+      <option value="20">戌時 19–21</option><option value="22">亥時 21–23</option>
+    </select></div>
     <button type="button" class="rm">移除</button>`;
   div.querySelector(".rm").addEventListener("click",()=>div.remove());
   document.getElementById("famList").appendChild(div);
@@ -2470,7 +2523,7 @@ function readFamMembers(){
     const [y,m,d]=dv.split("-").map(Number);
     if(y<1900||y>2100)return;
     const tv=row.querySelector(".f-time").value;
-    const hh=tv?Number(tv.split(":")[0]):12;
+    const hh=tv!==""?Number(tv):12;
     arr.push({rel:row.querySelector(".f-rel").value,name:row.querySelector(".f-name").value.trim(),y,m,d,hh});
   });
   return arr;
@@ -2515,15 +2568,16 @@ function run(){
   const err=document.getElementById("err"); err.style.display="none";
   const system=document.getElementById("system").value;
   const dv=document.getElementById("date").value;
-  const tv=document.getElementById("time").value;
+  const bt=getBirthTime();
+  const tv=bt.tv;
   const name=document.getElementById("name").value.trim()||"命主";
   if(!dv){err.textContent="請填寫出生日期。";err.style.display="block";return;}
   const [y,m,d]=dv.split("-").map(Number);
   if(y<1900||y>2100){err.textContent="本系統適用範圍為西元 1900–2100 年。";err.style.display="block";return;}
   if(system==="comp"&&!tv){err.textContent="綜合命盤需要出生時間以排定時柱與命宮，請填寫。";err.style.display="block";return;}
-  const hh=tv?Number(tv.split(":")[0]):12;
-  const mm=tv?Number(tv.split(":")[1]):0;
-  const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${tv||"（時辰未填）"}　·　製表 2026`;
+  const hh=bt.hh, mm=bt.mm;
+  const timeDisp=bt.label?`${bt.label.split("·")[0].trim()}`:(tv||"（時辰未填）");
+  const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${timeDisp}　·　製表 2026`;
 
   // 真太陽時校正：依出生地經度與時區中央經線，修正出生時刻供四柱／命宮排盤
   const cityEl=document.getElementById("city");
