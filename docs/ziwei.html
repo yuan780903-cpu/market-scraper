@@ -528,6 +528,29 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .aiexp .aibtn.sec{background:#fff;color:var(--purple);border:1.5px solid var(--purple-glow)}
 .aiexp .aihint{font-size:.78rem;color:var(--ink-faint);line-height:1.7}
 .aiexp .aiok{font-size:.84rem;color:var(--jade);font-weight:600;min-height:1.1em;text-align:center}
+/* ===== 八字重量（稱骨）+ 報告內應用工具 ===== */
+.bonewrap{background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:22px 22px 18px;margin:6px 14px 10px;box-shadow:0 12px 30px -20px var(--shadow)}
+.bonetop{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;text-align:center}
+.bonebig{color:var(--purple);line-height:1;display:flex;align-items:baseline;gap:1px}
+.bonebig b{font-size:3rem;font-weight:700;font-family:"Ma Shan Zheng",inherit}
+.bonebig span{font-size:1.05rem;color:var(--ink-faint);margin:0 3px}
+.bonelabel{font-size:1.18rem;font-weight:700;color:var(--gold);letter-spacing:1px}
+.bonepillars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 4px}
+.bonepill{background:var(--pwash);border:1px solid var(--purple-glow);border-radius:11px;padding:11px 6px;text-align:center}
+.bonepill .bpl{font-size:.73rem;color:var(--ink-faint);letter-spacing:1px}
+.bonepill .bpg{font-size:1.04rem;font-weight:700;color:var(--purple);margin:3px 0}
+.bonepill .bpw{font-size:.82rem;color:var(--jade);font-weight:600}
+.bonenote{margin-top:15px;line-height:1.95;color:var(--ink);font-size:.95rem}
+.bonenote b{color:var(--purple)}
+.bonefoot{margin-top:13px;font-size:.76rem;color:var(--ink-faint);line-height:1.7;border-top:1px dashed var(--line-soft);padding-top:11px}
+.toolcards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 14px 10px}
+.toolcard{background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:20px 20px 18px;display:flex;flex-direction:column;box-shadow:0 12px 30px -20px var(--shadow)}
+.toolcard h4{margin:0 0 9px;font-size:1.06rem;color:var(--purple);letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.toolcard h4 .ic{color:var(--gold);font-size:1em}
+.toolcard p{margin:0 0 16px;font-size:.86rem;line-height:1.8;color:var(--ink-faint);flex:1}
+.toolbtn{background:linear-gradient(135deg,var(--purple-glow),var(--purple));border:none;color:#fff;font-family:inherit;font-weight:600;font-size:.95rem;letter-spacing:1.5px;padding:13px;border-radius:11px;cursor:pointer;transition:.25s;width:100%}
+.toolbtn:hover{transform:translateY(-2px)}
+@media(max-width:640px){.toolcards{grid-template-columns:1fr}.bonepillars{gap:7px}.bonepill{padding:9px 4px}.bonebig b{font-size:2.5rem}.bonelabel{font-size:1.05rem}}
 .pdffab{position:fixed;right:16px;bottom:18px;z-index:90;display:none;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
 .pdffab.show{display:flex}
 .pdffabbtn{pointer-events:auto;background:linear-gradient(135deg,var(--purple-glow),var(--purple));border:none;color:#fff;
@@ -1326,12 +1349,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。</span>
-    <div class="tbrow2">
-      <button id="aiExpBtn" class="tbbtn2" type="button"><span class="ic">✦</span>輸出 AI 分析文本</button>
-      <button id="calExpBtn" class="tbbtn2" type="button"><span class="ic">◆</span>加入個人農民曆</button>
-    </div>
-    <span class="tbnote" id="tbnote2">「AI 分析文本」可一鍵複製命盤結構化文字，貼到 ChatGPT 等 AI 深入解讀。「個人農民曆」下載 .ics 行事曆檔，內含流月吉凶與流年提醒，匯入手機行事曆即可隨時提醒。</span>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。<br>「AI 分析文本」與「個人農民曆」已移至報告最末「命理應用工具」區，向下捲動即可使用。</span>
   </div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
@@ -2505,6 +2523,71 @@ function recalcName(){
  box.innerHTML=nameBody(_nameRaw,ov,_nameCross);
 }
 
+/* ================= 八字重量 · 袁天罡稱骨 ================= */
+const BONE_Y={ // 年柱（六十甲子）骨重，單位：錢
+ 甲子:12,乙丑:9,丙寅:6,丁卯:7,戊辰:12,己巳:5,庚午:9,辛未:8,壬申:7,癸酉:8,
+ 甲戌:15,乙亥:9,丙子:16,丁丑:8,戊寅:8,己卯:19,庚辰:12,辛巳:6,壬午:8,癸未:7,
+ 甲申:5,乙酉:15,丙戌:6,丁亥:16,戊子:15,己丑:7,庚寅:9,辛卯:12,壬辰:12,癸巳:7,
+ 甲午:15,乙未:6,丙申:5,丁酉:14,戊戌:14,己亥:9,庚子:7,辛丑:7,壬寅:9,癸卯:12,
+ 甲辰:8,乙巳:7,丙午:13,丁未:5,戊申:14,己酉:5,庚戌:9,辛亥:17,壬子:5,癸丑:7,
+ 甲寅:12,乙卯:8,丙辰:8,丁巳:6,戊午:19,己未:6,庚申:8,辛酉:16,壬戌:10,癸亥:6
+};
+const BONE_M=[6,7,18,9,5,16,9,15,18,8,9,5];                                          // 農曆月 1-12（錢）
+const BONE_D=[5,10,8,15,16,15,8,16,8,16,9,17,8,17,10,8,9,18,5,15,10,9,8,9,15,18,7,8,16,6]; // 農曆日 1-30（錢）
+const BONE_H={子:16,丑:6,寅:7,卯:10,辰:9,巳:16,午:10,未:8,申:8,酉:9,戌:6,亥:6};      // 時辰（錢）
+const BONE_TIER=[
+ {max:24,label:"骨輕福薄・白手自立之格",note:"先天骨格較輕、福基偏薄，少年根基多需自己一磚一瓦打下，難倚靠祖蔭與他人。然「命由天定，運靠己造」——此格之人若能勤勉自律、離鄉發展、廣結善緣，往往能在中晚年逐步翻轉局面，靠雙手掙出一片天，反比含著金湯匙者更懂得珍惜與堅韌。"},
+ {max:29,label:"早年勞碌・離鄉漸隆之格",note:"青年時期奔波勞碌、聚財不易，宜早立志、外出發展，不宜守在原地空等。此格貴在「熬」與「恆」——四十歲前多為磨練期，四十歲後運勢漸開；移居、轉業、改換環境常成轉機。守得雲開，自有晚福。"},
+ {max:34,label:"勤儉成家・漸入佳境之格",note:"早年雖辛勞，但只要終身勤儉、踏實經營，便能逐步積累、衣食無虞。此格不靠橫財、專靠累積，是典型的「先苦後甜」；中年起財源如水緩流，老來可享安穩，子女亦多得力。"},
+ {max:39,label:"先勞後逸・自立興家之格",note:"骨重中平，前半生風霜歷練不少，凡事多需親力親為；但您心性聰明、做事有主見，過了中年便漸入佳境。此格宜專注一業、深耕不懈，最忌三心二意；守得住者，晚景榮華可期。"},
+ {max:44,label:"白手成家・衣食豐足之格",note:"衣祿綿長、事事自有主張，雖前面受過些風霜，後來必定享安康。此格之人能幹近貴，中年後逍遙福漸現、財帛盈餘、家業穩固，是相當踏實的自立好格局。"},
+ {max:49,label:"福祿漸豐・近貴得助之格",note:"心性聰明、做事軒昂，常得貴人提攜，財自旺而心自安。此格福澤漸深、名利可期、福壽雙全，一生衣祿盈餘；多行善積德，福報更綿長。"},
+ {max:54,label:"名利雙收・富貴安穩之格",note:"福祿深厚、富貴吉祥，一生衣食無缺、身心康寧。此格之人多才能、近貴顯，不須過度勞碌即能安享榮華；宜廣行善德、回饋他人，福澤更能及於子孫。"},
+ {max:59,label:"富貴顯達・福壽雙全之格",note:"骨重上乘，富貴近貴、名利雙收，一生田園家業豐隆，談笑之間自顯威風。此格多有少年發達之機，財帛茂盛、貴人多助，是世間少見的福厚之命。"},
+ {max:64,label:"大富大貴・位高名顯之格",note:"此格人間少有，富貴榮華孰與爭。一生福澤宏大、門庭光顯，常居要位、為眾所仰，蔭及子孫、世澤綿延。福分如此深厚，更宜謙和守德、惜福布施，方能長久。"},
+ {max:99,label:"極品尊榮・福澤深厚之格",note:"骨重極貴，乃世代難逢之大福大貴格局，福壽雙全、名望蓋世，所至皆通、所為皆成。古云「斯人世代不多逢」；福厚至此，當以德配位、廣濟蒼生，方得福報無窮、流芳久遠。"}
+];
+function boneTier(q){for(let i=0;i<BONE_TIER.length;i++)if(q<=BONE_TIER[i].max)return BONE_TIER[i];return BONE_TIER[BONE_TIER.length-1];}
+function _boneFmt(q){const l=Math.floor(q/10),c=q%10;return (l>0?l+"兩":"")+(c>0?c+"錢":(l>0?"":"0錢"));}
+function baziWeightSection(bz,lunar){
+ const yg=bz.year.gan+bz.year.zhi;
+ const wy=BONE_Y[yg]||0, wm=BONE_M[lunar.month-1]||0, wd=BONE_D[lunar.day-1]||0, wh=BONE_H[bz.hour.zhi]||0;
+ const tot=wy+wm+wd+wh;                       // 單位：錢
+ const liang=Math.floor(tot/10), qian=tot%10;
+ const tier=boneTier(tot);
+ const lunarTxt=(lunar.isLeap?"閏":"")+LUNAR_M[lunar.month-1]+"月"+LUNAR_D[lunar.day];
+ return `<div class="sec-title"><span class="cn">八字重量 · 袁天罡稱骨</span><span class="en">Bone Weight</span></div>
+ <div class="bonewrap">
+   <div class="bonetop">
+     <div class="bonebig"><b>${liang}</b><span>兩</span><b>${qian}</b><span>錢</span></div>
+     <div class="bonelabel">${tier.label}</div>
+   </div>
+   <div class="bonepillars">
+     <div class="bonepill"><div class="bpl">出生年</div><div class="bpg">${yg}</div><div class="bpw">${_boneFmt(wy)}</div></div>
+     <div class="bonepill"><div class="bpl">農曆月</div><div class="bpg">${LUNAR_M[lunar.month-1]}月</div><div class="bpw">${_boneFmt(wm)}</div></div>
+     <div class="bonepill"><div class="bpl">農曆日</div><div class="bpg">${LUNAR_D[lunar.day]}</div><div class="bpw">${_boneFmt(wd)}</div></div>
+     <div class="bonepill"><div class="bpl">時辰</div><div class="bpg">${bz.hour.zhi}時</div><div class="bpw">${_boneFmt(wh)}</div></div>
+   </div>
+   <p class="bonenote">您的八字共重 <b>${liang}兩${qian}錢</b>（出生年 ${yg} ${_boneFmt(wy)}＋農曆${lunarTxt} ${_boneFmt(wm)}／${_boneFmt(wd)}＋${bz.hour.zhi}時 ${_boneFmt(wh)}）。${tier.note}</p>
+   <div class="bonefoot">稱骨算命相傳為唐代袁天罡所創，依出生年（干支）、農曆月、農曆日與時辰各賦「骨重」相加而得總兩數，骨重愈重多主福分愈厚。此為傳統民俗趨吉之說，重在借鏡自勉、知命造運；命運終究操之在己，請以正向心態參酌，不必執著於吉凶。</div>
+ </div>`;
+}
+function toolsSection(){
+ return `<div class="sec-title"><span class="cn">命理應用工具</span><span class="en">Personal Tools</span></div>
+ <div class="toolcards">
+   <div class="toolcard">
+     <h4><span class="ic">✦</span>輸出 AI 分析文本</h4>
+     <p>一鍵複製本命盤的結構化文字，貼到 ChatGPT、Claude、Gemini 等 AI 對話框，即可請 AI 依您的命盤量身深入解讀、追問互動。</p>
+     <button class="toolbtn" type="button" onclick="runAIExport()">產生 AI 分析文本</button>
+   </div>
+   <div class="toolcard">
+     <h4><span class="ic">◆</span>加入個人農民曆</h4>
+     <p>下載 .ics 行事曆檔，內含 2026 逐月流月吉凶、近六年流年提醒與未來大運切換；匯入手機行事曆後即成隨身的個人農民曆，逐項提前提醒、趨吉避凶。</p>
+     <button class="toolbtn" type="button" onclick="runCalExport()">下載個人農民曆 .ics</button>
+   </div>
+ </div>`;
+}
+
 /* ================= 命運落差解析（先天命 vs 後天運） ================= */
 function destinyGapSection(scores,name,dm,st,lk,adv,zw){
  const mingScore=scores.total;
@@ -3499,7 +3582,6 @@ function runAIExport(){
     okEl.textContent="✓ 已下載文字檔。";
   });
 }
-document.getElementById("aiExpBtn").addEventListener("click",runAIExport);
 
 /* ===== 一鍵帶入行事曆 · 個人農民曆（.ics） ===== */
 function _downloadFile(fname,content,mime){
@@ -3608,7 +3690,6 @@ function runCalExport(){
   const re=document.getElementById("calReDlBtn");
   if(re)re.addEventListener("click",function(){_downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");document.getElementById("calOk").textContent="✓ 已重新下載。";});
 }
-document.getElementById("calExpBtn").addEventListener("click",runCalExport);
 
 function timeLabel(h){
   const z=Math.floor(((h+1)%24)/2)%12;
@@ -4590,7 +4671,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   ${destinyGapSection(scores,name,dm,st,lk,adv,zw)}
 
+  ${baziWeightSection(bz,lunar)}
+
   ${familySection(fam)}
+
+  ${toolsSection()}
   </div>
   `;
   res.innerHTML=html;
