@@ -914,6 +914,13 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-adv li{margin:4px 0;font-size:10.5px;line-height:1.55;color:#3a2c12}
 #reportPrint .rp-syn{background:#fbf4e3;border:1px solid #e3d3a6;border-radius:8px;padding:8px 11px;font-size:10.5px;line-height:1.7;margin-top:5px;color:#3a2c12}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
+#reportPrint .rp-bless{margin:16px 0 8px;padding:15px 18px;text-align:center;border:2px double #b01e2e;border-radius:12px;background:linear-gradient(180deg,#fffdf9,#fcefe9)}
+#reportPrint .rp-bless .bt{font-size:9px;letter-spacing:8px;color:#9a5a2a;margin-bottom:7px;font-weight:700}
+#reportPrint .rp-bless .bw{font-family:"STKaiti","KaiTi TC","Kaiti TC","DFKai-SB","BiauKai","KaiTi","標楷體","楷体",serif;font-size:20px;font-weight:700;color:#b01e2e;letter-spacing:4px;line-height:1.7}
+#reportPrint .rp-bless .bs{margin-top:7px;font-size:8.5px;letter-spacing:2px;color:#9a5a2a}
+#reportPrint .rp-kv2{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0}
+#reportPrint .rp-kv2 span{flex:1 1 22%;min-width:90px;border:1px solid #e3d3a6;border-radius:7px;padding:5px 8px;font-size:10px;color:#5a4a28;background:#fdfaf2;text-align:center}
+#reportPrint .rp-kv2 span b{display:block;font-size:12px;color:#c2576f;margin-top:2px}
 #reportPrint .rp-fbadge{display:inline-block;border:1.5px solid #c2a14a;border-radius:18px;padding:2px 14px;font-size:12px;font-weight:700;color:#8a6a14;background:#fbf2db}
 #reportPrint .rp-fbadge.good{border-color:#3f8a5a;color:#2e6b43}
 #reportPrint .rp-fbadge.low{border-color:#c2576f;color:#a83d56}
@@ -942,9 +949,14 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
   html:has(body.rp-on),body.rp-on,body.rp-on .wrap{background:#fff!important;background-image:none!important}
   body.rp-on #reportPrint{display:block!important;max-width:100%;margin:0;padding:0;box-shadow:none;background:#fff!important}
   body.rp-on .wrap{max-width:100%;padding:0;margin:0}
-  #reportPrint .rp-page{page-break-after:always;padding:14mm 12mm;box-sizing:border-box}
-  #reportPrint .rp-page:last-child{page-break-after:auto}
+  /* 連續流排版：不強制每頁分頁，讓較短的段落自然接續、避免頁面中段大量留白；
+     每個 .rp-page 區塊自帶 padding（含上下邊距），分頁時邊距隨區塊移動，
+     搭配 @page margin:0 既隱藏網址頁眉、又保有乾淨的頁面留白。 */
+  #reportPrint .rp-page{padding:9mm 12mm;box-sizing:border-box}
   #reportPrint .rp-page+.rp-page{margin-top:0;border-top:none}
+  #reportPrint .rp-chart,#reportPrint .rp-score,#reportPrint .rp-fp,#reportPrint .rp-fsum,#reportPrint .rp-bless{break-inside:avoid;page-break-inside:avoid}
+  #reportPrint .rp-sec{break-after:avoid;page-break-after:avoid}
+  #reportPrint table.rp-tbl thead{display:table-header-group}
   #reportPrint *{box-shadow:none!important}
   #reportPrint .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a!important}
   #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(70px,82px))}
@@ -2608,6 +2620,23 @@ const BONE_TIER=[
  {max:99,label:"極品尊榮・福澤深厚之格",note:"骨重極貴，乃世代難逢之大福大貴格局，福壽雙全、名望蓋世，所至皆通、所為皆成。古云「斯人世代不多逢」；福厚至此，當以德配位、廣濟蒼生，方得福報無窮、流芳久遠。"}
 ];
 function boneTier(q){for(let i=0;i<BONE_TIER.length;i++)if(q<=BONE_TIER[i].max)return BONE_TIER[i];return BONE_TIER[BONE_TIER.length-1];}
+/* ================= 報告結語祝福語庫（50 則・隨機呈現）================= */
+const BLESSINGS=[
+ "願君事事順利，心想事成","福星高照，諸事亨通","鵬程萬里，前途無量","吉星拱照，否極泰來",
+ "時來運轉，紫氣東來","福如東海，壽比南山","財源廣進，金玉滿堂","步步高升，平步青雲",
+ "心安神泰，福祿綿長","風生水起，好運連連","否極泰來，苦盡甘來","家和業興，福澤綿延",
+ "天賜鴻福，地納百祥","龍馬精神，福壽康寧","萬事勝意，五福臨門","鴻運當頭，吉慶有餘",
+ "學業有成，金榜題名","事業騰達，名利雙收","闔家安康，幸福美滿","心想事成，萬事如意",
+ "順風順水，一帆風順","福慧雙修，吉祥如意","貴人相助，逢凶化吉","身強體健，歲歲平安",
+ "福至心靈，喜上眉梢","前程似錦，繁花似錦","春風得意，馬到成功","安居樂業，歲歲安康",
+ "德厚流光，福報綿長","心誠則靈，所求遂願","紫微高照，諸祥雲集","吉人天相，福壽雙全",
+ "積善之家，必有餘慶","守正出奇，水到渠成","福田心耕，善果自來","笑口常開，好運自來",
+ "天時地利，人和事順","大展宏圖，鴻圖大展","福星永伴，平安喜樂","心寬天地寬，福厚歲月長",
+ "一生平安，四季安康","吉祥如意，幸福安康","願您所求皆如願，所行皆坦途","願您前路繁花盛開，歸途滿載而歸",
+ "願君歲歲常歡愉，年年皆勝意","願您身常健、心常安、福常隨","願您有貴人相伴，有福氣常臨","願您所願皆成真，所盼皆可期",
+ "願您家宅安寧，福祿雙至","願您此生順遂，喜樂無憂"
+];
+function pickBlessing(){return BLESSINGS[Math.floor(Math.random()*BLESSINGS.length)];}
 function _boneFmt(q){const l=Math.floor(q/10),c=q%10;return (l>0?l+"兩":"")+(c>0?c+"錢":(l>0?"":"0錢"));}
 function baziWeightSection(bz,lunar){
  const yg=bz.year.gan+bz.year.zhi;
@@ -4916,6 +4945,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 喜用神生活開運應用
   const xiUseRows=st.xi.map(el=>{const w=WX_LIFE[el];return w?`<li><b>喜「${el}」</b>　開運色 ${w.色}｜吉方 ${w.方}｜利業 ${w.業}｜開運法 ${w.物}</li>`:'';}).join("");
   const jiNote=st.ji.length?`<div class="rp-row g">忌神參考：${st.ji.map(el=>{const w=WX_LIFE[el];return el+(w?`（少用 ${w.色}、${w.方}）`:'');}).join("；")}</div>`:'';
+  // 結語祝福語（每次輸出隨機）
+  const blessing=pickBlessing();
 
   // ===== 白話說明（逐項完整解讀，不限頁數）=====
   // 逐宮白話：每宮職掌＋主星性格
@@ -5074,16 +5105,24 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
   <div class="rp-page">
     <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第五頁 · 稱骨 · 姓名 · 開運）</div>
-    <div class="rp-sec">八字重量 · 袁天罡稱骨</div>
-    <div class="rp-row">骨重 <b style="font-size:13px;color:#c2576f">${boneStr}</b>（出生年 ${_yg} ${_boneFmt(_wy)}＋農曆${LUNAR_M[lunar.month-1]}月 ${_boneFmt(_wm)}＋${LUNAR_D[lunar.day]} ${_boneFmt(_wd)}＋${bz.hour.zhi}時 ${_boneFmt(_wh)}）</div>
-    <div class="rp-row">命格：<b>${_boneT.label}</b></div>
+    <div class="rp-sec">八字重量 · 袁天罡稱骨（八字份量說明解析）</div>
+    <div class="rp-row">您的八字共重 <b style="font-size:16px;color:#c2576f">${boneStr}</b>，由出生年、農曆月、農曆日、時辰四項「骨重」相加而成，各項份量如下：</div>
+    <div class="rp-kv2">
+      <span>出生年 ${_yg}<b>${_boneFmt(_wy)}</b></span>
+      <span>農曆${LUNAR_M[lunar.month-1]}月<b>${_boneFmt(_wm)}</b></span>
+      <span>${LUNAR_D[lunar.day]}<b>${_boneFmt(_wd)}</b></span>
+      <span>${bz.hour.zhi}時<b>${_boneFmt(_wh)}</b></span>
+    </div>
+    <div class="rp-row">命格論斷：<b style="color:#b01e2e">${_boneT.label}</b></div>
     <div class="rp-syn">${_boneT.note}</div>
+    <div class="rp-row g">【稱骨原理說明】稱骨算命相傳為唐代袁天罡所創，依出生年（干支）、農曆月、農曆日與時辰各賦予固定「骨重」（以兩、錢為單位），四者相加即得八字總份量；骨重愈重，傳統多主福分愈厚、根基愈穩、運途愈順。此為民俗趨吉之說，重在借鏡自勉、知命造運——份量輕者不必氣餒，勤勉自立、廣結善緣往往後福更厚；份量重者亦須惜福行善，方能福澤長久。命運終究操之在己，宜以正向心態參酌，不必執著於骨重輕重。</div>
     <div class="rp-sec">姓名學 · 三才五格</div>
     ${nameBlock}
     ${nameProse}
     <div class="rp-sec">喜用神 · 生活開運應用</div>
     <ul class="rp-adv">${xiUseRows}</ul>
     ${jiNote}
+    <div class="rp-bless"><div class="bt">敬　祝</div><div class="bw">${blessing}</div><div class="bs">人生實用說明書系統 · 聖源大師　敬上</div></div>
     <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>${famPages}`;
   const rp=document.getElementById("reportPrint");
