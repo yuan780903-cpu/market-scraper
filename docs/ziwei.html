@@ -2387,6 +2387,43 @@ const STROKE={
 "恆":10,"恒":10,"惠":12,"慈":14,"愛":13,"敏":11,"靈":24,"穎":16,"潔":16,"淑":12,
 "貞":9,"純":10,"真":10,"善":12,"良":7,"溫":14,"柔":9,"和":8,"順":12,"謙":17
 };
+/* 補充字典（康熙筆劃；辶部作7、氵作4、艹作6、扌作4、忄作4、阝左作8右作7、月肉部作6；
+   數字一～十依姓名學以「數值」計：一1二2三3四4五5六6七7八8九9十10）。 */
+Object.assign(STROKE,{
+"一":1,"二":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9,"十":10,
+"通":14,"達":16,"進":15,"連":14,"道":16,"運":16,"邁":23,"逸":15,"迪":12,"逢":14,
+"週":15,"遊":16,"遙":17,"逵":18,"遜":17,"邦":11,"鄉":17,"郁":19,"鄒":20,"邵":12,
+"聖":13,"源":14,"師":10,"大":3,"廷":7,"庭":10,"延":7,"建":9,"康":11,"庚":8,
+"雄":12,"英":11,"武":8,"剛":10,"毅":15,"彬":11,"斌":12,"凱":12,"群":13,"冠":9,
+"亮":9,"旭":6,"昇":8,"晉":10,"昭":9,"昕":8,"晨":11,"曉":16,"昌":8,"晃":10,
+"宗":8,"宏":7,"宥":9,"宸":10,"宇":6,"宙":8,"安":6,"寧":14,"寬":15,"宜":8,
+"泓":9,"洋":10,"治":9,"清":12,"淵":12,"湘":13,"澤":17,"潤":16,"濬":18,"瀚":20,
+"泉":9,"沛":8,"沂":8,"汝":7,"江":7,"河":9,"洪":10,"浩":11,"涵":12,"淳":12,
+"瑜":14,"瑾":16,"瑤":15,"珍":10,"珠":11,"玲":10,"琦":13,"琪":13,"瑋":15,"瑩":16,
+"琬":13,"玥":9,"璞":17,"璐":18,"環":18,"瓊":20,"璿":18,"瑞":14,"瑄":14,"珮":11,
+"森":12,"樹":16,"柳":9,"桐":10,"梓":11,"楨":13,"榆":13,"樺":16,"橙":16,"楷":13,
+"柏":9,"松":8,"桓":10,"梧":11,"楓":13,"榛":14,"槿":15,"樂":15,"權":22,"枬":9,
+"炎":8,"煌":13,"燕":16,"熹":16,"燦":17,"煒":13,"炫":9,"焜":12,"煥":13,"熙":13,
+"城":10,"培":11,"堂":11,"基":11,"坤":8,"垣":9,"境":14,"增":15,"墨":15,"圳":6,
+"鑫":24,"鈺":13,"銳":15,"鋒":15,"錡":16,"鐸":21,"銓":14,"鎮":18,"鈴":13,"錦":16,
+"倫":10,"儒":16,"億":15,"儀":15,"仰":6,"伸":7,"佑":7,"依":8,"侑":8,"俞":9,
+"倩":10,"偵":11,"傑":12,"健":11,"信":9,"仕":5,"佳":8,"佩":8,"任":6,"伶":7,
+"婉":11,"嫣":14,"娜":10,"媚":12,"嬌":15,"嫻":15,"婕":11,"娟":10,"婷":12,"嫻":15,
+"詩":13,"語":14,"誠":14,"謙":17,"謹":18,"諺":16,"諾":16,"謀":16,"訓":10,"譽":21,
+"敬":13,"慎":14,"恕":10,"厚":9,"樸":16,"清":12,"靜":16,"恬":10,"悅":11,"愷":14,
+"翔":12,"翰":16,"翎":11,"翊":11,"翌":11,"羽":6,"翁":10,"耀":20,"翰":16,"翠":14,
+"騰":20,"驊":22,"駿":17,"麒":19,"麟":23,"鴻":17,"鵬":19,"鳴":14,"鶴":21,"鷹":24,
+"雪":11,"霜":17,"露":21,"霓":16,"霏":16,"霈":15,"霽":22,"霞":17,"雯":12,"霖":16,
+"百":6,"千":3,"萬":15,"億":15,"兆":6,"豐":18,"盈":9,"滿":15,"溢":14,"裕":13,
+"鋐":14,"鋆":15,"鈿":13,"鈞":12,"釗":10,"錫":16,"鐶":21,"鑾":27,"鎧":18,"鍇":17,
+"潔":16,"澄":16,"瀅":19,"瀞":19,"瀅":19,"湧":13,"渝":13,"渼":13,"漢":15,"濤":18,
+"勳":16,"勛":12,"勵":17,"勤":13,"勝":12,"勁":9,"勉":11,"勃":9,"動":11,"務":11,
+"哲":10,"睿":14,"智":12,"叡":16,"慧":15,"穎":16,"頴":16,"敏":11,"銘":14,"鋭":15,
+"芸":10,"芯":10,"若":11,"茜":12,"茵":12,"荃":12,"莉":13,"菁":14,"菲":14,"萌":14,
+"蓁":17,"蓉":16,"蕓":18,"薇":19,"藍":20,"蕾":19,"蕎":18,"芊":9,"芮":10,"苡":11,
+"恩":10,"惠":12,"慈":14,"懿":22,"憶":17,"憲":16,"懷":20,"愉":13,"愛":13,"慕":15,
+"豪":14,"賢":15,"資":13,"賦":15,"賓":14,"贊":19,"貴":12,"財":10,"賀":12,"質":15
+});
 /* 81 數理吉凶（熊崎氏）：「評等 釋義」 */
 const SHULI81={
 1:"大吉 太極之數，萬物開泰",2:"凶 混沌未開，搖蕩不安",3:"大吉 三才之數，進取如意",
@@ -4880,6 +4917,44 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const xiUseRows=st.xi.map(el=>{const w=WX_LIFE[el];return w?`<li><b>喜「${el}」</b>　開運色 ${w.色}｜吉方 ${w.方}｜利業 ${w.業}｜開運法 ${w.物}</li>`:'';}).join("");
   const jiNote=st.ji.length?`<div class="rp-row g">忌神參考：${st.ji.map(el=>{const w=WX_LIFE[el];return el+(w?`（少用 ${w.色}、${w.方}）`:'');}).join("；")}</div>`:'';
 
+  // ===== 白話說明（逐項完整解讀，不限頁數）=====
+  // 逐宮白話：每宮職掌＋主星性格
+  let ppPalaceProse="";
+  for(let b=0;b<12;b++){
+    const pn=zw.palaceName[b];
+    const mains=(zw.stars[b]||[]).filter(s=>s.type==="main");
+    const starProse=mains.length
+      ? mains.map(s=>{const d=STAR_DESC[s.name];return d?`<b>${s.name}${_huaTxt(s.hua)}</b>—${d.d}`:`<b>${s.name}${_huaTxt(s.hua)}</b>`;}).join("<br>")
+      : (STAR_DESC["空宮"]?STAR_DESC["空宮"].d:"此宮無主星，須借對宮星曜論之。");
+    const mk=(b===zw.ming?'〔命宮〕':'')+(b===zw.shen?'〔身宮〕':'')+(b===adv.limits.curBranch?'〔現行大限〕':'');
+    ppPalaceProse+=`<div class="rp-row"><b>${pn}</b>${mk?`<span class="g"> ${mk}</span>`:''}　${PALACE_DESC[pn]||""}<br><span style="color:#555">${starProse}</span></div>`;
+  }
+  // 神煞白話
+  const ssProse=(adv.ss&&adv.ss.length)
+    ? adv.ss.map(s=>`<div class="rp-row"><b>${s.name}</b>（${s.at}柱）${s.desc?`：${s.desc}`:''}</div>`).join("")
+    : `<div class="rp-row g">本命無顯著神煞牽動，命局相對單純，吉凶主要看星曜與五行格局即可。</div>`;
+  // 生年四化飛星白話
+  const flyProse=["祿","權","科","忌"].map((k,i)=>{const star=syhArr[i],tb=flyLoc[star];const mn=FLY_MEAN[FLY_KEYS[i]];return `<div class="rp-row"><b>${star}化${k}</b>${tb!=null?` 飛入【${zw.palaceName[tb]}】`:''}：${mn}${tb!=null?`，主一生在「${zw.palaceName[tb]}」所司之事上${k==='忌'?'最須留意化解':'最易得力受惠'}。`:'。'}</div>`;}).join("");
+  // 三方四正白話
+  const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
+  // 大運白話（現行大限 + 各步十神綱要）
+  const _curStep=lk.list.find(p=>adv.curAge>=p.age&&adv.curAge<p.age+10);
+  const _curTg=_curStep?tenGod(dm,_curStep.gan):'';
+  let dyProse=_curStep?`<div class="rp-row"><b>現行大限 ${_curStep.age}-${_curStep.age+9} 歲（${_curStep.gan}${_curStep.zhi}・${_curTg}）</b>：${LUCK_TG[_curTg]||'此十年宜把握星曜運勢、順勢佈局。'}</div>`:'';
+  dyProse+=lk.list.map(p=>{const tg=tenGod(dm,p.gan);const cur=adv.curAge>=p.age&&adv.curAge<p.age+10;return `<div class="rp-row${cur?'':' g'}">${cur?'◆ ':''}${p.age}-${p.age+9} 歲（${p.gan}${p.zhi}・${tg}）：${(LUCK_TG[tg]||'').slice(0,40)}…</div>`;}).join("");
+  // 流年白話
+  const _lnTg=tenGod(dm,GAN[((2026-4)%10+10)%10]);
+  const lnProse=`<div class="rp-row"><b>2026 丙午年</b>（虛歲 ${2026-sol.y+1}・流年命宮${zw.palaceName[((2026-4)%12+12)%12]}）：流年走「${_lnTg}」之氣。${LUCK_TG[_lnTg]||''}　本年四化＝${SIHUA['丙'][0]}化祿、${SIHUA['丙'][1]}化權、${SIHUA['丙'][2]}化科、${SIHUA['丙'][3]}化忌，宜趁化祿之機進取、防化忌之耗守成。</div>`;
+  // 姓名學白話（數理吉凶）
+  let nameProse="";
+  if(_na){
+    const _r=shuLook(_na.ren),_z=shuLook(_na.zong),_d=shuLook(_na.di);
+    nameProse=`<div class="rp-row"><b>人格 ${_na.ren}（主運・最重要）</b>：${_r.label}　${_r.phrase}。人格代表你的個性與中年運勢，是五格中影響最大者。</div>`
+      +`<div class="rp-row"><b>地格 ${_na.di}（前運）</b>：${_d.label}　${_d.phrase}。地格代表少年到中年前的運勢與家庭子女緣。</div>`
+      +`<div class="rp-row"><b>總格 ${_na.zong}（後運）</b>：${_z.label}　${_z.phrase}。總格代表中年以後到晚年的總成就。</div>`
+      +`<div class="rp-row g">三才（天人地＝${_na.sancai.join("→")}）論先天根基與健康運途；五格數理為熊崎氏八十一數理之吉凶，姓名學僅為命理之輔，仍以八字紫微為主。</div>`;
+  }
+
   // 家庭成員交叉分析報告頁（每位親人一張單面 A4）
   let famPages="";
   if(fam&&fam.members&&fam.members.length){
@@ -4964,20 +5039,29 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">紫微斗數 · 十二宮逐宮詳解（主星 · 輔星 · 四化 · 亮度 · 雜曜）</div>
     <table class="rp-tbl"><thead><tr><th style="width:18%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:24%">雜曜 · 大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
     <div class="rp-row g">四化標記：化祿（福祿機緣）· 化權（掌控主導）· 化科（名聲貴人）· 化忌（牽絆耗損）。〔命〕命宮 〔身〕身宮 〔限〕現行大限。</div>
-    <div class="rp-sec">神煞</div>
+    <div class="rp-sec">十二宮白話逐宮解讀（宮位職掌 · 主星性格）</div>
+    ${ppPalaceProse}
+    <div class="rp-sec">神煞 · 白話</div>
     <div class="rp-row">${ssTxt}</div>
-    <div class="rp-sec">生年四化飛星（${bz.year.gan} 干引動）</div>
+    ${ssProse}
+    <div class="rp-sec">生年四化飛星（${bz.year.gan} 干引動）· 白話</div>
     <div class="rp-kv">${flyKv}</div>
-    <div class="rp-sec">命宮三方四正（最關鍵之格局組合）</div>
+    ${flyProse}
+    <div class="rp-sec">命宮三方四正（最關鍵之格局組合）· 白話</div>
     <div class="rp-kv">${sfszRows}</div>
+    ${sfszProse}
   </div>
   <div class="rp-page">
     <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第四頁 · 大運 · 流年 · 流月）</div>
     <div class="rp-sec">大運 · 每步十年</div>
     <div class="rp-row g">起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運</div>
     <table class="rp-tbl"><thead><tr><th>步</th><th>歲數</th><th>干支</th><th>主十神</th><th>納音</th><th>現行</th></tr></thead><tbody>${dyRows}</tbody></table>
+    <div class="rp-sec">大運白話 · 每步十年運勢綱要</div>
+    ${dyProse}
     <div class="rp-sec">近六年流年 · 流年四化</div>
     <table class="rp-tbl"><thead><tr><th>年</th><th>干支</th><th>虛歲</th><th>流年命宮</th><th>流年四化</th></tr></thead><tbody>${lnRows}</tbody></table>
+    <div class="rp-sec">流年白話</div>
+    ${lnProse}
     <div class="rp-sec">2026 丙午年 · 流月吉凶（依節氣定月）</div>
     ${lmHTML}
     <div class="rp-row g">吉＝逢喜用神之月，五行得氣、宜進取佈局；留意＝逢忌神之月，宜守成緩進；平＝五行持平，按部就班即可。</div>
@@ -4990,6 +5074,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-syn">${_boneT.note}</div>
     <div class="rp-sec">姓名學 · 三才五格</div>
     ${nameBlock}
+    ${nameProse}
     <div class="rp-sec">喜用神 · 生活開運應用</div>
     <ul class="rp-adv">${xiUseRows}</ul>
     ${jiNote}
