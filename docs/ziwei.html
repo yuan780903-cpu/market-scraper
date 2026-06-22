@@ -909,6 +909,15 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-wx{margin-top:6px;font-size:10.5px;color:#5a4a28}
 #reportPrint .wxc{display:inline-block;border:1px solid #d9c7a0;border-radius:5px;padding:1px 8px;margin:2px;font-size:10px}
 #reportPrint .rp-row{margin:5px 0;font-size:10.5px;color:#3a2c12;line-height:1.5}
+#reportPrint .rp-pgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0}
+#reportPrint .rp-pcard{border:1px solid;border-radius:9px;padding:7px 10px;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-pcard .ph{font-weight:800;font-size:11px;margin-bottom:4px;padding-bottom:3px;border-bottom:1px dashed currentColor;line-height:1.4}
+#reportPrint .rp-pcard .ph .pm{font-size:8.5px;font-weight:800;border:1px solid currentColor;border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle}
+#reportPrint .rp-pcard .pj{display:block;font-weight:500;font-size:9px;color:#6b5a33;margin-top:2px;border:none}
+#reportPrint .rp-pcard .pb{font-size:10px;line-height:1.55;color:#3a2c12}
+#reportPrint .rp-pcard .pb .ps{display:block;margin-top:2px}
+#reportPrint .rp-pcard .pb .ps b{font-weight:800}
+#reportPrint .rp-pcard.empty .pb{color:#8a7a52}
 #reportPrint .gc{display:inline-block;background:#f2e8cf;border-radius:5px;padding:2px 9px;margin:2px;font-size:10.5px;color:#8a6a14;font-weight:700}
 #reportPrint .rp-adv{margin:4px 0;padding-left:18px}
 #reportPrint .rp-adv li{margin:4px 0;font-size:10.5px;line-height:1.55;color:#3a2c12}
@@ -1194,12 +1203,6 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .lpbtn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(6,199,85,.45)}
 .paywall .lpbtn:active{transform:translateY(0)}
 .paywall .lpbtn .lpmark{background:#fff;color:#06C755;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem}
-.paywall .ecbtn{display:inline-flex;align-items:center;gap:9px;justify-content:center;width:100%;
-  margin-top:10px;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1.06rem;font-weight:800;
-  color:#fff;background:linear-gradient(135deg,#5b8def,#3a5fd9);box-shadow:0 8px 20px rgba(58,95,217,.35);transition:.2s;letter-spacing:.5px}
-.paywall .ecbtn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(58,95,217,.45)}
-.paywall .ecbtn:active{transform:translateY(0)}
-.paywall .ecbtn .ecmark{background:#fff;color:#3a5fd9;font-weight:900;border-radius:6px;padding:2px 9px;font-size:.9rem}
 .paywall .lpsec{font-size:.74rem;color:var(--ink-faint);margin-top:7px}
 .paywall .pwor{position:relative;text-align:center;margin:16px auto 12px;max-width:430px;color:var(--ink-faint);font-size:.78rem}
 .paywall .pwor::before{content:"";position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--line-soft)}
@@ -3886,7 +3889,7 @@ async function lcKey(p){
   return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
 }
 async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
-/* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay／綠界付款解鎖 ===== */
+/* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay 付款解鎖 ===== */
 let __disc=null;   // {code,amount,reuse,base,final}
 function updatePriceUI(){
   const el=document.getElementById('pwPriceLine');if(!el)return;
@@ -4060,63 +4063,6 @@ function lpRestoreAndRender(form){
   setTimeout(()=>{const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});},2600);
 }
 
-/* ===== 綠界 ECPay 自動解鎖（信用卡／ATM／超商；個人賣家免統編可用）=====
-   流程：前端把表單與 key 暫存本機 → 導向 Worker /ecpay/create（回傳自動送出表單→綠界結帳頁）；
-   付款成功後綠界導回 Worker /ecpay/return，驗章後 302 回本頁帶 ?ecok=訂單號；
-   本頁向 /ecpay/state 確認該訂單已付款 → 寫入本機解鎖 → 自動重排該命盤。 */
-let __ecInfo=undefined;
-async function ecReady(){
-  if(__ecInfo!==undefined)return __ecInfo;
-  try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/ready',{cache:'no-store'});
-    const j=await r.json();__ecInfo=(j&&j.enabled)?j:null;
-  }catch(e){__ecInfo=null;}
-  return __ecInfo;
-}
-async function ecMaybeShowButton(){
-  const info=await ecReady();if(!info)return;
-  const w=document.getElementById('ecBtnWrap');
-  if(w)w.style.display='';
-  const dw=document.getElementById('discWrap');if(dw)dw.style.display='';
-  if(info.mode==='stage'){
-    const sec=w&&w.querySelector('.lpsec');
-    if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為綠界測試模式，請用測試卡號，非真實扣款）</div>');}
-  }
-}
-async function lcStartECPay(){
-  const msg=document.getElementById('lcMsg');
-  if(!window.__LC){return;}
-  const key=await lcKey(window.__LC.payload);
-  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
-  form.gender=gender;
-  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
-  if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
-  const ret=location.origin+location.pathname;
-  const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
-  location.href=LC_API.replace(/\/+$/,'')+'/ecpay/create?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ;
-}
-async function ecHandleReturn(){
-  const p=new URLSearchParams(location.search);
-  const ok=p.get('ecok'),fail=p.get('ecfail');
-  if(!ok&&!fail)return false;
-  const clean=()=>{try{history.replaceState(null,'',location.origin+location.pathname);}catch(e){}};
-  let pend=null;try{pend=JSON.parse(localStorage.getItem('zw_ec_pending')||'null');}catch(e){}
-  if(ok&&pend){
-    try{
-      const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(ok),{cache:'no-store'});
-      const j=await r.json();
-      if(j&&j.paid&&j.key===pend.key){
-        try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
-        localStorage.removeItem('zw_ec_pending');clean();
-        lpRestoreAndRender(pend.form);return true;
-      }
-    }catch(e){}
-    localStorage.removeItem('zw_ec_pending');clean();
-    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
-  }
-  if(fail){localStorage.removeItem('zw_ec_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
-  return false;
-}
 
 /* ===== 觸控彈窗：宮位／大運白話解說 ===== */
 function zwOpenModal(tag,title,sub,bodyHTML){
@@ -4716,10 +4662,6 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <button id="lpBtn" class="lpbtn" onclick="lcStartLinePay()"><span class="lpmark">LINE</span>Pay 付款・付完自動解鎖</button>
       <div class="lpsec">透過 LINE Pay 安全付款，完成後立即自動開啟完整報告，免輸入任何代碼。</div>
     </div>
-    <div id="ecBtnWrap" class="lpwrap" style="display:none">
-      <button id="ecBtn" class="ecbtn" onclick="lcStartECPay()"><span class="ecmark">卡</span>信用卡 / ATM 付款・付完自動解鎖</button>
-      <div class="lpsec">透過綠界 ECPay 安全付款（信用卡／ATM／超商），完成後立即自動開啟完整報告。</div>
-    </div>
     <div id="lcMsg" class="lcmsg"></div>
     <div class="pwnote">付款完成後系統將自動驗證並開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
@@ -4951,18 +4893,33 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // ===== 白話說明（逐項完整解讀，不限頁數）=====
   // 逐宮白話：每宮職掌＋主星性格
   let ppPalaceProse="",_hasEmptyPalace=false;
+  // 每宮一張獨立色塊卡，主星集中框在同一格，方便辨識
+  const PAL_PAL=[
+    {bg:'#fceef0',bd:'#d99aa3',hd:'#b04a57'},{bg:'#fdf3e0',bd:'#e2c089',hd:'#b07b1f'},
+    {bg:'#f3f6e3',bd:'#bcce8e',hd:'#6f8a2e'},{bg:'#e9f6ee',bd:'#9ed3b3',hd:'#2f8a5a'},
+    {bg:'#e6f5f4',bd:'#95d0cc',hd:'#2a8a83'},{bg:'#e9f1fb',bd:'#a3c3ea',hd:'#3a6bb0'},
+    {bg:'#eeeefb',bd:'#b0b0e6',hd:'#5151b0'},{bg:'#f4ecfb',bd:'#c9aee6',hd:'#7a3fb0'},
+    {bg:'#fbecf6',bd:'#e2a8d2',hd:'#a83f87'},{bg:'#fbeee9',bd:'#e6ad97',hd:'#b0532f'},
+    {bg:'#eef1f4',bd:'#b3c0cc',hd:'#4a6373'},{bg:'#faf3df',bd:'#ddc57f',hd:'#97781f'}
+  ];
+  let _pcards="";
   for(let b=0;b<12;b++){
     const pn=zw.palaceName[b];
     const mains=(zw.stars[b]||[]).filter(s=>s.type==="main");
-    const mk=(b===zw.ming?'〔命宮〕':'')+(b===zw.shen?'〔身宮〕':'')+(b===adv.limits.curBranch?'〔現行大限〕':'');
+    const c=PAL_PAL[b%PAL_PAL.length];
+    const mk=(b===zw.ming?'<span class="pm">命宮</span>':'')+(b===zw.shen?'<span class="pm">身宮</span>':'')+(b===adv.limits.curBranch?'<span class="pm">現行大限</span>':'');
+    let body,emptyCls='';
     if(mains.length){
-      const starProse=mains.map(s=>{const d=STAR_DESC[s.name];return d?`<b>${s.name}${_huaTxt(s.hua)}</b>—${d.d}`:`<b>${s.name}${_huaTxt(s.hua)}</b>`;}).join("<br>");
-      ppPalaceProse+=`<div class="rp-row"><b>${pn}</b>${mk?`<span class="g"> ${mk}</span>`:''}　${PALACE_DESC[pn]||""}<br><span style="color:#555">${starProse}</span></div>`;
+      body=mains.map(s=>{const d=STAR_DESC[s.name];return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}</b>${d?`—${d.d}`:''}</span>`;}).join("");
     }else{
-      _hasEmptyPalace=true;
-      ppPalaceProse+=`<div class="rp-row"><b>${pn}</b>${mk?`<span class="g"> ${mk}</span>`:''}　${PALACE_DESC[pn]||""}<br><span class="g">本宮為空宮，須借對宮星曜論之（詳見下方備註）。</span></div>`;
+      _hasEmptyPalace=true;emptyCls=' empty';
+      body=`<span class="ps">本宮為空宮，須借對宮星曜論之（詳見下方備註）。</span>`;
     }
+    _pcards+=`<div class="rp-pcard${emptyCls}" style="background:${c.bg};border-color:${c.bd}">`
+      +`<div class="ph" style="color:${c.hd}">${pn}${mk}<span class="pj">${PALACE_DESC[pn]||""}</span></div>`
+      +`<div class="pb">${body}</div></div>`;
   }
+  ppPalaceProse=`<div class="rp-pgrid">${_pcards}</div>`;
   if(_hasEmptyPalace){
     ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}（凡上列標示「空宮」之宮位，皆依此原則解讀，不再逐宮重複說明。）</div>`;
   }
@@ -5131,15 +5088,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   finishRender(subText);
   lcRefresh();
   lpMaybeShowButton();
-  ecMaybeShowButton();
   // 四化飛星飛線盤：初次預設顯示命宮飛化
   _flyBindResize();
   requestAnimationFrame(()=>{if(document.getElementById('flyChart'))zwFly(zw.ming);});
 }
 
-/* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel；綠界：?ecok/?ecfail） */
+/* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel） */
 lpHandleReturn();
-ecHandleReturn();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
 /* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
