@@ -1403,7 +1403,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
 <footer>
   <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。</div>
-  <div>© 2026 人生實用說明書系統．政遠大師 版權所有 · 願君順遂 · ☯</div>
+  <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
 <script>
@@ -3479,6 +3479,15 @@ function runPdfExport(fromFab){
   }
   const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
   if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。手機若沒反應，請改用 Safari／Chrome 開啟本頁。';}
+  // 讓「另存為 PDF」的預設檔名帶上排盤人姓名（瀏覽器以 document.title 為建議檔名）
+  const _D=window.__ZW,_subj=(_D&&_D.name)?String(_D.name).trim():'';
+  const _origTitle=document.title;
+  if(_subj){
+    document.title=_subj+'_命理精析報告_人生實用說明書系統';
+    const _restoreTitle=()=>{document.title=_origTitle;window.removeEventListener('afterprint',_restoreTitle);};
+    window.addEventListener('afterprint',_restoreTitle);
+    setTimeout(_restoreTitle,60000);
+  }
   try{window.print();}
   catch(e){
     const err='✗ 此瀏覽器不支援直接列印，請改用 Safari／Chrome 開啟本頁再下載。';
@@ -3727,7 +3736,7 @@ function buildICS(){
     const advTxt=isXi?("逢喜用神（"+mwx+"）之月，五行得氣、諸事較順，宜進取佈局、把握機緣。")
       :isJi?("逢忌神（"+mwx+"）之月，宜守成緩進、穩中防耗，凡事多思而後行。")
       :("五行持平之月，按部就班、穩健經營即可。");
-    add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 政遠大師．人生實用說明書系統");
+    add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 聖源大師．人生實用說明書系統");
   }
   // 近六年流年提醒（每年立春當天）
   for(let yy=2026;yy<2032;yy++){
@@ -3736,7 +3745,7 @@ function buildICS(){
     const pname=zw.palaceName[yzi];
     const lc=sTerm(yy,2); // 立春日
     const title="流年｜"+yy+" "+ygan+yzhi+"年 入"+pname;
-    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-by+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 政遠大師．人生實用說明書系統");
+    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-by+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 聖源大師．人生實用說明書系統");
   }
   // 未來大運切換里程碑（起運後各步，落在未來者）
   const curAge=adv.curAge;
@@ -3746,7 +3755,7 @@ function buildICS(){
     if(startYear>2055)return;
     const tg=tenGod(dm,p.gan);
     const lc=sTerm(startYear,2);
-    add(startYear,2,lc,"大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起）","虛歲 "+p.age+" 進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。新運開啟，宜順此干支之性重新佈局十年重心。　— 政遠大師．人生實用說明書系統");
+    add(startYear,2,lc,"大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起）","虛歲 "+p.age+" 進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。新運開啟，宜順此干支之性重新佈局十年重心。　— 聖源大師．人生實用說明書系統");
   });
   const lines=[
     "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//人生實用說明書系統//個人農民曆//ZH-TW",
@@ -3793,7 +3802,7 @@ function timeLabel(h){
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
 const LC_PRICE="88 元";   // ← 想改價格改這裡（結緣價）
 const LC_ORIG="888 元";    // ← 原價（顯示刪除線）
-const LC_CONTACT="完成付款後，請以 LINE 告知 政遠大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
+const LC_CONTACT="完成付款後，請以 LINE 告知 聖源大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
 }
@@ -3861,8 +3870,8 @@ async function lcUnlock(){
   }else{
     const reason=res?res.reason:'';
     msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
-                  :reason==='invalid'?'✗ 萬用碼無效或尚未發出，請向 政遠大師確認。'
-                  :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 政遠大師索取新碼。'
+                  :reason==='invalid'?'✗ 萬用碼無效或尚未發出，請向 聖源大師確認。'
+                  :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 聖源大師索取新碼。'
                   :'✗ 解鎖失敗，請稍後再試。';
     msg.className='lcmsg err';
   }
@@ -3960,7 +3969,7 @@ async function lpHandleReturn(){
       }
     }catch(e){}
     localStorage.removeItem('zw_lp_pending');clean();
-    alert('付款驗證未通過。若您已被扣款，請聯絡 政遠大師（LINE：yuan780903）協助處理。');return true;
+    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
   }
   if(fail){localStorage.removeItem('zw_lp_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
   if(cancel){localStorage.removeItem('zw_lp_pending');clean();return true;}
@@ -4028,7 +4037,7 @@ async function ecHandleReturn(){
       }
     }catch(e){}
     localStorage.removeItem('zw_ec_pending');clean();
-    alert('付款驗證未通過。若您已被扣款，請聯絡 政遠大師（LINE：yuan780903）協助處理。');return true;
+    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
   }
   if(fail){localStorage.removeItem('zw_ec_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
   return false;
@@ -4893,7 +4902,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         <div class="rp-sec">相處心法</div>
         <div class="rp-syn">${mb.relAdvice}</div>
         <div class="rp-row" style="color:#8a6a14"><b>◆ 命理提點：</b>${mb.relTip}</div>
-        <div class="rp-foot">本頁為命主與「${mb.rel}${mb.name?`・${mb.name}`:""}」之八字合盤交叉分析，依生肖六合三合沖害、五行日主生剋、十神定位與喜用神互補綜合演算而成。緣分吉凶皆為趨勢、貴在用心經營。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+        <div class="rp-foot">本頁為命主與「${mb.rel}${mb.name?`・${mb.name}`:""}」之八字合盤交叉分析，依生肖六合三合沖害、五行日主生剋、十神定位與喜用神互補綜合演算而成。緣分吉凶皆為趨勢、貴在用心經營。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
       </div>`;
     }).join("");
   }
@@ -4939,7 +4948,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="rp-adv">${ppAdvice}</ul>
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
-    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
     <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第三頁 · 紫微命盤詳解）</div>
@@ -4975,7 +4984,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">喜用神 · 生活開運應用</div>
     <ul class="rp-adv">${xiUseRows}</ul>
     ${jiNote}
-    <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+    <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>${famPages}`;
   const rp=document.getElementById("reportPrint");
   if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
