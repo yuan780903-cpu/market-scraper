@@ -3488,74 +3488,149 @@ function _aiStars(zw,b){
     return t;
   }).join("、");
 }
+function _aiPalExtra(zw,b){
+  const parts=[];
+  if(zw.changSheng&&zw.changSheng[b])parts.push("長生十二神:"+zw.changSheng[b]);
+  if(zw.boShi&&zw.boShi[b])parts.push("博士十二神:"+zw.boShi[b]);
+  if(zw.jiangPre&&zw.jiangPre[b])parts.push("將前:"+zw.jiangPre[b]);
+  if(zw.suiPre&&zw.suiPre[b])parts.push("歲前:"+zw.suiPre[b]);
+  const xa=(zw.xiaoXian&&zw.xiaoXian[b]||[]).slice(0,7);
+  if(xa.length)parts.push("小限歲數:"+xa.join("/"));
+  return parts.length?("　〔"+parts.join("；")+"〕"):"";
+}
 function buildAIText(){
   const D=window.__ZW;if(!D)return "";
   const zw=D.zw,adv=D.adv,bz=D.bz,dm=D.dm,name=D.name,gender=D.gender,wx=D.wx,lk=D.lk,st=adv.strength,by=D.birthYear,sol=D.sol,lunar=D.lunar;
   const L=[],P=s=>L.push(s);
-  P("【人生實用說明書系統 · 結構化命盤文本（供 AI 分析）】");
-  P("");
-  P("一、命主基本資料");
+  let _n=0; const SEC=t=>{_n++;P("");P("【"+_n+"】"+t);};
+  P("════════════════════════════════════");
+  P("人生實用說明書系統 · 完整結構化命盤文本（供 AI 深入分析）");
+  P("命理體系：子平八字 + 紫微斗數 + 三才五格姓名學 + 袁天罡稱骨");
+  P("════════════════════════════════════");
+
+  SEC("命主基本資料");
   P("姓名："+name+"　性別："+gender);
-  if(sol)P("國曆："+sol.y+" 年 "+sol.m+" 月 "+sol.d+" 日 "+String(sol.hh).padStart(2,"0")+":"+String(sol.mm).padStart(2,"0"));
-  if(lunar)P("農曆："+lunar.year+" 年 "+(lunar.isLeap?"閏":"")+lunar.month+" 月 "+lunar.day+" 日");
-  P("生肖："+SHENGXIAO[bz.year.zhi]+"　日主："+dm+"（"+GAN_WX[dm]+GAN_YY[dm]+"）　五行局："+zw.juName);
-  P("命宮："+zw.palaceGan[zw.ming]+ZHI[zw.ming]+"　身宮："+zw.palaceGan[zw.shen]+ZHI[zw.shen]+"　命主："+zw.mingZhu+"　身主："+zw.shenZhu);
-  P("");
-  P("二、子平八字（四柱）");
+  if(sol)P("國曆："+sol.y+" 年 "+sol.m+" 月 "+sol.d+" 日 "+String(sol.hh).padStart(2,"0")+":"+String(sol.mm).padStart(2,"0")+"（"+timeLabel(sol.hh)+"）");
+  if(lunar)P("農曆："+lunar.year+" 年 "+(lunar.isLeap?"閏":"")+LUNAR_M[lunar.month-1]+"月"+LUNAR_D[lunar.day]);
+  P("生肖："+SHENGXIAO[bz.year.zhi]+"　陰陽性別："+zw.yinYang+"　日主："+dm+"（"+GAN_WX[dm]+GAN_YY[dm]+"）　五行局："+zw.juName);
+  P("命宮："+zw.palaceGan[zw.ming]+ZHI[zw.ming]+"　身宮："+zw.palaceGan[zw.shen]+ZHI[zw.shen]+"　命主星："+zw.mingZhu+"　身主星："+zw.shenZhu+"　斗君："+ZHI[zw.douJun]+"宮");
+  const cl0=adv.limits.limits[adv.limits.curBranch];
+  P("目前虛歲："+adv.curAge+"　起運 "+lk.startAge+" 歲（"+(lk.forward?"順行":"逆行")+"）　現行大限："+zw.palaceName[adv.limits.curBranch]+(cl0?("（"+cl0.start+"–"+cl0.end+" 歲）"):""));
+
+  SEC("子平八字（四柱八字）");
   [["年",bz.year],["月",bz.month],["日",bz.day],["時",bz.hour]].forEach(function(e){
     const lab=e[0],p=e[1];
-    const tg=lab==="日"?"日主":tenGod(dm,p.gan);
+    const tg=lab==="日"?"日主(本人)":tenGod(dm,p.gan);
     P(lab+"柱："+p.gan+p.zhi+"（天干十神："+tg+"　地支藏干："+ZHI_HID[p.zhi].join("、")+"　納音："+naYin(p.gan,p.zhi)+"）");
   });
-  P("");
-  P("三、日主旺衰與喜用神");
-  P("旺衰："+st.level);
-  P("喜用神："+st.xi.join("、")+"　忌神："+st.ji.join("、"));
-  P("");
-  P("四、五行能量分布");
+
+  SEC("日主旺衰與喜用神");
+  P("日主旺衰："+st.level);
+  P("喜用神（宜多用）："+st.xi.join("、"));
+  P("忌神（宜避忌）："+st.ji.join("、"));
+
+  SEC("五行能量分布");
   P(["木","火","土","金","水"].map(function(k){return k+" "+wx[k];}).join("　"));
-  P("");
-  P("五、格局");
+  const wxArr=["木","火","土","金","水"].map(k=>[k,wx[k]]).sort((a,b)=>b[1]-a[1]);
+  P("最旺：" +wxArr[0][0]+"（"+wxArr[0][1]+"）　最弱："+wxArr[4][0]+"（"+wxArr[4][1]+"）");
+
+  SEC("格局");
   P("八字月令格局："+adv.baziGe.name+"。"+(adv.baziGe.d||""));
-  P("紫微格局："+adv.ge.map(function(g){return g.n;}).join("、"));
-  P("");
-  P("六、神煞");
+  P("紫微格局："+(adv.ge.length?adv.ge.map(function(g){return g.n+(g.d?("（"+g.d+"）"):"");}).join("；"):"無特殊格局"));
+
+  SEC("神煞");
   P(adv.ss.length?adv.ss.map(function(s){return s.name+"("+s.at+"柱)";}).join("、"):"無顯著神煞");
-  P("");
-  P("七、紫微斗數 · 命盤十二宮");
+
+  SEC("命盤綜合評分（系統演算）");
+  const sc=calcScores(zw,bz,wx,adv);
+  P("綜合總分："+sc.total+"／100（評等 "+sc.grade+"・"+sc.gradeText+"；約贏過 "+sc.pr+"% 的人）　五行平衡度："+sc.balance);
+  sc.dims.forEach(function(d){P("・"+d.k+"："+d.v+" 分（"+d.band+"）— 主"+d.pal+"宮"+(d.star?("，主星 "+d.star):"（空宮借星）"));});
+
+  SEC("八字重量（袁天罡稱骨）");
+  const yg=bz.year.gan+bz.year.zhi;
+  const wy=BONE_Y[yg]||0,wm=BONE_M[lunar.month-1]||0,wd=BONE_D[lunar.day-1]||0,wh=BONE_H[bz.hour.zhi]||0;
+  const tot=wy+wm+wd+wh, tier=boneTier(tot);
+  P("骨重："+Math.floor(tot/10)+"兩"+(tot%10)+"錢（出生年 "+yg+" "+_boneFmt(wy)+"＋農曆"+LUNAR_M[lunar.month-1]+"月 "+_boneFmt(wm)+"＋"+LUNAR_D[lunar.day]+" "+_boneFmt(wd)+"＋"+bz.hour.zhi+"時 "+_boneFmt(wh)+"）");
+  P("命格："+tier.label);
+  P(tier.note);
+
+  SEC("姓名學（三才五格）");
+  const na=nameAnalysis(name);
+  if(na){
+    const cross={sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:"日主"+dm,xi:st.xi,ji:st.ji};
+    const ns=nameScore(na,cross);
+    P("姓名："+na.chars.join("")+"（各字筆畫："+na.strokes.join("、")+"）");
+    P("五格：天格 "+na.tian+"・人格 "+na.ren+"・地格 "+na.di+"・外格 "+na.wai+"・總格 "+na.zong);
+    P("三才（天→人→地）："+na.sancai.join("→")+"（"+na.scLabel+"）");
+    P("人格五行 "+na.renWx+"、總格五行 "+na.zongWx+"　姓名綜合分："+ns.total+"／100（"+ns.grade+"）");
+    P("與命局交叉："+(st.xi.includes(na.renWx)||st.xi.includes(na.zongWx)?"姓名五行合喜用神，助旺命格":(st.ji.includes(na.renWx)||st.ji.includes(na.zongWx)?"姓名五行偏忌神，宜以喜用之色彩方位調補":"姓名五行與喜忌中性，平穩不損運")));
+    if(na.unknown&&na.unknown.length)P("（註："+na.unknown.join("、")+" 未在筆畫庫中，姓名數理僅供參考）");
+  }else{
+    P("（姓名少於兩個中文字，未進行姓名學分析）");
+  }
+
+  SEC("紫微斗數 · 命盤十二宮（含主輔星、四化、亮度、大限、雜曜）");
   for(let b=0;b<12;b++){
     const lim=adv.limits.limits[b];
-    P(zw.palaceName[b]+"（"+zw.palaceGan[b]+ZHI[b]+"，大限 "+lim.start+"–"+lim.end+" 歲）："+_aiStars(zw,b));
+    const mk=(b===zw.ming?"〈命宮〉":"")+(b===zw.shen?"〈身宮〉":"")+(b===adv.limits.curBranch?"〈現行大限〉":"");
+    P(zw.palaceName[b]+mk+"（"+zw.palaceGan[b]+ZHI[b]+"，大限 "+lim.start+"–"+lim.end+" 歲）："+_aiStars(zw,b)+_aiPalExtra(zw,b));
   }
-  P("");
-  P("八、命宮三方四正");
-  [[zw.ming,"本宮·命宮"],[(zw.ming+6)%12,"對宮·遷移"],[(zw.ming+4)%12,"三合"],[(zw.ming+8)%12,"三合"]].forEach(function(e){
+
+  SEC("命宮三方四正（最關鍵的格局組合）");
+  [[zw.ming,"本宮·命宮"],[(zw.ming+6)%12,"對宮·遷移"],[(zw.ming+4)%12,"三合·財帛/官祿之一"],[(zw.ming+8)%12,"三合·財帛/官祿之一"]].forEach(function(e){
     const b=e[0];P(e[1]+" "+zw.palaceName[b]+"（"+zw.palaceGan[b]+ZHI[b]+"）："+_aiStars(zw,b));
   });
-  P("");
-  P("九、生年四化（"+bz.year.gan+"干引動）");
+
+  SEC("生年四化（"+bz.year.gan+"干引動）");
   const loc=_flyStarLoc(zw),syh=SIHUA[bz.year.gan];
   ["祿","權","科","忌"].forEach(function(k,i){
     const star=syh[i],tb=loc[star];
-    P("化"+k+"："+star+(tb!=null?(" → 入【"+zw.palaceName[tb]+"】"):""));
+    P("化"+k+"："+star+(tb!=null?(" → 入【"+zw.palaceName[tb]+"】宮"):""));
   });
-  P("");
-  P("十、大運（每柱十年）");
-  P("起運 "+lk.startAge+" 歲・"+(lk.forward?"順行":"逆行"));
+
+  SEC("大運（每步十年）");
+  P("起運 "+lk.startAge+" 歲・"+(lk.forward?"順行":"逆行")+"佈運");
   lk.list.forEach(function(p,i){
-    P("第"+(i+1)+"步 "+p.age+"–"+(p.age+9)+" 歲："+p.gan+p.zhi+"（十神 "+tenGod(dm,p.gan)+"，納音 "+naYin(p.gan,p.zhi)+"）");
+    const isCur=adv.curAge>=p.age&&adv.curAge<p.age+10;
+    P("第"+(i+1)+"步 "+p.age+"–"+(p.age+9)+" 歲："+p.gan+p.zhi+"（十神 "+tenGod(dm,p.gan)+"，納音 "+naYin(p.gan,p.zhi)+"）"+(isCur?" ←目前所在":""));
   });
-  P("");
-  P("十一、流年（近六年・含四化）");
+
+  SEC("流年（近六年・含流年四化）");
   for(let Y=2026;Y<2032;Y++){
     const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12;
     const gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];
     P(Y+" "+gan+zhi+"（虛歲 "+(Y-by+1)+"）流年命宮："+zw.palaceName[zi]+"　四化："+sh[0]+"祿、"+sh[1]+"權、"+sh[2]+"科、"+sh[3]+"忌");
   }
+
+  SEC("2026 丙午年 · 流月吉凶（依節氣定月）");
+  const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
+  const Y2=2026,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
+  for(let k=0;k<12;k++){
+    const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg];
+    const mark=st.xi.includes(mwx)?"吉（逢喜用）":st.ji.includes(mwx)?"留意（逢忌神）":"平";
+    P(lmLabels[k]+"月 "+mg+mzh+"（五行 "+mwx+"，月令十神 "+tenGod(dm,mg)+"）："+mark);
+  }
+
+  SEC("喜用神 · 生活開運應用");
+  st.xi.forEach(function(el){
+    const w=WX_LIFE[el];if(!w)return;
+    P("喜「"+el+"」｜開運顏色："+w.色+"｜吉利方位："+w.方+"｜適合行業："+w.業+"｜開運做法："+w.物);
+  });
+  if(st.ji.length){
+    P("忌神參考："+st.ji.map(function(el){const w=WX_LIFE[el];return el+(w?("（少用 "+w.色+"、"+w.方+"）"):"");}).join("；"));
+  }
+
   P("");
-  P("──────────");
-  P("【建議分析指令】");
-  P("請依以上紫微斗數與子平八字命盤資料，為命主提供：1) 性格特質與天賦優勢；2) 事業與財運方向建議；3) 感情與人際課題；4) 今年（2026）與未來大運的重點提醒及趨吉避凶之道；5) 喜用神在生活中的開運應用（適合的顏色、方位、行業屬性）。請以白話、具體、正向務實的方式逐項說明。");
+  P("════════════════════════════════════");
+  P("【請 AI 依以上完整命盤資料，為命主分析】");
+  P("1) 性格特質、天賦優勢與潛在盲點（綜合命宮主星、三方四正、日主旺衰、姓名人格）。");
+  P("2) 事業方向與財運建議（參官祿宮、財帛宮、八字格局、喜用神行業）。");
+  P("3) 感情婚姻與人際課題（參夫妻宮、交友宮、日支夫妻宮）。");
+  P("4) 健康須留意之處（參疾厄宮、五行最弱與失衡之處）。");
+  P("5) 今年 2026 流年與流月的重點提醒、未來大運走勢及趨吉避凶之道。");
+  P("6) 喜用神在生活中的具體開運應用（顏色、方位、行業、習慣）。");
+  P("7) 姓名與先天命格的契合度，及後天造命的具體建議。");
+  P("請以白話、具體、溫暖而正向務實的方式逐項說明，並適度引用上方命盤的實際星曜與數據佐證。");
   return L.join("\n");
 }
 function runAIExport(){
