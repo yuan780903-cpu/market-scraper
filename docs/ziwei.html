@@ -913,6 +913,20 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-fsum .ft{color:#2e6b43;font-weight:700;font-size:11.5px;letter-spacing:1px;margin-bottom:5px}
 #reportPrint .rp-fsum .fr{font-size:10.5px;color:#3a2c12;line-height:1.6;margin:3px 0}
 #reportPrint .rp-fsum .fr b{color:#2e6b43}
+#reportPrint .rp-tbl{width:100%;border-collapse:collapse;margin:4px 0 6px;font-size:9.5px}
+#reportPrint .rp-tbl th{background:#f2e8cf;color:#8a6a14;font-weight:700;padding:3px 4px;border:1px solid #e3d3a6;text-align:center;font-size:9px;letter-spacing:.5px}
+#reportPrint .rp-tbl td{padding:3px 5px;border:1px solid #ecdfbf;color:#3a2c12;line-height:1.45;vertical-align:top}
+#reportPrint .rp-tbl td.c{text-align:center;white-space:nowrap}
+#reportPrint .rp-tbl td.g,#reportPrint .rp-tbl .g{color:#999;font-size:8.5px}
+#reportPrint .rp-tbl tr.cur td{background:#fbf2db}
+#reportPrint .rp-tbl tr.cur td:first-child,#reportPrint .rp-tbl tr.cur b{color:#8a6a14}
+#reportPrint .rp-tbl.lm{table-layout:fixed}
+#reportPrint .rp-tbl.lm td{text-align:center;font-size:9.5px;line-height:1.55;width:16.66%}
+#reportPrint .rp-tbl.lm td.good{background:#eef7ef;color:#2e6b43}
+#reportPrint .rp-tbl.lm td.low{background:#fbeef1;color:#a83d56}
+#reportPrint .rp-kv{display:flex;flex-wrap:wrap;gap:4px 6px;margin:4px 0}
+#reportPrint .rp-kv span{border:1px solid #e0cf9e;border-radius:5px;padding:2px 8px;font-size:9.5px;color:#5a4a28;background:#fdfaf2}
+#reportPrint .rp-kv b{color:#8a6a14}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
   body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicwrap,body.rp-on footer{display:none!important}
@@ -4789,6 +4803,65 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     `<b>當前大限</b>　現行虛歲 ${adv.curAge}，正走「${curLimName}」大限（起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運），宜順此宮位星性佈局十年重心。`,
     `<b>2026 流年</b>　行運入「${lnPalaceName}」，把握 ${lnSihua[0]}化祿之機、慎防 ${lnSihua[3]}化忌之耗，趨吉避凶、穩中求進。`
   ].map(t=>`<li>${t}</li>`).join("");
+
+  // ===== 完整資料頁（盡可能完整呈現命盤所有數據） =====
+  const _huaTxt=h=>h?({lu:'化祿',quan:'化權',ke:'化科',ji:'化忌'})[h]:'';
+  // 逐宮詳解：主星＋輔星＋四化＋亮度＋雜曜＋小限＋大限
+  let ppDetailRows="";
+  for(let b=0;b<12;b++){
+    const sts=(zw.stars[b]||[]).slice().sort((x,y)=>(x.type==="main"?0:1)-(y.type==="main"?0:1));
+    const starTxt=sts.length?sts.map(s=>s.name+(s.bright?`(${s.bright})`:'')+_huaTxt(s.hua)).join("、"):'<span class="g">空宮</span>';
+    const za=[];
+    if(zw.changSheng&&zw.changSheng[b])za.push(zw.changSheng[b]);
+    if(zw.boShi&&zw.boShi[b])za.push(zw.boShi[b]);
+    if(zw.jiangPre&&zw.jiangPre[b])za.push(zw.jiangPre[b]);
+    if(zw.suiPre&&zw.suiPre[b])za.push(zw.suiPre[b]);
+    const xa=(zw.xiaoXian[b]||[]).slice(0,6).join("/");
+    const mk=(b===zw.ming?'·命':'')+(b===zw.shen?'·身':'')+(b===adv.limits.curBranch?'·限':'');
+    ppDetailRows+=`<tr><td class="c"><b>${zw.palaceName[b]}</b><span class="g">${mk}</span><br><span class="g">${zw.palaceGan[b]}${ZHI[b]}</span></td><td>${starTxt}</td><td class="c g">${za.join(' ')||'—'}<br>限${adv.limits.limits[b].start}-${adv.limits.limits[b].end}<br>小限 ${xa}</td></tr>`;
+  }
+  // 神煞
+  const ssTxt=adv.ss&&adv.ss.length?adv.ss.map(s=>`${s.name}（${s.at}柱）`).join("、"):"無顯著神煞";
+  // 生年四化飛星
+  const flyLoc=_flyStarLoc(zw),syhArr=SIHUA[bz.year.gan];
+  const flyKv=["祿","權","科","忌"].map((k,i)=>{const star=syhArr[i],tb=flyLoc[star];return `<span>化${k} <b>${star}</b>${tb!=null?` → ${zw.palaceName[tb]}`:''}</span>`;}).join("");
+  // 命宮三方四正
+  const sfszRows=[[zw.ming,"本宮·命宮"],[(zw.ming+6)%12,"對宮·遷移"],[(zw.ming+4)%12,"三合之一"],[(zw.ming+8)%12,"三合之一"]].map(e=>{const b=e[0];const ms=(zw.stars[b]||[]).filter(s=>s.type==="main").map(s=>s.name+_huaTxt(s.hua));return `<span><b>${e[1]}</b> ${zw.palaceName[b]}（${zw.palaceGan[b]}${ZHI[b]}）：${ms.length?ms.join("、"):'空宮'}</span>`;}).join("");
+  // 大運十步
+  let dyRows="";
+  lk.list.forEach((p,i)=>{const cur=adv.curAge>=p.age&&adv.curAge<p.age+10;dyRows+=`<tr${cur?' class="cur"':''}><td class="c">${i+1}</td><td class="c"><b>${p.age}-${p.age+9}</b></td><td class="c"><b>${p.gan}${p.zhi}</b></td><td class="c">${tenGod(dm,p.gan)}</td><td class="c g">${naYin(p.gan,p.zhi)}</td><td class="c">${cur?'◆現行':''}</td></tr>`;});
+  // 近六年流年
+  let lnRows="";
+  for(let Y=2026;Y<2032;Y++){const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12,gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];const cur=Y===2026;lnRows+=`<tr${cur?' class="cur"':''}><td class="c"><b>${Y}</b></td><td class="c">${gan}${zhi}</td><td class="c">${Y-sol.y+1}</td><td class="c">${zw.palaceName[zi]}</td><td>${sh[0]}祿·${sh[1]}權·${sh[2]}科·${sh[3]}忌</td></tr>`;}
+  // 2026 流月吉凶
+  const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
+  const Y2=2026,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
+  let lmCells=[];
+  for(let k=0;k<12;k++){const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg];const mark=st.xi.includes(mwx)?'吉':st.ji.includes(mwx)?'留意':'平';const cls=mark==='吉'?'good':mark==='留意'?'low':'';lmCells.push(`<td class="${cls}"><b>${lmLabels[k]}月</b><br>${mg}${mzh}<br><span class="g">${mwx}・${tenGod(dm,mg)}</span><br><b>${mark}</b></td>`);}
+  const lmHTML=`<table class="rp-tbl lm"><tbody><tr>${lmCells.slice(0,6).join("")}</tr><tr>${lmCells.slice(6).join("")}</tr></tbody></table>`;
+  // 八字重量（袁天罡稱骨）
+  const _yg=bz.year.gan+bz.year.zhi;
+  const _wy=BONE_Y[_yg]||0,_wm=BONE_M[lunar.month-1]||0,_wd=BONE_D[lunar.day-1]||0,_wh=BONE_H[bz.hour.zhi]||0;
+  const _boneTot=_wy+_wm+_wd+_wh,_boneT=boneTier(_boneTot);
+  const boneStr=`${Math.floor(_boneTot/10)}兩${_boneTot%10}錢`;
+  // 姓名學三才五格
+  let nameBlock="";
+  const _na=nameAnalysis(name);
+  if(_na){
+    const _ns=nameScore(_na,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:"日主"+dm,xi:st.xi,ji:st.ji});
+    const cr=st.xi.includes(_na.renWx)||st.xi.includes(_na.zongWx)?'姓名五行合喜用神，助旺命格':(st.ji.includes(_na.renWx)||st.ji.includes(_na.zongWx)?'姓名五行偏忌神，宜以喜用之色彩方位調補':'姓名五行與喜忌中性，平穩不損運');
+    nameBlock=`<div class="rp-row">姓名 <b>${_na.chars.join("")}</b>（各字筆畫 ${_na.strokes.join("、")}）　·　綜合 <b>${_ns.total}</b>／100（${_ns.grade}）</div>`
+      +`<div class="rp-kv"><span>天格 <b>${_na.tian}</b></span><span>人格 <b>${_na.ren}</b></span><span>地格 <b>${_na.di}</b></span><span>外格 <b>${_na.wai}</b></span><span>總格 <b>${_na.zong}</b></span></div>`
+      +`<div class="rp-row">三才（天→人→地）：<b>${_na.sancai.join("→")}</b>（${_na.scLabel}）　·　人格五行 ${_na.renWx}、總格五行 ${_na.zongWx}</div>`
+      +`<div class="rp-row"><b>與命局交叉</b>：${cr}</div>`
+      +(_na.unknown&&_na.unknown.length?`<div class="rp-row g">註：${_na.unknown.join("、")} 未在筆畫庫中，姓名數理僅供參考。</div>`:"");
+  }else{
+    nameBlock=`<div class="rp-row g">（姓名少於兩個中文字，未進行姓名學分析）</div>`;
+  }
+  // 喜用神生活開運應用
+  const xiUseRows=st.xi.map(el=>{const w=WX_LIFE[el];return w?`<li><b>喜「${el}」</b>　開運色 ${w.色}｜吉方 ${w.方}｜利業 ${w.業}｜開運法 ${w.物}</li>`:'';}).join("");
+  const jiNote=st.ji.length?`<div class="rp-row g">忌神參考：${st.ji.map(el=>{const w=WX_LIFE[el];return el+(w?`（少用 ${w.色}、${w.方}）`:'');}).join("；")}</div>`:'';
+
   // 家庭成員交叉分析報告頁（每位親人一張單面 A4）
   let famPages="";
   if(fam&&fam.members&&fam.members.length){
@@ -4867,6 +4940,42 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
+  </div>
+  <div class="rp-page">
+    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第三頁 · 紫微命盤詳解）</div>
+    <div class="rp-sec">紫微斗數 · 十二宮逐宮詳解（主星 · 輔星 · 四化 · 亮度 · 雜曜）</div>
+    <table class="rp-tbl"><thead><tr><th style="width:18%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:24%">雜曜 · 大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
+    <div class="rp-row g">四化標記：化祿（福祿機緣）· 化權（掌控主導）· 化科（名聲貴人）· 化忌（牽絆耗損）。〔命〕命宮 〔身〕身宮 〔限〕現行大限。</div>
+    <div class="rp-sec">神煞</div>
+    <div class="rp-row">${ssTxt}</div>
+    <div class="rp-sec">生年四化飛星（${bz.year.gan} 干引動）</div>
+    <div class="rp-kv">${flyKv}</div>
+    <div class="rp-sec">命宮三方四正（最關鍵之格局組合）</div>
+    <div class="rp-kv">${sfszRows}</div>
+  </div>
+  <div class="rp-page">
+    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第四頁 · 大運 · 流年 · 流月）</div>
+    <div class="rp-sec">大運 · 每步十年</div>
+    <div class="rp-row g">起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運</div>
+    <table class="rp-tbl"><thead><tr><th>步</th><th>歲數</th><th>干支</th><th>主十神</th><th>納音</th><th>現行</th></tr></thead><tbody>${dyRows}</tbody></table>
+    <div class="rp-sec">近六年流年 · 流年四化</div>
+    <table class="rp-tbl"><thead><tr><th>年</th><th>干支</th><th>虛歲</th><th>流年命宮</th><th>流年四化</th></tr></thead><tbody>${lnRows}</tbody></table>
+    <div class="rp-sec">2026 丙午年 · 流月吉凶（依節氣定月）</div>
+    ${lmHTML}
+    <div class="rp-row g">吉＝逢喜用神之月，五行得氣、宜進取佈局；留意＝逢忌神之月，宜守成緩進；平＝五行持平，按部就班即可。</div>
+  </div>
+  <div class="rp-page">
+    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第五頁 · 稱骨 · 姓名 · 開運）</div>
+    <div class="rp-sec">八字重量 · 袁天罡稱骨</div>
+    <div class="rp-row">骨重 <b style="font-size:13px;color:#c2576f">${boneStr}</b>（出生年 ${_yg} ${_boneFmt(_wy)}＋農曆${LUNAR_M[lunar.month-1]}月 ${_boneFmt(_wm)}＋${LUNAR_D[lunar.day]} ${_boneFmt(_wd)}＋${bz.hour.zhi}時 ${_boneFmt(_wh)}）</div>
+    <div class="rp-row">命格：<b>${_boneT.label}</b></div>
+    <div class="rp-syn">${_boneT.note}</div>
+    <div class="rp-sec">姓名學 · 三才五格</div>
+    ${nameBlock}
+    <div class="rp-sec">喜用神 · 生活開運應用</div>
+    <ul class="rp-adv">${xiUseRows}</ul>
+    ${jiNote}
+    <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．政遠大師 版權所有</div>
   </div>${famPages}`;
   const rp=document.getElementById("reportPrint");
   if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
