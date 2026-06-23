@@ -2926,6 +2926,7 @@ function run(){
   if(!dv){err.textContent="請填寫出生日期。";err.style.display="block";return;}
   const [y,m,d]=dv.split("-").map(Number);
   if(y<1900||y>2100){err.textContent="本系統適用範圍為西元 1900–2100 年。";err.style.display="block";return;}
+  if(Date.UTC(y,m-1,d)<Date.UTC(1900,0,31)){err.textContent="本系統農曆推算自 1900 年 1 月 31 日（庚子年正月初一）起，請確認出生日期。";err.style.display="block";return;}
   if(system==="comp"&&!tv){err.textContent="綜合命盤需要出生時間以排定時柱與命宮，請填寫。";err.style.display="block";return;}
   const hh=bt.hh, mm=bt.mm;
   const timeDisp=bt.label?`${bt.label.split("·")[0].trim()}`:(tv||"（時辰未填）");
