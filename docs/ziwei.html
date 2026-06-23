@@ -921,13 +921,18 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-pcard .px{margin-top:5px;padding-top:4px;border-top:1px dotted rgba(120,90,40,.45);font-size:10.5px;line-height:1.55;color:#5a4a2e}
 #reportPrint .rp-pcard .px b{font-weight:800;color:#7a5a2a}
 #reportPrint .rp-pcard .px .bo{font-weight:700;color:#a83d56}
-#reportPrint .fxline{display:inline}
-#reportPrint .fx{display:inline-block;font-size:11.5px;line-height:1.7;margin-right:2px;white-space:nowrap}
-#reportPrint .fx.lu{color:#9a6b00}
-#reportPrint .fx.quan{color:#1f6f3a}
-#reportPrint .fx.ke{color:#2a5fa8}
-#reportPrint .fx.ji{color:#a83d56}
-#reportPrint .fx b{font-weight:800}
+#reportPrint .rp-fgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0}
+#reportPrint .rp-fcard{border:1px solid;border-radius:9px;padding:7px 10px;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-fcard .fh{font-weight:800;font-size:13px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px dashed currentColor;line-height:1.4}
+#reportPrint .rp-fcard .fh .pm{font-size:9.5px;font-weight:800;border:1px solid currentColor;border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle}
+#reportPrint .rp-fcard .fh .fhg{font-size:10.5px;font-weight:600;color:#6b5a33;margin-left:4px}
+#reportPrint .rp-fcard .fbd .fxr{display:flex;gap:5px;align-items:flex-start;margin-top:4px;font-size:11.5px;line-height:1.55;color:#3a2c12}
+#reportPrint .rp-fcard .fxb{flex:none;width:15px;height:15px;border-radius:4px;color:#fff;font-size:10px;font-weight:800;text-align:center;line-height:15px;margin-top:1px}
+#reportPrint .fxb.lu{background:#3a9e6a}
+#reportPrint .fxb.quan{background:#d68a32}
+#reportPrint .fxb.ke{background:#5a86c4}
+#reportPrint .fxb.ji{background:#c45a6e}
+#reportPrint .rp-fcard .fxd b{font-weight:800}
 #reportPrint .gc{display:inline-block;background:#f2e8cf;border-radius:5px;padding:2px 9px;margin:2px;font-size:12px;color:#8a6a14;font-weight:700}
 #reportPrint .rp-adv{margin:4px 0;padding-left:18px}
 #reportPrint .rp-adv li{margin:4px 0;font-size:12px;line-height:1.6;color:#3a2c12}
@@ -4952,23 +4957,43 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     : `<div class="rp-row g">本命無顯著神煞牽動，命局相對單純，吉凶主要看星曜與五行格局即可。</div>`;
   // 生年四化飛星白話
   const flyProse=["祿","權","科","忌"].map((k,i)=>{const star=syhArr[i],tb=flyLoc[star];const mn=FLY_MEAN[FLY_KEYS[i]];return `<div class="rp-row"><b>${star}化${k}</b>${tb!=null?` 飛入【${zw.palaceName[tb]}】`:''}：${mn}${tb!=null?`，主一生在「${zw.palaceName[tb]}」所司之事上${k==='忌'?'最須留意化解':'最易得力受惠'}。`:'。'}</div>`;}).join("");
-  // 宮干四化飛星（飛線盤）白話：每宮宮干飛出祿權科忌，落入哪些宮位＝牽動哪些人生面向
-  const _flyTxt=(b)=>{
-    const stem=zw.palaceGan[b],arr=SIHUA[stem];if(!arr)return"";
-    const parts=["祿","權","科","忌"].map((k,i)=>{
-      const star=arr[i],tb=flyLoc[star];
-      if(tb==null)return `<span class="fx ${FLY_KEYS[i]}">${star}化${k}（未入盤）</span>`;
-      if(tb===b)return `<span class="fx ${FLY_KEYS[i]}"><b>${star}自化${k}</b>（飛回本宮）</span>`;
-      return `<span class="fx ${FLY_KEYS[i]}"><b>${star}化${k}</b>→【${zw.palaceName[tb]}】</span>`;
-    });
-    return parts.join("　");
+  // 宮干四化飛星（飛線盤）· 彩色卡片 + 白話：每宮宮干飛出祿權科忌落入哪些宮位＝牽動哪些人生面向
+  const FLY_LIFE={命宮:"個性與人生主軸",兄弟:"手足、平輩與合作",夫妻:"婚姻與感情",子女:"子女、桃花與創意",財帛:"金錢與財運",疾厄:"健康、身體與情緒",遷移:"出外、際遇與人緣",交友:"朋友與部屬",官祿:"事業與工作",田宅:"不動產與家庭",福德:"精神、興趣與福分",父母:"父母、長輩與文書"};
+  const FLY_INTO={
+    lu:"帶來福分與財緣，這方面較得助力、機會增多",
+    quan:"注入企圖心與掌控力，這方面能主導、有成，惟防過於強勢",
+    ke:"帶來好名聲與貴人，這方面遇事較能逢凶化吉、受人肯定",
+    ji:"形成牽掛與執著，這方面較費心耗神，宜留意調節、勿鑽牛角尖"
   };
-  const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動。</div>`
-    +Array.from({length:12},(_,b)=>{
-      const stem=zw.palaceGan[b];
-      const self=(b===zw.ming?'（命宮）':'')+(b===zw.shen?'（身宮）':'');
-      return `<div class="rp-row"><b>【${zw.palaceName[b]}】${self}宮干 ${stem}${ZHI[b]} 飛：</b><span class="fxline">${_flyTxt(b)}</span></div>`;
-    }).join("");
+  const FLY_SELF={
+    lu:"福分來得快也去得快，宜把握當下、莫輕易揮霍",
+    quan:"主見強、凡事親力親為、自我作主，宜剛中帶柔",
+    ke:"好名聲自然顯現，惟虛名易過，宜重實質內涵",
+    ji:"煩惱自惹自消、情緒起伏較直接，宜放寬心、莫鑽牛角尖"
+  };
+  const _flyCard=(b)=>{
+    const stem=zw.palaceGan[b],arr=SIHUA[stem],pn=zw.palaceName[b];
+    const c=PAL_PAL[b%PAL_PAL.length];
+    const mk=(b===zw.ming?'<span class="pm">命宮</span>':'')+(b===zw.shen?'<span class="pm">身宮</span>':'');
+    let rows="";
+    ["祿","權","科","忌"].forEach((k,i)=>{
+      const key=FLY_KEYS[i],star=arr?arr[i]:"",tb=arr?flyLoc[star]:null;
+      if(!arr)return;
+      if(tb==null){
+        rows+=`<div class="fxr"><span class="fxb ${key}">${k}</span><span class="fxd"><b>${star}化${k}</b>——本盤未見此星入宮，此股「${k}」氣懸而未顯。</span></div>`;
+      }else if(tb===b){
+        rows+=`<div class="fxr"><span class="fxb ${key}">${k}</span><span class="fxd"><b>${star}自化${k}（回本宮）</b>——${FLY_SELF[key]}。</span></div>`;
+      }else{
+        const tn=zw.palaceName[tb];
+        rows+=`<div class="fxr"><span class="fxb ${key}">${k}</span><span class="fxd"><b>${star}化${k}→【${tn}】</b>——本宮（${FLY_LIFE[pn]||pn}）牽動「${tn}・${FLY_LIFE[tn]||""}」，${FLY_INTO[key]}。</span></div>`;
+      }
+    });
+    return `<div class="rp-fcard" style="background:${c.bg};border-color:${c.bd}">`
+      +`<div class="fh" style="color:${c.hd}">【${pn}】${mk}<span class="fhg">宮干 ${stem}${ZHI[b]} 飛化</span></div>`
+      +`<div class="fbd">${rows}</div></div>`;
+  };
+  const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動；以下每宮一格、依色辨識，並附白話。</div>`
+    +`<div class="rp-fgrid">`+Array.from({length:12},(_,b)=>_flyCard(b)).join("")+`</div>`;
   // 三方四正白話
   const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
   // 大運白話（現行大限 + 各步十神綱要）
