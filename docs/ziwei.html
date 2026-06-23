@@ -1441,7 +1441,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 </div>
 
 <footer>
-  <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。<br><span style="opacity:.85">※ 演算說明：曆法推算適用 1900 年 1 月 31 日（庚子年正月初一）至 2100 年。節氣與立春定年以「日」為精度，恰逢交節當日且接近交節時刻者，建議再行核對；農曆閏月以該月月份排盤。</span></div>
+  <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。<br><span style="opacity:.85">※ 演算說明：曆法推算適用 1900 年 1 月 31 日（庚子年正月初一）至 2100 年。節氣與立春定年採太陽視黃經演算，達「分」級精度，恰逢交節當日者亦能依出生時刻自動判定年柱／月柱邊界（天文模型誤差約數分鐘，臨界數分鐘內者仍建議再行核對）；農曆閏月以該月月份排盤。</span></div>
   <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
@@ -1504,31 +1504,51 @@ function solar2lunar(y,m,d){
   return {year:ly,month:lm,day:offset+1,isLeap};
 }
 
-/* ================= 二十四節氣 ================= */
-const sTermInfo=[0,21208,42467,63836,85337,107014,128867,150921,173149,195551,218072,240693,
-263343,285989,308563,331033,353350,375494,397447,419210,440795,462224,483532,504758];
-function sTerm(y,n){
-  const off=31556925974.7*(y-1900)+sTermInfo[n]*60000;
-  const d=new Date(off+Date.UTC(1900,0,6,2,5,0));
-  return d.getUTCDate();
+/* ================= 二十四節氣（高精度：Meeus 太陽視黃經 + 牛頓逼近，分級精度） ================= */
+/* 以太陽視黃經求交節時刻，回傳 CST（UTC+8）對應之 Date.UTC 牆鐘毫秒，精度約數分鐘 */
+function _sunLong(jde){
+  const T=(jde-2451545)/36525, D2R=Math.PI/180;
+  const L0=280.46646+36000.76983*T+0.0003032*T*T;
+  const M=(357.52911+35999.05029*T-0.0001537*T*T)*D2R;
+  const C=(1.914602-0.004817*T-0.000014*T*T)*Math.sin(M)+(0.019993-0.000101*T)*Math.sin(2*M)+0.000289*Math.sin(3*M);
+  const Om=(125.04-1934.136*T)*D2R;
+  let lam=L0+C-0.00569-0.00478*Math.sin(Om);
+  return ((lam%360)+360)%360;
 }
+/* 節氣 n：0=小寒…23=冬至；黃經 λ_n=(285+15n)%360（n=2 立春=315°）。偶數 n 為十二「節」（定月支） */
+function sTermCST(y,n){
+  const target=(285+15*n)%360;
+  const seedMon=Math.floor(n/2)+1;
+  let jd=Date.UTC(y,seedMon-1,15,12,0,0)/86400000+2440587.5;
+  for(let it=0;it<10;it++){
+    const lam=_sunLong(jd);
+    let diff=((target-lam+540)%360)-180;
+    jd+=diff*365.2422/360;
+    if(Math.abs(diff)<1e-7)break;
+  }
+  return (jd-2440587.5)*86400000 + 8*3600000; // CST 牆鐘毫秒
+}
+/* 相容介面：回傳 CST 當日之「日」 */
+function sTerm(y,n){return new Date(sTermCST(y,n)).getUTCDate();}
 
 /* ================= 八字計算 ================= */
-function calcBazi(y,m,d,hour){
+function calcBazi(y,m,d,hour,minute){
+  minute=minute||0;
+  // 出生時刻（CST 牆鐘），用於分級精度判斷交節邊界
+  const birth=Date.UTC(y,m-1,d,hour,minute,0);
   // 子時換日：23時起算次日
   let dY=y,dM=m,dD=d;
   if(hour>=23){const nd=new Date(Date.UTC(y,m-1,d)+86400000);dY=nd.getUTCFullYear();dM=nd.getUTCMonth()+1;dD=nd.getUTCDate();}
   // 日柱
   const dayOffset=Math.floor(Date.UTC(dY,dM-1,dD)/86400000)+25577;
   const dayGan=((dayOffset%10)+10)%10, dayZhi=((dayOffset%12)+12)%12;
-  // 立春定年
-  const lichun=sTerm(y,2);
-  let baziYear=y;
-  if(m<2||(m===2&&d<lichun))baziYear=y-1;
+  // 立春定年（以精確交節時刻判斷）
+  const lichun=sTermCST(y,2);
+  let baziYear=(birth<lichun)?y-1:y;
   const yGan=((baziYear-4)%10+10)%10, yZhi=((baziYear-4)%12+12)%12;
-  // 月柱（依節氣）
-  const jieDay=sTerm(y,(m-1)*2);
-  let mZhi=(d>=jieDay)?(m%12):((m-1+12)%12); // 子=0
+  // 月柱（依節氣，以精確交節時刻判斷）
+  const jie=sTermCST(y,(m-1)*2);
+  let mZhi=(birth>=jie)?(m%12):((m-1+12)%12); // 子=0
   // 修正：以節後屬本月
   const yinStem=(yGan%5)*2+2; // 寅月天干
   const monthOrder=((mZhi-2)+12)%12;
@@ -1615,20 +1635,21 @@ function dayStrength(bz){
 }
 
 /* 大運 */
-function calcLuck(y,m,d,bz,gender){
+function calcLuck(y,m,d,bz,gender,hour,minute){
+  hour=hour||0;minute=minute||0;
   const yangYear=GAN_YY[bz.year.gan]==="陽";
   const forward=(yangYear&&gender==="男")||(!yangYear&&gender==="女");
-  const birth=Date.UTC(y,m-1,d);
-  const jieThis=Date.UTC(y,m-1,sTerm(y,(m-1)*2));
+  const birth=Date.UTC(y,m-1,d,hour,minute,0);
+  const jieThis=sTermCST(y,(m-1)*2);
   let days;
   if(forward){
     let ny=y,nm=m;if(birth>=jieThis){nm=m+1;if(nm>12){nm=1;ny=y+1;}}
-    const jieNext=Date.UTC(ny,nm-1,sTerm(ny,(nm-1)*2));
-    days=Math.round((jieNext-birth)/86400000);
+    const jieNext=sTermCST(ny,(nm-1)*2);
+    days=(jieNext-birth)/86400000;
   }else{
     let py=y,pm=m;if(birth<jieThis){pm=m-1;if(pm<1){pm=12;py=y-1;}}
-    const jiePrev=Date.UTC(py,pm-1,sTerm(py,(pm-1)*2));
-    days=Math.round((birth-jiePrev)/86400000);
+    const jiePrev=sTermCST(py,(pm-1)*2);
+    days=(birth-jiePrev)/86400000;
   }
   const startAge=Math.max(1,Math.round(days/3));
   const mGi=GAN.indexOf(bz.month.gan),mZi=ZHI.indexOf(bz.month.zhi);
@@ -2330,7 +2351,7 @@ function familyAnalysis(self,selfXi,selfJi,members){
  elemPool[selfDmWx]+=1;elemPool[ZHI_WX[self.year.zhi]]+=0.5;
  let totalScore=0;const goodRel=[],badRel=[];
  members.forEach(mem=>{
-  const bz=calcBazi(mem.y,mem.m,mem.d,mem.hh);
+  const bz=calcBazi(mem.y,mem.m,mem.d,mem.hh,mem.mm||0);
   const otherDmWx=GAN_WX[bz.dayMaster];
   elemPool[otherDmWx]+=1;elemPool[ZHI_WX[bz.year.zhi]]+=0.5;
   const zr=zodiacRel(self.year.zhi,bz.year.zhi);
@@ -2956,13 +2977,13 @@ function run(){
     if(system==="num"){renderNum(name,gender,{y,m,d,tv},subText);return;}
 
     const lunar=solar2lunar(cy,cm,cd);
-    const bz=calcBazi(cy,cm,cd,chh);
+    const bz=calcBazi(cy,cm,cd,chh,cmm);
     const zw=calcZiwei(lunar,chh,bz.year.gan,bz.year.zhi,gender);
     const wx=wuxingCount(bz);
     const curAge=2026-y+1;                          // 虛歲
     const adv={
       strength:dayStrength(bz),
-      luck:calcLuck(cy,cm,cd,bz,gender),
+      luck:calcLuck(cy,cm,cd,bz,gender,chh,cmm),
       ss:shenSha(bz),
       limits:bigLimits(zw,bz,gender,curAge),
       ge:detectGe(zw),
@@ -5092,7 +5113,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="rp-adv">${ppAdvice}</ul>
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
-    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年以「日」為精度，恰逢交節當日近交節時刻者宜再核對，閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
+    <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
     <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第三頁 · 紫微命盤詳解）</div>
