@@ -1194,6 +1194,30 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .discmsg{min-height:18px;font-size:.82rem;margin-top:6px;line-height:1.6}
 .paywall .discmsg.err{color:#c2576f}.paywall .discmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
+/* 路線B：個人收款 + 手動發碼 的付款說明區 */
+.paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
+  background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
+.paywall .pwpay-h{text-align:center;font-size:1rem;font-weight:800;color:var(--purple);margin-bottom:12px;letter-spacing:.5px}
+.paywall .pwpay-steps{list-style:none;counter-reset:s;padding:0;margin:0 0 14px}
+.paywall .pwpay-steps li{counter-increment:s;position:relative;padding:8px 0 8px 38px;font-size:.9rem;line-height:1.7;color:var(--ink);
+  border-bottom:1px dashed var(--line-soft)}
+.paywall .pwpay-steps li:last-child{border-bottom:none}
+.paywall .pwpay-steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,#8a5fd0,#6a3fb5);color:#fff;font-weight:800;font-size:.82rem;text-align:center;line-height:24px}
+.paywall .pwpay-steps b{color:var(--gold-deep)}
+.paywall .pwpay-steps .hl{color:#c2576f;font-weight:800;letter-spacing:.04em}
+.paywall .pwpay .pwform{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0}
+.paywall .pwpay .pwform input{flex:1;min-width:0;max-width:340px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;
+  font-size:1.05rem;text-align:center;letter-spacing:.14em;box-sizing:border-box;background:var(--card,#fff);color:var(--ink)}
+.paywall .pwpay .pwform input:focus{outline:none;border-color:var(--purple)}
+.paywall .pwpay .pwform button{flex:0 0 auto;padding:12px 26px;border:none;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:800;
+  color:#fff;background:linear-gradient(135deg,#8a5fd0,#6a3fb5);transition:transform .12s,box-shadow .12s}
+.paywall .pwpay .pwform button:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.22)}
+@media(max-width:480px){
+  .paywall .pwpay{padding:14px 13px}
+  .paywall .pwpay .pwform{flex-direction:column}
+  .paywall .pwpay .pwform input,.paywall .pwpay .pwform button{max-width:none;width:100%}
+}
 .supermask{position:fixed;inset:0;z-index:9999;background:rgba(20,12,30,.62);backdrop-filter:blur(3px);
   display:flex;align-items:center;justify-content:center;padding:20px;animation:supfade .18s ease}
 @keyframes supfade{from{opacity:0}to{opacity:1}}
@@ -3971,7 +3995,7 @@ async function lcUnlock(){
   const inp=document.getElementById('lcInput'),msg=document.getElementById('lcMsg');
   if(!inp||!window.__LC)return;
   const code=inp.value.trim().replace(/\s+/g,'');
-  if(!/^\d{4,5}$/.test(code)){msg.textContent='請輸入正確的萬用碼（4 位數字）。';msg.className='lcmsg err';return;}
+  if(!/^[0-9A-Za-z]{4,16}$/.test(code)){msg.textContent='請輸入正確的萬用碼。';msg.className='lcmsg err';return;}
   msg.textContent='驗證中…';msg.className='lcmsg';
   let res;
   try{res=await lcRedeem(code);}
@@ -4042,6 +4066,10 @@ async function lpReady(){
 }
 async function lpMaybeShowButton(){
   const info=await lpReady();if(!info)return;
+  // 只在正式金流(prod)時對一般訪客顯示 LINE Pay 自動付款按鈕；
+  // 沙盒僅供自行測試，需在網址加 ?lptest=1 才會出現，避免真實客人看到測試按鈕。
+  const testMode=/[?&]lptest=1\b/.test(location.search);
+  if(info.mode!=='prod'&&!testMode)return;
   const w=document.getElementById('lpBtnWrap');
   if(w)w.style.display='';
   const dw=document.getElementById('discWrap');if(dw)dw.style.display='';
@@ -4695,12 +4723,23 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       </div>
       <div id="discMsg" class="discmsg"></div>
     </div>
+    <div id="pwManual" class="pwpay">
+      <div class="pwpay-h">結緣付款 · 兩步驟解鎖</div>
+      <ol class="pwpay-steps">
+        <li>以 <b>LINE Pay 轉帳 <span class="hl">${LC_PRICE}</span></b>：加 聖源大師 LINE（ID：<b>yuan780903</b>，或手機 <b>0910-373-286</b>），用 LINE Pay 轉帳結緣價，並附上「<b>命主姓名 ＋ 出生年月日</b>」。</li>
+        <li>確認收款後，聖源大師將回傳一組<b>專屬萬用碼</b>；於下方輸入即可立即開啟本報告完整內容。</li>
+      </ol>
+      <div class="pwform">
+        <input id="lcInput" type="text" inputmode="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
+        <button type="button" onclick="lcUnlock()">解鎖</button>
+      </div>
+    </div>
     <div id="lpBtnWrap" class="lpwrap" style="display:none">
       <button id="lpBtn" class="lpbtn" onclick="lcStartLinePay()"><span class="lpmark">LINE</span>Pay 付款・付完自動解鎖</button>
       <div class="lpsec">透過 LINE Pay 安全付款，完成後立即自動開啟完整報告，免輸入任何代碼。</div>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
-    <div class="pwnote">付款完成後系統將自動驗證並開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
+    <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
   <div id="premZone" class="locked">
