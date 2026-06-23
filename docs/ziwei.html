@@ -917,7 +917,10 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-pcard .pb{font-size:12px;line-height:1.6;color:#3a2c12}
 #reportPrint .rp-pcard .pb .ps{display:block;margin-top:2px}
 #reportPrint .rp-pcard .pb .ps b{font-weight:800}
-#reportPrint .rp-pcard.empty .pb{color:#8a7a52}
+#reportPrint .rp-pcard.empty .pb{color:#3a2c12}
+#reportPrint .rp-pcard .px{margin-top:5px;padding-top:4px;border-top:1px dotted rgba(120,90,40,.45);font-size:10.5px;line-height:1.55;color:#5a4a2e}
+#reportPrint .rp-pcard .px b{font-weight:800;color:#7a5a2a}
+#reportPrint .rp-pcard .px .bo{font-weight:700;color:#a83d56}
 #reportPrint .gc{display:inline-block;background:#f2e8cf;border-radius:5px;padding:2px 9px;margin:2px;font-size:12px;color:#8a6a14;font-weight:700}
 #reportPrint .rp-adv{margin:4px 0;padding-left:18px}
 #reportPrint .rp-adv li{margin:4px 0;font-size:12px;line-height:1.6;color:#3a2c12}
@@ -4902,10 +4905,15 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     {bg:'#fbecf6',bd:'#e2a8d2',hd:'#a83f87'},{bg:'#fbeee9',bd:'#e6ad97',hd:'#b0532f'},
     {bg:'#eef1f4',bd:'#b3c0cc',hd:'#4a6373'},{bg:'#faf3df',bd:'#ddc57f',hd:'#97781f'}
   ];
+  // 取某宮主星（含四化）；論命「不以一宮論斷」，故每宮皆附三方四正合參
+  const _mainsOf=(idx)=>(zw.stars[idx]||[]).filter(s=>s.type==="main");
+  const _mnames=(ms)=>ms.length?ms.map(s=>s.name+_huaTxt(s.hua)).join("、"):"空宮";
   let _pcards="";
   for(let b=0;b<12;b++){
     const pn=zw.palaceName[b];
-    const mains=(zw.stars[b]||[]).filter(s=>s.type==="main");
+    const mains=_mainsOf(b);
+    const opp=(b+6)%12,t1=(b+4)%12,t2=(b+8)%12;   // 對宮、兩三合宮
+    const oppMs=_mainsOf(opp);
     const c=PAL_PAL[b%PAL_PAL.length];
     const mk=(b===zw.ming?'<span class="pm">命宮</span>':'')+(b===zw.shen?'<span class="pm">身宮</span>':'')+(b===adv.limits.curBranch?'<span class="pm">現行大限</span>':'');
     let body,emptyCls='';
@@ -4913,15 +4921,23 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       body=mains.map(s=>{const d=STAR_DESC[s.name];return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}</b>${d?`—${d.d}`:''}</span>`;}).join("");
     }else{
       _hasEmptyPalace=true;emptyCls=' empty';
-      body=`<span class="ps">本宮為空宮，須借對宮星曜論之（詳見下方備註）。</span>`;
+      if(oppMs.length){
+        // 空宮借對宮主星入本宮論之（交叉分析的核心）
+        body=`<span class="ps">本宮無主星（空宮），依「借星安宮」之法，借對宮【${zw.palaceName[opp]}】之主星入本宮論：</span>`
+          +oppMs.map(s=>{const d=STAR_DESC[s.name];return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}（借星）</b>${d?`—${d.d}`:''}</span>`;}).join("");
+      }else{
+        body=`<span class="ps">本宮與對宮【${zw.palaceName[opp]}】皆空，須再合參三合宮（${zw.palaceName[t1]}、${zw.palaceName[t2]}）之星曜綜合論之。</span>`;
+      }
     }
+    const px=`<div class="px"><b>三方四正合參</b>　<span class="bo">對宮【${zw.palaceName[opp]}】</span>${_mnames(oppMs)}　·　三合【${zw.palaceName[t1]}】${_mnames(_mainsOf(t1))}、【${zw.palaceName[t2]}】${_mnames(_mainsOf(t2))}</div>`;
     _pcards+=`<div class="rp-pcard${emptyCls}" style="background:${c.bg};border-color:${c.bd}">`
       +`<div class="ph" style="color:${c.hd}">${pn}${mk}<span class="pj">${PALACE_DESC[pn]||""}</span></div>`
-      +`<div class="pb">${body}</div></div>`;
+      +`<div class="pb">${body}</div>${px}</div>`;
   }
-  ppPalaceProse=`<div class="rp-pgrid">${_pcards}</div>`;
+  ppPalaceProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 論命要訣「不以一宮論斷」</b>：每一宮的吉凶，須連同<b>正對面的對宮</b>與<b>左右兩個三合宮</b>（合稱三方四正）一起交叉合參，才算準確；空宮則借對宮主星入本宮論之。以下每張宮位卡片下方均已附「三方四正合參」，請對照同看。</div>`
+    +`<div class="rp-pgrid">${_pcards}</div>`;
   if(_hasEmptyPalace){
-    ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}（凡上列標示「空宮」之宮位，皆依此原則解讀，不再逐宮重複說明。）</div>`;
+    ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}</div>`;
   }
   // 神煞白話
   const ssProse=(adv.ss&&adv.ss.length)
