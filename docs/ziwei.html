@@ -921,6 +921,13 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 #reportPrint .rp-pcard .px{margin-top:5px;padding-top:4px;border-top:1px dotted rgba(120,90,40,.45);font-size:10.5px;line-height:1.55;color:#5a4a2e}
 #reportPrint .rp-pcard .px b{font-weight:800;color:#7a5a2a}
 #reportPrint .rp-pcard .px .bo{font-weight:700;color:#a83d56}
+#reportPrint .fxline{display:inline}
+#reportPrint .fx{display:inline-block;font-size:11.5px;line-height:1.7;margin-right:2px;white-space:nowrap}
+#reportPrint .fx.lu{color:#9a6b00}
+#reportPrint .fx.quan{color:#1f6f3a}
+#reportPrint .fx.ke{color:#2a5fa8}
+#reportPrint .fx.ji{color:#a83d56}
+#reportPrint .fx b{font-weight:800}
 #reportPrint .gc{display:inline-block;background:#f2e8cf;border-radius:5px;padding:2px 9px;margin:2px;font-size:12px;color:#8a6a14;font-weight:700}
 #reportPrint .rp-adv{margin:4px 0;padding-left:18px}
 #reportPrint .rp-adv li{margin:4px 0;font-size:12px;line-height:1.6;color:#3a2c12}
@@ -4945,6 +4952,23 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     : `<div class="rp-row g">本命無顯著神煞牽動，命局相對單純，吉凶主要看星曜與五行格局即可。</div>`;
   // 生年四化飛星白話
   const flyProse=["祿","權","科","忌"].map((k,i)=>{const star=syhArr[i],tb=flyLoc[star];const mn=FLY_MEAN[FLY_KEYS[i]];return `<div class="rp-row"><b>${star}化${k}</b>${tb!=null?` 飛入【${zw.palaceName[tb]}】`:''}：${mn}${tb!=null?`，主一生在「${zw.palaceName[tb]}」所司之事上${k==='忌'?'最須留意化解':'最易得力受惠'}。`:'。'}</div>`;}).join("");
+  // 宮干四化飛星（飛線盤）白話：每宮宮干飛出祿權科忌，落入哪些宮位＝牽動哪些人生面向
+  const _flyTxt=(b)=>{
+    const stem=zw.palaceGan[b],arr=SIHUA[stem];if(!arr)return"";
+    const parts=["祿","權","科","忌"].map((k,i)=>{
+      const star=arr[i],tb=flyLoc[star];
+      if(tb==null)return `<span class="fx ${FLY_KEYS[i]}">${star}化${k}（未入盤）</span>`;
+      if(tb===b)return `<span class="fx ${FLY_KEYS[i]}"><b>${star}自化${k}</b>（飛回本宮）</span>`;
+      return `<span class="fx ${FLY_KEYS[i]}"><b>${star}化${k}</b>→【${zw.palaceName[tb]}】</span>`;
+    });
+    return parts.join("　");
+  };
+  const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動。</div>`
+    +Array.from({length:12},(_,b)=>{
+      const stem=zw.palaceGan[b];
+      const self=(b===zw.ming?'（命宮）':'')+(b===zw.shen?'（身宮）':'');
+      return `<div class="rp-row"><b>【${zw.palaceName[b]}】${self}宮干 ${stem}${ZHI[b]} 飛：</b><span class="fxline">${_flyTxt(b)}</span></div>`;
+    }).join("");
   // 三方四正白話
   const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
   // 大運白話（現行大限 + 各步十神綱要）
@@ -5057,6 +5081,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">生年四化飛星（${bz.year.gan} 干引動）· 白話</div>
     <div class="rp-kv">${flyKv}</div>
     ${flyProse}
+    <div class="rp-sec">宮干四化飛星（飛線盤）· 交叉合參 · 白話</div>
+    ${flyChartProse}
     <div class="rp-sec">命宮三方四正（最關鍵之格局組合）· 白話</div>
     <div class="rp-kv">${sfszRows}</div>
     ${sfszProse}
