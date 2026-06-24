@@ -1594,11 +1594,28 @@ function viewCustomer(id){
   CUST_GROUPS.forEach(g=>{ h+=custTile(id,g.key,g.icon,g.title,groupSummary(c,g.key),`custGroup('${id}','${g.key}')`); });
   (c.cards||[]).forEach(cd=>{ h+=custTile(id,'cd'+cd.id,'🗂️',cd.title,cd.body?String(cd.body).slice(0,16)+(cd.body.length>16?'…':''):'點此填寫',`custCustomCard('${id}','${cd.id}')`); });
   h+=`</div>`;
-  h+=`<div class="btn-row" style="margin-top:2px"><button class="btn btn-pri" onclick="custFullView('${id}')">📋 客戶資料全貌（可複製）</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:2px">
+    <button class="btn btn-pri" onclick="custFullView('${id}')">📋 客戶資料全貌（可複製）</button>
+    <button class="btn btn-out" onclick="openFormulaCalc('${id}')">🌱 配方計算</button>
+  </div>`;
   h+=`<div class="btn-row"><button class="btn btn-out" onclick="addCustCard('${id}')">⚙️ 新增卡片</button>
       <button class="btn btn-gray" onclick="toggleInactive('${id}')">${c.inactive?'▶️ 啟用客戶':'⏸️ 停用客戶'}</button></div>`;
   h+=`<div class="btn-row"><button class="btn btn-red" onclick="delCustomer('${id}')">刪除</button></div>`;
   openModal(c.name, h);
+}
+function openFormulaCalc(id){
+  const c=customers.find(x=>x.id===id); if(!c){ toast('找不到客戶資料'); return; }
+  const o=overlay[id]||{};
+  const data={
+    name: c.name||'',
+    address: c.address||'',
+    crops: Array.isArray(c.crops)?c.crops:[],
+    plantArea: c.plantArea||'',
+    plantAreaUnit: c.plantAreaUnit||'公頃',
+    crop: (o.fert&&o.fert.crop)||''
+  };
+  LS.set('fert_crm_import', data);
+  window.open('../有機質肥料配方計算系統.html','_blank');
 }
 function sectionTitleOf(key){ const s=CUST_SECTIONS.find(x=>x.key===key); return s?s.title:key; }
 function custBackBar(id){ return `<div class="btn-row" style="margin-top:0;margin-bottom:12px"><button class="btn btn-gray" onclick="viewCustomer('${id}')">← 返回</button></div>`; }
