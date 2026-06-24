@@ -19,14 +19,23 @@
          color:#fff;padding:20px 28px;box-shadow:var(--shadow);}
   header h1{margin:0;font-size:22px;letter-spacing:1px;}
   header p{margin:4px 0 0;opacity:.85;font-size:13px;}
-  .tabs{display:flex;gap:4px;background:var(--green-d);padding:0 16px;flex-wrap:wrap;}
-  .tab{padding:12px 20px;color:#cfe6d3;cursor:pointer;border:none;background:none;
-       font-size:15px;border-bottom:3px solid transparent;font-family:inherit;}
-  .tab:hover{color:#fff;}
-  .tab.active{color:#fff;border-bottom-color:var(--accent);font-weight:600;}
-  main{max-width:1180px;margin:0 auto;padding:22px 18px 80px;}
-  .panel{display:none;animation:fade .25s;}
-  .panel.active{display:block;}
+  /* 錨點快捷列 */
+  .page-nav{position:sticky;top:0;z-index:500;background:var(--green-d);
+    display:flex;gap:2px;padding:0 12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+  .page-nav a{padding:10px 14px;color:#cfe6d3;text-decoration:none;font-size:13.5px;
+    border-bottom:3px solid transparent;white-space:nowrap;transition:.15s;}
+  .page-nav a:hover{color:#fff;border-bottom-color:var(--accent);}
+  .page-nav a.cur{color:#fff;border-bottom-color:var(--accent);font-weight:600;}
+  /* 區塊分隔標頭 */
+  .sec-head{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--green-l) 0%,transparent 100%);
+    border-left:4px solid var(--green);border-radius:0 8px 8px 0;padding:10px 16px;
+    margin:32px 0 18px;scroll-margin-top:52px;}
+  .sec-head h2{margin:0;font-size:19px;color:var(--green-d);}
+  .sec-head .badge{font-size:11px;background:var(--green);color:#fff;
+    padding:2px 8px;border-radius:20px;margin-left:4px;font-weight:500;}
+  .sec-head p{margin:4px 0 0;font-size:13px;color:var(--muted);}
+  main{max-width:1180px;margin:0 auto;padding:18px 18px 80px;}
+  .sec{scroll-margin-top:52px;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
         padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
@@ -211,11 +220,12 @@
   @media print{
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{background:#fff;}
-    header,.tabs,.no-print{display:none !important;}
+    header,.page-nav,.no-print{display:none !important;}
     main{max-width:100%;padding:0;margin:0;}
-    .panel{display:none !important;}
+    .sec{display:none !important;}
     #convert{display:block !important;}
     #convert > .card:not(#convertResult){display:none !important;}
+    .sec-head{display:none !important;}
     #convertResult{display:block !important;border:none;box-shadow:none;padding:0;background:none;margin:0;}
     #convertResult .toolbar{display:none !important;}
     .report{box-shadow:none;border:none;border-radius:0;width:100%;}
@@ -233,22 +243,24 @@
   <p>原料資料庫 · 配方成分與成本計算 · 客戶肥料替代量換算　|　資料儲存於本機瀏覽器,不上傳雲端</p>
 </header>
 
-<nav class="tabs">
-  <button class="tab active" data-tab="db">① 原料資料庫</button>
-  <button class="tab" data-tab="calc">② 配方計算</button>
-  <button class="tab" data-tab="convert">③ 替代量換算</button>
-  <button class="tab" data-tab="store">④ 產品配方庫</button>
-  <button class="tab" data-tab="market">⑤ 市售肥料庫</button>
-  <button class="tab" data-tab="ref">📚 文獻參考</button>
-  <button class="tab" data-tab="news">📰 市場資訊</button>
+<nav class="page-nav">
+  <a href="#db">① 原料資料庫</a>
+  <a href="#calc">② 配方計算</a>
+  <a href="#convert">③ 替代量換算</a>
+  <a href="#store">④ 產品配方庫</a>
+  <a href="#market">⑤ 市售肥料庫</a>
+  <a href="#ref">📚 文獻參考</a>
+  <a href="#news">📰 市場資訊</a>
 </nav>
 
 <main>
   <!-- ① 原料資料庫 -->
-  <section class="panel active" id="db">
-    <div class="card">
-      <h2>原料資料庫 <span class="badge">可編輯</span></h2>
-      <p class="hint">下表數值為文獻與業界參考值(營養成分以乾基%表示),請依你的實際檢驗報告修改。修改後自動儲存。</p>
+  <section class="sec" id="db">
+    <div class="sec-head">
+      <div><h2>① 原料資料庫 <span class="badge">可編輯</span></h2>
+      <p>下表數值為文獻與業界參考值(乾基%),請依實際檢驗報告修改,修改後自動儲存。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <div class="toolbar">
         <button class="btn sm" onclick="addMaterial('禽畜糞')">+ 新增禽畜糞原料</button>
         <button class="btn sm alt" onclick="addMaterial('調整材')">+ 新增調整材</button>
@@ -275,10 +287,12 @@
   </section>
 
   <!-- ② 配方計算 -->
-  <section class="panel" id="calc">
-    <div class="card">
-      <h2>配方計算</h2>
-      <p class="hint">選擇原料並輸入投入重量(kg),系統依重量加權計算混合後的營養成分、碳氮比與每公斤基礎成本。</p>
+  <section class="sec" id="calc">
+    <div class="sec-head">
+      <div><h2>② 配方計算</h2>
+      <p>選擇原料並輸入投入重量(kg),系統依重量加權計算混合後的養分、碳氮比與每公斤基礎成本。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <div id="recipeRows"></div>
       <button class="btn ghost sm" onclick="addRecipeRow()">+ 加入原料</button>
 
@@ -311,8 +325,12 @@
   </section>
 
   <!-- ③ 替代量換算 -->
-  <section class="panel" id="convert">
-    <div class="card">
+  <section class="sec" id="convert">
+    <div class="sec-head">
+      <div><h2>③ 替代量換算</h2>
+      <p>輸入客戶原有肥料與我方產品,計算等養分替代用量、成本差異與施肥見解報告。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <h2>客戶基本資料 <span class="badge">報告抬頭用</span></h2>
       <p class="hint">填寫後將顯示於替代換算報告的抬頭。作物與耕作面積為選填;填了面積會同時計算「每分地」與「全場合計」。</p>
       <div class="grid g3">
@@ -427,19 +445,23 @@
   </section>
 
   <!-- ④ 產品配方庫 -->
-  <section class="panel" id="store">
-    <div class="card">
-      <h2>產品配方庫</h2>
-      <p class="hint">於「配方計算」儲存的產品會列在此,可用於替代量換算。</p>
+  <section class="sec" id="store">
+    <div class="sec-head">
+      <div><h2>④ 產品配方庫</h2>
+      <p>於「配方計算」儲存的產品列在此，可直接帶入替代量換算。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <div id="formulaList"><div class="empty">尚無儲存的配方</div></div>
     </div>
   </section>
 
   <!-- ⑤ 市售肥料庫 -->
-  <section class="panel" id="market">
-    <div class="card">
-      <h2>市售肥料產品庫 <span class="badge">可編輯</span></h2>
-      <p class="hint">內建常見化學肥料、有機質肥料與有機資材的保證成分,於「替代量換算」可直接下拉帶入客戶或我方產品。數值請以實際肥料袋標示為準。</p>
+  <section class="sec" id="market">
+    <div class="sec-head">
+      <div><h2>⑤ 市售肥料產品庫 <span class="badge">可編輯</span></h2>
+      <p>內建常見化學肥料、有機質肥料與有機資材成分，可下拉帶入替代量換算。數值請以實際肥料袋標示為準。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <div class="toolbar">
         <button class="btn sm" onclick="addMarket('碩成肥料')" style="background:var(--green-d);">+ 碩成肥料</button>
         <button class="btn sm" onclick="addMarket('化學肥料')">+ 化學肥料</button>
@@ -461,10 +483,12 @@
   </section>
 
   <!-- 文獻參考 -->
-  <section class="panel" id="ref">
-    <div class="card">
-      <h2>文獻與資料來源說明</h2>
-      <p class="hint">預設原料數據綜合下列來源之常見區間值,實務上請以你自己的成品檢驗報告為準。</p>
+  <section class="sec" id="ref">
+    <div class="sec-head">
+      <div><h2>📚 文獻參考</h2>
+      <p>預設原料數據綜合下列來源之常見區間值，實務上請以實際成品檢驗報告為準。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
       <div class="ref-list">
         <p><b>1. 行政院農業部(原農委會)有機質肥料相關規範</b><br>
         有機質肥料品目規格:有機質≥50%(乾基)、水分≤35%、碳氮比建議 ≤20、pH 5.5–8.5、含氮磷鉀標示。重金屬限量(總量,mg/kg):銅 Cu≤100、鋅 Zn≤500(因品目而異)。</p>
@@ -482,10 +506,12 @@
   </section>
 
   <!-- ⑥ 市場資訊 -->
-  <section class="panel no-print" id="news">
-    <div class="card">
-      <h2>📰 市場資訊 <span class="badge">不輸出報告</span></h2>
-      <p class="hint">從「市場爬蟲」系統輸出的 CSV 檔（市場資訊_*.csv）匯入，快速瀏覽農業政府公告與新聞動態，輔助業務拜訪前情蒐。</p>
+  <section class="sec no-print" id="news">
+    <div class="sec-head">
+      <div><h2>📰 市場資訊 <span class="badge">不輸出報告</span></h2>
+      <p>匯入市場爬蟲輸出的 CSV，快速瀏覽農業政策與新聞動態，輔助業務拜訪前情蒐。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
 
       <!-- 上傳區 -->
       <div id="newsUploadArea" class="news-upload-area" onclick="document.getElementById('newsFileInput').click()">
@@ -693,16 +719,19 @@ function saveForm(){localStorage.setItem('fert_formulas',JSON.stringify(formulas
 function saveMarket(){localStorage.setItem('fert_market',JSON.stringify(market));flash('mkSave','✓ 已儲存');}
 function flash(id,msg){const e=document.getElementById(id);if(!e)return;e.textContent=msg;setTimeout(()=>e.textContent='',1500);}
 
-/* ---------- 分頁 ---------- */
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  document.getElementById(t.dataset.tab).classList.add('active');
-  if(t.dataset.tab==='convert'){refreshOurSelect();refreshMarketSelects();}
-  if(t.dataset.tab==='store')renderFormulas();
-  if(t.dataset.tab==='market')renderMarket();
-  if(t.dataset.tab==='news')renderNews();
+/* ---------- 一頁式：補初始化 & 錨點高亮 ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+  renderMarket();   // 原本只在切 tab 時才呼叫
+  renderNews();     // 同上
+  // 錨點列：滾動到哪段就高亮哪個連結
+  const navLinks=document.querySelectorAll('.page-nav a');
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting)
+        navLinks.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+e.target.id));
+    });
+  },{threshold:0.12,rootMargin:'-52px 0px -45% 0px'});
+  document.querySelectorAll('.sec[id]').forEach(s=>observer.observe(s));
 });
 
 /* ---------- ① 原料資料庫 ---------- */
