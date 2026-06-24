@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有機質肥料配方計算系統</title>
+<style>
+  :root{
+    --green:#3a7d44; --green-d:#2c5e34; --green-l:#e8f3ea;
+    --brown:#8b5e3c; --brown-l:#f3ece4;
+    --bg:#faf8f4; --card:#ffffff; --line:#e3ddd2;
+    --text:#2d2a24; --muted:#7a7468; --warn:#c0392b; --accent:#d98e04;
+    --shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"PingFang TC","Microsoft JhengHei","Helvetica Neue",sans-serif;
+       background:var(--bg);color:var(--text);font-size:15px;line-height:1.55;}
+  header{background:linear-gradient(135deg,var(--green) 0%,var(--green-d) 100%);
+         color:#fff;padding:20px 28px;box-shadow:var(--shadow);}
+  header h1{margin:0;font-size:22px;letter-spacing:1px;}
+  header p{margin:4px 0 0;opacity:.85;font-size:13px;}
+  .tabs{display:flex;gap:4px;background:var(--green-d);padding:0 16px;flex-wrap:wrap;}
+  .tab{padding:12px 20px;color:#cfe6d3;cursor:pointer;border:none;background:none;
+       font-size:15px;border-bottom:3px solid transparent;font-family:inherit;}
+  .tab:hover{color:#fff;}
+  .tab.active{color:#fff;border-bottom-color:var(--accent);font-weight:600;}
+  main{max-width:1180px;margin:0 auto;padding:22px 18px 80px;}
+  .panel{display:none;animation:fade .25s;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .card h2{margin:0 0 4px;font-size:18px;color:var(--green-d);}
+  .card h2 .badge{font-size:12px;background:var(--green-l);color:var(--green-d);
+        padding:2px 9px;border-radius:20px;margin-left:8px;vertical-align:middle;font-weight:500;}
+  .hint{font-size:13px;color:var(--muted);margin:2px 0 14px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+  button.btn{background:var(--green);color:#fff;border:none;padding:9px 16px;border-radius:8px;
+        cursor:pointer;font-size:14px;font-family:inherit;transition:.15s;}
+  button.btn:hover{background:var(--green-d);}
+  button.btn.alt{background:var(--brown);}
+  button.btn.alt:hover{background:#6f482c;}
+  button.btn.ghost{background:#fff;color:var(--green-d);border:1px solid var(--green);}
+  button.btn.ghost:hover{background:var(--green-l);}
+  button.btn.danger{background:#fff;color:var(--warn);border:1px solid var(--warn);padding:6px 10px;font-size:13px;}
+  button.btn.danger:hover{background:#fdecea;}
+  button.btn.sm{padding:5px 11px;font-size:13px;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:920px;}
+  th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:center;white-space:nowrap;}
+  th{background:var(--green-l);color:var(--green-d);font-weight:600;position:sticky;top:0;}
+  td:first-child,th:first-child{text-align:left;}
+  tbody tr:hover{background:#fbfdfb;}
+  .grp-head td{background:var(--brown-l);color:var(--brown);font-weight:700;text-align:left;}
+  input.cell{width:62px;border:1px solid transparent;background:transparent;text-align:center;
+        padding:4px;border-radius:5px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  input.cell:focus{border-color:var(--green);background:#fff;outline:none;}
+  input.cell.name{width:120px;text-align:left;}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+  .field label{font-size:13px;color:var(--muted);font-weight:600;}
+  .field input,.field select,.field textarea{padding:9px 11px;border:1px solid var(--line);
+        border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--green);}
+  .grid{display:grid;gap:14px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr 1fr;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+  .recipe-row{display:grid;grid-template-columns:1fr 120px 90px 40px;gap:8px;align-items:center;margin-bottom:8px;}
+  .recipe-row select,.recipe-row input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;}
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:10px;}
+  .stat{background:var(--green-l);border-radius:10px;padding:12px 14px;text-align:center;}
+  .stat .v{font-size:24px;font-weight:700;color:var(--green-d);}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px;}
+  .stat.cost{background:var(--brown-l);} .stat.cost .v{color:var(--brown);}
+  .stat.warn .v{color:var(--warn);}
+  .cmp-table td,.cmp-table th{text-align:center;white-space:normal;}
+  .pos{color:var(--green);font-weight:600;} .neg{color:var(--warn);font-weight:600;}
+  .tag{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:14px;
+       padding:2px 10px;margin:3px 4px 0 0;font-size:12.5px;}
+  .note{background:#fffaf0;border:1px solid #f0e2c0;border-radius:8px;padding:10px 14px;
+        font-size:13px;color:#8a6d2f;margin:12px 0;}
+  .doc-item{background:#fbfbf8;border:1px solid var(--line);border-left:4px solid var(--green);
+        border-radius:8px;padding:10px 14px;margin:8px 0;}
+  .doc-item .doc-t{font-weight:700;color:var(--text);font-size:14.5px;margin-bottom:3px;}
+  .doc-item .doc-b{font-size:13.5px;color:#444;line-height:1.65;}
+  .empty{color:var(--muted);text-align:center;padding:26px;font-size:14px;}
+  .row-actions{display:flex;gap:6px;justify-content:center;}
+  .save-status{font-size:13px;color:var(--green);margin-left:6px;}
+  .ref-list{font-size:12.5px;color:var(--muted);line-height:1.7;}
+  .ref-list b{color:var(--text);}
+  .pill-grp{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;background:#eee;color:#555;margin-left:6px;}
+  .formula-card{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:#fff;}
+  .formula-card h4{margin:0 0 6px;color:var(--green-d);}
+  .formula-card .meta{font-size:13px;color:var(--muted);}
+  .mini{font-size:12px;color:var(--muted);}
+  /* ── 市場資訊分頁 ── */
+  .news-upload-area{border:2px dashed var(--green);border-radius:12px;text-align:center;
+    padding:28px 20px;color:var(--muted);cursor:pointer;transition:.15s;background:var(--green-l);}
+  .news-upload-area:hover{background:#d4ecda;}
+  .news-upload-area .up-icon{font-size:32px;display:block;margin-bottom:6px;}
+  .news-filter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px;}
+  .news-filter input,.news-filter select{padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
+  .news-filter input{flex:1;min-width:180px;}
+  .news-group-h{font-size:14px;font-weight:700;color:var(--green-d);margin:16px 0 8px;
+    display:flex;align-items:center;gap:8px;}
+  .news-group-h .cnt{font-size:12px;background:var(--green-l);color:var(--green-d);
+    padding:1px 9px;border-radius:12px;font-weight:500;}
+  .news-grid{display:grid;gap:8px;margin-bottom:12px;}
+  .news-item{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;cursor:pointer;transition:.15s;}
+  .news-item:hover{border-color:var(--green);box-shadow:0 3px 10px rgba(58,125,68,.1);background:var(--green-l);}
+  .news-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.5;}
+  .news-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+  .news-summary{font-size:12.5px;color:#666;line-height:1.5;margin-top:6px;
+    border-top:1px solid var(--line);padding-top:6px;}
+  .news-kw{display:inline-block;background:#fff3cd;color:#856404;border-radius:12px;
+    padding:1px 8px;font-size:11.5px;margin-left:4px;}
+  /* ── 微量元素點選晶片 ── */
+  .micro-chip{padding:4px 11px;font-size:12.5px;border:1px solid var(--line);border-radius:16px;
+    background:#fff;cursor:pointer;font-family:inherit;transition:.12s;color:var(--text);}
+  .micro-chip:hover{border-color:var(--green);color:var(--green);}
+  .micro-chip.on{background:var(--green);color:#fff;border-color:var(--green);}
+  .micro-chip.on:hover{background:var(--green-d);}
+  /* ── CRM 客戶選擇器 ── */
+  .crm-picker-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;}
+  .crm-picker{background:#fff;border-radius:16px;width:min(440px,93vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.22);}
+  .crm-picker-head{padding:16px 18px 10px;flex:none;border-bottom:1px solid var(--line);}
+  .crm-picker-head h3{margin:0 0 10px;font-size:17px;color:var(--green-d);}
+  .crm-picker-head input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;}
+  .crm-picker-list{overflow-y:auto;flex:1;padding:6px 8px;}
+  .crm-picker-item{padding:10px 12px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .crm-picker-item:hover{background:var(--green-l);}
+  .crm-picker-item .nm{font-weight:600;font-size:14px;}
+  .crm-picker-item .sb{font-size:12px;color:var(--muted);margin-top:2px;}
+  .crm-picker-foot{padding:10px 18px 14px;flex:none;}
+  /* 客戶資訊 / 成本盒 */
+  .subcard{background:#fbfdfb;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:8px 0 14px;}
+  .subcard-h{font-size:13px;font-weight:700;color:var(--brown);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .unit-out{background:var(--green-l);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--green-d);font-weight:600;}
+  .unit-out b{font-size:16px;}
+  /* 多品項客戶肥料 */
+  .cust-prod-entry{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:#fbfdfb;position:relative;}
+  .cust-prod-entry .entry-no{font-size:13px;font-weight:700;color:var(--brown);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+  .cust-prod-entry .entry-no .entry-lbl{flex:1;}
+  /* 報告版面 - 企業級設計 */
+  .report{position:relative;background:#fff;border-radius:0;overflow:hidden;
+    box-shadow:0 8px 40px rgba(0,0,0,.12);border:none;page-break-after:always;}
+  .report-bg{position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(58,125,68,.035) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(0deg, rgba(58,125,68,.02) 0 1px, transparent 1px 60px),
+      radial-gradient(circle at 95% 5%, rgba(58,125,68,.08), transparent 40%),
+      radial-gradient(circle at 2% 98%, rgba(139,94,60,.06), transparent 45%);}
+  .report > *{position:relative;z-index:1;}
+  .report-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:28px;
+    padding:22px 36px;border-bottom:4px solid var(--green);
+    background:linear-gradient(90deg,#f8fafb 0%,rgba(232,243,234,.5) 100%);}
+  .sc-logo{display:flex;align-items:center;gap:14px;}
+  .sc-badge{width:56px;height:56px;border:3px solid var(--green-d);border-radius:8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);flex:none;}
+  .sc-badge::before{content:"";position:absolute;inset:6px;border:2px solid var(--green);border-radius:4px;}
+  .sc-badge span{font-weight:900;color:var(--green-d);font-size:16px;line-height:1;letter-spacing:1px;font-family:Georgia,serif;}
+  .sc-name{font-size:24px;font-weight:900;color:var(--green-d);letter-spacing:1.5px;line-height:1.1;font-family:Georgia,serif;}
+  .sc-name small{display:block;font-size:10px;font-weight:700;color:var(--brown);letter-spacing:2.5px;margin-top:2px;font-family:"Courier New",monospace;}
+  .report-title{text-align:right;}
+  .report-title h1{margin:0;font-size:22px;font-weight:900;color:var(--green-d);letter-spacing:0.5px;font-family:Georgia,serif;}
+  .report-title small{display:block;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.5px;margin-top:3px;}
+  .report-meta{padding:14px 36px;font-size:13px;color:#555;border-bottom:2px solid var(--line);
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px 16px;background:#fafbfc;}
+  .report-meta b{color:var(--green-d);font-weight:700;display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:1px;}
+  .report-meta span{color:var(--text);font-size:14px;font-weight:600;}
+  .report-body{padding:24px 36px;}
+  .report-body h3{margin:18px 0 10px;font-size:14px;font-weight:800;color:var(--green-d);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--green-l);padding-bottom:6px;}
+  .report-body .note{background:#fffbf5;border:2px solid #f5ead1;margin:12px 0;padding:10px 12px;font-size:13px;}
+  .report-body .table-wrap{margin:12px 0;border:2px solid var(--green-l);}
+  .report-body table{font-size:13px;}
+  .report-body table th{background:var(--green);color:#fff;font-weight:700;padding:8px 10px;}
+  .report-body table td{padding:8px 10px;border-color:var(--green-l);}
+  .report-body .result-grid{margin:12px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .report-body .stat{padding:12px;font-weight:700;border-radius:6px;text-align:center;}
+  .report-body .stat .v{font-size:24px;font-weight:900;font-family:"Courier New",monospace;}
+  .report-body .stat .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-top:4px;}
+  .report-body .doc-item{margin:10px 0;border-left:4px solid;padding:10px 12px;background:#f9fbfc;border-radius:4px;border-bottom:1px solid var(--line);}
+  .report-body .doc-item .doc-t{font-size:13px;font-weight:800;margin-bottom:4px;color:var(--text);}
+  .report-body .doc-item .doc-b{font-size:12px;line-height:1.5;color:#555;}
+  .report-footer{text-align:right;padding:12px 36px;color:#a88a6f;
+    font-size:13px;letter-spacing:2px;font-weight:700;border-top:4px solid var(--brown);
+    background:linear-gradient(90deg,rgba(255,255,255,.6),var(--brown-l) 60%);font-family:Georgia,serif;}
+  .report-footer .leaf{color:var(--green);margin:0 8px;letter-spacing:0;font-size:14px;}
+  .print-head{display:none;}
+  @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{background:#fff;}
+    header,.tabs,.no-print{display:none !important;}
+    main{max-width:100%;padding:0;margin:0;}
+    .panel{display:none !important;}
+    #convert{display:block !important;}
+    #convert > .card:not(#convertResult){display:none !important;}
+    #convertResult{display:block !important;border:none;box-shadow:none;padding:0;background:none;margin:0;}
+    #convertResult .toolbar{display:none !important;}
+    .report{box-shadow:none;border:none;border-radius:0;width:100%;}
+    .report-footer{position:fixed;bottom:0.8cm;left:0;right:0;z-index:10;}
+    .report-body{padding-bottom:1.8cm;columns:2;column-gap:2cm;column-rule:1px solid #ddd;}
+    .report-body h3{break-after:avoid;break-inside:avoid;}
+    .report-body .note,.stat,.doc-item,.table-wrap{break-inside:avoid;}
+    @page{size:A4 landscape;margin:0.8cm 1cm;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌱 有機質肥料配方計算系統</h1>
+  <p>原料資料庫 · 配方成分與成本計算 · 客戶肥料替代量換算　|　資料儲存於本機瀏覽器,不上傳雲端</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="db">① 原料資料庫</button>
+  <button class="tab" data-tab="calc">② 配方計算</button>
+  <button class="tab" data-tab="convert">③ 替代量換算</button>
+  <button class="tab" data-tab="store">④ 產品配方庫</button>
+  <button class="tab" data-tab="market">⑤ 市售肥料庫</button>
+  <button class="tab" data-tab="ref">📚 文獻參考</button>
+  <button class="tab" data-tab="news">📰 市場資訊</button>
+</nav>
+
+<main>
+  <!-- ① 原料資料庫 -->
+  <section class="panel active" id="db">
+    <div class="card">
+      <h2>原料資料庫 <span class="badge">可編輯</span></h2>
+      <p class="hint">下表數值為文獻與業界參考值(營養成分以乾基%表示),請依你的實際檢驗報告修改。修改後自動儲存。</p>
+      <div class="toolbar">
+        <button class="btn sm" onclick="addMaterial('禽畜糞')">+ 新增禽畜糞原料</button>
+        <button class="btn sm alt" onclick="addMaterial('調整材')">+ 新增調整材</button>
+        <button class="btn ghost sm" onclick="resetMaterials()">⟳ 還原預設文獻值</button>
+        <span class="save-status" id="dbSave"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="matTable">
+          <thead>
+            <tr>
+              <th>原料名稱</th>
+              <th>氮 N (%)</th><th>磷 P₂O₅ (%)</th><th>鉀 K₂O (%)</th>
+              <th>有機質 (%)</th><th>pH</th><th>水分 (%)</th><th>碳氮比 C/N</th>
+              <th>銅 Cu (ppm)</th><th>鋅 Zn (ppm)</th>
+              <th>原料成本<br>(元/kg)</th><th>處理費收入<br>(元/kg)</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="matBody"></tbody>
+        </table>
+      </div>
+      <div class="note">💡 <b>處理費收入</b>=你代客處理廢棄物(如禽畜糞)收取的費用,計算成本時會「抵減」原料成本。<br>
+      💡 <b>碳氮比</b>欄為參考用;配方計算時系統會以「有機質×0.58(碳係數)÷全氮」自動推算混合後的實際碳氮比。</div>
+    </div>
+  </section>
+
+  <!-- ② 配方計算 -->
+  <section class="panel" id="calc">
+    <div class="card">
+      <h2>配方計算</h2>
+      <p class="hint">選擇原料並輸入投入重量(kg),系統依重量加權計算混合後的營養成分、碳氮比與每公斤基礎成本。</p>
+      <div id="recipeRows"></div>
+      <button class="btn ghost sm" onclick="addRecipeRow()">+ 加入原料</button>
+
+      <div class="grid g4" style="margin-top:18px;">
+        <div class="field">
+          <label>配方名稱(儲存用)</label>
+          <input id="recipeName" placeholder="例:有機質肥料 5號">
+        </div>
+        <div class="field">
+          <label>水分損耗率 (%)　<span class="mini">發酵後失水,選填</span></label>
+          <input id="lossRate" type="number" value="0" step="1">
+        </div>
+        <div class="field">
+          <label>建議售價 (元/kg)　<span class="mini">選填</span></label>
+          <input id="recipePrice" type="number" value="0" step="0.1">
+        </div>
+        <div class="field" style="justify-content:flex-end;">
+          <button class="btn alt" onclick="saveFormula()">💾 儲存為產品配方</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>計算結果 <span class="badge" id="totalWt">總投入 0 kg</span></h2>
+      <div class="result-grid" id="resultGrid">
+        <div class="empty">請於上方加入原料並輸入重量</div>
+      </div>
+      <div class="note" id="costBreak" style="display:none;"></div>
+    </div>
+  </section>
+
+  <!-- ③ 替代量換算 -->
+  <section class="panel" id="convert">
+    <div class="card">
+      <h2>客戶基本資料 <span class="badge">報告抬頭用</span></h2>
+      <p class="hint">填寫後將顯示於替代換算報告的抬頭。作物與耕作面積為選填;填了面積會同時計算「每分地」與「全場合計」。</p>
+      <div class="grid g3">
+        <div class="field"><label>客戶名稱</label><input id="custName" placeholder="例:王大明 / ○○農場"></div>
+        <div class="field"><label>縣市</label><select id="county" onchange="fillTownship()"></select></div>
+        <div class="field"><label>鄉鎮市區</label><select id="township"></select></div>
+        <div class="field"><label>🌾 作物類別(植物醫生判讀依據)</label><select id="crop"></select></div>
+        <div class="field"><label>作物品項(選填)</label><input id="cropItem" placeholder="例:愛文芒果、青江菜"></div>
+        <div class="field"><label>耕作面積(分地,選填)</label><input id="area" type="number" step="0.1" min="0" placeholder="例:5"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button class="btn ghost sm" onclick="openCRMPicker()">📥 從客戶管理系統帶入</button>
+        <span id="crmImportMsg" class="save-status"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>客戶原有肥料 → 替代量換算</h2>
+      <p class="hint">選擇肥料(可從市售清單一鍵帶入),系統算出達到相同養分所需的我方用量、成本比較,並由「植物醫生」給出施肥見解。</p>
+
+      <div class="grid g2">
+        <div>
+          <h3 style="color:var(--brown);margin:6px 0 10px;">客戶原有肥料</h3>
+          <div id="custProductList"></div>
+          <button class="btn ghost sm" onclick="addCustProd()" style="margin-bottom:14px;">＋ 新增客戶肥料</button>
+        </div>
+
+        <div>
+          <h3 style="color:var(--green-d);margin:6px 0;">我們的產品</h3>
+          <div class="field"><label>選擇已儲存配方</label>
+            <select id="ourSelect" onchange="loadOurProduct()">
+              <option value="">— 手動輸入 —</option>
+            </select>
+          </div>
+          <div class="field"><label>或從市售有機肥清單帶入</label>
+            <select id="oMarket" onchange="fillFromMarket('o')"><option value="">— 不帶入 —</option></select></div>
+          <div class="field"><label>產品名稱</label><input id="oName" placeholder="例:有機質肥料 5號"></div>
+          <div class="grid g3">
+            <div class="field"><label>氮 N (%)</label><input id="oN" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>磷 P₂O₅ (%)</label><input id="oP" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>鉀 K₂O (%)</label><input id="oK" type="number" step="0.1" value="0"></div>
+          </div>
+          <div class="grid g3">
+            <div class="field"><label>有機質 (%)</label><input id="oOM" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>銅 Cu (ppm)</label><input id="oCu" type="number" step="1" value="0"></div>
+            <div class="field"><label>鋅 Zn (ppm)</label><input id="oZn" type="number" step="1" value="0"></div>
+          </div>
+          <div class="field"><label>替代基準</label>
+            <select id="basis">
+              <option value="N">以氮 N 換算等量</option>
+              <option value="P">以磷 P₂O₅ 換算</option>
+              <option value="K">以鉀 K₂O 換算</option>
+              <option value="same">同用量直接比較</option>
+            </select>
+          </div>
+          <div class="subcard">
+            <div class="subcard-h">💰 我方產品成本(以包裝計,自動換算元/kg)</div>
+            <div class="grid g4">
+              <div class="field"><label>一包 (元)</label><input id="oBag" type="number" step="1" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>重量 (公斤/包)</label><input id="oBagKg" type="number" step="0.5" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>補助金額 (元/包)</label><input id="oSub" type="number" step="1" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>規格</label><select id="oSpec"><option>粒狀</option><option>粉狀</option><option>液態</option></select></div>
+            </div>
+            <div class="grid g2" style="align-items:end;">
+              <div class="field" style="margin:0;"><label>單位成本 (元/kg)　<span class="mini">可直接改</span></label><input id="oPrice" type="number" step="0.1" value="0"></div>
+              <div class="unit-out" id="oUnitNote">扣補助後單位成本:<b>—</b></div>
+            </div>
+          </div>
+          <div class="subcard" style="border:1px dashed var(--green-d);margin-top:10px;">
+            <div class="subcard-h" style="color:var(--green-d);">🦠 生物菌種（選填,加入報告）</div>
+            <div id="oStrainsList"><div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div></div>
+            <button class="btn ghost sm" onclick="addOStrain()" style="margin-top:4px;padding:4px 10px;font-size:12px;">＋ 新增菌種</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn" onclick="runConvert()" style="margin-top:6px;">計算替代量與差異</button>
+    </div>
+
+    <div class="card" id="convertResult" style="display:none;">
+      <div class="toolbar no-print" style="justify-content:flex-end;">
+        <h2 style="margin-right:auto;">換算結果 & 專業報告</h2>
+        <button class="btn ghost sm" onclick="copyReport(this)">📋 複製見解文字</button>
+        <button class="btn sm" onclick="window.print()">🖨 列印 / 存成PDF</button>
+      </div>
+      <div id="convertOut"></div>
+    </div>
+
+    <div class="card no-print" id="salesTalkCard" style="display:none;">
+      <h2>📢 業務話術建議 <span class="badge" style="background:#fff3cd;color:#856404;">不輸出報告</span></h2>
+      <p class="hint">依換算結果自動產出對話重點，可直接用於客戶拜訪說明。</p>
+      <div id="salesTalkOut"></div>
+      <div class="field" style="margin-top:14px;">
+        <label>📝 補充筆記（不輸出報告）</label>
+        <textarea id="salesNote" rows="4" style="padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;width:100%;" placeholder="自由記錄：客戶反饋、下次追蹤重點、特殊需求、議價空間…"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 產品配方庫 -->
+  <section class="panel" id="store">
+    <div class="card">
+      <h2>產品配方庫</h2>
+      <p class="hint">於「配方計算」儲存的產品會列在此,可用於替代量換算。</p>
+      <div id="formulaList"><div class="empty">尚無儲存的配方</div></div>
+    </div>
+  </section>
+
+  <!-- ⑤ 市售肥料庫 -->
+  <section class="panel" id="market">
+    <div class="card">
+      <h2>市售肥料產品庫 <span class="badge">可編輯</span></h2>
+      <p class="hint">內建常見化學肥料、有機質肥料與有機資材的保證成分,於「替代量換算」可直接下拉帶入客戶或我方產品。數值請以實際肥料袋標示為準。</p>
+      <div class="toolbar">
+        <button class="btn sm" onclick="addMarket('碩成肥料')" style="background:var(--green-d);">+ 碩成肥料</button>
+        <button class="btn sm" onclick="addMarket('化學肥料')">+ 化學肥料</button>
+        <button class="btn sm alt" onclick="addMarket('有機質肥料')">+ 有機質肥料</button>
+        <button class="btn sm alt" onclick="addMarket('有機資材')">+ 有機資材</button>
+        <button class="btn ghost sm" onclick="resetMarket()">⟳ 還原預設清單</button>
+        <span class="save-status" id="mkSave"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="mkTable">
+          <thead><tr>
+            <th>產品名稱</th><th>氮 N (%)</th><th>磷 P₂O₅ (%)</th><th>鉀 K₂O (%)</th>
+            <th>有機質 (%)</th><th>銅 Cu (ppm)</th><th>鋅 Zn (ppm)</th><th>參考價<br>(元/kg)</th><th>適用作物</th><th></th>
+          </tr></thead>
+          <tbody id="mkBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 文獻參考 -->
+  <section class="panel" id="ref">
+    <div class="card">
+      <h2>文獻與資料來源說明</h2>
+      <p class="hint">預設原料數據綜合下列來源之常見區間值,實務上請以你自己的成品檢驗報告為準。</p>
+      <div class="ref-list">
+        <p><b>1. 行政院農業部(原農委會)有機質肥料相關規範</b><br>
+        有機質肥料品目規格:有機質≥50%(乾基)、水分≤35%、碳氮比建議 ≤20、pH 5.5–8.5、含氮磷鉀標示。重金屬限量(總量,mg/kg):銅 Cu≤100、鋅 Zn≤500(因品目而異)。</p>
+        <p><b>2. 禽畜糞堆肥成分(畜試所/農改場資料)</b><br>
+        蛋雞糞富磷;肉雞糞含墊料、碳氮比略高;<b>豬糞因飼料添加,銅、鋅常偏高</b>(需注意重金屬上限)。</p>
+        <p><b>3. 碳氮比(C/N)推估</b><br>
+        有機物含碳量約為有機質之 0.58(Van Bemmelen 係數),故 C/N ≈ (有機質% × 0.58) ÷ 全氮%。成品 C/N 建議降至 15–20 以下代表腐熟良好。</p>
+        <p><b>4. 調整材(膨鬆材)</b><br>
+        菇包木屑、粉碎粗糠碳氮比高、養分低,作為調節水分與碳源、提升透氣性使用。</p>
+        <p><b>5. 一分地面積換算</b><br>
+        1 分地 = 0.1 甲 ≈ 969.9 m² ≈ 0.097 公頃。</p>
+        <p class="mini" style="margin-top:14px;">⚠️ 以上為通則性參考值;各場原料因飼養方式、墊料、發酵程度差異甚大,正式報價與施肥建議務必以實際化驗數據為準。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ 市場資訊 -->
+  <section class="panel no-print" id="news">
+    <div class="card">
+      <h2>📰 市場資訊 <span class="badge">不輸出報告</span></h2>
+      <p class="hint">從「市場爬蟲」系統輸出的 CSV 檔（市場資訊_*.csv）匯入，快速瀏覽農業政府公告與新聞動態，輔助業務拜訪前情蒐。</p>
+
+      <!-- 上傳區 -->
+      <div id="newsUploadArea" class="news-upload-area" onclick="document.getElementById('newsFileInput').click()">
+        <span class="up-icon">📂</span>
+        <b>點此開啟 CSV 檔</b><br>
+        <span style="font-size:13px;">選取市場爬蟲 output 資料夾中的 <code>市場資訊_*.csv</code></span>
+        <input type="file" id="newsFileInput" accept=".csv" style="display:none;" onchange="loadNewsCSV(this)">
+      </div>
+
+      <!-- 篩選列（有資料後才顯示） -->
+      <div id="newsFilterRow" style="display:none;">
+        <div class="news-filter">
+          <input id="newsSearch" type="text" placeholder="🔍 搜尋標題 / 關鍵字…" oninput="renderNews()">
+          <select id="newsType" onchange="renderNews()">
+            <option value="">全部類型</option>
+          </select>
+          <select id="newsSite" onchange="renderNews()">
+            <option value="">全部來源</option>
+          </select>
+          <button class="btn ghost sm" onclick="clearNewsFilter()">✕ 清除篩選</button>
+          <label class="btn ghost sm" style="cursor:pointer;">
+            🔄 換一份 CSV<input type="file" accept=".csv" style="display:none;" onchange="loadNewsCSV(this)">
+          </label>
+        </div>
+        <div id="newsStat" style="font-size:13px;color:var(--muted);margin-bottom:4px;"></div>
+      </div>
+
+      <!-- 卡片輸出 -->
+      <div id="newsCards">
+        <div class="empty">尚未載入資料 — 請點上方開啟 CSV 檔</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------- 預設原料文獻參考值 ---------- */
+const DEFAULT_MATERIALS = [
+  // group, name, N, P2O5, K2O, OM, pH, moisture, cn, cu, zn, cost, fee
+  {g:'禽畜糞',name:'蛋雞糞',         n:2.0,p:3.5,k:2.0,om:65,ph:7.5,moi:25,cn:10,cu:80, zn:350,cost:0.5,fee:1.0},
+  {g:'禽畜糞',name:'肉雞糞',         n:3.0,p:2.8,k:2.2,om:70,ph:7.0,moi:28,cn:12,cu:70, zn:300,cost:0.5,fee:1.0},
+  {g:'禽畜糞',name:'豬糞',           n:2.8,p:3.5,k:1.8,om:72,ph:6.8,moi:30,cn:11,cu:350,zn:600,cost:0.3,fee:1.5},
+  {g:'禽畜糞',name:'粗糠雞糞-一水',  n:1.0,p:1.5,k:1.0,om:75,ph:7.0,moi:20,cn:25,cu:30, zn:120,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-二水',  n:1.3,p:1.9,k:1.2,om:73,ph:7.1,moi:21,cn:22,cu:38, zn:150,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-三水',  n:1.6,p:2.3,k:1.4,om:71,ph:7.2,moi:22,cn:19,cu:45, zn:180,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-四水',  n:1.9,p:2.7,k:1.6,om:69,ph:7.3,moi:23,cn:16,cu:52, zn:210,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-五水',  n:2.2,p:3.1,k:1.8,om:67,ph:7.4,moi:24,cn:14,cu:60, zn:240,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-六水',  n:2.5,p:3.5,k:2.0,om:65,ph:7.5,moi:25,cn:12,cu:68, zn:270,cost:0.4,fee:0.8},
+  {g:'調整材',name:'菇包木屑',       n:0.8,p:0.5,k:0.6,om:78,ph:6.0,moi:55,cn:45,cu:15, zn:60, cost:1.0,fee:0},
+  {g:'調整材',name:'粉碎粗糠',       n:0.5,p:0.3,k:0.5,om:80,ph:6.5,moi:12,cn:70,cu:8,  zn:40, cost:1.5,fee:0},
+];
+const COLS=['n','p','k','om','ph','moi','cn','cu','zn','cost','fee'];
+const CARBON_FACTOR=0.58;
+
+/* ---------- 市售肥料產品庫(化學肥/有機肥/有機資材,標示值依包裝保證成分) ---------- */
+const DEFAULT_MARKET=[
+  // ── 碩成肥料正式登記品項（依肥料登記證保證成分；Cu/Zn 為禽畜糞堆肥估算值，請依實際檢驗更新）──
+  {g:'碩成肥料',name:'碩成508',           n:3.5,p:3.5,k:3.0,om:67.3,cu:75,zn:300,price:7},
+  {g:'碩成肥料',name:'碩成1號+',          n:2.5,p:3.0,k:3.0,om:60.0,cu:55,zn:220,price:6},
+  {g:'碩成肥料',name:'碩成2號',           n:3.0,p:3.0,k:2.5,om:53.0,cu:60,zn:250,price:6},
+  {g:'碩成肥料',name:'碩成2號+',          n:2.5,p:3.0,k:3.0,om:60.0,cu:55,zn:220,price:6},
+  {g:'碩成肥料',name:'碩成生技1號',       n:2.7,p:3.6,k:3.5,om:50.0,cu:50,zn:200,price:6},
+  {g:'碩成肥料',name:'碩成果美肥',        n:0,  p:0,  k:38.0,om:0,  cu:0, zn:0,  price:18},
+  {g:'碩成肥料',name:'碩成基肥1號',       n:2.7,p:3.6,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'碩成基肥2號',       n:2.5,p:3.5,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'碩成基肥2號+',      n:2.5,p:3.5,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'農會牌(嘉)有機質肥料1號',n:2.5,p:3.0,k:2.2,om:57.0,cu:55,zn:220,price:5},
+  // 化學肥料
+  {g:'化學肥料',name:'尿素 (46-0-0)',n:46,p:0,k:0,om:0,cu:0,zn:0,price:25},
+  {g:'化學肥料',name:'硫酸銨 (21-0-0)',n:21,p:0,k:0,om:0,cu:0,zn:0,price:18},
+  {g:'化學肥料',name:'過磷酸鈣 (0-18-0)',n:0,p:18,k:0,om:0,cu:0,zn:0,price:16},
+  {g:'化學肥料',name:'重過磷酸鈣 (0-46-0)',n:0,p:46,k:0,om:0,cu:0,zn:0,price:30},
+  {g:'化學肥料',name:'磷酸一銨 MAP (11-52-0)',n:11,p:52,k:0,om:0,cu:0,zn:0,price:45},
+  {g:'化學肥料',name:'磷酸二銨 DAP (18-46-0)',n:18,p:46,k:0,om:0,cu:0,zn:0,price:42},
+  {g:'化學肥料',name:'氯化鉀 (0-0-60)',n:0,p:0,k:60,om:0,cu:0,zn:0,price:28},
+  {g:'化學肥料',name:'硫酸鉀 (0-0-50)',n:0,p:0,k:50,om:0,cu:0,zn:0,price:38},
+  {g:'化學肥料',name:'硝酸鉀 (13-0-46)',n:13,p:0,k:46,om:0,cu:0,zn:0,price:55},
+  {g:'化學肥料',name:'硝酸鈣 (15.5-0-0)',n:15.5,p:0,k:0,om:0,cu:0,zn:0,price:32},
+  {g:'化學肥料',name:'台肥5號複合肥料 (16-8-12)',n:16,p:8,k:12,om:0,cu:0,zn:0,price:24},
+  {g:'化學肥料',name:'台肥39號 好速收 (15-15-15)',n:15,p:15,k:15,om:0,cu:0,zn:0,price:26},
+  {g:'化學肥料',name:'台肥1號複合肥料 (20-5-10)',n:20,p:5,k:10,om:0,cu:0,zn:0,price:25},
+  {g:'化學肥料',name:'通用複合肥 (14-14-14)',n:14,p:14,k:14,om:0,cu:0,zn:0,price:24},
+  {g:'化學肥料',name:'高鉀複合肥 (12-6-20)',n:12,p:6,k:20,om:0,cu:0,zn:0,price:28},
+  // 有機質肥料
+  {g:'有機質肥料',name:'一般有機質肥料 (通用)',n:3,p:3,k:2,om:70,cu:50,zn:250,price:12},
+  {g:'有機質肥料',name:'發酵雞糞有機肥',n:3,p:3,k:2,om:65,cu:60,zn:280,price:8},
+  {g:'有機質肥料',name:'牛糞堆肥',n:1,p:1,k:1.5,om:60,cu:20,zn:120,price:6},
+  {g:'有機質肥料',name:'豬糞堆肥',n:2.5,p:3,k:1.5,om:65,cu:300,zn:550,price:6},
+  {g:'有機質肥料',name:'高氮有機質肥料',n:4,p:2,k:1.5,om:72,cu:40,zn:180,price:15},
+  {g:'有機質肥料',name:'高鉀有機質肥料',n:2,p:2,k:4,om:65,cu:30,zn:150,price:15},
+  // 有機資材(單一原料)
+  {g:'有機資材',name:'骨粉',n:3,p:18,k:0,om:30,cu:0,zn:0,price:30},
+  {g:'有機資材',name:'黃豆粕 (豆粕)',n:7,p:1.4,k:2.2,om:80,cu:0,zn:0,price:22},
+  {g:'有機資材',name:'菜籽粕 (油粕)',n:5,p:2,k:1,om:78,cu:0,zn:0,price:18},
+  {g:'有機資材',name:'蓖麻粕',n:5,p:2,k:1,om:80,cu:0,zn:0,price:18},
+  {g:'有機資材',name:'米糠',n:2,p:4,k:1.5,om:80,cu:0,zn:0,price:10},
+  {g:'有機資材',name:'魚粉',n:9,p:6,k:1,om:65,cu:0,zn:0,price:45},
+  {g:'有機資材',name:'草木灰',n:0,p:2,k:6,om:0,cu:0,zn:0,price:5},
+];
+const MCOLS=['n','p','k','om','cu','zn','price'];
+
+/* ---------- 作物類別與養分需求(植物醫生判讀依據,ideal 為 N:P₂O₅:K₂O 偏好比) ---------- */
+const CROPS=[
+  {name:'一般 / 未指定', ideal:[1,1,1], baseUse:40, focus:'均衡施肥', advice:'以均衡施肥為原則,依土壤檢測結果微調。'},
+  {name:'葉菜類(小白菜/青江菜/萵苣)', ideal:[3,1,2], baseUse:30, focus:'速生、需氮量高', advice:'重氮促葉片生長,但忌過量造成硝酸鹽累積與徒長;有機肥可穩定緩釋供氮並改善土壤。'},
+  {name:'結球葉菜(高麗菜/包心白菜)', ideal:[2,1,2], baseUse:40, focus:'重氮並需充足鈣', advice:'結球期氮鉀並重,鈣不足易發生葉燒(tip burn),可配合含鈣資材。'},
+  {name:'果菜類(番茄/茄子/瓜類)', ideal:[2,1,3], baseUse:45, focus:'結果期重鉀、鈣、硼', advice:'前期適度氮,結果期加重鉀;注意補鈣防臍腐、補硼防落花落果。'},
+  {name:'根莖類(蘿蔔/馬鈴薯/薑/芋)', ideal:[1,1,2], baseUse:45, focus:'膨大期重鉀', advice:'鉀促進地下部膨大與澱粉累積;氮過量易徒長莖葉、根部不實。'},
+  {name:'果樹(柑橘/芒果/荔枝)', ideal:[1,0.6,1], baseUse:60, focus:'重有機質,結果期重鉀', advice:'多年生作物重視有機質改良根域;花芽分化前控氮,果實肥大期加鉀。'},
+  {name:'水稻', ideal:[2,1,2], baseUse:40, focus:'分蘗重氮、抽穗重鉀', advice:'氮鉀為主;基肥用有機質肥提升地力,追肥用速效氮。'},
+  {name:'茶樹', ideal:[3,1,1.5], baseUse:40, focus:'高氮但忌過量', advice:'氮影響產量與胺基酸,過量反降品質;有機質肥有助茶園土壤管理。'},
+  {name:'玉米 / 雜糧', ideal:[3,1,2], baseUse:40, focus:'重氮', advice:'需氮量大,生育中期為需肥高峰。'},
+  {name:'花卉 / 觀賞', ideal:[1,2,2], baseUse:30, focus:'開花重磷鉀', advice:'營養生長期適度氮,花芽分化與開花期加重磷鉀。'},
+  {name:'豆科(花生/大豆)', ideal:[1,2,2], baseUse:30, focus:'自身固氮,需磷鉀', advice:'根瘤可固氮,氮需求低;重視磷鉀與鈣,過量氮反抑制固氮。'},
+];
+
+/* ---------- 台灣縣市→鄉鎮二級選單資料 ---------- */
+const TAIWAN_AREAS={
+  '基隆市':['仁愛區','中山區','中正區','安樂區','暖暖區','七堵區'],
+  '台北市':['中山區','中正區','大安區','大同區','信義區','南港區','松山區','萬華區','文山區'],
+  '新北市':['板橋區','新莊區','泰山區','林口區','淡水區','三芝區','石門區','八里區','五股區','蘆洲區','三重區','永和區','中和區','土城區','樹林區','鶯歌區','三峽區','汐止區','瑞芳區','貢寮區','平溪區','雙溪區','烏來區'],
+  '桃園市':['桃園區','中壢區','平鎮區','八德區','楊梅區','蘆竹區','龜山區','龍潭區','新屋區','觀音區','復興區'],
+  '新竹市':['東區','北區','香山區'],
+  '新竹縣':['竹北市','湖口鄉','新豐鄉','新埤鄉','關西鎮','芎蕉鄉','寶山鄉','竹東鎮','五峰鄉','橫山鄉','尖石鄉','北埔鄉','峨眉鄉'],
+  '苗栗縣':['苗栗市','通霄鎮','苑裡鎮','竹南鎮','頭份鎮','三灣鄉','南庄鄉','獅潭鄉','後龍鎮','造橋鄉','頭屋鄉','公館鄉','大湖鄉','泰安鄉','銅鑼鄉','三義鄉','西湖鄉','卓蘭鎮'],
+  '台中市':['中區','東區','南區','西區','北區','北屯區','西屯區','南屯區','太平區','大里區','霧峰區','烏日區','大肚區','龍井區','沙鹿區','梧棲區','清水區','大甲區','外埔區','大安區','中山區','新社區','東勢區','和平區','石岡區','潭子區'],
+  '彰化縣':['彰化市','員林鎮','溪湖鎮','花壇鄉','芬園鄉','大村鄉','埔心鄉','埔鹽鄉','永靖鄉','伸港鄉','線西鄉','和美鎮','二林鎮','大城鄉','芳苑鄉','田尾鄉','田中鎮','北斗鎮','社頭鄉','二水鄉'],
+  '南投縣':['南投市','埔里鎮','草屯鎮','竹山鎮','集集鎮','名間鄉','鹿谷鄉','中寮鄉','仁愛鄉','信義鄉','水里鄉','魚池鄉'],
+  '嘉義縣':['太保市','朴子市','布袋鎮','民雄鄉','大林鎮','新港鄉','溪口鄉','六腳鄉','東石鄉','義竹鄉','鹿草鄉','中埔鄉','竹山鎮','梅山鄉','番路鄉','阿里山鄉','水上鄉','七星鄉'],
+  '嘉義市':['東區','西區'],
+  '雲林縣':['斗六市','斗南鎮','虎尾鎮','西螺鎮','土庫鎮','北港鎮','古坑鄉','莿桐鄉','林內鄉','麥寮鄉','臺西鄉','東勢鄉','褒忠鄉','四湖鄉','口湖鄉'],
+  '台南市':['新營區','鹽水區','白河區','柳營區','後壁區','東山區','麻豆區','下營區','六甲區','官田區','大內區','善化區','新市區','永康區','成功區','安定區','山上區','玉井區','楠西區','南化區','仁德區','歸仁區','關廟區','龍崗區','東牌區','西港區','七股區','將軍區','北門區','安南區','安平區','中西區'],
+  '高雄市':['新興區','興隆區','苓雅區','前金區','鹽埕區','鼓山區','旗津區','左營區','楠梓區','小港區','仁大區','大社區','岡山區','路竹區','阿蓮區','田寮區','燕巢區','永安區','湖內區','茄萣區','旗山區','美濃區','六龜區','內門區','杉林區','甲仙區','桃源區','那瑪夏區','茂林區','高雄市'],
+  '屏東縣':['屏東市','潮州鎮','東港鎮','恆春鎮','萬丹鄉','長治鄉','麟洛鄉','九如鄉','里港鄉','鹽埤鄉','高樹鄉','林邊鄉','南州鄉','新埤鄉','枋寮鄉','枋山鄉','春日鄉','獅子鄉','牡丹鄉','滿州鄉'],
+  '宜蘭縣':['宜蘭市','羅東鎮','蘇澳鎮','頭城鎮','礁溪鄉','壯圍鄉','員山鄉','三星鄉','冬山鄉','五結鄉','南澳鄉'],
+  '花蓮縣':['花蓮市','鳳林鎮','玉里鎮','新城鄉','秀林鄉','吉安鄉','壽豐鄉','豐濱鄉','光復鄉','富里鄉','卓溪鄉','萬榮鄉'],
+  '台東縣':['台東市','成功鎮','關山鎮','長濱鄉','海端鄉','池上鄉','東河鄉','鹿野鄉','延平鄉','金峰鄉','大武鄉','達仁鄉','蘭嶼鄉','綠島鄉'],
+  '澎湖縣':['馬公市','湖西鄉','白沙鄉','西嶼鄉'],
+  '金門縣':['金城鎮','金湖鎮','金沙鎮','金寧鄉','烈嶼鄉'],
+  '連江縣':['南竿鄉','北竿鄉','莒光鄉','東莒鄉'],
+};
+
+/* ---------- 常見農業菌種清單 ---------- */
+const MICRO_ELEMS=['鈣 Ca','鎂 Mg','硫 S','硼 B','鐵 Fe','錳 Mn','鋅 Zn','銅 Cu','鉬 Mo','矽 Si'];
+
+function microChipsHtml(i){
+  const p=custProds[i]||{};
+  return MICRO_ELEMS.map(el=>{
+    const on=(p.microElems||[]).includes(el);
+    return `<button type="button" class="micro-chip${on?' on':''}" onclick="toggleMicroElem(${i},'${el}')">${el}</button>`;
+  }).join('');
+}
+function toggleMicroElem(i,el){
+  const p=custProds[i]; if(!p)return;
+  if(!p.microElems)p.microElems=[];
+  const idx=p.microElems.indexOf(el);
+  if(idx>=0)p.microElems.splice(idx,1); else p.microElems.push(el);
+  const box=document.getElementById('cp_'+i+'_micro');
+  if(box)box.innerHTML=microChipsHtml(i);
+}
+
+const COMMON_STRAINS=[
+  '枯草桿菌 Bacillus subtilis',
+  '解澱粉芽孢桿菌 B. amyloliquefaciens',
+  '巨大芽孢桿菌 B. megaterium',
+  '地衣芽孢桿菌 B. licheniformis',
+  '凝結芽孢桿菌 B. coagulans',
+  '蠟質芽孢桿菌 B. cereus',
+  '側孢芽孢桿菌 B. laterosporus',
+  '固氮菌 Azotobacter spp.',
+  '固氮螺菌 Azospirillum brasilense',
+  '根瘤菌 Rhizobium spp.',
+  '解磷菌 Phosphate-solubilizing bacteria',
+  '木黴菌 Trichoderma spp.',
+  '叢枝菌根菌 AMF',
+  '光合作用菌 Photosynthetic bacteria',
+  '乳酸菌 Lactobacillus spp.',
+  '放線菌 Actinomycetes',
+  '假單孢菌 Pseudomonas fluorescens',
+];
+const CONC_OPTS=['10⁴ CFU/g','10⁵ CFU/g','10⁶ CFU/g','10⁷ CFU/g','10⁸ CFU/g','10⁹ CFU/g','10¹⁰ CFU/g'];
+
+let materials=[], formulas=[], market=[], custProds=[], oStrains=[];
+
+/* ---------- 儲存 ---------- */
+function load(){
+  try{materials=JSON.parse(localStorage.getItem('fert_materials'))||null;}catch(e){materials=null;}
+  if(!materials||!materials.length) materials=structuredClone(DEFAULT_MATERIALS);
+  try{formulas=JSON.parse(localStorage.getItem('fert_formulas'))||[];}catch(e){formulas=[];}
+  try{market=JSON.parse(localStorage.getItem('fert_market'))||null;}catch(e){market=null;}
+  if(!market||!market.length) market=structuredClone(DEFAULT_MARKET);
+
+  // 一次性遷移：補入 DEFAULT_MARKET 中 碩成肥料 品項（已有 localStorage 資料的舊版使用者也能自動取得）
+  const scDefault=DEFAULT_MARKET.filter(m=>m.g==='碩成肥料');
+  const scExisting=new Set(market.filter(m=>m.g==='碩成肥料').map(m=>m.name));
+  const scMissing=scDefault.filter(m=>!scExisting.has(m.name));
+  if(scMissing.length){
+    // 插到陣列最前面（確保顯示排序最上方）
+    market.unshift(...scMissing.map(m=>structuredClone(m)));
+    saveMarket();
+  }
+}
+function saveMat(){localStorage.setItem('fert_materials',JSON.stringify(materials));flash('dbSave','✓ 已儲存');}
+function saveForm(){localStorage.setItem('fert_formulas',JSON.stringify(formulas));}
+function saveMarket(){localStorage.setItem('fert_market',JSON.stringify(market));flash('mkSave','✓ 已儲存');}
+function flash(id,msg){const e=document.getElementById(id);if(!e)return;e.textContent=msg;setTimeout(()=>e.textContent='',1500);}
+
+/* ---------- 分頁 ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='convert'){refreshOurSelect();refreshMarketSelects();}
+  if(t.dataset.tab==='store')renderFormulas();
+  if(t.dataset.tab==='market')renderMarket();
+  if(t.dataset.tab==='news')renderNews();
+});
+
+/* ---------- ① 原料資料庫 ---------- */
+function renderMaterials(){
+  const body=document.getElementById('matBody');
+  body.innerHTML='';
+  let lastG=null;
+  materials.forEach((m,i)=>{
+    if(m.g!==lastG){
+      const gr=document.createElement('tr');gr.className='grp-head';
+      gr.innerHTML=`<td colspan="13">${m.g==='禽畜糞'?'🐔 禽畜糞':'🪵 調整材'}</td>`;
+      body.appendChild(gr);lastG=m.g;
+    }
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      `<td><input class="cell name" value="${m.name}" onchange="editMat(${i},'name',this.value)"></td>`+
+      COLS.map(c=>`<td><input class="cell" type="number" step="any" value="${m[c]}" onchange="editMat(${i},'${c}',this.value)"></td>`).join('')+
+      `<td><button class="btn danger" onclick="delMat(${i})">刪</button></td>`;
+    body.appendChild(tr);
+  });
+}
+function editMat(i,k,v){materials[i][k]=(k==='name')?v:parseFloat(v)||0;saveMat();refreshRecipeSelects();}
+function addMaterial(g){
+  materials.push({g,name:'新原料',n:0,p:0,k:0,om:0,ph:7,moi:0,cn:0,cu:0,zn:0,cost:0,fee:0});
+  materials.sort((a,b)=>a.g===b.g?0:(a.g==='禽畜糞'?-1:1));
+  saveMat();renderMaterials();refreshRecipeSelects();
+}
+function delMat(i){if(confirm('確定刪除「'+materials[i].name+'」?')){materials.splice(i,1);saveMat();renderMaterials();refreshRecipeSelects();}}
+function resetMaterials(){if(confirm('還原為預設文獻值?你目前的修改將被覆蓋。')){materials=structuredClone(DEFAULT_MATERIALS);saveMat();renderMaterials();refreshRecipeSelects();}}
+
+/* ---------- ⑤ 市售肥料庫 ---------- */
+function renderMarket(){
+  const body=document.getElementById('mkBody');body.innerHTML='';
+  let lastG=null;
+  const order={'碩成肥料':-1,'化學肥料':0,'有機質肥料':1,'有機資材':2};
+  market.sort((a,b)=>(order[a.g]??3)-(order[b.g]??3));
+  market.forEach((m,i)=>{
+    if(m.g!==lastG){const gr=document.createElement('tr');gr.className='grp-head';
+      gr.innerHTML=`<td colspan="9">${m.g}</td>`;body.appendChild(gr);lastG=m.g;}
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input class="cell name" value="${m.name}" onchange="editMk(${i},'name',this.value)"></td>`+
+      MCOLS.map(c=>`<td><input class="cell" type="number" step="any" value="${m[c]}" onchange="editMk(${i},'${c}',this.value)"></td>`).join('')+
+      `<td><button class="btn danger" onclick="delMk(${i})">刪</button></td>`;
+    body.appendChild(tr);
+  });
+}
+function editMk(i,k,v){market[i][k]=(k==='name')?v:parseFloat(v)||0;saveMarket();refreshMarketSelects();}
+function addMarket(g){market.push({g,name:'新產品',n:0,p:0,k:0,om:0,cu:0,zn:0,price:0});saveMarket();renderMarket();refreshMarketSelects();}
+function delMk(i){if(confirm('刪除「'+market[i].name+'」?')){market.splice(i,1);saveMarket();renderMarket();refreshMarketSelects();}}
+function resetMarket(){if(confirm('還原為預設市售清單?')){market=structuredClone(DEFAULT_MARKET);saveMarket();renderMarket();refreshMarketSelects();}}
+
+/* ---------- ② 配方計算 ---------- */
+function recipeOptions(sel){
+  return '<option value="">— 選擇原料 —</option>'+
+    materials.map((m,i)=>`<option value="${i}" ${sel==i?'selected':''}>${m.name}（${m.g}）</option>`).join('');
+}
+function addRecipeRow(idx='',wt=''){
+  const div=document.createElement('div');
+  div.className='recipe-row';
+  div.innerHTML=
+    `<select onchange="calc()">${recipeOptions(idx)}</select>`+
+    `<input type="number" placeholder="重量 kg" step="any" value="${wt}" oninput="calc()">`+
+    `<span class="mini matpct"></span>`+
+    `<button class="btn danger" onclick="this.parentNode.remove();calc()">×</button>`;
+  document.getElementById('recipeRows').appendChild(div);
+  calc();
+}
+function refreshRecipeSelects(){
+  document.querySelectorAll('#recipeRows .recipe-row select').forEach(s=>{
+    const cur=s.value;s.innerHTML=recipeOptions(cur);
+  });
+}
+function getRecipe(){
+  const rows=[...document.querySelectorAll('#recipeRows .recipe-row')];
+  const items=[];
+  rows.forEach(r=>{
+    const idx=r.querySelector('select').value;
+    const wt=parseFloat(r.querySelector('input').value)||0;
+    if(idx!==''&&wt>0)items.push({m:materials[idx],wt});
+  });
+  return {rows,items};
+}
+function calc(){
+  const {rows,items}=getRecipe();
+  const W=items.reduce((s,x)=>s+x.wt,0);
+  document.getElementById('totalWt').textContent='總投入 '+fmt(W)+' kg';
+  // 顯示各原料佔比
+  rows.forEach(r=>{
+    const idx=r.querySelector('select').value;
+    const wt=parseFloat(r.querySelector('input').value)||0;
+    const span=r.querySelector('.matpct');
+    span.textContent=(idx!==''&&W>0)?((wt/W*100).toFixed(1)+'%'):'';
+  });
+  const grid=document.getElementById('resultGrid');
+  const cb=document.getElementById('costBreak');
+  if(W<=0){grid.innerHTML='<div class="empty">請於上方加入原料並輸入重量</div>';cb.style.display='none';return;}
+
+  const wAvg=k=>items.reduce((s,x)=>s+x.wt*x.m[k],0)/W;
+  const N=wAvg('n'),P=wAvg('p'),K=wAvg('k'),OM=wAvg('om'),pH=wAvg('ph'),MOI=wAvg('moi'),Cu=wAvg('cu'),Zn=wAvg('zn');
+  // 碳氮比:總碳/總氮
+  const totC=items.reduce((s,x)=>s+x.wt*x.m.om*CARBON_FACTOR,0);
+  const totN=items.reduce((s,x)=>s+x.wt*x.m.n,0);
+  const CN=totN>0?totC/totN:0;
+  // 成本
+  const matCost=items.reduce((s,x)=>s+x.wt*x.m.cost,0);
+  const feeIn=items.reduce((s,x)=>s+x.wt*x.m.fee,0);
+  const net=matCost-feeIn;
+  const loss=parseFloat(document.getElementById('lossRate').value)||0;
+  const outW=W*(1-loss/100);
+  const costPerKg=outW>0?net/outW:0;
+
+  window._lastCalc={N,P,K,OM,pH,MOI,CN,Cu,Zn,costPerKg,outW};
+
+  grid.innerHTML=`
+    <div class="stat"><div class="v">${N.toFixed(2)}</div><div class="l">氮 N (%)</div></div>
+    <div class="stat"><div class="v">${P.toFixed(2)}</div><div class="l">磷 P₂O₅ (%)</div></div>
+    <div class="stat"><div class="v">${K.toFixed(2)}</div><div class="l">鉀 K₂O (%)</div></div>
+    <div class="stat"><div class="v">${OM.toFixed(1)}</div><div class="l">有機質 (%)</div></div>
+    <div class="stat"><div class="v">${pH.toFixed(1)}</div><div class="l">pH(估)</div></div>
+    <div class="stat"><div class="v">${MOI.toFixed(1)}</div><div class="l">水分 (%)</div></div>
+    <div class="stat ${CN>20?'warn':''}"><div class="v">${CN.toFixed(1)}</div><div class="l">碳氮比 C/N</div></div>
+    <div class="stat"><div class="v">${Cu.toFixed(0)}</div><div class="l">銅 Cu (ppm)</div></div>
+    <div class="stat"><div class="v">${Zn.toFixed(0)}</div><div class="l">鋅 Zn (ppm)</div></div>
+    <div class="stat cost"><div class="v">${costPerKg.toFixed(2)}</div><div class="l">基礎成本 (元/kg)</div></div>`;
+
+  cb.style.display='block';
+  cb.innerHTML=`💰 <b>成本明細</b>　原料成本 ${fmt(matCost)} 元　−　處理費收入 ${fmt(feeIn)} 元　=　淨成本 <b>${fmt(net)} 元</b>　`+
+    `÷ 產出 ${fmt(outW)} kg${loss>0?'(已扣損耗'+loss+'%)':''}　=　<b>${costPerKg.toFixed(2)} 元/kg</b>`+
+    (CN>20?'<br>⚠️ 碳氮比偏高(>20),腐熟可能不足,建議增加禽畜糞或延長發酵。':'')+
+    (Cu>100||Zn>500?'<br>⚠️ 銅/鋅接近或超過有機質肥料常見重金屬上限(Cu 100 / Zn 500 ppm),請注意豬糞比例。':'');
+}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString('zh-Hant');}
+
+function saveFormula(){
+  const name=document.getElementById('recipeName').value.trim();
+  if(!name){alert('請輸入配方名稱');return;}
+  if(!window._lastCalc||window._lastCalc.outW<=0){alert('請先加入原料計算');return;}
+  const c=window._lastCalc;
+  const {items}=getRecipe();
+  const recipe=items.map(x=>({name:x.m.name,wt:x.wt}));
+  const obj={id:Date.now(),name,recipe,
+    n:+c.N.toFixed(2),p:+c.P.toFixed(2),k:+c.K.toFixed(2),om:+c.OM.toFixed(1),
+    ph:+c.pH.toFixed(1),moi:+c.MOI.toFixed(1),cn:+c.CN.toFixed(1),
+    cu:Math.round(c.Cu),zn:Math.round(c.Zn),cost:+c.costPerKg.toFixed(2),
+    price:parseFloat(document.getElementById('recipePrice').value)||0};
+  const ex=formulas.findIndex(f=>f.name===name);
+  if(ex>=0){if(!confirm('已有同名配方,覆蓋?'))return;formulas[ex]=obj;}else formulas.push(obj);
+  saveForm();alert('已儲存配方:'+name);renderFormulas();
+}
+
+/* ---------- ④ 配方庫 ---------- */
+function renderFormulas(){
+  const el=document.getElementById('formulaList');
+  if(!formulas.length){el.innerHTML='<div class="empty">尚無儲存的配方</div>';return;}
+  el.innerHTML=formulas.map(f=>`
+    <div class="formula-card">
+      <h4>${f.name} <button class="btn danger" style="float:right" onclick="delFormula(${f.id})">刪除</button></h4>
+      <div class="meta">N ${f.n}% · P₂O₅ ${f.p}% · K₂O ${f.k}% · 有機質 ${f.om}% · C/N ${f.cn} · pH ${f.ph} · Cu ${f.cu} · Zn ${f.zn} · 成本 ${f.cost} 元/kg${f.price?' · 售價 '+f.price+' 元/kg':''}</div>
+      <div class="mini" style="margin-top:6px;">配方:${f.recipe.map(r=>r.name+' '+r.wt+'kg').join('、')}</div>
+    </div>`).join('');
+}
+function delFormula(id){if(confirm('刪除此配方?')){formulas=formulas.filter(f=>f.id!==id);saveForm();renderFormulas();refreshOurSelect();}}
+
+/* ---------- 客戶多品項肥料管理 ---------- */
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function addCustProd(){
+  custProds.push({name:'',n:0,p:0,k:0,om:0,cu:0,zn:0,other:'',use:0,bag:0,bagKg:0,sub:0,spec:'粒狀',price:0,strains:[],microElems:[]});
+  renderCustProds();
+}
+function removeCustProd(i){custProds.splice(i,1);renderCustProds();}
+function updateCustProd(i,field,value){
+  if(field==='name'||field==='other'||field==='spec')custProds[i][field]=value;
+  else custProds[i][field]=parseFloat(value)||0;
+  if(field==='bag'||field==='bagKg'||field==='sub')calcCustUnit(i);
+}
+function calcCustUnit(i){
+  const p=custProds[i];
+  const unitCost=p.bagKg>0?Math.max(0,(p.bag-p.sub)/p.bagKg):0;
+  p.price=unitCost;
+  const priceEl=document.getElementById('cp_'+i+'_price');
+  const noteEl=document.getElementById('cp_'+i+'_unitNote');
+  if(priceEl)priceEl.value=unitCost>0?unitCost.toFixed(2):0;
+  if(noteEl)noteEl.innerHTML='扣補助後單位成本:<b>'+(unitCost>0?unitCost.toFixed(2)+' 元/kg':'—')+'</b>';
+}
+function fillCustFromMarket(i){
+  const sel=document.getElementById('cp_'+i+'_market');
+  const m=market[+sel.value];if(!m)return;
+  const fv={name:m.name,n:m.n,p:m.p,k:m.k,om:m.om,cu:m.cu,zn:m.zn,price:m.price};
+  Object.keys(fv).forEach(f=>{custProds[i][f]=fv[f];const el=document.getElementById('cp_'+i+'_'+f);if(el)el.value=fv[f];});
+  const noteEl=document.getElementById('cp_'+i+'_unitNote');
+  if(noteEl&&m.price>0)noteEl.innerHTML='參考價:<b>'+m.price.toFixed(2)+' 元/kg</b>';
+}
+function renderCustProds(){
+  const container=document.getElementById('custProductList');
+  if(!container)return;
+  if(!custProds.length){container.innerHTML='<div class="empty" style="padding:10px 0;font-size:13px;">請點下方「＋ 新增客戶肥料」加入品項</div>';return;}
+  const mOpts=marketOptions();
+  container.innerHTML=custProds.map((p,i)=>`
+  <div class="cust-prod-entry">
+    <div class="entry-no">
+      <span class="entry-lbl">【品項 ${i+1}】${p.name?' — '+escHtml(p.name):''}</span>
+      ${custProds.length>1?`<button class="btn danger" style="padding:3px 10px;font-size:12px;" onclick="removeCustProd(${i})">× 移除</button>`:''}
+    </div>
+    <div class="field"><label>從市售清單帶入</label>
+      <select id="cp_${i}_market" class="cust-market-sel" onchange="fillCustFromMarket(${i})">${mOpts}</select></div>
+    <div class="field"><label>產品名稱</label>
+      <input id="cp_${i}_name" value="${escHtml(p.name)}" placeholder="例:台肥5號複合肥料" oninput="updateCustProd(${i},'name',this.value)"></div>
+    <div class="grid g4">
+      <div class="field"><label>氮 N (%)</label><input id="cp_${i}_n" type="number" step="0.1" value="${p.n}" oninput="updateCustProd(${i},'n',this.value)"></div>
+      <div class="field"><label>磷 P₂O₅ (%)</label><input id="cp_${i}_p" type="number" step="0.1" value="${p.p}" oninput="updateCustProd(${i},'p',this.value)"></div>
+      <div class="field"><label>鉀 K₂O (%)</label><input id="cp_${i}_k" type="number" step="0.1" value="${p.k}" oninput="updateCustProd(${i},'k',this.value)"></div>
+      <div class="field"><label>有機質 (%)</label><input id="cp_${i}_om" type="number" step="0.1" value="${p.om}" oninput="updateCustProd(${i},'om',this.value)"></div>
+    </div>
+    <div class="field">
+      <label>微量元素（點選標注,帶入比較報告）</label>
+      <div id="cp_${i}_micro" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">${microChipsHtml(i)}</div>
+    </div>
+    <div class="field"><label>一分地使用量 (kg/分地)</label>
+      <input id="cp_${i}_use" type="number" step="1" value="${p.use}" oninput="updateCustProd(${i},'use',this.value)"></div>
+    <div class="subcard">
+      <div class="subcard-h">💰 成本(以包裝計,自動換算元/kg)</div>
+      <div class="grid g4">
+        <div class="field"><label>一包 (元)</label><input id="cp_${i}_bag" type="number" step="1" value="${p.bag}" oninput="updateCustProd(${i},'bag',this.value)"></div>
+        <div class="field"><label>重量 (公斤/包)</label><input id="cp_${i}_bagKg" type="number" step="0.5" value="${p.bagKg}" oninput="updateCustProd(${i},'bagKg',this.value)"></div>
+        <div class="field"><label>補助金額 (元/包)</label><input id="cp_${i}_sub" type="number" step="1" value="${p.sub}" oninput="updateCustProd(${i},'sub',this.value)"></div>
+        <div class="field"><label>規格</label>
+          <select id="cp_${i}_spec" onchange="updateCustProd(${i},'spec',this.value)">
+            <option ${p.spec==='粒狀'?'selected':''}>粒狀</option><option ${p.spec==='粉狀'?'selected':''}>粉狀</option><option ${p.spec==='液態'?'selected':''}>液態</option>
+          </select></div>
+      </div>
+      <div class="grid g2" style="align-items:end;">
+        <div class="field" style="margin:0;"><label>單位成本 (元/kg) <span class="mini">可直接改</span></label>
+          <input id="cp_${i}_price" type="number" step="0.1" value="${p.price}" oninput="updateCustProd(${i},'price',this.value)"></div>
+        <div class="unit-out" id="cp_${i}_unitNote">扣補助後單位成本:<b>${p.price>0?p.price.toFixed(2)+' 元/kg':'—'}</b></div>
+      </div>
+    </div>
+    <div class="subcard" style="border:1px dashed var(--green-d);margin-top:8px;">
+      <div class="subcard-h" style="color:var(--green-d);">🦠 生物菌種（選填,加入報告）</div>
+      <div id="cp_${i}_strainsList">${cpStrainsHtml(i)}</div>
+      <button class="btn ghost sm" onclick="addCpStrain(${i})" style="margin-top:4px;padding:4px 10px;font-size:12px;">＋ 新增菌種</button>
+    </div>
+  </div>`).join('');
+}
+function cpStrainsHtml(i){
+  const strains=(custProds[i]&&custProds[i].strains)||[];
+  if(!strains.length)return '<div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div>';
+  return strains.map((s,j)=>`
+  <div style="display:grid;grid-template-columns:1fr 140px 26px;gap:6px;align-items:center;margin-bottom:5px;">
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="custProds[${i}].strains[${j}].name=this.value">
+      ${COMMON_STRAINS.map(n=>`<option ${s.name===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="custProds[${i}].strains[${j}].conc=this.value">
+      ${CONC_OPTS.map(c=>`<option ${s.conc===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <button class="btn danger" style="padding:2px 6px;font-size:12px;line-height:1.4;" onclick="removeCpStrain(${i},${j})">×</button>
+  </div>`).join('');
+}
+
+/* ---------- 菌種管理（我方產品） ---------- */
+function addOStrain(){
+  oStrains.push({name:COMMON_STRAINS[0],conc:'10⁷ CFU/g'});
+  renderOStrains();
+}
+function removeOStrain(i){oStrains.splice(i,1);renderOStrains();}
+function renderOStrains(){
+  const el=document.getElementById('oStrainsList');if(!el)return;
+  if(!oStrains.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div>';return;}
+  el.innerHTML=oStrains.map((s,i)=>`
+  <div style="display:grid;grid-template-columns:1fr 140px 26px;gap:6px;align-items:center;margin-bottom:5px;">
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="oStrains[${i}].name=this.value">
+      ${COMMON_STRAINS.map(n=>`<option ${s.name===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="oStrains[${i}].conc=this.value">
+      ${CONC_OPTS.map(c=>`<option ${s.conc===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <button class="btn danger" style="padding:2px 6px;font-size:12px;line-height:1.4;" onclick="removeOStrain(${i})">×</button>
+  </div>`).join('');
+}
+/* ---------- 菌種管理（客戶肥料品項） ---------- */
+function addCpStrain(i){
+  custProds[i].strains=custProds[i].strains||[];
+  custProds[i].strains.push({name:COMMON_STRAINS[0],conc:'10⁷ CFU/g'});
+  renderCpStrains(i);
+}
+function removeCpStrain(i,j){custProds[i].strains.splice(j,1);renderCpStrains(i);}
+function renderCpStrains(i){
+  const el=document.getElementById('cp_'+i+'_strainsList');if(!el)return;
+  el.innerHTML=cpStrainsHtml(i);
+}
+/* ---------- 業務話術生成 ---------- */
+function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName}){
+  const costO=ourUse*o.price;
+  const diff=totCCost-costO;
+  const diffPct=totCCost>0?Math.abs(diff/totCCost*100):0;
+  const omDiff=oOM-totCOM;
+  const pts=[];
+
+  // 開場
+  pts.push({icon:'👋',title:'開場建議',
+    body:`您好${custName&&custName!=='客戶'?'，'+custName:''}！今天帶來一份針對您${crop.name==='一般 / 未指定'?'的田區':'的'+crop.name}量身評估的施肥替代方案，請您參考。`});
+
+  // 成本
+  if(totCCost>0&&costO>0){
+    if(diff>0)
+      pts.push({icon:'💰',title:`每分地省 ${diff.toFixed(0)} 元（↓${diffPct.toFixed(0)}%）`,
+        body:`原本每分地約花 ${totCCost.toFixed(0)} 元，改用碩成${o.name||'有機肥'}只需約 ${costO.toFixed(0)} 元，每分地省 ${diff.toFixed(0)} 元。${area>0?'您全場 '+area+' 分地一年可省約 <b>'+(diff*area).toFixed(0)+' 元</b>。':''}`});
+    else
+      pts.push({icon:'💰',title:`成本多 ${Math.abs(diff).toFixed(0)} 元/分地，換來地力長期升值`,
+        body:`費用比原肥略多 ${Math.abs(diff).toFixed(0)} 元/分（↑${diffPct.toFixed(0)}%），但有機質可逐年降低化學追肥需求，通常 2–3 年後整體成本反而更低。`});
+  }else
+    pts.push({icon:'💰',title:'填入雙方單價即可自動比較成本',body:'請在左側客戶肥料及右側我方產品欄位填入單位成本，換算後即顯示每分地差額。'});
+
+  // 有機質效益
+  if(oOM>0)
+    pts.push({icon:'🌱',title:`有機質 ${oOM.toFixed(1)} kg/分地，活化土壤微生物`,
+      body:`每分地提供有機質約 ${oOM.toFixed(1)} kg${omDiff>0.05?'，較原肥多 '+omDiff.toFixed(1)+' kg':''}，可改善土壤團粒結構、提升保水保肥力(CEC)，是純化學肥料做不到的地力投資。`});
+
+  // 菌種話術
+  if(oStrains.length){
+    const names=oStrains.map(s=>s.name.split(' ')[0]).join('、');
+    const detail=oStrains.map(s=>`${s.name}（${s.conc}）`).join('；');
+    pts.push({icon:'🦠',title:`含 ${names}，促進根圈活性`,
+      body:`本產品添加 ${detail}。有益菌能幫助根域分解有機質、溶解土壤難溶磷鉀，提升養分吸收效率，特別適合${crop.name==='一般 / 未指定'?'各類作物':''+crop.name}。`});
+  }
+
+  // 用量說明
+  pts.push({icon:'📦',title:`用量換算一看即懂（以${basisLabel}等量）`,
+    body:`客戶原本每分地用 ${totCUse.toFixed(0)} kg，改用我方只需 ${ourUse.toFixed(0)} kg/分，${ourUse<totCUse?'用量少 '+(totCUse-ourUse).toFixed(0)+' kg，搬運儲存都更省力。':'養分供應更均衡穩定。'}${area>0?'全場需備貨約 '+(ourUse*area).toFixed(0)+' kg（20kg粒狀約 '+Math.ceil(ourUse*area/20)+' 包）。':''}`});
+
+  // 收場行動
+  pts.push({icon:'📋',title:'建議行動',
+    body:`可將此份「肥料替代對照表」列印給農友帶回參考（點右上角「列印/存成PDF」）。下次拜訪前可先準備樣品或試用包，讓農友實際比較。`});
+
+  return pts;
+}
+
+/* ---------- ③ 替代量換算 ---------- */
+function refreshOurSelect(){
+  const s=document.getElementById('ourSelect');
+  const cur=s.value;
+  s.innerHTML='<option value="">— 手動輸入 —</option>'+
+    formulas.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  s.value=cur;
+}
+function loadOurProduct(){
+  const id=+document.getElementById('ourSelect').value;
+  const f=formulas.find(x=>x.id===id);
+  if(!f)return;
+  oName.value=f.name;oN.value=f.n;oP.value=f.p;oK.value=f.k;oOM.value=f.om;oCu.value=f.cu;oZn.value=f.zn;
+  oPrice.value=f.price||f.cost||0;
+  document.getElementById('oMarket').value='';
+}
+/* 作物與市售清單下拉 */
+function populateCrops(){
+  const s=document.getElementById('crop');
+  s.innerHTML=CROPS.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+}
+function marketOptions(){
+  let html='<option value="">— 手動輸入 —</option>',lastG=null;
+  const order={'碩成肥料':-1,'化學肥料':0,'有機質肥料':1,'有機資材':2};
+  const sorted=[...market].sort((a,b)=>(order[a.g]??3)-(order[b.g]??3));
+  sorted.forEach((m,i)=>{
+    // 找原始 market 中的 index 以便 fillFrom 函式正確讀取
+    const realIdx=market.indexOf(m);
+    if(m.g!==lastG){
+      if(lastG)html+='</optgroup>';
+      const gLabel=m.g==='碩成肥料'?'🌱 碩成肥料（我方產品）':m.g;
+      html+=`<optgroup label="${gLabel}">`;lastG=m.g;
+    }
+    html+=`<option value="${realIdx}">${m.name}</option>`;
+  });
+  if(lastG)html+='</optgroup>';
+  return html;
+}
+function refreshMarketSelects(){
+  // 更新所有客戶品項的市售清單下拉
+  document.querySelectorAll('.cust-market-sel').forEach(sel=>{
+    const v=sel.value;sel.innerHTML=marketOptions();sel.value=v;
+  });
+  // 更新我方產品市售清單
+  const om=document.getElementById('oMarket');
+  if(om){const v=om.value;om.innerHTML=marketOptions().replace('— 手動輸入 —','— 不帶入 —');om.value=v;}
+}
+function fillFromMarket(side){
+  const sel=document.getElementById(side==='c'?'cMarket':'oMarket');
+  const m=market[+sel.value];if(!m)return;
+  const p=side==='c'?'c':'o';
+  document.getElementById(p+'Name').value=m.name;
+  document.getElementById(p+'N').value=m.n;
+  document.getElementById(p+'P').value=m.p;
+  document.getElementById(p+'K').value=m.k;
+  document.getElementById(p+'OM').value=m.om;
+  document.getElementById(p+'Cu').value=m.cu;
+  document.getElementById(p+'Zn').value=m.zn;
+  document.getElementById(p+'Price').value=m.price;
+  if(side==='o')document.getElementById('ourSelect').value='';
+}
+function gv(id){return parseFloat(document.getElementById(id).value)||0;}
+function runConvert(){
+  // 收集有效客戶肥料品項(有填用量的)
+  const validProds=custProds.filter(p=>p.use>0);
+  if(!validProds.length){alert('請至少為一個客戶肥料填入「一分地使用量」');return;}
+
+  const o={name:document.getElementById('oName').value||'我方產品',n:gv('oN'),p:gv('oP'),k:gv('oK'),om:gv('oOM'),cu:gv('oCu'),zn:gv('oZn'),price:gv('oPrice')};
+  const crop=CROPS[+document.getElementById('crop').value]||CROPS[0];
+  const basis=document.getElementById('basis').value;
+  const custName=document.getElementById('custName').value||'客戶';
+  const county=document.getElementById('county').value;
+  const township=document.getElementById('township').value;
+  const cropItem=document.getElementById('cropItem').value;
+  const area=gv('area');
+
+  // 彙整客戶所有肥料的每分地養分 (kg)
+  const totCN=validProds.reduce((s,p)=>s+p.use*p.n/100,0);
+  const totCP=validProds.reduce((s,p)=>s+p.use*p.p/100,0);
+  const totCK=validProds.reduce((s,p)=>s+p.use*p.k/100,0);
+  const totCOM=validProds.reduce((s,p)=>s+p.use*p.om/100,0);
+  const totCCost=validProds.reduce((s,p)=>s+p.use*p.price,0); // 元/分地
+  const totCUse=validProds.reduce((s,p)=>s+p.use,0);           // kg/分地
+  const allOther=[...new Set(validProds.flatMap(p=>p.microElems||[]))].join('、');
+  // 客戶肥料菌種彙整（去重）
+  const cStrainsAll=[...new Set(validProds.flatMap(p=>(p.strains||[]).map(s=>s.name+' ('+s.conc+')')))];
+  // 我方產品菌種
+  const oStrainsInfo=oStrains.map(s=>s.name+' ('+s.conc+')');
+
+  // 我方替代用量
+  let ourUse,basisLabel;
+  if(basis==='same'){ourUse=totCUse;basisLabel='同用量';}
+  else{
+    const key=basis.toLowerCase();
+    if(o[key]<=0){alert('我方產品該基準養分為 0,無法以此換算,請改選其他基準。');return;}
+    const map={n:totCN,p:totCP,k:totCK};
+    ourUse=map[key]/(o[key]/100);
+    basisLabel={N:'氮 N',P:'磷 P₂O₅',K:'鉀 K₂O'}[basis];
+  }
+
+  // 我方在替代用量下的養分供應
+  const oN=ourUse*o.n/100,oP=ourUse*o.p/100,oK=ourUse*o.k/100,oOM=ourUse*o.om/100;
+  const diff=(a,b)=>{const d=b-a;const cls=d>=0?'pos':'neg';const s=d>=0?'+':'';return `<span class="${cls}">${s}${d.toFixed(2)}</span>`;};
+  const today=new Date().toLocaleDateString('zh-Hant');
+
+  // buildDoctor 所需的彙整 c 物件
+  const cAgg={name:validProds.length===1?validProds[0].name:'客戶複合施肥',
+    n:totCUse>0?totCN/totCUse*100:0,p:totCUse>0?totCP/totCUse*100:0,k:totCUse>0?totCK/totCUse*100:0,
+    om:totCUse>0?totCOM/totCUse*100:0,cu:0,zn:0,use:totCUse,
+    price:totCUse>0?totCCost/totCUse:0,other:allOther};
+
+  // 耕作面積全區成本
+  let areaHtml='';
+  if(area>0){
+    const costC_total=totCCost*area,costO_total=ourUse*area*o.price;
+    const d_total=costC_total-costO_total;
+    areaHtml=`<h3 style="color:var(--brown);margin-top:18px;">全耕作面積成本比較(${area}分地)</h3>
+      <div class="result-grid">
+        <div class="stat cost"><div class="v">${costC_total.toFixed(0)}</div><div class="l">原肥總成本 (元)</div></div>
+        <div class="stat cost"><div class="v">${costO_total.toFixed(0)}</div><div class="l">改用我方 (元)</div></div>
+        <div class="stat ${d_total>=0?'':'warn'}"><div class="v">${d_total>=0?'省 ':'多 '}${Math.abs(d_total).toFixed(0)}</div><div class="l">總計差額 (元)</div></div>
+      </div>`;
+  }
+
+  // 多品項明細表 (超過 1 種才顯示)
+  const cLabel=validProds.length===1
+    ?escHtml(validProds[0].name||'客戶原肥')+'<br>('+fmt(totCUse)+'kg/分)'
+    :'客戶複合施肥<br>(共'+fmt(totCUse)+'kg/分)';
+  const custDetailHtml=validProds.length>1?`
+    <h3>客戶原有肥料明細 (${validProds.length} 種)</h3>
+    <div class="table-wrap"><table class="cmp-table"><thead><tr>
+      <th>品項名稱</th><th>規格</th><th>用量<br>kg/分</th>
+      <th>N<br>kg/分</th><th>P₂O₅<br>kg/分</th><th>K₂O<br>kg/分</th><th>有機質<br>kg/分</th><th>成本<br>元/分</th>
+    </tr></thead><tbody>
+    ${validProds.map(p=>`<tr>
+      <td style="text-align:left;">${escHtml(p.name)||'未命名'}</td>
+      <td>${p.spec}</td><td>${p.use}</td>
+      <td>${(p.use*p.n/100).toFixed(2)}</td><td>${(p.use*p.p/100).toFixed(2)}</td>
+      <td>${(p.use*p.k/100).toFixed(2)}</td><td>${(p.use*p.om/100).toFixed(2)}</td>
+      <td>${p.price>0?(p.use*p.price).toFixed(0):'-'}</td>
+    </tr>`).join('')}
+    <tr style="font-weight:700;background:var(--green-l);">
+      <td style="text-align:left;">合計</td><td>—</td><td>${totCUse.toFixed(0)}</td>
+      <td>${totCN.toFixed(2)}</td><td>${totCP.toFixed(2)}</td><td>${totCK.toFixed(2)}</td><td>${totCOM.toFixed(2)}</td>
+      <td>${totCCost>0?totCCost.toFixed(0):'-'}</td>
+    </tr>
+    </tbody></table></div>`:'';
+
+  // ── 專業報告版面 ──────────────────────────────────────
+  let html=`<div class="report">
+    <div class="report-bg"></div>
+    <div class="report-header">
+      <div class="sc-logo">
+        <div class="sc-badge"><span>碩<br>成</span></div>
+        <div class="sc-name">碩成肥料<small>SHUO CHENG FERTILIZER</small></div>
+      </div>
+      <div></div>
+      <div class="report-title">
+        <h1>肥料替代與施肥建議對照表</h1>
+        <small>${today}</small>
+      </div>
+    </div>
+    <div class="report-meta">
+      <div><b>客戶名稱</b><span>${escHtml(custName)}</span></div>
+      <div><b>地點</b><span>${county}${township?township:''}</span></div>
+      <div><b>作物</b><span>${crop.name}${cropItem?'　'+cropItem:''}</span></div>
+      ${area>0?'<div><b>耕作面積</b><span>'+area+' 分地</span></div>':''}
+    </div>
+    <div class="report-body">
+    ${custDetailHtml}
+    <div class="note">以 <b>${basisLabel}</b> 為基準換算:客戶每分地施用原肥合計 <b>${fmt(totCUse)} kg</b>,需改用 <b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 的「${escHtml(o.name)}」可達相同${basis==='same'?'用量':basisLabel}供應。</div>
+
+    <div class="table-wrap"><table class="cmp-table"><thead><tr>
+      <th>項目</th><th>${cLabel}</th><th>${escHtml(o.name)}<br>(${fmt(ourUse)}kg/分)</th><th>差異(我方−客戶)</th></tr></thead><tbody>
+      <tr><td>氮 N (kg/分)</td><td>${totCN.toFixed(2)}</td><td>${oN.toFixed(2)}</td><td>${diff(totCN,oN)}</td></tr>
+      <tr><td>磷 P₂O₅ (kg/分)</td><td>${totCP.toFixed(2)}</td><td>${oP.toFixed(2)}</td><td>${diff(totCP,oP)}</td></tr>
+      <tr><td>鉀 K₂O (kg/分)</td><td>${totCK.toFixed(2)}</td><td>${oK.toFixed(2)}</td><td>${diff(totCK,oK)}</td></tr>
+      <tr><td>有機質 (kg/分)</td><td>${totCOM.toFixed(2)}</td><td>${oOM.toFixed(2)}</td><td>${diff(totCOM,oOM)}</td></tr>
+      ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td></tr>`:''}
+      </tbody></table></div>
+
+    <h3>微量元素與成本比較</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">微量元素差異</div>
+        <div class="result-grid" style="grid-template-columns:repeat(2,1fr);">
+          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差</div></div>
+          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCUse*cAgg.cu/1e6*1000,ourUse*o.cu/1e6*1000)}</div><div class="l">Cu差</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--brown);text-transform:uppercase;margin-bottom:8px;">成本(每分地)</div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥</div></div>
+          <div class="stat cost"><div class="v" style="font-size:18px;">${(ourUse*o.price).toFixed(0)}</div><div class="l">我方</div></div>
+          <div class="stat ${(totCCost-ourUse*o.price)>=0?'':'warn'}"><div class="v" style="font-size:16px;">${totCCost-ourUse*o.price>=0?'省':'多'}<br>${Math.abs(totCCost-ourUse*o.price).toFixed(0)}</div><div class="l">差額</div></div>
+        </div>
+      </div>
+    </div>
+
+    ${areaHtml}
+
+    ${allOther?`<div class="note" style="margin-top:14px;">⚠️ <b>客戶原肥標示、我方產品未列出的成分</b>:<br>${allOther.split('、').map(s=>`<span class="tag">${s}</span>`).join('')}</div>`:''}
+
+    <h3>🩺 施肥評估與建議</h3>
+    <p class="mini" style="margin-top:-4px;">針對「${crop.name}」由換算結果自動研判,僅供施肥規劃參考。</p>
+    ${(()=>{const ins=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
+    </div>
+    <div class="report-footer">愛護臺灣土地<span class="leaf">🌱</span>種出好田地</div>
+  </div>`;
+
+  const costC=totCCost, costO=ourUse*o.price;
+
+  // 純文字報告(供複製)
+  const strip=s=>s.replace(/<[^>]+>/g,'');
+  const dd=(a,b)=>{const d=b-a;return (d>=0?'+':'')+d.toFixed(2);};
+  const ins2=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC,costO,cOther:allOther});
+  let rpt=`【肥料替代與施肥建議對照表】\n客戶:${custName}　${county}${township}　作物:${crop.name}　日期:${today}\n`;
+  if(area>0)rpt+=`耕作面積:${area}分地\n`;
+  if(validProds.length>1){
+    rpt+=`\n客戶原有肥料(${validProds.length}種):\n`;
+    validProds.forEach((p,idx)=>{rpt+=`  ${idx+1}. ${p.name||'未命名'}(${p.use}kg/分　N${p.n}%/P${p.p}%/K${p.k}%　${p.price>0?p.price+'元/kg':'無報價'})\n`;});
+    rpt+=`  合計 ${totCUse}kg/分　N=${totCN.toFixed(2)} P=${totCP.toFixed(2)} K=${totCK.toFixed(2)} kg/分\n`;
+  }else{
+    rpt+=`\n客戶原肥:${validProds[0].name||'未命名'}(${fmt(totCUse)} kg/分)\n`;
+  }
+  rpt+=`建議替代:${o.name}(${fmt(ourUse)} kg/分,以${basisLabel}換算等量)\n\n`+
+    `養分對照(kg/分,差異=我方−客戶)\n`+
+    `  氮 N    : ${totCN.toFixed(2)} → ${oN.toFixed(2)} (${dd(totCN,oN)})\n`+
+    `  磷 P2O5 : ${totCP.toFixed(2)} → ${oP.toFixed(2)} (${dd(totCP,oP)})\n`+
+    `  鉀 K2O  : ${totCK.toFixed(2)} → ${oK.toFixed(2)} (${dd(totCK,oK)})\n`+
+    `  有機質  : ${totCOM.toFixed(2)} → ${oOM.toFixed(2)} (${dd(totCOM,oOM)})\n`;
+  if(costC>0||costO>0)rpt+=`\n成本(每分地):原肥 ${costC.toFixed(0)} 元 → 我方 ${costO.toFixed(0)} 元(${costC-costO>=0?'省':'多'} ${Math.abs(costC-costO).toFixed(0)} 元)`;
+  if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${(ourUse*area*o.price).toFixed(0)} 元`;
+  rpt+=`\n\n【植物醫生見解】\n`+ins2.map(x=>`■ ${x.t}\n  ${strip(x.b)}`).join('\n\n');
+  window._report=rpt;
+
+  document.getElementById('convertResult').style.display='block';
+  document.getElementById('convertOut').innerHTML=html;
+
+  // 業務話術卡片
+  const talkCard=document.getElementById('salesTalkCard');
+  const talkOut=document.getElementById('salesTalkOut');
+  if(talkCard&&talkOut){
+    talkCard.style.display='block';
+    const pts=buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName});
+    talkOut.innerHTML=pts.map(p=>`<div class="doc-item" style="border-left-color:var(--accent);"><div class="doc-t">${p.icon} ${p.title}</div><div class="doc-b">${p.body}</div></div>`).join('');
+    talkCard.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+function copyReport(b){
+  if(!window._report){alert('請先執行換算');return;}
+  navigator.clipboard.writeText(window._report).then(
+    ()=>{const t=b.textContent;b.textContent='✓ 已複製';setTimeout(()=>b.textContent=t,1500);},
+    ()=>{prompt('複製失敗,請手動選取:',window._report);}
+  );
+}
+function diffRaw(a,b){const d=b-a;const s=d>=0?'+':'';return s+d.toFixed(2);}
+
+/* ---------- 植物醫生規則式判讀 ---------- */
+function buildDoctor(x){
+  const ins=[], names=['氮','磷','鉀'];
+  const supp={0:'高氮資材(尿素、硫酸銨,或高氮有機肥、魚粉、豆粕)',1:'磷肥(過磷酸鈣、骨粉)',2:'鉀肥(硫酸鉀、氯化鉀或草木灰)'};
+  const id=x.crop.ideal, isum=id[0]+id[1]+id[2]||1, ip=id.map(v=>v/isum);
+  const osum=(x.o.n+x.o.p+x.o.k)||1, op=[x.o.n/osum,x.o.p/osum,x.o.k/osum];
+
+  ins.push({type:'info',t:'🌾 作物養分定位',b:`本作物「${x.crop.name}」${x.crop.focus}。${x.crop.advice}`});
+
+  let low=[],high=[];
+  for(let i=0;i<3;i++){ if(op[i]<ip[i]*0.7)low.push(i); else if(op[i]>ip[i]*1.4)high.push(i); }
+  if(low.length||high.length){
+    let b='';
+    if(low.length)b+=`相對於本作物需求,我方產品<b>${low.map(i=>names[i]).join('、')}比例偏低</b>,建議搭配補充 ${low.map(i=>supp[i]).join('；')}。`;
+    if(high.length)b+=`${low.length?' ':''}我方產品<b>${high.map(i=>names[i]).join('、')}比例偏高</b>${high.includes(1)?',長期單施宜注意土壤磷酸鹽累積':''}。`;
+    ins.push({type:'warn',t:'⚖️ NPK 比例與作物需求適配',b});
+  }else{
+    ins.push({type:'good',t:'⚖️ NPK 比例與作物需求適配',b:'我方產品氮磷鉀比例與本作物需求大致相符,適配度良好。'});
+  }
+
+  if(x.basis!=='same'){
+    const dP=x.oP-x.cP, dK=x.oK-x.cK, parts=[];
+    if(dP>0.05)parts.push(`磷供應較原本<b class="pos">多 ${dP.toFixed(1)} kg/分</b>`);
+    else if(dP<-0.05)parts.push(`磷供應較原本<b class="neg">少 ${(-dP).toFixed(1)} kg/分</b>(可補磷肥)`);
+    if(dK>0.05)parts.push(`鉀供應<b class="pos">多 ${dK.toFixed(1)} kg/分</b>`);
+    else if(dK<-0.05)parts.push(`鉀供應<b class="neg">少 ${(-dK).toFixed(1)} kg/分</b>(建議補鉀)`);
+    if(parts.length)ins.push({type:'info',t:'🔄 替代後養分變化',b:`以${x.basisLabel}換算等量替代後,`+parts.join('、')+'。'+(dP>0.5?' 有機肥磷多來自禽畜糞,連作田區宜定期檢測土壤有效磷。':'')});
+  }
+
+  if(x.oOM>0)ins.push({type:'good',t:'🌱 有機質效益',b:`改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg)。有機質提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是本產品相對化學肥的核心優勢。`});
+
+  if(x.cOther)ins.push({type:'warn',t:'🔬 微量元素補充',b:`客戶原肥另標示「${x.cOther}」,我方產品未列出。若本作物有此需求,建議另行補充或調整配方。`});
+
+  if(x.o.cu>100||x.o.zn>500)ins.push({type:'warn',t:'⚠️ 重金屬注意',b:`我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`});
+
+  if(x.costC>0&&x.costO>0){
+    const d=x.costO-x.costC, pct=Math.abs(d/x.costC*100), cheaper=d<0;
+    ins.push({type:cheaper?'good':'warn',t:'💰 成本效益(每分地)',
+      b:`原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元,`+
+        (cheaper?`<b class="pos">每分地省 ${(-d).toFixed(0)} 元(↓${pct.toFixed(0)}%)</b>。`
+                :`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`)});
+  }else{
+    ins.push({type:'info',t:'💰 成本效益',b:'於上方填入雙方單價,即可自動比較每分地肥料成本。'});
+  }
+
+  ins.push({type:'info',t:'📋 施用建議',b:'有機質肥宜作基肥,整地時施入並確保腐熟(碳氮比降至約 15 以下);速效養分不足部分搭配少量化學追肥,達到減肥增效、養土護根。'});
+  return ins;
+}
+
+/* ---------- 縣市與鄉鎮二級選單 ---------- */
+function populateCounties(){
+  const s=document.getElementById('county');
+  s.innerHTML='<option value="">-- 請選擇縣市 --</option>'+
+    Object.keys(TAIWAN_AREAS).map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function fillTownship(){
+  const countyVal=document.getElementById('county').value;
+  const townships=TAIWAN_AREAS[countyVal]||[];
+  const s=document.getElementById('township');
+  s.innerHTML='<option value="">-- 請選擇鄉鎮 --</option>'+
+    townships.map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+/* 包裝→單位成本計算 */
+function calcUnit(side){
+  const p=side;
+  const bagPrice=gv(p+'Bag'), bagKg=gv(p+'BagKg'), sub=gv(p+'Sub');
+  let unitCost=0;
+  if(bagKg>0) unitCost=(bagPrice-sub)/bagKg;
+  document.getElementById(p+'Price').value=unitCost>0?unitCost.toFixed(2):0;
+  const note=document.getElementById(p+'UnitNote');
+  note.innerHTML=`扣補助後單位成本:<b>${unitCost>0?unitCost.toFixed(2):'-'} 元/kg</b>`;
+}
+
+/* ========== CRM 客戶帶入 ========== */
+const CROP_KW_MAP=[
+  {i:6, kw:['水稻','稻米','稻']},
+  {i:7, kw:['茶葉','茶樹','茶']},
+  {i:5, kw:['芒果','柑橘','柳橙','檸檬','荔枝','龍眼','鳳梨','西瓜','哈密瓜','番石榴','楊桃','釋迦','蓮霧','木瓜','枇杷','果樹','橘']},
+  {i:3, kw:['番茄','茄子','胡瓜','苦瓜','絲瓜','冬瓜','甜椒','辣椒','小黃瓜','瓜']},
+  {i:1, kw:['小白菜','青江','萵苣','菠菜','莧菜','空心菜','韭菜','A菜','葉菜']},
+  {i:2, kw:['高麗菜','包心','結球']},
+  {i:4, kw:['蘿蔔','馬鈴薯','薑','芋頭','地瓜','甘藷']},
+  {i:8, kw:['玉米','高粱','雜糧']},
+  {i:10,kw:['花生','大豆','毛豆','豆科','豆']},
+  {i:9, kw:['蘭花','菊花','玫瑰','百合','花卉']},
+];
+
+function openCRMPicker(){
+  // 先看是否有 CRM 主動發起的匯入（CRM 點按鈕→開此頁時寫入）
+  try{
+    const pending=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
+    if(pending){ localStorage.removeItem('fert_crm_import'); applyCRMData(pending); return; }
+  }catch(e){}
+
+  let custs=[];
+  try{ custs=JSON.parse(localStorage.getItem('crm_customers')||'[]'); }catch(e){}
+  custs=custs.filter(c=>!c.inactive);
+  if(!custs.length){ alert('客戶管理系統尚無客戶資料，請先在 CRM 新增客戶。'); return; }
+  window._crmCusts=custs;
+
+  const bg=document.createElement('div');
+  bg.className='crm-picker-bg'; bg.id='crmPickerBg';
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`
+    <div class="crm-picker">
+      <div class="crm-picker-head">
+        <h3>📥 從客戶管理系統選取客戶</h3>
+        <input id="crmPickerQ" type="text" placeholder="搜尋客戶名稱、地址、作物…" oninput="renderCRMItems()">
+      </div>
+      <div class="crm-picker-list" id="crmPickerList"></div>
+      <div class="crm-picker-foot">
+        <button class="btn ghost sm" onclick="document.getElementById('crmPickerBg').remove()">取消</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  renderCRMItems();
+  setTimeout(()=>document.getElementById('crmPickerQ')?.focus(),60);
+}
+
+function renderCRMItems(){
+  const q=(document.getElementById('crmPickerQ')?.value||'').toLowerCase();
+  const custs=window._crmCusts||[];
+  const list=document.getElementById('crmPickerList');
+  if(!list)return;
+  const filtered=q?custs.filter(c=>(c.name+c.address+(c.crops||[]).join('')).toLowerCase().includes(q)):custs;
+  if(!filtered.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">無符合結果</div>'; return; }
+  list.innerHTML=filtered.slice(0,60).map(c=>{
+    const j=custs.indexOf(c);
+    const area=c.plantArea?`${c.plantArea}${c.plantAreaUnit||'公頃'}`:'';
+    const crops=Array.isArray(c.crops)&&c.crops.length?c.crops.slice(0,3).join('、'):'';
+    const city=(c.address||'').match(/^(.*?[縣市])/)?.[1]||'';
+    return `<div class="crm-picker-item" onclick="pickCRMCust(${j})">
+      <div class="nm">${escHtml(c.name)}</div>
+      <div class="sb">${[city,area,crops].filter(Boolean).join(' · ')}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickCRMCust(idx){
+  const c=(window._crmCusts||[])[idx]; if(!c)return;
+  document.getElementById('crmPickerBg')?.remove();
+  applyCRMData(c);
+}
+
+function applyCRMData(c){
+  // 客戶名稱
+  const nameEl=document.getElementById('custName');
+  if(nameEl) nameEl.value=c.name||'';
+
+  // 縣市 & 鄉鎮
+  const addr=c.address||'';
+  const countyM=addr.match(/^(.*?[縣市])/);
+  const countyName=countyM?countyM[1]:'';
+  const countySel=document.getElementById('county');
+  if(countySel&&countyName){
+    const norm=s=>(s||'').replace(/臺/g,'台');
+    const opt=[...countySel.options].find(o=>o.value&&norm(o.value)===norm(countyName));
+    if(opt){ countySel.value=opt.value; fillTownship(); }
+    const rest=addr.slice(countyName.length);
+    const townM=rest.match(/^([^\d\s,，、]{2,5}[鄉鎮市區])/);
+    if(townM){
+      setTimeout(()=>{
+        const ts=document.getElementById('township');
+        if(ts){ const to=[...ts.options].find(o=>o.value===townM[1]); if(to) ts.value=to.value; }
+      },80);
+    }
+  }
+
+  // 面積（公頃→分地，1公頃≈10.3分地；甲→分地，1甲≈9.7分地）
+  if(c.plantArea){
+    const aEl=document.getElementById('area');
+    if(aEl){
+      const unit=c.plantAreaUnit||'公頃';
+      let fen=parseFloat(c.plantArea)||0;
+      if(unit.includes('公頃')) fen=+(fen*10.3).toFixed(1);
+      else if(unit.includes('甲')) fen=+(fen*9.7).toFixed(1);
+      aEl.value=fen;
+    }
+  }
+
+  // 作物（嘗試對應分類）
+  const crops=Array.isArray(c.crops)&&c.crops.length?c.crops:(c.crop?[c.crop]:[]);
+  if(crops.length){
+    const ci=document.getElementById('cropItem');
+    if(ci) ci.value=crops.join('、');
+    const blob=crops.join('');
+    const match=CROP_KW_MAP.find(r=>r.kw.some(k=>blob.includes(k)));
+    if(match){ const cs=document.getElementById('crop'); if(cs) cs.value=match.i; }
+  }
+
+  flash('crmImportMsg',`✓ 已帶入「${c.name}」`);
+  document.getElementById('custName')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// 頁面啟動時自動處理 CRM 發起的帶入（需在 DOM ready 後執行）
+window.addEventListener('DOMContentLoaded',()=>{
+  try{
+    const d=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
+    if(d){ localStorage.removeItem('fert_crm_import'); setTimeout(()=>applyCRMData(d),200); }
+  }catch(e){}
+});
+
+/* ========== 市場資訊分頁 ========== */
+let newsItems=[];
+
+/* 簡易 CSV 解析（支援帶引號欄位） */
+function parseCSVLine(line){
+  const cols=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else inQ=!inQ;
+    } else if(ch===','&&!inQ){cols.push(cur);cur='';}
+    else cur+=ch;
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function loadNewsCSV(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    const lines=text.trim().split(/\r?\n/);
+    if(lines.length<2){alert('CSV 格式不符或無資料');return;}
+    const header=parseCSVLine(lines[0]);
+    const idx={
+      type: header.findIndex(h=>h.includes('來源類型')),
+      site: header.findIndex(h=>h.includes('來源網站')),
+      title:header.findIndex(h=>h.includes('標題')),
+      link: header.findIndex(h=>h.includes('連結')),
+      kw:   header.findIndex(h=>h.includes('命中關鍵字')),
+      date: header.findIndex(h=>h.includes('發布日期')),
+      sum:  header.findIndex(h=>h.includes('摘要')),
+    };
+    newsItems=[];
+    for(let i=1;i<lines.length;i++){
+      const c=parseCSVLine(lines[i]);
+      if(!c[idx.title]&&!c[idx.link])continue;
+      newsItems.push({
+        type:  c[idx.type]||'其他',
+        site:  c[idx.site]||'',
+        title: c[idx.title]||'',
+        link:  c[idx.link]||'',
+        kw:    (c[idx.kw]||'').replace(/^—$/,''),
+        date:  c[idx.date]||'',
+        sum:   c[idx.sum]||'',
+      });
+    }
+    // 填充篩選下拉選單
+    const types=[...new Set(newsItems.map(n=>n.type))].sort();
+    const sites=[...new Set(newsItems.map(n=>n.site).filter(Boolean))].sort();
+    const tSel=document.getElementById('newsType');
+    const sSel=document.getElementById('newsSite');
+    tSel.innerHTML='<option value="">全部類型</option>'+types.map(t=>`<option>${t}</option>`).join('');
+    sSel.innerHTML='<option value="">全部來源</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+    // 顯示篩選列、隱藏上傳區
+    document.getElementById('newsUploadArea').style.display='none';
+    document.getElementById('newsFilterRow').style.display='block';
+    renderNews();
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value=''; // 允許重複選同一檔案
+}
+
+function clearNewsFilter(){
+  document.getElementById('newsSearch').value='';
+  document.getElementById('newsType').value='';
+  document.getElementById('newsSite').value='';
+  renderNews();
+}
+
+function newsHL(text,q){
+  if(!q||!text)return text||'';
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  return text.replace(re,m=>`<mark style="background:#fff3cd;padding:0 1px;">${m}</mark>`);
+}
+
+function renderNews(){
+  const container=document.getElementById('newsCards');
+  const stat=document.getElementById('newsStat');
+  if(!container)return;
+  if(!newsItems.length){
+    container.innerHTML='<div class="empty">尚未載入資料 — 請點上方開啟 CSV 檔</div>';
+    return;
+  }
+  const q=(document.getElementById('newsSearch')?.value||'').toLowerCase().trim();
+  const t=(document.getElementById('newsType')?.value||'');
+  const s=(document.getElementById('newsSite')?.value||'');
+
+  const filtered=newsItems.filter(n=>{
+    if(t&&n.type!==t)return false;
+    if(s&&n.site!==s)return false;
+    if(q){
+      return n.title.toLowerCase().includes(q)||
+             n.site.toLowerCase().includes(q)||
+             n.kw.toLowerCase().includes(q)||
+             n.sum.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  if(stat)stat.textContent=`共 ${newsItems.length} 筆，目前顯示 ${filtered.length} 筆`;
+
+  if(!filtered.length){
+    container.innerHTML='<div class="empty">無符合條件的資料，請調整篩選條件</div>';
+    return;
+  }
+
+  // 按 來源類型 分組
+  const groups={};
+  filtered.forEach(n=>{
+    if(!groups[n.type])groups[n.type]=[];
+    groups[n.type].push(n);
+  });
+  const TYPE_ICON={'政府公告':'🏛️','新聞':'📰','學術':'📖'};
+
+  let html='';
+  for(const[type,items]of Object.entries(groups)){
+    const icon=TYPE_ICON[type]||'📄';
+    html+=`<div class="news-group-h">${icon} ${type}<span class="cnt">${items.length}</span></div>
+    <div class="news-grid">`;
+    items.forEach(n=>{
+      const kwHtml=n.kw?`<span class="news-kw">🔑 ${n.kw}</span>`:'';
+      html+=`<div class="news-item" onclick="${n.link?`window.open(${JSON.stringify(n.link)},'_blank')`:''}" title="${n.link||''}">
+        <div class="news-title">${newsHL(n.title,q)}${kwHtml}</div>
+        <div class="news-meta">
+          <span>📡 ${newsHL(n.site,q)}</span>
+          ${n.date?`<span>📅 ${n.date}</span>`:''}
+          ${n.link?`<span style="color:var(--green);font-size:11px;">↗ 開啟原文</span>`:''}
+        </div>
+        ${n.sum?`<div class="news-summary">${newsHL(n.sum,q)}</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  }
+  container.innerHTML=html;
+}
+
+/* ---------- 初始化 ---------- */
+load();renderMaterials();renderFormulas();refreshOurSelect();
+populateCrops();populateCounties();refreshMarketSelects();
+addRecipeRow();addRecipeRow();
+addCustProd(); // 預設一筆空的客戶肥料品項
+</script>
+</body>
+</html>
