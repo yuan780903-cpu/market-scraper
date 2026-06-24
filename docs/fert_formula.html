@@ -116,6 +116,24 @@
     border-top:1px solid var(--line);padding-top:6px;}
   .news-kw{display:inline-block;background:#fff3cd;color:#856404;border-radius:12px;
     padding:1px 8px;font-size:11.5px;margin-left:4px;}
+  /* ── 替代量換算兩欄佈局 ── */
+  .basis-bar{background:#fff;border:1.5px solid var(--green);border-radius:10px;padding:12px 18px;
+    margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .basis-bar label{font-size:13.5px;font-weight:700;color:var(--green-d);white-space:nowrap;}
+  .basis-bar select{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
+  .cmp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:860px){.cmp-wrap{grid-template-columns:1fr;}}
+  .cmp-side{border-radius:14px;padding:18px 16px;border:1.5px solid;}
+  .cmp-side.cust-side{background:#fdf6ef;border-color:#dfc4a8;}
+  .cmp-side.ours-side{background:#eef7f1;border-color:#a8ceaf;}
+  .cmp-side-h{font-size:16px;font-weight:800;margin:0 0 14px;display:flex;align-items:center;gap:8px;
+    padding-bottom:10px;border-bottom:2px solid;}
+  .cmp-side.cust-side .cmp-side-h{color:var(--brown);border-color:#dfc4a8;}
+  .cmp-side.ours-side .cmp-side-h{color:var(--green-d);border-color:#a8ceaf;}
+  .cmp-side .subcard{background:rgba(255,255,255,.65);}
+  .calc-bar{text-align:center;margin:22px 0 4px;}
+  .calc-bar .btn{padding:14px 48px;font-size:17px;border-radius:12px;letter-spacing:.5px;box-shadow:0 4px 14px rgba(58,125,68,.25);}
+  .calc-bar .btn:hover{box-shadow:0 6px 18px rgba(58,125,68,.35);}
   /* ── 微量元素點選晶片 ── */
   .micro-chip{padding:4px 11px;font-size:12.5px;border:1px solid var(--line);border-radius:16px;
     background:#fff;cursor:pointer;font-family:inherit;transition:.12s;color:var(--text);}
@@ -315,41 +333,52 @@
       <h2>客戶原有肥料 → 替代量換算</h2>
       <p class="hint">選擇肥料(可從市售清單一鍵帶入),系統算出達到相同養分所需的我方用量、成本比較,並由「植物醫生」給出施肥見解。</p>
 
-      <div class="grid g2">
-        <div>
-          <h3 style="color:var(--brown);margin:6px 0 10px;">客戶原有肥料</h3>
+      <!-- 換算基準橫欄 -->
+      <div class="basis-bar">
+        <label>⚖️ 換算基準</label>
+        <select id="basis">
+          <option value="N">以氮 N 換算等量</option>
+          <option value="P">以磷 P₂O₅ 換算</option>
+          <option value="K">以鉀 K₂O 換算</option>
+          <option value="same">同用量直接比較</option>
+        </select>
+      </div>
+
+      <!-- 左右對比面板 -->
+      <div class="cmp-wrap">
+
+        <!-- 左：客戶原有肥料 -->
+        <div class="cmp-side cust-side">
+          <h3 class="cmp-side-h">🌾 客戶原有肥料</h3>
           <div id="custProductList"></div>
-          <button class="btn ghost sm" onclick="addCustProd()" style="margin-bottom:14px;">＋ 新增客戶肥料</button>
+          <button class="btn ghost sm" onclick="addCustProd()" style="margin-top:4px;">＋ 新增客戶肥料</button>
         </div>
 
-        <div>
-          <h3 style="color:var(--green-d);margin:6px 0;">我們的產品</h3>
+        <!-- 右：我們的產品 -->
+        <div class="cmp-side ours-side">
+          <h3 class="cmp-side-h">🌿 我們的產品</h3>
           <div class="field"><label>選擇已儲存配方</label>
             <select id="ourSelect" onchange="loadOurProduct()">
               <option value="">— 手動輸入 —</option>
             </select>
           </div>
           <div class="field"><label>或從市售有機肥清單帶入</label>
-            <select id="oMarket" onchange="fillFromMarket('o')"><option value="">— 不帶入 —</option></select></div>
+            <select id="oMarket" onchange="fillFromMarket('o')"><option value="">— 不帶入 —</option></select>
+          </div>
           <div class="field"><label>產品名稱</label><input id="oName" placeholder="例:有機質肥料 5號"></div>
-          <div class="grid g3">
+          <div class="grid g4">
             <div class="field"><label>氮 N (%)</label><input id="oN" type="number" step="0.1" value="0"></div>
             <div class="field"><label>磷 P₂O₅ (%)</label><input id="oP" type="number" step="0.1" value="0"></div>
             <div class="field"><label>鉀 K₂O (%)</label><input id="oK" type="number" step="0.1" value="0"></div>
-          </div>
-          <div class="grid g3">
             <div class="field"><label>有機質 (%)</label><input id="oOM" type="number" step="0.1" value="0"></div>
-            <div class="field"><label>銅 Cu (ppm)</label><input id="oCu" type="number" step="1" value="0"></div>
-            <div class="field"><label>鋅 Zn (ppm)</label><input id="oZn" type="number" step="1" value="0"></div>
           </div>
-          <div class="field"><label>替代基準</label>
-            <select id="basis">
-              <option value="N">以氮 N 換算等量</option>
-              <option value="P">以磷 P₂O₅ 換算</option>
-              <option value="K">以鉀 K₂O 換算</option>
-              <option value="same">同用量直接比較</option>
-            </select>
-          </div>
+          <details style="margin-bottom:10px;">
+            <summary style="cursor:pointer;font-size:13px;color:var(--muted);user-select:none;padding:4px 0;">▸ 重金屬含量（選填）</summary>
+            <div class="grid g2" style="margin-top:8px;">
+              <div class="field"><label>銅 Cu (ppm)</label><input id="oCu" type="number" step="1" value="0"></div>
+              <div class="field"><label>鋅 Zn (ppm)</label><input id="oZn" type="number" step="1" value="0"></div>
+            </div>
+          </details>
           <div class="subcard">
             <div class="subcard-h">💰 我方產品成本(以包裝計,自動換算元/kg)</div>
             <div class="grid g4">
@@ -370,7 +399,11 @@
           </div>
         </div>
       </div>
-      <button class="btn" onclick="runConvert()" style="margin-top:6px;">計算替代量與差異</button>
+
+      <!-- 計算按鈕 -->
+      <div class="calc-bar">
+        <button class="btn" onclick="runConvert()">⚡ 計算替代量與差異</button>
+      </div>
     </div>
 
     <div class="card" id="convertResult" style="display:none;">
