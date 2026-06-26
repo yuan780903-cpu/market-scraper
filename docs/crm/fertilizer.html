@@ -166,6 +166,28 @@
    .use-old{background:#f6ede0;color:#8a5a1c;border:1px solid #e6d2b2;}
    .use-new{background:#e4f1e6;color:#1f4c2d;border:1px solid #b8dcc0;}
 
+  /* ── 作物營養需求面板(選作物即時顯示,背景為作物渲染圖) ── */
+  .crop-info{display:none;position:relative;overflow:hidden;margin-top:14px;border-radius:14px;
+    border:1px solid #cfe3d3;background:linear-gradient(135deg,#f3faf4 0%,#eaf5ec 100%);padding:16px 18px;}
+  .crop-info.show{display:block;}
+  .crop-info .ci-bg{position:absolute;right:-6px;bottom:-18px;font-size:140px;line-height:1;
+    opacity:.10;pointer-events:none;filter:saturate(1.1);transform:rotate(-6deg);}
+  .crop-info .ci-h{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:900;
+    font-size:18px;color:var(--green-d);margin-bottom:4px;position:relative;z-index:1;}
+  .crop-info .ci-cat{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:999px;padding:2px 10px;letter-spacing:.5px;}
+  .crop-info .ci-focus{font-size:13px;color:var(--brown);font-weight:700;margin-bottom:12px;position:relative;z-index:1;}
+  .crop-info .ci-npk{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;position:relative;z-index:1;}
+  .crop-info .ci-npk .pill{flex:1 1 90px;min-width:90px;background:#fff;border:1px solid #d6e7da;border-radius:10px;padding:8px 10px;text-align:center;}
+  .crop-info .ci-npk .pill .lab{font-size:11px;color:var(--muted);font-weight:700;}
+  .crop-info .ci-npk .pill .num{font-size:20px;font-weight:900;color:var(--green-d);font-family:var(--mono);}
+  .crop-info .ci-npk .pill .bar{height:5px;border-radius:3px;background:#e2efe4;margin-top:5px;overflow:hidden;}
+  .crop-info .ci-npk .pill .bar>i{display:block;height:100%;background:var(--green);}
+  .crop-info .ci-rows{position:relative;z-index:1;font-size:13px;line-height:1.7;}
+  .crop-info .ci-rows .r{display:flex;gap:8px;padding:4px 0;border-top:1px dashed #d6e7da;}
+  .crop-info .ci-rows .r:first-child{border-top:none;}
+  .crop-info .ci-rows .r b{flex:none;color:var(--green-d);min-width:84px;}
+  .crop-info .ci-rows .r span{color:#3a463c;}
+
   /* ── 提示框 ───────────────────────────────── */
   .note{background:var(--gold-l);border:1px solid #eddcb4;border-radius:var(--r-sm);padding:12px 15px;
         font-size:13.5px;color:#806020;margin:14px 0;line-height:1.65;}
@@ -300,8 +322,8 @@
   /* 標題帶 */
   .report-titleband{text-align:center;padding:4px 40px 18px;
     border-bottom:3px double var(--green);margin:0 40px 0;}
-  .report-titleband h1{margin:0;font-family:var(--serif);font-size:26px;font-weight:900;
-    color:var(--green-d);letter-spacing:6px;text-indent:6px;}
+  .report-titleband h1{margin:0;font-family:var(--serif);font-size:23px;font-weight:900;
+    color:var(--green-d);letter-spacing:4px;text-indent:4px;white-space:nowrap;}
   .report-titleband .sub{display:block;font-size:11px;color:var(--brown);font-weight:700;
     letter-spacing:3px;margin-top:6px;font-family:var(--mono);text-transform:uppercase;}
 
@@ -411,10 +433,11 @@
         <div class="field"><label>客戶名稱</label><input id="custName" placeholder="例:王大明 / ○○農場"></div>
         <div class="field"><label>縣市</label><select id="county" onchange="fillTownship()"></select></div>
         <div class="field"><label>鄉鎮市區</label><select id="township"></select></div>
-        <div class="field"><label>🌾 作物類別(植物醫生判讀依據)</label><select id="crop"></select></div>
+        <div class="field"><label>🌾 作物類別(植物醫生判讀依據)</label><select id="crop" onchange="showCropInfo()"></select></div>
         <div class="field"><label>作物品項(選填)</label><input id="cropItem" placeholder="例:愛文芒果、青江菜"></div>
-        <div class="field"><label>耕作面積(分地,選填)</label><input id="area" type="number" step="0.1" min="0" placeholder="例:5"></div>
+        <div class="field"><label>耕作面積(分地,選填)</label><input id="area" type="number" step="0.1" min="0" placeholder="例:5" oninput="showAreaConv()"><span id="areaConv" class="mini" style="color:var(--green-d);font-weight:700;margin-top:4px;display:block;"></span></div>
       </div>
+      <div id="cropInfo" class="crop-info"></div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <button class="btn ghost sm" onclick="openCRMPicker()">📥 從客戶管理系統帶入</button>
         <span id="crmImportMsg" class="save-status"></span>
@@ -1401,6 +1424,62 @@ function populateCrops(){
   const CAT_ORDER=['通用','稻作','雜糧雜作','蔬菜','果樹','茶與特用','花卉'];
   s.innerHTML=CAT_ORDER.map(cat=>{const opts=CROPS.map((c,i)=>({c,i})).filter(o=>(o.c.cat||'通用')===cat);if(!opts.length)return '';return `<optgroup label="${cat}">`+opts.map(o=>`<option value="${o.i}">${o.c.name}</option>`).join('')+`</optgroup>`;}).join('');
 }
+
+/* 作物對應 emoji(背景渲染圖);找不到則用分類預設 */
+const CROP_EMOJI={
+  '水稻':'🌾','茶樹':'🍵','玉米 / 雜糧':'🌽','食用玉米(甜玉米/糯玉米)':'🌽',
+  '葉菜類(小白菜/青江菜/萵苣)':'🥬','結球葉菜(高麗菜/包心白菜)':'🥬','花椰菜 / 青花菜(十字花科花球)':'🥦',
+  '果菜類(番茄/茄子/瓜類)':'🍅','根莖類(蘿蔔/馬鈴薯/薑/芋)':'🥔','蔥蒜韭(青蔥/大蒜/韭菜)':'🧄',
+  '草莓':'🍓','鳳梨':'🍍','香蕉':'🍌','葡萄':'🍇','火龍果':'🐉','咖啡':'☕',
+  '豆科(花生/大豆)':'🥜','紅豆':'🫘','大豆 / 毛豆':'🫛','高粱':'🌾','小麥':'🌾','蕎麥':'🌾',
+  '薏苡(薏仁)':'🌾','甘藷(地瓜)':'🍠','樹薯':'🥔','芝麻':'🌱','甘蔗':'🎋',
+  '柑橘類(椪柑/桶柑/茂谷)':'🍊','文旦柚':'🍊','檸檬 / 萊姆 / 金桔':'🍋','芒果':'🥭','荔枝':'🍒',
+  '龍眼':'🍒','蓮霧':'🍎','芭樂(番石榴)':'🍈','木瓜':'🥭','棗子(印度棗)':'🍏','釋迦(鳳梨釋迦)':'🍈',
+  '柿子':'🍅','梨(高接梨/橫山梨)':'🍐','桃 / 李 / 梅':'🍑','枇杷':'🍊','楊桃':'⭐','百香果':'🍈',
+  '酪梨':'🥑','蘋果(高山)':'🍎','桑椹':'🫐','無花果':'🍈','西瓜 / 甜瓜(洋香瓜)':'🍉',
+  '蘆筍':'🌿','山藥':'🥔','牛蒡':'🥕','竹筍(綠竹/麻竹/桂竹)':'🎍','檳榔':'🌴','可可':'🍫',
+  '蝴蝶蘭':'🌸','文心蘭':'🌼','菊花':'🌼','玫瑰':'🌹','百合':'🌷','火鶴(花燭)':'🌺',
+  '花卉 / 觀賞':'🌸','果樹(柑橘/芒果/荔枝)':'🍊',
+};
+const CAT_EMOJI={'通用':'🌱','稻作':'🌾','雜糧雜作':'🌽','蔬菜':'🥬','果樹':'🍊','茶與特用':'🍵','花卉':'🌸'};
+function cropEmoji(c){return CROP_EMOJI[c.name]||CAT_EMOJI[c.cat]||'🌱';}
+
+/* 選作物 → 即時顯示該作物完整營養需求 */
+function showCropInfo(){
+  const sel=document.getElementById('crop'); if(!sel)return;
+  const box=document.getElementById('cropInfo'); if(!box)return;
+  const c=CROPS[+sel.value];
+  if(!c||(c.cat||'通用')==='通用'){ box.className='crop-info'; box.innerHTML=''; return; }
+  const id=c.ideal, sum=(id[0]+id[1]+id[2])||1;
+  const pct=id.map(v=>Math.round(v/sum*100));
+  const mx=Math.max(...id)||1;
+  const npk=[['氮 N',id[0],pct[0]],['磷 P₂O₅',id[1],pct[1]],['鉀 K₂O',id[2],pct[2]]]
+    .map(([lab,v,p])=>`<div class="pill"><div class="lab">${lab}</div><div class="num">${p}%</div><div class="bar"><i style="width:${Math.round(v/mx*100)}%"></i></div></div>`).join('');
+  const rows=[
+    ['🎯 養分定位',c.focus],
+    ['💧 施肥要點',c.advice],
+    ['🗓️ 肥培時程',c.season],
+    ['🩺 缺素警示',c.deficiency],
+    ['📦 參考基肥量',`每分地約 ${c.baseUse} kg(有機質肥基肥概估,實依土測調整)`],
+  ].filter(r=>r[1]).map(([b,t])=>`<div class="r"><b>${b}</b><span>${t}</span></div>`).join('');
+  box.className='crop-info show';
+  box.innerHTML=`<div class="ci-bg">${cropEmoji(c)}</div>
+    <div class="ci-h">🌾 ${c.name}<span class="ci-cat">${c.cat||'通用'}</span></div>
+    <div class="ci-focus">本作物養分需求傾向(N－P₂O₅－K₂O 相對比例)</div>
+    <div class="ci-npk">${npk}</div>
+    <div class="ci-rows">${rows}</div>
+    <div class="mini" style="margin-top:8px;position:relative;z-index:1;color:var(--muted);">※ 以上為文獻通則之相對需求比例與要點,非絕對施用量;精確用量請以土壤／葉片檢測為準。</div>`;
+}
+/* 面積即時換算成 公頃 / 甲 */
+function areaConvText(fen){
+  if(!(fen>0))return '';
+  const ha=fen/10.3, jia=fen/9.7;
+  return `≈ ${ha.toFixed(2)} 公頃 ／ ${jia.toFixed(2)} 甲`;
+}
+function showAreaConv(){
+  const el=document.getElementById('areaConv'); if(!el)return;
+  el.textContent=areaConvText(gv('area'));
+}
 function marketOptions(){
   let html='<option value="">— 手動輸入 —</option>',lastG=null;
   const order={'碩成肥料':-1,'化學肥料':0,'有機質肥料':1,'有機資材':2};
@@ -1463,6 +1542,8 @@ function runConvert(){
   const totCP=validProds.reduce((s,p)=>s+p.use*p.p/100,0);
   const totCK=validProds.reduce((s,p)=>s+p.use*p.k/100,0);
   const totCOM=validProds.reduce((s,p)=>s+p.use*p.om/100,0);
+  const totCcu=validProds.reduce((s,p)=>s+p.use*(p.cu||0),0); // 銅供應量 mg/分(kg×mg/kg)
+  const totCzn=validProds.reduce((s,p)=>s+p.use*(p.zn||0),0); // 鋅供應量 mg/分
   const totCCost=validProds.reduce((s,p)=>s+p.use*p.price,0); // 元/分地
   const totCUse=validProds.reduce((s,p)=>s+p.use,0);           // kg/分地
   const allOther=[...new Set(validProds.flatMap(p=>(p.microElems||[]).map(fmtMicro)).filter(Boolean))].join('、');
@@ -1518,7 +1599,7 @@ function runConvert(){
   if(area>0){
     const costC_total=totCCost*area,costO_total=ourUse*area*o.price;
     const d_total=costC_total-costO_total;
-    areaHtml=`<h3 style="color:var(--brown);margin-top:18px;">全耕作面積成本比較(${area}分地)</h3>
+    areaHtml=`<h3 style="color:var(--brown);margin-top:18px;">全耕作面積成本比較(${fmt(area)} 分地 ≈ ${(area/10.3).toFixed(2)} 公頃 / ${(area/9.7).toFixed(2)} 甲)</h3>
       <div class="result-grid">
         <div class="stat cost"><div class="v">${costC_total.toFixed(0)}</div><div class="l">原肥總成本 (元)</div></div>
         <div class="stat cost"><div class="v">${costO_total.toFixed(0)}</div><div class="l">改用我方 (元)</div></div>
@@ -1580,7 +1661,7 @@ function runConvert(){
       <div><b>客戶名稱 CLIENT</b><span>${escHtml(custName)}</span></div>
       <div><b>耕作地點 LOCATION</b><span>${county}${township?township:''}</span></div>
       <div><b>栽培作物 CROP</b><span>${crop.name}${cropItem?'　'+cropItem:''}</span></div>
-      <div><b>耕作面積 AREA</b><span>${area>0?area+' 分地':'—'}</span></div>
+      <div><b>耕作面積 AREA</b><span>${area>0?`${(area/10.3).toFixed(2)} 公頃　/　${(area/9.7).toFixed(2)} 甲<br><small style="color:var(--muted);font-weight:400;">(${fmt(area)} 分地)</small>`:'—'}</span></div>
     </div>
     <div class="report-body">
     ${custDetailHtml}
@@ -1596,24 +1677,36 @@ function runConvert(){
       ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td></tr>`:''}
       </tbody></table></div>
 
-    <h3>微量元素與成本比較</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;">
+    <h3>有機質、微量元素與成本比較</h3>
+    ${(()=>{
+      const cCuG=totCcu/1000, oCuG=ourUse*o.cu/1000;     // g/分
+      const cZnG=totCzn/1000, oZnG=ourUse*o.zn/1000;      // g/分
+      const hasMicro=(cCuG+oCuG+cZnG+oZnG)>0;
+      const micro=hasMicro?`
+          <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(cCuG,oCuG)}</div><div class="l">銅 Cu 差 (g/分)</div></div>
+          <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(cZnG,oZnG)}</div><div class="l">鋅 Zn 差 (g/分)</div></div>`:'';
+      // 重金屬濃度提醒(以 ppm 計,上限 Cu≤100、Zn≤500)
+      const ourCuPpm=o.cu, ourZnPpm=o.zn;
+      const hmWarn=(ourCuPpm>100||ourZnPpm>500)?`<div class="note" style="margin:8px 0 0;">⚠️ 我方產品標示 Cu ${fmt(ourCuPpm)} ppm、Zn ${fmt(ourZnPpm)} ppm,${(ourCuPpm>100||ourZnPpm>500)?'部分數值接近或超過普肥重金屬上限(Cu≤100、Zn≤500 ppm),':''}長期施用宜留意累積,正式以化驗報告為準。</div>`:'';
+      const dCost=totCCost-ourUse*o.price;
+      return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;">
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">微量元素差異</div>
-        <div class="result-grid" style="grid-template-columns:repeat(2,1fr);">
-          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差</div></div>
-          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCUse*cAgg.cu/1e6*1000,ourUse*o.cu/1e6*1000)}</div><div class="l">Cu差</div></div>
+        <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">有機質與微量元素差異(我方 − 原肥)</div>
+        <div class="result-grid" style="grid-template-columns:repeat(${hasMicro?3:1},1fr);">
+          <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差 (kg/分)</div></div>
+          ${micro}
         </div>
+        ${hmWarn}
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--brown);text-transform:uppercase;margin-bottom:8px;">成本(每分地)</div>
         <div class="result-grid" style="grid-template-columns:repeat(3,1fr);">
-          <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥</div></div>
-          <div class="stat cost"><div class="v" style="font-size:18px;">${(ourUse*o.price).toFixed(0)}</div><div class="l">我方</div></div>
-          <div class="stat ${(totCCost-ourUse*o.price)>=0?'':'warn'}"><div class="v" style="font-size:16px;">${totCCost-ourUse*o.price>=0?'省':'多'}<br>${Math.abs(totCCost-ourUse*o.price).toFixed(0)}</div><div class="l">差額</div></div>
+          <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥 (元/分)</div></div>
+          <div class="stat cost"><div class="v" style="font-size:18px;">${(ourUse*o.price).toFixed(0)}</div><div class="l">我方 (元/分)</div></div>
+          <div class="stat ${dCost>=0?'':'warn'}"><div class="v" style="font-size:16px;">${dCost>=0?'省':'多'}<br>${Math.abs(dCost).toFixed(0)}</div><div class="l">差額 (元/分)</div></div>
         </div>
       </div>
-    </div>
+    </div>`;})()}
 
     ${areaHtml}
 
@@ -1788,6 +1881,35 @@ function buildDoctor(x){
     if(dK>0.05)parts.push(`鉀供應<b class="pos">多 ${dK.toFixed(1)} kg/分</b>`);
     else if(dK<-0.05)parts.push(`鉀供應<b class="neg">少 ${(-dK).toFixed(1)} kg/分</b>(建議補鉀)`);
     if(parts.length)ins.push({type:'info',t:'🔄 替代後養分變化',b:`以${x.basisLabel}換算等量替代後,`+parts.join('、')+'。'+(dP>0.5?' 有機肥磷多來自禽畜糞,連作田區宜定期檢測土壤有效磷。':'')});
+  }
+
+  // 磷／鉀供應偏多 → 對作物生長的好壞影響 + 磷累積後果
+  {
+    const dP=x.oP-x.cP, dK=x.oK-x.cK;
+    const pHigh=(dP>0.5)||(op[1]>ip[1]*1.4);
+    const kHigh=(dK>0.5)||(op[2]>ip[2]*1.4);
+    if(pHigh||kHigh){
+      const isRice=(x.crop.cat==='稻作')||x.crop.name==='水稻';
+      const who=isRice?'水稻':`本作物「${x.crop.name}」`;
+      let b='';
+      if(kHigh){
+        b+=`<b>鉀(K)供應偏多——對${who}的影響</b>`+
+           `<br><span class="pos">好處</span>:鉀是${isRice?'水稻後期關鍵營養':'果實／籽實品質的關鍵'},充足鉀可<b>強化莖稈、提升抗倒伏</b>,增進稔實率與${isRice?'千粒重、米質':'糖度、著色與耐儲'},並提高對${isRice?'紋枯病、稻熱病等':''}病害與逆境的耐受。`+
+           `<br><span class="neg">風險</span>:超過需求後屬「<b>奢侈吸收</b>」、增產效益遞減;鉀過量會<b>拮抗鎂、鈣的吸收</b>,誘發缺鎂(老葉脈間黃化)、缺鈣,並可能提高土壤鹽分。建議依目標產量定量、分次施用,後期重點補。`;
+      }
+      if(pHigh){
+        if(b)b+='<br><br>';
+        b+=`<b>磷(P₂O₅)供應偏多——對${who}的影響</b>`+
+           `<br><span class="pos">好處</span>:磷利<b>根系發育與${isRice?'分蘗、早期生長':'花芽分化、開花結實'}</b>,健全根群有助整體養分吸收,適量可促早期立苗與成熟。`+
+           `<br><span class="neg">風險</span>:${isRice?'水稻對磷需求相對低,':''}過量磷作物利用率有限、<b>多施無效又增加成本</b>;高磷會<b>誘發鋅、鐵缺乏</b>(${isRice?'秧苗縮苗／僵苗、':''}新葉黃化),並在土壤<b>累積固定</b>不易移除。`;
+        b+=`<br><br><b>🪨 磷在土壤累積會造成什麼</b>`+
+           `<br>・<b>被固定難利用</b>:磷易與土壤鐵、鋁、鈣結合成難溶態,有效性下降${isRice?'(淹水還原下與鐵的轉化更複雜)':''};`+
+           `<br>・<b>誘發微量元素缺乏</b>:土壤高磷拮抗鋅、鐵吸收,反而出現缺鋅／缺鐵症;`+
+           `<br>・<b>環境風險</b>:過剩磷隨逕流、排水進入溝渠水體,造成<b>優養化(藻華)</b>;`+
+           `<br>・<b>改善方向</b>:暫停或減少磷肥、輪作吸磷作物、利用有機質與菌根菌活化既有磷庫,並以土壤有效磷檢測決定後續用量。`;
+      }
+      ins.push({type:'warn',t:'📊 磷、鉀供應偏多對作物的利與弊',b});
+    }
   }
 
   if(x.oOM>0)ins.push({type:'good',t:'🌱 有機質效益',b:`改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg)。有機質提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是本產品相對化學肥的核心優勢。`});
@@ -2002,6 +2124,7 @@ function applyCRMData(c){
     const match=CROP_KW_MAP.find(r=>r.kw.some(k=>blob.includes(k)));
     if(match){ const cs=document.getElementById('crop'); if(cs) cs.value=match.i; }
   }
+  showCropInfo();showAreaConv();
 
   flash('crmImportMsg',`✓ 已帶入「${c.name}」`);
   document.getElementById('custName')?.scrollIntoView({behavior:'smooth',block:'center'});
@@ -2160,6 +2283,7 @@ load();
 populateCrops();populateCounties();
 addCustProd(); // 預設一筆空的客戶肥料品項
 refreshMarketSelects();
+showCropInfo();showAreaConv();
 </script>
 </body>
 </html>
