@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有機質肥料配方計算系統</title>
+<style>
+  /* ============================================================
+     有機質肥料替代量換算系統 — 視覺設計系統 v2
+     設計語彙:自然農業 × 專業企業 × 舒適閱讀
+     ============================================================ */
+  :root{
+    /* 主色:沉穩農業綠 */
+    --green:#2f6e41; --green-d:#1f4c2d; --green-l:#e9f2ec; --green-xl:#f4f9f5;
+    /* 輔色:溫潤大地棕 */
+    --brown:#8a5d3b; --brown-d:#6c462b; --brown-l:#f4ece2;
+    /* 點綴:金黃(警示/重點) */
+    --gold:#c4881e; --gold-d:#9a6a14; --gold-l:#fbf3df;
+    /* 中性 */
+    --bg:#f5f3ec; --card:#ffffff; --line:#e5e0d4; --line-s:#efebe0;
+    --ink:#28312c; --text:#2d352f; --muted:#73796f; --warn:#c0392b;
+    --accent:var(--gold);
+    /* 陰影:多層次柔和 */
+    --sh-sm:0 1px 2px rgba(40,49,44,.05),0 1px 3px rgba(40,49,44,.06);
+    --sh:0 2px 6px rgba(40,49,44,.05),0 6px 18px rgba(40,49,44,.07);
+    --sh-lg:0 10px 30px rgba(40,49,44,.10),0 4px 10px rgba(40,49,44,.06);
+    --shadow:var(--sh);
+    /* 字體 */
+    --sans:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Noto Serif TC","Songti TC","STSong","Times New Roman",serif;
+    --mono:"SF Mono","JetBrains Mono","Roboto Mono","Courier New",monospace;
+    --r:14px; --r-sm:9px; --r-lg:18px;
+  }
+  *{box-sizing:border-box;min-width:0;}
+  html,body{max-width:100%;overflow-x:hidden;}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);
+       font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  ::selection{background:rgba(47,110,65,.18);}
+  input,select,textarea{min-width:0;width:100%;}
+  a{color:var(--green);}
+
+  /* ── 頁首 ───────────────────────────────── */
+  header{position:relative;overflow:hidden;color:#fff;padding:24px 30px;
+         background:linear-gradient(125deg,#347447 0%,var(--green-d) 70%);
+         box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+  header::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+         background:
+           radial-gradient(circle at 88% -20%,rgba(255,255,255,.14),transparent 45%),
+           radial-gradient(circle at 8% 130%,rgba(196,136,30,.18),transparent 50%);}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+         background:linear-gradient(90deg,var(--gold) 0%,#e0b34d 50%,var(--gold) 100%);opacity:.85;}
+  header .head-title{min-width:0;flex:1;position:relative;z-index:1;}
+  header h1{margin:0;font-size:23px;font-weight:800;letter-spacing:1.5px;
+         display:flex;align-items:center;gap:10px;}
+  header h1 .h-mark{display:inline-flex;align-items:center;justify-content:center;
+         width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);
+         border:1px solid rgba(255,255,255,.28);font-size:18px;flex:none;}
+  header p{margin:6px 0 0;opacity:.82;font-size:13px;font-weight:400;letter-spacing:.3px;}
+  header .head-owner{display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative;z-index:1;}
+  header .head-owner img{width:48px;height:48px;border-radius:50%;object-fit:cover;
+         border:2px solid rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(0,0,0,.22);}
+  header .head-owner .owner-txt{font-size:12px;line-height:1.4;text-align:right;}
+  header .head-owner .owner-txt .c{opacity:.72;letter-spacing:.5px;}
+  header .head-owner .owner-txt .n{font-size:14.5px;font-weight:700;letter-spacing:1.5px;}
+  @media(max-width:520px){header{padding:18px 18px;}header h1{font-size:19px;}header .head-owner .owner-txt{display:none;}}
+
+  /* ── 錨點快捷列 ───────────────────────────── */
+  .page-nav{position:sticky;top:0;z-index:500;background:var(--green-d);
+    display:flex;gap:2px;padding:0 12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+  .page-nav a{padding:9px 12px;color:#cfe6d3;text-decoration:none;font-size:13px;
+    border-bottom:3px solid transparent;white-space:nowrap;transition:.15s;}
+  .page-nav a:hover{color:#fff;border-bottom-color:var(--gold);}
+  .page-nav a.cur{color:#fff;border-bottom-color:var(--gold);font-weight:600;}
+
+  /* ── 版面容器 ─────────────────────────────── */
+  main{max-width:1160px;margin:0 auto;padding:26px 20px 90px;}
+  .sec{scroll-margin-top:52px;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ── 區段標頭 ─────────────────────────────── */
+  .sec-head{display:flex;align-items:center;gap:14px;
+    border-left:4px solid var(--green);padding:6px 4px 6px 18px;
+    margin:8px 0 22px;scroll-margin-top:52px;position:relative;}
+  .sec-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+    border-radius:4px;background:linear-gradient(180deg,var(--green),var(--gold));}
+  .sec-head{border-left-color:transparent;}
+  .sec-head h2{margin:0;font-size:21px;font-weight:800;color:var(--green-d);letter-spacing:.5px;}
+  .sec-head .badge{font-size:11px;background:var(--green);color:#fff;
+    padding:3px 10px;border-radius:20px;margin-left:4px;font-weight:600;letter-spacing:.5px;}
+  .sec-head p{margin:5px 0 0;font-size:13.5px;color:var(--muted);line-height:1.55;}
+
+  /* ── 卡片 ─────────────────────────────────── */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:22px 24px;margin-bottom:20px;box-shadow:var(--sh-sm);
+        transition:box-shadow .2s;animation:fade .3s ease both;}
+  .card:hover{box-shadow:var(--sh);}
+  .card h2{margin:0 0 5px;font-size:18.5px;font-weight:800;color:var(--green-d);
+        display:flex;align-items:center;flex-wrap:wrap;gap:8px;letter-spacing:.3px;}
+  .card h2 .badge{font-size:12px;background:var(--green-l);color:var(--green-d);
+        padding:3px 11px;border-radius:20px;vertical-align:middle;font-weight:600;}
+  .hint{font-size:13.5px;color:var(--muted);margin:2px 0 16px;line-height:1.6;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+
+  /* ── 按鈕 ─────────────────────────────────── */
+  button.btn{background:var(--green);color:#fff;border:none;padding:10px 18px;border-radius:var(--r-sm);
+        cursor:pointer;font-size:14.5px;font-family:inherit;font-weight:600;letter-spacing:.3px;
+        transition:transform .12s,box-shadow .15s,background .15s;box-shadow:0 2px 6px rgba(47,110,65,.22);}
+  button.btn:hover{background:var(--green-d);box-shadow:0 4px 12px rgba(47,110,65,.3);transform:translateY(-1px);}
+  button.btn:active{transform:translateY(0);}
+  button.btn.alt{background:var(--brown);box-shadow:0 2px 6px rgba(138,93,59,.22);}
+  button.btn.alt:hover{background:var(--brown-d);}
+  button.btn.ghost{background:#fff;color:var(--green-d);border:1.5px solid var(--green);box-shadow:none;}
+  button.btn.ghost:hover{background:var(--green-l);transform:translateY(-1px);}
+  button.btn.danger{background:#fff;color:var(--warn);border:1.5px solid #e3b4ae;padding:6px 11px;font-size:13px;box-shadow:none;}
+  button.btn.danger:hover{background:#fdecea;border-color:var(--warn);transform:none;}
+  button.btn.sm{padding:6px 13px;font-size:13px;}
+
+  /* ── 表格 ─────────────────────────────────── */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-sm);}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:920px;}
+  th,td{border-bottom:1px solid var(--line-s);padding:9px 10px;text-align:center;white-space:nowrap;}
+  th{background:var(--green-l);color:var(--green-d);font-weight:700;position:sticky;top:0;letter-spacing:.3px;}
+  td:first-child,th:first-child{text-align:left;}
+  tbody tr:nth-child(even){background:#fcfdfb;}
+  tbody tr:hover{background:var(--green-xl);}
+  .grp-head td{background:var(--brown-l);color:var(--brown-d);font-weight:700;text-align:left;}
+  input.cell{width:62px;border:1px solid transparent;background:transparent;text-align:center;
+        padding:5px;border-radius:6px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  input.cell:focus{border-color:var(--green);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(47,110,65,.12);}
+  input.cell.name{width:120px;text-align:left;}
+
+  /* ── 表單欄位 ─────────────────────────────── */
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+  .field label{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.2px;}
+  .field input,.field select,.field textarea{padding:11px 13px;border:1.5px solid var(--line);
+        border-radius:var(--r-sm);font-size:14.5px;font-family:inherit;background:#fff;color:var(--text);
+        transition:border-color .15s,box-shadow .15s;min-height:44px;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green);
+        box-shadow:0 0 0 3px rgba(47,110,65,.13);}
+  .field input::placeholder,.field textarea::placeholder{color:#b3b3a8;}
+  select{cursor:pointer;}
+  .grid{display:grid;gap:15px;}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .g4{grid-template-columns:repeat(4,minmax(0,1fr));}
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+
+  .recipe-row{display:grid;grid-template-columns:1fr 110px 80px 36px;gap:8px;align-items:center;margin-bottom:8px;min-width:0;}
+  .recipe-row select,.recipe-row input{padding:9px 11px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:inherit;font-size:14px;}
+
+  /* ── 統計數字盒 ───────────────────────────── */
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:13px;margin-top:12px;}
+  .stat{background:var(--green-l);border-radius:var(--r-sm);padding:14px 14px;text-align:center;
+        border:1px solid rgba(47,110,65,.1);}
+  .stat .v{font-size:25px;font-weight:800;color:var(--green-d);font-family:var(--mono);letter-spacing:-.5px;}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:3px;font-weight:600;}
+  .stat.cost{background:var(--brown-l);border-color:rgba(138,93,59,.12);} .stat.cost .v{color:var(--brown-d);}
+  .stat.warn{background:#fdeeec;border-color:#f0cdc6;} .stat.warn .v{color:var(--warn);}
+  .cmp-table td,.cmp-table th{text-align:center;white-space:normal;}
+  .pos{color:var(--green);font-weight:700;} .neg{color:var(--warn);font-weight:700;}
+  .tag{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:14px;
+       padding:3px 11px;margin:3px 4px 0 0;font-size:12.5px;color:var(--text);}
+   /* 使用別標籤:原有使用 / 新品換用 */
+   .use-tag{display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;
+        font-weight:800;letter-spacing:.5px;white-space:nowrap;line-height:1.4;}
+   .use-old{background:#f6ede0;color:#8a5a1c;border:1px solid #e6d2b2;}
+   .use-new{background:#e4f1e6;color:#1f4c2d;border:1px solid #b8dcc0;}
+
+  /* ── 提示框 ───────────────────────────────── */
+  .note{background:var(--gold-l);border:1px solid #eddcb4;border-radius:var(--r-sm);padding:12px 15px;
+        font-size:13.5px;color:#806020;margin:14px 0;line-height:1.65;}
+  .note b{color:#6b4f17;}
+  .doc-item{background:#fbfbf7;border:1px solid var(--line-s);border-left:4px solid var(--green);
+        border-radius:var(--r-sm);padding:12px 16px;margin:9px 0;transition:box-shadow .15s;}
+  .doc-item:hover{box-shadow:var(--sh-sm);}
+  .doc-item .doc-t{font-weight:800;color:var(--text);font-size:14.5px;margin-bottom:4px;letter-spacing:.2px;}
+  .doc-item .doc-b{font-size:13.5px;color:#4a4f47;line-height:1.7;}
+  .empty{color:var(--muted);text-align:center;padding:28px;font-size:14px;}
+  .row-actions{display:flex;gap:6px;justify-content:center;}
+  .save-status{font-size:13px;color:var(--green);margin-left:6px;font-weight:600;}
+  .ref-list{font-size:12.5px;color:var(--muted);line-height:1.8;}
+  .ref-list b{color:var(--text);}
+  .pill-grp{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#eee;color:#555;margin-left:6px;}
+  .formula-card{border:1px solid var(--line);border-radius:var(--r-sm);padding:15px;margin-bottom:10px;background:#fff;}
+  .formula-card h4{margin:0 0 6px;color:var(--green-d);}
+  .formula-card .meta{font-size:13px;color:var(--muted);}
+  .mini{font-size:12px;color:var(--muted);line-height:1.55;}
+
+  /* ── 市場資訊(保留) ───────────────────────── */
+  .news-upload-area{border:2px dashed var(--green);border-radius:var(--r);text-align:center;
+    padding:28px 20px;color:var(--muted);cursor:pointer;transition:.15s;background:var(--green-l);}
+  .news-upload-area:hover{background:#d4ecda;}
+  .news-upload-area .up-icon{font-size:32px;display:block;margin-bottom:6px;}
+  .news-filter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px;}
+  .news-filter input,.news-filter select{padding:9px 12px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-size:14px;font-family:inherit;background:#fff;}
+  .news-filter input{flex:1;min-width:180px;}
+  .news-group-h{font-size:14px;font-weight:700;color:var(--green-d);margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+  .news-group-h .cnt{font-size:12px;background:var(--green-l);color:var(--green-d);padding:1px 9px;border-radius:12px;font-weight:500;}
+  .news-grid{display:grid;gap:8px;margin-bottom:12px;}
+  .news-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;transition:.15s;}
+  .news-item:hover{border-color:var(--green);box-shadow:0 3px 10px rgba(47,110,65,.1);background:var(--green-l);}
+  .news-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.5;}
+  .news-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+  .news-summary{font-size:12.5px;color:#666;line-height:1.5;margin-top:6px;border-top:1px solid var(--line);padding-top:6px;}
+  .news-kw{display:inline-block;background:#fff3cd;color:#856404;border-radius:12px;padding:1px 8px;font-size:11.5px;margin-left:4px;}
+
+  /* ── 替代量換算佈局 ───────────────────────── */
+  .basis-bar{background:linear-gradient(100deg,var(--green-xl),#fff);border:1.5px solid var(--green);
+    border-radius:var(--r);padding:14px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    box-shadow:var(--sh-sm);}
+  .basis-bar label{font-size:14px;font-weight:800;color:var(--green-d);white-space:nowrap;}
+  .basis-bar select{flex:1;min-width:200px;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-size:14.5px;font-family:inherit;min-height:44px;background:#fff;}
+  .basis-bar select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(47,110,65,.13);}
+
+  .minr-note{background:var(--gold-l);border:1px solid #eddcb4;border-radius:var(--r);margin-bottom:18px;overflow:hidden;}
+  .minr-note>summary{cursor:pointer;list-style:none;padding:13px 18px;font-size:13.5px;font-weight:800;color:#806020;user-select:none;transition:background .15s;}
+  .minr-note>summary:hover{background:rgba(196,136,30,.07);}
+  .minr-note>summary::-webkit-details-marker{display:none;}
+  .minr-note>summary::before{content:'▸ ';}
+  .minr-note[open]>summary::before{content:'▾ ';}
+  .minr-note-body{padding:0 18px 16px;font-size:13px;color:#5d4f33;line-height:1.75;}
+  .minr-note-body b{color:#6b4f17;}
+  .minr-field input,.minr-field select{border-color:var(--gold)!important;background:#fffdf6;}
+  .minr-field label{color:var(--gold-d)!important;}
+  .minr-def{font-size:12px;color:#806020;background:var(--gold-l);border:1px solid #eddcb4;
+    border-radius:7px;padding:6px 10px;margin:-2px 0 7px;line-height:1.6;}
+
+  .cmp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:1080px){.cmp-wrap{grid-template-columns:1fr;}}
+  .cmp-side{border-radius:var(--r);padding:20px 18px;border:1.5px solid;box-shadow:var(--sh-sm);}
+  .cmp-side.cust-side{background:linear-gradient(170deg,#fdf6ee,#fff);border-color:#e3ccb2;}
+  .cmp-side.ours-side{background:linear-gradient(170deg,#edf6f0,#fff);border-color:#b3d3ba;}
+  .cmp-side-h{font-size:16.5px;font-weight:800;margin:0 0 16px;display:flex;align-items:center;gap:9px;
+    padding-bottom:11px;border-bottom:2px solid;letter-spacing:.3px;}
+  .cmp-side.cust-side .cmp-side-h{color:var(--brown-d);border-color:#e3ccb2;}
+  .cmp-side.ours-side .cmp-side-h{color:var(--green-d);border-color:#b3d3ba;}
+  .cmp-side .subcard{background:rgba(255,255,255,.7);}
+
+  .calc-bar{text-align:center;margin:26px 0 6px;}
+  .calc-bar .btn{padding:15px 52px;font-size:17px;border-radius:var(--r);letter-spacing:1px;font-weight:800;
+    box-shadow:0 6px 20px rgba(47,110,65,.28);}
+  .calc-bar .btn:hover{box-shadow:0 9px 26px rgba(47,110,65,.36);}
+
+  /* 微量元素晶片(保留) */
+  .micro-chip{padding:5px 12px;font-size:12.5px;border:1px solid var(--line);border-radius:16px;
+    background:#fff;cursor:pointer;font-family:inherit;transition:.12s;color:var(--text);}
+  .micro-chip:hover{border-color:var(--green);color:var(--green);}
+  .micro-chip.on{background:var(--green);color:#fff;border-color:var(--green);}
+  .micro-chip.on:hover{background:var(--green-d);}
+
+  /* ── CRM 客戶選擇器 ──────────────────────── */
+  .crm-picker-bg{position:fixed;inset:0;background:rgba(31,40,35,.5);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .crm-picker{background:#fff;border-radius:var(--r-lg);width:min(440px,93vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.28);}
+  .crm-picker-head{padding:18px 20px 12px;flex:none;border-bottom:1px solid var(--line);}
+  .crm-picker-head h3{margin:0 0 12px;font-size:17px;color:var(--green-d);font-weight:800;}
+  .crm-picker-head input{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-size:14px;font-family:inherit;box-sizing:border-box;}
+  .crm-picker-list{overflow-y:auto;flex:1;padding:6px 8px;}
+  .crm-picker-item{padding:11px 13px;border-radius:var(--r-sm);cursor:pointer;border-bottom:1px solid var(--line-s);transition:background .12s;}
+  .crm-picker-item:hover{background:var(--green-l);}
+  .crm-picker-item .nm{font-weight:700;font-size:14px;}
+  .crm-picker-item .sb{font-size:12px;color:var(--muted);margin-top:2px;}
+  .crm-picker-foot{padding:12px 20px 16px;flex:none;}
+
+  /* ── 子卡片 / 成本盒 ─────────────────────── */
+  .subcard{background:#fbfcfa;border:1px dashed var(--line);border-radius:var(--r-sm);padding:14px 15px;margin:10px 0 14px;}
+  .subcard-h{font-size:13px;font-weight:800;color:var(--brown-d);margin-bottom:10px;display:flex;align-items:center;gap:6px;letter-spacing:.2px;}
+  .unit-out{background:var(--green-l);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;color:var(--green-d);font-weight:700;}
+  .unit-out b{font-size:16px;font-family:var(--mono);}
+
+  /* 多品項客戶肥料 */
+  .cust-prod-entry{border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin-bottom:12px;background:#fbfcfa;position:relative;}
+  .cust-prod-entry .entry-no{font-size:13.5px;font-weight:800;color:var(--brown-d);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .cust-prod-entry .entry-no .entry-lbl{flex:1;}
+
+  /* ============================================================
+     正式報告版面 — 參考產官學界正式報告模板
+     ============================================================ */
+  .report{position:relative;background:#fff;border-radius:0;overflow:hidden;
+    box-shadow:var(--sh-lg);border:1px solid var(--line);page-break-after:always;}
+  .report-bg{position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(47,110,65,.025) 0 1px, transparent 1px 44px),
+      repeating-linear-gradient(0deg, rgba(47,110,65,.014) 0 1px, transparent 1px 64px),
+      radial-gradient(circle at 97% 3%, rgba(47,110,65,.06), transparent 38%),
+      radial-gradient(circle at 2% 99%, rgba(138,94,60,.045), transparent 42%);}
+  .report > *{position:relative;z-index:1;}
+
+  /* 信頭 letterhead */
+  .report-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;
+    padding:24px 40px 16px;}
+  .sc-logo{display:flex;align-items:center;gap:14px;}
+  .sc-badge{flex:none;display:flex;align-items:center;}
+  .sc-badge svg{height:56px;width:auto;display:block;filter:drop-shadow(0 1px 3px rgba(31,76,45,.18));}
+  .sc-name{font-size:23px;font-weight:900;color:var(--green-d);letter-spacing:2px;line-height:1.15;}
+  .sc-name small{display:block;font-size:9.5px;font-weight:700;color:var(--brown);letter-spacing:2.5px;margin-top:3px;font-family:var(--mono);}
+  .report-docnum{text-align:right;font-size:12px;color:var(--muted);line-height:1.9;padding-top:4px;}
+  .report-docnum b{color:var(--green-d);font-weight:700;}
+  .report-docnum .dn{font-family:var(--mono);letter-spacing:.5px;color:var(--text);font-weight:600;}
+
+  /* 標題帶 */
+  .report-titleband{text-align:center;padding:4px 40px 18px;
+    border-bottom:3px double var(--green);margin:0 40px 0;}
+  .report-titleband h1{margin:0;font-family:var(--serif);font-size:26px;font-weight:900;
+    color:var(--green-d);letter-spacing:6px;text-indent:6px;}
+  .report-titleband .sub{display:block;font-size:11px;color:var(--brown);font-weight:700;
+    letter-spacing:3px;margin-top:6px;font-family:var(--mono);text-transform:uppercase;}
+
+  /* 客戶資訊欄 */
+  .report-meta{padding:16px 40px;font-size:13px;color:#555;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px 18px;
+    border-bottom:1px solid var(--line);margin:0 40px;}
+  .report-meta>div{border-left:3px solid var(--green-l);padding-left:10px;}
+  .report-meta b{color:var(--muted);font-weight:700;display:block;font-size:10.5px;letter-spacing:1px;margin-bottom:2px;}
+  .report-meta span{color:var(--text);font-size:14.5px;font-weight:700;}
+  @media(max-width:680px){.report-meta{grid-template-columns:repeat(2,1fr);}}
+
+  /* 報告本文 */
+  .report-body{padding:24px 40px 8px;counter-reset:secn;}
+  .report-body h3{margin:24px 0 12px;font-size:15.5px;font-weight:800;color:var(--green-d);
+    padding:7px 0 8px 14px;border-bottom:2px solid var(--green-l);position:relative;letter-spacing:.5px;
+    counter-increment:secn;}
+  .report-body h3::before{content:counter(secn,cjk-decimal) "、";
+    font-family:var(--serif);font-weight:900;color:var(--green);margin-right:2px;}
+  .report-body h3::after{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:4px;height:18px;border-radius:3px;background:linear-gradient(180deg,var(--green),var(--gold));}
+  .report-body .note{background:#fcfaf3;border:1px solid #ecdfc3;border-left:4px solid var(--gold);margin:14px 0;padding:12px 15px;font-size:13.5px;border-radius:0 7px 7px 0;}
+  .report-body .table-wrap{margin:14px 0;border:1px solid var(--green-l);box-shadow:none;}
+  .report-body table{font-size:13px;}
+  .report-body table th{background:var(--green);color:#fff;font-weight:700;padding:9px 11px;}
+  .report-body table td{padding:9px 11px;border-color:var(--green-l);}
+  .report-body table tbody tr:nth-child(even){background:#f8fbf9;}
+  .report-body .result-grid{margin:14px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+  .report-body .stat{padding:13px;font-weight:700;border-radius:7px;text-align:center;}
+  .report-body .stat .v{font-size:23px;font-weight:900;font-family:var(--mono);}
+  .report-body .stat .l{font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:4px;}
+  .report-body .doc-item{margin:10px 0;border-left:4px solid;padding:11px 14px;background:#fafcfb;border-radius:0 6px 6px 0;border-top:none;border-right:none;border-bottom:none;}
+  .report-body .doc-item .doc-t{font-size:13.5px;font-weight:800;margin-bottom:4px;color:var(--text);}
+  .report-body .doc-item .doc-b{font-size:12.5px;line-height:1.65;color:#4a4f47;}
+
+  /* 簽認 / 用印區 */
+  .report-sign{margin:26px 0 8px;padding:18px 0 4px;border-top:1px dashed var(--line);
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;column-span:all;break-inside:avoid;}
+  .report-sign .sg{font-size:12.5px;color:var(--muted);}
+  .report-sign .sg .lab{font-weight:700;color:var(--text);margin-bottom:26px;display:block;}
+  .report-sign .sg .ln{border-top:1px solid #99948a;padding-top:5px;font-size:11px;color:var(--muted);}
+  .report-sign .seal{justify-self:end;align-self:center;width:78px;height:78px;border:2px dashed #c9a98f;
+    border-radius:8px;display:flex;align-items:center;justify-content:center;color:#bda286;
+    font-size:11px;text-align:center;line-height:1.4;letter-spacing:1px;}
+
+  /* 報告免責說明 */
+  .report-disclaimer{margin:14px 0 2px;padding:11px 15px;background:#f7f6f1;border:1px solid var(--line-s);
+    border-radius:7px;font-size:11.5px;color:var(--muted);line-height:1.7;column-span:all;break-inside:avoid;}
+  .report-disclaimer b{color:var(--brown-d);}
+
+  /* 頁尾 */
+  .report-footer{text-align:center;padding:13px 40px;color:#9a7d62;
+    font-size:13px;letter-spacing:3px;font-weight:700;border-top:3px solid var(--brown);
+    background:linear-gradient(90deg,rgba(255,255,255,.5),var(--brown-l) 50%,rgba(255,255,255,.5));font-family:var(--serif);}
+  .report-footer .leaf{color:var(--green);margin:0 8px;letter-spacing:0;font-size:14px;}
+  .print-head{display:none;}
+
+  /* ── 列印 ─────────────────────────────────── */
+  @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{background:#fff;}
+    header,.page-nav,.no-print{display:none !important;}
+    main{max-width:100%;padding:0;margin:0;}
+    .sec{display:none !important;}
+    #convert{display:block !important;}
+    #convert > .card:not(#convertResult){display:none !important;}
+    .sec-head{display:none !important;}
+    #convertResult{display:block !important;border:none;box-shadow:none;padding:0;background:none;margin:0;}
+    #convertResult .toolbar{display:none !important;}
+    .report{box-shadow:none;border:none;border-radius:0;width:100%;}
+    .report-footer{position:fixed;bottom:0.7cm;left:0;right:0;z-index:10;}
+    .report-body{padding-bottom:1.6cm;}
+    /* 橫式 A4、不限一頁:單欄完整呈現,表格與區塊不被切斷 */
+    .report-header,.report-titleband,.report-meta{break-inside:avoid;}
+    .report-body table{width:100%;}
+    .report-body>h3,.report-body .note{break-inside:avoid;}
+    .report-body h3{break-after:avoid;break-inside:avoid;}
+    .report-body .note,.stat,.doc-item,.table-wrap{break-inside:avoid;}
+    .report-sign,.report-disclaimer{break-inside:avoid;}
+    @page{size:A4 landscape;margin:0.8cm 1cm;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <button onclick="location.href='index.html'" style="flex:none;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:11px;padding:9px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">‹ 返回戰情室</button>
+  <div class="head-title">
+    <h1><span class="h-mark">🌱</span>肥料替代量換算系統</h1>
+    <p>客戶原有肥料 → 我方產品 等養分替代用量、成本差異與施肥建議報告　|　資料儲存於本機瀏覽器,不上傳雲端</p>
+  </div>
+  <div class="head-owner">
+    <div class="owner-txt"><div class="c">版權所有</div><div class="n">莊政遠</div></div>
+    <img src="data:image/png;base64,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" alt="莊政遠">
+  </div>
+</header>
+
+<main>
+  <!-- 替代量換算 -->
+  <section class="sec" id="convert">
+    <div class="sec-head">
+      <div><h2>替代量換算</h2>
+      <p>輸入客戶原有肥料與我方產品,計算等養分替代用量、成本差異與施肥見解報告。</p></div>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <h2>客戶基本資料 <span class="badge">報告抬頭用</span></h2>
+      <p class="hint">填寫後將顯示於替代換算報告的抬頭。作物與耕作面積為選填;填了面積會同時計算「每分地」與「全場合計」。</p>
+      <div class="grid g3">
+        <div class="field"><label>客戶名稱</label><input id="custName" placeholder="例:王大明 / ○○農場"></div>
+        <div class="field"><label>縣市</label><select id="county" onchange="fillTownship()"></select></div>
+        <div class="field"><label>鄉鎮市區</label><select id="township"></select></div>
+        <div class="field"><label>🌾 作物類別(植物醫生判讀依據)</label><select id="crop"></select></div>
+        <div class="field"><label>作物品項(選填)</label><input id="cropItem" placeholder="例:愛文芒果、青江菜"></div>
+        <div class="field"><label>耕作面積(分地,選填)</label><input id="area" type="number" step="0.1" min="0" placeholder="例:5"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button class="btn ghost sm" onclick="openCRMPicker()">📥 從客戶管理系統帶入</button>
+        <span id="crmImportMsg" class="save-status"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>客戶原有肥料 → 替代量換算</h2>
+      <p class="hint">選擇肥料(可從市售清單一鍵帶入),系統算出達到相同養分所需的我方用量、成本比較,並由「植物醫生」給出施肥見解。</p>
+
+      <!-- 換算基準橫欄 -->
+      <div class="basis-bar">
+        <label>⚖️ 換算基準</label>
+        <select id="basis">
+          <option value="N">以有效氮 N（礦化後）換算等量</option>
+          <option value="P">以磷 P₂O₅ 換算</option>
+          <option value="K">以鉀 K₂O 換算</option>
+          <option value="same">同用量直接比較</option>
+        </select>
+      </div>
+
+      <!-- 礦化率說明 -->
+      <details class="minr-note">
+        <summary>🧪 什麼是「礦化率（當季氮素有效率）」？為什麼預設是這些數值？</summary>
+        <div class="minr-note-body">
+          <p>化學肥料的氮是<b>無機態（銨態／硝酸態）</b>，施下即可被作物吸收，<b>當季有效率≈100%</b>。<br>
+          有機肥料的氮多為<b>有機態</b>，必須先經土壤微生物分解（礦化）轉成無機氮，作物才吸收得到，<b>當季只釋放一部分</b>。若用「全氮＝全氮」直接換算，從化學肥換到有機肥會嚴重低估用量、造成缺氮誤差，因此本系統以「有效氮」為基準。</p>
+          <p style="margin:8px 0 4px;"><b>各類肥料當季氮素有效率（礦化率）文獻通則參考值：</b></p>
+          <ul style="margin:0;padding-left:20px;">
+            <li><b>化學肥料 100%</b>　無機氮即溶速效。</li>
+            <li><b>植物性渣粕（豆粕／菜籽粕／米糠／魚粉）約 50–55%</b>　碳氮比低、易分解，礦化快、當季釋放高。</li>
+            <li><b>禽畜糞堆肥約 25–40%</b>　已腐熟、含較多難分解有機物，礦化慢；雞糞≈40%、豬糞≈35%、牛糞≈25%。</li>
+            <li><b>骨粉約 30%</b>　氮釋放緩慢。</li>
+          </ul>
+          <p style="margin:8px 0 0;color:var(--muted);font-size:12px;">註：礦化率受土溫、濕度、碳氮比與土壤微生物活性影響，上述為通則值、每個欄位皆可自行修改；正式評估請以田間試驗或土壤檢測結果為準。磷、鉀因多屬無機態或當季有效性高，本系統不另折算礦化率。</p>
+        </div>
+      </details>
+
+      <!-- 左右對比面板 -->
+      <div class="cmp-wrap">
+
+        <!-- 左：客戶原有肥料 -->
+        <div class="cmp-side cust-side">
+          <h3 class="cmp-side-h">🌾 客戶原有肥料</h3>
+          <div id="custProductList"></div>
+          <button class="btn ghost sm" onclick="addCustProd()" style="margin-top:4px;">＋ 新增客戶肥料</button>
+        </div>
+
+        <!-- 右：我們的產品 -->
+        <div class="cmp-side ours-side">
+          <h3 class="cmp-side-h">🌿 我們的產品</h3>
+          <div class="field"><label>從市售/碩成肥料清單帶入</label>
+            <select id="oMarket" onchange="fillFromMarket('o')"><option value="">— 不帶入 —</option></select>
+          </div>
+          <div class="field"><label>產品名稱</label><input id="oName" placeholder="例:有機質肥料 5號"></div>
+          <div class="grid g4">
+            <div class="field"><label>氮 N (%)</label><input id="oN" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>磷 P₂O₅ (%)</label><input id="oP" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>鉀 K₂O (%)</label><input id="oK" type="number" step="0.1" value="0"></div>
+            <div class="field"><label>有機質 (%)</label><input id="oOM" type="number" step="0.1" value="0"></div>
+          </div>
+          <div class="field minr-field"><label>當季氮素有效率（礦化率 %）　<span class="mini">有機肥約25–55、化肥100，可調</span></label>
+            <div class="minr-def">礦化率＝有機態氮被土壤微生物分解、轉成作物當季可吸收無機氮的比率；越高代表肥效釋放越快。</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <select id="oMinrSel" onchange="onOMinrSel(this.value)" style="padding:9px 11px;border:1px solid var(--accent);border-radius:8px;font-size:14px;font-family:inherit;background:#fffdf6;">
+                <option value="100">化學肥料（無機氮即溶速效）（100%）</option>
+                <option value="55">植物渣粕 豆粕/菜籽粕/米糠/魚粉（礦化快）（55%）</option>
+                <option value="40" selected>雞糞堆肥 / 碩成肥料 / 一般有機堆肥（40%）</option>
+                <option value="35">豬糞堆肥（35%）</option>
+                <option value="30">骨粉（氮釋放慢）（30%）</option>
+                <option value="25">牛糞堆肥（高纖維、礦化最慢）（25%）</option>
+                <option value="custom">自訂（手動輸入 %）</option>
+              </select>
+              <input id="oMinr" type="number" step="1" min="0" max="100" value="40" style="width:120px;display:none;" placeholder="自訂 %"></div></div>
+          <details style="margin-bottom:10px;">
+            <summary style="cursor:pointer;font-size:13px;color:var(--muted);user-select:none;padding:4px 0;">▸ 重金屬含量（選填）</summary>
+            <div class="grid g2" style="margin-top:8px;">
+              <div class="field"><label>銅 Cu (ppm)</label><input id="oCu" type="number" step="1" value="0"></div>
+              <div class="field"><label>鋅 Zn (ppm)</label><input id="oZn" type="number" step="1" value="0"></div>
+            </div>
+          </details>
+          <div class="subcard">
+            <div class="subcard-h">💰 我方產品成本(以包裝計,自動換算元/kg)</div>
+            <div class="grid g4">
+              <div class="field"><label>一包 (元)</label><input id="oBag" type="number" step="1" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>重量 (公斤/包)</label><input id="oBagKg" type="number" step="0.5" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>補助金額 (元/包)</label><input id="oSub" type="number" step="1" value="0" oninput="calcUnit('o')"></div>
+              <div class="field"><label>規格</label><select id="oSpec"><option>粒狀</option><option>粉狀</option><option>液態</option></select></div>
+            </div>
+            <div class="grid g2" style="align-items:end;">
+              <div class="field" style="margin:0;"><label>單位成本 (元/kg)　<span class="mini">可直接改</span></label><input id="oPrice" type="number" step="0.1" value="0"></div>
+              <div class="unit-out" id="oUnitNote">扣補助後單位成本:<b>—</b></div>
+            </div>
+          </div>
+          <div class="subcard" style="border:1px dashed var(--green-d);margin-top:10px;">
+            <div class="subcard-h" style="color:var(--green-d);">🦠 生物菌種（選填,加入報告）</div>
+            <div id="oStrainsList"><div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div></div>
+            <button class="btn ghost sm" onclick="addOStrain()" style="margin-top:4px;padding:4px 10px;font-size:12px;">＋ 新增菌種</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 計算按鈕 -->
+      <div class="calc-bar">
+        <button class="btn" onclick="runConvert()">⚡ 計算替代量與差異</button>
+      </div>
+    </div>
+
+    <div class="card" id="convertResult" style="display:none;">
+      <div class="toolbar no-print" style="justify-content:flex-end;">
+        <h2 style="margin-right:auto;">換算結果 & 專業報告</h2>
+        <button class="btn ghost sm" onclick="copyReport(this)">📋 複製見解文字</button>
+        <button class="btn sm" onclick="window.print()">🖨 列印 / 存成PDF</button>
+      </div>
+      <div id="convertOut"></div>
+    </div>
+
+    <div class="card no-print" id="salesTalkCard" style="display:none;">
+      <h2>📢 業務話術建議 <span class="badge" style="background:#fff3cd;color:#856404;">不輸出報告</span></h2>
+      <p class="hint">依換算結果自動產出對話重點，可直接用於客戶拜訪說明。</p>
+      <div id="salesTalkOut"></div>
+      <div class="field" style="margin-top:14px;">
+        <label>📝 補充筆記（不輸出報告）</label>
+        <textarea id="salesNote" rows="4" style="padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;width:100%;" placeholder="自由記錄：客戶反饋、下次追蹤重點、特殊需求、議價空間…"></textarea>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ---------- 預設原料文獻參考值 ---------- */
+const DEFAULT_MATERIALS = [
+  // group, name, N, P2O5, K2O, OM, pH, moisture, cn, cu, zn, cost, fee
+  {g:'禽畜糞',name:'蛋雞糞',         n:2.0,p:3.5,k:2.0,om:65,ph:7.5,moi:25,cn:10,cu:80, zn:350,cost:0.5,fee:1.0},
+  {g:'禽畜糞',name:'肉雞糞',         n:3.0,p:2.8,k:2.2,om:70,ph:7.0,moi:28,cn:12,cu:70, zn:300,cost:0.5,fee:1.0},
+  {g:'禽畜糞',name:'豬糞',           n:2.8,p:3.5,k:1.8,om:72,ph:6.8,moi:30,cn:11,cu:350,zn:600,cost:0.3,fee:1.5},
+  {g:'禽畜糞',name:'粗糠雞糞-一水',  n:1.0,p:1.5,k:1.0,om:75,ph:7.0,moi:20,cn:25,cu:30, zn:120,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-二水',  n:1.3,p:1.9,k:1.2,om:73,ph:7.1,moi:21,cn:22,cu:38, zn:150,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-三水',  n:1.6,p:2.3,k:1.4,om:71,ph:7.2,moi:22,cn:19,cu:45, zn:180,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-四水',  n:1.9,p:2.7,k:1.6,om:69,ph:7.3,moi:23,cn:16,cu:52, zn:210,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-五水',  n:2.2,p:3.1,k:1.8,om:67,ph:7.4,moi:24,cn:14,cu:60, zn:240,cost:0.4,fee:0.8},
+  {g:'禽畜糞',name:'粗糠雞糞-六水',  n:2.5,p:3.5,k:2.0,om:65,ph:7.5,moi:25,cn:12,cu:68, zn:270,cost:0.4,fee:0.8},
+  {g:'調整材',name:'菇包木屑',       n:0.8,p:0.5,k:0.6,om:78,ph:6.0,moi:55,cn:45,cu:15, zn:60, cost:1.0,fee:0},
+  {g:'調整材',name:'粉碎粗糠',       n:0.5,p:0.3,k:0.5,om:80,ph:6.5,moi:12,cn:70,cu:8,  zn:40, cost:1.5,fee:0},
+];
+const COLS=['n','p','k','om','ph','moi','cn','cu','zn','cost','fee'];
+const CARBON_FACTOR=0.58;
+
+/* ---------- 市售肥料產品庫(化學肥/有機肥/有機資材,標示值依包裝保證成分) ---------- */
+const DEFAULT_MARKET=[
+  // ── 碩成肥料正式登記品項（依肥料登記證保證成分；Cu/Zn 為禽畜糞堆肥估算值，請依實際檢驗更新）──
+  {g:'碩成肥料',name:'碩成508',           n:3.5,p:3.5,k:3.0,om:67.3,cu:75,zn:300,price:7},
+  {g:'碩成肥料',name:'碩成1號+',          n:2.5,p:3.0,k:3.0,om:60.0,cu:55,zn:220,price:6},
+  {g:'碩成肥料',name:'碩成2號',           n:3.0,p:3.0,k:2.5,om:53.0,cu:60,zn:250,price:6},
+  {g:'碩成肥料',name:'碩成2號+',          n:2.5,p:3.0,k:3.0,om:60.0,cu:55,zn:220,price:6},
+  {g:'碩成肥料',name:'碩成生技1號',       n:2.7,p:3.6,k:3.5,om:50.0,cu:50,zn:200,price:6},
+  {g:'碩成肥料',name:'碩成果美肥',        n:0,  p:0,  k:38.0,om:0,  cu:0, zn:0,  price:18},
+  {g:'碩成肥料',name:'碩成基肥1號',       n:2.7,p:3.6,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'碩成基肥2號',       n:2.5,p:3.5,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'碩成基肥2號+',      n:2.5,p:3.5,k:3.5,om:50.0,cu:50,zn:200,price:5},
+  {g:'碩成肥料',name:'農會牌(嘉)有機質肥料1號',n:2.5,p:3.0,k:2.2,om:57.0,cu:55,zn:220,price:5},
+  // 化學肥料
+  {g:'化學肥料',name:'尿素 (46-0-0)',n:46,p:0,k:0,om:0,cu:0,zn:0,price:25},
+  {g:'化學肥料',name:'硫酸銨 (21-0-0)',n:21,p:0,k:0,om:0,cu:0,zn:0,price:18},
+  {g:'化學肥料',name:'過磷酸鈣 (0-18-0)',n:0,p:18,k:0,om:0,cu:0,zn:0,price:16},
+  {g:'化學肥料',name:'重過磷酸鈣 (0-46-0)',n:0,p:46,k:0,om:0,cu:0,zn:0,price:30},
+  {g:'化學肥料',name:'磷酸一銨 MAP (11-52-0)',n:11,p:52,k:0,om:0,cu:0,zn:0,price:45},
+  {g:'化學肥料',name:'磷酸二銨 DAP (18-46-0)',n:18,p:46,k:0,om:0,cu:0,zn:0,price:42},
+  {g:'化學肥料',name:'氯化鉀 (0-0-60)',n:0,p:0,k:60,om:0,cu:0,zn:0,price:28},
+  {g:'化學肥料',name:'硫酸鉀 (0-0-50)',n:0,p:0,k:50,om:0,cu:0,zn:0,price:38},
+  {g:'化學肥料',name:'硝酸鉀 (13-0-46)',n:13,p:0,k:46,om:0,cu:0,zn:0,price:55},
+  {g:'化學肥料',name:'硝酸鈣 (15.5-0-0)',n:15.5,p:0,k:0,om:0,cu:0,zn:0,price:32},
+  {g:'化學肥料',name:'台肥5號複合肥料 (16-8-12)',n:16,p:8,k:12,om:0,cu:0,zn:0,price:24},
+  {g:'化學肥料',name:'台肥39號 好速收 (15-15-15)',n:15,p:15,k:15,om:0,cu:0,zn:0,price:26},
+  {g:'化學肥料',name:'台肥1號複合肥料 (20-5-10)',n:20,p:5,k:10,om:0,cu:0,zn:0,price:25},
+  {g:'化學肥料',name:'通用複合肥 (14-14-14)',n:14,p:14,k:14,om:0,cu:0,zn:0,price:24},
+  {g:'化學肥料',name:'高鉀複合肥 (12-6-20)',n:12,p:6,k:20,om:0,cu:0,zn:0,price:28},
+  // 有機質肥料
+  {g:'有機質肥料',name:'一般有機質肥料 (通用)',n:3,p:3,k:2,om:70,cu:50,zn:250,price:12},
+  {g:'有機質肥料',name:'發酵雞糞有機肥',n:3,p:3,k:2,om:65,cu:60,zn:280,price:8},
+  {g:'有機質肥料',name:'牛糞堆肥',n:1,p:1,k:1.5,om:60,cu:20,zn:120,price:6},
+  {g:'有機質肥料',name:'豬糞堆肥',n:2.5,p:3,k:1.5,om:65,cu:300,zn:550,price:6},
+  {g:'有機質肥料',name:'高氮有機質肥料',n:4,p:2,k:1.5,om:72,cu:40,zn:180,price:15},
+  {g:'有機質肥料',name:'高鉀有機質肥料',n:2,p:2,k:4,om:65,cu:30,zn:150,price:15},
+  // 有機資材(單一原料)
+  {g:'有機資材',name:'骨粉',n:3,p:18,k:0,om:30,cu:0,zn:0,price:30},
+  {g:'有機資材',name:'黃豆粕 (豆粕)',n:7,p:1.4,k:2.2,om:80,cu:0,zn:0,price:22},
+  {g:'有機資材',name:'菜籽粕 (油粕)',n:5,p:2,k:1,om:78,cu:0,zn:0,price:18},
+  {g:'有機資材',name:'蓖麻粕',n:5,p:2,k:1,om:80,cu:0,zn:0,price:18},
+  {g:'有機資材',name:'米糠',n:2,p:4,k:1.5,om:80,cu:0,zn:0,price:10},
+  {g:'有機資材',name:'魚粉',n:9,p:6,k:1,om:65,cu:0,zn:0,price:45},
+  {g:'有機資材',name:'草木灰',n:0,p:2,k:6,om:0,cu:0,zn:0,price:5},
+];
+const MCOLS=['n','p','k','om','cu','zn','price'];
+
+/* ---------- 作物類別與養分需求(植物醫生判讀依據,ideal 為 N:P₂O₅:K₂O 偏好比) ---------- */
+const CROPS=[
+  {name:'一般 / 未指定', ideal:[1,1,1], baseUse:40, focus:'均衡施肥', advice:'以均衡施肥為原則,依土壤檢測結果微調。'},
+  {name:'葉菜類(小白菜/青江菜/萵苣)', ideal:[3,1,2], baseUse:30, focus:'速生、需氮量高', advice:'重氮促葉片生長,但忌過量造成硝酸鹽累積與徒長;有機肥可穩定緩釋供氮並改善土壤。'},
+  {name:'結球葉菜(高麗菜/包心白菜)', ideal:[2,1,2], baseUse:40, focus:'重氮並需充足鈣', advice:'結球期氮鉀並重,鈣不足易發生葉燒(tip burn),可配合含鈣資材。'},
+  {name:'果菜類(番茄/茄子/瓜類)', ideal:[2,1,3], baseUse:45, focus:'結果期重鉀、鈣、硼', advice:'前期適度氮,結果期加重鉀;注意補鈣防臍腐、補硼防落花落果。'},
+  {name:'根莖類(蘿蔔/馬鈴薯/薑/芋)', ideal:[1,1,2], baseUse:45, focus:'膨大期重鉀', advice:'鉀促進地下部膨大與澱粉累積;氮過量易徒長莖葉、根部不實。'},
+  {name:'果樹(柑橘/芒果/荔枝)', ideal:[1,0.6,1], baseUse:60, focus:'重有機質,結果期重鉀', advice:'多年生作物重視有機質改良根域;花芽分化前控氮,果實肥大期加鉀。'},
+  {name:'水稻', ideal:[2,1,2], baseUse:40, focus:'分蘗重氮、抽穗重鉀', advice:'氮鉀為主;基肥用有機質肥提升地力,追肥用速效氮。'},
+  {name:'茶樹', ideal:[3,1,1.5], baseUse:40, focus:'高氮但忌過量', advice:'氮影響產量與胺基酸,過量反降品質;有機質肥有助茶園土壤管理。'},
+  {name:'玉米 / 雜糧', ideal:[3,1,2], baseUse:40, focus:'重氮', advice:'需氮量大,生育中期為需肥高峰。'},
+  {name:'花卉 / 觀賞', ideal:[1,2,2], baseUse:30, focus:'開花重磷鉀', advice:'營養生長期適度氮,花芽分化與開花期加重磷鉀。'},
+  {name:'豆科(花生/大豆)', ideal:[1,2,2], baseUse:30, focus:'自身固氮,需磷鉀', advice:'根瘤可固氮,氮需求低;重視磷鉀與鈣,過量氮反抑制固氮。'},
+];
+
+/* ---------- 台灣縣市→鄉鎮二級選單資料 ---------- */
+const TAIWAN_AREAS={
+  '基隆市':['仁愛區','中山區','中正區','安樂區','暖暖區','七堵區'],
+  '台北市':['中山區','中正區','大安區','大同區','信義區','南港區','松山區','萬華區','文山區'],
+  '新北市':['板橋區','新莊區','泰山區','林口區','淡水區','三芝區','石門區','八里區','五股區','蘆洲區','三重區','永和區','中和區','土城區','樹林區','鶯歌區','三峽區','汐止區','瑞芳區','貢寮區','平溪區','雙溪區','烏來區'],
+  '桃園市':['桃園區','中壢區','平鎮區','八德區','楊梅區','蘆竹區','龜山區','龍潭區','新屋區','觀音區','復興區'],
+  '新竹市':['東區','北區','香山區'],
+  '新竹縣':['竹北市','湖口鄉','新豐鄉','新埤鄉','關西鎮','芎蕉鄉','寶山鄉','竹東鎮','五峰鄉','橫山鄉','尖石鄉','北埔鄉','峨眉鄉'],
+  '苗栗縣':['苗栗市','通霄鎮','苑裡鎮','竹南鎮','頭份鎮','三灣鄉','南庄鄉','獅潭鄉','後龍鎮','造橋鄉','頭屋鄉','公館鄉','大湖鄉','泰安鄉','銅鑼鄉','三義鄉','西湖鄉','卓蘭鎮'],
+  '台中市':['中區','東區','南區','西區','北區','北屯區','西屯區','南屯區','太平區','大里區','霧峰區','烏日區','大肚區','龍井區','沙鹿區','梧棲區','清水區','大甲區','外埔區','大安區','中山區','新社區','東勢區','和平區','石岡區','潭子區'],
+  '彰化縣':['彰化市','員林鎮','溪湖鎮','花壇鄉','芬園鄉','大村鄉','埔心鄉','埔鹽鄉','永靖鄉','伸港鄉','線西鄉','和美鎮','二林鎮','大城鄉','芳苑鄉','田尾鄉','田中鎮','北斗鎮','社頭鄉','二水鄉'],
+  '南投縣':['南投市','埔里鎮','草屯鎮','竹山鎮','集集鎮','名間鄉','鹿谷鄉','中寮鄉','仁愛鄉','信義鄉','水里鄉','魚池鄉'],
+  '嘉義縣':['太保市','朴子市','布袋鎮','民雄鄉','大林鎮','新港鄉','溪口鄉','六腳鄉','東石鄉','義竹鄉','鹿草鄉','中埔鄉','竹山鎮','梅山鄉','番路鄉','阿里山鄉','水上鄉','七星鄉'],
+  '嘉義市':['東區','西區'],
+  '雲林縣':['斗六市','斗南鎮','虎尾鎮','西螺鎮','土庫鎮','北港鎮','古坑鄉','莿桐鄉','林內鄉','麥寮鄉','臺西鄉','東勢鄉','褒忠鄉','四湖鄉','口湖鄉'],
+  '台南市':['新營區','鹽水區','白河區','柳營區','後壁區','東山區','麻豆區','下營區','六甲區','官田區','大內區','善化區','新市區','永康區','成功區','安定區','山上區','玉井區','楠西區','南化區','仁德區','歸仁區','關廟區','龍崗區','東牌區','西港區','七股區','將軍區','北門區','安南區','安平區','中西區'],
+  '高雄市':['新興區','興隆區','苓雅區','前金區','鹽埕區','鼓山區','旗津區','左營區','楠梓區','小港區','仁大區','大社區','岡山區','路竹區','阿蓮區','田寮區','燕巢區','永安區','湖內區','茄萣區','旗山區','美濃區','六龜區','內門區','杉林區','甲仙區','桃源區','那瑪夏區','茂林區','高雄市'],
+  '屏東縣':['屏東市','潮州鎮','東港鎮','恆春鎮','萬丹鄉','長治鄉','麟洛鄉','九如鄉','里港鄉','鹽埤鄉','高樹鄉','林邊鄉','南州鄉','新埤鄉','枋寮鄉','枋山鄉','春日鄉','獅子鄉','牡丹鄉','滿州鄉'],
+  '宜蘭縣':['宜蘭市','羅東鎮','蘇澳鎮','頭城鎮','礁溪鄉','壯圍鄉','員山鄉','三星鄉','冬山鄉','五結鄉','南澳鄉'],
+  '花蓮縣':['花蓮市','鳳林鎮','玉里鎮','新城鄉','秀林鄉','吉安鄉','壽豐鄉','豐濱鄉','光復鄉','富里鄉','卓溪鄉','萬榮鄉'],
+  '台東縣':['台東市','成功鎮','關山鎮','長濱鄉','海端鄉','池上鄉','東河鄉','鹿野鄉','延平鄉','金峰鄉','大武鄉','達仁鄉','蘭嶼鄉','綠島鄉'],
+  '澎湖縣':['馬公市','湖西鄉','白沙鄉','西嶼鄉'],
+  '金門縣':['金城鎮','金湖鎮','金沙鎮','金寧鄉','烈嶼鄉'],
+  '連江縣':['南竿鄉','北竿鄉','莒光鄉','東莒鄉'],
+};
+
+/* ---------- 常見農業菌種清單 ---------- */
+const MICRO_ELEMS=['鈣 Ca','鎂 Mg','硫 S','硼 B','鐵 Fe','錳 Mn','鋅 Zn','銅 Cu','鉬 Mo','矽 Si'];
+const MICRO_UNITS=['ppm','%','mg/kg','g/kg'];
+
+// 微量元素列表（下拉選元素 + 含量 + 單位,可增列）
+function microRowsHtml(i){
+  const arr=(custProds[i]&&custProds[i].microElems)||[];
+  if(!arr.length)return '<div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未標注微量元素</div>';
+  return arr.map((m,j)=>`
+  <div style="display:grid;grid-template-columns:1fr 88px 92px 26px;gap:6px;align-items:center;margin-bottom:5px;">
+    <select style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;" onchange="custProds[${i}].microElems[${j}].el=this.value">
+      ${MICRO_ELEMS.map(el=>`<option ${m.el===el?'selected':''}>${el}</option>`).join('')}
+    </select>
+    <input type="number" step="0.01" min="0" placeholder="含量" value="${(m.val??'')}" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;width:100%;" oninput="custProds[${i}].microElems[${j}].val=this.value">
+    <select style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;" onchange="custProds[${i}].microElems[${j}].unit=this.value">
+      ${MICRO_UNITS.map(u=>`<option ${m.unit===u?'selected':''}>${u}</option>`).join('')}
+    </select>
+    <button class="btn danger" style="padding:2px 6px;font-size:12px;line-height:1.4;" onclick="removeMicroElem(${i},${j})">×</button>
+  </div>`).join('');
+}
+function addMicroElem(i){
+  custProds[i].microElems=custProds[i].microElems||[];
+  custProds[i].microElems.push({el:MICRO_ELEMS[0],val:'',unit:'ppm'});
+  renderMicroRows(i);
+}
+function removeMicroElem(i,j){custProds[i].microElems.splice(j,1);renderMicroRows(i);}
+function renderMicroRows(i){const box=document.getElementById('cp_'+i+'_micro');if(box)box.innerHTML=microRowsHtml(i);}
+// 格式化微量元素為文字(元素+含量單位),相容舊版純字串
+function fmtMicro(m){
+  if(typeof m==='string')return m;
+  if(!m||!m.el)return '';
+  const hasVal=(m.val!==''&&m.val!=null&&!isNaN(parseFloat(m.val)));
+  return m.el+(hasVal?` ${m.val}${m.unit||''}`:'');
+}
+
+const COMMON_STRAINS=[
+  '枯草桿菌 Bacillus subtilis',
+  '解澱粉芽孢桿菌 B. amyloliquefaciens',
+  '巨大芽孢桿菌 B. megaterium',
+  '地衣芽孢桿菌 B. licheniformis',
+  '凝結芽孢桿菌 B. coagulans',
+  '蠟質芽孢桿菌 B. cereus',
+  '側孢芽孢桿菌 B. laterosporus',
+  '固氮菌 Azotobacter spp.',
+  '固氮螺菌 Azospirillum brasilense',
+  '根瘤菌 Rhizobium spp.',
+  '解磷菌 Phosphate-solubilizing bacteria',
+  '木黴菌 Trichoderma spp.',
+  '叢枝菌根菌 AMF',
+  '光合作用菌 Photosynthetic bacteria',
+  '乳酸菌 Lactobacillus spp.',
+  '放線菌 Actinomycetes',
+  '假單孢菌 Pseudomonas fluorescens',
+];
+const CONC_OPTS=['10⁴ CFU/g','10⁵ CFU/g','10⁶ CFU/g','10⁷ CFU/g','10⁸ CFU/g','10⁹ CFU/g','10¹⁰ CFU/g'];
+
+let materials=[], formulas=[], market=[], custProds=[], oStrains=[];
+
+/* ---------- 儲存 ---------- */
+function load(){
+  try{materials=JSON.parse(localStorage.getItem('fert_materials'))||null;}catch(e){materials=null;}
+  if(!materials||!materials.length) materials=structuredClone(DEFAULT_MATERIALS);
+  try{formulas=JSON.parse(localStorage.getItem('fert_formulas'))||[];}catch(e){formulas=[];}
+  try{market=JSON.parse(localStorage.getItem('fert_market'))||null;}catch(e){market=null;}
+  if(!market||!market.length) market=structuredClone(DEFAULT_MARKET);
+
+  // 一次性遷移：補入 DEFAULT_MARKET 中 碩成肥料 品項（已有 localStorage 資料的舊版使用者也能自動取得）
+  const scDefault=DEFAULT_MARKET.filter(m=>m.g==='碩成肥料');
+  const scExisting=new Set(market.filter(m=>m.g==='碩成肥料').map(m=>m.name));
+  const scMissing=scDefault.filter(m=>!scExisting.has(m.name));
+  if(scMissing.length){
+    // 插到陣列最前面（確保顯示排序最上方）
+    market.unshift(...scMissing.map(m=>structuredClone(m)));
+    saveMarket();
+  }
+}
+function saveMat(){localStorage.setItem('fert_materials',JSON.stringify(materials));flash('dbSave','✓ 已儲存');}
+function saveForm(){localStorage.setItem('fert_formulas',JSON.stringify(formulas));}
+function saveMarket(){localStorage.setItem('fert_market',JSON.stringify(market));flash('mkSave','✓ 已儲存');}
+function flash(id,msg){const e=document.getElementById(id);if(!e)return;e.textContent=msg;setTimeout(()=>e.textContent='',1500);}
+
+
+/* ---------- ① 原料資料庫 ---------- */
+function renderMaterials(){
+  const body=document.getElementById('matBody');
+  body.innerHTML='';
+  let lastG=null;
+  materials.forEach((m,i)=>{
+    if(m.g!==lastG){
+      const gr=document.createElement('tr');gr.className='grp-head';
+      gr.innerHTML=`<td colspan="13">${m.g==='禽畜糞'?'🐔 禽畜糞':'🪵 調整材'}</td>`;
+      body.appendChild(gr);lastG=m.g;
+    }
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      `<td><input class="cell name" value="${m.name}" onchange="editMat(${i},'name',this.value)"></td>`+
+      COLS.map(c=>`<td><input class="cell" type="number" step="any" value="${m[c]}" onchange="editMat(${i},'${c}',this.value)"></td>`).join('')+
+      `<td><button class="btn danger" onclick="delMat(${i})">刪</button></td>`;
+    body.appendChild(tr);
+  });
+}
+function editMat(i,k,v){materials[i][k]=(k==='name')?v:parseFloat(v)||0;saveMat();refreshRecipeSelects();}
+function addMaterial(g){
+  materials.push({g,name:'新原料',n:0,p:0,k:0,om:0,ph:7,moi:0,cn:0,cu:0,zn:0,cost:0,fee:0});
+  materials.sort((a,b)=>a.g===b.g?0:(a.g==='禽畜糞'?-1:1));
+  saveMat();renderMaterials();refreshRecipeSelects();
+}
+function delMat(i){if(confirm('確定刪除「'+materials[i].name+'」?')){materials.splice(i,1);saveMat();renderMaterials();refreshRecipeSelects();}}
+function resetMaterials(){if(confirm('還原為預設文獻值?你目前的修改將被覆蓋。')){materials=structuredClone(DEFAULT_MATERIALS);saveMat();renderMaterials();refreshRecipeSelects();}}
+
+/* ---------- ⑤ 市售肥料庫 ---------- */
+function renderMarket(){
+  const body=document.getElementById('mkBody');body.innerHTML='';
+  let lastG=null;
+  const order={'碩成肥料':-1,'化學肥料':0,'有機質肥料':1,'有機資材':2};
+  market.sort((a,b)=>(order[a.g]??3)-(order[b.g]??3));
+  market.forEach((m,i)=>{
+    if(m.g!==lastG){const gr=document.createElement('tr');gr.className='grp-head';
+      gr.innerHTML=`<td colspan="9">${m.g}</td>`;body.appendChild(gr);lastG=m.g;}
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input class="cell name" value="${m.name}" onchange="editMk(${i},'name',this.value)"></td>`+
+      MCOLS.map(c=>`<td><input class="cell" type="number" step="any" value="${m[c]}" onchange="editMk(${i},'${c}',this.value)"></td>`).join('')+
+      `<td><button class="btn danger" onclick="delMk(${i})">刪</button></td>`;
+    body.appendChild(tr);
+  });
+}
+function editMk(i,k,v){market[i][k]=(k==='name')?v:parseFloat(v)||0;saveMarket();refreshMarketSelects();}
+function addMarket(g){market.push({g,name:'新產品',n:0,p:0,k:0,om:0,cu:0,zn:0,price:0});saveMarket();renderMarket();refreshMarketSelects();}
+function delMk(i){if(confirm('刪除「'+market[i].name+'」?')){market.splice(i,1);saveMarket();renderMarket();refreshMarketSelects();}}
+function resetMarket(){if(confirm('還原為預設市售清單?')){market=structuredClone(DEFAULT_MARKET);saveMarket();renderMarket();refreshMarketSelects();}}
+
+/* ---------- ② 配方計算 ---------- */
+function recipeOptions(sel){
+  return '<option value="">— 選擇原料 —</option>'+
+    materials.map((m,i)=>`<option value="${i}" ${sel==i?'selected':''}>${m.name}（${m.g}）</option>`).join('');
+}
+function addRecipeRow(idx='',wt=''){
+  const div=document.createElement('div');
+  div.className='recipe-row';
+  div.innerHTML=
+    `<select onchange="calc()">${recipeOptions(idx)}</select>`+
+    `<input type="number" placeholder="重量 kg" step="any" value="${wt}" oninput="calc()">`+
+    `<span class="mini matpct"></span>`+
+    `<button class="btn danger" onclick="this.parentNode.remove();calc()">×</button>`;
+  document.getElementById('recipeRows').appendChild(div);
+  calc();
+}
+function refreshRecipeSelects(){
+  document.querySelectorAll('#recipeRows .recipe-row select').forEach(s=>{
+    const cur=s.value;s.innerHTML=recipeOptions(cur);
+  });
+}
+function getRecipe(){
+  const rows=[...document.querySelectorAll('#recipeRows .recipe-row')];
+  const items=[];
+  rows.forEach(r=>{
+    const idx=r.querySelector('select').value;
+    const wt=parseFloat(r.querySelector('input').value)||0;
+    if(idx!==''&&wt>0)items.push({m:materials[idx],wt});
+  });
+  return {rows,items};
+}
+function calc(){
+  const {rows,items}=getRecipe();
+  const W=items.reduce((s,x)=>s+x.wt,0);
+  document.getElementById('totalWt').textContent='總投入 '+fmt(W)+' kg';
+  // 顯示各原料佔比
+  rows.forEach(r=>{
+    const idx=r.querySelector('select').value;
+    const wt=parseFloat(r.querySelector('input').value)||0;
+    const span=r.querySelector('.matpct');
+    span.textContent=(idx!==''&&W>0)?((wt/W*100).toFixed(1)+'%'):'';
+  });
+  const grid=document.getElementById('resultGrid');
+  const cb=document.getElementById('costBreak');
+  if(W<=0){grid.innerHTML='<div class="empty">請於上方加入原料並輸入重量</div>';cb.style.display='none';return;}
+
+  const wAvg=k=>items.reduce((s,x)=>s+x.wt*x.m[k],0)/W;
+  const N=wAvg('n'),P=wAvg('p'),K=wAvg('k'),OM=wAvg('om'),pH=wAvg('ph'),MOI=wAvg('moi'),Cu=wAvg('cu'),Zn=wAvg('zn');
+  // 碳氮比:總碳/總氮
+  const totC=items.reduce((s,x)=>s+x.wt*x.m.om*CARBON_FACTOR,0);
+  const totN=items.reduce((s,x)=>s+x.wt*x.m.n,0);
+  const CN=totN>0?totC/totN:0;
+  // 成本
+  const matCost=items.reduce((s,x)=>s+x.wt*x.m.cost,0);
+  const feeIn=items.reduce((s,x)=>s+x.wt*x.m.fee,0);
+  const net=matCost-feeIn;
+  const loss=parseFloat(document.getElementById('lossRate').value)||0;
+  const outW=W*(1-loss/100);
+  const costPerKg=outW>0?net/outW:0;
+
+  window._lastCalc={N,P,K,OM,pH,MOI,CN,Cu,Zn,costPerKg,outW};
+
+  grid.innerHTML=`
+    <div class="stat"><div class="v">${N.toFixed(2)}</div><div class="l">氮 N (%)</div></div>
+    <div class="stat"><div class="v">${P.toFixed(2)}</div><div class="l">磷 P₂O₅ (%)</div></div>
+    <div class="stat"><div class="v">${K.toFixed(2)}</div><div class="l">鉀 K₂O (%)</div></div>
+    <div class="stat"><div class="v">${OM.toFixed(1)}</div><div class="l">有機質 (%)</div></div>
+    <div class="stat"><div class="v">${pH.toFixed(1)}</div><div class="l">pH(估)</div></div>
+    <div class="stat"><div class="v">${MOI.toFixed(1)}</div><div class="l">水分 (%)</div></div>
+    <div class="stat ${CN>20?'warn':''}"><div class="v">${CN.toFixed(1)}</div><div class="l">碳氮比 C/N</div></div>
+    <div class="stat"><div class="v">${Cu.toFixed(0)}</div><div class="l">銅 Cu (ppm)</div></div>
+    <div class="stat"><div class="v">${Zn.toFixed(0)}</div><div class="l">鋅 Zn (ppm)</div></div>
+    <div class="stat cost"><div class="v">${costPerKg.toFixed(2)}</div><div class="l">基礎成本 (元/kg)</div></div>`;
+
+  cb.style.display='block';
+  cb.innerHTML=`💰 <b>成本明細</b>　原料成本 ${fmt(matCost)} 元　−　處理費收入 ${fmt(feeIn)} 元　=　淨成本 <b>${fmt(net)} 元</b>　`+
+    `÷ 產出 ${fmt(outW)} kg${loss>0?'(已扣損耗'+loss+'%)':''}　=　<b>${costPerKg.toFixed(2)} 元/kg</b>`+
+    (CN>20?'<br>⚠️ 碳氮比偏高(>20),腐熟可能不足,建議增加禽畜糞或延長發酵。':'')+
+    (Cu>100||Zn>500?'<br>⚠️ 銅/鋅接近或超過有機質肥料常見重金屬上限(Cu 100 / Zn 500 ppm),請注意豬糞比例。':'');
+}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString('zh-Hant');}
+
+function saveFormula(){
+  const name=document.getElementById('recipeName').value.trim();
+  if(!name){alert('請輸入配方名稱');return;}
+  if(!window._lastCalc||window._lastCalc.outW<=0){alert('請先加入原料計算');return;}
+  const c=window._lastCalc;
+  const {items}=getRecipe();
+  const recipe=items.map(x=>({name:x.m.name,wt:x.wt}));
+  const obj={id:Date.now(),name,recipe,
+    n:+c.N.toFixed(2),p:+c.P.toFixed(2),k:+c.K.toFixed(2),om:+c.OM.toFixed(1),
+    ph:+c.pH.toFixed(1),moi:+c.MOI.toFixed(1),cn:+c.CN.toFixed(1),
+    cu:Math.round(c.Cu),zn:Math.round(c.Zn),cost:+c.costPerKg.toFixed(2),
+    price:parseFloat(document.getElementById('recipePrice').value)||0};
+  const ex=formulas.findIndex(f=>f.name===name);
+  if(ex>=0){if(!confirm('已有同名配方,覆蓋?'))return;formulas[ex]=obj;}else formulas.push(obj);
+  saveForm();alert('已儲存配方:'+name);renderFormulas();
+}
+
+/* ---------- ④ 配方庫 ---------- */
+function renderFormulas(){
+  const el=document.getElementById('formulaList');
+  if(!formulas.length){el.innerHTML='<div class="empty">尚無儲存的配方</div>';return;}
+  el.innerHTML=formulas.map(f=>`
+    <div class="formula-card">
+      <h4>${f.name} <button class="btn danger" style="float:right" onclick="delFormula(${f.id})">刪除</button></h4>
+      <div class="meta">N ${f.n}% · P₂O₅ ${f.p}% · K₂O ${f.k}% · 有機質 ${f.om}% · C/N ${f.cn} · pH ${f.ph} · Cu ${f.cu} · Zn ${f.zn} · 成本 ${f.cost} 元/kg${f.price?' · 售價 '+f.price+' 元/kg':''}</div>
+      <div class="mini" style="margin-top:6px;">配方:${f.recipe.map(r=>r.name+' '+r.wt+'kg').join('、')}</div>
+    </div>`).join('');
+}
+function delFormula(id){if(confirm('刪除此配方?')){formulas=formulas.filter(f=>f.id!==id);saveForm();renderFormulas();refreshOurSelect();}}
+
+/* ---------- 客戶多品項肥料管理 ---------- */
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function addCustProd(){
+  custProds.push({name:'',n:0,p:0,k:0,om:0,cu:0,zn:0,other:'',use:0,bag:0,bagKg:0,sub:0,spec:'粒狀',price:0,minr:100,strains:[],microElems:[]});
+  renderCustProds();
+}
+function removeCustProd(i){custProds.splice(i,1);renderCustProds();}
+function updateCustProd(i,field,value){
+  if(field==='name'||field==='other'||field==='spec')custProds[i][field]=value;
+  else custProds[i][field]=parseFloat(value)||0;
+  if(field==='bag'||field==='bagKg'||field==='sub')calcCustUnit(i);
+}
+function calcCustUnit(i){
+  const p=custProds[i];
+  const unitCost=p.bagKg>0?Math.max(0,(p.bag-p.sub)/p.bagKg):0;
+  p.price=unitCost;
+  const priceEl=document.getElementById('cp_'+i+'_price');
+  const noteEl=document.getElementById('cp_'+i+'_unitNote');
+  if(priceEl)priceEl.value=unitCost>0?unitCost.toFixed(2):0;
+  if(noteEl)noteEl.innerHTML='扣補助後單位成本:<b>'+(unitCost>0?unitCost.toFixed(2)+' 元/kg':'—')+'</b>';
+}
+// 當季氮素有效率(礦化率)預設值 — 文獻通則參考值,可自行修改
+function defMinr(group,name){
+  name=name||'';
+  if(group==='化學肥料') return 100;        // 無機氮即溶速效
+  if(/草木灰/.test(name)) return 100;        // 幾無氮,鉀速效
+  if(group==='有機資材'){
+    if(/骨粉/.test(name)) return 30;         // 骨粉氮釋放緩慢
+    return 55;                                // 植物性渣粕(豆粕/菜籽粕/米糠/魚粉)碳氮比低、礦化快
+  }
+  // 有機質肥料 / 碩成肥料 等堆肥類
+  if(/牛糞/.test(name)) return 25;           // 高纖維、礦化最慢
+  if(/豬糞/.test(name)) return 35;
+  return 40;                                  // 一般有機質堆肥 / 雞糞
+}
+// ── 礦化率下拉選單(分類預設,依文獻通則值) ──
+const MINR_OPTIONS=[
+  {label:'化學肥料（無機氮即溶速效）',val:100},
+  {label:'植物渣粕 豆粕/菜籽粕/米糠/魚粉（礦化快）',val:55},
+  {label:'雞糞堆肥 / 碩成肥料 / 一般有機堆肥',val:40},
+  {label:'豬糞堆肥',val:35},
+  {label:'骨粉（氮釋放慢）',val:30},
+  {label:'牛糞堆肥（高纖維、礦化最慢）',val:25},
+];
+const MINR_PRESET_VALS=MINR_OPTIONS.map(o=>o.val);
+function minrSelectHtml(selId,onchange,rate){
+  const r=+rate, isPreset=MINR_PRESET_VALS.includes(r);
+  const opts=MINR_OPTIONS.map(o=>`<option value="${o.val}" ${(isPreset&&r===o.val)?'selected':''}>${o.label}（${o.val}%）</option>`).join('');
+  return `<select id="${selId}" onchange="${onchange}" style="padding:9px 11px;border:1px solid var(--accent);border-radius:8px;font-size:14px;font-family:inherit;background:#fffdf6;">${opts}<option value="custom" ${!isPreset?'selected':''}>自訂（手動輸入 %）</option></select>`;
+}
+// 客戶品項礦化率
+function onCustMinrSel(i,val){
+  const inp=document.getElementById('cp_'+i+'_minr');
+  if(val==='custom'){if(inp){inp.style.display='';inp.focus();}}
+  else{custProds[i].minr=+val;if(inp){inp.value=val;inp.style.display='none';}}
+}
+function setCustMinr(i,rate){
+  custProds[i].minr=rate;
+  const sel=document.getElementById('cp_'+i+'_minrSel'),inp=document.getElementById('cp_'+i+'_minr');
+  const isPreset=MINR_PRESET_VALS.includes(+rate);
+  if(sel)sel.value=isPreset?String(rate):'custom';
+  if(inp){inp.value=rate;inp.style.display=isPreset?'none':'';}
+}
+// 我方產品礦化率
+function onOMinrSel(val){
+  const inp=document.getElementById('oMinr');
+  if(val==='custom'){inp.style.display='';inp.focus();}
+  else{inp.style.display='none';inp.value=val;}
+}
+function setOMinr(rate){
+  const sel=document.getElementById('oMinrSel'),inp=document.getElementById('oMinr');
+  const isPreset=MINR_PRESET_VALS.includes(+rate);
+  if(sel)sel.value=isPreset?String(rate):'custom';
+  if(inp){inp.value=rate;inp.style.display=isPreset?'none':'';}
+}
+function readOMinr(){
+  const sel=document.getElementById('oMinrSel');
+  if(sel&&sel.value!=='custom'){const v=parseFloat(sel.value);return v>0?v:100;}
+  const v=gv('oMinr');return v>0?v:100;
+}
+function fillCustFromMarket(i){
+  const sel=document.getElementById('cp_'+i+'_market');
+  const m=market[+sel.value];if(!m)return;
+  const fv={name:m.name,n:m.n,p:m.p,k:m.k,om:m.om,cu:m.cu,zn:m.zn,price:m.price};
+  Object.keys(fv).forEach(f=>{custProds[i][f]=fv[f];const el=document.getElementById('cp_'+i+'_'+f);if(el)el.value=fv[f];});
+  setCustMinr(i,defMinr(m.g,m.name));
+  const noteEl=document.getElementById('cp_'+i+'_unitNote');
+  if(noteEl&&m.price>0)noteEl.innerHTML='參考價:<b>'+m.price.toFixed(2)+' 元/kg</b>';
+}
+function renderCustProds(){
+  const container=document.getElementById('custProductList');
+  if(!container)return;
+  if(!custProds.length){container.innerHTML='<div class="empty" style="padding:10px 0;font-size:13px;">請點下方「＋ 新增客戶肥料」加入品項</div>';return;}
+  const mOpts=marketOptions();
+  container.innerHTML=custProds.map((p,i)=>`
+  <div class="cust-prod-entry">
+    <div class="entry-no">
+      <span class="entry-lbl">【品項 ${i+1}】${p.name?' — '+escHtml(p.name):''}</span>
+      ${custProds.length>1?`<button class="btn danger" style="padding:3px 10px;font-size:12px;" onclick="removeCustProd(${i})">× 移除</button>`:''}
+    </div>
+    <div class="field"><label>從市售清單帶入</label>
+      <select id="cp_${i}_market" class="cust-market-sel" onchange="fillCustFromMarket(${i})">${mOpts}</select></div>
+    <div class="field"><label>產品名稱</label>
+      <input id="cp_${i}_name" value="${escHtml(p.name)}" placeholder="例:台肥5號複合肥料" oninput="updateCustProd(${i},'name',this.value)"></div>
+    <div class="grid g4">
+      <div class="field"><label>氮 N (%)</label><input id="cp_${i}_n" type="number" step="0.1" value="${p.n}" oninput="updateCustProd(${i},'n',this.value)"></div>
+      <div class="field"><label>磷 P₂O₅ (%)</label><input id="cp_${i}_p" type="number" step="0.1" value="${p.p}" oninput="updateCustProd(${i},'p',this.value)"></div>
+      <div class="field"><label>鉀 K₂O (%)</label><input id="cp_${i}_k" type="number" step="0.1" value="${p.k}" oninput="updateCustProd(${i},'k',this.value)"></div>
+      <div class="field"><label>有機質 (%)</label><input id="cp_${i}_om" type="number" step="0.1" value="${p.om}" oninput="updateCustProd(${i},'om',this.value)"></div>
+    </div>
+    <div class="field minr-field"><label>當季氮素有效率（礦化率 %）　<span class="mini">化肥填100、有機肥約25–55</span></label>
+      <div class="minr-def">礦化率＝有機態氮被土壤微生物分解、轉成作物當季可吸收無機氮的比率；越高代表肥效釋放越快。</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        ${minrSelectHtml('cp_'+i+'_minrSel','onCustMinrSel('+i+',this.value)',p.minr??100)}
+        <input id="cp_${i}_minr" type="number" step="1" min="0" max="100" value="${p.minr??100}" oninput="updateCustProd(${i},'minr',this.value)" style="width:120px;${MINR_PRESET_VALS.includes(+(p.minr??100))?'display:none;':''}" placeholder="自訂 %"></div></div>
+    <div class="field">
+      <label>微量元素（選填，下拉選元素並填含量，帶入比較報告）</label>
+      <div id="cp_${i}_micro" style="margin-top:5px;">${microRowsHtml(i)}</div>
+      <button class="btn ghost sm" onclick="addMicroElem(${i})" style="margin-top:4px;padding:4px 10px;font-size:12px;">＋ 新增微量元素</button>
+    </div>
+    <div class="field"><label>一分地使用量 (kg/分地)</label>
+      <input id="cp_${i}_use" type="number" step="1" value="${p.use}" oninput="updateCustProd(${i},'use',this.value)"></div>
+    <div class="subcard">
+      <div class="subcard-h">💰 成本(以包裝計,自動換算元/kg)</div>
+      <div class="grid g4">
+        <div class="field"><label>一包 (元)</label><input id="cp_${i}_bag" type="number" step="1" value="${p.bag}" oninput="updateCustProd(${i},'bag',this.value)"></div>
+        <div class="field"><label>重量 (公斤/包)</label><input id="cp_${i}_bagKg" type="number" step="0.5" value="${p.bagKg}" oninput="updateCustProd(${i},'bagKg',this.value)"></div>
+        <div class="field"><label>補助金額 (元/包)</label><input id="cp_${i}_sub" type="number" step="1" value="${p.sub}" oninput="updateCustProd(${i},'sub',this.value)"></div>
+        <div class="field"><label>規格</label>
+          <select id="cp_${i}_spec" onchange="updateCustProd(${i},'spec',this.value)">
+            <option ${p.spec==='粒狀'?'selected':''}>粒狀</option><option ${p.spec==='粉狀'?'selected':''}>粉狀</option><option ${p.spec==='液態'?'selected':''}>液態</option>
+          </select></div>
+      </div>
+      <div class="grid g2" style="align-items:end;">
+        <div class="field" style="margin:0;"><label>單位成本 (元/kg) <span class="mini">可直接改</span></label>
+          <input id="cp_${i}_price" type="number" step="0.1" value="${p.price}" oninput="updateCustProd(${i},'price',this.value)"></div>
+        <div class="unit-out" id="cp_${i}_unitNote">扣補助後單位成本:<b>${p.price>0?p.price.toFixed(2)+' 元/kg':'—'}</b></div>
+      </div>
+    </div>
+    <div class="subcard" style="border:1px dashed var(--green-d);margin-top:8px;">
+      <div class="subcard-h" style="color:var(--green-d);">🦠 生物菌種（選填,加入報告）</div>
+      <div id="cp_${i}_strainsList">${cpStrainsHtml(i)}</div>
+      <button class="btn ghost sm" onclick="addCpStrain(${i})" style="margin-top:4px;padding:4px 10px;font-size:12px;">＋ 新增菌種</button>
+    </div>
+  </div>`).join('');
+}
+function cpStrainsHtml(i){
+  const strains=(custProds[i]&&custProds[i].strains)||[];
+  if(!strains.length)return '<div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div>';
+  return strains.map((s,j)=>`
+  <div style="display:grid;grid-template-columns:1fr 140px 26px;gap:6px;align-items:center;margin-bottom:5px;">
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="custProds[${i}].strains[${j}].name=this.value">
+      ${COMMON_STRAINS.map(n=>`<option ${s.name===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="custProds[${i}].strains[${j}].conc=this.value">
+      ${CONC_OPTS.map(c=>`<option ${s.conc===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <button class="btn danger" style="padding:2px 6px;font-size:12px;line-height:1.4;" onclick="removeCpStrain(${i},${j})">×</button>
+  </div>`).join('');
+}
+
+/* ---------- 菌種管理（我方產品） ---------- */
+function addOStrain(){
+  oStrains.push({name:COMMON_STRAINS[0],conc:'10⁷ CFU/g'});
+  renderOStrains();
+}
+function removeOStrain(i){oStrains.splice(i,1);renderOStrains();}
+function renderOStrains(){
+  const el=document.getElementById('oStrainsList');if(!el)return;
+  if(!oStrains.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0 2px;">未添加菌種</div>';return;}
+  el.innerHTML=oStrains.map((s,i)=>`
+  <div style="display:grid;grid-template-columns:1fr 140px 26px;gap:6px;align-items:center;margin-bottom:5px;">
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="oStrains[${i}].name=this.value">
+      ${COMMON_STRAINS.map(n=>`<option ${s.name===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+    <select style="padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;" onchange="oStrains[${i}].conc=this.value">
+      ${CONC_OPTS.map(c=>`<option ${s.conc===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <button class="btn danger" style="padding:2px 6px;font-size:12px;line-height:1.4;" onclick="removeOStrain(${i})">×</button>
+  </div>`).join('');
+}
+/* ---------- 菌種管理（客戶肥料品項） ---------- */
+function addCpStrain(i){
+  custProds[i].strains=custProds[i].strains||[];
+  custProds[i].strains.push({name:COMMON_STRAINS[0],conc:'10⁷ CFU/g'});
+  renderCpStrains(i);
+}
+function removeCpStrain(i,j){custProds[i].strains.splice(j,1);renderCpStrains(i);}
+function renderCpStrains(i){
+  const el=document.getElementById('cp_'+i+'_strainsList');if(!el)return;
+  el.innerHTML=cpStrainsHtml(i);
+}
+/* ---------- 業務話術生成 ---------- */
+function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName}){
+  const costO=ourUse*o.price;
+  const diff=totCCost-costO;
+  const diffPct=totCCost>0?Math.abs(diff/totCCost*100):0;
+  const omDiff=oOM-totCOM;
+  const pts=[];
+
+  // 開場
+  pts.push({icon:'👋',title:'開場建議',
+    body:`您好${custName&&custName!=='客戶'?'，'+custName:''}！今天帶來一份針對您${crop.name==='一般 / 未指定'?'的田區':'的'+crop.name}量身評估的施肥替代方案，請您參考。`});
+
+  // 成本
+  if(totCCost>0&&costO>0){
+    if(diff>0)
+      pts.push({icon:'💰',title:`每分地省 ${diff.toFixed(0)} 元（↓${diffPct.toFixed(0)}%）`,
+        body:`原本每分地約花 ${totCCost.toFixed(0)} 元，改用碩成${o.name||'有機肥'}只需約 ${costO.toFixed(0)} 元，每分地省 ${diff.toFixed(0)} 元。${area>0?'您全場 '+area+' 分地一年可省約 <b>'+(diff*area).toFixed(0)+' 元</b>。':''}`});
+    else
+      pts.push({icon:'💰',title:`成本多 ${Math.abs(diff).toFixed(0)} 元/分地，換來地力長期升值`,
+        body:`費用比原肥略多 ${Math.abs(diff).toFixed(0)} 元/分（↑${diffPct.toFixed(0)}%），但有機質可逐年降低化學追肥需求，通常 2–3 年後整體成本反而更低。`});
+  }else
+    pts.push({icon:'💰',title:'填入雙方單價即可自動比較成本',body:'請在左側客戶肥料及右側我方產品欄位填入單位成本，換算後即顯示每分地差額。'});
+
+  // 有機質效益
+  if(oOM>0)
+    pts.push({icon:'🌱',title:`有機質 ${oOM.toFixed(1)} kg/分地，活化土壤微生物`,
+      body:`每分地提供有機質約 ${oOM.toFixed(1)} kg${omDiff>0.05?'，較原肥多 '+omDiff.toFixed(1)+' kg':''}，可改善土壤團粒結構、提升保水保肥力(CEC)，是純化學肥料做不到的地力投資。`});
+
+  // 菌種話術
+  if(oStrains.length){
+    const names=oStrains.map(s=>s.name.split(' ')[0]).join('、');
+    const detail=oStrains.map(s=>`${s.name}（${s.conc}）`).join('；');
+    pts.push({icon:'🦠',title:`含 ${names}，促進根圈活性`,
+      body:`本產品添加 ${detail}。有益菌能幫助根域分解有機質、溶解土壤難溶磷鉀，提升養分吸收效率，特別適合${crop.name==='一般 / 未指定'?'各類作物':''+crop.name}。`});
+  }
+
+  // 用量說明
+  pts.push({icon:'📦',title:`用量換算一看即懂（以${basisLabel}等量）`,
+    body:`客戶原本每分地用 ${totCUse.toFixed(0)} kg，改用我方只需 ${ourUse.toFixed(0)} kg/分，${ourUse<totCUse?'用量少 '+(totCUse-ourUse).toFixed(0)+' kg，搬運儲存都更省力。':'養分供應更均衡穩定。'}${area>0?'全場需備貨約 '+(ourUse*area).toFixed(0)+' kg（20kg粒狀約 '+Math.ceil(ourUse*area/20)+' 包）。':''}`});
+
+  // 收場行動
+  pts.push({icon:'📋',title:'建議行動',
+    body:`可將此份「肥料替代對照表」列印給農友帶回參考（點右上角「列印/存成PDF」）。下次拜訪前可先準備樣品或試用包，讓農友實際比較。`});
+
+  return pts;
+}
+
+/* ---------- ③ 替代量換算 ---------- */
+function refreshOurSelect(){
+  const s=document.getElementById('ourSelect');
+  const cur=s.value;
+  s.innerHTML='<option value="">— 手動輸入 —</option>'+
+    formulas.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  s.value=cur;
+}
+function loadOurProduct(){
+  const id=+document.getElementById('ourSelect').value;
+  const f=formulas.find(x=>x.id===id);
+  if(!f)return;
+  oName.value=f.name;oN.value=f.n;oP.value=f.p;oK.value=f.k;oOM.value=f.om;oCu.value=f.cu;oZn.value=f.zn;
+  oPrice.value=f.price||f.cost||0;
+  document.getElementById('oMarket').value='';
+}
+/* 作物與市售清單下拉 */
+function populateCrops(){
+  const s=document.getElementById('crop');
+  s.innerHTML=CROPS.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+}
+function marketOptions(){
+  let html='<option value="">— 手動輸入 —</option>',lastG=null;
+  const order={'碩成肥料':-1,'化學肥料':0,'有機質肥料':1,'有機資材':2};
+  const sorted=[...market].sort((a,b)=>(order[a.g]??3)-(order[b.g]??3));
+  sorted.forEach((m,i)=>{
+    // 找原始 market 中的 index 以便 fillFrom 函式正確讀取
+    const realIdx=market.indexOf(m);
+    if(m.g!==lastG){
+      if(lastG)html+='</optgroup>';
+      const gLabel=m.g==='碩成肥料'?'🌱 碩成肥料（我方產品）':m.g;
+      html+=`<optgroup label="${gLabel}">`;lastG=m.g;
+    }
+    html+=`<option value="${realIdx}">${m.name}</option>`;
+  });
+  if(lastG)html+='</optgroup>';
+  return html;
+}
+function refreshMarketSelects(){
+  // 更新所有客戶品項的市售清單下拉
+  document.querySelectorAll('.cust-market-sel').forEach(sel=>{
+    const v=sel.value;sel.innerHTML=marketOptions();sel.value=v;
+  });
+  // 更新我方產品市售清單
+  const om=document.getElementById('oMarket');
+  if(om){const v=om.value;om.innerHTML=marketOptions().replace('— 手動輸入 —','— 不帶入 —');om.value=v;}
+}
+function fillFromMarket(side){
+  const sel=document.getElementById(side==='c'?'cMarket':'oMarket');
+  const m=market[+sel.value];if(!m)return;
+  const p=side==='c'?'c':'o';
+  document.getElementById(p+'Name').value=m.name;
+  document.getElementById(p+'N').value=m.n;
+  document.getElementById(p+'P').value=m.p;
+  document.getElementById(p+'K').value=m.k;
+  document.getElementById(p+'OM').value=m.om;
+  document.getElementById(p+'Cu').value=m.cu;
+  document.getElementById(p+'Zn').value=m.zn;
+  document.getElementById(p+'Price').value=m.price;
+  if(side==='o')setOMinr(defMinr(m.g,m.name));
+  const osel=document.getElementById('ourSelect');if(side==='o'&&osel)osel.value='';
+}
+function gv(id){return parseFloat(document.getElementById(id).value)||0;}
+function runConvert(){
+  // 收集有效客戶肥料品項(有填用量的)
+  const validProds=custProds.filter(p=>p.use>0);
+  if(!validProds.length){alert('請至少為一個客戶肥料填入「一分地使用量」');return;}
+
+  const o={name:document.getElementById('oName').value||'我方產品',n:gv('oN'),p:gv('oP'),k:gv('oK'),om:gv('oOM'),cu:gv('oCu'),zn:gv('oZn'),price:gv('oPrice'),minr:readOMinr()};
+  const crop=CROPS[+document.getElementById('crop').value]||CROPS[0];
+  const basis=document.getElementById('basis').value;
+  const custName=document.getElementById('custName').value||'客戶';
+  const county=document.getElementById('county').value;
+  const township=document.getElementById('township').value;
+  const cropItem=document.getElementById('cropItem').value;
+  const area=gv('area');
+
+  // 彙整客戶所有肥料的每分地養分 (kg)
+  const totCN=validProds.reduce((s,p)=>s+p.use*p.n/100,0);
+  const totCAvailN=validProds.reduce((s,p)=>s+p.use*p.n/100*((p.minr??100)/100),0); // 礦化後有效氮 kg/分
+  const totCP=validProds.reduce((s,p)=>s+p.use*p.p/100,0);
+  const totCK=validProds.reduce((s,p)=>s+p.use*p.k/100,0);
+  const totCOM=validProds.reduce((s,p)=>s+p.use*p.om/100,0);
+  const totCCost=validProds.reduce((s,p)=>s+p.use*p.price,0); // 元/分地
+  const totCUse=validProds.reduce((s,p)=>s+p.use,0);           // kg/分地
+  const allOther=[...new Set(validProds.flatMap(p=>(p.microElems||[]).map(fmtMicro)).filter(Boolean))].join('、');
+  // 客戶肥料菌種彙整（去重）
+  const cStrainsAll=[...new Set(validProds.flatMap(p=>(p.strains||[]).map(s=>s.name+' ('+s.conc+')')))];
+  // 我方產品菌種
+  const oStrainsInfo=oStrains.map(s=>s.name+' ('+s.conc+')');
+
+  // 我方替代用量
+  let ourUse,basisLabel;
+  if(basis==='same'){ourUse=totCUse;basisLabel='同用量';}
+  else if(basis==='N'){
+    // 以「有效氮(礦化後)」為基準:客戶有效氮 ÷ 我方每kg有效氮
+    const oAvailNperKg=o.n/100*o.minr/100;
+    if(oAvailNperKg<=0){alert('我方產品有效氮(全氮 × 礦化率)為 0,無法以此換算,請確認氮含量與礦化率,或改選其他基準。');return;}
+    ourUse=totCAvailN/oAvailNperKg;
+    basisLabel='有效氮 N（礦化後）';
+  }
+  else{
+    const key=basis.toLowerCase();
+    if(o[key]<=0){alert('我方產品該基準養分為 0,無法以此換算,請改選其他基準。');return;}
+    const map={p:totCP,k:totCK};
+    ourUse=map[key]/(o[key]/100);
+    basisLabel={P:'磷 P₂O₅',K:'鉀 K₂O'}[basis];
+  }
+
+  // 我方在替代用量下的養分供應
+  const oN=ourUse*o.n/100,oP=ourUse*o.p/100,oK=ourUse*o.k/100,oOM=ourUse*o.om/100;
+  const oAvailN=oN*o.minr/100;                              // 我方礦化後有效氮 kg/分
+  const cAvgMinr=totCN>0?totCAvailN/totCN*100:0;            // 客戶加權平均礦化率
+  // ── 有效養分對照(礦化後實際可吸收氮)── 一律顯示
+  const availHtml=(totCN>0||o.n>0)?`
+    <h3 style="color:var(--green-d);margin-top:18px;">有效養分對照（礦化後實際可吸收氮）</h3>
+    <p class="mini" style="margin:0 0 8px;">有機肥的有機態氮須經土壤微生物礦化才轉為作物可吸收的無機氮，下表以「當季氮素有效率（礦化率）」折算實際有效氮，使化學肥↔有機肥的氮素比較不失真。</p>
+    <div class="table-wrap"><table class="cmp-table" style="min-width:0;"><thead><tr>
+      <th>使用別</th><th>項目</th><th>用量<br>kg/分</th><th>全氮 N<br>kg/分</th><th>礦化率</th><th>有效氮 N<br>kg/分</th>
+    </tr></thead><tbody>
+      <tr><td><span class="use-tag use-old">原有使用</span></td><td style="text-align:left;">客戶原有肥料</td><td>${fmt(totCUse)}</td><td>${totCN.toFixed(2)}</td><td>${cAvgMinr.toFixed(0)}%</td><td><b style="color:var(--brown);">${totCAvailN.toFixed(2)}</b></td></tr>
+      <tr><td><span class="use-tag use-new">新品換用</span></td><td style="text-align:left;">${escHtml(o.name)}</td><td>${fmt(ourUse)}</td><td>${oN.toFixed(2)}</td><td>${o.minr.toFixed(0)}%</td><td><b style="color:var(--green-d);">${oAvailN.toFixed(2)}</b></td></tr>
+    </tbody></table></div>
+    <p class="mini" style="margin:6px 0 0;color:var(--muted);">礦化率為文獻通則參考值（化學肥100%、植物渣粕約50–55%、禽畜糞堆肥約25–40%），實際受土溫、濕度、碳氮比與土壤微生物活性影響；正式評估請以田間試驗或土壤檢測為準。</p>`:'';
+  const diff=(a,b)=>{const d=b-a;const cls=d>=0?'pos':'neg';const s=d>=0?'+':'';return `<span class="${cls}">${s}${d.toFixed(2)}</span>`;};
+  const today=new Date().toLocaleDateString('zh-Hant');
+
+  // buildDoctor 所需的彙整 c 物件
+  const cAgg={name:validProds.length===1?validProds[0].name:'客戶複合施肥',
+    n:totCUse>0?totCN/totCUse*100:0,p:totCUse>0?totCP/totCUse*100:0,k:totCUse>0?totCK/totCUse*100:0,
+    om:totCUse>0?totCOM/totCUse*100:0,cu:0,zn:0,use:totCUse,
+    price:totCUse>0?totCCost/totCUse:0,other:allOther};
+
+  // 耕作面積全區成本
+  let areaHtml='';
+  if(area>0){
+    const costC_total=totCCost*area,costO_total=ourUse*area*o.price;
+    const d_total=costC_total-costO_total;
+    areaHtml=`<h3 style="color:var(--brown);margin-top:18px;">全耕作面積成本比較(${area}分地)</h3>
+      <div class="result-grid">
+        <div class="stat cost"><div class="v">${costC_total.toFixed(0)}</div><div class="l">原肥總成本 (元)</div></div>
+        <div class="stat cost"><div class="v">${costO_total.toFixed(0)}</div><div class="l">改用我方 (元)</div></div>
+        <div class="stat ${d_total>=0?'':'warn'}"><div class="v">${d_total>=0?'省 ':'多 '}${Math.abs(d_total).toFixed(0)}</div><div class="l">總計差額 (元)</div></div>
+      </div>`;
+  }
+
+  // 多品項明細表 (超過 1 種才顯示)
+  const cLabel=validProds.length===1
+    ?escHtml(validProds[0].name||'客戶原肥')+'<br>('+fmt(totCUse)+'kg/分)'
+    :'客戶複合施肥<br>(共'+fmt(totCUse)+'kg/分)';
+  const custDetailHtml=validProds.length>1?`
+    <h3>客戶原有肥料明細 (${validProds.length} 種)</h3>
+    <div class="table-wrap"><table class="cmp-table"><thead><tr>
+      <th>品項名稱</th><th>規格</th><th>用量<br>kg/分</th>
+      <th>N<br>kg/分</th><th>P₂O₅<br>kg/分</th><th>K₂O<br>kg/分</th><th>有機質<br>kg/分</th><th>成本<br>元/分</th>
+    </tr></thead><tbody>
+    ${validProds.map(p=>`<tr>
+      <td style="text-align:left;">${escHtml(p.name)||'未命名'}</td>
+      <td>${p.spec}</td><td>${p.use}</td>
+      <td>${(p.use*p.n/100).toFixed(2)}</td><td>${(p.use*p.p/100).toFixed(2)}</td>
+      <td>${(p.use*p.k/100).toFixed(2)}</td><td>${(p.use*p.om/100).toFixed(2)}</td>
+      <td>${p.price>0?(p.use*p.price).toFixed(0):'-'}</td>
+    </tr>`).join('')}
+    <tr style="font-weight:700;background:var(--green-l);">
+      <td style="text-align:left;">合計</td><td>—</td><td>${totCUse.toFixed(0)}</td>
+      <td>${totCN.toFixed(2)}</td><td>${totCP.toFixed(2)}</td><td>${totCK.toFixed(2)}</td><td>${totCOM.toFixed(2)}</td>
+      <td>${totCCost>0?totCCost.toFixed(0):'-'}</td>
+    </tr>
+    </tbody></table></div>`:'';
+
+  // ── 專業報告版面 ──────────────────────────────────────
+  const _dn=new Date(),_p2=x=>String(x).padStart(2,'0');
+  const docNo=`SC-${_dn.getFullYear()}${_p2(_dn.getMonth()+1)}${_p2(_dn.getDate())}-${_p2(_dn.getHours())}${_p2(_dn.getMinutes())}`;
+  let html=`<div class="report">
+    <div class="report-bg"></div>
+    <div class="report-header">
+      <div class="sc-logo">
+        <span class="sc-badge" aria-label="碩成肥料">
+          <svg viewBox="0 0 132 92" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="6,46 34,8 98,8 126,46 98,84 34,84" fill="#1f4c2d" stroke="#cfe3d2" stroke-width="3"/>
+            <polygon points="17,46 41,18 91,18 115,46 91,74 41,74" fill="none" stroke="#9ec7a6" stroke-width="3.5"/>
+            <text x="66" y="48" text-anchor="middle" dominant-baseline="central" font-family="'PingFang TC','Microsoft JhengHei',sans-serif" font-weight="800" font-size="40" fill="#fff" letter-spacing="2">碩成</text>
+          </svg>
+        </span>
+        <div class="sc-name">碩成肥料<small>SHUO CHENG FERTILIZER</small></div>
+      </div>
+      <div class="report-docnum">
+        <div>報告編號　<span class="dn">${docNo}</span></div>
+        <div>製表日期　<b>${today}</b></div>
+        <div>承辦業務　<b>莊政遠</b></div>
+      </div>
+    </div>
+    <div class="report-titleband">
+      <h1>肥料替代與施肥建議評估報告</h1>
+      <span class="sub">Fertilizer Substitution &amp; Advisory Report</span>
+    </div>
+    <div class="report-meta">
+      <div><b>客戶名稱 CLIENT</b><span>${escHtml(custName)}</span></div>
+      <div><b>耕作地點 LOCATION</b><span>${county}${township?township:''}</span></div>
+      <div><b>栽培作物 CROP</b><span>${crop.name}${cropItem?'　'+cropItem:''}</span></div>
+      <div><b>耕作面積 AREA</b><span>${area>0?area+' 分地':'—'}</span></div>
+    </div>
+    <div class="report-body">
+    ${custDetailHtml}
+    <div class="note">以 <b>${basisLabel}</b> 為基準換算:客戶每分地施用原肥合計 <b>${fmt(totCUse)} kg</b>,需改用 <b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 的「${escHtml(o.name)}」可達相同${basis==='same'?'用量':basisLabel}供應。</div>
+    ${availHtml}
+
+    <div class="table-wrap"><table class="cmp-table"><thead><tr>
+      <th>項目</th><th><span class="use-tag use-old">原有使用</span><br>${cLabel}</th><th><span class="use-tag use-new">新品換用</span><br>${escHtml(o.name)}<br>(${fmt(ourUse)}kg/分)</th><th>差異(我方−客戶)</th></tr></thead><tbody>
+      <tr><td>氮 N (kg/分)</td><td>${totCN.toFixed(2)}</td><td>${oN.toFixed(2)}</td><td>${diff(totCN,oN)}</td></tr>
+      <tr><td>磷 P₂O₅ (kg/分)</td><td>${totCP.toFixed(2)}</td><td>${oP.toFixed(2)}</td><td>${diff(totCP,oP)}</td></tr>
+      <tr><td>鉀 K₂O (kg/分)</td><td>${totCK.toFixed(2)}</td><td>${oK.toFixed(2)}</td><td>${diff(totCK,oK)}</td></tr>
+      <tr><td>有機質 (kg/分)</td><td>${totCOM.toFixed(2)}</td><td>${oOM.toFixed(2)}</td><td>${diff(totCOM,oOM)}</td></tr>
+      ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td></tr>`:''}
+      </tbody></table></div>
+
+    <h3>微量元素與成本比較</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">微量元素差異</div>
+        <div class="result-grid" style="grid-template-columns:repeat(2,1fr);">
+          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差</div></div>
+          <div class="stat"><div class="v" style="font-size:20px;">${diffRaw(totCUse*cAgg.cu/1e6*1000,ourUse*o.cu/1e6*1000)}</div><div class="l">Cu差</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--brown);text-transform:uppercase;margin-bottom:8px;">成本(每分地)</div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥</div></div>
+          <div class="stat cost"><div class="v" style="font-size:18px;">${(ourUse*o.price).toFixed(0)}</div><div class="l">我方</div></div>
+          <div class="stat ${(totCCost-ourUse*o.price)>=0?'':'warn'}"><div class="v" style="font-size:16px;">${totCCost-ourUse*o.price>=0?'省':'多'}<br>${Math.abs(totCCost-ourUse*o.price).toFixed(0)}</div><div class="l">差額</div></div>
+        </div>
+      </div>
+    </div>
+
+    ${areaHtml}
+
+    ${allOther?`<div class="note" style="margin-top:14px;">⚠️ <b>客戶原肥標示、我方產品未列出的成分</b>:<br>${allOther.split('、').map(s=>`<span class="tag">${s}</span>`).join('')}</div>`:''}
+
+    <h3>施肥評估與建議</h3>
+    <p class="mini" style="margin-top:-4px;">針對「${crop.name}」由換算結果自動研判,僅供施肥規劃參考。</p>
+    ${(()=>{const ins=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
+
+    <div class="report-disclaimer"><b>說明：</b>本報告之養分含量、礦化率（當季氮素有效率）及成本等數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考。有機質肥料之有機態氮須經土壤微生物礦化方為作物當季吸收，其有效率受土溫、濕度、碳氮比與微生物活性影響而異。正式採購與施肥決策，請以實際土壤檢測及肥料化驗報告為準。</div>
+    <div class="report-sign">
+      <div class="sg"><span class="lab">承辦業務代表</span><div class="ln">碩成肥料　莊政遠　（簽章）</div></div>
+      <div class="sg"><span class="lab">客戶簽認</span><div class="ln">簽名 ／ 日期</div></div>
+      <div class="seal">碩成肥料<br>公司用印</div>
+    </div>
+    </div>
+    <div class="report-footer">愛護臺灣土地<span class="leaf">🌱</span>種出好田地</div>
+  </div>`;
+
+  const costC=totCCost, costO=ourUse*o.price;
+
+  // 純文字報告(供複製)
+  const strip=s=>s.replace(/<[^>]+>/g,'');
+  const dd=(a,b)=>{const d=b-a;return (d>=0?'+':'')+d.toFixed(2);};
+  const ins2=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC,costO,cOther:allOther});
+  let rpt=`【肥料替代與施肥建議對照表】\n客戶:${custName}　${county}${township}　作物:${crop.name}　日期:${today}\n`;
+  if(area>0)rpt+=`耕作面積:${area}分地\n`;
+  if(validProds.length>1){
+    rpt+=`\n客戶原有肥料(${validProds.length}種):\n`;
+    validProds.forEach((p,idx)=>{rpt+=`  ${idx+1}. ${p.name||'未命名'}(${p.use}kg/分　N${p.n}%/P${p.p}%/K${p.k}%　${p.price>0?p.price+'元/kg':'無報價'})\n`;});
+    rpt+=`  合計 ${totCUse}kg/分　N=${totCN.toFixed(2)} P=${totCP.toFixed(2)} K=${totCK.toFixed(2)} kg/分\n`;
+  }else{
+    rpt+=`\n客戶原肥:${validProds[0].name||'未命名'}(${fmt(totCUse)} kg/分)\n`;
+  }
+  rpt+=`建議替代:${o.name}(${fmt(ourUse)} kg/分,以${basisLabel}換算等量)\n\n`+
+    `養分對照(kg/分,差異=我方−客戶)\n`+
+    `  氮 N    : ${totCN.toFixed(2)} → ${oN.toFixed(2)} (${dd(totCN,oN)})\n`+
+    `  磷 P2O5 : ${totCP.toFixed(2)} → ${oP.toFixed(2)} (${dd(totCP,oP)})\n`+
+    `  鉀 K2O  : ${totCK.toFixed(2)} → ${oK.toFixed(2)} (${dd(totCK,oK)})\n`+
+    `  有機質  : ${totCOM.toFixed(2)} → ${oOM.toFixed(2)} (${dd(totCOM,oOM)})\n`;
+  if(totCN>0||o.n>0)rpt+=`\n有效養分對照(礦化後可吸收氮,kg/分)\n`+
+    `  客戶原肥 : 全氮 ${totCN.toFixed(2)} × 礦化率 ${cAvgMinr.toFixed(0)}% = 有效氮 ${totCAvailN.toFixed(2)}\n`+
+    `  我方產品 : 全氮 ${oN.toFixed(2)} × 礦化率 ${o.minr.toFixed(0)}% = 有效氮 ${oAvailN.toFixed(2)}\n`;
+  if(costC>0||costO>0)rpt+=`\n成本(每分地):原肥 ${costC.toFixed(0)} 元 → 我方 ${costO.toFixed(0)} 元(${costC-costO>=0?'省':'多'} ${Math.abs(costC-costO).toFixed(0)} 元)`;
+  if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${(ourUse*area*o.price).toFixed(0)} 元`;
+  rpt+=`\n\n【植物醫生見解】\n`+ins2.map(x=>`■ ${x.t}\n  ${strip(x.b)}`).join('\n\n');
+  window._report=rpt;
+
+  document.getElementById('convertResult').style.display='block';
+  document.getElementById('convertOut').innerHTML=html;
+
+  // 業務話術卡片
+  const talkCard=document.getElementById('salesTalkCard');
+  const talkOut=document.getElementById('salesTalkOut');
+  if(talkCard&&talkOut){
+    talkCard.style.display='block';
+    const pts=buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName});
+    talkOut.innerHTML=pts.map(p=>`<div class="doc-item" style="border-left-color:var(--accent);"><div class="doc-t">${p.icon} ${p.title}</div><div class="doc-b">${p.body}</div></div>`).join('');
+    talkCard.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+function copyReport(b){
+  if(!window._report){alert('請先執行換算');return;}
+  navigator.clipboard.writeText(window._report).then(
+    ()=>{const t=b.textContent;b.textContent='✓ 已複製';setTimeout(()=>b.textContent=t,1500);},
+    ()=>{prompt('複製失敗,請手動選取:',window._report);}
+  );
+}
+function diffRaw(a,b){const d=b-a;const s=d>=0?'+':'';return s+d.toFixed(2);}
+
+/* ---------- 植物醫生規則式判讀 ---------- */
+function buildDoctor(x){
+  const ins=[], names=['氮','磷','鉀'];
+  const supp={0:'高氮資材(尿素、硫酸銨,或高氮有機肥、魚粉、豆粕)',1:'磷肥(過磷酸鈣、骨粉)',2:'鉀肥(硫酸鉀、氯化鉀或草木灰)'};
+  const id=x.crop.ideal, isum=id[0]+id[1]+id[2]||1, ip=id.map(v=>v/isum);
+  const osum=(x.o.n+x.o.p+x.o.k)||1, op=[x.o.n/osum,x.o.p/osum,x.o.k/osum];
+
+  ins.push({type:'info',t:'🌾 作物養分定位',b:`本作物「${x.crop.name}」${x.crop.focus}。${x.crop.advice}`});
+
+  let low=[],high=[];
+  for(let i=0;i<3;i++){ if(op[i]<ip[i]*0.7)low.push(i); else if(op[i]>ip[i]*1.4)high.push(i); }
+  if(low.length||high.length){
+    let b='';
+    if(low.length)b+=`相對於本作物需求,我方產品<b>${low.map(i=>names[i]).join('、')}比例偏低</b>,建議搭配補充 ${low.map(i=>supp[i]).join('；')}。`;
+    if(high.length)b+=`${low.length?' ':''}我方產品<b>${high.map(i=>names[i]).join('、')}比例偏高</b>${high.includes(1)?',長期單施宜注意土壤磷酸鹽累積':''}。`;
+    ins.push({type:'warn',t:'⚖️ NPK 比例與作物需求適配',b});
+  }else{
+    ins.push({type:'good',t:'⚖️ NPK 比例與作物需求適配',b:'我方產品氮磷鉀比例與本作物需求大致相符,適配度良好。'});
+  }
+
+  if(x.basis!=='same'){
+    const dP=x.oP-x.cP, dK=x.oK-x.cK, parts=[];
+    if(dP>0.05)parts.push(`磷供應較原本<b class="pos">多 ${dP.toFixed(1)} kg/分</b>`);
+    else if(dP<-0.05)parts.push(`磷供應較原本<b class="neg">少 ${(-dP).toFixed(1)} kg/分</b>(可補磷肥)`);
+    if(dK>0.05)parts.push(`鉀供應<b class="pos">多 ${dK.toFixed(1)} kg/分</b>`);
+    else if(dK<-0.05)parts.push(`鉀供應<b class="neg">少 ${(-dK).toFixed(1)} kg/分</b>(建議補鉀)`);
+    if(parts.length)ins.push({type:'info',t:'🔄 替代後養分變化',b:`以${x.basisLabel}換算等量替代後,`+parts.join('、')+'。'+(dP>0.5?' 有機肥磷多來自禽畜糞,連作田區宜定期檢測土壤有效磷。':'')});
+  }
+
+  if(x.oOM>0)ins.push({type:'good',t:'🌱 有機質效益',b:`改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg)。有機質提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是本產品相對化學肥的核心優勢。`});
+
+  if(x.cOther)ins.push({type:'warn',t:'🔬 微量元素補充',b:`客戶原肥另標示「${x.cOther}」,我方產品未列出。若本作物有此需求,建議另行補充或調整配方。`});
+
+  if(x.o.cu>100||x.o.zn>500)ins.push({type:'warn',t:'⚠️ 重金屬注意',b:`我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`});
+
+  if(x.costC>0&&x.costO>0){
+    const d=x.costO-x.costC, pct=Math.abs(d/x.costC*100), cheaper=d<0;
+    ins.push({type:cheaper?'good':'warn',t:'💰 成本效益(每分地)',
+      b:`原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元,`+
+        (cheaper?`<b class="pos">每分地省 ${(-d).toFixed(0)} 元(↓${pct.toFixed(0)}%)</b>。`
+                :`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`)});
+  }else{
+    ins.push({type:'info',t:'💰 成本效益',b:'於上方填入雙方單價,即可自動比較每分地肥料成本。'});
+  }
+
+  ins.push({type:'info',t:'📋 施用建議',b:'有機質肥宜作基肥,整地時施入並確保腐熟(碳氮比降至約 15 以下);速效養分不足部分搭配少量化學追肥,達到減肥增效、養土護根。'});
+  return ins;
+}
+
+/* ---------- 縣市與鄉鎮二級選單 ---------- */
+function populateCounties(){
+  const s=document.getElementById('county');
+  s.innerHTML='<option value="">-- 請選擇縣市 --</option>'+
+    Object.keys(TAIWAN_AREAS).map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function fillTownship(){
+  const countyVal=document.getElementById('county').value;
+  const townships=TAIWAN_AREAS[countyVal]||[];
+  const s=document.getElementById('township');
+  s.innerHTML='<option value="">-- 請選擇鄉鎮 --</option>'+
+    townships.map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+/* 包裝→單位成本計算 */
+function calcUnit(side){
+  const p=side;
+  const bagPrice=gv(p+'Bag'), bagKg=gv(p+'BagKg'), sub=gv(p+'Sub');
+  let unitCost=0;
+  if(bagKg>0) unitCost=(bagPrice-sub)/bagKg;
+  document.getElementById(p+'Price').value=unitCost>0?unitCost.toFixed(2):0;
+  const note=document.getElementById(p+'UnitNote');
+  note.innerHTML=`扣補助後單位成本:<b>${unitCost>0?unitCost.toFixed(2):'-'} 元/kg</b>`;
+}
+
+/* ========== CRM 客戶帶入 ========== */
+const CROP_KW_MAP=[
+  {i:6, kw:['水稻','稻米','稻']},
+  {i:7, kw:['茶葉','茶樹','茶']},
+  {i:5, kw:['芒果','柑橘','柳橙','檸檬','荔枝','龍眼','鳳梨','西瓜','哈密瓜','番石榴','楊桃','釋迦','蓮霧','木瓜','枇杷','果樹','橘']},
+  {i:3, kw:['番茄','茄子','胡瓜','苦瓜','絲瓜','冬瓜','甜椒','辣椒','小黃瓜','瓜']},
+  {i:1, kw:['小白菜','青江','萵苣','菠菜','莧菜','空心菜','韭菜','A菜','葉菜']},
+  {i:2, kw:['高麗菜','包心','結球']},
+  {i:4, kw:['蘿蔔','馬鈴薯','薑','芋頭','地瓜','甘藷']},
+  {i:8, kw:['玉米','高粱','雜糧']},
+  {i:10,kw:['花生','大豆','毛豆','豆科','豆']},
+  {i:9, kw:['蘭花','菊花','玫瑰','百合','花卉']},
+];
+
+function openCRMPicker(){
+  // 先看是否有 CRM 主動發起的匯入（CRM 點按鈕→開此頁時寫入）
+  try{
+    const pending=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
+    if(pending){ localStorage.removeItem('fert_crm_import'); applyCRMData(pending); return; }
+  }catch(e){}
+
+  let custs=[];
+  try{ custs=JSON.parse(localStorage.getItem('crm_customers')||'[]'); }catch(e){}
+  custs=custs.filter(c=>!c.inactive);
+  if(!custs.length){ alert('客戶管理系統尚無客戶資料，請先在 CRM 新增客戶。'); return; }
+  window._crmCusts=custs;
+
+  const bg=document.createElement('div');
+  bg.className='crm-picker-bg'; bg.id='crmPickerBg';
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`
+    <div class="crm-picker">
+      <div class="crm-picker-head">
+        <h3>📥 從客戶管理系統選取客戶</h3>
+        <input id="crmPickerQ" type="text" placeholder="搜尋客戶名稱、地址、作物…" oninput="renderCRMItems()">
+      </div>
+      <div class="crm-picker-list" id="crmPickerList"></div>
+      <div class="crm-picker-foot">
+        <button class="btn ghost sm" onclick="document.getElementById('crmPickerBg').remove()">取消</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  renderCRMItems();
+  setTimeout(()=>document.getElementById('crmPickerQ')?.focus(),60);
+}
+
+function renderCRMItems(){
+  const q=(document.getElementById('crmPickerQ')?.value||'').toLowerCase();
+  const custs=window._crmCusts||[];
+  const list=document.getElementById('crmPickerList');
+  if(!list)return;
+  const filtered=q?custs.filter(c=>(c.name+c.address+(c.crops||[]).join('')).toLowerCase().includes(q)):custs;
+  if(!filtered.length){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">無符合結果</div>'; return; }
+  list.innerHTML=filtered.slice(0,60).map(c=>{
+    const j=custs.indexOf(c);
+    const area=c.plantArea?`${c.plantArea}${c.plantAreaUnit||'公頃'}`:'';
+    const crops=Array.isArray(c.crops)&&c.crops.length?c.crops.slice(0,3).join('、'):'';
+    const city=(c.address||'').match(/^(.*?[縣市])/)?.[1]||'';
+    return `<div class="crm-picker-item" onclick="pickCRMCust(${j})">
+      <div class="nm">${escHtml(c.name)}</div>
+      <div class="sb">${[city,area,crops].filter(Boolean).join(' · ')}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickCRMCust(idx){
+  const c=(window._crmCusts||[])[idx]; if(!c)return;
+  document.getElementById('crmPickerBg')?.remove();
+  applyCRMData(c);
+}
+
+function applyCRMData(c){
+  // 客戶名稱
+  const nameEl=document.getElementById('custName');
+  if(nameEl) nameEl.value=c.name||'';
+
+  // 縣市 & 鄉鎮
+  const addr=c.address||'';
+  const countyM=addr.match(/^(.*?[縣市])/);
+  const countyName=countyM?countyM[1]:'';
+  const countySel=document.getElementById('county');
+  if(countySel&&countyName){
+    const norm=s=>(s||'').replace(/臺/g,'台');
+    const opt=[...countySel.options].find(o=>o.value&&norm(o.value)===norm(countyName));
+    if(opt){ countySel.value=opt.value; fillTownship(); }
+    const rest=addr.slice(countyName.length);
+    const townM=rest.match(/^([^\d\s,，、]{2,5}[鄉鎮市區])/);
+    if(townM){
+      setTimeout(()=>{
+        const ts=document.getElementById('township');
+        if(ts){ const to=[...ts.options].find(o=>o.value===townM[1]); if(to) ts.value=to.value; }
+      },80);
+    }
+  }
+
+  // 面積（公頃→分地，1公頃≈10.3分地；甲→分地，1甲≈9.7分地）
+  if(c.plantArea){
+    const aEl=document.getElementById('area');
+    if(aEl){
+      const unit=c.plantAreaUnit||'公頃';
+      let fen=parseFloat(c.plantArea)||0;
+      if(unit.includes('公頃')) fen=+(fen*10.3).toFixed(1);
+      else if(unit.includes('甲')) fen=+(fen*9.7).toFixed(1);
+      aEl.value=fen;
+    }
+  }
+
+  // 作物（嘗試對應分類）
+  const crops=Array.isArray(c.crops)&&c.crops.length?c.crops:(c.crop?[c.crop]:[]);
+  if(crops.length){
+    const ci=document.getElementById('cropItem');
+    if(ci) ci.value=crops.join('、');
+    const blob=crops.join('');
+    const match=CROP_KW_MAP.find(r=>r.kw.some(k=>blob.includes(k)));
+    if(match){ const cs=document.getElementById('crop'); if(cs) cs.value=match.i; }
+  }
+
+  flash('crmImportMsg',`✓ 已帶入「${c.name}」`);
+  document.getElementById('custName')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// 頁面啟動時自動處理 CRM 發起的帶入（需在 DOM ready 後執行）
+window.addEventListener('DOMContentLoaded',()=>{
+  try{
+    const d=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
+    if(d){ localStorage.removeItem('fert_crm_import'); setTimeout(()=>applyCRMData(d),200); }
+  }catch(e){}
+});
+
+/* ========== 市場資訊分頁 ========== */
+let newsItems=[];
+
+/* 簡易 CSV 解析（支援帶引號欄位） */
+function parseCSVLine(line){
+  const cols=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else inQ=!inQ;
+    } else if(ch===','&&!inQ){cols.push(cur);cur='';}
+    else cur+=ch;
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function loadNewsCSV(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    const lines=text.trim().split(/\r?\n/);
+    if(lines.length<2){alert('CSV 格式不符或無資料');return;}
+    const header=parseCSVLine(lines[0]);
+    const idx={
+      type: header.findIndex(h=>h.includes('來源類型')),
+      site: header.findIndex(h=>h.includes('來源網站')),
+      title:header.findIndex(h=>h.includes('標題')),
+      link: header.findIndex(h=>h.includes('連結')),
+      kw:   header.findIndex(h=>h.includes('命中關鍵字')),
+      date: header.findIndex(h=>h.includes('發布日期')),
+      sum:  header.findIndex(h=>h.includes('摘要')),
+    };
+    newsItems=[];
+    for(let i=1;i<lines.length;i++){
+      const c=parseCSVLine(lines[i]);
+      if(!c[idx.title]&&!c[idx.link])continue;
+      newsItems.push({
+        type:  c[idx.type]||'其他',
+        site:  c[idx.site]||'',
+        title: c[idx.title]||'',
+        link:  c[idx.link]||'',
+        kw:    (c[idx.kw]||'').replace(/^—$/,''),
+        date:  c[idx.date]||'',
+        sum:   c[idx.sum]||'',
+      });
+    }
+    // 填充篩選下拉選單
+    const types=[...new Set(newsItems.map(n=>n.type))].sort();
+    const sites=[...new Set(newsItems.map(n=>n.site).filter(Boolean))].sort();
+    const tSel=document.getElementById('newsType');
+    const sSel=document.getElementById('newsSite');
+    tSel.innerHTML='<option value="">全部類型</option>'+types.map(t=>`<option>${t}</option>`).join('');
+    sSel.innerHTML='<option value="">全部來源</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+    // 顯示篩選列、隱藏上傳區
+    document.getElementById('newsUploadArea').style.display='none';
+    document.getElementById('newsFilterRow').style.display='block';
+    renderNews();
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value=''; // 允許重複選同一檔案
+}
+
+function clearNewsFilter(){
+  document.getElementById('newsSearch').value='';
+  document.getElementById('newsType').value='';
+  document.getElementById('newsSite').value='';
+  renderNews();
+}
+
+function newsHL(text,q){
+  if(!q||!text)return text||'';
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  return text.replace(re,m=>`<mark style="background:#fff3cd;padding:0 1px;">${m}</mark>`);
+}
+
+function renderNews(){
+  const container=document.getElementById('newsCards');
+  const stat=document.getElementById('newsStat');
+  if(!container)return;
+  if(!newsItems.length){
+    container.innerHTML='<div class="empty">尚未載入資料 — 請點上方開啟 CSV 檔</div>';
+    return;
+  }
+  const q=(document.getElementById('newsSearch')?.value||'').toLowerCase().trim();
+  const t=(document.getElementById('newsType')?.value||'');
+  const s=(document.getElementById('newsSite')?.value||'');
+
+  const filtered=newsItems.filter(n=>{
+    if(t&&n.type!==t)return false;
+    if(s&&n.site!==s)return false;
+    if(q){
+      return n.title.toLowerCase().includes(q)||
+             n.site.toLowerCase().includes(q)||
+             n.kw.toLowerCase().includes(q)||
+             n.sum.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  if(stat)stat.textContent=`共 ${newsItems.length} 筆，目前顯示 ${filtered.length} 筆`;
+
+  if(!filtered.length){
+    container.innerHTML='<div class="empty">無符合條件的資料，請調整篩選條件</div>';
+    return;
+  }
+
+  // 按 來源類型 分組
+  const groups={};
+  filtered.forEach(n=>{
+    if(!groups[n.type])groups[n.type]=[];
+    groups[n.type].push(n);
+  });
+  const TYPE_ICON={'政府公告':'🏛️','新聞':'📰','學術':'📖'};
+
+  let html='';
+  for(const[type,items]of Object.entries(groups)){
+    const icon=TYPE_ICON[type]||'📄';
+    html+=`<div class="news-group-h">${icon} ${type}<span class="cnt">${items.length}</span></div>
+    <div class="news-grid">`;
+    items.forEach(n=>{
+      const kwHtml=n.kw?`<span class="news-kw">🔑 ${n.kw}</span>`:'';
+      html+=`<div class="news-item" onclick="${n.link?`window.open(${JSON.stringify(n.link)},'_blank')`:''}" title="${n.link||''}">
+        <div class="news-title">${newsHL(n.title,q)}${kwHtml}</div>
+        <div class="news-meta">
+          <span>📡 ${newsHL(n.site,q)}</span>
+          ${n.date?`<span>📅 ${n.date}</span>`:''}
+          ${n.link?`<span style="color:var(--green);font-size:11px;">↗ 開啟原文</span>`:''}
+        </div>
+        ${n.sum?`<div class="news-summary">${newsHL(n.sum,q)}</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  }
+  container.innerHTML=html;
+}
+
+/* ---------- 初始化 ---------- */
+load();
+populateCrops();populateCounties();
+addCustProd(); // 預設一筆空的客戶肥料品項
+refreshMarketSelects();
+</script>
+</body>
+</html>
