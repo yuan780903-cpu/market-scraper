@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light only">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src https://*.line.me; base-uri 'self'; form-action 'self' https://*.line.me; object-src 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src 'self'; base-uri 'self'; form-action 'self' https://*.ecpay.com.tw; object-src 'none'; frame-ancestors 'none'">
 <title>人生實用說明書系統 · 您的專屬人生導航 — 斗數十二宮 × 四柱八字</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1198,6 +1198,8 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
   background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
 .paywall .pwpay-h{text-align:center;font-size:1rem;font-weight:800;color:var(--purple);margin-bottom:12px;letter-spacing:.5px}
+.paywall .pwpay-note{text-align:center;font-size:.86rem;line-height:1.7;color:var(--ink-soft,var(--ink));margin:0 auto 14px;max-width:420px}
+.paywall .pwpay-note b{color:var(--gold-deep)}
 .paywall .pwpay-steps{list-style:none;counter-reset:s;padding:0;margin:0 0 14px}
 .paywall .pwpay-steps li{counter-increment:s;position:relative;padding:8px 0 8px 38px;font-size:.9rem;line-height:1.7;color:var(--ink);
   border-bottom:1px dashed var(--line-soft)}
@@ -3942,7 +3944,7 @@ function timeLabel(h){
    並把該碼標記為已用，全世界只能用一次；16888 為無限次「超級萬用碼」。
    命理計算全程在本機，不上傳任何個資；只把「4 位數字的碼」送去驗證。 */
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
-const LC_PRICE="88 元";   // ← 想改價格改這裡（結緣價）
+const LC_PRICE="188 元";   // ← 想改價格改這裡（結緣價）
 const LC_ORIG="888 元";    // ← 原價（顯示刪除線）
 const LC_CONTACT="完成付款後，請以 LINE 告知 聖源大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
@@ -4802,19 +4804,12 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="lpsec">支援信用卡／ATM／超商，完成付款後立即自動開啟完整報告，免輸入任何代碼。</div>
     </div>
     <div id="pwManual" class="pwpay">
-      <div class="pwpay-h">結緣付款 · 兩步驟解鎖</div>
-      <ol class="pwpay-steps">
-        <li>以 <b>LINE Pay 轉帳 <span class="hl">${LC_PRICE}</span></b>：加 聖源大師 LINE（ID：<b>yuan780903</b>，或手機 <b>0910-373-286</b>），用 LINE Pay 轉帳結緣價，並附上「<b>命主姓名 ＋ 出生年月日</b>」。</li>
-        <li>確認收款後，聖源大師將回傳一組<b>專屬萬用碼</b>；於下方輸入即可立即開啟本報告完整內容。</li>
-      </ol>
+      <div class="pwpay-h">已持有萬用碼？</div>
+      <div class="pwpay-note">若您已取得 聖源大師 提供的專屬萬用碼，於下方輸入即可立即開啟本報告完整內容。如需協助，請洽 聖源大師（LINE：<b>yuan780903</b>）。</div>
       <div class="pwform">
         <input id="lcInput" type="text" inputmode="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
         <button type="button" onclick="lcUnlock()">解鎖</button>
       </div>
-    </div>
-    <div id="lpBtnWrap" class="lpwrap" style="display:none">
-      <button id="lpBtn" class="lpbtn" onclick="lcStartLinePay()"><span class="lpmark">LINE</span>Pay 付款・付完自動解鎖</button>
-      <div class="lpsec">透過 LINE Pay 安全付款，完成後立即自動開啟完整報告，免輸入任何代碼。</div>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
@@ -5293,15 +5288,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   finishRender(subText);
   lcRefresh();
-  lpMaybeShowButton();
   ecMaybeShowButton();
   // 四化飛星飛線盤：初次預設顯示命宮飛化
   _flyBindResize();
   requestAnimationFrame(()=>{if(document.getElementById('flyChart'))zwFly(zw.ming);});
 }
 
-/* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel；綠界 ECPay：?ecback） */
-lpHandleReturn();
+/* 進站時處理付款返回（綠界 ECPay：?ecback） */
 ecHandleReturn();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
