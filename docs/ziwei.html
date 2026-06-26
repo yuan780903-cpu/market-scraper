@@ -1243,6 +1243,9 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 .paywall .lpbtn:active{transform:translateY(0)}
 .paywall .lpbtn .lpmark{background:#fff;color:#06C755;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem}
 .paywall .lpsec{font-size:.74rem;color:var(--ink-faint);margin-top:7px}
+.paywall .ecbtn{background:#f25c05;box-shadow:0 8px 20px rgba(242,92,5,.35)}
+.paywall .ecbtn:hover{box-shadow:0 12px 26px rgba(242,92,5,.45)}
+.paywall .ecbtn .ecmark{background:#fff;color:#f25c05;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem;letter-spacing:.5px}
 .paywall .pwor{position:relative;text-align:center;margin:16px auto 12px;max-width:430px;color:var(--ink-faint);font-size:.78rem}
 .paywall .pwor::before{content:"";position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--line-soft)}
 .paywall .pwor span{position:relative;background:#fdf6e6;padding:0 12px}
@@ -4128,6 +4131,77 @@ function lpRestoreAndRender(form){
   setTimeout(()=>{const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});},2600);
 }
 
+/* ===== 綠界 ECPay 自動解鎖 =====
+   流程：前端送出 key(報告識別)+ret(返回網址) → Worker 建單回 {action,params}；
+   前端組成隱藏表單 POST 至綠界付款頁；顧客付款後綠界「背景」POST 我方 /ecpay/return 標記已付款，
+   並導回本頁帶 ?ecback=訂單號；本頁輪詢 /ecpay/state 確認已付款 → 寫入本機解鎖 → 自動重排該命盤。 */
+let __ecInfo=undefined; // 快取 /ecpay/ready
+async function ecReady(){
+  if(__ecInfo!==undefined)return __ecInfo;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/ready',{cache:'no-store'});
+    const j=await r.json();__ecInfo=(j&&j.enabled)?j:null;
+  }catch(e){__ecInfo=null;}
+  return __ecInfo;
+}
+async function ecMaybeShowButton(){
+  const info=await ecReady();if(!info)return;
+  // 只在正式金流(prod)對一般訪客顯示；測試(stage)需網址加 ?lptest=1 才出現，避免真實客人看到測試按鈕。
+  const testMode=/[?&]lptest=1\b/.test(location.search);
+  if(info.mode!=='prod'&&!testMode)return;
+  const w=document.getElementById('ecBtnWrap');if(w)w.style.display='';
+  const dw=document.getElementById('discWrap');if(dw)dw.style.display='';
+  if(info.mode!=='prod'){
+    const sec=w&&w.querySelector('.lpsec');
+    if(sec&&!sec.dataset.sb){sec.dataset.sb='1';sec.insertAdjacentHTML('afterend','<div class="lpsec" style="color:#c2576f">（目前為綠界測試模式，非真實扣款）</div>');}
+  }
+}
+async function ecStartEcpay(){
+  const msg=document.getElementById('lcMsg');
+  if(!window.__LC){return;}
+  const key=await lcKey(window.__LC.payload);
+  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
+  form.gender=gender;
+  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
+  if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
+  const ret=location.origin+location.pathname;
+  const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ,{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.action&&j.params){
+      const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
+      Object.keys(j.params).forEach(k=>{const i=document.createElement('input');i.type='hidden';i.name=k;i.value=j.params[k];f.appendChild(i);});
+      document.body.appendChild(f);f.submit();
+    }else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請改用萬用碼或稍後再試。';msg.className='lcmsg err';}
+  }catch(e){if(msg){msg.textContent='✗ 無法連線付款伺服器，請稍後再試。';msg.className='lcmsg err';}}
+}
+async function ecHandleReturn(){
+  const p=new URLSearchParams(location.search);
+  const back=p.get('ecback');
+  if(!back)return false;
+  const clean=()=>{try{history.replaceState(null,'',location.origin+location.pathname);}catch(e){}};
+  let pend=null;try{pend=JSON.parse(localStorage.getItem('zw_ec_pending')||'null');}catch(e){}
+  if(pend){
+    // 綠界背景通知可能略晚於顧客返回，故輪詢數次
+    for(let i=0;i<12;i++){
+      try{
+        const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(back),{cache:'no-store'});
+        const j=await r.json();
+        if(j&&j.paid&&j.key===pend.key){
+          try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
+          localStorage.removeItem('zw_ec_pending');clean();
+          lpRestoreAndRender(pend.form);return true;
+        }
+      }catch(e){}
+      await new Promise(r=>setTimeout(r,1500));
+    }
+    localStorage.removeItem('zw_ec_pending');clean();
+    alert('付款確認中或未完成。若您已完成付款卻未自動解鎖，請稍候重新整理，或聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
+  }
+  clean();return true;
+}
+
 
 /* ===== 觸控彈窗：宮位／大運白話解說 ===== */
 function zwOpenModal(tag,title,sub,bodyHTML){
@@ -4723,6 +4797,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       </div>
       <div id="discMsg" class="discmsg"></div>
     </div>
+    <div id="ecBtnWrap" class="lpwrap" style="display:none">
+      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界</span>安全付款・付完自動解鎖</button>
+      <div class="lpsec">支援信用卡／ATM／超商，完成付款後立即自動開啟完整報告，免輸入任何代碼。</div>
+    </div>
     <div id="pwManual" class="pwpay">
       <div class="pwpay-h">結緣付款 · 兩步驟解鎖</div>
       <ol class="pwpay-steps">
@@ -5216,13 +5294,15 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   finishRender(subText);
   lcRefresh();
   lpMaybeShowButton();
+  ecMaybeShowButton();
   // 四化飛星飛線盤：初次預設顯示命宮飛化
   _flyBindResize();
   requestAnimationFrame(()=>{if(document.getElementById('flyChart'))zwFly(zw.ming);});
 }
 
-/* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel） */
+/* 進站時處理付款返回（LINE Pay：?lpok/?lpfail/?lpcancel；綠界 ECPay：?ecback） */
 lpHandleReturn();
+ecHandleReturn();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
 /* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
