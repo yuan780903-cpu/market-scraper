@@ -1621,7 +1621,7 @@ function runConvert(){
 
     <h3>施肥評估與建議</h3>
     <p class="mini" style="margin-top:-4px;">針對「${crop.name}」由換算結果自動研判,僅供施肥規劃參考。</p>
-    ${(()=>{const ins=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
+    ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
 
     <div class="report-disclaimer"><b>說明：</b>本報告之養分含量、礦化率（當季氮素有效率）及成本等數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考。有機質肥料之有機態氮須經土壤微生物礦化方為作物當季吸收，其有效率受土溫、濕度、碳氮比與微生物活性影響而異。正式採購與施肥決策，請以實際土壤檢測及肥料化驗報告為準。</div>
     <div class="report-sign">
@@ -1638,7 +1638,7 @@ function runConvert(){
   // 純文字報告(供複製)
   const strip=s=>s.replace(/<[^>]+>/g,'');
   const dd=(a,b)=>{const d=b-a;return (d>=0?'+':'')+d.toFixed(2);};
-  const ins2=buildDoctor({crop,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC,costO,cOther:allOther});
+  const ins2=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC,costO,cOther:allOther});
   let rpt=`【肥料替代與施肥建議對照表】\n客戶:${custName}　${county}${township}　作物:${crop.name}　日期:${today}\n`;
   if(area>0)rpt+=`耕作面積:${area}分地\n`;
   if(validProds.length>1){
@@ -1685,6 +1685,62 @@ function copyReport(b){
 function diffRaw(a,b){const d=b-a;const s=d>=0?'+':'';return s+d.toFixed(2);}
 
 /* ---------- 植物醫生規則式判讀 ---------- */
+
+/* ====== 全台區域肥培差異(依縣市自動判北/中/南/東/離島) ====== */
+const REGION_SETS={
+  北部:['基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣'],
+  中部:['台中市','彰化縣','南投縣','雲林縣'],
+  南部:['嘉義市','嘉義縣','台南市','高雄市','屏東縣'],
+  東部:['宜蘭縣','花蓮縣','台東縣'],
+  離島:['澎湖縣','金門縣','連江縣'],
+};
+function REGION_OF(county){
+  if(!county)return '';
+  const c=county.replace(/臺/g,'台').trim();
+  for(const r in REGION_SETS){ if(REGION_SETS[r].some(x=>c.indexOf(x.replace(/臺/g,'台'))>=0||c.indexOf(x)>=0))return r; }
+  return '';
+}
+const REGION_PROFILE={
+  北部:{climate:'冬季濕冷、東北季風雨多,一期作較南部晚(約2–3月)',caution:'台地多紅壤偏酸,重排水與酸化改良(配合石灰質資材調整pH),冬季低溫作物生長轉慢宜減量勤施。'},
+  中部:{climate:'日照充足、日夜溫差大、相對少雨需灌溉,為蔬果雜糧與花卉重要產區',caution:'濁水溪沖積平原地力佳但連作密集,注意連作障礙與旱季水分管理,有機質肥有助維持團粒與保肥。'},
+  南部:{climate:'高溫、生長季長、作期最早,可一二期作加裡作',caution:'部分濱海土壤偏鹼或具鹽分,夏季高溫易逼熟,注意補鈣、增加施肥次數並做好水分管理。'},
+  東部:{climate:'宜花東多雨、環境潔淨、為有機栽培重點帶',caution:'雨季養分易淋洗、颱風影響大,首重排水與分次少量施肥,有機質緩釋肥可降低淋洗損失。'},
+  離島:{climate:'風大、土層淺薄、保水保肥差、易缺水',caution:'宜重施有機質增厚耕作層、提升保水保肥,並做好防風與節水灌溉。'},
+};
+/* 各分類 × 區域的在地作期與肥培重點 */
+const CAT_REGION={
+  通用:{北部:'依作物別調整,北部作期偏晚、冬季低溫期減量勤施。',中部:'依作物別調整,把握日夜溫差利乾物累積,注意連作改土。',南部:'依作物別調整,作期早、可多期作,高溫期重水分與補鈣。',東部:'依作物別調整,多雨重排水與分次少量施肥。',離島:'依作物別調整,重有機質改土、防風與節水。'},
+  稻作:{北部:'一期作約2–3月插秧、6–7月收;二期作7–8月插秧、11月收,生長期長須注意稻熱病。',中部:'一期作1–2月插秧,濁水溪流域良質米產區、水源穩定,重整地基肥與穗肥管理。',南部:'一期作12月–1月即可插秧、作期最早,可一二期作加裡作,高溫期重後期鉀肥防倒伏。',東部:'宜花一期作約2–3月,多雨重排水與防倒伏,有機米產區、重基肥養地力。',離島:'水稻栽培極少,以旱作為主;若種植須加強保水與地力培養。'},
+  雜糧雜作:{北部:'多為水稻冬裡作(秋冬種小麥/蕎麥/甘藷),春雨注意排水。',中部:'雲彰投為雜糧重鎮(玉米/大豆/甘藷/落花生),秋冬裡作為主、溫差利乾物累積。',南部:'高溫作期早,春作與秋裡作皆可;甘蔗、芝麻、紅豆等旱作主產區,重灌溉與排水。',東部:'多雨重排水與分次施肥,花東有有機雜糧與薏苡栽培。',離島:'耐旱雜糧(高粱/甘藷/花生)為主,金門高粱著名,重防風保水與有機質改土。'},
+  蔬菜:{北部:'近都會、設施與葉菜周年供應;冬季低溫慢生、夏季高溫多病,重通風排水。',中部:'西螺彰化雲林為蔬菜大宗產區、周年密集輪作,注意連作障礙與土壤改良。',南部:'冬春為露天蔬菜盛產期、設施普遍;夏季高溫病蟲多,注意鹽分與高溫障礙。',東部:'潔淨有機蔬菜帶,雨多重排水與分次施肥,病害壓力相對低。',離島:'風大土淺以設施或防風蔬菜為主,重保水保肥與有機質改土。'},
+  果樹:{北部:'以溫帶與亞熱帶果樹為主(梨/桃/柑橘/柚),冬季低溫利花芽,雨多注意裂果與病害。',中部:'中海拔多元果樹帶(葡萄/梨/柑橘/番石榴),溫差利糖度,重產期調節。',南部:'熱帶果樹主產區(芒果/荔枝/龍眼/蓮霧/鳳梨/香蕉),花前嚴格控氮、果期重鉀,注意高溫與裂果。',東部:'多雨潔淨、有機果園帶(文旦/柚/釋迦/柑橘),首重排水防根病與裂果。',離島:'果樹少,以耐風耐旱小果樹為主,重防風與有機質改土。'},
+  茶與特用:{北部:'包種/東方美人等,濕冷雨多,重茶園排水與酸化土壤改良,各季採摘後追肥。',中部:'高山茶與凍頂烏龍帶,海拔高溫差大利胺基酸,重有機質養根與護坡。',南部:'低海拔茶與檳榔、咖啡、可可,高溫多次採收,重持續供肥與坡地水土保持。',東部:'有機茶與特用作物帶,多雨化肥淋洗快,宜緩釋有機質分次施用。',離島:'特用作物少,若栽培重防風與有機質改土。'},
+  花卉:{北部:'設施蘭花與盆花周年生產,冬季補溫補光,重介質保肥與稀薄液肥。',中部:'田尾彰化為花卉專區(菊花/玫瑰/盆花)、周年密集生產,注意連作與介質改良。',南部:'蝴蝶蘭等外銷蘭花重鎮(台南/屏東),設施溫控,重稀薄供肥與根域健康。',東部:'潔淨環境利種苗與球根花,多雨重排水與設施防雨。',離島:'花卉少,以耐風設施栽培為主。'},
+};
+/* 知名產區的作物在地事實(可選,僅補充參考) */
+const CROP_REGION_FACT={
+  '水稻':'西部平原(彰化/雲林/台南)與東部(宜蘭/花蓮/台東)為主要稻米帶,各區作期不同。',
+  '釋迦(鳳梨釋迦)':'台東為釋迦/鳳梨釋迦最大產區,冬果為主,可藉修剪行產期調節。',
+  '文旦柚':'台南麻豆、花蓮瑞穗(鶴岡)、雲林斗六為知名產區,中秋前採收,老欉風味佳。',
+  '芒果':'台南玉井/南化、屏東枋山為主產;愛文需高溫日照,花期忌雨與低溫。',
+  '蓮霧':'屏東(黑珍珠)為頂級產區,以產期調節技術冬春出果。',
+  '鳳梨':'嘉義/台南/高雄/屏東為主,金鑽鳳梨周年供應。',
+  '香蕉':'高雄旗山、屏東為主產區。',
+  '茶樹':'嘉義阿里山、南投鹿谷/杉林溪高山茶;新北坪林包種;新竹苗栗東方美人。',
+  '蝴蝶蘭':'台南、屏東為外銷蘭花核心,設施溫控栽培。',
+  '柑橘類(椪柑/桶柑/茂谷)':'台中東勢、苗栗、雲林古坑(柳丁)、台東(茂谷)等為產區。',
+  '葡萄':'彰化大村、南投、苗栗卓蘭為主,常行一年二收產期調節。',
+  '梨(高接梨/橫山梨)':'台中東勢/和平高接梨、苗栗卓蘭橫山梨為主。',
+  '火龍果':'彰化/南投/台南為主,周年多收。',
+  '甘蔗':'雲嘉南為傳統糖業帶。',
+  '咖啡':'雲林古坑、嘉義、台東、屏東為產區。',
+  '檳榔':'南投、屏東、嘉義為主要產區。',
+  '高粱':'金門高粱著名(供釀酒),耐旱耐瘠。',
+  '草莓':'苗栗大湖為最大產區,冬春採果。',
+  '木瓜':'台南/高雄/屏東/花蓮網室栽培普遍。',
+  '西瓜 / 甜瓜(洋香瓜)':'雲林、台南為西瓜甜瓜主產;花蓮西瓜亦著名。',
+};
+
 function buildDoctor(x){
   const ins=[], names=['氮','磷','鉀'];
   const supp={0:'高氮資材(尿素、硫酸銨,或高氮有機肥、魚粉、豆粕)',1:'磷肥(過磷酸鈣、骨粉)',2:'鉀肥(硫酸鉀、氯化鉀或草木灰)'};
@@ -1694,6 +1750,22 @@ function buildDoctor(x){
   ins.push({type:'info',t:'🌾 作物養分定位',b:`本作物「${x.crop.name}」${x.crop.focus}。${x.crop.advice}`});
 
   if(x.crop.season)ins.push({type:'info',t:'🗓️ 肥培管理時程',b:x.crop.season});
+  // 區域肥培差異(依縣市自動帶入)
+  {
+    const _rg=REGION_OF(x.county||'');
+    if(_rg){
+      const _pf=REGION_PROFILE[_rg];
+      const _ct=(CAT_REGION[x.crop.cat]||CAT_REGION['通用'])[_rg]||'';
+      const _ft=CROP_REGION_FACT[x.crop.name];
+      let _b=`<b>${_rg}</b>:${_pf.climate}。`;
+      if(_ct)_b+=`<br>・在地作期與重點:${_ct}`;
+      if(_ft)_b+=`<br>・在地產區參考:${_ft}`;
+      _b+=`<br>・土壤與注意:${_pf.caution}`;
+      ins.push({type:'info',t:`🧭 ${_rg}・在地肥培差異`,b:_b});
+    }else{
+      ins.push({type:'info',t:'🧭 區域肥培差異',b:'填入客戶「縣市」後,將自動依北部／中部／南部／東部／離島顯示該區域的在地作期、氣候與土壤肥培差異(本欄為通則參考,精確作期仍依當地農業改良場與實際田區為準)。'});
+    }
+  }
   if(x.crop.benefit)ins.push({type:'good',t:'🌿 改用碩成有機質肥的作物效益',b:`相較化學肥單施,${x.crop.benefit}`});
   if(x.crop.deficiency)ins.push({type:'warn',t:'🩺 缺素與肥傷警示',b:`${x.crop.deficiency}　建議搭配土壤／葉片檢測,針對性補充中微量元素。`});
 
