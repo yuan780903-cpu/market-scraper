@@ -550,7 +550,10 @@
       <div class="toolbar no-print" style="justify-content:flex-end;">
         <h2 style="margin-right:auto;">換算結果 & 專業報告</h2>
         <button class="btn ghost sm" onclick="copyReport(this)">📋 複製見解文字</button>
-        <button class="btn sm" onclick="window.print()">🖨 列印 / 存成PDF</button>
+        <button class="btn ghost sm" onclick="saveReportFile()">💾 存檔（含話術）</button>
+        <button class="btn ghost sm" onclick="document.getElementById('loadReportInput').click()">📂 讀取存檔</button>
+        <input id="loadReportInput" type="file" accept=".html,text/html" style="display:none;" onchange="loadReportFile(this)">
+        <button class="btn sm" onclick="printReport()">🖨 列印 / 存成PDF</button>
       </div>
       <div id="convertOut"></div>
     </div>
@@ -1717,11 +1720,6 @@ function runConvert(){
     ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
 
     <div class="report-disclaimer"><b>說明：</b>本報告之養分含量、礦化率（當季氮素有效率）及成本等數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考。有機質肥料之有機態氮須經土壤微生物礦化方為作物當季吸收，其有效率受土溫、濕度、碳氮比與微生物活性影響而異。正式採購與施肥決策，請以實際土壤檢測及肥料化驗報告為準。</div>
-    <div class="report-sign">
-      <div class="sg"><span class="lab">承辦業務代表</span><div class="ln">碩成肥料　莊政遠　（簽章）</div></div>
-      <div class="sg"><span class="lab">客戶簽認</span><div class="ln">簽名 ／ 日期</div></div>
-      <div class="seal">碩成肥料<br>公司用印</div>
-    </div>
     </div>
     <div class="report-footer">愛護臺灣土地<span class="leaf">🌱</span>種出好田地</div>
   </div>`;
@@ -1757,16 +1755,30 @@ function runConvert(){
 
   document.getElementById('convertResult').style.display='block';
   document.getElementById('convertOut').innerHTML=html;
+  window._reportHtml=html;
 
   // 業務話術卡片
   const talkCard=document.getElementById('salesTalkCard');
   const talkOut=document.getElementById('salesTalkOut');
+  let talkHtml='';
   if(talkCard&&talkOut){
     talkCard.style.display='block';
     const pts=buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName});
-    talkOut.innerHTML=pts.map(p=>`<div class="doc-item" style="border-left-color:var(--accent);"><div class="doc-t">${p.icon} ${p.title}</div><div class="doc-b">${p.body}</div></div>`).join('');
+    talkHtml=pts.map(p=>`<div class="doc-item" style="border-left-color:var(--accent);"><div class="doc-t">${p.icon} ${p.title}</div><div class="doc-b">${p.body}</div></div>`).join('');
+    talkOut.innerHTML=talkHtml;
     talkCard.scrollIntoView({behavior:'smooth',block:'start'});
   }
+  window._talkHtml=talkHtml;
+
+  // PDF 檔名 & 存檔資料
+  const _san=s=>(s||'').replace(/[\\/:*?"<>|　\s]+/g,'').replace(/[、，,]/g,'') || '未命名';
+  window._fileBase=`${_san(custName)}-${_san(crop.name)}-碩成肥料替代量報告`;
+  window._formState={
+    fields:['custName','county','township','crop','cropItem','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','oMinrSel','oMinr','salesNote']
+      .reduce((m,id)=>{const el=document.getElementById(id);if(el)m[id]=el.value;return m;},{}),
+    custProds:JSON.parse(JSON.stringify(custProds)),
+    oStrains:JSON.parse(JSON.stringify(oStrains))
+  };
 }
 function copyReport(b){
   if(!window._report){alert('請先執行換算');return;}
@@ -1774,6 +1786,82 @@ function copyReport(b){
     ()=>{const t=b.textContent;b.textContent='✓ 已複製';setTimeout(()=>b.textContent=t,1500);},
     ()=>{prompt('複製失敗,請手動選取:',window._report);}
   );
+}
+function printReport(){
+  if(!window._reportHtml){alert('請先執行換算');return;}
+  const prev=document.title;
+  document.title=window._fileBase||'碩成肥料替代量報告';
+  window.print();
+  setTimeout(()=>{document.title=prev;},800);
+}
+function saveReportFile(){
+  if(!window._reportHtml){alert('請先執行換算');return;}
+  const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  const note=(document.getElementById('salesNote')?.value||'').trim();
+  const noteHtml=note?`<h2 style="margin-top:26px;">📝 補充筆記</h2><div class="doc-item" style="border-left-color:var(--brown);white-space:pre-wrap;">${note.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`:'';
+  const stateJSON=JSON.stringify(window._formState||{});
+  const doc=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${window._fileBase||'碩成肥料替代量報告'}</title>
+<style>${css}
+body{background:#f4f1ea;margin:0;padding:22px;}
+.archive-wrap{max-width:1100px;margin:0 auto;}
+.archive-tag{display:inline-block;background:#2f6e41;color:#fff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;margin-bottom:14px;}
+.sales-block{background:#fff;border-radius:14px;padding:18px 20px;margin-top:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.sales-block h2{margin:0 0 6px;font-size:18px;color:#2f6e41;}
+@media print{body{background:#fff;padding:0;}.archive-tag,.archive-note{display:none;}@page{size:A4 landscape;margin:0.8cm 1cm;}}
+</style></head>
+<body><div class="archive-wrap">
+<div class="archive-tag">碩成肥料・替代量評估存檔　${new Date().toLocaleString('zh-TW')}</div>
+${window._reportHtml}
+<div class="sales-block">
+  <h2>📢 業務話術建議（內部參考）</h2>
+  <p style="color:#777;font-size:13px;margin:0 0 10px;">以下話術為業務拜訪說明用，列印報告時通常隱藏，此存檔特別保留供日後查閱。</p>
+  ${window._talkHtml||'<div style="color:#999;">（無）</div>'}
+  ${noteHtml}
+</div>
+<p class="archive-note" style="color:#aaa;font-size:12px;margin-top:18px;text-align:center;">此檔可用「肥料替代量換算」工具的「📂 讀取存檔」重新載入並編輯。</p>
+</div>
+<script type="application/json" id="ffStateJSON">${stateJSON.replace(/<\/script>/gi,'<\\/script>')}<\/script>
+</body></html>`;
+  const blob=new Blob([doc],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(window._fileBase||'碩成肥料替代量報告')+'.html';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+function loadReportFile(input){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const doc=new DOMParser().parseFromString(e.target.result,'text/html');
+      const tag=doc.getElementById('ffStateJSON');
+      if(!tag){alert('此檔不含可讀取的存檔資料（請選擇由本工具「存檔」產生的檔案）。');return;}
+      const st=JSON.parse(tag.textContent);
+      // 還原客戶肥料與菌種
+      if(Array.isArray(st.custProds)){ custProds=st.custProds; renderCustProds(); }
+      if(Array.isArray(st.oStrains)){ oStrains=st.oStrains; if(typeof renderOStrains==='function')renderOStrains(); }
+      // 還原欄位
+      const fl=st.fields||{};
+      const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+      ['custName','crop','cropItem','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
+      // 縣市→鄉鎮需序列填入
+      if(fl.county){ setVal('county',fl.county); if(typeof fillTownship==='function')fillTownship(); }
+      setTimeout(()=>{
+        if(fl.township)setVal('township',fl.township);
+        if(fl.oMinrSel){ setVal('oMinrSel',fl.oMinrSel); if(typeof onOMinrSel==='function')onOMinrSel(fl.oMinrSel); }
+        if(fl.oMinr)setVal('oMinr',fl.oMinr);
+        if(typeof showCropInfo==='function')showCropInfo();
+        if(typeof showAreaConv==='function')showAreaConv();
+        runConvert();
+      },120);
+    }catch(err){ alert('讀取失敗:'+err.message); }
+    input.value='';
+  };
+  reader.readAsText(f,'utf-8');
 }
 function diffRaw(a,b){const d=b-a;const s=d>=0?'+':'';return s+d.toFixed(2);}
 
@@ -1912,23 +2000,23 @@ function buildDoctor(x){
     }
   }
 
-  if(x.oOM>0)ins.push({type:'good',t:'🌱 有機質效益',b:`改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg)。有機質提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是本產品相對化學肥的核心優勢。`});
-
-  if(x.cOther)ins.push({type:'warn',t:'🔬 微量元素補充',b:`客戶原肥另標示「${x.cOther}」,我方產品未列出。若本作物有此需求,建議另行補充或調整配方。`});
-
-  if(x.o.cu>100||x.o.zn>500)ins.push({type:'warn',t:'⚠️ 重金屬注意',b:`我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`});
-
-  if(x.costC>0&&x.costO>0){
-    const d=x.costO-x.costC, pct=Math.abs(d/x.costC*100), cheaper=d<0;
-    ins.push({type:cheaper?'good':'warn',t:'💰 成本效益(每分地)',
-      b:`原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元,`+
+  // ── 綜合效益與施用建議(整合:有機質效益＋成本＋微量元素＋重金屬＋施用方式於一張卡) ──
+  {
+    let cheaper=false, lines=[];
+    if(x.oOM>0)lines.push(`<b>🌱 有機質效益</b>:改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg),提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是相對化學肥的核心優勢。`);
+    if(x.costC>0&&x.costO>0){
+      const d=x.costO-x.costC, pct=Math.abs(d/x.costC*100); cheaper=d<0;
+      lines.push(`<b>💰 成本(每分地)</b>:原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元,`+
         (cheaper?`<b class="pos">每分地省 ${(-d).toFixed(0)} 元(↓${pct.toFixed(0)}%)</b>。`
-                :`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`)});
-  }else{
-    ins.push({type:'info',t:'💰 成本效益',b:'於上方填入雙方單價,即可自動比較每分地肥料成本。'});
+                :`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`));
+    }else{
+      lines.push('<b>💰 成本</b>:於上方填入雙方單價,即可自動比較每分地肥料成本。');
+    }
+    if(x.cOther)lines.push(`<b>🔬 微量元素補充</b>:客戶原肥另標示「${x.cOther}」,我方產品未列出,若本作物有此需求建議另行補充或調整配方。`);
+    if(x.o.cu>100||x.o.zn>500)lines.push(`<b>⚠️ 重金屬注意</b>:我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`);
+    lines.push('<b>📋 施用方式</b>:有機質肥宜作基肥,整地時施入並確保腐熟(碳氮比降至約 15 以下);速效養分不足部分搭配少量化學追肥,達到減肥增效、養土護根。');
+    ins.push({type:cheaper?'good':'info',t:'📌 綜合效益與施用建議',b:lines.join('<br><br>')});
   }
-
-  ins.push({type:'info',t:'📋 施用建議',b:'有機質肥宜作基肥,整地時施入並確保腐熟(碳氮比降至約 15 以下);速效養分不足部分搭配少量化學追肥,達到減肥增效、養土護根。'});
   return ins;
 }
 
