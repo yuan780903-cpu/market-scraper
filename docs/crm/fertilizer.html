@@ -426,6 +426,7 @@
     .report-body>h3,.report-body .note{break-inside:avoid;}
     .report-body h3{break-after:avoid;break-inside:avoid;}
     .report-body .note,.stat,.doc-item,.table-wrap{break-inside:avoid;}
+    .report-body .micro-cost-grid,.report-body .micro-cost-grid>div,.report-body .result-grid{break-inside:avoid;page-break-inside:avoid;}
     .report-sign,.report-disclaimer{break-inside:avoid;}
     /* 業務話術:勾選「一併輸出」時才印出(預設隱藏) */
     #convert > #salesTalkCard.print-talk{display:block !important;border:none;box-shadow:none;padding:0;margin:0;background:none;break-before:page;}
@@ -1813,8 +1814,8 @@ function runConvert(){
       const ourCuPpm=o.cu, ourZnPpm=o.zn;
       const hmWarn=(ourCuPpm>100||ourZnPpm>500)?`<div class="note" style="margin:8px 0 0;">⚠️ 我方產品標示 Cu ${fmt(ourCuPpm)} ppm、Zn ${fmt(ourZnPpm)} ppm,${(ourCuPpm>100||ourZnPpm>500)?'部分數值接近或超過普肥重金屬上限(Cu≤100、Zn≤500 ppm),':''}長期施用宜留意累積,正式以化驗報告為準。</div>`:'';
       const dCost=totCCost-ourUse*o.price;
-      return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;">
-      <div>
+      return `<div class="micro-cost-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;break-inside:avoid;page-break-inside:avoid;">
+      <div style="break-inside:avoid;page-break-inside:avoid;">
         <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">有機質與微量元素差異(我方 − 原肥)</div>
         <div class="result-grid" style="grid-template-columns:repeat(${hasMicro?3:1},1fr);">
           <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差 (kg/分)</div></div>
@@ -1823,7 +1824,7 @@ function runConvert(){
         ${microNote}
         ${hmWarn}
       </div>
-      <div>
+      <div style="break-inside:avoid;page-break-inside:avoid;">
         <div style="font-size:11px;font-weight:700;color:var(--brown);text-transform:uppercase;margin-bottom:8px;">成本(每分地)</div>
         <div class="result-grid" style="grid-template-columns:repeat(3,1fr);">
           <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥 (元/分)</div></div>
