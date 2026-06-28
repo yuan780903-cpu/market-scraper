@@ -1413,7 +1413,17 @@ function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,to
     pts.push({icon:'🎯',title:'點出問題：化肥連用的隱性成本',body:b});
   }
 
-  // 3) 成本切入(四種情境)
+  // 3b) FAB 賣點公式:特徵(F)→優點(A)→利益(B),一定要落在「利益」
+  {
+    let rows=[];
+    if(oOM>0)rows.push(`<b>有機質</b><br>　F 特徵:每分地含約 ${oOM.toFixed(0)} kg 有機質(產品約 ${fmt(o.om)}% OM)。<br>　A 優點:改善土壤團粒、提升保水保肥力(CEC)、養活微生物。<br>　<b class="pos">B 利益→對您而言:地力逐年變好、化肥用量逐年遞減,省錢又穩產。</b>`);
+    if(oStrains&&oStrains.length){const nm=oStrains.map(s=>s.name.split(' ')[0]).join('、');rows.push(`<b>有益菌</b><br>　F 特徵:添加 ${nm}。<br>　A 優點:分解有機質、溶解土壤裡被固定的難溶磷鉀。<br>　<b class="pos">B 利益→對您而言:把土裡原本吸不到的養分釋放出來,等於多請一批工人幫您找肥。</b>`);}
+    rows.push(`<b>養分緩釋</b><br>　F 特徵:有機氮須礦化才釋放(礦化率約 ${fmt(o.minr)}%),N-${fmt(o.n)}／P-${fmt(o.p)}／K-${fmt(o.k)}。<br>　A 優點:養分慢慢放,不像化肥一次衝完就流失。<br>　<b class="pos">B 利益→對您而言:肥效穩、淋洗少,雨後不易一次溜光,施一次撐更久。</b>`);
+    const b=`FAB 公式:<b>「因為…(特徵F),所以…(優點A),這對您的好處是…(利益B)」</b>。客戶只在乎 B,千萬別只報 F。<br><br>`+rows.join('<br><br>')+`<br><span style="color:var(--muted);font-size:12px;">技巧:每講一個特徵,都用「對您而言」收尾到利益;講不到利益的特徵,客戶聽過就忘。</span>`;
+    pts.push({icon:'🧱',title:'FAB 賣點公式：特徵 → 優點 → 利益',body:b});
+  }
+
+  // 4) 成本切入(四種情境)
   if(totCCost>0&&costO>0){
     if(diff>0)
       pts.push({icon:'💰',title:`每分地省 ${diff.toFixed(0)} 元${area>0?`，全場一年省 ${(diff*area).toFixed(0)} 元`:''}`,
@@ -1456,6 +1466,20 @@ function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,to
     const detail=oStrains.map(s=>`${s.name}（${s.conc}）`).join('；');
     pts.push({icon:'🦠',title:`含 ${names}，幫根「主動找養分」`,
       body:`本產品添加 ${detail}。有益菌會分解有機質、溶解土壤裡被固定的難溶磷鉀，把「土裡本來吸不到的養分」釋放出來。話術：「等於多請一批工人在土裡幫您鬆土、找肥。」`});
+  }
+
+  // 6b) 4P × 4C:賣方策略(4P)對應買方視角(4C),每個 P 都要打中對應的 C
+  {
+    const costLine=(totCCost>0&&costO>0)
+      ? (diff>0?`本案每分地比原肥省 ${diff.toFixed(0)} 元,直接幫農友把總成本壓下來。`:`單價略高,務必用「肥錢＋工錢＋逐年減肥＋地力升值」算總帳才公平。`)
+      : (costO===0?`本案我方以 0 元計入,農友零採購成本、零風險,這就是最有力的「降低顧客總成本」。`:`記得先問出農友現用肥單價,才能把總成本講清楚。`);
+    const b=`左是我方策略(4P)、右是農友怎麼想(4C);每個 P 都要對到一個 C,農友才買單。<br><br>`+
+      `<b>Product 產品 ↔ Customer 顧客需求</b><br>不只賣肥,是賣「地力解決方案」(有機質${oStrains&&oStrains.length?'＋菌種':''}＋施肥建議)。先問農友要的是<b>省錢</b>還是<b>衝產量</b>,對症下藥。<br><br>`+
+      `<b>Price 價格 ↔ Cost 顧客總成本</b><br>別只比單價,幫農友算<b>總成本</b>＝肥錢＋施肥工錢＋逐年減肥＋地力升值。${costLine}<br><br>`+
+      `<b>Place 通路 ↔ Convenience 便利性</b><br>配送到府、依施肥期程<b>分批進貨</b>、粒狀好施撒——讓農友拿貨、施肥都省事,降低改用的麻煩。<br><br>`+
+      `<b>Promotion 推廣 ↔ Communication 溝通</b><br>示範田＋試用包＋這份對照表(就是您的 DM)＋LINE 跟進。<b>雙向溝通、眼見為憑</b>,不是單向叫賣。<br>`+
+      `<span style="color:var(--muted);font-size:12px;">技巧:4P 是你手上的牌、4C 是農友的心;成交就發生在「你的 P 正好打中他的 C」。</span>`;
+    pts.push({icon:'🎛️',title:'4P × 4C：我方策略，對到農友的心',body:b});
   }
 
   // 7) 反對處理:先把答案備好(Feel–Felt–Found)
