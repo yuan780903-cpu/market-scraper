@@ -355,9 +355,24 @@
   .report-body .stat{padding:13px;font-weight:700;border-radius:7px;text-align:center;}
   .report-body .stat .v{font-size:23px;font-weight:900;font-family:var(--mono);}
   .report-body .stat .l{font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:4px;}
-  .report-body .doc-item{margin:10px 0;border-left:4px solid;padding:11px 14px;background:#fafcfb;border-radius:0 6px 6px 0;border-top:none;border-right:none;border-bottom:none;}
-  .report-body .doc-item .doc-t{font-size:13.5px;font-weight:800;margin-bottom:4px;color:var(--text);}
-  .report-body .doc-item .doc-b{font-size:12.5px;line-height:1.65;color:#4a4f47;}
+  /* 施肥建議:官方公文式編號條列(弱化卡片感,細框線分隔) */
+  .report-body .doc-list{counter-reset:doci;list-style:none;margin:8px 0 4px;padding:0;border-top:1px solid var(--line);}
+  .report-body .doc-item{position:relative;margin:0;padding:12px 2px 12px 30px;background:none;border:none;border-bottom:1px solid var(--line-s);border-radius:0;}
+  .report-body .doc-item:last-child{border-bottom:none;}
+  .report-body .doc-item::before{counter-increment:doci;content:counter(doci) ".";position:absolute;left:2px;top:12px;font-weight:800;color:var(--green-d);font-family:var(--mono);font-size:13px;}
+  .report-body .doc-item .doc-t{font-size:13.5px;font-weight:800;margin-bottom:4px;color:var(--text);display:flex;align-items:baseline;gap:8px;}
+  .report-body .doc-item .doc-b{font-size:12.5px;line-height:1.7;color:#3f443c;}
+  .report-body .doc-tag{flex:none;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;border:1px solid;letter-spacing:1.5px;line-height:1.5;}
+  .report-body .doc-good .doc-tag{color:var(--green-d);border-color:var(--green);background:var(--green-l);}
+  .report-body .doc-warn .doc-tag{color:#9a4b1e;border-color:var(--accent);background:#fdeee6;}
+  .report-body .doc-info .doc-tag{color:var(--brown-d);border-color:var(--brown);background:var(--brown-l);}
+  /* 頂部聲明(仿官方「僅供參考、不作證明文件」) */
+  .report-statement{margin:0 40px;padding:7px 0;font-size:11px;color:var(--muted);line-height:1.6;
+    border-top:1px solid var(--line-s);border-bottom:1px solid var(--line-s);letter-spacing:.2px;}
+  /* 作物養分需求參考區間(仿官方「參考標準值」列) */
+  .ref-std{margin:10px 0 4px;padding:9px 13px;font-size:12px;color:#4a4f47;line-height:1.7;
+    border-top:1.5px solid var(--green);border-bottom:1px solid var(--line);background:#fbfdfb;}
+  .ref-std b{color:var(--green-d);font-weight:700;}
 
   /* 簽認 / 用印區 */
   .report-sign{margin:26px 0 8px;padding:18px 0 4px;border-top:1px dashed var(--line);
@@ -1660,6 +1675,7 @@ function runConvert(){
       <h1>肥料替代與施肥建議評估報告</h1>
       <span class="sub">Fertilizer Substitution &amp; Advisory Report</span>
     </div>
+    <div class="report-statement">※ 本報告之養分、礦化率及成本數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考，不作為證明文件；實際用量請以土壤檢測與肥料化驗報告為準。</div>
     <div class="report-meta">
       <div><b>客戶名稱 CLIENT</b><span>${escHtml(custName)}</span></div>
       <div><b>耕作地點 LOCATION</b><span>${county}${township?township:''}</span></div>
@@ -1679,6 +1695,7 @@ function runConvert(){
       <tr><td>有機質 (kg/分)</td><td>${totCOM.toFixed(2)}</td><td>${oOM.toFixed(2)}</td><td>${diff(totCOM,oOM)}</td></tr>
       ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td></tr>`:''}
       </tbody></table></div>
+    ${(()=>{const id=crop.ideal||[0,0,0];const s=(id[0]+id[1]+id[2])||1;const r=id.map(v=>Math.round(v/s*100));return `<div class="ref-std"><b>作物養分需求參考（${crop.name}）：</b>理想 N：P₂O₅：K₂O 比例約 <b>${r[0]}：${r[1]}：${r[2]}</b>（${crop.focus}）。本欄為作物需求通則參考區間；實際施用量另受土壤肥力、目標產量與作期影響，建議搭配土壤檢測，適配研判詳見後列施肥建議。</div>`;})()}
 
     <h3>有機質、微量元素與成本比較</h3>
     ${(()=>{
@@ -1717,7 +1734,7 @@ function runConvert(){
 
     <h3>施肥評估與建議</h3>
     <p class="mini" style="margin-top:-4px;">針對「${crop.name}」由換算結果自動研判,僅供施肥規劃參考。</p>
-    ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tcol={good:'var(--green)',warn:'var(--accent)',info:'var(--brown)'};return ins.map(x=>`<div class="doc-item" style="border-left-color:${tcol[x.type]}"><div class="doc-t">${x.t}</div><div class="doc-b">${x.b}</div></div>`).join('');})()}
+    ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tlabel={good:'效益',warn:'注意',info:'說明'};return `<ol class="doc-list">`+ins.map(x=>`<li class="doc-item doc-${x.type}"><div class="doc-t"><span class="doc-tag">${tlabel[x.type]||'說明'}</span>${x.t}</div><div class="doc-b">${x.b}</div></li>`).join('')+`</ol>`;})()}
 
     <div class="report-disclaimer"><b>說明：</b>本報告之養分含量、礦化率（當季氮素有效率）及成本等數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考。有機質肥料之有機態氮須經土壤微生物礦化方為作物當季吸收，其有效率受土溫、濕度、碳氮比與微生物活性影響而異。正式採購與施肥決策，請以實際土壤檢測及肥料化驗報告為準。</div>
     </div>
