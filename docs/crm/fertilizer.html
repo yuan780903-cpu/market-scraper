@@ -240,6 +240,15 @@
   .ouse-field input{border-color:var(--green)!important;background:#f4faf5;}
   .ouse-hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;}
   .ouse-hint.on{color:var(--green-d);background:#eef7ef;border:1px solid #cfe6d4;border-radius:8px;padding:6px 9px;}
+  .cloud-box{margin-top:12px;background:#eef4fb;border:1px solid #cfe0f2;border-radius:var(--r);overflow:hidden;}
+  .cloud-box>summary{cursor:pointer;list-style:none;padding:11px 15px;font-size:13.5px;font-weight:800;color:#1e5a91;user-select:none;display:flex;align-items:center;gap:8px;}
+  .cloud-box>summary::-webkit-details-marker{display:none;}
+  .cloud-box>summary:hover{background:rgba(30,90,145,.06);}
+  .cloud-body{padding:4px 15px 15px;}
+  .cloud-toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#1e5a91;cursor:pointer;}
+  .cloud-toggle input{width:18px;height:18px;}
+  .cloud-chip{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+  .cloud-chip.on{background:#d8f0dd;color:#1f7a34;} .cloud-chip.off{background:#e7ebef;color:#7a8794;}
 
   .minr-note{background:var(--gold-l);border:1px solid #eddcb4;border-radius:var(--r);margin-bottom:18px;overflow:hidden;}
   .minr-note>summary{cursor:pointer;list-style:none;padding:13px 18px;font-size:13.5px;font-weight:800;color:#806020;user-select:none;transition:background .15s;}
@@ -489,8 +498,35 @@
       <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <button class="btn ghost sm" onclick="openCRMPicker()">📥 從客戶管理系統帶入</button>
         <button class="btn ghost sm" onclick="document.getElementById('loadReportInput').click()">📂 讀取舊存檔</button>
+        <button class="btn ghost sm" onclick="cloudPull()">☁️ 雲端讀取紀錄</button>
         <span id="crmImportMsg" class="save-status"></span>
       </div>
+
+      <!-- 雲端自動同步設定 -->
+      <details class="cloud-box" id="cloudBox">
+        <summary>☁️ 雲端自動同步設定 <span id="cloudStatusChip" class="cloud-chip"></span></summary>
+        <div class="cloud-body">
+          <p class="hint" style="margin:2px 0 8px;">將「換算紀錄」自動備份到<b>您自己的 Google 雲端</b>(免費),換手機/電腦也能讀取。資料只存在您的 Google 帳號,本工具與第三方都看不到。設定一次即可。</p>
+          <label class="cloud-toggle"><input type="checkbox" id="cloudAutoOn" onchange="cloudSaveCfg()"> 啟用自動同步(每次完成換算後自動上傳)</label>
+          <div class="field" style="margin-top:8px;"><label>雲端同步網址(Google Apps Script Web App /exec)</label>
+            <input id="cloudUrl" placeholder="https://script.google.com/macros/s/AKfy.../exec" oninput="cloudSaveCfg()" style="font-family:var(--mono);font-size:12.5px;">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+            <button type="button" class="btn ghost sm" onclick="cloudTest()">🔌 測試連線</button>
+            <button type="button" class="btn ghost sm" onclick="cloudPush(true)">⬆️ 立即上傳目前紀錄</button>
+            <span id="cloudMsg" class="save-status"></span>
+          </div>
+          <details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12.5px;color:var(--muted);">▸ 如何取得同步網址?(一次性設定,約 3 分鐘)</summary>
+            <ol style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:6px 0 0;padding-left:18px;">
+              <li>用您的 Google 帳號開 <b>script.google.com</b> → 新增專案。</li>
+              <li>把我提供的程式碼(見對話)貼上、儲存。</li>
+              <li>右上「部署」→ 新增部署 → 類型選「網頁應用程式」→ 執行身分:<b>我</b>;存取對象:<b>任何人</b>(此為必選,選「僅限我自己」會無法從網頁讀寫)。</li>
+              <li>授權後會得到一個 <b>/exec</b> 網址,貼到上面欄位即可。資料仍存在<b>您的</b> Google 雲端,此網址不可被猜到、即為存取金鑰。</li>
+            </ol>
+            <p style="font-size:12px;color:var(--warn);margin:6px 0 0;">⚠️ 此網址等同存取金鑰,內含客戶名稱/地區,請勿外流或貼到公開處。</p>
+          </details>
+        </div>
+      </details>
     </div>
 
     <div class="card">
@@ -2273,6 +2309,7 @@ function runConvert(){
     custProds:JSON.parse(JSON.stringify(custProds)),
     oStrains:JSON.parse(JSON.stringify(oStrains))
   };
+  if(typeof cloudAutoSync==='function')cloudAutoSync();   // 雲端自動同步(若已啟用)
 }
 function copyReport(b){
   if(!window._report){alert('請先執行換算');return;}
@@ -2340,6 +2377,108 @@ ${window._reportHtml}
   document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
 }
+// 由 state 物件還原全部表單(供「讀取存檔」與「雲端讀取」共用)
+function restoreFormState(st){
+  if(!st)return;
+  if(Array.isArray(st.custProds)){ custProds=st.custProds; renderCustProds(); }
+  if(Array.isArray(st.oStrains)){ oStrains=st.oStrains; if(typeof renderOStrains==='function')renderOStrains(); }
+  const fl=st.fields||{};
+  const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  ['custName','crop','cropItem','bizMode','growEnv','area','basis','oName','oUse','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
+  if(typeof onOUseEdit==='function')onOUseEdit();
+  if(fl.county){ setVal('county',fl.county); if(typeof fillTownship==='function')fillTownship(); }
+  setTimeout(()=>{
+    if(fl.township)setVal('township',fl.township);
+    if(fl.oMinrSel){ setVal('oMinrSel',fl.oMinrSel); if(typeof onOMinrSel==='function')onOMinrSel(fl.oMinrSel); }
+    if(fl.oMinr)setVal('oMinr',fl.oMinr);
+    if(typeof showCropInfo==='function')showCropInfo();
+    if(typeof showAreaConv==='function')showAreaConv();
+    runConvert();
+  },120);
+}
+/* ========== 雲端自動同步(連到使用者自己的 Google Apps Script Web App) ========== */
+function cloudCfg(){ try{return JSON.parse(localStorage.getItem('fert_cloud_cfg')||'{}');}catch(e){return {};} }
+function cloudSaveCfg(){
+  const cfg={url:(document.getElementById('cloudUrl').value||'').trim(),on:!!document.getElementById('cloudAutoOn').checked};
+  localStorage.setItem('fert_cloud_cfg',JSON.stringify(cfg));
+  cloudRefreshChip();
+}
+function cloudRefreshChip(){
+  const cfg=cloudCfg(),chip=document.getElementById('cloudStatusChip');
+  if(!chip)return;
+  if(cfg.on&&cfg.url){chip.className='cloud-chip on';chip.textContent='● 自動同步中';}
+  else if(cfg.url){chip.className='cloud-chip off';chip.textContent='已設定·未啟用';}
+  else{chip.className='cloud-chip off';chip.textContent='未設定';}
+}
+function cloudInit(){
+  const cfg=cloudCfg();
+  const u=document.getElementById('cloudUrl'),a=document.getElementById('cloudAutoOn');
+  if(u&&cfg.url)u.value=cfg.url;
+  if(a)a.checked=!!cfg.on;
+  cloudRefreshChip();
+}
+function cloudMsg(t,ok){ const el=document.getElementById('cloudMsg'); if(el){el.textContent=t;el.style.color=ok===false?'var(--warn)':(ok?'var(--green-d)':'var(--muted)');} }
+// 目前表單→可同步的紀錄物件
+function cloudRecord(){
+  if(!window._formState)return null;
+  return {id:(window._cloudId||('rec_'+Date.now())), name:(window._fileBase||'未命名'),
+          ts:new Date().toISOString(), state:window._formState};
+}
+// 上傳(GAS 用 text/plain 避開 CORS preflight)
+function cloudPush(manual){
+  const cfg=cloudCfg();
+  if(!cfg.url){ if(manual)alert('請先填入雲端同步網址。'); return; }
+  const rec=cloudRecord();
+  if(!rec){ if(manual)alert('請先執行一次換算,才有紀錄可上傳。'); return; }
+  window._cloudId=rec.id;
+  if(manual)cloudMsg('上傳中…');
+  fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'save',rec})})
+    .then(r=>r.json()).then(j=>{ cloudMsg(j&&j.ok?('✔ 已同步('+new Date().toLocaleTimeString('zh-TW')+')'):'同步失敗:'+(j&&j.error||'未知'), j&&j.ok); })
+    .catch(e=>cloudMsg('同步失敗(網路或網址錯誤):'+e.message,false));
+}
+// 自動同步(runConvert 後呼叫,防抖)
+let _cloudTimer=null;
+function cloudAutoSync(){
+  const cfg=cloudCfg();
+  if(!cfg.on||!cfg.url)return;
+  clearTimeout(_cloudTimer);
+  _cloudTimer=setTimeout(()=>cloudPush(false),1500);
+}
+function cloudTest(){
+  const cfg=cloudCfg();
+  if(!cfg.url){alert('請先填入雲端同步網址。');return;}
+  cloudMsg('測試中…');
+  fetch(cfg.url+(cfg.url.includes('?')?'&':'?')+'action=list')
+    .then(r=>r.json()).then(j=>{ cloudMsg(j&&j.ok?('✔ 連線成功,雲端現有 '+(j.items?j.items.length:0)+' 筆紀錄'):'連線失敗:'+(j&&j.error||'格式錯誤'), j&&j.ok); })
+    .catch(e=>cloudMsg('連線失敗:'+e.message,false));
+}
+// 從雲端列出並讀取
+function cloudPull(){
+  const cfg=cloudCfg();
+  if(!cfg.url){ alert('尚未設定雲端同步網址。請先展開「☁️ 雲端自動同步設定」填入網址。'); const b=document.getElementById('cloudBox'); if(b)b.open=true; return; }
+  cloudMsg('讀取清單中…');
+  fetch(cfg.url+(cfg.url.includes('?')?'&':'?')+'action=list')
+    .then(r=>r.json()).then(j=>{
+      if(!j||!j.ok){cloudMsg('讀取失敗:'+(j&&j.error||'格式錯誤'),false);return;}
+      const items=(j.items||[]).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+      if(!items.length){cloudMsg('雲端尚無紀錄。',null);return;}
+      cloudMsg('');
+      const list=items.slice(0,40).map((it,i)=>`${i+1}. ${it.name}　(${new Date(it.ts).toLocaleString('zh-TW')})`).join('\n');
+      const pick=prompt('☁️ 雲端紀錄(輸入編號讀取):\n\n'+list,'1');
+      if(pick==null)return;
+      const idx=parseInt(pick,10)-1;
+      if(!(idx>=0&&idx<items.length)){alert('編號無效。');return;}
+      const id=items[idx].id;
+      cloudMsg('讀取中…');
+      fetch(cfg.url+(cfg.url.includes('?')?'&':'?')+'action=get&id='+encodeURIComponent(id))
+        .then(r=>r.json()).then(g=>{
+          if(!g||!g.ok||!g.rec){cloudMsg('讀取內容失敗。',false);return;}
+          window._cloudId=g.rec.id;
+          restoreFormState(g.rec.state);
+          cloudMsg('✔ 已載入:'+(g.rec.name||''),true);
+        }).catch(e=>cloudMsg('讀取失敗:'+e.message,false));
+    }).catch(e=>cloudMsg('讀取失敗:'+e.message,false));
+}
 function loadReportFile(input){
   const f=input.files&&input.files[0];
   if(!f)return;
@@ -2349,25 +2488,7 @@ function loadReportFile(input){
       const doc=new DOMParser().parseFromString(e.target.result,'text/html');
       const tag=doc.getElementById('ffStateJSON');
       if(!tag){alert('此檔不含可讀取的存檔資料（請選擇由本工具「存檔」產生的檔案）。');return;}
-      const st=JSON.parse(tag.textContent);
-      // 還原客戶肥料與菌種
-      if(Array.isArray(st.custProds)){ custProds=st.custProds; renderCustProds(); }
-      if(Array.isArray(st.oStrains)){ oStrains=st.oStrains; if(typeof renderOStrains==='function')renderOStrains(); }
-      // 還原欄位
-      const fl=st.fields||{};
-      const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
-      ['custName','crop','cropItem','bizMode','growEnv','area','basis','oName','oUse','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
-      if(typeof onOUseEdit==='function')onOUseEdit();
-      // 縣市→鄉鎮需序列填入
-      if(fl.county){ setVal('county',fl.county); if(typeof fillTownship==='function')fillTownship(); }
-      setTimeout(()=>{
-        if(fl.township)setVal('township',fl.township);
-        if(fl.oMinrSel){ setVal('oMinrSel',fl.oMinrSel); if(typeof onOMinrSel==='function')onOMinrSel(fl.oMinrSel); }
-        if(fl.oMinr)setVal('oMinr',fl.oMinr);
-        if(typeof showCropInfo==='function')showCropInfo();
-        if(typeof showAreaConv==='function')showAreaConv();
-        runConvert();
-      },120);
+      restoreFormState(JSON.parse(tag.textContent));
     }catch(err){ alert('讀取失敗:'+err.message); }
     input.value='';
   };
@@ -2818,6 +2939,7 @@ function applyCRMData(c){
 // 頁面啟動時自動處理 CRM 發起的帶入（需在 DOM ready 後執行）
 window.addEventListener('DOMContentLoaded',()=>{
   if(typeof onOUseEdit==='function')onOUseEdit();
+  if(typeof cloudInit==='function')cloudInit();
   try{
     const d=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
     if(d){ localStorage.removeItem('fert_crm_import'); setTimeout(()=>applyCRMData(d),200); }
