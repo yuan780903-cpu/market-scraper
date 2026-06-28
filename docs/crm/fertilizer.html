@@ -237,6 +237,9 @@
   .basis-bar label{font-size:14px;font-weight:800;color:var(--green-d);white-space:nowrap;}
   .basis-bar select{flex:1;min-width:200px;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-size:14.5px;font-family:inherit;min-height:44px;background:#fff;}
   .basis-bar select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(47,110,65,.13);}
+  .ouse-field input{border-color:var(--green)!important;background:#f4faf5;}
+  .ouse-hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;}
+  .ouse-hint.on{color:var(--green-d);background:#eef7ef;border:1px solid #cfe6d4;border-radius:8px;padding:6px 9px;}
 
   .minr-note{background:var(--gold-l);border:1px solid #eddcb4;border-radius:var(--r);margin-bottom:18px;overflow:hidden;}
   .minr-note>summary{cursor:pointer;list-style:none;padding:13px 18px;font-size:13.5px;font-weight:800;color:#806020;user-select:none;transition:background .15s;}
@@ -539,6 +542,10 @@
             <select id="oMarket" onchange="fillFromMarket('o')"><option value="">— 不帶入 —</option></select>
           </div>
           <div class="field"><label>產品名稱</label><input id="oName" placeholder="例:有機質肥料 5號"></div>
+          <div class="field ouse-field"><label>我方產品用量 (kg/分地)　<span class="mini">留空＝依換算基準自動算;客戶若只「部分替代」可手動填入實際要用的量</span></label>
+            <input id="oUse" type="number" step="1" min="0" placeholder="自動換算（留空）" oninput="onOUseEdit()">
+            <div id="oUseHint" class="ouse-hint"></div>
+          </div>
           <div class="grid g4">
             <div class="field"><label>氮 N (%)</label><input id="oN" type="number" step="0.1" value="0"></div>
             <div class="field"><label>磷 P₂O₅ (%)</label><input id="oP" type="number" step="0.1" value="0"></div>
@@ -1497,6 +1504,18 @@ function onOMinrSel(val){
   if(val==='custom'){inp.style.display='';inp.focus();}
   else{inp.style.display='none';inp.value=val;}
 }
+// 我方用量手動編輯提示(部分替代)
+function onOUseEdit(){
+  const hint=document.getElementById('oUseHint'); if(!hint)return;
+  const v=parseFloat(document.getElementById('oUse').value)||0;
+  if(v>0){
+    hint.className='ouse-hint on';
+    hint.innerHTML=`✔ 以手動指定 <b>${v} kg/分</b> 計算（部分替代／實際用量）。留空則改回依基準自動換算。`;
+  }else{
+    hint.className='ouse-hint';
+    hint.innerHTML='目前為空白＝依上方「換算基準」自動算出達相同養分所需用量。';
+  }
+}
 function setOMinr(rate){
   const sel=document.getElementById('oMinrSel'),inp=document.getElementById('oMinr');
   const isPreset=MINR_PRESET_VALS.includes(+rate);
@@ -1956,23 +1975,31 @@ function runConvert(){
   // 我方產品菌種
   const oStrainsInfo=oStrains.map(s=>s.name+' ('+s.conc+')');
 
-  // 我方替代用量
-  let ourUse,basisLabel;
-  if(basis==='same'){ourUse=totCUse;basisLabel='同用量';}
+  // 我方替代用量 — 先算「依基準自動換算」的量,再看是否有手動指定用量(部分替代)
+  let ourUse,basisLabel,autoUse=null;
+  if(basis==='same'){autoUse=totCUse;basisLabel='同用量';}
   else if(basis==='N'){
     // 以「有效氮(礦化後)」為基準:客戶有效氮 ÷ 我方每kg有效氮
     const oAvailNperKg=o.n/100*o.minr/100;
-    if(oAvailNperKg<=0){alert('我方產品有效氮(全氮 × 礦化率)為 0,無法以此換算,請確認氮含量與礦化率,或改選其他基準。');return;}
-    ourUse=totCAvailN/oAvailNperKg;
+    if(oAvailNperKg>0)autoUse=totCAvailN/oAvailNperKg;
     basisLabel='有效氮 N（礦化後）';
   }
   else{
     const key=basis.toLowerCase();
-    if(o[key]<=0){alert('我方產品該基準養分為 0,無法以此換算,請改選其他基準。');return;}
     const map={p:totCP,k:totCK};
-    ourUse=map[key]/(o[key]/100);
+    if(o[key]>0)autoUse=map[key]/(o[key]/100);
     basisLabel={P:'磷 P₂O₅',K:'鉀 K₂O'}[basis];
   }
+  const oUseManual=gv('oUse');                                // 手動指定我方用量(kg/分),0/空=自動
+  const manualUse=oUseManual>0;
+  if(manualUse){
+    ourUse=oUseManual;
+    basisLabel='指定用量（手動）';
+  }else{
+    if(autoUse==null){alert('我方產品該基準養分為 0,無法自動換算。請確認氮/磷/鉀含量與礦化率,或在「我方產品用量」欄直接填入要用的量。');return;}
+    ourUse=autoUse;
+  }
+  window._autoUse=autoUse;                                    // 供提示用:全量替代基準值
 
   // 我方在替代用量下的養分供應
   const oN=ourUse*o.n/100,oP=ourUse*o.p/100,oK=ourUse*o.k/100,oOM=ourUse*o.om/100;
@@ -2097,11 +2124,13 @@ function runConvert(){
     </div>
     <div class="report-body">
     ${custDetailHtml}
-    <div class="note">以 <b>${basisLabel}</b> 為基準換算:客戶每分地施用原肥合計 <b>${fmt(totCUse)} kg</b>,需改用 <b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 的「${escHtml(o.name)}」可達相同${basis==='same'?'用量':basisLabel}供應。</div>
+    <div class="note">${manualUse
+      ?`採<b>指定用量（部分替代）</b>:客戶每分地原肥合計 <b>${fmt(totCUse)} kg</b>,本次以手動指定之「${escHtml(o.name)}」<b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 計算養分供應與成本${autoUse!=null?`（若要完全替代達相同${basis==='same'?'用量':basisLabel},約需 ${fmt(autoUse)} kg/分）`:''}。客戶可保留部分原肥併用,實際用量請依田間調整。`
+      :`以 <b>${basisLabel}</b> 為基準換算:客戶每分地施用原肥合計 <b>${fmt(totCUse)} kg</b>,需改用 <b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 的「${escHtml(o.name)}」可達相同${basis==='same'?'用量':basisLabel}供應。`}</div>
     ${catNoteHtml}
     ${availHtml}
 
-    <div class="table-wrap"><table class="cmp-table"><thead><tr>
+    <div class="table-wrap"><table class="cmp-table" style="min-width:560px;"><thead><tr>
       <th>項目</th><th><span class="use-tag use-old">原有使用</span><br>${cLabel}</th><th><span class="use-tag use-new">新品換用</span><br>${escHtml(o.name)}<br>(${fmt(ourUse)}kg/分)</th><th>差異(我方−客戶)</th><th>作物全期需求<br><span class="mini" style="font-weight:400;">文獻${cReq&&cReq.est?'·估計':''} kg/分</span></th></tr></thead><tbody>
       <tr><td>氮 N (kg/分)</td><td>${totCN.toFixed(2)}</td><td>${oN.toFixed(2)}</td><td>${diff(totCN,oN)}</td>${reqCell(cReq?cReq.n:null,oN)}</tr>
       <tr><td>磷 P₂O₅ (kg/分)</td><td>${totCP.toFixed(2)}</td><td>${oP.toFixed(2)}</td><td>${diff(totCP,oP)}</td>${reqCell(cReq?cReq.p:null,oP)}</tr>
@@ -2233,10 +2262,13 @@ function runConvert(){
   window._talkHtml=talkHtml;
 
   // PDF 檔名 & 存檔資料
-  const _san=s=>(s||'').replace(/[\\/:*?"<>|　\s]+/g,'').replace(/[、，,]/g,'') || '未命名';
-  window._fileBase=`${_san(custName)}-${_san(crop.name)}-碩成肥料替代量報告`;
+  const _san=s=>(s||'').replace(/[\\/:*?"<>|　\s]+/g,'').replace(/[、，,]/g,'');
+  // 檔名:地區(縣市+鄉鎮)＋客戶名稱＋作物
+  const _region=_san((county||'')+(township||''));
+  const _parts=[_region,_san(custName),_san(crop.name)].filter(Boolean);
+  window._fileBase=(_parts.join('-')||'碩成')+'-肥料替代量報告';
   window._formState={
-    fields:['custName','county','township','crop','cropItem','bizMode','growEnv','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','oMinrSel','oMinr','salesNote']
+    fields:['custName','county','township','crop','cropItem','bizMode','growEnv','area','basis','oName','oUse','oN','oP','oK','oOM','oCu','oZn','oPrice','oMinrSel','oMinr','salesNote']
       .reduce((m,id)=>{const el=document.getElementById(id);if(el)m[id]=el.value;return m;},{}),
     custProds:JSON.parse(JSON.stringify(custProds)),
     oStrains:JSON.parse(JSON.stringify(oStrains))
@@ -2263,8 +2295,13 @@ function printReport(){
   const talkCard=document.getElementById('salesTalkCard');
   const inc=document.getElementById('includeTalkPrint')?.checked;
   if(inc&&talkCard)talkCard.classList.add('print-talk');
+  // 還原 title:桌面靠 afterprint 事件;手機(iOS/Android)常不觸發或存檔對話框較慢,
+  // 故改用「事件 + 長後援」確保存成 PDF 時檔名(=地區+客戶+作物)已生效,不被 800ms 提早還原洗掉
+  let restored=false;
+  const restore=()=>{ if(restored)return; restored=true; document.title=prev; if(talkCard)talkCard.classList.remove('print-talk'); window.removeEventListener('afterprint',restore); };
+  window.addEventListener('afterprint',restore);
   window.print();
-  setTimeout(()=>{document.title=prev;if(talkCard)talkCard.classList.remove('print-talk');},800);
+  setTimeout(restore,60000);
 }
 function saveReportFile(){
   if(!window._reportHtml){alert('請先執行換算');return;}
@@ -2319,7 +2356,8 @@ function loadReportFile(input){
       // 還原欄位
       const fl=st.fields||{};
       const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
-      ['custName','crop','cropItem','bizMode','growEnv','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
+      ['custName','crop','cropItem','bizMode','growEnv','area','basis','oName','oUse','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
+      if(typeof onOUseEdit==='function')onOUseEdit();
       // 縣市→鄉鎮需序列填入
       if(fl.county){ setVal('county',fl.county); if(typeof fillTownship==='function')fillTownship(); }
       setTimeout(()=>{
@@ -2779,6 +2817,7 @@ function applyCRMData(c){
 
 // 頁面啟動時自動處理 CRM 發起的帶入（需在 DOM ready 後執行）
 window.addEventListener('DOMContentLoaded',()=>{
+  if(typeof onOUseEdit==='function')onOUseEdit();
   try{
     const d=JSON.parse(localStorage.getItem('fert_crm_import')||'null');
     if(d){ localStorage.removeItem('fert_crm_import'); setTimeout(()=>applyCRMData(d),200); }
