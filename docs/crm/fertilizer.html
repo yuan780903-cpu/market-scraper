@@ -1380,46 +1380,85 @@ function renderCpStrains(i){
 /* ---------- 業務話術生成 ---------- */
 function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName}){
   const costO=ourUse*o.price;
-  const diff=totCCost-costO;
+  const diff=totCCost-costO;                       // >0 表示我方較便宜
   const diffPct=totCCost>0?Math.abs(diff/totCCost*100):0;
   const omDiff=oOM-totCOM;
+  const oName=o.name||'碩成有機質肥';
+  const who=custName&&custName!=='客戶'?custName:'';
+  const cropName=crop.name==='一般 / 未指定'?'您的田區':crop.name;
+  const bulkier=ourUse>totCUse*1.2;                // 有機肥用量明顯較大
   const pts=[];
 
-  // 開場
-  pts.push({icon:'👋',title:'開場建議',
-    body:`您好${custName&&custName!=='客戶'?'，'+custName:''}！今天帶來一份針對您${crop.name==='一般 / 未指定'?'的田區':'的'+crop.name}量身評估的施肥替代方案，請您參考。`});
+  // 1) 開場：先給價值＋丟洞察(Challenger 教學式,不一進門就推產品)
+  pts.push({icon:'👋',title:'開場：先給價值，不急著推產品',
+    body:`「${who?who+'，':''}今天不是來推肥料，是帶一份針對您${cropName}的施肥體檢。先說一個多數人沒留意的點——化肥養的是「這一季的作物」，但真正決定您每年要花多少肥錢的，是「土壤的底子」。我把帳幫您算清楚，您再決定。」<br><span style="color:var(--muted);font-size:12px;">技巧：用「體檢」取代「推銷」，先降低戒心；丟一個對方沒想過的觀點，建立專業權威。</span>`});
 
-  // 成本
+  // 2) 點問題：化肥連用的隱性代價＋本作物痛點(SPIN 的 Implication)
+  {
+    let b=`長期單施化肥，鹽基累積、土壤逐漸酸化板結，根變淺、保肥力下降——結果是「同樣產量，肥卻要愈用愈多」。`;
+    if(crop.deficiency)b+=`以${cropName}來說，${crop.deficiency.split('。')[0].split('；')[0]}。`;
+    b+=`這不是這一季的事，是三五年後地力跟成本的差距。<br><span style="color:var(--muted);font-size:12px;">技巧：先放大「不改變的代價」，農友才有動機聽你的方案——人對「損失」比「獲得」更敏感。</span>`;
+    pts.push({icon:'🎯',title:'點出問題：化肥連用的隱性成本',body:b});
+  }
+
+  // 3) 成本切入(四種情境)
   if(totCCost>0&&costO>0){
     if(diff>0)
-      pts.push({icon:'💰',title:`每分地省 ${diff.toFixed(0)} 元（↓${diffPct.toFixed(0)}%）`,
-        body:`原本每分地約花 ${totCCost.toFixed(0)} 元，改用碩成${o.name||'有機肥'}只需約 ${costO.toFixed(0)} 元，每分地省 ${diff.toFixed(0)} 元。${area>0?'您全場 '+area+' 分地一年可省約 <b>'+(diff*area).toFixed(0)+' 元</b>。':''}`});
+      pts.push({icon:'💰',title:`每分地省 ${diff.toFixed(0)} 元${area>0?`，全場一年省 ${(diff*area).toFixed(0)} 元`:''}`,
+        body:`原本每分地約 ${totCCost.toFixed(0)} 元，改用${oName}約 ${costO.toFixed(0)} 元。${area>0?`您全場 ${fmt(area)} 分地，<b>一年就差 ${(diff*area).toFixed(0)} 元</b>——不換，等於每年多花這筆。`:''}<br><span style="color:var(--muted);font-size:12px;">技巧：先報「一年、全場」的大數字製造落差，再回到每分地；數字錨點愈大愈有感。</span>`});
     else
-      pts.push({icon:'💰',title:`成本多 ${Math.abs(diff).toFixed(0)} 元/分地，換來地力長期升值`,
-        body:`費用比原肥略多 ${Math.abs(diff).toFixed(0)} 元/分（↑${diffPct.toFixed(0)}%），但有機質可逐年降低化學追肥需求，通常 2–3 年後整體成本反而更低。`});
-  }else
-    pts.push({icon:'💰',title:'填入雙方單價即可自動比較成本',body:'請在左側客戶肥料及右側我方產品欄位填入單位成本，換算後即顯示每分地差額。'});
+      pts.push({icon:'💰',title:`單價貴 ${Math.abs(diff).toFixed(0)} 元/分，但要算「三年總帳」`,
+        body:`單看這一包是貴 ${Math.abs(diff).toFixed(0)} 元/分（↑${diffPct.toFixed(0)}%），但有機質改良地力後可逐年遞減化學追肥，通常 2–3 年總肥料支出反而更低。<br><span style="color:var(--muted);font-size:12px;">技巧：把客戶從「比單價」拉到「比三年總成本＋地力資產」，不要在單價戰場跟人拼輸贏。</span>`});
+  }else if(totCCost>0&&costO===0){
+    pts.push({icon:'🎁',title:'這次成本 0＝零風險試用，讓田自己說話',
+      body:`我方這次以 0 元計入，對農友就是<b>零風險</b>：不用先掏錢、不用賭。話術：「您不用信我講的，您信您自己的田。這批先讓您試，看不到效果不算您的；看得到，我們再談長期。」<br><span style="color:var(--muted);font-size:12px;">技巧：風險逆轉(Risk Reversal)是最強成交器——先拿掉「要花錢」的心理門檻，讓對方先答應「試」。</span>`});
+  }else if(costO>0){
+    pts.push({icon:'💰',title:'先問出客戶現用肥的單價，成本才好打',
+      body:`目前只有我方單價（約 ${costO.toFixed(0)} 元/分）。務必向農友問出他現在用什麼肥、單價與用量——成本對比是最有感的切入，<b>缺了這塊就少一把刀</b>。問到後這裡會自動生成省／多錢話術。`});
+  }else{
+    pts.push({icon:'💰',title:'填入雙方單價，成本話術自動生成',
+      body:'在左右兩側填入單位成本後，這裡會自動算出每分地與全場差額，並生成對應的成本話術。'});
+  }
 
-  // 有機質效益
+  // 4) 有機質＝地力資產(價值重塑,把產品從「肥料」抬升成「投資」)
   if(oOM>0)
-    pts.push({icon:'🌱',title:`有機質 ${oOM.toFixed(1)} kg/分地，活化土壤微生物`,
-      body:`每分地提供有機質約 ${oOM.toFixed(1)} kg${omDiff>0.05?'，較原肥多 '+omDiff.toFixed(1)+' kg':''}，可改善土壤團粒結構、提升保水保肥力(CEC)，是純化學肥料做不到的地力投資。`});
+    pts.push({icon:'🌱',title:`您買的不是 NPK，是 ${oOM.toFixed(0)} kg/分的地力資產`,
+      body:`每分地多了約 ${oOM.toFixed(0)} kg 有機質${omDiff>0.05?`（較原肥多 ${omDiff.toFixed(0)} kg）`:''}，養的是土壤團粒、保水保肥力(CEC)與微生物——這些純化肥永遠給不了。話術：「化肥是給作物吃，有機質是給土吃；土養好，化肥才用得省。」`});
 
-  // 菌種話術
+  // 5) 用量誠實反框(關鍵:主動講,別讓客戶拿來打你)
+  {
+    let b;
+    if(bulkier){
+      b=`誠實先講在前面：有機肥用量本來就比化肥大。為什麼？化肥是高濃度鹽類，有機肥多的是<b>有機質</b>——這 ${fmt(ourUse)} kg 裡約 ${oOM.toFixed(0)} kg 是養土的有機質，不是拿東西稀釋灌重量。<br>反框話術：「<b>量大正是料實在的證明</b>，您買的是一整年的地力，不是一包濃縮鹽。」`;
+      if(area>0)b+=`<br>全場約 ${fmt(Math.round(ourUse*area))} kg，可<b>分批進貨、依施肥期程配送</b>，不必一次囤放——這塊交給我們安排。`;
+      b+=`<br><span style="color:var(--muted);font-size:12px;">技巧：缺點主動先講(自爆法)，誠實感反而加分；再把「量大」反框成「料實在」。</span>`;
+    }else{
+      b=`客戶原本每分地用 ${fmt(totCUse)} kg，改用我方約 ${fmt(ourUse)} kg/分${ourUse<totCUse?`，<b>少 ${(totCUse-ourUse).toFixed(0)} kg</b>，搬運貯存更省力`:'，養分供應更均衡穩定'}。${area>0?`全場約備貨 ${fmt(Math.round(ourUse*area))} kg（20kg約 ${Math.ceil(ourUse*area/20)} 包）。`:''}`;
+    }
+    pts.push({icon:'📦',title:'用量這題：主動講在前面，別等客戶問',body:b});
+  }
+
+  // 6) 菌種(若有添加)
   if(oStrains.length){
     const names=oStrains.map(s=>s.name.split(' ')[0]).join('、');
     const detail=oStrains.map(s=>`${s.name}（${s.conc}）`).join('；');
-    pts.push({icon:'🦠',title:`含 ${names}，促進根圈活性`,
-      body:`本產品添加 ${detail}。有益菌能幫助根域分解有機質、溶解土壤難溶磷鉀，提升養分吸收效率，特別適合${crop.name==='一般 / 未指定'?'各類作物':''+crop.name}。`});
+    pts.push({icon:'🦠',title:`含 ${names}，幫根「主動找養分」`,
+      body:`本產品添加 ${detail}。有益菌會分解有機質、溶解土壤裡被固定的難溶磷鉀，把「土裡本來吸不到的養分」釋放出來。話術：「等於多請一批工人在土裡幫您鬆土、找肥。」`});
   }
 
-  // 用量說明
-  pts.push({icon:'📦',title:`用量換算一看即懂（以${basisLabel}等量）`,
-    body:`客戶原本每分地用 ${totCUse.toFixed(0)} kg，改用我方只需 ${ourUse.toFixed(0)} kg/分，${ourUse<totCUse?'用量少 '+(totCUse-ourUse).toFixed(0)+' kg，搬運儲存都更省力。':'養分供應更均衡穩定。'}${area>0?'全場需備貨約 '+(ourUse*area).toFixed(0)+' kg（20kg粒狀約 '+Math.ceil(ourUse*area/20)+' 包）。':''}`});
+  // 7) 反對處理:先把答案備好(Feel–Felt–Found)
+  {
+    let lines=[];
+    if(bulkier)lines.push(`<b>「量太大、搬運麻煩」</b><br>→「我懂，很多農友一開始也這樣想；後來發現粒狀好施撒、又能分批配送，基肥一次施入反而省了後面好幾次追肥的工。」`);
+    lines.push(`<b>「有機肥見效慢」</b><br>→「對，它不像化肥猛一下；但它穩、不退、養根養土。我們的作法是基肥用有機、關鍵期搭一點化肥追，<b>減肥不減產</b>，兩邊好處都拿。」`);
+    if(o.price>0&&diff<0)lines.push(`<b>「比化肥貴」</b><br>→「比單價是貴一點，但比三年總帳，有機這邊逐年減肥、地力升值，划得來。要不要先試一分地，用您自己的田比給您看？」`);
+    lines.push(`<b>「我用習慣了，不想換」</b><br>→「不用整場換，先撥一分地試，其他照舊。一分地的差別，一季就看得出來。」`);
+    pts.push({icon:'🛡️',title:'常見疑慮，先備好回應（Feel–Felt–Found）',body:lines.join('<br><br>')});
+  }
 
-  // 收場行動
-  pts.push({icon:'📋',title:'建議行動',
-    body:`可將此份「肥料替代對照表」列印給農友帶回參考（點右上角「列印/存成PDF」）。下次拜訪前可先準備樣品或試用包，讓農友實際比較。`});
+  // 8) 收場:要一個「小答應」(承諾階梯＋風險逆轉)
+  pts.push({icon:'🤝',title:'臨門一腳：先要一個「小 yes」',
+    body:`別一次要大單。給農友一個低門檻的下一步：<b>「先撥一分地做示範，我下次帶樣品來，我們一起看。」</b>先拿到「試一分地」這個小答應，效果出來後擴大就順理成章。${area>0?`（全場 ${fmt(area)} 分地的潛在量擺在那，從一分地切入最穩。）`:''}<br>順手把對照表列印給農友帶回（右上角「列印／存成PDF」），留個念想。<br><span style="color:var(--muted);font-size:12px;">技巧：承諾一致性原理——小 yes 累積成大 yes；示範田＝眼見為憑＋低風險。</span>`});
 
   return pts;
 }
