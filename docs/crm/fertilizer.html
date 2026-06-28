@@ -157,6 +157,10 @@
   .stat.cost{background:var(--brown-l);border-color:rgba(138,93,59,.12);} .stat.cost .v{color:var(--brown-d);}
   .stat.warn{background:#fdeeec;border-color:#f0cdc6;} .stat.warn .v{color:var(--warn);}
   .cmp-table td,.cmp-table th{text-align:center;white-space:normal;}
+  /* 對照表首欄(項目/使用別)固定:水平捲動時欄位名稱與單位不被遮住 */
+  .report-body .cmp-table th:first-child,.report-body .cmp-table td:first-child{position:sticky;left:0;z-index:2;}
+  .report-body .cmp-table td:first-child{background:#eef5ef;text-align:left;font-weight:600;box-shadow:1px 0 0 var(--green-l);}
+  .report-body .cmp-table th:first-child{background:var(--green);box-shadow:1px 0 0 rgba(255,255,255,.28);}
   .pos{color:var(--green);font-weight:700;} .neg{color:var(--warn);font-weight:700;}
   .tag{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:14px;
        padding:3px 11px;margin:3px 4px 0 0;font-size:12.5px;color:var(--text);}
@@ -423,7 +427,7 @@
 </style>
 </head>
 <body>
-<header><button onclick="location.href='index.html'" style="flex:none;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:11px;padding:9px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;">‹ 返回戰情室</button>
+<header><button onclick="location.href='index.html'" style="position:absolute;left:16px;top:16px;background:#fff;border:1.5px solid #cfe3d2;color:#1f4c2d;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;z-index:50;">‹ 返回戰情室</button>
   <div class="head-title">
     <h1><span class="h-mark">🌱</span>肥料替代量換算系統</h1>
     <p>客戶原有肥料 → 我方產品 等養分替代用量、成本差異與施肥建議報告　|　資料儲存於本機瀏覽器,不上傳雲端</p>
@@ -1705,6 +1709,13 @@ function runConvert(){
       const micro=hasMicro?`
           <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(cCuG,oCuG)}</div><div class="l">銅 Cu 差 (g/分)</div></div>
           <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(cZnG,oZnG)}</div><div class="l">鋅 Zn 差 (g/分)</div></div>`:'';
+      const cCuPpm=totCUse>0?totCcu/totCUse:0, cZnPpm=totCUse>0?totCzn/totCUse:0;
+      const microNote=hasMicro?`<div class="mini" style="margin:6px 2px 0;color:var(--muted);font-size:11px;line-height:1.65;">
+        <b>銅鋅數值來源：</b>銅、鋅屬微量元素，係依肥料標示濃度（ppm）換算每分地供應量，公式：供應量(g) ＝ 施用量(kg) × 標示濃度(ppm) ÷ 1000。
+        我方「${escHtml(o.name)}」標示 Cu <b>${fmt(o.cu)}</b> ppm、Zn <b>${fmt(o.zn)}</b> ppm，按 ${fmt(ourUse)} kg/分計＝Cu ${oCuG.toFixed(2)} g、Zn ${oZnG.toFixed(2)} g；
+        客戶原肥${(totCcu+totCzn)>0?`加權平均 Cu ${cCuPpm.toFixed(0)} ppm、Zn ${cZnPpm.toFixed(0)} ppm＝Cu ${cCuG.toFixed(2)} g、Zn ${cZnG.toFixed(2)} g`:'未標示銅鋅含量（以 0 計），故上列差異即我方產品之供應量'}。
+        以上濃度為產品標示／文獻通則參考值，非實測，正式請以肥料化驗報告為準。
+      </div>`:'';
       // 重金屬濃度提醒(以 ppm 計,上限 Cu≤100、Zn≤500)
       const ourCuPpm=o.cu, ourZnPpm=o.zn;
       const hmWarn=(ourCuPpm>100||ourZnPpm>500)?`<div class="note" style="margin:8px 0 0;">⚠️ 我方產品標示 Cu ${fmt(ourCuPpm)} ppm、Zn ${fmt(ourZnPpm)} ppm,${(ourCuPpm>100||ourZnPpm>500)?'部分數值接近或超過普肥重金屬上限(Cu≤100、Zn≤500 ppm),':''}長期施用宜留意累積,正式以化驗報告為準。</div>`:'';
@@ -1716,6 +1727,7 @@ function runConvert(){
           <div class="stat"><div class="v" style="font-size:18px;">${diffRaw(totCOM,oOM)}</div><div class="l">有機質差 (kg/分)</div></div>
           ${micro}
         </div>
+        ${microNote}
         ${hmWarn}
       </div>
       <div>
@@ -2043,13 +2055,15 @@ function buildDoctor(x){
   {
     let cheaper=false, lines=[];
     if(x.oOM>0)lines.push(`<b>🌱 有機質效益</b>:改用後每分地增加有機質約 <b>${x.oOM.toFixed(1)} kg</b>(原肥約 ${x.cOM.toFixed(1)} kg),提升土壤團粒結構、保水保肥力(CEC)與微生物活性,是相對化學肥的核心優勢。`);
-    if(x.costC>0&&x.costO>0){
-      const d=x.costO-x.costC, pct=Math.abs(d/x.costC*100); cheaper=d<0;
-      lines.push(`<b>💰 成本(每分地)</b>:原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元,`+
-        (cheaper?`<b class="pos">每分地省 ${(-d).toFixed(0)} 元(↓${pct.toFixed(0)}%)</b>。`
-                :`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`));
+    if(x.costC>0||x.costO>0){
+      const d=x.costO-x.costC, pct=x.costC>0?Math.abs(d/x.costC*100):0; cheaper=d<0;
+      const ourZero=x.costO===0;
+      lines.push(`<b>💰 成本(每分地)</b>:原肥 ${x.costC.toFixed(0)} 元、改用我方 ${x.costO.toFixed(0)} 元${ourZero?'(本案我方以 0 元計入)':''},`+
+        (cheaper?`<b class="pos">每分地省 ${(-d).toFixed(0)} 元${x.costC>0?`(↓${pct.toFixed(0)}%)`:''}</b>${ourZero?',等於原肥成本全數省下':''}。`
+                :d>0?`<b class="neg">每分地多 ${d.toFixed(0)} 元(↑${pct.toFixed(0)}%)</b>,惟有機質改良地力屬長期投資,可逐年遞減化肥用量攤平。`
+                    :'雙方每分地成本相同。'));
     }else{
-      lines.push('<b>💰 成本</b>:於上方填入雙方單價,即可自動比較每分地肥料成本。');
+      lines.push('<b>💰 成本</b>:雙方單價皆未填或為 0;如需成本比較請於上方填入單價。');
     }
     if(x.cOther)lines.push(`<b>🔬 微量元素補充</b>:客戶原肥另標示「${x.cOther}」,我方產品未列出,若本作物有此需求建議另行補充或調整配方。`);
     if(x.o.cu>100||x.o.zn>500)lines.push(`<b>⚠️ 重金屬注意</b>:我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`);
