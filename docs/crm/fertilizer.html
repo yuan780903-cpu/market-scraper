@@ -422,6 +422,12 @@
     .report-body h3{break-after:avoid;break-inside:avoid;}
     .report-body .note,.stat,.doc-item,.table-wrap{break-inside:avoid;}
     .report-sign,.report-disclaimer{break-inside:avoid;}
+    /* 業務話術:勾選「一併輸出」時才印出(預設隱藏) */
+    #convert > #salesTalkCard.print-talk{display:block !important;border:none;box-shadow:none;padding:0;margin:0;background:none;break-before:page;}
+    #salesTalkCard.print-talk .talk-print-toggle,#salesTalkCard.print-talk .badge,#salesTalkCard.print-talk .field{display:none !important;}
+    #salesTalkCard.print-talk > .hint{font-size:12px;color:#777;margin:2px 0 12px;}
+    #salesTalkCard.print-talk h2{font-size:17px;color:var(--green-d);margin:0 0 4px;}
+    #salesTalkCard.print-talk .doc-item{break-inside:avoid;}
     @page{size:A4 landscape;margin:0.8cm 1cm;}
   }
 </style>
@@ -579,8 +585,12 @@
     </div>
 
     <div class="card no-print" id="salesTalkCard" style="display:none;">
-      <h2>📢 業務話術建議 <span class="badge" style="background:#fff3cd;color:#856404;">不輸出報告</span></h2>
+      <h2>📢 業務話術建議 <span class="badge" id="talkPrintBadge" style="background:#fff3cd;color:#856404;">預設不輸出</span></h2>
       <p class="hint">依換算結果自動產出對話重點，可直接用於客戶拜訪說明。</p>
+      <label class="talk-print-toggle no-print" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 14px;padding:9px 13px;background:#fffbef;border:1px solid #ecdfc3;border-radius:8px;font-size:13.5px;font-weight:700;color:var(--brown-d);cursor:pointer;">
+        <input type="checkbox" id="includeTalkPrint" onchange="onTalkPrintToggle()" style="width:16px;height:16px;cursor:pointer;">
+        🖨 列印 / 存成PDF 時，一併輸出這份話術
+      </label>
       <div id="salesTalkOut"></div>
       <div class="field" style="margin-top:14px;">
         <label>📝 補充筆記（不輸出報告）</label>
@@ -1893,12 +1903,22 @@ function copyReport(b){
     ()=>{prompt('複製失敗,請手動選取:',window._report);}
   );
 }
+function onTalkPrintToggle(){
+  const on=document.getElementById('includeTalkPrint')?.checked;
+  const b=document.getElementById('talkPrintBadge');
+  if(!b)return;
+  if(on){ b.textContent='將隨報告輸出'; b.style.background='var(--green-l)'; b.style.color='var(--green-d)'; }
+  else  { b.textContent='預設不輸出';  b.style.background='#fff3cd'; b.style.color='#856404'; }
+}
 function printReport(){
   if(!window._reportHtml){alert('請先執行換算');return;}
   const prev=document.title;
   document.title=window._fileBase||'碩成肥料替代量報告';
+  const talkCard=document.getElementById('salesTalkCard');
+  const inc=document.getElementById('includeTalkPrint')?.checked;
+  if(inc&&talkCard)talkCard.classList.add('print-talk');
   window.print();
-  setTimeout(()=>{document.title=prev;},800);
+  setTimeout(()=>{document.title=prev;if(talkCard)talkCard.classList.remove('print-talk');},800);
 }
 function saveReportFile(){
   if(!window._reportHtml){alert('請先執行換算');return;}
