@@ -1613,7 +1613,7 @@ function runConvert(){
   // buildDoctor 所需的彙整 c 物件
   const cAgg={name:validProds.length===1?validProds[0].name:'客戶複合施肥',
     n:totCUse>0?totCN/totCUse*100:0,p:totCUse>0?totCP/totCUse*100:0,k:totCUse>0?totCK/totCUse*100:0,
-    om:totCUse>0?totCOM/totCUse*100:0,cu:0,zn:0,use:totCUse,
+    om:totCUse>0?totCOM/totCUse*100:0,cu:totCUse>0?totCcu/totCUse:0,zn:totCUse>0?totCzn/totCUse:0,use:totCUse,
     price:totCUse>0?totCCost/totCUse:0,other:allOther};
 
   // 耕作面積全區成本
@@ -2051,6 +2051,33 @@ function buildDoctor(x){
     }
   }
 
+  // ── 銅、鋅(微量元素)對作物的影響與管理(不論是否超標都分析) ──
+  {
+    const oCuG=x.ourUse*(x.o.cu||0)/1000, oZnG=x.ourUse*(x.o.zn||0)/1000;   // g/分
+    const cCuG=(x.c&&x.c.use||0)*(x.c&&x.c.cu||0)/1000, cZnG=(x.c&&x.c.use||0)*(x.c&&x.c.zn||0)/1000;
+    if(oCuG>0||oZnG>0||cCuG>0||cZnG>0){
+      const cat=x.crop.cat||'通用';
+      const znRole={
+        '稻作':'水稻是缺鋅敏感作物,插秧後低溫淹水易發生「縮苗／僵苗」(新葉黃白、生長停滯),適量鋅有助返青與分蘗',
+        '雜糧雜作':'玉米、高粱等禾本科對鋅敏感,缺鋅出現葉脈間白化條紋與植株矮化,適量鋅穩定產量',
+        '果樹':'果樹缺鋅常見「小葉病／簇葉」(新梢葉片變小叢生),適量鋅有助新梢與花芽正常發育',
+        '蔬菜':'葉菜與果菜缺鋅會新葉黃化、節間縮短,適量鋅有助葉色與生長勢',
+        '茶與特用':'茶樹等缺鋅影響新芽萌發與品質,適量鋅有助芽葉生長',
+        '花卉':'花卉缺鋅影響新葉與花芽分化,適量鋅有助株型與開花',
+      }[cat]||'鋅是作物必需微量元素,參與生長素合成與酵素活化,缺鋅多見新葉黃化、葉片變小、節間縮短';
+      const over=(x.o.cu>100||x.o.zn>500);
+      const znCrop=cat==='稻作'?'水稻':cat==='果樹'?'果樹':cat==='雜糧雜作'?'玉米等禾本科':'本作物';
+      let b=`<b>供應量</b>:本配方每分地供應 銅(Cu) <b>${oCuG.toFixed(2)} g</b>、鋅(Zn) <b>${oZnG.toFixed(2)} g</b>(原肥 銅 ${cCuG.toFixed(2)} g、鋅 ${cZnG.toFixed(2)} g);產品標示濃度 銅 ${fmt(x.o.cu)}、鋅 ${fmt(x.o.zn)} ppm。`;
+      b+=`<br><br><b>對作物的益處</b>:銅、鋅都是作物<b>必需微量元素</b>。鋅參與生長素(IAA)合成、酵素活化與葉綠素形成——${znRole};銅參與光合作用電子傳遞與木質素合成,影響${cat==='果樹'?'新梢木質化、抗病與結實':'莖稈強度、抗病與授粉結實'},缺銅易頂梢枯死、不稔。有機質肥同時提供這些微量元素與螯合載體,利用率通常優於單施化肥。`;
+      b+=over
+        ?`<br><br><b>濃度評估</b>:本產品銅 ${fmt(x.o.cu)}、鋅 ${fmt(x.o.zn)} ppm,<b class="neg">已接近或超過普肥常見上限(銅 100／鋅 500 ppm)</b>,須控制單次與年累積施用量。`
+        :`<br><br><b>濃度評估</b>:本產品銅 ${fmt(x.o.cu)}、鋅 ${fmt(x.o.zn)} ppm,<b class="pos">在普肥重金屬常見上限(銅 100／鋅 500 ppm)以內,屬安全施用範圍</b>;正常用量下對本作物是「補充有益微量」而非危害。`;
+      b+=`<br><br><b>過量與累積風險</b>:銅、鋅屬重金屬性微量元素,<b>長期連用會在土壤累積且不易移除</b>。過量銅傷害根尖、抑制鐵吸收;過量鋅拮抗鐵、誘發新葉黃化(缺鐵);酸性土壤毒害風險更高。畜禽糞來源(尤其豬糞)銅鋅偏高,連作田尤須留意。`;
+      b+=`<br><br><b>管理建議</b>:① 依<b>土壤／葉片檢測</b>決定是否需額外補微量,不貿然多施;② 連作或長期施用田區<b>定期監測土壤銅鋅</b>累積值;③ 維持土壤 pH(勿過酸)與有機質,有助螯合緩衝、降低毒害;④ ${znCrop}若確有缺鋅,優先採<b>葉面針對性補充</b>,比大量土施更有效且不增土壤負荷。`;
+      ins.push({type:over?'warn':'info',t:'🔬 銅、鋅(微量元素)對作物的影響與管理',b});
+    }
+  }
+
   // ── 綜合效益與施用建議(整合:有機質效益＋成本＋微量元素＋重金屬＋施用方式於一張卡) ──
   {
     let cheaper=false, lines=[];
@@ -2066,7 +2093,6 @@ function buildDoctor(x){
       lines.push('<b>💰 成本</b>:雙方單價皆未填或為 0;如需成本比較請於上方填入單價。');
     }
     if(x.cOther)lines.push(`<b>🔬 微量元素補充</b>:客戶原肥另標示「${x.cOther}」,我方產品未列出,若本作物有此需求建議另行補充或調整配方。`);
-    if(x.o.cu>100||x.o.zn>500)lines.push(`<b>⚠️ 重金屬注意</b>:我方產品銅 ${x.o.cu}、鋅 ${x.o.zn} ppm 偏高(常見上限 Cu100 / Zn500),連作田區應控制施用量並定期監測。`);
     lines.push('<b>📋 施用方式</b>:有機質肥宜作基肥,整地時施入並確保腐熟(碳氮比降至約 15 以下);速效養分不足部分搭配少量化學追肥,達到減肥增效、養土護根。');
     ins.push({type:cheaper?'good':'info',t:'📌 綜合效益與施用建議',b:lines.join('<br><br>')});
   }
