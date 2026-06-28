@@ -1061,6 +1061,91 @@ const CROPS=[
     deficiency:'濃度過高→根焦葉燒;缺鈣→新葉變形;缺鉀→苞片小色淡。'},
 ];
 
+/* ---------- 作物全期養分需求(文獻建議,kg/分地) ----------
+   est:false=文獻/官方推薦概值;est:true=依分類通則×理想比推估(已夾合理區間)。
+   皆為通則參考、可比對供應量;精確需求以土壤檢測與目標產量為準。 */
+const CROP_REQ={
+  "一般 / 未指定":{n:10,p:7,k:10,est:true},
+  "葉菜類(小白菜/青江菜/萵苣)":{n:9,p:3,k:6,est:false},
+  "結球葉菜(高麗菜/包心白菜)":{n:14,p:6,k:14,est:false},
+  "果菜類(番茄/茄子/瓜類)":{n:14,p:7,k:20,est:false},
+  "根莖類(蘿蔔/馬鈴薯/薑/芋)":{n:12,p:6,k:18,est:false},
+  "果樹(柑橘/芒果/荔枝)":{n:12,p:7.2,k:12,est:true},
+  "水稻":{n:14,p:5,k:8,est:false},
+  "茶樹":{n:18,p:5,k:9,est:false},
+  "玉米 / 雜糧":{n:13,p:5,k:9,est:false},
+  "花卉 / 觀賞":{n:9,p:6.3,k:14.4,est:true},
+  "豆科(花生/大豆)":{n:4,p:6,k:8,est:false},
+  "蔥蒜韭(青蔥/大蒜/韭菜)":{n:11,p:3.7,k:7.3,est:true},
+  "花椰菜 / 青花菜(十字花科花球)":{n:11,p:5.5,k:11,est:true},
+  "草莓":{n:8,p:5,k:12,est:false},
+  "鳳梨":{n:11,p:4,k:18,est:false},
+  "香蕉":{n:20,p:6,k:35,est:false},
+  "葡萄":{n:11,p:6,k:16,est:false},
+  "火龍果":{n:12,p:8.4,k:19.2,est:true},
+  "咖啡":{n:14,p:5,k:14,est:false},
+  "食用玉米(甜玉米/糯玉米)":{n:13,p:5,k:9,est:false},
+  "紅豆":{n:4,p:6,k:8,est:false},
+  "大豆 / 毛豆":{n:4,p:6,k:8,est:false},
+  "高粱":{n:12,p:4,k:8,est:false},
+  "小麥":{n:12,p:4,k:7,est:false},
+  "蕎麥":{n:11,p:5.5,k:11,est:true},
+  "薏苡(薏仁)":{n:11,p:3.7,k:7.3,est:true},
+  "甘藷(地瓜)":{n:8,p:5,k:18,est:false},
+  "樹薯":{n:11,p:5.5,k:16.5,est:true},
+  "芝麻":{n:11,p:5.5,k:11,est:true},
+  "甘蔗":{n:18,p:7,k:24,est:false},
+  "柑橘類(椪柑/桶柑/茂谷)":{n:12,p:6,k:12,est:false},
+  "文旦柚":{n:12,p:6,k:12,est:false},
+  "檸檬 / 萊姆 / 金桔":{n:12,p:6,k:12,est:false},
+  "芒果":{n:10,p:5,k:12,est:false},
+  "荔枝":{n:10,p:5,k:11,est:false},
+  "龍眼":{n:10,p:5,k:11,est:false},
+  "蓮霧":{n:10,p:5,k:13,est:false},
+  "芭樂(番石榴)":{n:12,p:8.4,k:14.4,est:true},
+  "木瓜":{n:14,p:7,k:16,est:false},
+  "棗子(印度棗)":{n:12,p:8.4,k:14.4,est:true},
+  "釋迦(鳳梨釋迦)":{n:12,p:8.4,k:14.4,est:true},
+  "柿子":{n:12,p:7.2,k:12,est:true},
+  "梨(高接梨/橫山梨)":{n:12,p:8.4,k:14.4,est:true},
+  "桃 / 李 / 梅":{n:12,p:8.4,k:14.4,est:true},
+  "枇杷":{n:12,p:7.2,k:12,est:true},
+  "楊桃":{n:12,p:8.4,k:14.4,est:true},
+  "百香果":{n:12,p:6,k:12,est:true},
+  "酪梨":{n:12,p:7.2,k:12,est:true},
+  "蘋果(高山)":{n:12,p:8.4,k:14.4,est:true},
+  "桑椹":{n:12,p:6,k:12,est:true},
+  "無花果":{n:12,p:8.4,k:14.4,est:true},
+  "西瓜 / 甜瓜(洋香瓜)":{n:10,p:5,k:14,est:false},
+  "蘆筍":{n:14,p:6,k:14,est:false},
+  "山藥":{n:11,p:7.7,k:17.6,est:true},
+  "牛蒡":{n:11,p:7.7,k:17.6,est:true},
+  "竹筍(綠竹/麻竹/桂竹)":{n:11,p:5.5,k:11,est:true},
+  "檳榔":{n:12,p:5,k:12,est:false},
+  "可可":{n:16,p:8,k:16,est:true},
+  "蝴蝶蘭":{n:4.1,p:2.9,k:4.1,est:true},
+  "文心蘭":{n:4.1,p:2.9,k:4.1,est:true},
+  "菊花":{n:9,p:4.5,k:9,est:true},
+  "玫瑰":{n:9,p:4.5,k:9,est:true},
+  "百合":{n:9,p:6.3,k:14.4,est:true},
+  "火鶴(花燭)":{n:4.1,p:2.9,k:6.1,est:true},
+};
+const CAT_MICRO_REQ={
+  "通用":"依作物與土壤檢測補充鈣 Ca、鎂 Mg、硼 B、鋅 Zn 等中微量元素。",
+  "稻作":"鋅 Zn（秧苗期缺鋅易縮苗僵苗）、矽 Si（水稻需矽量高，強稈、抗倒伏與抗病）、鐵 Fe。",
+  "雜糧雜作":"鋅 Zn、鎂 Mg、硫 S；豆科另重鉬 Mo（助根瘤固氮）與鈣 Ca。",
+  "蔬菜":"鈣 Ca（防葉燒、尻腐病）、硼 B（防空心／裂莖）、鎂 Mg；十字花科另需鉬 Mo。",
+  "果樹":"鈣 Ca（防裂果、軟果、苦痘）、鎂 Mg（老葉脈間黃化）、硼 B（著果與果形）、鋅／鐵／錳（新葉）。",
+  "茶與特用":"鎂 Mg、鋅 Zn、硫 S；茶樹忌石灰過量（喜微酸）。",
+  "花卉":"鈣 Ca、鎂 Mg、鐵 Fe（新葉黃化）、硼 B（花器發育與著花）。",
+};
+function cropReqOf(crop){return crop&&CROP_REQ[crop.name]||null;}
+function cropMicroReq(crop){
+  if(!crop)return '';
+  const base=CAT_MICRO_REQ[crop.cat]||CAT_MICRO_REQ['通用'];
+  return base;
+}
+
 /* ---------- 台灣縣市→鄉鎮二級選單資料 ---------- */
 const TAIWAN_AREAS={
   '基隆市':['仁愛區','中山區','中正區','安樂區','暖暖區','七堵區'],
@@ -1767,8 +1852,13 @@ function showCropInfo(){
   const mx=Math.max(...id)||1;
   const npk=[['氮 N',id[0],pct[0]],['磷 P₂O₅',id[1],pct[1]],['鉀 K₂O',id[2],pct[2]]]
     .map(([lab,v,p])=>`<div class="pill"><div class="lab">${lab}</div><div class="num">${p}%</div><div class="bar"><i style="width:${Math.round(v/mx*100)}%"></i></div></div>`).join('');
+  const cr=CROP_REQ[c.name];
+  const reqTxt=cr?`每分地約 N ${cr.n}・P₂O₅ ${cr.p}・K₂O ${cr.k} kg（文獻${cr.est?'估計':'參考'}；≈ 公頃 N ${(cr.n*10.3).toFixed(0)}/P₂O₅ ${(cr.p*10.3).toFixed(0)}/K₂O ${(cr.k*10.3).toFixed(0)} kg）`:'';
+  const microTxt=CAT_MICRO_REQ[c.cat]||'';
   const rows=[
     ['🎯 養分定位',c.focus],
+    ['🧮 全期養分需求',reqTxt],
+    ['🔬 微量／中量需求',microTxt],
     ['💧 施肥要點',c.advice],
     ['🗓️ 肥培時程',c.season],
     ['🩺 缺素警示',c.deficiency],
@@ -1888,6 +1978,17 @@ function runConvert(){
   const oN=ourUse*o.n/100,oP=ourUse*o.p/100,oK=ourUse*o.k/100,oOM=ourUse*o.om/100;
   const oAvailN=oN*o.minr/100;                              // 我方礦化後有效氮 kg/分
   const cAvgMinr=totCN>0?totCAvailN/totCN*100:0;            // 客戶加權平均礦化率
+  // ── 作物全期養分需求(文獻) ↔ 供應對照 ──
+  const cReq=cropReqOf(crop);                               // {n,p,k,est} 或 null
+  const reqCell=(rv,supply)=>{                              // 報告需求欄:需求值＋我方供應達成率
+    if(rv==null||rv===undefined)return '<td>—</td>';
+    const pct=rv>0?Math.round(supply/rv*100):0;
+    let bd;
+    if(pct>=90&&pct<=130) bd=`<span style="color:#2e7d32;font-weight:700;">我方 ${pct}%・達標</span>`;
+    else if(pct<90) bd=`<span style="color:#b26a00;font-weight:700;">我方 ${pct}%・偏低</span>`;
+    else bd=`<span style="color:#c0392b;font-weight:700;">我方 ${pct}%・偏高</span>`;
+    return `<td>需 <b>${rv}</b><br><span style="font-size:11px;">${bd}</span></td>`;
+  };
   // ── 肥料品目合法性判定 banner ──
   const illegalProds=validProds.filter(p=>p.cat==='none');
   const legalProds=validProds.filter(p=>p.cat&&p.cat!=='none');
@@ -2001,14 +2102,23 @@ function runConvert(){
     ${availHtml}
 
     <div class="table-wrap"><table class="cmp-table"><thead><tr>
-      <th>項目</th><th><span class="use-tag use-old">原有使用</span><br>${cLabel}</th><th><span class="use-tag use-new">新品換用</span><br>${escHtml(o.name)}<br>(${fmt(ourUse)}kg/分)</th><th>差異(我方−客戶)</th></tr></thead><tbody>
-      <tr><td>氮 N (kg/分)</td><td>${totCN.toFixed(2)}</td><td>${oN.toFixed(2)}</td><td>${diff(totCN,oN)}</td></tr>
-      <tr><td>磷 P₂O₅ (kg/分)</td><td>${totCP.toFixed(2)}</td><td>${oP.toFixed(2)}</td><td>${diff(totCP,oP)}</td></tr>
-      <tr><td>鉀 K₂O (kg/分)</td><td>${totCK.toFixed(2)}</td><td>${oK.toFixed(2)}</td><td>${diff(totCK,oK)}</td></tr>
-      <tr><td>有機質 (kg/分)</td><td>${totCOM.toFixed(2)}</td><td>${oOM.toFixed(2)}</td><td>${diff(totCOM,oOM)}</td></tr>
-      ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td></tr>`:''}
+      <th>項目</th><th><span class="use-tag use-old">原有使用</span><br>${cLabel}</th><th><span class="use-tag use-new">新品換用</span><br>${escHtml(o.name)}<br>(${fmt(ourUse)}kg/分)</th><th>差異(我方−客戶)</th><th>作物全期需求<br><span class="mini" style="font-weight:400;">文獻${cReq&&cReq.est?'·估計':''} kg/分</span></th></tr></thead><tbody>
+      <tr><td>氮 N (kg/分)</td><td>${totCN.toFixed(2)}</td><td>${oN.toFixed(2)}</td><td>${diff(totCN,oN)}</td>${reqCell(cReq?cReq.n:null,oN)}</tr>
+      <tr><td>磷 P₂O₅ (kg/分)</td><td>${totCP.toFixed(2)}</td><td>${oP.toFixed(2)}</td><td>${diff(totCP,oP)}</td>${reqCell(cReq?cReq.p:null,oP)}</tr>
+      <tr><td>鉀 K₂O (kg/分)</td><td>${totCK.toFixed(2)}</td><td>${oK.toFixed(2)}</td><td>${diff(totCK,oK)}</td>${reqCell(cReq?cReq.k:null,oK)}</tr>
+      <tr><td>有機質 (kg/分)</td><td>${totCOM.toFixed(2)}</td><td>${oOM.toFixed(2)}</td><td>${diff(totCOM,oOM)}</td><td style="font-size:11px;color:var(--muted);">依地力（逐年提升）</td></tr>
+      ${(cStrainsAll.length||oStrainsInfo.length)?`<tr><td>生物菌種</td><td style="font-size:12px;">${cStrainsAll.length?cStrainsAll.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td style="font-size:12px;">${oStrainsInfo.length?oStrainsInfo.map(s=>`<span class="tag">${s}</span>`).join(''):'—'}</td><td>—</td><td>—</td></tr>`:''}
       </tbody></table></div>
-    ${(()=>{const id=crop.ideal||[0,0,0];const s=(id[0]+id[1]+id[2])||1;const r=id.map(v=>Math.round(v/s*100));return `<div class="ref-std"><b>作物養分需求參考（${crop.name}）：</b>理想 N：P₂O₅：K₂O 比例約 <b>${r[0]}：${r[1]}：${r[2]}</b>（${crop.focus}）。本欄為作物需求通則參考區間；實際施用量另受土壤肥力、目標產量與作期影響，建議搭配土壤檢測，適配研判詳見後列施肥建議。</div>`;})()}
+    ${(()=>{const id=crop.ideal||[0,0,0];const s=(id[0]+id[1]+id[2])||1;const r=id.map(v=>Math.round(v/s*100));
+      let reqLine='';
+      if(cReq){
+        const perFen=`N <b>${cReq.n}</b>　P₂O₅ <b>${cReq.p}</b>　K₂O <b>${cReq.k}</b> kg/分`;
+        const ha=`（≈ 公頃 N ${(cReq.n*10.3).toFixed(0)}／P₂O₅ ${(cReq.p*10.3).toFixed(0)}／K₂O ${(cReq.k*10.3).toFixed(0)} kg）`;
+        reqLine=`<br><b>全期養分需求（文獻${cReq.est?'·依分類通則估計':'參考'}）：</b>每分地約 ${perFen} ${ha}。`;
+      }
+      const micro=cropMicroReq(crop);
+      const microLine=micro?`<br><b>主要微量／中量要素需求：</b>${micro}${crop.deficiency?`<br><span style="color:var(--muted);">作物缺素警示：${crop.deficiency}</span>`:''}`:'';
+      return `<div class="ref-std"><b>作物養分需求參考（${crop.name}）：</b>理想 N：P₂O₅：K₂O 比例約 <b>${r[0]}：${r[1]}：${r[2]}</b>（${crop.focus}）。${reqLine}${microLine}<br><span style="color:var(--muted);">※ 全期需求為作物整個生育期之養分需要通則參考值（非單次施用量），用以對照上表供應量；實際另受土壤肥力、目標產量、品種與作期影響，建議搭配土壤檢測，適配研判詳見後列施肥建議。</span></div>`;})()}
 
     <h3>有機質、微量元素與成本比較</h3>
     ${(()=>{
@@ -2083,6 +2193,14 @@ function runConvert(){
     `  磷 P2O5 : ${totCP.toFixed(2)} → ${oP.toFixed(2)} (${dd(totCP,oP)})\n`+
     `  鉀 K2O  : ${totCK.toFixed(2)} → ${oK.toFixed(2)} (${dd(totCK,oK)})\n`+
     `  有機質  : ${totCOM.toFixed(2)} → ${oOM.toFixed(2)} (${dd(totCOM,oOM)})\n`;
+  if(cReq){
+    const pc=(s,r)=>r>0?Math.round(s/r*100)+'%':'—';
+    rpt+=`\n作物全期養分需求(文獻${cReq.est?'·估計':'參考'},kg/分;括號為我方供應達成率)\n`+
+      `  氮 N    : 需 ${cReq.n}  (我方 ${pc(oN,cReq.n)})\n`+
+      `  磷 P2O5 : 需 ${cReq.p}  (我方 ${pc(oP,cReq.p)})\n`+
+      `  鉀 K2O  : 需 ${cReq.k}  (我方 ${pc(oK,cReq.k)})\n`+
+      `  微量需求: ${cropMicroReq(crop)}\n`;
+  }
   if(totCN>0||o.n>0)rpt+=`\n有效養分對照(礦化後可吸收氮,kg/分)\n`+
     `  客戶原肥 : 全氮 ${totCN.toFixed(2)} × 礦化率 ${cAvgMinr.toFixed(0)}% = 有效氮 ${totCAvailN.toFixed(2)}\n`+
     `  我方產品 : 全氮 ${oN.toFixed(2)} × 礦化率 ${o.minr.toFixed(0)}% = 有效氮 ${oAvailN.toFixed(2)}\n`;
@@ -2289,6 +2407,29 @@ function buildDoctor(x){
   const osum=(x.o.n+x.o.p+x.o.k)||1, op=[x.o.n/osum,x.o.p/osum,x.o.k/osum];
 
   ins.push({type:'info',t:'🌾 作物養分定位',b:`本作物「${x.crop.name}」${x.crop.focus}。${x.crop.advice}`});
+
+  // 作物全期養分需求 vs 我方供應達成率
+  {
+    const dreq=cropReqOf(x.crop);
+    if(dreq){
+      const rows=[['氮 N',dreq.n,x.oN],['磷 P₂O₅',dreq.p,x.oP],['鉀 K₂O',dreq.k,x.oK]];
+      let worst='good', parts=[];
+      rows.forEach(([nm,rv,sup])=>{
+        if(rv==null||!(rv>0)){parts.push(`${nm}:需求資料不足`);return;}
+        const pct=Math.round(sup/rv*100);
+        let tag;
+        if(pct>=90&&pct<=130){tag=`<span class="pos">達標 ${pct}%</span>`;}
+        else if(pct<90){tag=`<span class="neg">偏低 ${pct}%</span>`;if(worst!=='warn')worst='warn';}
+        else {tag=`<span style="color:#c0392b;font-weight:700;">偏高 ${pct}%</span>`;if(worst!=='warn')worst='warn';}
+        parts.push(`${nm}:需 <b>${rv}</b> kg/分,我方供應 <b>${sup.toFixed(1)}</b> → ${tag}`);
+      });
+      const micro=cropMicroReq(x.crop);
+      let b=`以本作物全期需求(文獻${dreq.est?'估計':'通則'},kg/分)對照我方單次施用供應量:<br>`+parts.join('<br>');
+      if(micro)b+=`<br><br><b>中微量需求重點</b>:${micro}`;
+      b+=`<br><span class="mini" style="color:var(--muted);">※ 此為全生長期累計需求,實務分基肥／追肥多次施用;有機質肥另靠地力逐年提升。精確量請依土壤檢測。</span>`;
+      ins.push({type:worst==='warn'?'warn':'good',t:'🧮 作物全期養分需求達成評估',b});
+    }
+  }
 
   if(x.crop.season)ins.push({type:'info',t:'🗓️ 肥培管理時程',b:x.crop.season});
   // 區域肥培差異(依縣市自動帶入)
