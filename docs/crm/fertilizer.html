@@ -304,6 +304,9 @@
   .legal-badge.legal-ok b{color:#1f6b34;}
   .legal-badge.legal-bad{background:#fdecec;border:1px solid #f2b8b8;}
   .legal-badge.legal-bad b{color:#b3261e;}
+  .ref-compare{background:#f4f7fb;border:1px solid #cfdcec;border-left:3px solid #3a6ea5;border-radius:8px;padding:8px 11px;margin:2px 0 4px;}
+  .ref-compare-h{font-size:12.5px;font-weight:800;color:#274b73;margin-bottom:5px;}
+  .ref-compare-body{font-size:12.5px;color:#23364a;line-height:1.7;}
 
   /* ============================================================
      正式報告版面 — 參考產官學界正式報告模板
@@ -730,6 +733,73 @@ function custLegalBadge(cat){
   if(L.state==='unset')return '';
   return `<div class="legal-badge ${L.cls}"><b>${L.text}</b><span>${L.note}</span></div>`;
 }
+/* ---------- 文獻建議成分對照(依肥料品目/競品帶入文獻典型乾基概值) ---------- */
+const FERT_ITEM_REF={
+  '1-01':{n:46,note:'尿素，純氮速效'},
+  '1-07':{n:21,note:'硫酸銨'},
+  '1-11':{n:34,note:'硝酸銨'},
+  '2-01':{p:18,note:'過磷酸鈣'},
+  '2-02':{p:46,note:'重過磷酸鈣'},
+  '3-01':{k:60,note:'氯化鉀'},
+  '3-02':{k:50,note:'硫酸鉀'},
+  '4-01':{note:'硫酸鎂，含 MgO 約16%'},
+  '5-01':{n:5.5,p:2.0,k:1.5,om:80,note:'植物渣粕(油粕類)，高有機氮、緩釋'},
+  '5-02':{n:3,p:1.5,k:1.5,om:70,note:'副產植物質'},
+  '5-03':{n:8,p:5,k:1,om:65,note:'魚廢渣，高氮高磷'},
+  '5-04':{n:4,p:16,k:0,om:35,note:'動物廢渣(骨粉類)，高磷高鈣'},
+  '5-05':{n:5,p:3,k:1,om:55,note:'副產動物質'},
+  '5-06':{n:6,p:3,k:1,om:65,note:'乾燥菌體'},
+  '5-07':{n:12,p:10,k:2,om:50,note:'氮質海鳥糞，高氮高磷'},
+  '5-08':{n:3,p:4,k:2.5,om:58,note:'雞糞加工肥料(完熟)'},
+  '5-09':{n:2,p:3,k:2,om:50,note:'禽畜糞堆肥'},
+  '5-10':{n:1.5,p:1.5,k:1.5,om:45,note:'一般堆肥'},
+  '5-11':{n:1.5,p:1.5,k:1.5,om:45,note:'雜項堆肥'},
+  '5-12':{n:4,p:3,k:2,om:60,note:'混合有機質肥料'},
+  '5-13':{n:3,p:2,k:2,om:55,note:'雜項有機質肥料'},
+  '5-15':{n:3,p:1,k:3,om:20,note:'液態有機質肥料'},
+};
+// 競品未醱酵粗糠雞糞 一水~四水(文獻乾基概值，含重金屬概值)
+const RAW_MANURE_REF={
+  '一水':{n:1.5,p:2.0,k:1.5,om:50,cu:80, zn:350},
+  '二水':{n:2.0,p:3.0,k:2.0,om:55,cu:110,zn:450},
+  '三水':{n:2.5,p:4.0,k:2.3,om:60,cu:140,zn:550},
+  '四水':{n:3.0,p:5.0,k:2.6,om:65,cu:170,zn:650},
+};
+function fertRefLookup(p){
+  const nm=p.name||'';
+  if(p.cat==='none'||/未醱酵|粗糠雞糞|生雞糞/.test(nm)){
+    const m=nm.match(/[一二三四]水/);
+    if(m&&RAW_MANURE_REF[m[0]])return {ref:RAW_MANURE_REF[m[0]],label:'未醱酵粗糠雞糞 '+m[0]+'（競品·文獻概值）',cu:true};
+    return {ref:RAW_MANURE_REF['二水'],label:'未醱酵粗糠雞糞（競品·文獻概值，預設以二水估）',cu:true};
+  }
+  if(p.cat&&FERT_ITEM_REF[p.cat]){const r=FERT_ITEM_REF[p.cat];return {ref:r,label:p.cat+' '+fertItemName(p.cat)+(r.note?'　'+r.note:''),cu:false};}
+  return null;
+}
+function refCell(label,refv,entered){
+  if(refv===undefined||refv===null)return '';
+  let d='';
+  const e=parseFloat(entered);
+  if(entered!==''&&entered!==undefined&&entered!==null&&!isNaN(e)&&!(e===0)){
+    const diff=e-refv, ad=Math.abs(diff);
+    if(ad<Math.max(refv*0.15,0.3)) d=`<span style="color:#2e7d32;font-weight:700;">≈符合</span>`;
+    else if(diff>0) d=`<span style="color:#b26a00;font-weight:700;">↑高${ad.toFixed(1)}</span>`;
+    else d=`<span style="color:#c0392b;font-weight:700;">↓低${ad.toFixed(1)}</span>`;
+  }
+  return `<span style="display:inline-block;margin:0 12px 4px 0;white-space:nowrap;">${label} 建議 <b>${refv}</b>${d?'　'+d:''}</span>`;
+}
+function fertRefHtml(i){
+  const p=custProds[i]; if(!p)return '';
+  const L=fertRefLookup(p); if(!L)return '';
+  const r=L.ref;
+  let cells=refCell('氮N',r.n,p.n)+refCell('磷P₂O₅',r.p,p.p)+refCell('鉀K₂O',r.k,p.k)+refCell('有機質',r.om,p.om);
+  if(!cells)cells='<span class="mini" style="color:var(--muted);">本品目以特定成分為主（詳見官方規格），NPK 非主要指標。</span>';
+  let cuzn='';
+  if(L.cu)cuzn=`<div style="margin-top:3px;color:#7a4a00;font-size:12px;">重金屬概值參考：銅 Cu ${r.cu} ppm・鋅 Zn ${r.zn} ppm（粗糠雞糞因飼料添加常偏高，留意土壤累積；普肥常見上限 Cu100／Zn500 ppm）</div>`;
+  return `<div class="ref-compare"><div class="ref-compare-h">📚 文獻建議成分對照　<span class="mini">${escHtml(L.label)}</span></div>
+    <div class="ref-compare-body">${cells}</div>${cuzn}
+    <div class="mini" style="color:var(--muted);margin-top:3px;">文獻典型乾基概值，供「您填入值 ↔ 文獻」對照參考；實際成分以肥料登記證標示或化驗報告為準。</div></div>`;
+}
+function refreshCustRef(i){const box=document.getElementById('cp_'+i+'_ref');if(box)box.innerHTML=fertRefHtml(i);}
 
 /* ---------- 作物類別與養分需求(植物醫生判讀依據,ideal 為 N:P₂O₅:K₂O 偏好比) ---------- */
 const CROPS=[
@@ -1276,12 +1346,14 @@ function onCustCat(i,val){
   custProds[i].cat=val;
   const box=document.getElementById('cp_'+i+'_legal');
   if(box)box.innerHTML=custLegalBadge(val);
+  refreshCustRef(i);
 }
 function removeCustProd(i){custProds.splice(i,1);renderCustProds();}
 function updateCustProd(i,field,value){
   if(field==='name'||field==='other'||field==='spec')custProds[i][field]=value;
   else custProds[i][field]=parseFloat(value)||0;
   if(field==='bag'||field==='bagKg'||field==='sub')calcCustUnit(i);
+  if(field==='n'||field==='p'||field==='k'||field==='om'||field==='name')refreshCustRef(i);
 }
 function calcCustUnit(i){
   const p=custProds[i];
@@ -1359,6 +1431,7 @@ function fillCustFromMarket(i){
   // 帶入肥料品目與合法性判定(競品粗糠雞糞 cat:'none')
   if(m.cat!==undefined){custProds[i].cat=m.cat;const cs=document.getElementById('cp_'+i+'_cat');if(cs)cs.value=m.cat;const lb=document.getElementById('cp_'+i+'_legal');if(lb)lb.innerHTML=custLegalBadge(m.cat);}
   setCustMinr(i,defMinr(m.g,m.name));
+  refreshCustRef(i);
   const noteEl=document.getElementById('cp_'+i+'_unitNote');
   if(noteEl&&m.price>0)noteEl.innerHTML='參考價:<b>'+m.price.toFixed(2)+' 元/kg</b>';
 }
@@ -1386,6 +1459,7 @@ function renderCustProds(){
       <div class="field"><label>鉀 K₂O (%)</label><input id="cp_${i}_k" type="number" step="0.1" value="${p.k}" oninput="updateCustProd(${i},'k',this.value)"></div>
       <div class="field"><label>有機質 (%)</label><input id="cp_${i}_om" type="number" step="0.1" value="${p.om}" oninput="updateCustProd(${i},'om',this.value)"></div>
     </div>
+    <div id="cp_${i}_ref">${fertRefHtml(i)}</div>
     <div class="field minr-field"><label>當季氮素有效率（礦化率 %）　<span class="mini">化肥填100、有機肥約25–55</span></label>
       <div class="minr-def">礦化率＝有機態氮被土壤微生物分解、轉成作物當季可吸收無機氮的比率；越高代表肥效釋放越快。</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
