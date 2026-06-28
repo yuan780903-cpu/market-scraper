@@ -1751,8 +1751,9 @@ function runConvert(){
   if(costC>0||costO>0)rpt+=`\n成本(每分地):原肥 ${costC.toFixed(0)} 元 → 我方 ${costO.toFixed(0)} 元(${costC-costO>=0?'省':'多'} ${Math.abs(costC-costO).toFixed(0)} 元)`;
   if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${(ourUse*area*o.price).toFixed(0)} 元`;
   rpt+=`\n\n【植物醫生見解】\n`+ins2.map(x=>`■ ${x.t}\n  ${strip(x.b)}`).join('\n\n');
-  window._report=rpt;
+  window._report=stripEmoji(rpt);
 
+  html=stripEmoji(html);
   document.getElementById('convertResult').style.display='block';
   document.getElementById('convertOut').innerHTML=html;
   window._reportHtml=html;
@@ -1864,6 +1865,12 @@ function loadReportFile(input){
   reader.readAsText(f,'utf-8');
 }
 function diffRaw(a,b){const d=b-a;const s=d>=0?'+':'';return s+d.toFixed(2);}
+/* 移除報告中的 emoji 圖示(保留箭頭↑↓→與中點・等排版符號),提升正式報告嚴謹度 */
+function stripEmoji(s){
+  return String(s)
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}]️?[ \t]?/gu,'')
+    .replace(/️/gu,'');
+}
 
 /* ---------- 植物醫生規則式判讀 ---------- */
 
