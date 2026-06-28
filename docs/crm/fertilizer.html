@@ -297,6 +297,13 @@
   .cust-prod-entry{border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin-bottom:12px;background:#fbfcfa;position:relative;}
   .cust-prod-entry .entry-no{font-size:13.5px;font-weight:800;color:var(--brown-d);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .cust-prod-entry .entry-no .entry-lbl{flex:1;}
+  .legal-badge{border-radius:8px;padding:8px 11px;margin:6px 0 2px;font-size:12px;line-height:1.55;}
+  .legal-badge b{display:block;font-size:13px;margin-bottom:2px;}
+  .legal-badge span{color:#555;font-size:11.5px;}
+  .legal-badge.legal-ok{background:#eaf6ec;border:1px solid #b9ddc0;}
+  .legal-badge.legal-ok b{color:#1f6b34;}
+  .legal-badge.legal-bad{background:#fdecec;border:1px solid #f2b8b8;}
+  .legal-badge.legal-bad b{color:#b3261e;}
 
   /* ============================================================
      正式報告版面 — 參考產官學界正式報告模板
@@ -466,6 +473,10 @@
         <div class="field"><label>鄉鎮市區</label><select id="township"></select></div>
         <div class="field"><label>🌾 作物類別(植物醫生判讀依據)</label><select id="crop" onchange="showCropInfo()"></select></div>
         <div class="field"><label>作物品項(選填)</label><input id="cropItem" placeholder="例:愛文芒果、青江菜"></div>
+        <div class="field"><label>🏢 經營模式(擊破話術依據)</label>
+          <select id="bizMode"><option value="">— 未指定 —</option><option value="有機">有機驗證／轉型期</option><option value="非有機">慣行(非有機)</option></select></div>
+        <div class="field"><label>🏠 種植環境(擊破話術依據)</label>
+          <select id="growEnv"><option value="">— 未指定 —</option><option value="戶外">戶外露天</option><option value="溫室">溫室</option><option value="網室">網室</option></select></div>
         <div class="field"><label>耕作面積(分地,選填)</label><input id="area" type="number" step="0.1" min="0" placeholder="例:5" oninput="showAreaConv()"><span id="areaConv" class="mini" style="color:var(--green-d);font-weight:700;margin-top:4px;display:block;"></span></div>
       </div>
       <div id="cropInfo" class="crop-info"></div>
@@ -662,16 +673,63 @@ const DEFAULT_MARKET=[
   {g:'有機質肥料',name:'豬糞堆肥',n:2.5,p:3,k:1.5,om:65,cu:300,zn:550,price:6},
   {g:'有機質肥料',name:'高氮有機質肥料',n:4,p:2,k:1.5,om:72,cu:40,zn:180,price:15},
   {g:'有機質肥料',name:'高鉀有機質肥料',n:2,p:2,k:4,om:65,cu:30,zn:150,price:15},
-  // 有機資材(單一原料)
-  {g:'有機資材',name:'骨粉',n:3,p:18,k:0,om:30,cu:0,zn:0,price:30},
-  {g:'有機資材',name:'黃豆粕 (豆粕)',n:7,p:1.4,k:2.2,om:80,cu:0,zn:0,price:22},
-  {g:'有機資材',name:'菜籽粕 (油粕)',n:5,p:2,k:1,om:78,cu:0,zn:0,price:18},
-  {g:'有機資材',name:'蓖麻粕',n:5,p:2,k:1,om:80,cu:0,zn:0,price:18},
-  {g:'有機資材',name:'米糠',n:2,p:4,k:1.5,om:80,cu:0,zn:0,price:10},
-  {g:'有機資材',name:'魚粉',n:9,p:6,k:1,om:65,cu:0,zn:0,price:45},
+  // 有機資材(單一原料) — 植物渣粕為合法登記品目「5-01 植物渣粕肥料」
+  {g:'有機資材',name:'骨粉',n:3,p:18,k:0,om:30,cu:0,zn:0,price:30,cat:'5-04'},
+  {g:'有機資材',name:'黃豆粕 (豆粕)',n:7,p:1.4,k:2.2,om:80,cu:0,zn:0,price:22,cat:'5-01'},
+  {g:'有機資材',name:'菜籽粕 (油粕)',n:5,p:2,k:1,om:78,cu:0,zn:0,price:18,cat:'5-01'},
+  {g:'有機資材',name:'蓖麻粕',n:5,p:2,k:1,om:80,cu:0,zn:0,price:18,cat:'5-01'},
+  {g:'有機資材',name:'米糠',n:2,p:4,k:1.5,om:80,cu:0,zn:0,price:10,cat:'5-01'},
+  {g:'有機資材',name:'魚粉',n:9,p:6,k:1,om:65,cu:0,zn:0,price:45,cat:'5-03'},
   {g:'有機資材',name:'草木灰',n:0,p:2,k:6,om:0,cu:0,zn:0,price:5},
+  // 未醱酵粗糠雞糞(競品·直接下田)──「水數」＝同批粗糠墊料連續飼養的雞批數,批數越多糞便累積越多、養分與銅鋅越高。
+  // 屬「未經醱酵腐熟、未取得肥料登記」之農業資材,非合法登記肥料品目,故 cat:'none'。數值為文獻通則乾基概估,可自行修改。
+  {g:'未醱酵粗糠雞糞（競品·未登記）',name:'未醱酵粗糠雞糞 一水',n:1.5,p:2.0,k:1.5,om:50,cu:80, zn:350,price:2,cat:'none'},
+  {g:'未醱酵粗糠雞糞（競品·未登記）',name:'未醱酵粗糠雞糞 二水',n:2.0,p:3.0,k:2.0,om:55,cu:110,zn:450,price:2,cat:'none'},
+  {g:'未醱酵粗糠雞糞（競品·未登記）',name:'未醱酵粗糠雞糞 三水',n:2.5,p:4.0,k:2.3,om:60,cu:140,zn:550,price:3,cat:'none'},
+  {g:'未醱酵粗糠雞糞（競品·未登記）',name:'未醱酵粗糠雞糞 四水',n:3.0,p:5.0,k:2.6,om:65,cu:170,zn:650,price:3,cat:'none'},
 ];
 const MCOLS=['n','p','k','om','cu','zn','price'];
+
+/* ---------- 官方肥料品目清單（行政院農業部「肥料種類品目及規格」附件一，含品目編號） ----------
+   用於「肥料設定」下拉,讓系統對客戶／競品施用的資材做合法性判定。
+   '' = 未指定;'none' = 非登記肥料品目(如未醱酵粗糠雞糞、未取得登記之資材)。 */
+const FERT_ITEMS=[
+  {g:'一、氮肥類',items:[['1-01','尿素肥料'],['1-02','裹覆尿素肥料'],['1-03','甲醛縮合尿素肥料'],['1-04','丁烯醛縮合尿素肥料'],['1-05','異丁醛縮合尿素肥料'],['1-06','硫酸胍基尿素肥料'],['1-07','硫酸銨肥料'],['1-08','腐植酸銨肥料'],['1-09','乙二醯二胺肥料'],['1-10','氯化銨肥料'],['1-11','硝酸銨肥料'],['1-12','硝酸銨鈣肥料'],['1-13','液態尿素硝酸銨肥料'],['1-14','硝酸鈣肥料'],['1-15','硝酸鈉肥料'],['1-16','氰氮化鈣肥料'],['1-17','固態副產氮質肥料'],['1-18','液態副產氮質肥料'],['1-19','固態混合氮質肥料'],['1-20','液態混合氮質肥料']]},
+  {g:'二、磷肥類',items:[['2-01','過磷酸鈣肥料'],['2-02','重過磷酸鈣肥料'],['2-03','燒製磷肥料'],['2-04','熔製磷肥料'],['2-05','腐植酸磷肥料'],['2-06','加工磷質肥料'],['2-07','副產磷質肥料'],['2-08','混合磷質肥料'],['2-09','磷礦粉肥料']]},
+  {g:'三、鉀肥類',items:[['3-01','氯化鉀肥料'],['3-02','硫酸鉀肥料'],['3-03','碳酸氫鉀肥料'],['3-04','粗製鉀鹽肥料'],['3-05','硫酸鉀鎂肥料'],['3-06','腐植酸鉀肥料'],['3-07','矽酸鉀肥料'],['3-08','加工滷汁鉀肥料'],['3-09','副產鉀質肥料'],['3-10','混合鉀質肥料']]},
+  {g:'四、次微量要素肥料類',items:[['4-01','硫酸鎂肥料'],['4-02','氫氧化鎂肥料'],['4-03','氧化鎂肥料'],['4-04','腐植酸鎂肥料'],['4-05','木質磺酸鎂肥料'],['4-06','加工鎂質肥料'],['4-07','副產鎂質肥料'],['4-08','混合鎂質肥料'],['4-09','鉗合態鎂肥料'],['4-10','生石灰肥料'],['4-11','消石灰肥料'],['4-12','碳酸鈣肥料'],['4-13','貝殼粉肥料'],['4-14','副產石灰肥料'],['4-15','混合石灰肥料'],['4-16','鈣液肥'],['4-17','硫酸鈣肥料'],['4-18','白雲石灰肥料'],['4-19','白雲石粉肥料'],['4-20','矽質石灰石肥料'],['4-21','矽酸爐渣肥料'],['4-22','硼酸肥料'],['4-23','硼酸鹽肥料'],['4-24','熔製硼質肥料'],['4-25','加工硼質肥料'],['4-26','硫酸錳肥料'],['4-27','礦渣錳質肥料'],['4-28','鉗合態錳肥料'],['4-29','加工錳質肥料'],['4-30','混合錳質肥料'],['4-31','氧化鋅肥料'],['4-32','硫酸鋅肥料'],['4-33','鉗合態鋅肥料'],['4-34','硫酸亞鐵肥料'],['4-35','鉗合態鐵肥料'],['4-36','鉬酸鈉肥料'],['4-37','鉗合態銅肥料'],['4-38','熔製微量要素肥料'],['4-39','複合次微量要素肥料'],['4-40','液態複合次微量要素肥料'],['4-41','雜項次量微量要素肥料'],['4-42','液態雜項次量微量要素肥料']]},
+  {g:'五、有機質肥料類',items:[['5-01','植物渣粕肥料'],['5-02','副產植物質肥料'],['5-03','魚廢渣肥料'],['5-04','動物廢渣肥料'],['5-05','副產動物質肥料'],['5-06','乾燥菌體肥料'],['5-07','氮質海鳥糞肥料'],['5-08','雞糞加工肥料'],['5-09','禽畜糞堆肥'],['5-10','一般堆肥'],['5-11','雜項堆肥'],['5-12','混合有機質肥料'],['5-13','雜項有機質肥料'],['5-14','液態雜項有機質肥料'],['5-15','液態有機質肥料']]},
+  {g:'六、複合肥料類',items:[['6-01','複合肥料'],['6-02','裹覆複合肥料'],['6-03','家庭園藝用複合肥料'],['6-04','化成複合肥料'],['6-05','雜項複合肥料'],['6-06','液態複合肥料'],['6-07','液態雜項複合肥料']]},
+  {g:'七、植物生長輔助劑類',items:[['7-01','植物生長輔助劑-腐植酸'],['7-02','雜項有機質栽培介質'],['7-03','有機質栽培介質']]},
+  {g:'八、微生物肥料類',items:[['8-01','豆科根瘤菌肥料'],['8-02','游離固氮菌肥料'],['8-03','溶磷菌肥料'],['8-04','溶鉀菌肥料'],['8-05','複合微生物肥料'],['8-06','叢枝菌根菌肥料']]}
+];
+const FERT_ITEM_MAP=(()=>{const m={};FERT_ITEMS.forEach(g=>g.items.forEach(([c,n])=>m[c]=n));return m;})();
+function fertItemName(code){return FERT_ITEM_MAP[code]||'';}
+/* 品目下拉選項(含「未指定」「無—非登記」與全部官方品目) */
+function fertItemOptions(sel){
+  sel=sel||'';
+  let html=`<option value="" ${sel===''?'selected':''}>— 未指定 —</option>`+
+    `<option value="none" ${sel==='none'?'selected':''}>⚠ 無：非登記肥料品目（未醱酵粗糠雞糞等資材）</option>`;
+  FERT_ITEMS.forEach(grp=>{
+    html+=`<optgroup label="${grp.g}">`+
+      grp.items.map(([c,n])=>`<option value="${c}" ${sel===c?'selected':''}>${c}　${n}</option>`).join('')+
+      `</optgroup>`;
+  });
+  return html;
+}
+/* 合法性判定:回傳 {state:'unset'|'legal'|'illegal', text, cls} */
+function fertLegality(cat){
+  if(cat==='none') return {state:'illegal',text:'⚠ 非登記肥料品目',cls:'legal-bad',
+    note:'此資材未列入官方肥料品目（未經醱酵腐熟／未取得肥料登記）。依《肥料管理法》，未經登記不得以「肥料」名義販售、標示或宣稱肥效；有機驗證田區施用未腐熟畜禽糞亦不符規範。'};
+  if(cat&&FERT_ITEM_MAP[cat]) return {state:'legal',text:'✓ 合法登記品目 '+cat+'　'+FERT_ITEM_MAP[cat],cls:'legal-ok',
+    note:'屬官方公告之合法肥料品目，依登記證標示成分施用。'};
+  return {state:'unset',text:'',cls:''};
+}
+function custLegalBadge(cat){
+  const L=fertLegality(cat);
+  if(L.state==='unset')return '';
+  return `<div class="legal-badge ${L.cls}"><b>${L.text}</b><span>${L.note}</span></div>`;
+}
 
 /* ---------- 作物類別與養分需求(植物醫生判讀依據,ideal 為 N:P₂O₅:K₂O 偏好比) ---------- */
 const CROPS=[
@@ -1034,6 +1092,12 @@ function load(){
     market.unshift(...scMissing.map(m=>structuredClone(m)));
     saveMarket();
   }
+  // 一次性遷移：補入競品「未醱酵粗糠雞糞 一水~四水」(舊版使用者也能取得)
+  const compG='未醱酵粗糠雞糞（競品·未登記）';
+  const compDefault=DEFAULT_MARKET.filter(m=>m.g===compG);
+  const compExisting=new Set(market.filter(m=>m.g===compG).map(m=>m.name));
+  const compMissing=compDefault.filter(m=>!compExisting.has(m.name));
+  if(compMissing.length){ market.push(...compMissing.map(m=>structuredClone(m))); saveMarket(); }
 }
 function saveMat(){localStorage.setItem('fert_materials',JSON.stringify(materials));flash('dbSave','✓ 已儲存');}
 function saveForm(){localStorage.setItem('fert_formulas',JSON.stringify(formulas));}
@@ -1205,8 +1269,13 @@ function delFormula(id){if(confirm('刪除此配方?')){formulas=formulas.filter
 /* ---------- 客戶多品項肥料管理 ---------- */
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function addCustProd(){
-  custProds.push({name:'',n:0,p:0,k:0,om:0,cu:0,zn:0,other:'',use:0,bag:0,bagKg:0,sub:0,spec:'粒狀',price:0,minr:100,strains:[],microElems:[]});
+  custProds.push({name:'',cat:'',n:0,p:0,k:0,om:0,cu:0,zn:0,other:'',use:0,bag:0,bagKg:0,sub:0,spec:'粒狀',price:0,minr:100,strains:[],microElems:[]});
   renderCustProds();
+}
+function onCustCat(i,val){
+  custProds[i].cat=val;
+  const box=document.getElementById('cp_'+i+'_legal');
+  if(box)box.innerHTML=custLegalBadge(val);
 }
 function removeCustProd(i){custProds.splice(i,1);renderCustProds();}
 function updateCustProd(i,field,value){
@@ -1287,6 +1356,8 @@ function fillCustFromMarket(i){
   const m=market[+sel.value];if(!m)return;
   const fv={name:m.name,n:m.n,p:m.p,k:m.k,om:m.om,cu:m.cu,zn:m.zn,price:m.price};
   Object.keys(fv).forEach(f=>{custProds[i][f]=fv[f];const el=document.getElementById('cp_'+i+'_'+f);if(el)el.value=fv[f];});
+  // 帶入肥料品目與合法性判定(競品粗糠雞糞 cat:'none')
+  if(m.cat!==undefined){custProds[i].cat=m.cat;const cs=document.getElementById('cp_'+i+'_cat');if(cs)cs.value=m.cat;const lb=document.getElementById('cp_'+i+'_legal');if(lb)lb.innerHTML=custLegalBadge(m.cat);}
   setCustMinr(i,defMinr(m.g,m.name));
   const noteEl=document.getElementById('cp_'+i+'_unitNote');
   if(noteEl&&m.price>0)noteEl.innerHTML='參考價:<b>'+m.price.toFixed(2)+' 元/kg</b>';
@@ -1304,6 +1375,9 @@ function renderCustProds(){
     </div>
     <div class="field"><label>從市售清單帶入</label>
       <select id="cp_${i}_market" class="cust-market-sel" onchange="fillCustFromMarket(${i})">${mOpts}</select></div>
+    <div class="field"><label>🏷️ 肥料品目（合法性判定依據・官方附件一）　<span class="mini">未醱酵粗糠雞糞請選「無」</span></label>
+      <select id="cp_${i}_cat" class="cust-cat-sel" onchange="onCustCat(${i},this.value)">${fertItemOptions(p.cat||'')}</select>
+      <div id="cp_${i}_legal">${custLegalBadge(p.cat||'')}</div></div>
     <div class="field"><label>產品名稱</label>
       <input id="cp_${i}_name" value="${escHtml(p.name)}" placeholder="例:台肥5號複合肥料" oninput="updateCustProd(${i},'name',this.value)"></div>
     <div class="grid g4">
@@ -1395,7 +1469,7 @@ function renderCpStrains(i){
   el.innerHTML=cpStrainsHtml(i);
 }
 /* ---------- 業務話術生成 ---------- */
-function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName}){
+function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName,bizMode,growEnv}){
   const costO=ourUse*o.price;
   const diff=totCCost-costO;                       // >0 表示我方較便宜
   const diffPct=totCCost>0?Math.abs(diff/totCCost*100):0;
@@ -1438,6 +1512,56 @@ function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,to
     rows.push(`<b>養分緩釋</b><br>　F Feature 特徵:有機氮須礦化才釋放(礦化率約 ${fmt(o.minr)}%),N-${fmt(o.n)}／P-${fmt(o.p)}／K-${fmt(o.k)}。<br>　A Advantage 優點:養分慢慢放,不像化肥一次衝完就流失。<br>　<b class="pos">B Benefit 利益→對您而言:肥效穩、淋洗少,雨後不易一次溜光,施一次撐更久。</b>`);
     const b=`<b>FAB ＝ Feature（特徵）／Advantage（優點）／Benefit（利益）</b>。公式:<b>「因為…(Feature 特徵),所以…(Advantage 優點),這對您的好處是…(Benefit 利益)」</b>。客戶只在乎 Benefit(利益),千萬別只報 Feature(特徵)。<br><br>`+rows.join('<br><br>')+`<br><span style="color:var(--muted);font-size:12px;">技巧:每講一個特徵,都用「對您而言」收尾到利益;講不到利益的特徵,客戶聽過就忘。</span>`;
     pts.push({icon:'🧱',title:'FAB 賣點公式：特徵 → 優點 → 利益',body:b});
+  }
+
+  // 3c) 競品擊破 — 依「肥料品目合法性 + 經營模式 + 種植環境」一一拆解
+  {
+    const rawManure=validProds.filter(p=>p.cat==='none'||/未醱酵|粗糠雞糞|生雞糞/.test(p.name||''));
+    const cakeComp =validProds.filter(p=>p.cat==='5-01'||/渣粕|豆粕|菜籽|油粕|蓖麻|花生粕/.test(p.name||''));
+    const isOrganic=bizMode==='有機', isConv=bizMode==='非有機';
+    const enclosed=growEnv==='溫室'||growEnv==='網室', outdoor=growEnv==='戶外';
+    const envTag=growEnv?`<b>${growEnv}</b>`:'您的田區';
+    const bizTag=bizMode?`<b>${bizMode}</b>經營`:'';
+
+    // ── A. 未醱酵粗糠雞糞(非登記)──
+    if(rawManure.length){
+      const cuList=rawManure.map(p=>p.cu||0).filter(v=>v>0);
+      const znList=rawManure.map(p=>p.zn||0).filter(v=>v>0);
+      const cuTxt=cuList.length?`銅約 ${Math.min(...cuList)}–${Math.max(...cuList)} ppm`:'銅偏高';
+      const znTxt=znList.length?`鋅約 ${Math.min(...znList)}–${Math.max(...znList)} ppm`:'鋅偏高';
+      let b=`客戶若直接用<b>未醱酵粗糠雞糞</b>(俗稱一水～四水,水數＝同批粗糠墊料連續養過幾批雞、批數越多糞越濃)，這是價格最低的對手；但它的弱點可以「一一擊破」——<br><br>`;
+      b+=`<b>① 合法性（最硬的一刀）</b><br>未醱酵粗糠雞糞<b class="neg">不是登記肥料品目</b>(本系統品目選「無」)。依《肥料管理法》，未取得肥料登記者不得以「肥料」名義販售、標示或宣稱肥效；出問題沒有登記證、沒有保證成分可究責。`;
+      if(isOrganic)b+=`<br>　您是${bizTag}，更關鍵:<b class="neg">有機規範禁止施用未經完熟腐熟的畜禽糞</b>，一旦被查到或重金屬超標，驗證可能直接失格——一年的有機標章賭不起。`;
+      b+=`<br><br><b>② 重金屬越養越毒</b><br>飼料含銅、鋅添加劑，雞糞${cuTxt}、${znTxt}，<b class="neg">水數越多(四水)累積越高</b>。銅鋅不會被代謝分解，年年下田只會在表土越積越多，逼近甚至超過普肥上限(銅100／鋅500 ppm)；連作田一旦超標，土壤難復原。`;
+      b+=`<br><br><b>③ 沒腐熟＝把風險埋進田裡</b><br>未醱酵的料帶<b>病原菌(沙門氏菌、大腸桿菌)、雜草種子、蟲卵</b>；下田後在土裡<b>二次高溫發酵會「燒根」</b>、釋放氨氣傷苗。`;
+      if(enclosed)b+=`您是${envTag}密閉栽培，<b class="neg">氨氣、高溫與病原在設施內散不掉、更毒</b>，根線蟲與土媒病害也會在連作下爆量。`;
+      else if(outdoor)b+=`露天田還會<b>發臭、招蠅蟲</b>，鄰田與檢舉風險高。`;
+      b+=`<br><br><b>④ 肥效像賭博</b><br>一水～四水成分天差地別、批批不同，碳氮比高時微生物還會<b>先把土裡的氮搶去分解粗糠</b>，作物前期反而缺氮。`;
+      b+=`<br><br><b class="pos">收尾話術</b>：「便宜是真的便宜，但您撒下去的是<b>沒登記、沒保證、銅鋅會累積、還可能燒根帶病</b>的東西。碩成是<b>合法登記、完熟腐熟、成分固定</b>的有機質肥，貴一點點，買的是安心跟可究責。${isOrganic?'尤其您要顧有機標章，這條底線不能破。':'撒對東西，地才會越種越好。'}」`;
+      b+=`<br><span style="color:var(--muted);font-size:12px;">技巧:先承認對手「便宜」這個事實(不硬凹),再用合法性→重金屬→病原→肥效四刀,把「便宜」翻成「便宜的代價」。</span>`;
+      pts.push({icon:'⚔️',title:'擊破競品 1：未醱酵粗糠雞糞（一水～四水・非登記資材）',body:b});
+    }
+
+    // ── B. 植物渣粕肥料(合法登記品目，改打體質而非合法性)──
+    if(cakeComp.length){
+      let b=`客戶若用的是<b>植物性渣粕肥料</b>(豆粕／菜籽粕／油粕等)，<b class="pos">這是合法登記品目(5-01)、也是好料</b>——千萬<b>別硬說它違法</b>，否則一講就露餡、信任全失。改打它的「體質」與「總成本」——<br><br>`;
+      b+=`<b>① 先肯定，再切入</b><br>「渣粕是好東西，純植物性、乾淨，我認同您的選擇。」先站在農友這邊，他才聽得進後面。<br><br>`;
+      b+=`<b>② 渣粕的先天限制</b><br>單一原料、<b>養分偏一邊</b>(高氮但磷鉀鈣不足)；碳氮比與礦化快、<b>肥效衝得快也退得快</b>、續航短；純渣粕<b>價格偏高</b>(豆粕尤其貴)，論單位養分成本未必划算。<br><br>`;
+      b+=`<b>③ 碩成的差異化</b><br>碩成是<b>多元料源＋完熟腐熟＋(可含)菌種</b>的有機質肥：養分均衡、<b>緩釋續航</b>、有機質改良土壤團粒，地力是「存起來」的；登記證保證成分、批批穩定。`;
+      if(isOrganic)b+=`您做${bizTag}，選肥重點是「登記＋列入有機可用資材」；碩成為合法登記有機質肥，正式驗證請一併確認品牌是否列入有機資材清單。`;
+      b+=`<br><br><b>④ 不逼客戶二選一(降戒心)</b><br>不必要客戶丟掉渣粕：可建議<b>用碩成打底(基肥)、渣粕做關鍵期追肥</b>，或先替換一部分。先合作、再用田間效果擴大。`;
+      b+=`<br><span style="color:var(--muted);font-size:12px;">技巧:對「合法的好對手」,攻合法性會自爆;改打單一原料、肥效短、總成本與地力續航,並給「搭配方案」留台階。</span>`;
+      pts.push({icon:'🤝',title:'擊破競品 2：植物渣粕肥料（合法品目・打體質與總成本）',body:b});
+    }
+
+    // ── C. 環境／經營量身提醒(沒填競品也給)──
+    if(isOrganic||enclosed){
+      let tips=[];
+      if(isOrganic)tips.push(`<b>有機經營</b>:所有投入品都要能追溯、且符合有機規範；未登記、未腐熟資材是驗證地雷，幫客戶守住標章＝守住他的售價。`);
+      if(enclosed)tips.push(`<b>${growEnv}密閉栽培</b>:通風差、高溫高濕，<b>未腐熟肥的氨氣與病原危害放大</b>，務必用完熟、穩定的有機質肥；設施投資大，禁不起一次燒根或病害爆發。`);
+      if(outdoor)tips.push(`<b>戶外露天</b>:雨水淋洗強，速效養分易流失，緩釋型有機質肥可降低淋洗、穩定供肥。`);
+      pts.push({icon:'🌡️',title:'量身提醒：依經營模式／種植環境守住客戶底線',body:tips.join('<br><br>')});
+    }
   }
 
   // 4) 成本切入(四種情境)
@@ -1648,6 +1772,8 @@ function runConvert(){
   const county=document.getElementById('county').value;
   const township=document.getElementById('township').value;
   const cropItem=document.getElementById('cropItem').value;
+  const bizMode=document.getElementById('bizMode')?.value||'';
+  const growEnv=document.getElementById('growEnv')?.value||'';
   const area=gv('area');
 
   // 彙整客戶所有肥料的每分地養分 (kg)
@@ -1688,6 +1814,19 @@ function runConvert(){
   const oN=ourUse*o.n/100,oP=ourUse*o.p/100,oK=ourUse*o.k/100,oOM=ourUse*o.om/100;
   const oAvailN=oN*o.minr/100;                              // 我方礦化後有效氮 kg/分
   const cAvgMinr=totCN>0?totCAvailN/totCN*100:0;            // 客戶加權平均礦化率
+  // ── 肥料品目合法性判定 banner ──
+  const illegalProds=validProds.filter(p=>p.cat==='none');
+  const legalProds=validProds.filter(p=>p.cat&&p.cat!=='none');
+  let catNoteHtml='';
+  if(illegalProds.length||legalProds.length){
+    let rows='';
+    if(legalProds.length)rows+=`<div style="margin-bottom:${illegalProds.length?'8px':'0'};"><b style="color:#1f6b34;">✓ 合法登記品目</b>：`+
+      legalProds.map(p=>`${escHtml(p.name||'品項')}（${p.cat} ${fertItemName(p.cat)}）`).join('、')+`</div>`;
+    if(illegalProds.length)rows+=`<div><b style="color:#b3261e;">⚠ 非登記肥料品目</b>：`+
+      illegalProds.map(p=>escHtml(p.name||'品項')).join('、')+
+      `。此類資材（如未醱酵粗糠雞糞）未列入官方肥料品目，依《肥料管理法》未經登記不得以肥料名義販售、標示或宣稱肥效；未腐熟畜禽糞另有重金屬累積、病原與燒根風險，有機驗證田區亦不符規範。建議改用合法登記、完熟腐熟之有機質肥料。</div>`;
+    catNoteHtml=`<div class="note" style="margin:14px 0 0;border-left-color:${illegalProds.length?'#b3261e':'#1f6b34'};">🏷️ <b>肥料品目合法性判定</b><br>${rows}<div class="mini" style="margin-top:6px;color:var(--muted);">判定依據:行政院農業部「肥料種類品目及規格」附件一。本欄為依使用者所選品目之程序性提醒,非法律意見;實際登記狀態請查肥料登記證。</div></div>`;
+  }
   // ── 有效養分對照(礦化後實際可吸收氮)── 一律顯示
   const availHtml=(totCN>0||o.n>0)?`
     <h3 style="color:var(--green-d);margin-top:18px;">有效養分對照（礦化後實際可吸收氮）</h3>
@@ -1779,10 +1918,12 @@ function runConvert(){
       <div><b>耕作地點 LOCATION</b><span>${county}${township?township:''}</span></div>
       <div><b>栽培作物 CROP</b><span>${crop.name}${cropItem?'　'+cropItem:''}</span></div>
       <div><b>耕作面積 AREA</b><span>${area>0?`${(area/10.3).toFixed(2)} 公頃　/　${(area/9.7).toFixed(2)} 甲<br><small style="color:var(--muted);font-weight:400;">(${fmt(area)} 分地)</small>`:'—'}</span></div>
+      ${(bizMode||growEnv)?`<div><b>經營型態 MODE</b><span>${[bizMode?'經營：'+bizMode:'',growEnv?'環境：'+growEnv:''].filter(Boolean).join('　')}</span></div>`:''}
     </div>
     <div class="report-body">
     ${custDetailHtml}
     <div class="note">以 <b>${basisLabel}</b> 為基準換算:客戶每分地施用原肥合計 <b>${fmt(totCUse)} kg</b>,需改用 <b style="color:var(--green-d);">${fmt(ourUse)} kg/分地</b> 的「${escHtml(o.name)}」可達相同${basis==='same'?'用量':basisLabel}供應。</div>
+    ${catNoteHtml}
     ${availHtml}
 
     <div class="table-wrap"><table class="cmp-table"><thead><tr>
@@ -1873,6 +2014,11 @@ function runConvert(){
     `  我方產品 : 全氮 ${oN.toFixed(2)} × 礦化率 ${o.minr.toFixed(0)}% = 有效氮 ${oAvailN.toFixed(2)}\n`;
   if(costC>0||costO>0)rpt+=`\n成本(每分地):原肥 ${costC.toFixed(0)} 元 → 我方 ${costO.toFixed(0)} 元(${costC-costO>=0?'省':'多'} ${Math.abs(costC-costO).toFixed(0)} 元)`;
   if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${(ourUse*area*o.price).toFixed(0)} 元`;
+  if(illegalProds.length||legalProds.length){
+    rpt+=`\n\n【肥料品目合法性判定】\n`;
+    if(legalProds.length)rpt+=`  ✓ 合法登記品目:${legalProds.map(p=>`${p.name||'品項'}(${p.cat} ${fertItemName(p.cat)})`).join('、')}\n`;
+    if(illegalProds.length)rpt+=`  ⚠ 非登記肥料品目:${illegalProds.map(p=>p.name||'品項').join('、')}——未列入官方肥料品目,依肥料管理法未經登記不得以肥料名義販售/標示肥效,另有重金屬累積與病原燒根風險,建議改用合法登記之完熟有機質肥。\n`;
+  }
   rpt+=`\n\n【植物醫生見解】\n`+ins2.map(x=>`■ ${x.t}\n  ${strip(x.b)}`).join('\n\n');
   window._report=stripEmoji(rpt);
 
@@ -1887,7 +2033,7 @@ function runConvert(){
   let talkHtml='';
   if(talkCard&&talkOut){
     talkCard.style.display='block';
-    const pts=buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName});
+    const pts=buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName,bizMode,growEnv});
     talkHtml=pts.map(p=>`<div class="doc-item" style="border-left-color:var(--accent);"><div class="doc-t">${p.icon} ${p.title}</div><div class="doc-b">${p.body}</div></div>`).join('');
     talkOut.innerHTML=talkHtml;
     talkCard.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1898,7 +2044,7 @@ function runConvert(){
   const _san=s=>(s||'').replace(/[\\/:*?"<>|　\s]+/g,'').replace(/[、，,]/g,'') || '未命名';
   window._fileBase=`${_san(custName)}-${_san(crop.name)}-碩成肥料替代量報告`;
   window._formState={
-    fields:['custName','county','township','crop','cropItem','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','oMinrSel','oMinr','salesNote']
+    fields:['custName','county','township','crop','cropItem','bizMode','growEnv','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','oMinrSel','oMinr','salesNote']
       .reduce((m,id)=>{const el=document.getElementById(id);if(el)m[id]=el.value;return m;},{}),
     custProds:JSON.parse(JSON.stringify(custProds)),
     oStrains:JSON.parse(JSON.stringify(oStrains))
@@ -1981,7 +2127,7 @@ function loadReportFile(input){
       // 還原欄位
       const fl=st.fields||{};
       const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
-      ['custName','crop','cropItem','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
+      ['custName','crop','cropItem','bizMode','growEnv','area','basis','oName','oN','oP','oK','oOM','oCu','oZn','oPrice','salesNote'].forEach(id=>setVal(id,fl[id]));
       // 縣市→鄉鎮需序列填入
       if(fl.county){ setVal('county',fl.county); if(typeof fillTownship==='function')fillTownship(); }
       setTimeout(()=>{
@@ -2396,6 +2542,21 @@ function applyCRMData(c){
     if(match){ const cs=document.getElementById('crop'); if(cs) cs.value=match.i; }
   }
   showCropInfo();showAreaConv();
+
+  // 經營模式／種植環境(CRM 若有對應欄位則帶入,欄位名稱多種寫法皆容錯)
+  const bizEl=document.getElementById('bizMode');
+  if(bizEl){
+    const raw=String(c.bizMode||c.businessMode||c.organic||c.farmType||'');
+    if(/有機|organic/i.test(raw)&&!/非有機|慣行/.test(raw))bizEl.value='有機';
+    else if(/非有機|慣行|conventional/i.test(raw))bizEl.value='非有機';
+  }
+  const envEl=document.getElementById('growEnv');
+  if(envEl){
+    const raw=String(c.growEnv||c.environment||c.facility||'');
+    if(/網室/.test(raw))envEl.value='網室';
+    else if(/溫室|設施|greenhouse/i.test(raw))envEl.value='溫室';
+    else if(/戶外|露天|outdoor/i.test(raw))envEl.value='戶外';
+  }
 
   flash('crmImportMsg',`✓ 已帶入「${c.name}」`);
   document.getElementById('custName')?.scrollIntoView({behavior:'smooth',block:'center'});
