@@ -322,6 +322,11 @@
   .report-docnum{text-align:right;font-size:12px;color:var(--muted);line-height:1.9;padding-top:4px;}
   .report-docnum b{color:var(--green-d);font-weight:700;}
   .report-docnum .dn{font-family:var(--mono);letter-spacing:.5px;color:var(--text);font-weight:600;}
+  .report-owner{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+  .report-owner .ro-txt{text-align:right;line-height:1.35;}
+  .report-owner .ro-c{display:block;font-size:10px;color:var(--muted);letter-spacing:.5px;}
+  .report-owner .ro-n{display:block;font-size:14px;font-weight:800;color:var(--green-d);letter-spacing:2px;}
+  .report-owner .ro-photo{flex:none;width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--green-l);box-shadow:0 1px 4px rgba(31,76,45,.2);}
 
   /* 標題帶 */
   .report-titleband{text-align:center;padding:4px 40px 18px;
@@ -1742,6 +1747,7 @@ function runConvert(){
   // ── 專業報告版面 ──────────────────────────────────────
   const _dn=new Date(),_p2=x=>String(x).padStart(2,'0');
   const docNo=`SC-${_dn.getFullYear()}${_p2(_dn.getMonth()+1)}${_p2(_dn.getDate())}-${_p2(_dn.getHours())}${_p2(_dn.getMinutes())}`;
+  const ownerPhoto=(document.querySelector('header img[src^="data:image"]')||{}).src||'';
   let html=`<div class="report">
     <div class="report-bg"></div>
     <div class="report-header">
@@ -1756,6 +1762,7 @@ function runConvert(){
         <div class="sc-name">碩成肥料<small>SHUO CHENG FERTILIZER</small></div>
       </div>
       <div class="report-docnum">
+        ${ownerPhoto?`<div class="report-owner"><div class="ro-txt"><span class="ro-c">本報告版權所有</span><span class="ro-n">莊政遠</span></div><img class="ro-photo" src="${ownerPhoto}" alt="莊政遠"></div>`:`<div class="report-owner"><div class="ro-txt"><span class="ro-c">本報告版權所有</span><span class="ro-n">莊政遠</span></div></div>`}
         <div>報告編號　<span class="dn">${docNo}</span></div>
         <div>製表日期　<b>${today}</b></div>
         <div>承辦業務　<b>莊政遠</b></div>
