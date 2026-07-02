@@ -1391,6 +1391,7 @@ function renderCustomers(){
         <option value="active" ${cFilter.status!=='inactive'?'selected':''}>✅ 使用中（${activeN}）</option>
         <option value="inactive" ${cFilter.status==='inactive'?'selected':''}>⏸️ 停用客戶（${inactiveN}）</option></select></div>`;
   h+=`<div class="btn-row" style="margin-top:8px"><button class="btn btn-pri" style="width:100%;padding:14px;font-size:16px;font-weight:700" onclick="custSearch()">🔍 搜尋客戶</button></div>`;
+  h+=`<div class="btn-row" style="margin-top:6px"><button class="btn btn-pri" style="width:100%;padding:13px;font-weight:700" onclick="editCustomer(null,true)">＋ 手動新增客戶（下拉選欄位）</button></div>`;
   h+=`<div class="btn-row" style="margin-top:6px;gap:6px"><button class="btn btn-out" onclick="custPasteImport()">📋 貼文字自動建檔</button><button class="btn btn-out" onclick="orgManager()">🏷️ 整理組織（批次歸戶）</button></div>`;
   h+=`<div id="cust-results"></div>`;
   viewHTML(h);
@@ -2234,6 +2235,17 @@ function editCustomer(c, isNew){
   h+=field('系統編號','f-sysno',c.sysno,'text',false,'內部系統編號');
   h+=field('電話','f-phone',c.phone,'tel');
   h+=field('聯絡人','f-contact',c.contact);
+  // 縣市 / 鄉鎮下拉（自動帶入地址開頭；仍可在下方地址欄補門牌路名）
+  const _counties=countyNames();
+  const _curCity=cityOf(c.address)||'';
+  const _selCounty=_curCity?(_counties.find(n=>n===_curCity)||_counties.find(n=>countyCore(n)===countyCore(_curCity))||''):'';
+  const _curTown=_selCounty?matchTown(c.address,countyCore(_selCounty)):'';
+  const _townList=_selCounty?(townsByCore()[countyCore(_selCounty)]||[]):[];
+  h+=`<div class="field"><label>縣市 / 鄉鎮（下拉選，自動帶入地址開頭）</label>
+    <div class="field-2">
+      <select id="f-city-sel" onchange="onCustCitySel()"><option value="">選縣市</option>${_counties.map(n=>`<option ${n===_selCounty?'selected':''}>${esc(n)}</option>`).join('')}</select>
+      <select id="f-town-sel" onchange="onCustTownSel()"><option value="">選鄉鎮</option>${_townList.map(t=>`<option ${t.raw===_curTown?'selected':''}>${esc(t.raw)}</option>`).join('')}</select>
+    </div></div>`;
   h+=field('通訊地址','f-address',c.address);
   h+=field('建檔日期','f-filedDate',c.filedDate,'date');
   h+=`</fieldset>`;
@@ -2271,7 +2283,27 @@ function editCustomer(c, isNew){
   h+=`</fieldset>`;
   h+=`<div class="btn-row"><button class="btn btn-pri" onclick='saveCustomer(${JSON.stringify(c.id)},${isAdd})'>💾 儲存</button></div>`;
   openModal(isAdd?'新增客戶':'編輯客戶', h);
+  // 記住地址目前的「縣市＋鄉鎮」開頭，之後改下拉才能正確替換而不重複
+  { const a=$('#f-address'); if(a && _selCounty){
+      let actCity=''; for(const v of [_selCounty,_selCounty.replace(/台/g,'臺')]){ if((c.address||'').startsWith(v)){ actCity=v; break; } }
+      let actTown=''; if(_curTown){ const after=(c.address||'').slice(actCity.length); if(after.startsWith(_curTown)) actTown=_curTown; }
+      const pre=actCity+actTown; if(pre) a.dataset.locpre=pre;
+  } }
   window._draft=c;
+}
+function onCustCitySel(){
+  const sel=$('#f-city-sel').value, ts=$('#f-town-sel');
+  const list=sel?(townsByCore()[countyCore(sel)]||[]):[];
+  ts.innerHTML='<option value="">選鄉鎮</option>'+list.map(t=>`<option>${esc(t.raw)}</option>`).join('');
+  onCustTownSel();
+}
+function onCustTownSel(){
+  const a=$('#f-address'); if(!a) return;
+  const city=$('#f-city-sel').value, town=$('#f-town-sel').value;
+  const prev=a.dataset.locpre||''; let rest=a.value;
+  if(prev && rest.startsWith(prev)) rest=rest.slice(prev.length);
+  const pre=(city||'')+(town||'');
+  a.value=pre+rest; a.dataset.locpre=pre;
 }
 function onGradeChange(){ const g=$('#f-grade').value; if(g) $('#f-freq').value=GRADE_FREQ[g]; }
 function saveCustomer(id, isAdd){
