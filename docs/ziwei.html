@@ -5349,29 +5349,45 @@ function __obDc(ctx,val){const c=ctx.createConstantSource();c.offset.value=val;r
 /* ---- 身心靈輕音樂 合成工具（溫暖・安定・歡愉，五聲音階保證無不和諧） ---- */
 function __obReverb(ctx){            // 柔和殘響（雙延遲回授＋低通）→ 直接連到 destination，回傳送音節點
   const send=ctx.createGain();send.gain.value=1;
-  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;
-  const d1=ctx.createDelay(1.5);d1.delayTime.value=0.21;
-  const f1=ctx.createGain();f1.gain.value=0.42;
-  const d2=ctx.createDelay(1.5);d2.delayTime.value=0.38;
-  const f2=ctx.createGain();f2.gain.value=0.36;
-  const wet=ctx.createGain();wet.gain.value=0.30;
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
+  const d1=ctx.createDelay(1.5);d1.delayTime.value=0.19;
+  const f1=ctx.createGain();f1.gain.value=0.26;       // 降低回授：避免鬼魅般長迴音尾
+  const d2=ctx.createDelay(1.5);d2.delayTime.value=0.33;
+  const f2=ctx.createGain();f2.gain.value=0.20;
+  const wet=ctx.createGain();wet.gain.value=0.16;     // 降低濕度：乾淨、近似真實鋼琴空間
   send.connect(d1);d1.connect(f1);f1.connect(d1);d1.connect(lp);
   send.connect(d2);d2.connect(f2);f2.connect(d2);d2.connect(lp);
   lp.connect(wet);wet.connect(ctx.destination);
   return send;
 }
-function __obPad(ctx,out,freqs,vol){   // 持續襯底和弦（暖 sine＋八度 triangle，極緩顫音）→ 安定感
-  const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.06;
-  const lg=ctx.createGain();lg.gain.value=vol*0.16;lfo.connect(lg);
+function __obPad(ctx,out,freqs,vol){   // 溫暖襯底和弦（乾淨八度＋低通柔化，無顫音、無拍頻）→ 安定不陰森
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(out);
   freqs.forEach(f=>{
     const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
-    const o2=ctx.createOscillator();o2.type='triangle';o2.frequency.value=f*2.001;
-    const g=ctx.createGain();g.gain.value=vol;lg.connect(g.gain);
-    const g2=ctx.createGain();g2.gain.value=vol*0.22;
-    o.connect(g);o2.connect(g2);g.connect(out);g2.connect(out);
+    const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=f*2;   // 純八度：不再失諧拍頻
+    const g=ctx.createGain();g.gain.value=vol;
+    const g2=ctx.createGain();g2.gain.value=vol*0.16;
+    o.connect(g);o2.connect(g2);g.connect(lp);g2.connect(lp);
     o.start(0);o2.start(0);
   });
-  lfo.start(0);
+}
+function __obPiano(ctx,out,f,t,vol,len){   // 溫潤鋼琴音：快起音（琴槌）＋自然指數衰減＋泛音，低通隨衰減轉柔
+  len=len||2.2;
+  const env=ctx.createGain();
+  env.gain.setValueAtTime(0.0001,t);
+  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.008);
+  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*0.3),t+0.45);
+  env.gain.exponentialRampToValueAtTime(0.0001,t+len);
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';
+  lp.frequency.setValueAtTime(4200,t);
+  lp.frequency.exponentialRampToValueAtTime(1300,t+len);
+  env.connect(lp);lp.connect(out);
+  const parts=[[1,1],[2,0.45],[3,0.22],[4.01,0.09]];   // 含輕微非諧和高泛音，仿真實鋼琴弦
+  parts.forEach(p=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
+    const g=ctx.createGain();g.gain.value=p[1];
+    o.connect(g);g.connect(env);o.start(t);o.stop(t+len+0.1);
+  });
 }
 function __obChime(ctx,out,f,t,len,vol){  // 溫柔鐘聲（多泛音、緩起緩落）→ 歡愉感
   const parts=[[1,1],[2,0.45],[3,0.2],[4.2,0.08]];
@@ -5410,44 +5426,67 @@ const __OB={
     const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.8;
     const lg=ctx.createGain();lg.gain.value=300;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
   },
-  dawn(ctx,dur){          // 晨曦暖陽：C 大調，溫暖明亮、上揚歡愉
+  dawn(ctx,dur){          // 晨曦暖陽：C 大調鋼琴，溫暖明亮、流動歡愉（和弦進行 C–G–Am–F）
+    const rv=__obReverb(ctx);
+    const dry=ctx.createGain();dry.gain.value=0.92;dry.connect(ctx.destination);
+    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
+    __obPad(ctx,bus,[130.81,196.00,261.63],0.045);             // C3 G3 C4 極輕暖底
+    const prog=[
+      {r:130.81,n:[261.63,329.63,392.00,523.25]},              // C
+      {r:98.00, n:[293.66,392.00,493.88,587.33]},              // G
+      {r:110.00,n:[261.63,329.63,440.00,523.25]},              // Am
+      {r:87.31, n:[261.63,349.23,440.00,523.25]}               // F
+    ];
+    const step=0.5;let t=0.5,bar=0;
+    while(t<dur-3){
+      const c=prog[bar%prog.length];
+      __obPiano(ctx,bus,c.r,t,0.09,3.2);                       // 每小節低音鋪底
+      const seq=[c.n[0],c.n[1],c.n[2],c.n[3],c.n[2],c.n[1]];   // 分解和弦上下行
+      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-2)break;
+        __obPiano(ctx,bus,seq[k],nt,k===0?0.12:0.10,2.0);}
+      t+=seq.length*step;bar++;
+    }
+  },
+  calm(ctx,dur){          // 靜心放鬆：F 大調鋼琴，低緩柔和、深層安定（和弦進行 F–Dm–B♭–C）
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,329.63],0.06);              // C3 + G3 + E4 暖和弦
-    const scale=[523.25,587.33,659.25,783.99,880.00,1046.50];  // C5 D5 E5 G5 A5 C6 大調五聲
-    let t=0.6,prev=2;
-    while(t<dur-2.5){
-      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>2);prev=i;
-      __obChime(ctx,bus,scale[i],t,3.2,0.12);
-      if(Math.random()<0.4)__obChime(ctx,bus,scale[Math.min(scale.length-1,i+2)],t+0.12,2.6,0.06);
-      t+=1.6+Math.random()*1.8;
+    __obPad(ctx,bus,[87.31,174.61,261.63],0.05);               // F2 F3 C4 暖底
+    const prog=[
+      {r:87.31, n:[174.61,220.00,261.63,349.23]},              // F
+      {r:73.42, n:[174.61,220.00,293.66,349.23]},              // Dm
+      {r:58.27, n:[174.61,233.08,293.66,349.23]},              // B♭
+      {r:65.41, n:[164.81,196.00,261.63,329.63]}               // C
+    ];
+    const step=0.78;let t=1.0,bar=0;
+    while(t<dur-4){
+      const c=prog[bar%prog.length];
+      __obPiano(ctx,bus,c.r,t,0.085,4.2);
+      const seq=[c.n[0],c.n[1],c.n[2],c.n[3]];                 // 緩慢上行分解和弦
+      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-3)break;
+        __obPiano(ctx,bus,seq[k],nt,0.095,3.2);}
+      t+=seq.length*step+0.4;bar++;
     }
   },
-  calm(ctx,dur){          // 靜心放鬆：F 大調，低緩柔和、深層安定
+  dream(ctx,dur){         // 療癒星空：A 大調鋼琴，空靈閃爍、夢幻療癒（和弦進行 A–E–F#m–D）
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.85;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[174.61,261.63,349.23],0.07);              // F3 + C4 + F4 暖和弦
-    const scale=[349.23,392.00,440.00,523.25,587.33];          // F4 G4 A4 C5 D5 大調五聲
-    let t=1.2,prev=1;
-    while(t<dur-4){
-      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>2);prev=i;
-      __obChime(ctx,bus,scale[i],t,4.5,0.10);
-      t+=2.8+Math.random()*2.6;
-    }
-  },
-  dream(ctx,dur){         // 療癒星空：A 大調，空靈閃爍、夢幻療癒
-    const rv=__obReverb(ctx);
-    const dry=ctx.createGain();dry.gain.value=0.8;dry.connect(ctx.destination);
-    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[110.00,164.81,220.00],0.06);              // A2 + E3 + A3 暖和弦
-    const scale=[440.00,493.88,554.37,659.25,739.99,880.00,1108.73]; // A4 B4 C#5 E5 F#5 A5 C#6 大調五聲
-    let t=0.5,prev=3;
-    while(t<dur-2){
-      let i;do{i=Math.floor(Math.random()*scale.length);}while(Math.abs(i-prev)>3);prev=i;
-      __obChime(ctx,bus,scale[i],t,2.4,0.085);
-      t+=0.9+Math.random()*1.3;
+    __obPad(ctx,bus,[110.00,164.81,220.00],0.045);             // A2 E3 A3 暖底
+    const prog=[
+      {r:110.00,n:[440.00,554.37,659.25,880.00]},              // A
+      {r:82.41, n:[493.88,659.25,830.61,987.77]},              // E
+      {r:92.50, n:[440.00,554.37,739.99,880.00]},              // F#m
+      {r:73.42, n:[440.00,587.33,739.99,880.00]}               // D
+    ];
+    const step=0.44;let t=0.5,bar=0;
+    while(t<dur-2.5){
+      const c=prog[bar%prog.length];
+      __obPiano(ctx,bus,c.r,t,0.06,2.8);
+      const seq=[c.n[0],c.n[2],c.n[1],c.n[3],c.n[2]];          // 高音區閃爍琶音
+      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-1.5)break;
+        __obPiano(ctx,bus,seq[k],nt,0.075,1.9);}
+      t+=seq.length*step+0.2;bar++;
     }
   },
   forest(ctx,dur){
