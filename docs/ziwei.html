@@ -1471,6 +1471,7 @@ footer .disc{max-width:620px;margin:0 auto 18px;line-height:1.9}
 
 <footer>
   <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。<br><span style="opacity:.85">※ 演算說明：曆法推算適用 1900 年 1 月 31 日（庚子年正月初一）至 2100 年。節氣與立春定年採太陽視黃經演算，達「分」級精度，恰逢交節當日者亦能依出生時刻自動判定年柱／月柱邊界（天文模型誤差約數分鐘，臨界數分鐘內者仍建議再行核對）；農曆閏月以該月月份排盤。</span></div>
+  <div style="margin:6px 0 2px">聯絡我們（聖源大師）　Email：<a href="mailto:yuan780903@gmail.com" style="color:inherit">yuan780903@gmail.com</a>　·　電話：<a href="tel:0910373286" style="color:inherit">0910-373-286</a></div>
   <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
@@ -4117,7 +4118,7 @@ async function lpHandleReturn(){
       }
     }catch(e){}
     localStorage.removeItem('zw_lp_pending');clean();
-    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
+    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（Email：yuan780903@gmail.com・電話：0910-373-286）協助處理。');return true;
   }
   if(fail){localStorage.removeItem('zw_lp_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
   if(cancel){localStorage.removeItem('zw_lp_pending');clean();return true;}
@@ -4199,7 +4200,7 @@ async function ecHandleReturn(){
       await new Promise(r=>setTimeout(r,1500));
     }
     localStorage.removeItem('zw_ec_pending');clean();
-    alert('付款確認中或未完成。若您已完成付款卻未自動解鎖，請稍候重新整理，或聯絡 聖源大師（LINE：yuan780903）協助處理。');return true;
+    alert('付款確認中或未完成。若您已完成付款卻未自動解鎖，請稍候重新整理，或聯絡 聖源大師（Email：yuan780903@gmail.com・電話：0910-373-286）協助處理。');return true;
   }
   clean();return true;
 }
@@ -4805,7 +4806,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </div>
     <div id="pwManual" class="pwpay">
       <div class="pwpay-h">已持有萬用碼？</div>
-      <div class="pwpay-note">若您已取得 聖源大師 提供的專屬萬用碼，於下方輸入即可立即開啟本報告完整內容。如需協助，請洽 聖源大師（LINE：<b>yuan780903</b>）。</div>
+      <div class="pwpay-note">若您已取得 聖源大師 提供的專屬萬用碼，於下方輸入即可立即開啟本報告完整內容。如需協助，請洽 聖源大師（Email：<b>yuan780903@gmail.com</b>・電話：<b>0910-373-286</b>）。</div>
       <div class="pwform">
         <input id="lcInput" type="text" inputmode="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
         <button type="button" onclick="lcUnlock()">解鎖</button>
