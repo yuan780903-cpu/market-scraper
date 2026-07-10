@@ -4063,7 +4063,7 @@ async function lcUnlock(){
   const inp=document.getElementById('lcInput'),msg=document.getElementById('lcMsg');
   if(!inp||!window.__LC)return;
   const code=inp.value.trim().replace(/\s+/g,'');
-  if(!/^[0-9A-Za-z]{4,16}$/.test(code)){msg.textContent='請輸入正確的萬用碼。';msg.className='lcmsg err';return;}
+  if(!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(code)){msg.textContent='請輸入正確的萬用碼。';msg.className='lcmsg err';return;}
   msg.textContent='驗證中…';msg.className='lcmsg';
   let res;
   try{res=await lcRedeem(code);}
@@ -4108,14 +4108,14 @@ function superOpen(){
       <div class="englbl">① 折扣碼</div>
       <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engReuse" value="once" checked> 單次性</label><label class="engradio"><input type="radio" name="engReuse" value="forever"> 連續性</label></div>
-      <div class="engrow"><span class="engk">代碼</span><input id="engDiscCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="16" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">代碼</span><input id="engDiscCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="24" autocomplete="off" spellcheck="false"></div>
       <button class="engbtn" type="button" onclick="engGenDisc()">生成折扣碼</button>
       <div id="engDiscOut" class="engout"></div>
     </div>
     <div class="engsec">
       <div class="englbl">② 直接通關碼（免付費・全站解鎖）</div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engPassKind" value="forever" checked onchange="engPassKind()"> 終身</label><label class="engradio"><input type="radio" name="engPassKind" value="limited" onchange="engPassKind()"> 限次數</label><input id="engPassUses" class="enginp2" type="number" min="1" value="1" style="max-width:76px;display:none"><span id="engPassUsesU" class="engu" style="display:none">次</span></div>
-      <div class="engrow"><span class="engk">代碼</span><input id="engPassCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="16" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">代碼</span><input id="engPassCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="24" autocomplete="off" spellcheck="false"></div>
       <button class="engbtn" type="button" onclick="engGenPass()">生成通關碼</button>
       <div id="engPassOut" class="engout"></div>
     </div>
@@ -4185,7 +4185,7 @@ async function engGenDisc(){
   const reuse=reuseEl?reuseEl.value:'once';
   const custom=((document.getElementById('engDiscCode')||{}).value||'').trim();
   if(!(amt>=1)){engOut('engDiscOut','請輸入折扣金額（元）。','err');return;}
-  if(custom&&!/^[0-9A-Za-z]{4,16}$/.test(custom)){engOut('engDiscOut','自訂代碼需 4~16 位英文或數字。','err');return;}
+  if(custom&&!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(custom)){engOut('engDiscOut','代碼需 2~24 位中英文或數字（不含空格與符號）。','err');return;}
   engOut('engDiscOut','生成中…','');
   let j;try{ j=await engFetch('/discIssue?amount='+amt+'&reuse='+reuse+(custom?'&code='+encodeURIComponent(custom):'')); }
   catch(e){ engOut('engDiscOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
@@ -4202,7 +4202,7 @@ function engPassKind(){
 }
 async function engGenPass(){
   const custom=((document.getElementById('engPassCode')||{}).value||'').trim();
-  if(custom&&!/^[0-9A-Za-z]{4,16}$/.test(custom)){engOut('engPassOut','自訂代碼需 4~16 位英文或數字。','err');return;}
+  if(custom&&!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(custom)){engOut('engPassOut','代碼需 2~24 位中英文或數字（不含空格與符號）。','err');return;}
   const k=document.querySelector('input[name="engPassKind"]:checked');
   const limited=k&&k.value==='limited';
   let uses=0;
@@ -4975,7 +4975,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div id="discWrap" class="discwrap" style="display:none">
       <div class="discrow">
-        <input id="discInput" class="discinput" placeholder="折扣碼（選填）" maxlength="16" autocomplete="off" spellcheck="false">
+        <input id="discInput" class="discinput" placeholder="折扣碼（選填）" maxlength="24" autocomplete="off" spellcheck="false">
         <button id="discBtn" class="discbtn" onclick="discApply()">套用</button>
       </div>
       <div id="discMsg" class="discmsg"></div>
@@ -4988,7 +4988,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="pwpay-h">已持有萬用碼？</div>
       <div class="pwpay-note">若您已取得 聖源大師 提供的專屬萬用碼，於下方輸入即可立即開啟本報告完整內容。如需協助，請洽 聖源大師（Email：<b>yuan780903@gmail.com</b>・電話：<b>0910-373-286</b>）。</div>
       <div class="pwform">
-        <input id="lcInput" type="text" inputmode="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
+        <input id="lcInput" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
         <button type="button" onclick="lcUnlock()">解鎖</button>
       </div>
     </div>
