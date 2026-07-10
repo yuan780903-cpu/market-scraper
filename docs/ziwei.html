@@ -4091,7 +4091,10 @@ function superOpen(){
       <div class="englbl">管理密碼（後端 ADMIN_SECRET）</div>
       <input id="engSecret" class="superinp" type="password" autocomplete="off" spellcheck="false" placeholder="輸入管理密碼" value="${esc(saved)}">
       <label class="engchk"><input type="checkbox" id="engRemember" ${saved?'checked':''}> 記住於本機（僅此裝置）</label>
+      <button class="engbtn" type="button" id="engVerifyBtn" onclick="engVerify()">驗證並進入</button>
+      <div id="engAuthMsg" class="engout"></div>
     </div>
+    <div id="engGate" style="display:none">
     <div class="engsec">
       <div class="englbl">① 折扣碼</div>
       <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
@@ -4112,6 +4115,7 @@ function superOpen(){
       <button id="superGo" class="superbtn" type="button">開通此裝置</button>
       <div id="superMsg" class="supermsg"></div>
     </div>
+    </div>
   </div>`;
   document.body.appendChild(m);
   const close=()=>{m.remove();};
@@ -4120,9 +4124,27 @@ function superOpen(){
   const inp=m.querySelector('#superInput');
   m.querySelector('#superGo').addEventListener('click',()=>superActivate(inp.value));
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')superActivate(inp.value);});
-  setTimeout(()=>{const s=document.getElementById('engSecret');if(s&&!s.value)s.focus();},30);
+  // 已記住密碼者：自動驗證直接進入；否則聚焦密碼欄等待輸入。
+  setTimeout(()=>{const s=document.getElementById('engSecret');if(s&&s.value){engVerify();}else if(s){s.focus();}},40);
 }
 /* ===== 工程模式：折扣碼／通關碼 發碼（需後端 ADMIN_SECRET，經 X-Admin-Secret 標頭傳送） ===== */
+async function engVerify(){
+  const sec=engGetSecret();
+  if(!sec){engOut('engAuthMsg','請輸入管理密碼。','err');return;}
+  engOut('engAuthMsg','驗證中…','');
+  let j;try{ j=await engFetch('/discStatus'); }
+  catch(e){ engOut('engAuthMsg',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
+  const gate=document.getElementById('engGate');
+  if(j&&j.ok){
+    if(gate)gate.style.display='';
+    engOut('engAuthMsg','✓ 驗證成功，已解鎖發碼功能。','ok');
+    const vb=document.getElementById('engVerifyBtn');if(vb)vb.textContent='重新驗證';
+  }else{
+    if(gate)gate.style.display='none';
+    try{localStorage.removeItem('zw_admin_secret');}catch(e){}   // 密碼錯就別再記住
+    engOut('engAuthMsg',ENG_ERR[j&&j.reason]||'密碼錯誤，無法進入。','err');
+  }
+}
 function engGetSecret(){
   const el=document.getElementById('engSecret');const v=el?el.value.trim():'';
   const rem=document.getElementById('engRemember');
