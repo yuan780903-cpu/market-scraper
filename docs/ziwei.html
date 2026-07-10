@@ -976,6 +976,8 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-adv{margin:4px 0;padding-left:18px}
 #reportPrint .rp-adv li{margin:4px 0;font-size:12px;line-height:1.6;color:#3a2c12}
 #reportPrint .rp-syn{background:#fbf4e3;border:1px solid #e3d3a6;border-radius:8px;padding:8px 11px;font-size:12.5px;line-height:1.75;margin-top:5px;color:#3a2c12}
+#reportPrint .rp-lifesum{font-size:12.5px;line-height:1.85;padding:12px 15px}
+#reportPrint .rp-lifesum b{color:#7a5a12}
 #reportPrint .rp-foot{margin-top:12px;border-top:1px dashed #ccc;padding-top:7px;font-size:8px;color:#999;line-height:1.5}
 #reportPrint .rp-bless{margin:16px 0 8px;padding:15px 18px;text-align:center;border:2px double #b01e2e;border-radius:12px;background:linear-gradient(180deg,#fffdf9,#fcefe9)}
 #reportPrint .rp-bless .bt{font-size:15px;letter-spacing:10px;color:#9a5a2a;margin-bottom:9px;font-weight:700}
@@ -1018,6 +1020,11 @@ footer .disc .sub{display:block;margin-top:12px}
   #reportPrint .rp-page{padding:9mm 12mm;box-sizing:border-box}
   #reportPrint .rp-page+.rp-page{margin-top:0;border-top:none}
   #reportPrint .rp-chart,#reportPrint .rp-score,#reportPrint .rp-fp,#reportPrint .rp-fsum,#reportPrint .rp-bless{break-inside:avoid;page-break-inside:avoid}
+  /* 逐宮卡片／飛化卡片：改 inline-block 雙欄（Safari 列印對 grid 子項的 break-inside 支援不佳，
+     inline-block 會被視為「不可分割整體」，確保卡片不被跨頁切一半）。 */
+  #reportPrint .rp-pgrid,#reportPrint .rp-fgrid{display:block;font-size:0}
+  #reportPrint .rp-pcard,#reportPrint .rp-fcard{display:inline-block;width:49%;box-sizing:border-box;vertical-align:top;margin:0 0 7px;font-size:12px;break-inside:avoid;page-break-inside:avoid}
+  #reportPrint .rp-pgrid .rp-pcard:nth-child(odd),#reportPrint .rp-fgrid .rp-fcard:nth-child(odd){margin-right:1.6%}
   #reportPrint .rp-sec{break-after:avoid;page-break-after:avoid}
   #reportPrint table.rp-tbl thead{display:table-header-group}
   #reportPrint *{box-shadow:none!important}
@@ -4073,7 +4080,7 @@ async function lcUnlock(){
   const inp=document.getElementById('lcInput'),msg=document.getElementById('lcMsg');
   if(!inp||!window.__LC)return;
   const code=inp.value.trim().replace(/\s+/g,'');
-  if(!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(code)){msg.textContent='請輸入正確的萬用碼。';msg.className='lcmsg err';return;}
+  if(!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(code)){msg.textContent='請輸入萬用碼或折扣碼。';msg.className='lcmsg err';return;}
   msg.textContent='驗證中…';msg.className='lcmsg';
   let res;
   try{res=await lcRedeem(code);}
@@ -4084,14 +4091,28 @@ async function lcUnlock(){
     msg.className='lcmsg ok';
     await lcRefresh();
     const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});
-  }else{
-    const reason=res?res.reason:'';
-    msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
-                  :reason==='invalid'?'✗ 萬用碼無效或尚未發出，請向 聖源大師確認。'
-                  :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 聖源大師索取新碼。'
-                  :'✗ 解鎖失敗，請稍後再試。';
-    msg.className='lcmsg err';
+    return;
   }
+  // (2) 不是萬用碼 → 當「折扣碼」查詢：成功則套用折扣、引導往下付款
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/discCheck?code='+encodeURIComponent(code),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok){
+      __disc={code:code,amount:j.amount,reuse:j.reuse,base:j.base,final:j.final};
+      updatePriceUI();
+      msg.textContent='✓ 已套用折扣碼，折抵 '+j.amount+' 元，付款只需 '+j.final+' 元。請於下方按綠界安全付款。';
+      msg.className='lcmsg ok';
+      const ec=document.getElementById('ecBtnWrap');
+      if(ec&&getComputedStyle(ec).display!=='none')ec.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+  }catch(e){/* 折扣碼查詢失敗 → 落到下方通用錯誤訊息 */}
+  // (3) 兩者皆非
+  const reason=res?res.reason:'';
+  msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
+                :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 聖源大師索取新碼。'
+                :'✗ 代碼無效：查無此萬用碼或折扣碼，請確認後再試，或洽 聖源大師。';
+  msg.className='lcmsg err';
 }
 
 /* ===== 隱藏全能開通（連點背景音樂鈕 7 下觸發）=====
@@ -5027,26 +5048,19 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </ul>
     <div class="pworig">原價 <s>${LC_ORIG}</s></div>
     <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
-    <div id="discWrap" class="discwrap" style="display:none">
-      <div class="discrow">
-        <input id="discInput" class="discinput" placeholder="折扣碼（選填）" maxlength="24" autocomplete="off" spellcheck="false">
-        <button id="discBtn" class="discbtn" onclick="discApply()">套用</button>
-      </div>
-      <div id="discMsg" class="discmsg"></div>
-    </div>
-    <div id="ecBtnWrap" class="lpwrap" style="display:none">
-      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界</span>安全付款・付完自動解鎖</button>
-      <div class="lpsec">支援信用卡／ATM／超商，完成付款後立即自動開啟完整報告，免輸入任何代碼。</div>
-    </div>
     <div id="pwManual" class="pwpay">
-      <div class="pwpay-h">已持有萬用碼？</div>
-      <div class="pwpay-note">若您已取得 聖源大師 提供的專屬萬用碼，於下方輸入即可立即開啟本報告完整內容。如需協助，請洽 聖源大師（Email：<b>yuan780903@gmail.com</b>・電話：<b>0910-373-286</b>）。</div>
+      <div class="pwpay-h">有萬用碼或折扣碼？</div>
+      <div class="pwpay-note">若您持有 聖源大師 提供的<b>萬用碼</b>（免費開啟完整報告）或<b>折扣碼</b>（付款時折抵），於下方同一欄輸入即可。如需協助，請洽 聖源大師（Email：<b>yuan780903@gmail.com</b>・電話：<b>0910-373-286</b>）。</div>
       <div class="pwform">
-        <input id="lcInput" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="在此輸入萬用碼" onkeydown="if(event.key==='Enter')lcUnlock()">
-        <button type="button" onclick="lcUnlock()">解鎖</button>
+        <input id="lcInput" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="輸入萬用碼或折扣碼" onkeydown="if(event.key==='Enter')lcUnlock()">
+        <button type="button" onclick="lcUnlock()">確認</button>
       </div>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
+    <div id="ecBtnWrap" class="lpwrap" style="display:none">
+      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界</span>安全付款・付完自動解鎖</button>
+      <div class="lpsec">支援信用卡／ATM／超商，完成付款後立即自動開啟完整報告。</div>
+    </div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
@@ -5418,6 +5432,26 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       </div>`;
     }).join("");
   }
+  // ===== 綜合命理白話總評（整合 紫微十二宮 + 八字 + 姓名學，越白話越好）=====
+  const lifeSummary=(function(){
+    const g=scores.gradeTier+scores.grade, total=scores.total, pr=scores.pr;
+    const ds=[...scores.dims].sort((a,b)=>b.v-a.v), top=ds[0], bot=ds[ds.length-1];
+    const nsX=_na?nameScore(_na,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:"日主"+dm,xi:st.xi,ji:st.ji}):null;
+    const xi=st.xi.join("、"), ji=st.ji.join("、");
+    const col=st.xi.map(el=>(WX_LIFE[el]||{}).色).filter(Boolean).join("、");
+    const dir=st.xi.map(el=>(WX_LIFE[el]||{}).方).filter(Boolean).join("、");
+    const biz=st.xi.map(el=>(WX_LIFE[el]||{}).業).filter(Boolean).join("、");
+    const nameLine=nsX
+      ?(nsX.total>=75?`你的名字「<b>${_na.chars.join("")}</b>」拿 <b>${nsX.total} 分</b>（${nsX.grade}），是個會「加分」的好名字，天天被叫、天天在幫你旺運，這點可以放心。`
+        :nsX.total>=60?`你的名字「<b>${_na.chars.join("")}</b>」拿 <b>${nsX.total} 分</b>（${nsX.grade}），大致平穩、不拖累運勢；若想更上一層，可用喜用神的顏色、英文名或印鑑來補強。`
+        :`你的名字「<b>${_na.chars.join("")}</b>」拿 <b>${nsX.total} 分</b>（${nsX.grade}），偏低了些——名字是後天天天被呼喚的磁場，建議用喜用神色彩、別名／英文名或印鑑補強，甚至可考慮諮詢改名。`)
+      :`（這次沒有輸入兩個字以上的中文姓名，姓名學這塊先略過。）`;
+    return `<p style="margin:0 0 9px"><b>一、先看整體：</b>你這張命盤綜合 <b>${total} 分</b>（${g} 級，約贏過 ${pr}% 的人）。但請記得——分數只是「先天拿到的牌」，人生輸贏更看你怎麼打。你最強的是 <b>${top.k}</b>（${top.v} 分），最需要用心經營的是 <b>${bot.k}</b>（${bot.v} 分）。</p>`
+      +`<p style="margin:0 0 9px"><b>二、你是什麼樣的人（紫微命盤）：</b>命宮坐「<b>${mingStarTxt}</b>」，這決定了你的個性底色與一生最在意的方向。從十二宮看，你的<b>錢財</b>是「${palaceOf("財帛")}」；<b>事業舞台</b>是「${palaceOf("官祿")}」；<b>感情婚姻</b>是「${palaceOf("夫妻")}」；<b>內在福氣與享受</b>是「${palaceOf("福德")}」。這四塊，就是人生最常被問的「錢、事業、感情、快不快樂」。</p>`
+      +`<p style="margin:0 0 9px"><b>三、你的能量體質（八字）：</b>日主是「<b>${dm}（${GAN_WX[dm]}）</b>」，整體屬「${st.level}」。命裡最喜歡、最補你的五行是「<b>${xi}</b>」，要多親近；最不利、要少碰的是「<b>${ji}</b>」。白話講：多往「${xi}」的方向走，會越走越順、越有貴人；老是卡在「${ji}」，就容易費力又不討好。</p>`
+      +`<p style="margin:0 0 9px"><b>四、名字幫不幫你（姓名學）：</b>${nameLine}</p>`
+      +`<p style="margin:0"><b>五、三個系統合起來，給你的一句話：</b>紫微告訴你「<b>你是誰、舞台在哪</b>」，八字告訴你「<b>你的體質、該補什麼</b>」，姓名學告訴你「<b>後天名字有沒有幫上忙</b>」。三者一起看，你的開運方向很明確——${col?`多穿戴「<b>${col}</b>」系顏色`:""}${dir?`、桌位或床頭朝「<b>${dir}</b>」方`:""}${biz?`、往「<b>${biz}</b>」這類領域發展`:""}，都能借五行之力替你加分。發揮最強的 <b>${top.k}</b>、有意識地補 <b>${bot.k}</b>，先天這副好牌就能打到滿分。命由天定、運由己造，願你把這份說明書真正用起來，活出最順遂精彩的自己。</p>`;
+  })();
   const printHTML=`
   <div class="rp-page">
     <div class="rp-time" id="rpTime"></div>
@@ -5515,6 +5549,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">喜用神 · 生活開運應用</div>
     <ul class="rp-adv">${xiUseRows}</ul>
     ${jiNote}
+    <div class="rp-sec">綜合命理白話總評 · 一次讀懂你的人生說明書</div>
+    <div class="rp-syn rp-lifesum">${lifeSummary}</div>
     <div class="rp-bless"><div class="bt">敬　祝</div><div class="bw">${blessing}</div><div class="bs">人生實用說明書系統 · 聖源大師　敬上</div></div>
     <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>${famPages}`;
