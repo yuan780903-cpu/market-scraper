@@ -1550,7 +1550,7 @@ footer .disc .sub{display:block;margin-top:12px}
 
 <footer>
   <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。<span class="sub" style="opacity:.85">※ 演算說明：曆法推算適用 1900 年 1 月 31 日（庚子年正月初一）至 2100 年。節氣與立春定年採太陽視黃經演算，達「分」級精度，恰逢交節當日者亦能依出生時刻自動判定年柱／月柱邊界（天文模型誤差約數分鐘，臨界數分鐘內者仍建議再行核對）；農曆閏月以該月月份排盤。</span></div>
-  <div class="ftcontact">聯絡我們（聖源大師）<span class="ctu">Email：<a href="mailto:yuan780903@gmail.com">yuan780903@gmail.com</a></span><span class="ctdot"> · </span><span class="ctu">電話：<a href="tel:0910373286">0910-373-286</a></span></div>
+  <div class="ftcontact">聯絡我們（聖源大師）<span class="ctu">客服信箱：<a href="mailto:yuan780903@gmail.com">yuan780903@gmail.com</a></span><span class="ctdot"> · </span><span class="ctu">服務時間：平日 08:00–17:00</span></div>
   <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
@@ -4026,7 +4026,7 @@ function timeLabel(h){
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
 const LC_PRICE="188 元";   // ← 想改價格改這裡（結緣價）
 const LC_ORIG="888 元";    // ← 原價（顯示刪除線）
-const LC_CONTACT="完成付款後，請以 LINE 告知 聖源大師（LINE ID：yuan780903，或手機 0910-373-286），即可取得專屬萬用碼解鎖。";  // ← 改成你的聯絡方式
+const LC_CONTACT="完成付款後系統會自動解鎖；如需協助，請來信客服信箱 yuan780903@gmail.com（服務時間：平日 08:00–17:00）。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
 }
@@ -4373,7 +4373,7 @@ async function lpHandleReturn(){
       }
     }catch(e){}
     localStorage.removeItem('zw_lp_pending');clean();
-    alert('付款驗證未通過。若您已被扣款，請聯絡 聖源大師（Email：yuan780903@gmail.com・電話：0910-373-286）協助處理。');return true;
+    alert('付款驗證未通過。若您已被扣款，請來信客服信箱 yuan780903@gmail.com（服務時間：平日 08:00–17:00）協助處理。');return true;
   }
   if(fail){localStorage.removeItem('zw_lp_pending');clean();alert('付款未完成，可重新嘗試或改用萬用碼解鎖。');return true;}
   if(cancel){localStorage.removeItem('zw_lp_pending');clean();return true;}
@@ -4455,7 +4455,7 @@ async function ecHandleReturn(){
       await new Promise(r=>setTimeout(r,1500));
     }
     localStorage.removeItem('zw_ec_pending');clean();
-    alert('付款確認中或未完成。若您已完成付款卻未自動解鎖，請稍候重新整理，或聯絡 聖源大師（Email：yuan780903@gmail.com・電話：0910-373-286）協助處理。');return true;
+    alert('付款確認中或未完成。若您已完成付款卻未自動解鎖，請稍候重新整理，或來信客服信箱 yuan780903@gmail.com（服務時間：平日 08:00–17:00）協助處理。');return true;
   }
   clean();return true;
 }
@@ -5050,7 +5050,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div id="pwManual" class="pwpay">
       <div class="pwpay-h">有萬用碼或折扣碼？</div>
-      <div class="pwpay-note">若您持有 聖源大師 提供的<b>萬用碼</b>（免費開啟完整報告）或<b>折扣碼</b>（付款時折抵），於下方同一欄輸入即可。如需協助，請洽 聖源大師（Email：<b>yuan780903@gmail.com</b>・電話：<b>0910-373-286</b>）。</div>
+      <div class="pwpay-note">若您持有 聖源大師 提供的<b>萬用碼</b>（免費開啟完整報告）或<b>折扣碼</b>（付款時折抵），於下方同一欄輸入即可。如需協助，請來信客服信箱 <b>yuan780903@gmail.com</b>（服務時間：平日 08:00–17:00）。</div>
       <div class="pwform">
         <input id="lcInput" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="輸入萬用碼或折扣碼" onkeydown="if(event.key==='Enter')lcUnlock()">
         <button type="button" onclick="lcUnlock()">確認</button>
