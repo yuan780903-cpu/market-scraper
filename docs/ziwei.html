@@ -890,16 +890,23 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint{display:none}
 #reportPrint.rp-show{display:block;max-width:794px;margin:24px auto;background:#fff;padding:18mm 16mm;box-shadow:0 10px 40px rgba(0,0,0,.18);font-family:"Noto Serif TC","PingFang TC",serif;color:#2a2110}
 #reportPrint .rp-page{position:relative}
-#reportPrint .rp-page+.rp-page{margin-top:30px;border-top:2px dashed #ddd;padding-top:20px}
-#reportPrint .rp-head{text-align:center;border-bottom:2px solid #a9853a;padding-bottom:8px;margin-bottom:10px}
-#reportPrint .rp-time{position:absolute;top:0;right:0;font-size:8.5px;color:#888;letter-spacing:.3px;line-height:1.3}
-#reportPrint .rp-head .b{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:26px;color:#8a6a14;letter-spacing:6px}
-#reportPrint .rp-head .s{font-size:9px;color:#888;letter-spacing:1px;margin-top:4px}
-#reportPrint .rp-head2{text-align:center;font-size:11px;color:#8a6a14;border-bottom:1px solid #d9c7a0;padding-bottom:6px;margin-bottom:8px;letter-spacing:2px}
-#reportPrint .rp-id{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px}
-#reportPrint .rp-id span{border:1px solid #d9c7a0;border-radius:6px;padding:2px 9px;font-size:11.5px;color:#5a4a28}
-#reportPrint .rp-id b{color:#8a6a14}
-#reportPrint .rp-sec{font-weight:700;color:#8a6a14;border-left:4px solid #c2a14a;padding-left:8px;margin:11px 0 6px;font-size:14.5px}
+#reportPrint .rp-page+.rp-page{margin-top:34px;border-top:1px solid #efe6cf;padding-top:26px}
+#reportPrint .rp-head{text-align:center;border-bottom:none;padding-bottom:2px;margin-bottom:4px}
+#reportPrint .rp-time{position:absolute;top:0;right:0;font-size:8.5px;color:#a89a78;letter-spacing:.3px;line-height:1.3}
+#reportPrint .rp-head .b{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:33px;color:#7a5a12;letter-spacing:9px;line-height:1.15}
+#reportPrint .rp-head .s{font-size:9.5px;color:#a68f52;letter-spacing:3px;margin-top:9px}
+#reportPrint .rp-head2{text-align:center;font-size:9.5px;color:#b09a5c;border-bottom:none;padding-bottom:16px;margin-bottom:14px;letter-spacing:4px;
+  position:relative}
+#reportPrint .rp-head2::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:64px;height:2px;
+  background:linear-gradient(90deg,transparent,#c2a14a,transparent)}
+#reportPrint .rp-id{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:14px}
+#reportPrint .rp-id span{border:none;background:#f7efda;border-radius:20px;padding:3px 14px;font-size:11.5px;color:#6a562e}
+#reportPrint .rp-id b{color:#8a6a14;font-weight:700}
+#reportPrint .rp-sec{font-weight:700;color:#7a5a12;margin:24px 0 11px;font-size:16.5px;letter-spacing:3px;
+  padding-bottom:7px;border-bottom:1.5px solid #e0cc9a;display:flex;align-items:center;gap:9px}
+#reportPrint .rp-sec::before{content:"";flex:none;width:8px;height:8px;background:linear-gradient(135deg,#d9b85a,#8a6a14);
+  transform:rotate(45deg);border-radius:1.5px}
+#reportPrint .rp-page>.rp-sec:first-of-type,#reportPrint .rp-head2+.rp-sec,#reportPrint .rp-id+.rp-sec{margin-top:6px}
 #reportPrint .rp-chart{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,minmax(76px,1fr));gap:4px}
 #reportPrint{background:#fff}
 #reportPrint .rp-page{background:#fff}
@@ -976,9 +983,9 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-fsum .ft{color:#2e6b43;font-weight:700;font-size:13px;letter-spacing:1px;margin-bottom:5px}
 #reportPrint .rp-fsum .fr{font-size:12px;color:#3a2c12;line-height:1.65;margin:3px 0}
 #reportPrint .rp-fsum .fr b{color:#2e6b43}
-#reportPrint .rp-tbl{width:100%;border-collapse:collapse;margin:4px 0 6px;font-size:11px}
-#reportPrint .rp-tbl th{background:#f2e8cf;color:#8a6a14;font-weight:700;padding:3px 4px;border:1px solid #e3d3a6;text-align:center;font-size:10.5px;letter-spacing:.5px}
-#reportPrint .rp-tbl td{padding:3px 5px;border:1px solid #ecdfbf;color:#3a2c12;line-height:1.5;vertical-align:top}
+#reportPrint .rp-tbl{width:100%;border-collapse:collapse;margin:6px 0 10px;font-size:11px}
+#reportPrint .rp-tbl th{background:transparent;color:#8a6a14;font-weight:700;padding:5px 7px;border:none;border-bottom:2px solid #d9b85a;text-align:center;font-size:10.5px;letter-spacing:1px}
+#reportPrint .rp-tbl td{padding:5px 7px;border:none;border-bottom:1px solid #eee4cc;color:#3a2c12;line-height:1.5;vertical-align:top}
 #reportPrint .rp-tbl td.c{text-align:center;white-space:nowrap}
 #reportPrint .rp-tbl td.g,#reportPrint .rp-tbl .g{color:#999;font-size:9.5px}
 #reportPrint .rp-tbl tr.cur td{background:#fbf2db}
