@@ -1324,9 +1324,9 @@ footer .disc .sub{display:block;margin-top:12px}
 .paywall .lpbtn:active{transform:translateY(0)}
 .paywall .lpbtn .lpmark{background:#fff;color:#06C755;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem}
 .paywall .lpsec{font-size:.74rem;color:var(--ink-faint);margin-top:7px}
-.paywall .ecbtn{background:#f25c05;box-shadow:0 8px 20px rgba(242,92,5,.35)}
-.paywall .ecbtn:hover{box-shadow:0 12px 26px rgba(242,92,5,.45)}
-.paywall .ecbtn .ecmark{background:#fff;color:#f25c05;font-weight:900;border-radius:6px;padding:2px 8px;font-size:.9rem;letter-spacing:.5px}
+.paywall .ecbtn{background:linear-gradient(135deg,#6cbf3f,#4e9e2a);box-shadow:0 8px 20px rgba(78,158,42,.38)}
+.paywall .ecbtn:hover{box-shadow:0 12px 26px rgba(78,158,42,.5)}
+.paywall .ecbtn .ecmark{background:#fff;color:#4e9e2a;font-weight:900;border-radius:6px;padding:2px 9px;font-size:.86rem;letter-spacing:.3px}
 .paywall .pwor{position:relative;text-align:center;margin:16px auto 12px;max-width:430px;color:var(--ink-faint);font-size:.78rem}
 .paywall .pwor::before{content:"";position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--line-soft)}
 .paywall .pwor span{position:relative;background:#fdf6e6;padding:0 12px}
@@ -5058,8 +5058,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </div>
     <div id="lcMsg" class="lcmsg"></div>
     <div id="ecBtnWrap" class="lpwrap" style="display:none">
-      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界</span>安全付款・付完自動解鎖</button>
-      <div class="lpsec">支援信用卡／ATM／超商，完成付款後立即自動開啟完整報告。</div>
+      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
+      <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
     </div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
