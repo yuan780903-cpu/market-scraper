@@ -1267,6 +1267,29 @@ footer .disc .sub{display:block;margin-top:12px}
 .superbtn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.24)}
 .supermsg{min-height:20px;font-size:.86rem;margin-top:10px}
 .supermsg.err{color:#c2576f}.supermsg.ok{color:#2f9b5e;font-weight:700}
+/* ===== 工程模式主控台 ===== */
+.superbox.eng{max-width:392px;max-height:88vh;overflow-y:auto;text-align:left}
+.engsec{border-top:1px solid var(--line-soft,#eee);margin-top:15px;padding-top:13px}
+.englbl{font-size:.94rem;font-weight:800;color:var(--gold-deep,#7a5a12);margin-bottom:9px;letter-spacing:.5px}
+.engchk{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--ink-faint,#888);margin-top:8px;cursor:pointer}
+.engrow{display:flex;align-items:center;gap:9px;margin:8px 0;font-size:.86rem;flex-wrap:wrap}
+.engk{flex:0 0 56px;color:var(--ink-dim,#666)}
+.engu{color:var(--ink-faint,#888);margin-left:-3px}
+.enginp2{flex:1;min-width:120px;padding:9px 12px;border:1px solid var(--line,#ddd);border-radius:10px;font-size:.9rem;font-family:inherit;background:var(--card,#fff);color:var(--ink,#333)}
+.enginp2:focus{outline:none;border-color:var(--gold,#a9801c)}
+.engradio{display:flex;align-items:center;gap:5px;color:var(--ink-dim,#555);cursor:pointer}
+.engbtn{width:100%;margin-top:11px;padding:11px;border:none;border-radius:11px;cursor:pointer;font-size:.98rem;font-weight:800;
+  color:#fff;background:linear-gradient(135deg,var(--gold-bright,#c2941d),var(--gold-deep,#6f5210));transition:transform .15s,box-shadow .2s}
+.engbtn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.2)}
+.engout{margin-top:10px;font-size:.84rem;line-height:1.5}
+.engout.err{color:#c2576f}
+.engres{position:relative;border:1px solid var(--gold,#c2a14a);background:var(--wash,#fbf4e3);border-radius:11px;padding:11px 13px}
+.engresk{font-size:.75rem;color:var(--ink-faint,#888)}
+.engrescode{font-size:1.4rem;font-weight:900;letter-spacing:3px;color:var(--gold-deep,#7a5a12);margin:3px 0;word-break:break-all}
+.engressub{font-size:.78rem;color:var(--ink-dim,#666)}
+.engcopy{position:absolute;top:10px;right:11px;border:1px solid var(--gold,#c2a14a);background:#fff;color:var(--gold-deep,#7a5a12);
+  border-radius:8px;padding:3px 12px;font-size:.78rem;font-weight:700;cursor:pointer}
+.engcopy:hover{background:var(--gold,#c2a14a);color:#fff}
 .paywall .lpwrap{margin:10px auto 2px;max-width:430px}
 .paywall .lpbtn{display:inline-flex;align-items:center;gap:9px;justify-content:center;width:100%;
   padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1.06rem;font-weight:800;
@@ -4058,7 +4081,38 @@ async function lcUnlock(){
 function superOpen(){
   if(document.getElementById('superMask'))return;
   const m=document.createElement('div');m.id='superMask';m.className='supermask';
-  m.innerHTML='<div class="superbox" role="dialog" aria-label="全能開通"><button class="superx" type="button" aria-label="關閉">×</button><div class="supertt">全能開通</div><div class="supersub">請輸入全能萬用密碼以開通整站完整功能。</div><input id="superInput" class="superinp" type="password" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼"><button id="superGo" class="superbtn" type="button">開通</button><div id="superMsg" class="supermsg"></div></div>';
+  let saved='';try{saved=localStorage.getItem('zw_admin_secret')||'';}catch(e){}
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  m.innerHTML=`<div class="superbox eng" role="dialog" aria-label="工程模式">
+    <button class="superx" type="button" aria-label="關閉">×</button>
+    <div class="supertt">工程模式 · 維護者主控台</div>
+    <div class="supersub">聖源大師專用。發碼需後端管理密碼；密碼僅存於此裝置、不會外傳，也不寫入網頁原始碼。</div>
+    <div class="engsec">
+      <div class="englbl">管理密碼（後端 ADMIN_SECRET）</div>
+      <input id="engSecret" class="superinp" type="password" autocomplete="off" spellcheck="false" placeholder="輸入管理密碼" value="${esc(saved)}">
+      <label class="engchk"><input type="checkbox" id="engRemember" ${saved?'checked':''}> 記住於本機（僅此裝置）</label>
+    </div>
+    <div class="engsec">
+      <div class="englbl">① 折扣碼</div>
+      <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
+      <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engReuse" value="once" checked> 單次性</label><label class="engradio"><input type="radio" name="engReuse" value="forever"> 連續性</label></div>
+      <div class="engrow"><span class="engk">代碼</span><input id="engDiscCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="16" autocomplete="off" spellcheck="false"></div>
+      <button class="engbtn" type="button" onclick="engGenDisc()">生成折扣碼</button>
+      <div id="engDiscOut" class="engout"></div>
+    </div>
+    <div class="engsec">
+      <div class="englbl">② 直接通關碼（全站終身解鎖・可重複使用）</div>
+      <div class="engrow"><span class="engk">代碼</span><input id="engPassCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="16" autocomplete="off" spellcheck="false"></div>
+      <button class="engbtn" type="button" onclick="engGenPass()">生成通關碼</button>
+      <div id="engPassOut" class="engout"></div>
+    </div>
+    <div class="engsec">
+      <div class="englbl">③ 本機開通（在這台裝置預覽完整功能）</div>
+      <input id="superInput" class="superinp" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼或任一通關碼">
+      <button id="superGo" class="superbtn" type="button">開通此裝置</button>
+      <div id="superMsg" class="supermsg"></div>
+    </div>
+  </div>`;
   document.body.appendChild(m);
   const close=()=>{m.remove();};
   m.addEventListener('click',e=>{if(e.target===m)close();});
@@ -4066,7 +4120,57 @@ function superOpen(){
   const inp=m.querySelector('#superInput');
   m.querySelector('#superGo').addEventListener('click',()=>superActivate(inp.value));
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')superActivate(inp.value);});
-  setTimeout(()=>inp.focus(),30);
+  setTimeout(()=>{const s=document.getElementById('engSecret');if(s&&!s.value)s.focus();},30);
+}
+/* ===== 工程模式：折扣碼／通關碼 發碼（需後端 ADMIN_SECRET，經 X-Admin-Secret 標頭傳送） ===== */
+function engGetSecret(){
+  const el=document.getElementById('engSecret');const v=el?el.value.trim():'';
+  const rem=document.getElementById('engRemember');
+  try{ if(rem&&rem.checked&&v)localStorage.setItem('zw_admin_secret',v); else if(rem&&!rem.checked)localStorage.removeItem('zw_admin_secret'); }catch(e){}
+  return v;
+}
+async function engFetch(path){
+  const sec=engGetSecret();
+  if(!sec)throw {msg:'請先輸入管理密碼。'};
+  const r=await fetch(LC_API.replace(/\/+$/,'')+path,{cache:'no-store',headers:{'X-Admin-Secret':sec}});
+  let j;try{j=await r.json();}catch(e){throw {msg:'伺服器回應異常。'};}
+  return j;
+}
+const ENG_ERR={forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼（ADMIN_SECRET）。',amount:'折扣金額需介於 1 ~ 原價之間。',badcode:'代碼需 4~16 位英文或數字。',exists:'此折扣碼已存在，請換一組。',conflict:'此代碼已被通關碼佔用，請換一組。',used:'此代碼先前已使用過。',range:'數量範圍不正確。',ratelimited:'嘗試過於頻繁，請稍後再試。'};
+function engOut(id,html,cls){const el=document.getElementById(id);if(el){el.innerHTML=html;el.className='engout '+(cls||'');}}
+function engCard(label,code,sub){
+  return '<div class="engres"><div class="engresk">'+label+'</div><div class="engrescode">'+code+'</div>'+(sub?'<div class="engressub">'+sub+'</div>':'')+'<button class="engcopy" type="button" onclick="engCopy(\''+code+'\',this)">複製</button></div>';
+}
+function engCopy(text,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='已複製';setTimeout(()=>{btn.textContent=o;},1200);}};
+  try{ navigator.clipboard.writeText(text).then(done,()=>engCopyFallback(text,done)); }
+  catch(e){ engCopyFallback(text,done); }
+}
+function engCopyFallback(text,done){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(_){}t.remove();done&&done();}
+async function engGenDisc(){
+  const amt=parseInt((document.getElementById('engDiscAmt')||{}).value||'0',10);
+  const reuseEl=document.querySelector('input[name="engReuse"]:checked');
+  const reuse=reuseEl?reuseEl.value:'once';
+  const custom=((document.getElementById('engDiscCode')||{}).value||'').trim();
+  if(!(amt>=1)){engOut('engDiscOut','請輸入折扣金額（元）。','err');return;}
+  if(custom&&!/^[0-9A-Za-z]{4,16}$/.test(custom)){engOut('engDiscOut','自訂代碼需 4~16 位英文或數字。','err');return;}
+  engOut('engDiscOut','生成中…','');
+  let j;try{ j=await engFetch('/discIssue?amount='+amt+'&reuse='+reuse+(custom?'&code='+encodeURIComponent(custom):'')); }
+  catch(e){ engOut('engDiscOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
+  if(j&&j.ok){
+    engOut('engDiscOut',engCard((reuse==='forever'?'連續性':'單次性')+'折扣碼・折 '+j.amount+' 元',j.code,'客戶付款前輸入，應付 '+j.final+' 元（原價 '+j.base+' 元）'),'ok');
+  }else{ engOut('engDiscOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
+}
+async function engGenPass(){
+  const custom=((document.getElementById('engPassCode')||{}).value||'').trim();
+  if(custom&&!/^[0-9A-Za-z]{4,16}$/.test(custom)){engOut('engPassOut','自訂代碼需 4~16 位英文或數字。','err');return;}
+  engOut('engPassOut','生成中…','');
+  let j;try{ j=custom?await engFetch('/issue?code='+encodeURIComponent(custom)):await engFetch('/issueRandom?n=1&len=8'); }
+  catch(e){ engOut('engPassOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
+  if(j&&j.ok){
+    const c=j.code||(j.issued&&j.issued[0])||'';
+    engOut('engPassOut',engCard('通關碼・全站終身解鎖',c,'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告'),'ok');
+  }else{ engOut('engPassOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
 }
 async function superActivate(val){
   const msg=document.getElementById('superMsg');
