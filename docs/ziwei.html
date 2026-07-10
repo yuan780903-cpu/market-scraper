@@ -1299,6 +1299,16 @@ footer .disc .sub{display:block;margin-top:12px}
 .engcopy{position:absolute;top:10px;right:11px;border:1px solid var(--gold,#c2a14a);background:#fff;color:var(--gold-deep,#7a5a12);
   border-radius:8px;padding:3px 12px;font-size:.78rem;font-weight:700;cursor:pointer}
 .engcopy:hover{background:var(--gold,#c2a14a);color:#fff}
+.englink{font-size:.78rem;font-weight:600;color:var(--gold,#a9801c);background:none;border:none;cursor:pointer;text-decoration:underline;margin-left:8px;padding:0}
+.englist{margin-top:6px}
+.enghd{font-size:.82rem;font-weight:800;color:var(--gold-deep,#7a5a12);margin:4px 0 3px;letter-spacing:.5px}
+.engempty{font-size:.8rem;color:var(--ink-faint,#999);padding:5px 0}
+.engli{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line-soft,#eee)}
+.engli-c{flex:0 0 auto;max-width:46%;font-weight:800;font-size:.9rem;color:var(--gold-deep,#7a5a12);word-break:break-all;line-height:1.3}
+.engli-m{flex:1;min-width:0;font-size:.75rem;color:var(--ink-dim,#666);line-height:1.35}
+.engli-x{flex:0 0 auto;border:1px solid #c2576f;color:#c2576f;background:#fff;border-radius:8px;padding:3px 10px;font-size:.76rem;font-weight:700;cursor:pointer}
+.engli-x:hover{background:#c2576f;color:#fff}
+.engli-x:disabled{opacity:.5;cursor:default}
 .paywall .lpwrap{margin:10px auto 2px;max-width:430px}
 .paywall .lpbtn{display:inline-flex;align-items:center;gap:9px;justify-content:center;width:100%;
   padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1.06rem;font-weight:800;
@@ -4120,7 +4130,11 @@ function superOpen(){
       <div id="engPassOut" class="engout"></div>
     </div>
     <div class="engsec">
-      <div class="englbl">③ 本機開通（在這台裝置預覽完整功能）</div>
+      <div class="englbl">③ 已發代碼清單 <button class="englink" type="button" onclick="engLoadList()">重新整理</button></div>
+      <div id="engListOut" class="englist"><div class="engempty">點「重新整理」載入目前所有折扣碼與通關碼。</div></div>
+    </div>
+    <div class="engsec">
+      <div class="englbl">④ 本機開通（在這台裝置預覽完整功能）</div>
       <input id="superInput" class="superinp" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼或任一通關碼">
       <button id="superGo" class="superbtn" type="button">開通此裝置</button>
       <div id="superMsg" class="supermsg"></div>
@@ -4217,6 +4231,46 @@ async function engGenPass(){
     const sub=uses>=1?('客戶於付費牆「萬用碼」欄輸入，累計用滿 '+uses+' 次後失效'):'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告（可重複用）';
     engOut('engPassOut',engCard(label,c,sub),'ok');
   }else{ engOut('engPassOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
+}
+/* ===== 工程模式：已發代碼清單＋一鍵作廢 ===== */
+function engEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function engLoadList(){
+  const box=document.getElementById('engListOut');
+  if(box){box.innerHTML='<div class="engempty">讀取中…</div>';}
+  let disc,pass;
+  try{ disc=await engFetch('/discStatus'); pass=await engFetch('/status'); }
+  catch(e){ if(box)box.innerHTML='<div class="engempty" style="color:#c2576f">'+((e&&e.msg)||'連線失敗')+'</div>'; return; }
+  if(!(disc&&disc.ok)){ if(box)box.innerHTML='<div class="engempty" style="color:#c2576f">'+(ENG_ERR[disc&&disc.reason]||'讀取失敗')+'</div>'; return; }
+  let html='';
+  // 折扣碼
+  const ds=(disc.items||[]);
+  html+='<div class="enghd">折扣碼（'+ds.length+'）</div>';
+  if(!ds.length)html+='<div class="engempty">目前無折扣碼。</div>';
+  ds.forEach(function(d){
+    const meta=(d.reuse==='forever'?'連續性':'單次性')+'・折 '+d.amount+' 元'+(d.used?'・已作廢':'');
+    const c=engEsc(d.code);
+    html+='<div class="engli"><div class="engli-c">'+c+'</div><div class="engli-m">'+meta+'</div><button class="engli-x" type="button" onclick="engRevoke(\'disc\',\''+c+'\',this)">作廢</button></div>';
+  });
+  // 通關碼
+  const ps=(pass&&pass.items)||[];
+  html+='<div class="enghd" style="margin-top:14px">通關碼（'+ps.length+'）</div>';
+  if(!ps.length)html+='<div class="engempty">目前無通關碼。</div>';
+  ps.forEach(function(p){
+    let meta;
+    if(p.kind==='forever')meta='終身・可重複用';
+    else if(p.kind==='limited')meta=(p.remaining>0?('限次數・剩 '+p.remaining+' 次'):'限次數・已用完');
+    else meta='已用完';
+    const c=engEsc(p.code);
+    html+='<div class="engli"><div class="engli-c">'+c+'</div><div class="engli-m">'+meta+'</div><button class="engli-x" type="button" onclick="engRevoke(\'pass\',\''+c+'\',this)">作廢</button></div>';
+  });
+  if(box)box.innerHTML=html;
+}
+async function engRevoke(type,code,btn){
+  if(!confirm('確定作廢代碼「'+code+'」？此動作無法復原。'))return;
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{ await engFetch((type==='disc'?'/discRevoke':'/revoke')+'?code='+encodeURIComponent(code)); }
+  catch(e){ if(btn){btn.disabled=false;btn.textContent='作廢';} return; }
+  const row=btn&&btn.closest('.engli'); if(row)row.remove();
 }
 async function superActivate(val){
   const msg=document.getElementById('superMsg');
