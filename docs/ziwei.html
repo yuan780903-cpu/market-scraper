@@ -4104,7 +4104,8 @@ function superOpen(){
       <div id="engDiscOut" class="engout"></div>
     </div>
     <div class="engsec">
-      <div class="englbl">② 直接通關碼（全站終身解鎖・可重複使用）</div>
+      <div class="englbl">② 直接通關碼（免付費・全站解鎖）</div>
+      <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engPassKind" value="forever" checked onchange="engPassKind()"> 終身</label><label class="engradio"><input type="radio" name="engPassKind" value="limited" onchange="engPassKind()"> 限次數</label><input id="engPassUses" class="enginp2" type="number" min="1" value="1" style="max-width:76px;display:none"><span id="engPassUsesU" class="engu" style="display:none">次</span></div>
       <div class="engrow"><span class="engk">代碼</span><input id="engPassCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="16" autocomplete="off" spellcheck="false"></div>
       <button class="engbtn" type="button" onclick="engGenPass()">生成通關碼</button>
       <div id="engPassOut" class="engout"></div>
@@ -4183,15 +4184,29 @@ async function engGenDisc(){
     engOut('engDiscOut',engCard((reuse==='forever'?'連續性':'單次性')+'折扣碼・折 '+j.amount+' 元',j.code,'客戶付款前輸入，應付 '+j.final+' 元（原價 '+j.base+' 元）'),'ok');
   }else{ engOut('engDiscOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
 }
+function engPassKind(){
+  const k=document.querySelector('input[name="engPassKind"]:checked');
+  const limited=k&&k.value==='limited';
+  const u=document.getElementById('engPassUses'),uu=document.getElementById('engPassUsesU');
+  if(u)u.style.display=limited?'':'none';
+  if(uu)uu.style.display=limited?'':'none';
+}
 async function engGenPass(){
   const custom=((document.getElementById('engPassCode')||{}).value||'').trim();
   if(custom&&!/^[0-9A-Za-z]{4,16}$/.test(custom)){engOut('engPassOut','自訂代碼需 4~16 位英文或數字。','err');return;}
+  const k=document.querySelector('input[name="engPassKind"]:checked');
+  const limited=k&&k.value==='limited';
+  let uses=0;
+  if(limited){ uses=parseInt((document.getElementById('engPassUses')||{}).value||'0',10); if(!(uses>=1)){engOut('engPassOut','請輸入可用次數（至少 1）。','err');return;} }
+  const q=(uses>=1?('&uses='+uses):'');
   engOut('engPassOut','生成中…','');
-  let j;try{ j=custom?await engFetch('/issue?code='+encodeURIComponent(custom)):await engFetch('/issueRandom?n=1&len=8'); }
+  let j;try{ j=custom?await engFetch('/issue?code='+encodeURIComponent(custom)+q):await engFetch('/issueRandom?n=1&len=8'+q); }
   catch(e){ engOut('engPassOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
   if(j&&j.ok){
     const c=j.code||(j.issued&&j.issued[0])||'';
-    engOut('engPassOut',engCard('通關碼・全站終身解鎖',c,'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告'),'ok');
+    const label=uses>=1?('通關碼・限用 '+uses+' 次'):'通關碼・全站終身解鎖';
+    const sub=uses>=1?('客戶於付費牆「萬用碼」欄輸入，累計用滿 '+uses+' 次後失效'):'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告（可重複用）';
+    engOut('engPassOut',engCard(label,c,sub),'ok');
   }else{ engOut('engPassOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
 }
 async function superActivate(val){
