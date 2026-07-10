@@ -5048,6 +5048,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </ul>
     <div class="pworig">原價 <s>${LC_ORIG}</s></div>
     <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="ecBtnWrap" class="lpwrap" style="display:none">
+      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
+      <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
+    </div>
     <div id="pwManual" class="pwpay">
       <div class="pwpay-h">有萬用碼或折扣碼？</div>
       <div class="pwpay-note">若您持有 聖源大師 提供的<b>萬用碼</b>（免費開啟完整報告）或<b>折扣碼</b>（付款時折抵），於下方同一欄輸入即可。如需協助，請來信客服信箱 <b>yuan780903@gmail.com</b>（服務時間：平日 08:00–17:00）。</div>
@@ -5057,10 +5061,6 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       </div>
     </div>
     <div id="lcMsg" class="lcmsg"></div>
-    <div id="ecBtnWrap" class="lpwrap" style="display:none">
-      <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
-      <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
-    </div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
   </div>
 
