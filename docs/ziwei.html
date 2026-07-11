@@ -589,7 +589,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .pdffabbtn:hover{transform:translateY(-2px)}
 .pdffabbtn::before{content:"⤓ ";font-weight:700}
 .pdffab.lockpdf .pdffabbtn{opacity:.85}
-.pdffab.lockpdf .pdffabbtn::before{content:"鎖 "}
+.pdffab.lockpdf .pdffabbtn::before{content:"解鎖後 "}
 .pdffabmsg{pointer-events:auto;display:none;max-width:min(78vw,320px);background:var(--card);border:1px solid var(--line-soft);
   border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:var(--ink);box-shadow:0 12px 30px -14px var(--shadow)}
 .pdffabmsg.show{display:block}
@@ -5701,6 +5701,32 @@ function __obPiano(ctx,out,f,t,vol,len){   // 溫潤鋼琴音：快起音（琴�
     o.connect(g);g.connect(env);o.start(t);o.stop(t+len+0.1);
   });
 }
+function __obGuitar(ctx,out,f,t,vol,len){   // 木吉他指彈音：極快撥弦起音＋暖泛音＋撥弦瞬態（尼龍/鋼弦木頭味），安靜耐聽
+  len=len||2.4;
+  const env=ctx.createGain();
+  env.gain.setValueAtTime(0.0001,t);
+  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.004);
+  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*0.32),t+0.26);
+  env.gain.exponentialRampToValueAtTime(0.0001,t+len);
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';
+  lp.frequency.setValueAtTime(2900,t);
+  lp.frequency.exponentialRampToValueAtTime(850,t+len);                 // 隨衰減轉暖，木頭共鳴感
+  env.connect(lp);lp.connect(out);
+  const parts=[[1,1],[2,0.5],[2.99,0.27],[4,0.12],[5.01,0.05]];        // 偏低階暖泛音＋微失諧仿真弦
+  parts.forEach(p=>{
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
+    const g=ctx.createGain();g.gain.value=p[1];
+    o.connect(g);g.connect(env);o.start(t);o.stop(t+len+0.1);
+  });
+  // 撥弦瞬態：極短高通噪聲，模擬指腹/指甲觸弦的自然質感
+  const nb=ctx.createBufferSource();
+  const buf=ctx.createBuffer(1,Math.max(1,Math.ceil(ctx.sampleRate*0.03)),ctx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+  nb.buffer=buf;
+  const nhp=ctx.createBiquadFilter();nhp.type='highpass';nhp.frequency.value=1400;
+  const ng=ctx.createGain();ng.gain.value=vol*0.22;
+  nb.connect(nhp);nhp.connect(ng);ng.connect(out);nb.start(t);
+}
 function __obChime(ctx,out,f,t,len,vol){  // 溫柔鐘聲（多泛音、緩起緩落）→ 歡愉感
   const parts=[[1,1],[2,0.45],[3,0.2],[4.2,0.08]];
   parts.forEach(p=>{
@@ -5760,24 +5786,29 @@ const __OB={
     }
   },
   calm(ctx,dur){          // 靜心放鬆：F 大調鋼琴，低緩柔和、深層安定（和弦進行 F–Dm–B♭–C）
+    // 木吉他指彈：安靜耐聽、旋律不搶耳，適合工作/休息/夜晚低音量背景（原創合成，無版權）
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[87.31,174.61,261.63],0.05);               // F2 F3 C4 暖底
+    __obPad(ctx,bus,[130.81,196.00,261.63],0.028);             // 極輕暖底（幾乎不可聞，只增溫潤）
+    // 溫暖民謠和弦進行 C–Am–F–G（低音根音＋高聲部，最適合指彈）
     const prog=[
-      {r:87.31, n:[174.61,220.00,261.63,349.23]},              // F
-      {r:73.42, n:[174.61,220.00,293.66,349.23]},              // Dm
-      {r:58.27, n:[174.61,233.08,293.66,349.23]},              // B♭
-      {r:65.41, n:[164.81,196.00,261.63,329.63]}               // C
+      {b:130.81,n:[261.63,329.63,392.00]},                     // C ：C3 / C4 E4 G4
+      {b:110.00,n:[261.63,329.63,440.00]},                     // Am：A2 / C4 E4 A4
+      {b:174.61,n:[261.63,349.23,440.00]},                     // F ：F3 / C4 F4 A4
+      {b:98.00, n:[293.66,392.00,493.88]}                      // G ：G2 / D4 G4 B4
     ];
-    const step=0.78;let t=1.0,bar=0;
-    while(t<dur-4){
+    const v=0.07, step=0.44;let t=1.0,bar=0;                   // 音量偏小、指法從容
+    while(t<dur-3.5){
       const c=prog[bar%prog.length];
-      __obPiano(ctx,bus,c.r,t,0.085,4.2);
-      const seq=[c.n[0],c.n[1],c.n[2],c.n[3]];                 // 緩慢上行分解和弦
-      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-3)break;
-        __obPiano(ctx,bus,seq[k],nt,0.095,3.2);}
-      t+=seq.length*step+0.4;bar++;
+      // 指法循環（拇指低音 → 內外聲部交替，柔和不搶）
+      __obGuitar(ctx,bus,c.b,      t,          v*1.0, 3.0);    // 低音根音
+      __obGuitar(ctx,bus,c.n[0],   t+step,     v*0.8, 2.3);
+      __obGuitar(ctx,bus,c.n[2],   t+step*2,   v*0.85,2.3);
+      __obGuitar(ctx,bus,c.n[1],   t+step*3,   v*0.8, 2.3);
+      __obGuitar(ctx,bus,c.b*2,    t+step*4,   v*0.65,1.9);    // 低音八度輕點
+      __obGuitar(ctx,bus,c.n[2],   t+step*5,   v*0.85,2.3);
+      t+=step*6+0.15;bar++;
     }
   },
   dream(ctx,dur){         // 療癒星空：A 大調鋼琴，空靈閃爍、夢幻療癒（和弦進行 A–E–F#m–D）
