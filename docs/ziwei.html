@@ -4172,14 +4172,18 @@ async function lcKey(p){
 async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
 /* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay 付款解鎖 ===== */
 let __disc=null;   // {code,amount,reuse,base,final}
+let __kol=null;    // KOL 推薦碼 {code,name,discount,base,final}（付款時穿透帶進綠界）
 function updatePriceUI(){
   const el=document.getElementById('pwPriceLine');if(!el)return;
-  if(__disc){
+  if(__kol){
+    el.innerHTML='<em>'+esc4kol(__kol.name)+' 推薦價</em> <del>'+__kol.base+' 元</del><span class="pwfinal">'+__kol.final+' 元</span> <span>／ 單份完整報告</span>';
+  }else if(__disc){
     el.innerHTML='<em>折扣後應付</em> <del>'+__disc.base+' 元</del><span class="pwfinal">'+__disc.final+' 元</span> <span>／ 單份完整報告</span>';
   }else{
     el.innerHTML='<em>人生航路限時結緣價</em> '+LC_PRICE+' <span>／ 單份完整報告</span>';
   }
 }
+function esc4kol(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 /* 限時結緣價：24 小時循環倒數（時分秒），到 0 自動歸零重新倒數 24:00:00，製造急迫感 */
 function __pwCdTick(){
   const el=document.getElementById('pwCdTime');if(!el)return;
@@ -4252,7 +4256,22 @@ async function lcUnlock(){
     }
     discReason=(j&&j.reason)||'';
   }catch(e){/* 折扣碼查詢失敗 → 落到下方通用錯誤訊息 */}
-  // (3) 兩者皆非
+  // (2.5) 不是萬用碼、也不是折扣碼 → 當「KOL 推薦碼」查詢：成功則套用推薦價、引導往下付款
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/kol/check?code='+encodeURIComponent(code),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok){
+      __disc=null; // 推薦碼與折扣碼不疊加，以推薦碼為準
+      __kol={code:j.code,name:j.name,discount:j.discount,base:j.base,final:j.final};
+      updatePriceUI();
+      msg.textContent='✓ 已套用「'+j.name+'」推薦碼，推薦價 '+j.final+' 元。請於下方按綠界安全付款。';
+      msg.className='lcmsg ok';
+      const ec=document.getElementById('ecBtnWrap');
+      if(ec&&getComputedStyle(ec).display!=='none')ec.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+  }catch(e){/* KOL 查詢失敗 → 落到下方通用錯誤訊息 */}
+  // (3) 三者皆非
   const reason=res?res.reason:'';
   msg.textContent=(reason==='expired'||discReason==='expired')?'✗ 此代碼已逾有效期限，無法使用，請向 聖源大師索取新碼。'
                 :reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
@@ -4306,7 +4325,26 @@ function superOpen(){
       <div id="engListOut" class="englist"><div class="engempty">點「重新整理」載入目前所有折扣碼與通關碼。</div></div>
     </div>
     <div class="engsec">
-      <div class="englbl">④ 本機開通（在這台裝置預覽完整功能）</div>
+      <div class="englbl">④ KOL 網紅推薦碼管理</div>
+      <div class="engrow"><span class="engk">KOL 名稱</span><input id="engKolName" class="enginp2" placeholder="例如 小美老師" maxlength="40" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">推薦碼</span><input id="engKolCode" class="enginp2" placeholder="2~24 位英數，例如 MEIMEI" maxlength="24" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">客戶折扣</span><input id="engKolDisc" class="enginp2" type="number" min="0" value="0"><span class="engu">元（可 0）</span></div>
+      <div class="engrow"><span class="engk">每單返佣</span><input id="engKolComm" class="enginp2" type="number" min="0" value="0"><span class="engu">元</span></div>
+      <button class="engbtn" type="button" onclick="engKolCreate()">新增 KOL 碼</button>
+      <div id="engKolOut" class="engout"></div>
+      <div class="englbl" style="margin-top:12px">KOL 清單 <button class="englink" type="button" onclick="engKolLoad()">重新整理</button></div>
+      <div id="engKolList" class="englist"><div class="engempty">點「重新整理」載入所有 KOL 碼。</div></div>
+    </div>
+    <div class="engsec">
+      <div class="englbl">⑤ KOL 月結報表</div>
+      <div class="engrow"><span class="engk">選擇 KOL</span><select id="engRptKol" class="enginp2"><option value="">— 請先載入清單 —</option></select><button class="englink" type="button" onclick="engKolLoadForReport()">載入</button></div>
+      <div class="engrow"><span class="engk">月份</span><input id="engRptMonth" class="enginp2" type="month"><label class="engradio"><input type="checkbox" id="engRptAll"> 全部（不限月份）</label></div>
+      <button class="engbtn" type="button" onclick="engKolReport()">產生月結</button>
+      <div id="engRptOut" class="engout"></div>
+      <div id="engRptTable" class="englist"></div>
+    </div>
+    <div class="engsec">
+      <div class="englbl">⑥ 本機開通（在這台裝置預覽完整功能）</div>
       <input id="superInput" class="superinp" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼或任一通關碼">
       <button id="superGo" class="superbtn" type="button">開通此裝置</button>
       <div id="superMsg" class="supermsg"></div>
@@ -4478,6 +4516,91 @@ async function engRevoke(type,code,btn){
   catch(e){ if(btn){btn.disabled=false;btn.textContent='作廢';} return; }
   const row=btn&&btn.closest('.engli'); if(row)row.remove();
 }
+/* ===== 工程模式：KOL 網紅推薦碼管理（需 ADMIN_SECRET，經 engFetch 帶 X-Admin-Secret） ===== */
+const KOL_ERR={badcode:'推薦碼需 2~24 位中英文或數字。',noname:'請輸入 KOL 名稱。',amount:'折扣與返佣金額需為 0 以上整數。',exists:'此推薦碼已存在，請換一組。',conflict:'此代碼已被萬用碼或折扣碼佔用，請換一組。',kol_unbound:'後端尚未綁定 KOL 資料庫（D1）。',notfound:'查無此推薦碼。',dberr:'資料庫錯誤，請稍後再試。',forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼。'};
+function kolEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function engKolCreate(){
+  const name=((document.getElementById('engKolName')||{}).value||'').trim();
+  const code=((document.getElementById('engKolCode')||{}).value||'').trim();
+  const disc=parseInt((document.getElementById('engKolDisc')||{}).value||'0',10);
+  const comm=parseInt((document.getElementById('engKolComm')||{}).value||'0',10);
+  if(!name){engOut('engKolOut','請輸入 KOL 名稱。','err');return;}
+  if(!/^[0-9A-Za-z一-鿿]{2,24}$/.test(code)){engOut('engKolOut','推薦碼需 2~24 位中英文或數字（不含空格與符號）。','err');return;}
+  if(!(disc>=0)||!(comm>=0)){engOut('engKolOut','折扣與返佣金額需為 0 以上整數。','err');return;}
+  engOut('engKolOut','建立中…','');
+  let j;try{ j=await engFetch('/kol/issue?code='+encodeURIComponent(code)+'&name='+encodeURIComponent(name)+'&discount='+disc+'&commission='+comm); }
+  catch(e){ engOut('engKolOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
+  if(j&&j.ok){
+    engOut('engKolOut',engCard('KOL 推薦碼・'+kolEsc(j.name),j.code,'客戶折扣 '+j.discount+' 元　·　每單返佣 '+j.commission+' 元'),'ok');
+    const c=document.getElementById('engKolCode');if(c)c.value='';
+    engKolLoad();
+  }else{ engOut('engKolOut',KOL_ERR[j&&j.reason]||('建立失敗（'+(j&&j.reason)+'）'),'err'); }
+}
+async function engKolLoad(){
+  const box=document.getElementById('engKolList');if(!box)return;
+  box.innerHTML='<div class="engempty">載入中…</div>';
+  let j;try{ j=await engFetch('/kol/list'); }
+  catch(e){ box.innerHTML='<div class="engempty">'+((e&&e.msg)||'連線失敗')+'</div>';return; }
+  if(!(j&&j.ok)){ box.innerHTML='<div class="engempty">'+(KOL_ERR[j&&j.reason]||'載入失敗')+'</div>';return; }
+  if(!j.items.length){ box.innerHTML='<div class="engempty">尚無 KOL 碼。</div>';return; }
+  box.innerHTML=j.items.map(it=>{
+    const on=it.status==='active';
+    return '<div class="engli"><div class="englitxt"><b>'+kolEsc(it.code)+'</b>　'+kolEsc(it.name)+
+      '<span class="engmeta">折扣 '+(it.discount|0)+' 元 · 返佣 '+(it.commission|0)+' 元 · 成交 '+(it.orders|0)+' 單 · 應付分潤 '+(it.total_commission|0)+' 元 · '+(on?'啟用中':'已停用')+'</span></div>'+
+      '<button class="engcopy" type="button" onclick="engKolToggle(\''+encodeURIComponent(it.code)+'\',\''+(on?'disabled':'active')+'\',this)">'+(on?'停用':'啟用')+'</button></div>';
+  }).join('');
+}
+async function engKolToggle(codeEnc,status,btn){
+  if(btn){btn.disabled=true;btn.textContent='處理中…';}
+  let j;try{ j=await engFetch('/kol/setStatus?code='+codeEnc+'&status='+status); }
+  catch(e){ if(btn){btn.disabled=false;btn.textContent=status==='active'?'啟用':'停用';} return; }
+  if(j&&j.ok){ engKolLoad(); } else if(btn){ btn.disabled=false; btn.textContent=status==='active'?'啟用':'停用'; }
+}
+async function engKolLoadForReport(){
+  const sel=document.getElementById('engRptKol');if(!sel)return;
+  let j;try{ j=await engFetch('/kol/list'); }catch(e){ return; }
+  if(!(j&&j.ok))return;
+  sel.innerHTML='<option value="">— 請選擇 —</option>'+j.items.map(it=>'<option value="'+kolEsc(it.code)+'">'+kolEsc(it.code)+'（'+kolEsc(it.name)+'）</option>').join('');
+}
+let __rptRows=[],__rptMeta=null;
+async function engKolReport(){
+  const code=((document.getElementById('engRptKol')||{}).value||'').trim();
+  const all=(document.getElementById('engRptAll')||{}).checked;
+  const month=all?'':((document.getElementById('engRptMonth')||{}).value||'').trim();
+  if(!code){engOut('engRptOut','請先選擇 KOL。','err');return;}
+  if(!all&&!/^\d{4}-\d{2}$/.test(month)){engOut('engRptOut','請選擇月份，或勾選「全部」。','err');return;}
+  engOut('engRptOut','查詢中…','');
+  let j;try{ j=await engFetch('/kol/report?code='+encodeURIComponent(code)+(month?('&month='+encodeURIComponent(month)):'')); }
+  catch(e){ engOut('engRptOut',(e&&e.msg)||'連線失敗。','err');return; }
+  if(!(j&&j.ok)){ engOut('engRptOut',KOL_ERR[j&&j.reason]||'查詢失敗。','err');return; }
+  __rptRows=j.orders||[];__rptMeta={code:code,month:j.month};
+  const s=j.summary||{orders:0,totalAmount:0,totalCommission:0};
+  engOut('engRptOut','<b>'+kolEsc(code)+'</b>　'+(all?'全部':month)+'：成交 <b>'+s.orders+'</b> 單 · 總營收 <b>'+s.totalAmount+'</b> 元 · 應付分潤 <b>'+s.totalCommission+'</b> 元　<button class="englink" type="button" onclick="engKolCsv()">匯出 CSV</button>','ok');
+  const box=document.getElementById('engRptTable');
+  if(!__rptRows.length){ box.innerHTML='<div class="engempty">此區間無成交記錄。</div>';return; }
+  box.innerHTML='<div class="engli" style="font-weight:700"><div class="englitxt">付款時間 · 綠界交易編號 · 金額 · 折扣 · 返佣</div></div>'+
+    __rptRows.map(r=>{
+      const t=new Date(r.paid_at||r.created_at||0);
+      const ts=isNaN(t.getTime())?'—':(t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
+      return '<div class="engli"><div class="englitxt">'+ts+'　<b>'+kolEsc(r.merchant_no)+'</b>'+(r.trade_no?(' / '+kolEsc(r.trade_no)):'')+'<span class="engmeta">金額 '+(r.amount|0)+' 元 · 折扣 '+(r.discount|0)+' 元 · 返佣 '+(r.commission|0)+' 元</span></div></div>';
+    }).join('');
+}
+function engKolCsv(){
+  if(!__rptRows.length){return;}
+  const head=['付款時間','綠界訂單號MerchantTradeNo','綠界交易編號TradeNo','付款金額','該單折扣','該單返佣'];
+  const lines=[head.join(',')];
+  __rptRows.forEach(r=>{
+    const t=new Date(r.paid_at||r.created_at||0);
+    const ts=isNaN(t.getTime())?'':(t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0'));
+    const cell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    lines.push([cell(ts),cell(r.merchant_no),cell(r.trade_no),r.amount|0,r.discount|0,r.commission|0].join(','));
+  });
+  const csv='﻿'+lines.join('\r\n'); // BOM 讓 Excel 正確辨識 UTF-8
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='KOL_'+(__rptMeta&&__rptMeta.code||'report')+'_'+(__rptMeta&&__rptMeta.month||'all')+'.csv';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
 async function superActivate(val){
   const msg=document.getElementById('superMsg');
   const code=String(val||'').trim().replace(/\s+/g,'');
@@ -4609,8 +4732,9 @@ async function ecStartEcpay(){
   if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname;
   const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
+  const kolQ=(__kol&&__kol.code)?('&kol='+encodeURIComponent(__kol.code)):'';
   try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ,{cache:'no-store'});
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ+kolQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.ok&&j.action&&j.params){
       const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
@@ -5825,6 +5949,57 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
 /* 進站時處理付款返回（綠界 ECPay：?ecback） */
 ecHandleReturn();
+
+/* ===== KOL 自助查詢頁（唯讀）=====
+   KOL 用網址 #kol 進入，輸入自己的推薦碼 → 只查得到自己這組碼的成交明細與累計分潤；
+   後端 /kol/self 只回該碼資料，無法看別人、無法修改。 */
+function kolSelfEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function kolSelfOpen(){
+  if(document.getElementById('kolSelfMask'))return;
+  const m=document.createElement('div');m.id='kolSelfMask';m.className='supermask';
+  m.innerHTML='<div class="superbox eng" role="dialog" aria-label="KOL 分潤查詢">'+
+    '<button class="superx" type="button" aria-label="關閉">×</button>'+
+    '<div class="supertt">KOL 分潤查詢</div>'+
+    '<div class="supersub">輸入您的專屬推薦碼，查詢您的成交明細與累計分潤（唯讀，僅顯示您自己的資料）。</div>'+
+    '<div class="engsec"><input id="kolSelfCode" class="superinp" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="輸入您的推薦碼">'+
+    '<button class="engbtn" type="button" id="kolSelfGo">查詢</button>'+
+    '<div id="kolSelfMsg" class="engout"></div></div>'+
+    '<div id="kolSelfResult"></div></div>';
+  document.body.appendChild(m);
+  const close=()=>{m.remove();try{if(location.hash==='#kol')history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+  m.addEventListener('click',e=>{if(e.target===m)close();});
+  m.querySelector('.superx').addEventListener('click',close);
+  const inp=m.querySelector('#kolSelfCode');
+  const go=()=>kolSelfQuery(inp.value);
+  m.querySelector('#kolSelfGo').addEventListener('click',go);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  setTimeout(()=>inp.focus(),40);
+}
+async function kolSelfQuery(val){
+  const msg=document.getElementById('kolSelfMsg'),out=document.getElementById('kolSelfResult');
+  const code=String(val||'').trim();
+  if(!code){if(msg){msg.textContent='請輸入推薦碼。';msg.className='engout err';}return;}
+  if(msg){msg.textContent='查詢中…';msg.className='engout';}if(out)out.innerHTML='';
+  let j;try{const r=await fetch(LC_API.replace(/\/+$/,'')+'/kol/self?code='+encodeURIComponent(code),{cache:'no-store'});j=await r.json();}
+  catch(e){if(msg){msg.textContent='✗ 無法連線，請稍後再試。';msg.className='engout err';}return;}
+  if(!(j&&j.ok)){if(msg){msg.textContent='✗ 查無此推薦碼，請確認後再試。';msg.className='engout err';}return;}
+  if(msg){msg.textContent='';msg.className='engout';}
+  const rows=j.orders||[];
+  let html='<div class="engout ok" style="margin-top:6px"><b>'+kolSelfEsc(j.name)+'</b>（'+kolSelfEsc(j.code)+'）'+(j.status==='active'?'':'　·　目前停用')+
+    '<br>累計成交 <b>'+j.count+'</b> 單 · 累計消費金額 <b>'+(j.totalAmount|0)+'</b> 元 · 累計分潤 <b>'+(j.totalCommission|0)+'</b> 元</div>';
+  if(!rows.length){ html+='<div class="engempty">目前尚無成交記錄。</div>'; }
+  else{
+    html+='<div class="englist" style="margin-top:8px">'+rows.map(r=>{
+      const t=new Date(r.paid_at||0);
+      const ts=isNaN(t.getTime())?'—':(t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
+      return '<div class="engli"><div class="englitxt">'+ts+'　<b>'+kolSelfEsc(r.merchant_no)+'</b><span class="engmeta">金額 '+(r.amount|0)+' 元 · 折扣 '+(r.discount|0)+' 元 · 您的分潤 '+(r.commission|0)+' 元</span></div></div>';
+    }).join('')+'</div>';
+  }
+  if(out)out.innerHTML=html;
+}
+function kolSelfCheckHash(){ if(location.hash==='#kol')kolSelfOpen(); }
+window.addEventListener('hashchange',kolSelfCheckHash);
+kolSelfCheckHash();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
 /* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
