@@ -1403,7 +1403,7 @@ footer .disc .sub{display:block;margin-top:12px}
     </div>
     <div class="grid-in">
       <div class="field">
-        <label>姓名（選填）</label>
+        <label>姓名（必填）</label>
         <input id="name" type="text" placeholder="您的稱呼" autocomplete="off">
       </div>
       <div class="field">
@@ -3161,7 +3161,8 @@ function run(){
   const dv=document.getElementById("date").value;
   const bt=getBirthTime();
   const tv=bt.tv;
-  const name=document.getElementById("name").value.trim()||"命主";
+  const name=document.getElementById("name").value.trim();
+  if(!name){err.textContent="請輸入姓名。";err.style.display="block";document.getElementById("name").focus();return;}
   if(!dv){err.textContent="請填寫出生日期。";err.style.display="block";return;}
   const [y,m,d]=dv.split("-").map(Number);
   if(y<1900||y>2100){err.textContent="本系統適用範圍為西元 1900–2100 年。";err.style.display="block";return;}
