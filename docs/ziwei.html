@@ -953,7 +953,10 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-wx{margin-top:6px;font-size:12px;color:#5a4a28}
 #reportPrint .wxc{display:inline-block;border:1px solid #d9c7a0;border-radius:5px;padding:1px 8px;margin:2px;font-size:11.5px}
 #reportPrint .rp-row{margin:5px 0;font-size:12.5px;color:#3a2c12;line-height:1.6}
-#reportPrint .rp-pgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0}
+#reportPrint .rp-pgrid{margin:6px 0}
+#reportPrint .rp-prow{display:flex;align-items:stretch;gap:7px;margin-bottom:7px}
+#reportPrint .rp-prow>.rp-pcard{flex:1 1 0;width:50%;min-width:0;margin-bottom:0}
+#reportPrint .rp-prow>.rp-pcard:only-child{flex:0 1 calc(50% - 3.5px)}
 #reportPrint .rp-pcard{border:1px solid;border-radius:9px;padding:7px 10px;break-inside:avoid;page-break-inside:avoid}
 #reportPrint .rp-pcard .ph{font-weight:800;font-size:13px;margin-bottom:4px;padding-bottom:3px;border-bottom:1px dashed currentColor;line-height:1.4}
 #reportPrint .rp-pcard .ph .pm{font-size:9.5px;font-weight:800;border:1px solid currentColor;border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle}
@@ -965,7 +968,10 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-pcard .px{margin-top:5px;padding-top:4px;border-top:1px dotted rgba(120,90,40,.45);font-size:10.5px;line-height:1.55;color:#5a4a2e}
 #reportPrint .rp-pcard .px b{font-weight:800;color:#7a5a2a}
 #reportPrint .rp-pcard .px .bo{font-weight:700;color:#a83d56}
-#reportPrint .rp-fgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0}
+#reportPrint .rp-fgrid{margin:6px 0}
+#reportPrint .rp-frow{display:flex;align-items:stretch;gap:7px;margin-bottom:7px}
+#reportPrint .rp-frow>.rp-fcard{flex:1 1 0;width:50%;min-width:0;margin-bottom:0}
+#reportPrint .rp-frow>.rp-fcard:only-child{flex:0 1 calc(50% - 3.5px)}
 #reportPrint .rp-fcard{border:1px solid;border-radius:9px;padding:7px 10px;break-inside:avoid;page-break-inside:avoid}
 #reportPrint .rp-fcard .fh{font-weight:800;font-size:13px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px dashed currentColor;line-height:1.4}
 #reportPrint .rp-fcard .fh .pm{font-size:9.5px;font-weight:800;border:1px solid currentColor;border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle}
@@ -1025,11 +1031,13 @@ footer .disc .sub{display:block;margin-top:12px}
   #reportPrint .rp-page{padding:9mm 12mm;box-sizing:border-box}
   #reportPrint .rp-page+.rp-page{margin-top:0;border-top:none}
   #reportPrint .rp-chart,#reportPrint .rp-score,#reportPrint .rp-fp,#reportPrint .rp-fsum,#reportPrint .rp-bless{break-inside:avoid;page-break-inside:avoid}
-  /* 逐宮卡片／飛化卡片：改 inline-block 雙欄（Safari 列印對 grid 子項的 break-inside 支援不佳，
-     inline-block 會被視為「不可分割整體」，確保卡片不被跨頁切一半）。 */
-  #reportPrint .rp-pgrid,#reportPrint .rp-fgrid{display:block;font-size:0}
-  #reportPrint .rp-pcard,#reportPrint .rp-fcard{display:inline-block;width:49%;box-sizing:border-box;vertical-align:top;margin:0 0 7px;font-size:12px;break-inside:avoid;page-break-inside:avoid}
-  #reportPrint .rp-pgrid .rp-pcard:nth-child(odd),#reportPrint .rp-fgrid .rp-fcard:nth-child(odd){margin-right:1.6%}
+  /* 逐宮卡片／飛化卡片：兩張一列包進 row（.rp-prow/.rp-frow）。
+     row 設 flex+align-items:stretch → 同列兩卡等高、色塊鋪滿到底邊、底邊對齊；
+     row 設 break-inside:avoid → 以「整列」為分頁最小單位，卡片絕不被跨頁切一半
+     （避開 Safari 列印對 grid/flex 子項 break-inside 支援不佳的問題）。 */
+  #reportPrint .rp-prow,#reportPrint .rp-frow{display:flex;align-items:stretch;gap:7px;margin-bottom:7px;break-inside:avoid;page-break-inside:avoid}
+  #reportPrint .rp-prow>.rp-pcard,#reportPrint .rp-frow>.rp-fcard{flex:1 1 0;width:50%;min-width:0;box-sizing:border-box;margin:0}
+  #reportPrint .rp-prow>.rp-pcard:only-child,#reportPrint .rp-frow>.rp-fcard:only-child{flex:0 1 calc(50% - 3.5px)}
   #reportPrint .rp-sec{break-after:avoid;page-break-after:avoid}
   #reportPrint table.rp-tbl thead{display:table-header-group}
   #reportPrint *{box-shadow:none!important}
@@ -5550,7 +5558,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 取某宮主星（含四化）；論命「不以一宮論斷」，故每宮皆附三方四正合參
   const _mainsOf=(idx)=>(zw.stars[idx]||[]).filter(s=>s.type==="main");
   const _mnames=(ms)=>ms.length?ms.map(s=>s.name+_huaTxt(s.hua)).join("、"):"空宮";
-  let _pcards="";
+  // 將扁平卡片「兩張一列」包進 row wrapper：列印時 row 為分頁最小單位（break-inside:avoid），
+  // 同時 row 內 flex 讓同列兩卡等高、色塊鋪滿到底邊、底邊對齊。
+  const _pairRows=(cards,rowCls)=>{let o="";for(let i=0;i<cards.length;i+=2){o+=`<div class="${rowCls}">`+cards[i]+(cards[i+1]||"")+`</div>`;}return o;};
+  let _pcards=[];
   for(let b=0;b<12;b++){
     const pn=zw.palaceName[b];
     const mains=_mainsOf(b);
@@ -5572,12 +5583,12 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       }
     }
     const px=`<div class="px"><b>三方四正合參</b>　<span class="bo">對宮【${zw.palaceName[opp]}】</span>${_mnames(oppMs)}　·　三合【${zw.palaceName[t1]}】${_mnames(_mainsOf(t1))}、【${zw.palaceName[t2]}】${_mnames(_mainsOf(t2))}</div>`;
-    _pcards+=`<div class="rp-pcard${emptyCls}" style="background:${c.bg};border-color:${c.bd}">`
+    _pcards.push(`<div class="rp-pcard${emptyCls}" style="background:${c.bg};border-color:${c.bd}">`
       +`<div class="ph" style="color:${c.hd}">${pn}${mk}<span class="pj">${PALACE_DESC[pn]||""}</span></div>`
-      +`<div class="pb">${body}</div>${px}</div>`;
+      +`<div class="pb">${body}</div>${px}</div>`);
   }
   ppPalaceProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 論命要訣「不以一宮論斷」</b>：每一宮的吉凶，須連同<b>正對面的對宮</b>與<b>左右兩個三合宮</b>（合稱三方四正）一起交叉合參，才算準確；空宮則借對宮主星入本宮論之。以下每張宮位卡片下方均已附「三方四正合參」，請對照同看。</div>`
-    +`<div class="rp-pgrid">${_pcards}</div>`;
+    +`<div class="rp-pgrid">${_pairRows(_pcards,"rp-prow")}</div>`;
   if(_hasEmptyPalace){
     ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}</div>`;
   }
@@ -5623,7 +5634,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<div class="fbd">${rows}</div></div>`;
   };
   const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動；以下每宮一格、依色辨識，並附白話。</div>`
-    +`<div class="rp-fgrid">`+Array.from({length:12},(_,b)=>_flyCard(b)).join("")+`</div>`;
+    +`<div class="rp-fgrid">`+_pairRows(Array.from({length:12},(_,b)=>_flyCard(b)),"rp-frow")+`</div>`;
   // 三方四正白話
   const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
   // 大運白話（現行大限 + 各步十神綱要）
