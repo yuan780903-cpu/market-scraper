@@ -5764,25 +5764,29 @@ const __OB={
     const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.8;
     const lg=ctx.createGain();lg.gain.value=300;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
   },
-  dawn(ctx,dur){          // 晨曦暖陽：C 大調鋼琴，溫暖明亮、流動歡愉（和弦進行 C–G–Am–F）
+  dawn(ctx,dur){          // 晨曦暖陽：木吉他指彈，明亮流動、溫暖歡愉（和弦進行 C–G–Am–F，原創合成）
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.92;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,261.63],0.045);             // C3 G3 C4 極輕暖底
+    __obPad(ctx,bus,[130.81,196.00,261.63],0.03);              // 極輕暖底
     const prog=[
-      {r:130.81,n:[261.63,329.63,392.00,523.25]},              // C
-      {r:98.00, n:[293.66,392.00,493.88,587.33]},              // G
-      {r:110.00,n:[261.63,329.63,440.00,523.25]},              // Am
-      {r:87.31, n:[261.63,349.23,440.00,523.25]}               // F
+      {b:130.81,n:[261.63,329.63,392.00,523.25]},              // C ：C3 / C4 E4 G4 C5
+      {b:98.00, n:[293.66,392.00,493.88,587.33]},              // G ：G2 / D4 G4 B4 D5
+      {b:110.00,n:[261.63,329.63,440.00,523.25]},              // Am：A2 / C4 E4 A4 C5
+      {b:87.31, n:[261.63,349.23,440.00,523.25]}               // F ：F3 / C4 F4 A4 C5
     ];
-    const step=0.5;let t=0.5,bar=0;
+    const v=0.085, step=0.42;let t=0.5,bar=0;                  // 稍明亮流暢
     while(t<dur-3){
       const c=prog[bar%prog.length];
-      __obPiano(ctx,bus,c.r,t,0.09,3.2);                       // 每小節低音鋪底
-      const seq=[c.n[0],c.n[1],c.n[2],c.n[3],c.n[2],c.n[1]];   // 分解和弦上下行
-      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-2)break;
-        __obPiano(ctx,bus,seq[k],nt,k===0?0.12:0.10,2.0);}
-      t+=seq.length*step;bar++;
+      // 明亮指法：低音 → 高聲部上下行分解和弦
+      __obGuitar(ctx,bus,c.b,    t,        v*1.0, 2.8);
+      __obGuitar(ctx,bus,c.n[0], t+step,   v*0.8, 2.0);
+      __obGuitar(ctx,bus,c.n[1], t+step*2, v*0.85,2.0);
+      __obGuitar(ctx,bus,c.n[2], t+step*3, v*0.85,2.0);
+      __obGuitar(ctx,bus,c.n[3], t+step*4, v*0.9, 2.0);
+      __obGuitar(ctx,bus,c.n[2], t+step*5, v*0.8, 2.0);
+      __obGuitar(ctx,bus,c.n[1], t+step*6, v*0.8, 2.0);
+      t+=step*7+0.1;bar++;
     }
   },
   calm(ctx,dur){          // 靜心放鬆：F 大調鋼琴，低緩柔和、深層安定（和弦進行 F–Dm–B♭–C）
@@ -5811,25 +5815,27 @@ const __OB={
       t+=step*6+0.15;bar++;
     }
   },
-  dream(ctx,dur){         // 療癒星空：A 大調鋼琴，空靈閃爍、夢幻療癒（和弦進行 A–E–F#m–D）
+  dream(ctx,dur){         // 療癒星空：木吉他指彈，空靈、高音區閃爍、夢幻療癒（和弦進行 A–E–F#m–D，原創合成）
     const rv=__obReverb(ctx);
-    const dry=ctx.createGain();dry.gain.value=0.85;dry.connect(ctx.destination);
+    const dry=ctx.createGain();dry.gain.value=0.82;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[110.00,164.81,220.00],0.045);             // A2 E3 A3 暖底
+    __obPad(ctx,bus,[110.00,164.81,220.00],0.03);              // 極輕暖底
     const prog=[
-      {r:110.00,n:[440.00,554.37,659.25,880.00]},              // A
-      {r:82.41, n:[493.88,659.25,830.61,987.77]},              // E
-      {r:92.50, n:[440.00,554.37,739.99,880.00]},              // F#m
-      {r:73.42, n:[440.00,587.33,739.99,880.00]}               // D
+      {b:110.00,n:[440.00,554.37,659.25,880.00]},              // A ：A2 / A4 C#5 E5 A5
+      {b:82.41, n:[493.88,659.25,830.61,987.77]},              // E ：E2 / B4 E5 G#5 B5
+      {b:92.50, n:[440.00,554.37,739.99,880.00]},              // F#m：F#2 / A4 C#5 F#5 A5
+      {b:73.42, n:[440.00,587.33,739.99,880.00]}               // D ：D2 / A4 D5 F#5 A5
     ];
-    const step=0.44;let t=0.5,bar=0;
+    const v=0.058, step=0.5;let t=0.5,bar=0;                   // 更稀疏、更空靈
     while(t<dur-2.5){
       const c=prog[bar%prog.length];
-      __obPiano(ctx,bus,c.r,t,0.06,2.8);
-      const seq=[c.n[0],c.n[2],c.n[1],c.n[3],c.n[2]];          // 高音區閃爍琶音
-      for(let k=0;k<seq.length;k++){const nt=t+k*step;if(nt>dur-1.5)break;
-        __obPiano(ctx,bus,seq[k],nt,0.075,1.9);}
-      t+=seq.length*step+0.2;bar++;
+      // 空靈指法：低音根音＋高音區跳躍閃爍（音符間留白多）
+      __obGuitar(ctx,bus,c.b,    t,        v*0.9, 2.6);
+      __obGuitar(ctx,bus,c.n[0], t+step,   v*0.8, 2.2);
+      __obGuitar(ctx,bus,c.n[2], t+step*2, v*0.85,2.2);
+      __obGuitar(ctx,bus,c.n[3], t+step*3, v*0.75,2.2);
+      __obGuitar(ctx,bus,c.n[1], t+step*4, v*0.8, 2.2);
+      t+=step*5+0.35;bar++;
     }
   },
   forest(ctx,dur){
