@@ -1256,6 +1256,32 @@ footer .disc .sub{display:block;margin-top:12px}
 .paywall .discmsg{min-height:18px;font-size:.82rem;margin-top:6px;line-height:1.6}
 .paywall .discmsg.err{color:#c2576f}.paywall .discmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
+/* 付款前閘門：App 內建瀏覽器引導彈窗 */
+.inappgate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(24,16,40,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.inappgate.on{display:flex}
+.inappgate .iag-card{width:100%;max-width:440px;max-height:90vh;overflow:auto;background:#fff;border-radius:20px;
+  padding:26px 22px 20px;box-shadow:0 24px 64px rgba(20,10,45,.4);text-align:center;
+  animation:iagIn .22s ease}
+@keyframes iagIn{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.inappgate .iag-ic{font-size:2.4rem;line-height:1;margin-bottom:8px}
+.inappgate .iag-t{font-size:1.16rem;font-weight:800;color:var(--purple,#6a3fb5);margin:0 0 12px;line-height:1.45}
+.inappgate .iag-p{font-size:.92rem;line-height:1.75;color:var(--ink,#33294a);margin:0 0 10px;text-align:left}
+.inappgate .iag-p.iag-hi{background:rgba(106,63,181,.07);border-radius:12px;padding:11px 13px}
+.inappgate .iag-p b,.inappgate .iag-steps b{color:var(--purple,#6a3fb5)}
+.inappgate .iag-steps{font-size:.86rem;line-height:1.7;color:var(--ink-soft,#5a5170);text-align:left;
+  background:rgba(0,0,0,.035);border-radius:12px;padding:11px 13px;margin:2px 0 16px}
+.inappgate .iag-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.inappgate .iag-b{width:100%;padding:13px 16px;border-radius:13px;font-size:1rem;font-weight:800;cursor:pointer;
+  border:1.5px solid var(--purple,#6a3fb5);background:#fff;color:var(--purple,#6a3fb5);transition:.15s}
+.inappgate .iag-b.primary{background:var(--purple,#6a3fb5);color:#fff}
+.inappgate .iag-b:hover{transform:translateY(-1px)}
+.inappgate .iag-b:disabled{opacity:.7;cursor:default;transform:none}
+.inappgate .iag-note{font-size:.78rem;line-height:1.6;color:var(--ink-faint,#8a83a0);text-align:left;margin-bottom:14px}
+.inappgate .iag-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border-top:1px solid var(--line-soft,#eee);padding-top:12px}
+.inappgate .iag-force{font-size:.74rem;color:var(--ink-faint,#9a92b0);text-decoration:underline;cursor:pointer;text-align:left}
+.inappgate .iag-x{font-size:.82rem;color:var(--ink-soft,#6a6280);cursor:pointer;padding:4px 8px;white-space:nowrap}
 /* 路線B：個人收款 + 手動發碼 的付款說明區 */
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
   background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
@@ -3835,12 +3861,80 @@ function renderNum(name,gender,sol,sub){
 
 /* ===== PDF 列印 ===== */
 function isInAppBrowser(){
+  // 使用者可強制略過（避免 UA 誤判把真客戶鎖死）
+  try{if(window.__forceAllowInApp||sessionStorage.getItem('zw_force_inapp')==='1')return false;}catch(e){}
   const ua=navigator.userAgent||"";
-  if(/\b(Line|FBAN|FBAV|FB_IAB|FBIOS|Instagram|MicroMessenger|Twitter|TikTok|Snapchat|KAKAOTALK)\b/i.test(ua))return true;
+  // 已知不支援 PDF 下載/列印的 App 內建瀏覽器：
+  // LINE(Line/、LIFF)、Facebook(FBAN/FBAV/FB_IAB/FBIOS)、Messenger、Instagram、Threads(Barcelona)、
+  // 微信 WeChat(MicroMessenger)、Twitter/X、TikTok、Snapchat、KakaoTalk。
+  if(/\b(Line|LIFF|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Threads|Barcelona|MicroMessenger|Twitter|TikTok|Snapchat|KAKAOTALK)\b/i.test(ua))return true;
   const iOS=/iPhone|iPad|iPod/i.test(ua);
   if(iOS && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua))return true; // iOS WebView
   if(/Android/i.test(ua) && /;\s*wv\b/i.test(ua))return true;                   // Android WebView
   return false;
+}
+/* ===== 付款前閘門：在進入金流前，若處於不支援下載的 App 內建瀏覽器就先擋下並引導改用外部瀏覽器 ===== */
+function inAppPayGate(){
+  // 回傳 true = 已攔截並顯示引導（呼叫端應中止付款）；false = 放行。
+  if(!isInAppBrowser())return false;
+  showInAppGate();
+  return true;
+}
+function _copyPageUrl(btn){
+  const url=location.href;
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='已複製網址 ✓';btn.disabled=true;setTimeout(()=>{btn.textContent=o;btn.disabled=false;},2200);}};
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(done,()=>_copyPageUrlFb(url,done));}
+    else{_copyPageUrlFb(url,done);}
+  }catch(e){_copyPageUrlFb(url,done);}
+}
+function _copyPageUrlFb(text,done){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.focus();t.select();try{document.execCommand('copy');}catch(_){}t.remove();done&&done();}
+function _openExternalBrowser(){
+  // LINE 內建瀏覽器支援 openExternalBrowser=1 參數改用系統瀏覽器開啟；其他 App 無效時仍有複製網址與 ⋯ 指引作後備。
+  try{
+    const u=new URL(location.href);
+    u.searchParams.set('openExternalBrowser','1');
+    location.href=u.toString();
+  }catch(e){location.href=location.href+(location.href.indexOf('?')>=0?'&':'?')+'openExternalBrowser=1';}
+}
+function _forceContinueInApp(){
+  try{window.__forceAllowInApp=true;sessionStorage.setItem('zw_force_inapp','1');}catch(e){window.__forceAllowInApp=true;}
+  closeInAppGate();
+  // 使用者選擇仍要在此付款：直接進入綠界流程
+  try{ecStartEcpay();}catch(e){}
+}
+function closeInAppGate(){
+  const m=document.getElementById('inAppGate');
+  if(m){m.classList.remove('on');}
+  try{document.body.style.overflow='';}catch(e){}
+}
+function showInAppGate(){
+  let m=document.getElementById('inAppGate');
+  if(!m){
+    m=document.createElement('div');
+    m.id='inAppGate';
+    m.className='inappgate';
+    m.setAttribute('role','dialog');
+    m.setAttribute('aria-modal','true');
+    m.innerHTML=
+      '<div class="iag-card" onclick="event.stopPropagation()">'
+      +'<div class="iag-ic">🧭</div>'
+      +'<h3 class="iag-t">為了讓您順利拿到報告，請改用瀏覽器開啟</h3>'
+      +'<p class="iag-p">您目前是用 <b>App 內建瀏覽器</b>（例如 LINE）開啟本頁。這種瀏覽器<b>無法下載 PDF 報告</b>；而且付款紀錄只會留在目前這個瀏覽器，之後換到別的瀏覽器需要<b>重新付款</b>。</p>'
+      +'<p class="iag-p iag-hi">請先改用 <b>Safari／Chrome</b> 開啟本頁，再於外部瀏覽器完成購買與下載，一次到位。</p>'
+      +'<div class="iag-steps"><b>LINE 開啟方式：</b>點畫面右上角的「<b>⋯</b>」→ 選「<b>用預設瀏覽器開啟</b>」（或「在 Safari／Chrome 開啟」）。</div>'
+      +'<div class="iag-btns">'
+      +'<button type="button" class="iag-b primary" onclick="_openExternalBrowser()">用外部瀏覽器開啟本頁</button>'
+      +'<button type="button" class="iag-b" onclick="_copyPageUrl(this)">複製本頁網址</button>'
+      +'</div>'
+      +'<div class="iag-note">若「用外部瀏覽器開啟」沒有反應，請改用上方「複製本頁網址」，再自行貼到 Safari／Chrome 開啟。</div>'
+      +'<div class="iag-foot"><a href="javascript:void(0)" class="iag-force" onclick="_forceContinueInApp()">我了解付款後可能無法下載，仍要在此付款</a><span class="iag-x" onclick="closeInAppGate()">關閉</span></div>'
+      +'</div>';
+    m.addEventListener('click',function(e){if(e.target===m)closeInAppGate();});
+    document.body.appendChild(m);
+  }
+  m.classList.add('on');
+  try{document.body.style.overflow='hidden';}catch(e){}
 }
 function expTimeStr(){
   const d=new Date(),p=n=>String(n).padStart(2,'0');
@@ -4702,6 +4796,8 @@ async function lpMaybeShowButton(){
 async function lcStartLinePay(){
   const msg=document.getElementById('lcMsg');
   if(!window.__LC){return;}
+  // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
+  if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
   const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
   form.gender=gender;
@@ -4777,6 +4873,8 @@ async function ecMaybeShowButton(){
 async function ecStartEcpay(){
   const msg=document.getElementById('lcMsg');
   if(!window.__LC){return;}
+  // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
+  if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
   const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
   form.gender=gender;
