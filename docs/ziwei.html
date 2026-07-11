@@ -5959,9 +5959,9 @@ function updateMusicUI(){
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
   // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
   const hint=document.getElementById('musicHint');
-  let want='1',choice='dawn';
-  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'dawn';}catch(e){}
-  if(!SND_NAME[choice])choice='dawn';   // 舊版偏好（頌缽/微風/夜晚蟲鳴）已移除，自動改用輕音樂
+  let want='1',choice='forest';
+  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'forest';}catch(e){}
+  if(!SND_NAME[choice])choice='forest';   // 預設背景音樂＝森林鳥鳴（舊版偏好已移除者也自動改用此）
   if(want!=='0'){
     const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
     const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
