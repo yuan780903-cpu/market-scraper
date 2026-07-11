@@ -398,6 +398,10 @@ header .meta b{color:var(--gold);font-weight:500}
 .sschip b{color:var(--gold-deep);font-size:1.05rem;letter-spacing:2px}
 .sschip span{font-size:.72rem;color:var(--purple);margin-left:8px;border:1px solid var(--line-soft);padding:1px 7px;border-radius:10px}
 .sschip i{display:block;font-style:normal;font-size:.8rem;color:var(--ink-dim);margin-top:8px;line-height:1.6}
+.jichou{grid-column:1/-1;font-size:.82rem;color:var(--ink-dim);line-height:1.7;letter-spacing:.4px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-soft)}
+.jichou b{color:var(--rose)}
+.ssgold{text-align:center;color:var(--gold-deep);font-size:.82rem;letter-spacing:1px;margin-top:12px;font-style:italic}
+.bzrel-day{color:var(--rose);font-size:.85rem;letter-spacing:.4px;line-height:1.7;margin-top:10px;padding:10px 14px;background:var(--rwash);border-radius:10px}
 .sschip.ji{border-color:rgba(47,155,115,.4);background:linear-gradient(135deg,rgba(47,155,115,.07),var(--card))}
 .sschip.ji b{color:var(--jade)}
 .sschip.ji b::after{content:"吉";font-size:.6rem;color:#fff;background:var(--jade);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle;letter-spacing:0}
@@ -860,6 +864,7 @@ footer .disc .sub{display:block;margin-top:12px}
   .center-info .t{font-size:1.3rem}
   .center-info .row{font-size:.82rem} .center-info .zhurow{font-size:.76rem} .center-info .ju{font-size:1.05rem}
   .strength{grid-template-columns:1fr;text-align:center;gap:16px;justify-items:center}
+  .strength .jichou{text-align:left;justify-self:stretch;width:100%}
   .tengods{grid-template-columns:repeat(2,1fr)}
   .triowrap{grid-template-columns:repeat(2,1fr)}
   .cell .daxian{font-size:.56rem}
@@ -1774,7 +1779,7 @@ function calcLuck(y,m,d,bz,gender,hour,minute){
 }
 
 /* 神煞 */
-const SHENSHA_JI=new Set(["天乙貴人","文昌貴人","金輿","月德貴人","天德貴人","紅鸞","天喜","學堂"]); // 吉神
+const SHENSHA_JI=new Set(["天乙貴人","文昌貴人","金輿","月德貴人","天德貴人","紅鸞","天喜","學堂","祿神","太極貴人"]); // 吉神
 const SHENSHA_SHA=new Set(["劫煞","亡神","羊刃","孤辰","寡宿","紅艷"]); // 煞星（桃花/驛馬/華蓋/將星屬中性）
 function ssTier(name){return SHENSHA_JI.has(name)?"ji":SHENSHA_SHA.has(name)?"sha":"mid";}
 function shenSha(bz){
@@ -1794,7 +1799,11 @@ function shenSha(bz){
   const XUETANG={甲:"亥",乙:"午",丙:"寅",丁:"酉",戊:"寅",己:"酉",庚:"巳",辛:"子",壬:"申",癸:"卯"};
   const HONGYAN={甲:"午",乙:"午",丙:"寅",丁:"未",戊:"辰",己:"辰",庚:"戌",辛:"酉",壬:"子",癸:"申"};
   const YANGREN={甲:"卯",丙:"午",戊:"午",庚:"酉",壬:"子"}; // 陽干羊刃
+  const LUSHEN={甲:"寅",乙:"卯",丙:"巳",丁:"午",戊:"巳",己:"午",庚:"申",辛:"酉",壬:"亥",癸:"子"}; // 祿神＝日干臨官之支
+  const TAIJI={甲:["子","午"],乙:["子","午"],丙:["卯","酉"],丁:["卯","酉"],戊:["辰","戌","丑","未"],己:["辰","戌","丑","未"],庚:["寅","亥"],辛:["寅","亥"],壬:["巳","申"],癸:["巳","申"]}; // 太極貴人（依日干）
   (TIANYI[dg]||[]).forEach(t=>pushB("天乙貴人",t,"逢凶化吉、得貴人提攜之最上吉星。"));
+  pushB("祿神",LUSHEN[dg],"日干臨官之祿，主衣食豐足、自立有成，一生財祿較穩，宜踏實惜福。");
+  (TAIJI[dg]||[]).forEach(t=>pushB("太極貴人",t,"主聰慧好學、逢凶化吉，喜文史哲理與探究之學，得先賢庇蔭。"));
   pushB("文昌貴人",WENCHANG[dg],"主聰明科甲、文采學業、考試功名。");
   pushB("金輿",JINYU[dg],"主富貴清吉、配偶賢良，常得意外提攜與助力。");
   pushB("學堂",XUETANG[dg],"主聰穎好學、利讀書考試與專業進修，文星之吉。");
@@ -1826,6 +1835,36 @@ function shenSha(bz){
   pushS("月德貴人",YUEDE[SANHE[mz]],"主慈祥福厚、逢凶化吉，一生少病災、多蔭德。");
   // 去重
   const seen=new Set();return out.filter(o=>{const k=o.name+o.at;if(seen.has(k))return false;seen.add(k);return true;});
+}
+
+/* 感情婚姻應期：掃描未來 startY 起 span 年流年，命中合日支／沖日支／見配偶星／逢桃花紅鸞天喜者標記 */
+function marriageYears(bz,gender,birthY,startY,span){
+  span=span||10;
+  const dayZhi=bz.day.zhi, dm=bz.dayMaster;
+  const spouseGod=gender==="男"?["正財","偏財"]:["正官","七殺"]; // 男命財為妻星、女命官殺為夫星
+  // 三合局定桃花（以日支起）
+  const SANHE={申:"水",子:"水",辰:"水",寅:"火",午:"火",戌:"火",巳:"金",酉:"金",丑:"金",亥:"木",卯:"木",未:"木"};
+  const TAOHUA={水:"酉",火:"卯",金:"午",木:"子"};
+  const taohuaZhi=TAOHUA[SANHE[dayZhi]];
+  const yzi=ZHI.indexOf(bz.year.zhi);
+  const hong=ZHI[((3-yzi)%12+12)%12], xi=ZHI[((3-yzi+6)%12+12)%12]; // 紅鸞・天喜（依年支）
+  const res=[];
+  for(let k=0;k<span;k++){
+    const yy=startY+k;
+    const gi=((yy-4)%10+10)%10, zi=((yy-4)%12+12)%12;
+    const gan=GAN[gi], zhi=ZHI[zi];
+    const reasons=[];
+    if(BZ_LIUHE[zhi]===dayZhi)reasons.push("流年支合日支（配偶宮）");
+    if(BZ_CHONG[zhi]===dayZhi)reasons.push("流年支沖日支（配偶宮）");
+    // 配偶星：以流年天干十神為主（藏干本氣為輔），避免年年皆中
+    const godTop=[tenGod(dm,gan),tenGod(dm,(ZHI_HID[zhi]||[])[0])];
+    if(godTop.some(g=>spouseGod.includes(g)))reasons.push(gender==="男"?"流年透財星（妻星）":"流年透官殺（夫星）");
+    if(taohuaZhi&&zhi===taohuaZhi)reasons.push("流年逢桃花");
+    if(zhi===hong)reasons.push("流年逢紅鸞");
+    if(zhi===xi)reasons.push("流年逢天喜");
+    if(reasons.length)res.push({year:yy,gz:gan+zhi,age:yy-birthY+1,zodiac:SHENGXIAO[zhi],reasons:[...new Set(reasons)]});
+  }
+  return res;
 }
 
 /* 紫微大限 */
@@ -2090,6 +2129,65 @@ const STAR_DESC={
  破軍:{t:"耗星 · 破舊立新",d:"破軍主變革、衝撞與開創。命坐破軍者敢衝敢拚、勇於突破舊局，不畏變動、富開拓精神，宜創業、變革、外勤之路。能量強而耗，宜把握方向、量力而為，於破舊中立新方為大用。",tags:["變革","開拓","突破","衝勁"]},
  空宮:{t:"借星安命 · 包容多元",d:"命宮無主星，謂之「空宮」，須借對宮星曜論命。此格者性格較具彈性與包容，受環境與際遇影響大，宜多方歷練、確立志向。空宮非弱，反主多元發展、晚成大器，定性者最能成就。",tags:["彈性","包容","多元","晚成"]}
 };
+/* 紫微十四輔星（六吉六煞・祿馬）解釋——渲染時 STAR_DESC 查無則 fallback 查此 */
+const AUX_DESC={
+ 文昌:{t:"文星 · 科甲聰穎",d:"主聰明好學、文采與考運，利讀書、文書、專業證照。思路清晰、記憶力佳，宜走學術文教與需要專業資格之路。",tags:["聰穎","文采","考運","專業"]},
+ 文曲:{t:"文星 · 才藝口才",d:"主才藝、口才與異路功名，善表達、有藝術與辯才。宜文藝、演說、傳播，惟略帶多情，感情宜專一。",tags:["才藝","口才","藝術","表達"]},
+ 左輔:{t:"助星 · 貴人扶持",d:"主得力助手與平輩貴人，處事左右逢源、易獲協助。宜廣結善緣，一生多逢及時之援。",tags:["貴人","助力","人和","協調"]},
+ 右弼:{t:"助星 · 貴人扶持",d:"與左輔同氣，主平輩相助、人緣佳。輔弼會照者處事圓融、易得眾人擁戴。",tags:["貴人","助力","人緣","圓融"]},
+ 天魁:{t:"貴人星 · 晝貴逢祥",d:"天乙貴人入命，遇事有人相助、逢難呈祥，尤主長輩提攜與正式場合之機遇。宜以誠待人、珍惜機緣。",tags:["貴人","化厄","提攜","機緣"]},
+ 天鉞:{t:"貴人星 · 夜貴暗助",d:"與天魁同為天乙貴人，主暗中相助與異性貴人，逢難得援。宜廣積善緣。",tags:["貴人","暗助","化厄","機緣"]},
+ 祿存:{t:"財祿星 · 衣食豐足",d:"主財祿穩定、保守聚財，一生衣食無虞。守命者踏實惜福，宜穩中理財，忌孤守慳吝。",tags:["財祿","穩定","聚財","惜福"]},
+ 擎羊:{t:"煞星 · 剛烈進取",d:"主衝勁與刑傷，性剛有魄力，逢挑戰能激發鬥志，然易衝動招損。宜以柔濟剛、三思後行，化煞為權。",tags:["剛烈","衝勁","競爭","須節制"]},
+ 陀羅:{t:"煞星 · 磨練沉潛",d:"主拖延、暗傷與反覆磨練，凡事需時方成。宜耐心沉潛、化阻力為韌性，忌鑽牛角尖。",tags:["磨練","堅韌","反覆","須耐心"]},
+ 火星:{t:"火煞 · 爆發突變",d:"主急躁與突發之力，逢貪狼成火貪暴發格。性急有行動力，宜穩定情緒、把握關鍵時機而不躁進。",tags:["爆發","急躁","機遇","行動"]},
+ 鈴星:{t:"火煞 · 內斂爆發",d:"與火星同氣而較陰沉，主暗勁與突變。逢貪狼亦成暴發格。宜收斂脾性、蓄勢而發。",tags:["爆發","內斂","突變","蓄勢"]},
+ 地空:{t:"空劫 · 玄思出世",d:"主空想、破耗與另類思維，錢財不宜守成、利宗教哲學與創意。不重物質、思想超脫，宜開源亦須理財。",tags:["玄思","創意","破耗","超脫"]},
+ 地劫:{t:"空劫 · 破耗多變",d:"與地空同氣，主劫奪、耗損與計畫多變。宜量入為出、忌投機作保，轉念於創意研發則有得。",tags:["破耗","多變","創意","須理財"]},
+ 天馬:{t:"驛馬 · 奔波求財",d:"主移動、遠行與變遷，宜外出發展、動中求財。逢祿成祿馬交馳，奔波得利；宜順勢求變、不宜守株。",tags:["變動","遠行","求財","機動"]}
+};
+/* 星曜查表（先主星 STAR_DESC，後輔星 AUX_DESC） */
+function starDesc(n){return STAR_DESC[n]||AUX_DESC[n]||null;}
+/* ===== 八字四柱地支關係：合冲刑害破會 ===== */
+const BZ_CHONG={子:"午",午:"子",丑:"未",未:"丑",寅:"申",申:"寅",卯:"酉",酉:"卯",辰:"戌",戌:"辰",巳:"亥",亥:"巳"};
+const BZ_LIUHE={子:"丑",丑:"子",寅:"亥",亥:"寅",卯:"戌",戌:"卯",辰:"酉",酉:"辰",巳:"申",申:"巳",午:"未",未:"午"};
+const BZ_HAI={子:"未",未:"子",丑:"午",午:"丑",寅:"巳",巳:"寅",卯:"辰",辰:"卯",申:"亥",亥:"申",酉:"戌",戌:"酉"};
+const BZ_PO={子:"酉",酉:"子",午:"卯",卯:"午",寅:"亥",亥:"寅",巳:"申",申:"巳",辰:"丑",丑:"辰",戌:"未",未:"戌"};
+const BZ_SANHE=[["申","子","辰","水"],["亥","卯","未","木"],["寅","午","戌","火"],["巳","酉","丑","金"]];
+const BZ_SANHUI=[["寅","卯","辰","木","東方"],["巳","午","未","火","南方"],["申","酉","戌","金","西方"],["亥","子","丑","水","北方"]];
+const BZ_XING3=[["寅","巳","申","無恩之刑"],["丑","戌","未","恃勢之刑"]]; // 三刑
+const BZ_XING2=[["子","卯"]]; // 相刑（無禮之刑，互刑）
+const BZ_ZIXING=["辰","午","酉","亥"]; // 自刑
+/* 輸入四柱地支 [年支,月支,日支,時支]，回傳命中的合冲刑害破會清單 */
+function baziRelations(zhiArr){
+  const arr=zhiArr.slice(0,4);
+  const labels=["年","月","日","時"];
+  const dayZhi=arr[2]; // 日支＝配偶宮
+  const out=[]; const dayFlag=[]; // 日支狀況
+  const has=z=>arr.indexOf(z)>=0;
+  const posOf=z=>{const i=arr.indexOf(z);return i>=0?labels[i]:"";};
+  const involvesDay=(a,b)=>a===dayZhi||b===dayZhi;
+  const seen=new Set();
+  const push=(type,key,txt,cls,dayNote)=>{if(seen.has(key))return;seen.add(key);out.push({type,txt,cls});if(dayNote)dayFlag.push(dayNote);};
+  // 兩兩比對（六沖／六合／六害／六破／子卯相刑）
+  for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){
+    const a=arr[i],b=arr[j];const pr=[a,b].sort().join("");
+    if(BZ_CHONG[a]===b)push("六沖","chong-"+pr,`${a}${b}相沖，主變動、波動、分離、搬遷——沖則動、動則有事。`,"sha",involvesDay(a,b)?"日支（配偶宮）逢沖，主婚姻感情易生波動、聚少離多，宜多包容經營。":"");
+    if(BZ_LIUHE[a]===b)push("六合","he-"+pr,`${a}${b}六合，主和合、貴人、易得助力，人際圓融。`,"ji",involvesDay(a,b)?"日支（配偶宮）逢合，主夫妻投緣、感情黏膩，得配偶助力。":"");
+    if(BZ_HAI[a]===b)push("六害","hai-"+pr,`${a}${b}相害，主暗損、恩中招怨，人際宜防小人與內耗。`,"sha",involvesDay(a,b)?"日支（配偶宮）逢害，感情易生誤會怨懟，宜坦誠溝通、勿積怨。":"");
+    if(BZ_PO[a]===b)push("六破","po-"+pr,`${a}${b}相破，主破損、變卦、事多反覆，宜留意計畫生變。`,"mid","");
+    if((a==="子"&&b==="卯")||(a==="卯"&&b==="子"))push("相刑","xing2-"+pr,`${a}${b}相刑（無禮之刑），主是非口舌、人際磨擦，宜謹言慎行、以禮相待。`,"sha",involvesDay(a,b)?"日支（配偶宮）逢刑，感情相處易有摩擦言語之傷，宜互相尊重。":"");
+  }
+  // 自刑（同支重複出現）
+  BZ_ZIXING.forEach(z=>{if(arr.filter(x=>x===z).length>=2)push("自刑","zixing-"+z,`${z}${z}自刑，主自我糾結、內在拉扯，宜放寬心、勿鑽牛角尖。`,"sha",z===dayZhi?"日支（配偶宮）自刑，感情易自尋煩惱，宜開朗以對。":"");});
+  // 三刑（寅巳申／丑戌未，三支全見）
+  BZ_XING3.forEach(g=>{if(g.slice(0,3).every(has))push("三刑",`xing3-${g[0]}`,`地支 ${g[0]}${g[1]}${g[2]} 三刑（${g[3]}），主是非、口舌、健康或官非之擾，宜謹言慎行、和氣為上。`,"sha",g.slice(0,3).includes(dayZhi)?"日支（配偶宮）在三刑之列，感情人際宜多退讓化解。":"");});
+  // 三合局（全見）與半合（見兩支且含日支或月支者，僅提示三合完整局）
+  BZ_SANHE.forEach(g=>{if(g.slice(0,3).every(has))push("三合局",`sanhe-${g[3]}`,`地支 ${g[0]}${g[1]}${g[2]} 三合${g[3]}局，該五行力量倍增——喜之則大吉、忌之則須防。`,"ji","");});
+  // 三會方（全見）
+  BZ_SANHUI.forEach(g=>{if(g.slice(0,3).every(has))push("三會",`sanhui-${g[3]}`,`地支 ${g[0]}${g[1]}${g[2]} 三會${g[4]}${g[3]}，${g[3]}氣專旺成方，同氣勢盛、旺極——喜之為大用、忌之須調候。`,"ji","");});
+  return {list:out,dayFlags:dayFlag,dayZhi};
+}
 /* 十二宮職掌（白話） */
 const PALACE_DESC={
  命宮:"一生命格的核心，代表個性、才華、外貌與人生格局的總方向，是看一個人「先天本質」的第一宮。命宮的星曜，最能說明你天生是什麼樣的人。",
@@ -2136,6 +2234,14 @@ const WX_ADVICE={
  土:"土主信、主厚實。土旺者宜疏通流動、避免淤滯；土弱者宜培土固本，重承諾、講信用，穩中求進。",
  金:"金主義、主肅殺。金旺者宜以火煉、以水洩其銳；金弱者宜增剛健果決，重原則、講效率，化柔為剛。",
  水:"水主智、主流通。水旺者宜以土制、以木洩其勢；水弱者宜增流動與智巧，多親近水、保持心思靈活。"
+};
+/* 五行失衡（過旺／過弱）身心表現——供五行失衡卡引用 */
+const WX_EXCESS={
+ 木:{over:"木過旺易固執衝動、肝火旺、脾氣大，宜多舒展抒發、學習退讓。",under:"木偏弱少決斷、易疲倦、筋骨較弱，宜增條理與行動力、多接觸綠意。"},
+ 火:{over:"火過旺易急躁失眠、口舌是非、心煩氣浮，宜靜心沉潛、以水土調候。",under:"火偏弱顯冷淡、循環較差、動力不足，宜增暖增動、多曬陽光保持熱情。"},
+ 土:{over:"土過旺易固執、消化欠佳、思慮過重，宜疏通流動、放寬心胸。",under:"土偏弱欠安全感、腸胃較弱，宜培土固本、重承諾、穩中求進。"},
+ 金:{over:"金過旺易剛硬冷漠、呼吸皮膚偏弱，宜以柔濟剛、多與人交流。",under:"金偏弱欠果決、肺氣較弱，宜增剛健果決、重原則講效率。"},
+ 水:{over:"水過旺易多慮怕冷、記憶力減退，宜以土制、定住方向勿隨波逐流。",under:"水偏弱智巧稍欠、腎氣較弱，宜增流動與智巧、多親近水。"}
 };
 
 /* 五行白話精解（含舉例）——供互動彈窗 */
@@ -3790,6 +3896,23 @@ function buildAIText(){
 
   SEC("神煞");
   P(adv.ss.length?adv.ss.map(function(s){return s.name+"("+s.at+"柱)";}).join("、"):"無顯著神煞");
+  P("※ 神煞是調味料、喜用神是主菜——神煞只能加分點綴，不能單獨定吉凶。");
+
+  SEC("地支關係 · 合冲刑害");
+  var _br=baziRelations([bz.year.zhi,bz.month.zhi,bz.day.zhi,bz.hour.zhi]);
+  P(_br.list.length?_br.list.map(function(r){return r.type+"："+r.txt;}).join("　"):"四柱地支之間無明顯沖刑害破，關係平順。");
+  if(_br.dayFlags.length)P("日支（配偶宮）提醒："+_br.dayFlags.join("　"));
+
+  SEC("財運 · 身強能否任財");
+  var _caiN=0;[bz.year.gan,bz.month.gan,bz.hour.gan].forEach(function(g){var t=tenGod(dm,g);if(t==="正財"||t==="偏財")_caiN++;});
+  [bz.year.zhi,bz.month.zhi,bz.day.zhi,bz.hour.zhi].forEach(function(z){(ZHI_HID[z]||[]).forEach(function(g){var t=tenGod(dm,g);if(t==="正財"||t==="偏財")_caiN+=0.5;});});
+  var _sq=st.level==="身強"||st.level==="中和",_cw=_caiN>=2;
+  P((_sq&&_cw)?"日主有力、財星旺——能賺能守、越賺越多，富貴可期，宜積極開拓、把握投資機會。":(!_sq&&_cw)?"財多身弱、扛不住財——賺錢辛苦、易因財損身，宜先養身、量力理財，忌盲目擴張與作保。":(_sq&&!_cw)?"日主能擔而財源不豐——求財較費力、機會需自己創造，宜靠實力與貴人運補足。":"財運平順、宜守——先固本再求財，穩健儲蓄勝過投機。");
+  P("財為養命之源，然「財旺不如身旺」——能任財者方能真正得財。");
+
+  SEC("感情婚姻應期");
+  var _my=marriageYears(bz,gender,by,2026,10);
+  P(_my.length?("感情婚姻可留意的年份："+_my.map(function(y){return y.year+"（"+y.gz+"・"+y.age+"歲）";}).join("、")+"。應期主感情有明顯變化，可能成婚亦可能關係轉折，吉凶需綜合喜忌。"):"未來十年未見明顯配偶星／桃花／紅鸞天喜引動，感情步調相對平穩。");
 
   SEC("命盤綜合評分（系統演算）");
   const sc=calcScores(zw,bz,wx,adv);
@@ -4543,12 +4666,17 @@ function zwPalace(b){
   if(isLn)badges+='<span class="zwb ln">2026流年</span>';
   let starHTML;
   if(mainStars.length){
-    starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
+    starHTML=mainStars.map(s=>{const d=starDesc(s.name);
       const br=s.bright?`<span class="brq2 b-${BRIGHT_TIER[s.bright]||'c'}">${s.bright}</span><span class="brw">${BRIGHT_WORD[s.bright]||""}</span>`:"";
       return d?`<div class="zwstar"><b>${s.name}</b>${br}<span class="zwst">${d.t}</span>${d.d}<div class="zwtags">${d.tags.map(t=>`<span class="zwtag2">${t}</span>`).join("")}</div></div>`
               :`<div class="zwstar"><b>${s.name}</b>${br}</div>`;}).join("");
   }else{const d=STAR_DESC["空宮"];starHTML=`<div class="zwstar"><b>本宮無主星（空宮）</b><span class="zwst">${d.t}</span>${d.d}</div>`;}
-  const auxTxt=auxStars.length?auxStars.map(s=>s.name+(s.bright?`(${s.bright})`:"")+(s.hua?`（化${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}）`:"")).join("、"):"無";
+  const auxTxt=auxStars.length?auxStars.map(s=>{
+      const d=starDesc(s.name);
+      const tail=(s.bright?`(${s.bright})`:"")+(s.hua?`（化${({lu:"祿",quan:"權",ke:"科",ji:"忌"})[s.hua]}）`:"");
+      return d?`<div class="zwstar"><b>${s.name}</b>${tail}<span class="zwst">${d.t}</span>${d.d}<div class="zwtags">${d.tags.map(t=>`<span class="zwtag2">${t}</span>`).join("")}</div></div>`
+              :`<div class="zwstar"><b>${s.name}</b>${tail}</div>`;
+    }).join(""):"<p>無</p>";
   const hasBright=mainStars.some(s=>s.bright)||auxStars.some(s=>s.bright);
   let summary=`對 ${name} 而言，「${pname}」這一宮坐落在 ${gz}。`;
   if(isMing)summary+="此處正是您的命宮，是全盤核心，最能代表您的本性與一生格局走向。";
@@ -4560,7 +4688,7 @@ function zwPalace(b){
     <div class="zwkv"><span>宮位干支 <b>${gz}</b></span><span>大限 <b>${lim.start}–${lim.end} 歲</b></span><span>小限 <b>${xage}</b></span></div>
     <div class="zwsec">這一宮看什麼</div><p>${PALACE_DESC[pname]||""}</p>
     <div class="zwsec">坐守星曜</div>${starHTML}
-    <div class="zwsec">輔曜・雜曜</div><p>${auxTxt}</p>
+    <div class="zwsec">輔曜・雜曜</div>${auxTxt}
     ${hasBright?`<div class="zwsec">廟旺利陷 是什麼（白話）</div>
     <p>每顆星坐進不同宮位，會有強弱之分，這就是<b>「廟旺利陷」</b>——好比同一個人，放對位置如魚得水，放錯位置處處受限。由強到弱共七級：<br>
     <span class="brq2 b-a">廟</span><span class="brq2 b-a">旺</span> 力量最足，星性的優點充分發揮；<span class="brq2 b-b">得</span><span class="brq2 b-b">利</span> 表現良好、平順有力；<span class="brq2 b-c">平</span> 中庸持平；<span class="brq2 b-d">不</span><span class="brq2 b-d">陷</span> 較不得力，需多費心經營、或借助其他吉星扶持。<br>
@@ -4723,7 +4851,7 @@ function zwTrio(b,i){
   const mainStars=stars.filter(s=>s.type==="main");
   let starHTML;
   if(mainStars.length){
-    starHTML=mainStars.map(s=>{const d=STAR_DESC[s.name];
+    starHTML=mainStars.map(s=>{const d=starDesc(s.name);
       const br=s.bright?`<span class="brq2 b-${BRIGHT_TIER[s.bright]||'c'}">${s.bright}</span><span class="brw">${BRIGHT_WORD[s.bright]||""}</span>`:"";
       return d?`<div class="zwstar"><b>${s.name}</b>${br}<span class="zwst">${d.t}</span>${d.d}</div>`
               :`<div class="zwstar"><b>${s.name}</b>${br}</div>`;}).join("");
@@ -4948,7 +5076,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     ["年干",tenGod(dm,bz.year.gan)],["月干",tenGod(dm,bz.month.gan)],
     ["日支",tenGod(dm,ZHI_HID[bz.day.zhi][0])],["時干",tenGod(dm,bz.hour.gan)]
   ];
-  const tgHTML=tgList.map(([pos,g])=>`<div class="tgcard"><div class="tgn">${g}</div><div class="tgp">${pos}</div><div class="tgd">${TENGOD_DESC[g]}</div></div>`).join("");
+  // 十神男／女命側重補述（缺口6）
+  const TENGOD_GENDER={
+    男:{正財:"男命正財為妻星，主穩定婚姻與務實理財。",偏財:"男命偏財為父、為情緣與外財，主活絡財源。"},
+    女:{正官:"女命正官為夫星，主正緣婚姻與名分。",七殺:"女命七殺為情緣中之剛性緣分，感情濃烈宜擇善固執。"}
+  };
+  const tgGender=(TENGOD_GENDER[gender]||{});
+  const tgHTML=tgList.map(([pos,g])=>{const gx=tgGender[g]?`<div class="tgd" style="color:var(--gold-deep);margin-top:4px">${tgGender[g]}</div>`:"";return `<div class="tgcard"><div class="tgn">${g}</div><div class="tgp">${pos}</div><div class="tgd">${TENGOD_DESC[g]}</div>${gx}</div>`;}).join("");
 
   // ===== 大運 =====
   const lk=adv.luck;
@@ -4979,6 +5113,48 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const ssHTML=adv.ss.length
     ?adv.ss.map(s=>`<div class="sschip ${s.tier}" title="${s.desc}"><b>${s.name}</b><span>${s.at}柱</span><i>${s.desc}</i></div>`).join("")
     :`<div class="sschip"><b>命局清純</b><i>命中神煞平和，貴在自身用功積德。</i></div>`;
+
+  // ===== 地支關係 · 合冲刑害（缺口1）=====
+  const bzRel=baziRelations([bz.year.zhi,bz.month.zhi,bz.day.zhi,bz.hour.zhi]);
+  const bzRelHTML=bzRel.list.length
+    ?bzRel.list.map(r=>`<div class="sschip ${r.cls}"><b>${r.type}</b><i>${r.txt}</i></div>`).join("")
+    :`<div class="sschip"><b>地支和諧</b><i>四柱地支之間無明顯沖刑害破，關係平順、根基安穩。</i></div>`;
+  const dayFlagHTML=bzRel.dayFlags.length?`<p class="bzrel-day">日支（配偶宮）提醒：${bzRel.dayFlags.join("　")}</p>`:"";
+
+  // ===== 財運 · 身強能否任財（缺口3）=====
+  const caiCount=(function(){let n=0;[bz.year.gan,bz.month.gan,bz.hour.gan].forEach(g=>{const t=tenGod(dm,g);if(t==="正財"||t==="偏財")n++;});
+    [bz.year.zhi,bz.month.zhi,bz.day.zhi,bz.hour.zhi].forEach(z=>{(ZHI_HID[z]||[]).forEach(g=>{const t=tenGod(dm,g);if(t==="正財"||t==="偏財")n+=0.5;});});return n;})();
+  const caiWang=caiCount>=2;            // 財星旺（含藏干加權）
+  const shenQiang=st.level==="身強"||st.level==="中和";
+  let caiVerdict;
+  if(shenQiang&&caiWang)caiVerdict="日主有力、財星旺——能賺能守、越賺越多，富貴可期，宜積極開拓、把握投資機會。";
+  else if(!shenQiang&&caiWang)caiVerdict="財多身弱、扛不住財——賺錢辛苦、易因財損身，宜先養身（比劫印星）、量力理財，忌盲目擴張與作保。";
+  else if(shenQiang&&!caiWang)caiVerdict="日主能擔而財源不豐——求財較費力、機會需自己創造，宜靠實力與貴人運補足。";
+  else caiVerdict="財運平順、宜守——先固本再求財，穩健儲蓄勝過投機。";
+
+  // ===== 五行失衡表現 ＋ 臟腑保健（缺口4b／8）=====
+  const wxMax=Math.max(...wxOrder.map(k=>wx[k]));
+  const wxExcessRows=wxOrder.map(k=>{
+    const over=wx[k]>=4||(wx[k]===wxMax&&wxMax-Math.min(...wxOrder.map(x=>wx[x]))>=2.5);
+    const under=wx[k]<=1;
+    if(!over&&!under)return "";
+    const ex=WX_EXCESS[k], body=(WX_MEAN[k]&&WX_MEAN[k].body)||"";
+    const txt=over?ex.over:ex.under;
+    const state=over?"過旺":"偏弱";
+    return `<div class="sschip ${over?'sha':'mid'}"><b>${k}${state}</b><i>${txt}　健康提醒：${k}失衡，對應臟腑（${body}）宜多留意保養。</i></div>`;
+  }).filter(Boolean).join("");
+  const wxBalanceHTML=wxExcessRows||`<div class="sschip ji"><b>五行均衡</b><i>命局五行分布尚稱勻稱、無明顯偏枯，身心根基平和，順喜用神調養即可。</i></div>`;
+
+  // ===== 忌神／仇神補述（缺口4a）=====
+  // 忌神＝過度生剋日主者（身強取生扶為忌、身弱取洩剋為忌，已由 st.ji 給出）；仇神＝生忌神者
+  const chouGod=(function(){const set=new Set();st.ji.forEach(j=>{const ji=WX_IDX[j];const chou=WX_NAME[(ji-1+5)%5];set.add(chou);});st.ji.forEach(j=>set.delete(j));return [...set];})();
+  const jiChouTxt=`忌神為 <b style="color:#d47f8f">${st.ji.join("、")}</b>——${st.level==="身強"?"日主已旺，再逢比劫印星生扶則過猶不及，宜避之。":st.level==="身弱"?"日主偏弱，再逢財官食傷洩剋則力不從心，宜避之。":"命局中和，逢最旺一氣再加強則失衡，宜節之。"}仇神（生忌神者）為 <b style="color:#c98fa0">${chouGod.length?chouGod.join("、"):"—"}</b>，在旁助長忌神之勢，遇之亦宜留意化解。`;
+
+  // ===== 感情婚姻應期（缺口5）=====
+  const marYears=marriageYears(bz,gender,sol.y,2026,10);
+  const marYearsHTML=marYears.length
+    ?`<p>感情婚姻可留意的年份：${marYears.map(y=>`<b style="color:var(--gold)">${y.year}（${y.gz}・${y.age}歲）</b>`).join("、")}。<br><span style="color:var(--ink-faint)">應期主「感情有明顯變化」，可能是成婚、也可能是關係轉折，吉凶需綜合喜忌。</span></p>`
+    :`<p>未來十年流年未見明顯配偶星／桃花／紅鸞天喜引動，感情步調相對平穩；緣分宜主動經營、順其自然。</p>`;
 
   // ===== 格局 =====
   const geHTML=adv.ge.map(g=>`<div class="gecard"><h4>${g.n}</h4><p>${g.d}</p></div>`).join("");
@@ -5130,6 +5306,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="xj xi"><span>喜用神</span><b>${st.xi.join("　")}</b></div>
       <div class="xj ji"><span>忌　神</span><b>${st.ji.join("　")}</b></div>
     </div>
+    <p class="jichou">${jiChouTxt}</p>
   </div>
 
   <div class="divider"><span>十神格局</span></div>
@@ -5140,6 +5317,14 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   <div class="divider"><span>命帶神煞</span></div>
   <div class="shensha">${ssHTML}</div>
+  <p class="ssgold">神煞是調味料、喜用神是主菜——神煞只能加分點綴，不能單獨定吉凶。</p>
+
+  <div class="divider"><span>地支關係 · 合冲刑害</span></div>
+  <div class="shensha">${bzRelHTML}</div>
+  ${dayFlagHTML}
+
+  <div class="divider"><span>五行失衡 · 身心提醒</span></div>
+  <div class="shensha">${wxBalanceHTML}</div>
 
   <div class="sec-title"><span class="cn">命格精析</span><span class="en">Destiny Interpretation</span></div>
   <div class="reading">
@@ -5161,13 +5346,20 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <h3><span class="ic">財</span>財帛宮</h3>
       <p>財帛宮坐 <b style="color:var(--gold)">${palaceOf("財帛")}</b>，主一生財祿之來路與理財之道。宜順其星性以求財，正財偏財各有其法，務實經營者最得其利。</p>
     </div>
+    <div class="rcard wide">
+      <h3><span class="ic">任</span>財運論斷 · 身${shenQiang?"強":"弱"}${caiWang?"財旺":"財弱"}</h3>
+      <div class="lead">日主 ${st.level} · 財星${caiWang?"旺":"弱"}（正偏財力量約 ${caiCount} 分）</div>
+      <p>${caiVerdict}</p>
+      <p style="color:var(--gold-deep);margin-top:8px">財為養命之源，然「財旺不如身旺」——能任財者方能真正得財。</p>
+    </div>
     <div class="rcard">
       <h3><span class="ic">官</span>官祿宮（事業）</h3>
       <p>官祿宮坐 <b style="color:var(--gold)">${palaceOf("官祿")}</b>，主事業格局與發展方向。順此星曜之性擇業，揚長而行，事業之路自能漸入佳境。</p>
     </div>
-    <div class="rcard">
-      <h3><span class="ic">姻</span>夫妻宮</h3>
-      <p>夫妻宮坐 <b style="color:var(--gold)">${palaceOf("夫妻")}</b>，主感情與婚配之緣。星曜映照另一半特質與相處之道，互敬互諒、剛柔相濟者，最能琴瑟和鳴。</p>
+    <div class="rcard wide">
+      <h3><span class="ic">姻</span>夫妻宮 · 感情婚姻應期</h3>
+      <p>夫妻宮坐 <b style="color:var(--gold)">${palaceOf("夫妻")}</b>，主感情與婚配之緣。星曜映照另一半特質與相處之道，互敬互諒、剛柔相濟者，最能琴瑟和鳴。${bzRel.dayFlags.length?"　八字日支（配偶宮）方面："+bzRel.dayFlags[0]:""}</p>
+      ${marYearsHTML}
     </div>
     <div class="rcard">
       <h3><span class="ic">遷</span>遷移宮</h3>
@@ -5367,13 +5559,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     const mk=(b===zw.ming?'<span class="pm">命宮</span>':'')+(b===zw.shen?'<span class="pm">身宮</span>':'')+(b===adv.limits.curBranch?'<span class="pm">現行大限</span>':'');
     let body,emptyCls='';
     if(mains.length){
-      body=mains.map(s=>{const d=STAR_DESC[s.name];return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}</b>${d?`—${d.d}`:''}</span>`;}).join("");
+      body=mains.map(s=>{const d=starDesc(s.name);return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}</b>${d?`—${d.d}`:''}</span>`;}).join("");
     }else{
       _hasEmptyPalace=true;emptyCls=' empty';
       if(oppMs.length){
         // 空宮借對宮主星入本宮論之（交叉分析的核心）
         body=`<span class="ps">本宮無主星（空宮），依「借星安宮」之法，借對宮【${zw.palaceName[opp]}】之主星入本宮論：</span>`
-          +oppMs.map(s=>{const d=STAR_DESC[s.name];return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}（借星）</b>${d?`—${d.d}`:''}</span>`;}).join("");
+          +oppMs.map(s=>{const d=starDesc(s.name);return `<span class="ps"><b>${s.name}${_huaTxt(s.hua)}（借星）</b>${d?`—${d.d}`:''}</span>`;}).join("");
       }else{
         body=`<span class="ps">本宮與對宮【${zw.palaceName[opp]}】皆空，須再合參三合宮（${zw.palaceName[t1]}、${zw.palaceName[t2]}）之星曜綜合論之。</span>`;
       }
