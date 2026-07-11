@@ -1215,6 +1215,9 @@ footer .disc .sub{display:block;margin-top:12px}
 .paywall .pworig{font-size:.95rem;color:var(--ink-faint);margin-top:8px}
 .paywall .pworig s{color:#c2576f;text-decoration-thickness:1.5px}
 .paywall .pwprice{font-size:1.7rem;font-weight:800;color:var(--gold-bright);margin:2px 0 2px}
+.paywall .pwcd{margin:4px auto 8px;font-size:.9rem;color:#b0402f;letter-spacing:.5px}
+.paywall .pwcd b{display:inline-block;min-width:88px;font-size:1.02rem;font-weight:800;color:#fff;background:#c2402f;
+  border-radius:8px;padding:2px 9px;margin:0 2px;letter-spacing:1px;font-variant-numeric:tabular-nums}
 .paywall .pwprice em{font-style:normal;font-size:.92rem;font-weight:700;color:var(--purple);margin-right:4px;
   background:var(--pwash);border-radius:8px;padding:2px 8px;vertical-align:middle}
 .paywall .pwprice span{font-size:.84rem;font-weight:400;color:var(--ink-faint)}
@@ -4042,9 +4045,17 @@ function updatePriceUI(){
   if(__disc){
     el.innerHTML='<em>折扣後應付</em> <del>'+__disc.base+' 元</del><span class="pwfinal">'+__disc.final+' 元</span> <span>／ 單份完整報告</span>';
   }else{
-    el.innerHTML='<em>人生航路結緣價</em> '+LC_PRICE+' <span>／ 單份完整報告</span>';
+    el.innerHTML='<em>人生航路限時結緣價</em> '+LC_PRICE+' <span>／ 單份完整報告</span>';
   }
 }
+/* 限時結緣價：24 小時循環倒數（時分秒），到 0 自動歸零重新倒數 24:00:00，製造急迫感 */
+function __pwCdTick(){
+  const el=document.getElementById('pwCdTime');if(!el)return;
+  const day=86400000, ms=day-(Date.now()%day);
+  const p=n=>String(n).padStart(2,'0');
+  el.textContent=p(Math.floor(ms/3600000))+':'+p(Math.floor((ms%3600000)/60000))+':'+p(Math.floor((ms%60000)/1000));
+}
+setInterval(__pwCdTick,1000);
 async function discApply(){
   const inp=document.getElementById('discInput'),msg=document.getElementById('discMsg');
   const code=(inp?inp.value:'').trim().toUpperCase();
@@ -5089,7 +5100,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div class="pworig">原價 <s>${LC_ORIG}</s></div>
-    <div id="pwPriceLine" class="pwprice"><em>人生航路結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="pwPriceLine" class="pwprice"><em>人生航路限時結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
+    <div id="pwCountdown" class="pwcd">限時結緣價倒數 <b id="pwCdTime">--:--:--</b> 後恢復原價 ${LC_ORIG}</div>
     <div id="ecBtnWrap" class="lpwrap" style="display:none">
       <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
       <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
