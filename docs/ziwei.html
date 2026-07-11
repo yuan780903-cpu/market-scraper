@@ -4305,8 +4305,61 @@ function timeLabel(h){
    並把該碼標記為已用，全世界只能用一次；16888 為無限次「超級萬用碼」。
    命理計算全程在本機，不上傳任何個資；只把「4 位數字的碼」送去驗證。 */
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
-const LC_PRICE="188 元";   // ← 想改價格改這裡（結緣價）
-const LC_ORIG="888 元";    // ← 原價（顯示刪除線）
+/* 價格：預設寫死值＝失敗安全（/price/get 讀不到時顯示這組，畫面永不空白）。
+   實際顯示與收款一律以後端 KV「price:current」為單一真相；工程模式可改價。 */
+let LC_PRICE="188 元";   // ← 失敗安全的結緣價（後端讀取失敗時顯示）
+let LC_ORIG="888 元";    // ← 失敗安全的原價（顯示刪除線）
+// 目前生效的價格與文字標籤（由 /price/get 載入；先給預設值避免任何時序空窗）。
+let __price={
+  original:888, promo:188,
+  labels:{title:"人生航路限時結緣價", unit:"／ 單份完整報告", origPrefix:"原價", restoreNote:"限時結緣價倒數 {cd} 後恢復原價 {orig}", currency:"元"}
+};
+function __priceCurrency(){return (__price&&__price.labels&&__price.labels.currency)||"元";}
+function __priceMoney(n){return String(n)+" "+__priceCurrency();}  // 例："188 元"
+// 依 __price 重算 LC_PRICE / LC_ORIG（供各處沿用既有變數的地方顯示）。
+function __applyPriceStrings(){
+  try{
+    LC_PRICE=__priceMoney(__price.promo);
+    LC_ORIG=__priceMoney(__price.original);
+  }catch(e){}
+}
+// 把目前價格（金額＋文字標籤）渲染到付款區的各節點（若已在畫面上）。失敗安全：任何缺節點都略過。
+function __renderPriceNodes(){
+  try{
+    __applyPriceStrings();
+    const L=(__price&&__price.labels)||{};
+    // 原價刪除線列
+    const orig=document.querySelector('.paywall .pworig');
+    if(orig)orig.innerHTML=(L.origPrefix||'原價')+' <s>'+esc4kol(LC_ORIG)+'</s>';
+    // 倒數列「恢復原價」文案（{cd} 保留為倒數 <b> 節點，{orig} 換成原價字串）
+    const cd=document.getElementById('pwCountdown');
+    if(cd){
+      const note=(L.restoreNote||'限時結緣價倒數 {cd} 後恢復原價 {orig}');
+      const html=esc4kol(note)
+        .replace('{cd}','<b id="pwCdTime">--:--:--</b>')
+        .replace('{orig}',esc4kol(LC_ORIG));
+      cd.innerHTML=html;
+    }
+    // 優惠價主列（無折扣碼/KOL 時）→ 交給 updatePriceUI 統一處理
+    updatePriceUI();
+  }catch(e){}
+}
+// 載入後端價格（/price/get）。失敗安全：任何錯誤都保留現有（預設）值，不清空畫面。
+async function priceLoad(){
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/price/get',{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.promo>=1&&j.original>=1){
+      __price={
+        original:parseInt(j.original,10),
+        promo:parseInt(j.promo,10),
+        labels:Object.assign({title:"人生航路限時結緣價",unit:"／ 單份完整報告",origPrefix:"原價",restoreNote:"限時結緣價倒數 {cd} 後恢復原價 {orig}",currency:"元"},(j.labels&&typeof j.labels==='object')?j.labels:{})
+      };
+    }
+  }catch(e){ /* 失敗安全：保留預設 */ }
+  __applyPriceStrings();
+  __renderPriceNodes();
+}
 const LC_CONTACT="完成付款後系統會自動解鎖；如需協助，請來信客服信箱 yuan780903@gmail.com（服務時間：平日 08:00–17:00）。";  // ← 改成你的聯絡方式
 function lcPayload(name,y,m,d,hh,mm,gender){
   return [String(name).replace(/\s+/g,''),`${+y}-${+m}-${+d}`,`${+hh}:${+mm}`,gender].join("|");
@@ -4321,12 +4374,15 @@ let __disc=null;   // {code,amount,reuse,base,final}
 let __kol=null;    // KOL 推薦碼 {code,name,discount,base,final}（付款時穿透帶進綠界）
 function updatePriceUI(){
   const el=document.getElementById('pwPriceLine');if(!el)return;
+  const L=(__price&&__price.labels)||{};
+  const unit=L.unit||'／ 單份完整報告';
+  const cur=__priceCurrency();
   if(__kol){
-    el.innerHTML='<em>'+esc4kol(__kol.name)+' 推薦價</em> <del>'+__kol.base+' 元</del><span class="pwfinal">'+__kol.final+' 元</span> <span>／ 單份完整報告</span>';
+    el.innerHTML='<em>'+esc4kol(__kol.name)+' 推薦價</em> <del>'+esc4kol(__kol.base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(__kol.final)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
   }else if(__disc){
-    el.innerHTML='<em>折扣後應付</em> <del>'+__disc.base+' 元</del><span class="pwfinal">'+__disc.final+' 元</span> <span>／ 單份完整報告</span>';
+    el.innerHTML='<em>折扣後應付</em> <del>'+esc4kol(__disc.base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(__disc.final)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
   }else{
-    el.innerHTML='<em>人生航路限時結緣價</em> '+LC_PRICE+' <span>／ 單份完整報告</span>';
+    el.innerHTML='<em>'+esc4kol(L.title||'人生航路限時結緣價')+'</em> '+esc4kol(LC_PRICE)+' <span>'+esc4kol(unit)+'</span>';
   }
 }
 function esc4kol(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -4446,6 +4502,20 @@ function superOpen(){
     </div>
     <div id="engGate" style="display:none">
     <div class="engsec">
+      <div class="englbl">⓪ 價格修改（全站顯示與綠界收款金額）</div>
+      <div class="engrow"><span class="engk">原價</span><input id="engPriceOrig" class="enginp2" type="number" min="1" placeholder="例如 888"><span class="engu">元（顯示刪除線）</span></div>
+      <div class="engrow"><span class="engk">限時優惠價</span><input id="engPricePromo" class="enginp2" type="number" min="1" placeholder="例如 188"><span class="engu">元（＝實際收款金額）</span></div>
+      <div class="engrow"><span class="engk">優惠價前綴</span><input id="engPriceTitle" class="enginp2" placeholder="人生航路限時結緣價" maxlength="40" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">價格後綴</span><input id="engPriceUnit" class="enginp2" placeholder="／ 單份完整報告" maxlength="40" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">原價前綴</span><input id="engPriceOrigPrefix" class="enginp2" placeholder="原價" maxlength="20" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">倒數文案</span><input id="engPriceRestore" class="enginp2" placeholder="限時結緣價倒數 {cd} 後恢復原價 {orig}" maxlength="80" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">金額單位</span><input id="engPriceCurrency" class="enginp2" placeholder="元" maxlength="8" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow" style="font-size:.72rem;color:var(--ink-faint,#888);line-height:1.5">倒數文案可用 <b>{cd}</b>（倒數時間）與 <b>{orig}</b>（原價金額）兩個代入標記。儲存後全站訪客即看到新價，綠界收款金額同步跟著改。</div>
+      <button class="engbtn" type="button" onclick="engLoadPrice()">載入目前設定</button>
+      <button class="engbtn" type="button" onclick="engSavePrice()">儲存價格</button>
+      <div id="engPriceOut" class="engout"></div>
+    </div>
+    <div class="engsec">
       <div class="englbl">① 折扣碼</div>
       <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engReuse" value="once" checked> 單次性</label><label class="engradio"><input type="radio" name="engReuse" value="forever"> 連續性</label></div>
@@ -4519,6 +4589,7 @@ async function engVerify(){
     if(gate)gate.style.display='';
     engOut('engAuthMsg','✓ 驗證成功，已解鎖發碼功能。','ok');
     const vb=document.getElementById('engVerifyBtn');if(vb)vb.textContent='重新驗證';
+    try{engLoadPrice();}catch(e){}   // 進入即帶出目前價格，方便直接修改
   }else{
     if(gate)gate.style.display='none';
     try{localStorage.removeItem('zw_admin_secret');}catch(e){}   // 密碼錯就別再記住
@@ -4540,6 +4611,50 @@ async function engFetch(path){
 }
 const ENG_ERR={forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼（ADMIN_SECRET）。',amount:'折扣金額需介於 1 ~ 原價之間。',badcode:'代碼需 2~24 位中英文或數字（不含空格與符號）。',exists:'此折扣碼已存在，請換一組。',conflict:'此代碼已被通關碼佔用，請換一組。',used:'此代碼先前已使用過。',expired:'此代碼已過期。',range:'數量範圍不正確。',ratelimited:'嘗試過於頻繁，請稍後再試。'};
 function engOut(id,html,cls){const el=document.getElementById(id);if(el){el.innerHTML=html;el.className='engout '+(cls||'');}}
+/* ===== 工程模式：價格修改（讀 /price/get 顯示、寫 /price/set；走 X-Admin-Secret） ===== */
+const PRICE_ERR={original:'原價需為 1 以上的整數。',promo:'限時優惠價需為 1 以上的整數。',promo_gt_original:'限時優惠價不可高於原價。',kv_write_failed:'寫入失敗，請稍後再試。',forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼。'};
+async function engLoadPrice(){
+  engOut('engPriceOut','載入中…','');
+  let j;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/price/get',{cache:'no-store'});
+    j=await r.json();
+  }catch(e){ engOut('engPriceOut','連線失敗，無法載入目前價格。','err'); return; }
+  if(!(j&&j.ok)){ engOut('engPriceOut','載入失敗。','err'); return; }
+  const L=(j.labels&&typeof j.labels==='object')?j.labels:{};
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=(v==null?'':v);};
+  set('engPriceOrig',j.original); set('engPricePromo',j.promo);
+  set('engPriceTitle',L.title); set('engPriceUnit',L.unit); set('engPriceOrigPrefix',L.origPrefix);
+  set('engPriceRestore',L.restoreNote); set('engPriceCurrency',L.currency);
+  engOut('engPriceOut','目前：原價 '+j.original+' 元 · 優惠價 '+j.promo+' 元'+(j.fallback?'（後端尚無設定，顯示為預設值，儲存後即生效）':'')+'。','ok');
+}
+async function engSavePrice(){
+  const orig=parseInt((document.getElementById('engPriceOrig')||{}).value||'',10);
+  const promo=parseInt((document.getElementById('engPricePromo')||{}).value||'',10);
+  if(!(orig>=1)){engOut('engPriceOut','請輸入正確的原價（1 以上整數）。','err');return;}
+  if(!(promo>=1)){engOut('engPriceOut','請輸入正確的限時優惠價（1 以上整數）。','err');return;}
+  if(promo>orig){engOut('engPriceOut','限時優惠價不可高於原價。','err');return;}
+  const gv=id=>((document.getElementById(id)||{}).value||'').trim();
+  const q=[];
+  q.push('original='+orig,'promo='+promo);
+  // 文字標籤：有填才帶（未帶則後端沿用預設）
+  const t=gv('engPriceTitle'); if(t)q.push('labTitle='+encodeURIComponent(t));
+  const u=gv('engPriceUnit'); if(u)q.push('labUnit='+encodeURIComponent(u));
+  const op=gv('engPriceOrigPrefix'); if(op)q.push('labOrigPrefix='+encodeURIComponent(op));
+  const rn=gv('engPriceRestore'); if(rn)q.push('labRestoreNote='+encodeURIComponent(rn));
+  const cu=gv('engPriceCurrency'); if(cu)q.push('labCurrency='+encodeURIComponent(cu));
+  engOut('engPriceOut','儲存中…','');
+  let j;try{ j=await engFetch('/price/set?'+q.join('&')); }
+  catch(e){ engOut('engPriceOut',(e&&e.msg)||'連線失敗，請確認網路。','err'); return; }
+  if(j&&j.ok){
+    engOut('engPriceOut','✓ 已儲存並生效：原價 '+j.original+' 元 · 優惠價 '+j.promo+' 元（全站與綠界收款同步更新）。','ok');
+    try{ if(window.__price!==undefined){} }catch(e){}
+    try{ __ecInfo=undefined; }catch(e){}   // 讓 /ecpay/ready 快取失效，重新取得新金額
+    try{ await priceLoad(); }catch(e){}     // 立即把新價反映到目前畫面付款區
+  }else{
+    engOut('engPriceOut',PRICE_ERR[j&&j.reason]||('儲存失敗（'+(j&&j.reason)+'）'),'err');
+  }
+}
 function engCard(label,code,sub){
   return '<div class="engres"><div class="engresk">'+label+'</div><div class="engrescode">'+code+'</div>'+(sub?'<div class="engressub">'+sub+'</div>':'')+'<button class="engcopy" type="button" onclick="engCopy(\''+code+'\',this)">複製</button></div>';
 }
@@ -6094,6 +6209,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   finishRender(subText);
   lcRefresh();
   ecMaybeShowButton();
+  priceLoad();   // 付款區價格/文字改吃後端 /price/get（失敗安全：讀不到則顯示寫死預設值）
   // 四化飛星飛線盤：初次預設顯示命宮飛化
   _flyBindResize();
   requestAnimationFrame(()=>{if(document.getElementById('flyChart'))zwFly(zw.ming);});
