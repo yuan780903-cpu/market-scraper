@@ -4094,6 +4094,7 @@ async function lcUnlock(){
     return;
   }
   // (2) 不是萬用碼 → 當「折扣碼」查詢：成功則套用折扣、引導往下付款
+  let discReason='';
   try{
     const r=await fetch(LC_API.replace(/\/+$/,'')+'/discCheck?code='+encodeURIComponent(code),{cache:'no-store'});
     const j=await r.json();
@@ -4106,11 +4107,12 @@ async function lcUnlock(){
       if(ec&&getComputedStyle(ec).display!=='none')ec.scrollIntoView({behavior:'smooth',block:'center'});
       return;
     }
+    discReason=(j&&j.reason)||'';
   }catch(e){/* 折扣碼查詢失敗 → 落到下方通用錯誤訊息 */}
   // (3) 兩者皆非
   const reason=res?res.reason:'';
-  msg.textContent=reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
-                :reason==='expired'?'✗ 此通行碼已逾有效期限，請向 聖源大師索取新碼。'
+  msg.textContent=(reason==='expired'||discReason==='expired')?'✗ 此代碼已逾有效期限，無法使用，請向 聖源大師索取新碼。'
+                :reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
                 :'✗ 代碼無效：查無此萬用碼或折扣碼，請確認後再試，或洽 聖源大師。';
   msg.className='lcmsg err';
 }
@@ -4140,6 +4142,9 @@ function superOpen(){
       <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engReuse" value="once" checked> 單次性</label><label class="engradio"><input type="radio" name="engReuse" value="forever"> 連續性</label></div>
       <div class="engrow"><span class="engk">代碼</span><input id="engDiscCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="24" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">期限</span><label class="engradio"><input type="radio" name="engDiscExp" value="none" checked onchange="engExpToggle('Disc')"> 永久</label><label class="engradio"><input type="radio" name="engDiscExp" value="until" onchange="engExpToggle('Disc')"> 限時</label></div>
+      <div class="engrow" id="engDiscExpRow" style="display:none"><span class="engk">到期</span><input id="engDiscExpAt" class="enginp2" type="datetime-local"></div>
+      <div class="engrow" id="engDiscExpQuick" style="display:none"><span class="engk"></span><button type="button" class="englink" onclick="engExpQuick('Disc',1)">+1天</button><button type="button" class="englink" onclick="engExpQuick('Disc',7)">+7天</button><button type="button" class="englink" onclick="engExpQuick('Disc',30)">+30天</button></div>
       <button class="engbtn" type="button" onclick="engGenDisc()">生成折扣碼</button>
       <div id="engDiscOut" class="engout"></div>
     </div>
@@ -4147,6 +4152,9 @@ function superOpen(){
       <div class="englbl">② 直接通關碼（免付費・全站解鎖）</div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engPassKind" value="forever" checked onchange="engPassKind()"> 終身</label><label class="engradio"><input type="radio" name="engPassKind" value="limited" onchange="engPassKind()"> 限次數</label><input id="engPassUses" class="enginp2" type="number" min="1" value="1" style="max-width:76px;display:none"><span id="engPassUsesU" class="engu" style="display:none">次</span></div>
       <div class="engrow"><span class="engk">代碼</span><input id="engPassCode" class="enginp2" placeholder="自訂文字，留空＝亂數產生" maxlength="24" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">期限</span><label class="engradio"><input type="radio" name="engPassExp" value="none" checked onchange="engExpToggle('Pass')"> 永久</label><label class="engradio"><input type="radio" name="engPassExp" value="until" onchange="engExpToggle('Pass')"> 限時</label></div>
+      <div class="engrow" id="engPassExpRow" style="display:none"><span class="engk">到期</span><input id="engPassExpAt" class="enginp2" type="datetime-local"></div>
+      <div class="engrow" id="engPassExpQuick" style="display:none"><span class="engk"></span><button type="button" class="englink" onclick="engExpQuick('Pass',1)">+1天</button><button type="button" class="englink" onclick="engExpQuick('Pass',7)">+7天</button><button type="button" class="englink" onclick="engExpQuick('Pass',30)">+30天</button></div>
       <button class="engbtn" type="button" onclick="engGenPass()">生成通關碼</button>
       <div id="engPassOut" class="engout"></div>
     </div>
@@ -4203,7 +4211,7 @@ async function engFetch(path){
   let j;try{j=await r.json();}catch(e){throw {msg:'伺服器回應異常。'};}
   return j;
 }
-const ENG_ERR={forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼（ADMIN_SECRET）。',amount:'折扣金額需介於 1 ~ 原價之間。',badcode:'代碼需 4~16 位英文或數字。',exists:'此折扣碼已存在，請換一組。',conflict:'此代碼已被通關碼佔用，請換一組。',used:'此代碼先前已使用過。',range:'數量範圍不正確。',ratelimited:'嘗試過於頻繁，請稍後再試。'};
+const ENG_ERR={forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼（ADMIN_SECRET）。',amount:'折扣金額需介於 1 ~ 原價之間。',badcode:'代碼需 2~24 位中英文或數字（不含空格與符號）。',exists:'此折扣碼已存在，請換一組。',conflict:'此代碼已被通關碼佔用，請換一組。',used:'此代碼先前已使用過。',expired:'此代碼已過期。',range:'數量範圍不正確。',ratelimited:'嘗試過於頻繁，請稍後再試。'};
 function engOut(id,html,cls){const el=document.getElementById(id);if(el){el.innerHTML=html;el.className='engout '+(cls||'');}}
 function engCard(label,code,sub){
   return '<div class="engres"><div class="engresk">'+label+'</div><div class="engrescode">'+code+'</div>'+(sub?'<div class="engressub">'+sub+'</div>':'')+'<button class="engcopy" type="button" onclick="engCopy(\''+code+'\',this)">複製</button></div>';
@@ -4221,11 +4229,13 @@ async function engGenDisc(){
   const custom=((document.getElementById('engDiscCode')||{}).value||'').trim();
   if(!(amt>=1)){engOut('engDiscOut','請輸入折扣金額（元）。','err');return;}
   if(custom&&!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(custom)){engOut('engDiscOut','代碼需 2~24 位中英文或數字（不含空格與符號）。','err');return;}
+  const exp=engReadExp('Disc');
+  if(exp===-1){engOut('engDiscOut','請選擇到期時間（且須晚於現在）。','err');return;}
   engOut('engDiscOut','生成中…','');
-  let j;try{ j=await engFetch('/discIssue?amount='+amt+'&reuse='+reuse+(custom?'&code='+encodeURIComponent(custom):'')); }
+  let j;try{ j=await engFetch('/discIssue?amount='+amt+'&reuse='+reuse+(custom?'&code='+encodeURIComponent(custom):'')+(exp>0?('&exp='+exp):'')); }
   catch(e){ engOut('engDiscOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
   if(j&&j.ok){
-    engOut('engDiscOut',engCard((reuse==='forever'?'連續性':'單次性')+'折扣碼・折 '+j.amount+' 元',j.code,'客戶付款前輸入，應付 '+j.final+' 元（原價 '+j.base+' 元）'),'ok');
+    engOut('engDiscOut',engCard((reuse==='forever'?'連續性':'單次性')+'折扣碼・折 '+j.amount+' 元',j.code,'客戶付款前輸入，應付 '+j.final+' 元（原價 '+j.base+' 元）'+(exp>0?('　·　'+engFmtExp(exp)):'')),'ok');
   }else{ engOut('engDiscOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
 }
 function engPassKind(){
@@ -4235,6 +4245,34 @@ function engPassKind(){
   if(u)u.style.display=limited?'':'none';
   if(uu)uu.style.display=limited?'':'none';
 }
+/* ===== 有效期限：永久／限時（指定到期年月日時分） ===== */
+function engExpToggle(which){
+  const on=((document.querySelector('input[name="eng'+which+'Exp"]:checked')||{}).value)==='until';
+  ['Row','Quick'].forEach(function(s){const el=document.getElementById('eng'+which+'Exp'+s);if(el)el.style.display=on?'':'none';});
+}
+function engExpQuick(which,days){
+  const at=document.getElementById('eng'+which+'ExpAt');if(!at)return;
+  const d=new Date(Date.now()+days*86400000),p=function(n){return String(n).padStart(2,'0');};
+  at.value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+function engReadExp(which){
+  // 回傳到期 epoch ms；0＝永久；-1＝選了限時但沒填或填了過去時間（錯誤）
+  const on=((document.querySelector('input[name="eng'+which+'Exp"]:checked')||{}).value)==='until';
+  if(!on)return 0;
+  const at=document.getElementById('eng'+which+'ExpAt'),v=at?at.value:'';
+  if(!v)return -1;
+  const ms=new Date(v).getTime();
+  return (ms>Date.now())?ms:-1;
+}
+function engFmtExp(ms){
+  if(!ms)return '';
+  const d=new Date(ms),p=function(n){return String(n).padStart(2,'0');};
+  const s=d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  const diff=ms-Date.now();
+  if(diff<=0)return '到期 '+s+'（已過期）';
+  const days=Math.floor(diff/86400000),hrs=Math.floor((diff%86400000)/3600000);
+  return '到期 '+s+'（剩 '+(days>0?days+' 天 ':'')+hrs+' 時）';
+}
 async function engGenPass(){
   const custom=((document.getElementById('engPassCode')||{}).value||'').trim();
   if(custom&&!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(custom)){engOut('engPassOut','代碼需 2~24 位中英文或數字（不含空格與符號）。','err');return;}
@@ -4242,14 +4280,16 @@ async function engGenPass(){
   const limited=k&&k.value==='limited';
   let uses=0;
   if(limited){ uses=parseInt((document.getElementById('engPassUses')||{}).value||'0',10); if(!(uses>=1)){engOut('engPassOut','請輸入可用次數（至少 1）。','err');return;} }
-  const q=(uses>=1?('&uses='+uses):'');
+  const exp=engReadExp('Pass');
+  if(exp===-1){engOut('engPassOut','請選擇到期時間（且須晚於現在）。','err');return;}
+  const q=(uses>=1?('&uses='+uses):'')+(exp>0?('&exp='+exp):'');
   engOut('engPassOut','生成中…','');
   let j;try{ j=custom?await engFetch('/issue?code='+encodeURIComponent(custom)+q):await engFetch('/issueRandom?n=1&len=8'+q); }
   catch(e){ engOut('engPassOut',(e&&e.msg)||'連線失敗，請確認網路。','err');return; }
   if(j&&j.ok){
     const c=j.code||(j.issued&&j.issued[0])||'';
     const label=uses>=1?('通關碼・限用 '+uses+' 次'):'通關碼・全站終身解鎖';
-    const sub=uses>=1?('客戶於付費牆「萬用碼」欄輸入，累計用滿 '+uses+' 次後失效'):'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告（可重複用）';
+    const sub=(uses>=1?'客戶於付費牆「萬用碼」欄輸入，累計用滿 '+uses+' 次後失效':'客戶於付費牆「萬用碼」欄輸入，即可免費開啟完整報告（可重複用）')+(exp>0?('　·　'+engFmtExp(exp)):'');
     engOut('engPassOut',engCard(label,c,sub),'ok');
   }else{ engOut('engPassOut',ENG_ERR[j&&j.reason]||('生成失敗（'+(j&&j.reason)+'）'),'err'); }
 }
@@ -4268,7 +4308,7 @@ async function engLoadList(){
   html+='<div class="enghd">折扣碼（'+ds.length+'）</div>';
   if(!ds.length)html+='<div class="engempty">目前無折扣碼。</div>';
   ds.forEach(function(d){
-    const meta=(d.reuse==='forever'?'連續性':'單次性')+'・折 '+d.amount+' 元'+(d.used?'・已作廢':'');
+    const meta=(d.reuse==='forever'?'連續性':'單次性')+'・折 '+d.amount+' 元'+(d.expired?'・已過期':(d.used?'・已作廢':''))+(d.exp?('　·　'+engFmtExp(d.exp)):'');
     const c=engEsc(d.code);
     html+='<div class="engli"><div class="engli-c">'+c+'</div><div class="engli-m">'+meta+'</div><button class="engli-x" type="button" onclick="engRevoke(\'disc\',\''+c+'\',this)">作廢</button></div>';
   });
@@ -4278,9 +4318,11 @@ async function engLoadList(){
   if(!ps.length)html+='<div class="engempty">目前無通關碼。</div>';
   ps.forEach(function(p){
     let meta;
-    if(p.kind==='forever')meta='終身・可重複用';
+    if(p.expired)meta='已過期';
+    else if(p.kind==='forever')meta='終身・可重複用';
     else if(p.kind==='limited')meta=(p.remaining>0?('限次數・剩 '+p.remaining+' 次'):'限次數・已用完');
     else meta='已用完';
+    if(p.exp&&!p.expired)meta+='　·　'+engFmtExp(p.exp);
     const c=engEsc(p.code);
     html+='<div class="engli"><div class="engli-c">'+c+'</div><div class="engli-m">'+meta+'</div><button class="engli-x" type="button" onclick="engRevoke(\'pass\',\''+c+'\',this)">作廢</button></div>';
   });
