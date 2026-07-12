@@ -23,7 +23,7 @@
 <link rel="canonical" href="https://lifeguidetw.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   /* —— 中性（亮底）—— */
@@ -170,14 +170,14 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
 @keyframes twinkle{from{opacity:.14}to{opacity:.42}}
 /* ===== 通用 ===== */
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-.seal{display:inline-block;font-family:"Ma Shan Zheng",serif;color:var(--night-0);
+.seal{display:inline-block;font-family:"LXGW WenKai TC",serif;color:var(--night-0);
   background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));
   padding:2px 12px;border-radius:4px;font-size:.9rem;letter-spacing:2px}
 .gold{color:var(--gold)}
 .divider{display:flex;align-items:center;gap:18px;margin:14px 0;color:var(--gold)}
 .divider::before,.divider::after{content:"";height:1px;flex:1;
   background:linear-gradient(90deg,transparent,var(--line),transparent)}
-.divider span{font-family:"Ma Shan Zheng",serif;font-size:1.4rem;letter-spacing:4px;
+.divider span{font-family:"LXGW WenKai TC",serif;font-size:1.4rem;letter-spacing:4px;
   background:var(--head);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ===== 精華分享卡：CTA + 彈窗 ===== */
@@ -186,7 +186,7 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
   box-shadow:0 18px 44px -28px var(--shadow);text-align:center}
 .scc-head{display:flex;align-items:center;gap:14px;justify-content:center;text-align:left;margin-bottom:14px;flex-wrap:wrap}
 .scc-seal{flex:none;width:44px;height:44px;border-radius:8px;display:grid;place-items:center;
-  font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:#fff;
+  font-family:"LXGW WenKai TC",serif;font-size:1.5rem;color:#fff;
   background:linear-gradient(135deg,var(--seal),var(--seal-deep));box-shadow:0 4px 12px rgba(179,56,44,.32)}
 .scc-head b{display:block;color:var(--gold-deep);font-size:1.08rem;letter-spacing:1px}
 .scc-head small{color:var(--ink-dim);font-size:.82rem;line-height:1.6}
@@ -201,7 +201,7 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
 .scm-box{background:linear-gradient(160deg,#fffbf2,#faf1dd);border:1px solid var(--line);
   border-radius:20px;max-width:420px;width:100%;padding:22px 22px 20px;box-shadow:0 30px 80px -20px rgba(40,25,0,.6);
   max-height:92vh;overflow:auto}
-.scm-box h3{font-family:"Ma Shan Zheng",serif;color:var(--gold-deep);font-size:1.5rem;letter-spacing:3px;text-align:center;margin-bottom:4px}
+.scm-box h3{font-family:"LXGW WenKai TC",serif;color:var(--gold-deep);font-size:1.5rem;letter-spacing:3px;text-align:center;margin-bottom:4px}
 .scm-box .scm-sub{text-align:center;color:var(--ink-dim);font-size:.82rem;margin-bottom:14px}
 .scm-canvas-wrap{border-radius:14px;overflow:hidden;box-shadow:0 10px 30px -12px var(--shadow);
   border:1px solid var(--line-soft);background:#fff}
@@ -220,7 +220,7 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
 
 /* ===== Hero ===== */
 header{position:relative;text-align:center;padding:78px 24px 30px}
-.bagua{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:380px;height:380px;
+.bagua{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:min(380px,86vw);height:min(380px,86vw);
   border:1px solid var(--line-soft);border-radius:50%;opacity:.5;animation:spin 80s linear infinite}
 .bagua::before{content:"";position:absolute;inset:34px;border:1px solid var(--line-soft);border-radius:50%}
 .bagua::after{content:"";position:absolute;inset:70px;border:1px dashed var(--line-soft);border-radius:50%}
@@ -231,7 +231,7 @@ body:not([data-theme]) header .eyebrow::before,
 body[data-theme="comp"] header .eyebrow::before{content:"❖";color:var(--seal);margin-right:12px;font-size:.7rem;vertical-align:1px;letter-spacing:0;-webkit-text-fill-color:var(--seal)}
 body:not([data-theme]) header .eyebrow::after,
 body[data-theme="comp"] header .eyebrow::after{content:"❖";color:var(--seal);margin-left:12px;font-size:.7rem;vertical-align:1px;letter-spacing:0;-webkit-text-fill-color:var(--seal)}
-header h1{position:relative;font-family:"Ma Shan Zheng",serif;font-size:clamp(3rem,8.4vw,5.6rem);font-weight:400;letter-spacing:10px;
+header h1{position:relative;font-family:"LXGW WenKai TC",serif;font-size:clamp(3rem,8.4vw,5.6rem);font-weight:400;letter-spacing:10px;
   background:linear-gradient(175deg,#7a5a12 0%,#c2941d 34%,#f0d488 50%,#c2941d 66%,#6f5210 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 1px rgba(255,250,232,.6)) drop-shadow(0 5px 14px var(--shadow));
@@ -367,7 +367,7 @@ header .meta b{color:var(--gold);font-weight:500}
   min-height:158px;display:flex;flex-direction:column;transition:.25s;box-shadow:0 10px 24px -22px var(--shadow)}
 .cell:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 12px 30px -16px var(--shadow);z-index:2}
 .cell.ming{background:var(--pwash);border-color:var(--purple-glow)}
-.cell.ming::before{content:"命";position:absolute;top:6px;right:7px;font-family:"Ma Shan Zheng";color:var(--purple);font-size:1.05rem;opacity:.85}
+.cell.ming::before{content:"命";position:absolute;top:6px;right:7px;font-family:"LXGW WenKai TC";color:var(--purple);font-size:1.05rem;opacity:.85}
 .cell.shen .sbadge{position:absolute;top:6px;right:7px;background:var(--jade);color:#fff;font-size:.6rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
 .cell .pstars{display:flex;flex-wrap:wrap;gap:2px 7px;align-content:flex-start;width:100%;flex:1}
 .star{font-size:1.02rem;font-weight:600;letter-spacing:.5px;white-space:nowrap}
@@ -394,7 +394,7 @@ header .meta b{color:var(--gold);font-weight:500}
 .center-info{grid-column:2/4;grid-row:2/4;background:var(--card2);
   border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;
   justify-content:center;align-items:center;text-align:center;padding:16px;gap:5px}
-.center-info .t{font-family:"Ma Shan Zheng";font-size:1.62rem;color:var(--gold);letter-spacing:2px}
+.center-info .t{font-family:"LXGW WenKai TC";font-size:1.62rem;color:var(--gold);letter-spacing:2px}
 .center-info .row{font-size:.92rem;color:var(--ink-dim);letter-spacing:1px}
 .center-info .row b{color:var(--ink)}
 .center-info .pillars b{color:var(--gold-deep);letter-spacing:2px}
@@ -428,7 +428,7 @@ header .meta b{color:var(--gold);font-weight:500}
 /* 旺衰 喜用 */
 .strength{background:var(--card);border:1px solid var(--line);
   border-radius:18px;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;box-shadow:0 14px 34px -28px var(--shadow)}
-.slevel{font-family:"Ma Shan Zheng",serif;font-size:2.6rem;width:96px;height:96px;border-radius:50%;
+.slevel{font-family:"LXGW WenKai TC",serif;font-size:2.6rem;width:96px;height:96px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;border:2px solid;flex-shrink:0}
 .slevel.strong{color:#d9542f;border-color:#d9542f;box-shadow:0 0 26px -10px #d9542f}
 .slevel.weak{color:#2f72c4;border-color:#2f72c4;box-shadow:0 0 26px -10px #2f72c4}
@@ -485,8 +485,8 @@ header .meta b{color:var(--gold);font-weight:500}
 .gewrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
 .gecard{background:var(--pwash);border:1px solid var(--line-soft);
   border-radius:16px;padding:20px;position:relative;overflow:hidden}
-.gecard::before{content:"格";position:absolute;right:-6px;bottom:-14px;font-family:"Ma Shan Zheng";font-size:5rem;color:rgba(124,95,176,.16)}
-.gecard h4{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:3px;margin-bottom:10px}
+.gecard::before{content:"格";position:absolute;right:-6px;bottom:-14px;font-family:"LXGW WenKai TC";font-size:5rem;color:rgba(124,95,176,.16)}
+.gecard h4{font-family:"LXGW WenKai TC",serif;font-size:1.5rem;color:var(--gold-deep);letter-spacing:3px;margin-bottom:10px}
 .gecard p{color:var(--ink-dim);font-size:.9rem;line-height:1.8;position:relative}
 
 /* 八字格局（月令取格） */
@@ -494,8 +494,8 @@ header .meta b{color:var(--gold);font-weight:500}
 .bgcard{background:linear-gradient(135deg,var(--pwash),var(--card2));border:1px solid var(--line-soft);
   border-radius:16px;padding:22px 22px 18px;position:relative;overflow:hidden;cursor:pointer;transition:.18s}
 .bgcard:hover{border-color:var(--gold);box-shadow:0 6px 22px rgba(124,95,176,.14)}
-.bgcard::before{content:"格";position:absolute;right:8px;bottom:-18px;font-family:"Ma Shan Zheng";font-size:6rem;color:rgba(176,141,87,.13)}
-.bgname{font-family:"Ma Shan Zheng",serif;font-size:1.9rem;color:var(--gold-deep);letter-spacing:4px}
+.bgcard::before{content:"格";position:absolute;right:8px;bottom:-18px;font-family:"LXGW WenKai TC";font-size:6rem;color:rgba(176,141,87,.13)}
+.bgname{font-family:"LXGW WenKai TC",serif;font-size:1.9rem;color:var(--gold-deep);letter-spacing:4px}
 .bgmeta{font-size:.78rem;color:var(--ink-faint);letter-spacing:1px;margin:6px 0 12px}
 .bgmeta b{color:var(--gold)}
 .bgcard .bgd{color:var(--ink-dim);font-size:.92rem;line-height:1.85;position:relative;margin-bottom:10px}
@@ -580,7 +580,7 @@ header .meta b{color:var(--gold);font-weight:500}
 /* 綜合論斷 */
 .synthesis{background:var(--wash);border:1px solid var(--gold);
   border-radius:20px;padding:34px 30px;position:relative;overflow:hidden;box-shadow:0 18px 40px -30px var(--shadow)}
-.synthesis .syn-mark{font-family:"Ma Shan Zheng";position:absolute;right:6px;top:-22px;font-size:8rem;color:rgba(0,0,0,.05)}
+.synthesis .syn-mark{font-family:"LXGW WenKai TC";position:absolute;right:6px;top:-22px;font-size:8rem;color:rgba(0,0,0,.05)}
 .synthesis p{color:var(--ink);font-size:1rem;line-height:2.05;letter-spacing:.6px;position:relative}
 .synthesis p b{font-weight:700;color:var(--gold-deep)}
 .synthesis .syn-foot{margin-top:22px;text-align:center;color:var(--ink-faint);font-size:.78rem;letter-spacing:1px;line-height:1.7}
@@ -639,7 +639,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .bonewrap{background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:22px 22px 18px;margin:6px 14px 10px;box-shadow:0 12px 30px -20px var(--shadow)}
 .bonetop{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;text-align:center}
 .bonebig{color:var(--purple);line-height:1;display:flex;align-items:baseline;gap:1px}
-.bonebig b{font-size:3rem;font-weight:700;font-family:"Ma Shan Zheng",inherit}
+.bonebig b{font-size:3rem;font-weight:700;font-family:"LXGW WenKai TC",inherit}
 .bonebig span{font-size:1.05rem;color:var(--ink-faint);margin:0 3px}
 .bonelabel{font-size:1.18rem;font-weight:700;color:var(--gold);letter-spacing:1px}
 .bonepillars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 4px}
@@ -740,7 +740,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .scoretotal .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .scoretotal .ring .num b{font-size:3.2rem;font-weight:800;color:var(--gold-deep);line-height:1}
 .scoretotal .ring .num span{font-size:.72rem;color:var(--ink-faint);letter-spacing:2px;margin-top:4px}
-.scoretotal .grade{margin-top:16px;font-family:"Ma Shan Zheng",serif;font-size:2rem;color:var(--gold);letter-spacing:4px}
+.scoretotal .grade{margin-top:16px;font-family:"LXGW WenKai TC",serif;font-size:2rem;color:var(--gold);letter-spacing:4px}
 .scoretotal .gtext{color:var(--ink-dim);font-size:.85rem;line-height:1.7;margin-top:8px}
 .scoretotal .prbadge{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:8px 16px 8px 9px;border-radius:999px;
   background:linear-gradient(160deg,var(--purple-glow),var(--purple));border:none;color:#fff;
@@ -815,7 +815,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .bigsign{text-align:center;background:var(--pwash);
   border:1px solid var(--line);border-radius:22px;padding:38px 26px;margin-bottom:24px}
 .bigsign .glyph{font-size:5rem;line-height:1;margin-bottom:10px}
-.bigsign .sname{font-family:"Ma Shan Zheng",serif;font-size:2.6rem;color:var(--gold-deep);letter-spacing:5px}
+.bigsign .sname{font-family:"LXGW WenKai TC",serif;font-size:2.6rem;color:var(--gold-deep);letter-spacing:5px}
 .bigsign .seng{color:var(--ink-faint);letter-spacing:4px;font-size:.82rem;margin-top:6px;text-transform:uppercase}
 .bigsign .smeta{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 .bigsign .smeta span{border:1px solid var(--line);border-radius:20px;padding:6px 16px;font-size:.84rem;color:var(--ink-dim);background:var(--card)}
@@ -827,7 +827,7 @@ footer .disc .sub{display:block;margin-top:12px}
   60%{transform:perspective(900px) rotateY(-8deg) scale(1.02)}100%{transform:none;opacity:1}}
 .tarotcard .tnum{color:#f0d089;font-size:.9rem;letter-spacing:3px}
 .tarotcard .tglyph{font-size:3.4rem;margin:10px 0}
-.tarotcard .tname{font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:#f0d089;letter-spacing:2px}
+.tarotcard .tname{font-family:"LXGW WenKai TC",serif;font-size:1.5rem;color:#f0d089;letter-spacing:2px}
 .tarotcard .teng{color:#b6a8d8;font-size:.72rem;letter-spacing:2px;margin-top:4px}
 .numhero{text-align:center;margin-bottom:24px}
 .numhero .ncircle{width:150px;height:150px;margin:0 auto;border-radius:50%;border:3px solid var(--gold);
@@ -844,7 +844,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .namechars{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
 .nchar{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--pwash);
   border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:70px}
-.nchar .cz{font-family:"Ma Shan Zheng",serif;font-size:2.2rem;color:var(--gold-deep);line-height:1}
+.nchar .cz{font-family:"LXGW WenKai TC",serif;font-size:2.2rem;color:var(--gold-deep);line-height:1}
 .nchar .skin{width:58px;text-align:center;background:var(--surface);border:1px solid var(--line-soft);border-radius:8px;
   color:var(--gold-deep);font-size:.95rem;padding:4px 2px;-moz-appearance:textfield}
 .nchar .skin::-webkit-outer-spin-button,.nchar .skin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -884,7 +884,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .namescore .nsnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .namescore .nsnum b{font-size:2.7rem;font-weight:800;color:var(--gold-deep);line-height:1}
 .namescore .nsnum span{font-size:.66rem;color:var(--ink-faint);letter-spacing:2px;margin-top:3px}
-.namescore .nsgrade{text-align:center;margin-top:8px;font-family:"Ma Shan Zheng",serif;font-size:1.6rem;color:var(--gold);letter-spacing:3px}
+.namescore .nsgrade{text-align:center;margin-top:8px;font-family:"LXGW WenKai TC",serif;font-size:1.6rem;color:var(--gold);letter-spacing:3px}
 .nspro{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .nspro .nscol h5{font-size:.94rem;letter-spacing:2px;margin-bottom:9px;display:flex;align-items:center;gap:7px}
 .nspro .nscol.adv h5{color:var(--jade)} .nspro .nscol.dis h5{color:var(--rose)}
@@ -901,7 +901,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .gapcard .gcn{font-size:2.6rem;font-weight:800;color:var(--gold-deep);line-height:1.1;margin:6px 0 2px}
 .gapcard .gcs{font-size:.76rem;color:var(--ink-dim);letter-spacing:1px;line-height:1.5}
 .gapcard.na .gcn{font-size:1.2rem;color:var(--ink-faint);margin:14px 0}
-.gapvs{display:flex;align-items:center;justify-content:center;font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:var(--purple)}
+.gapvs{display:flex;align-items:center;justify-content:center;font-family:"LXGW WenKai TC",serif;font-size:1.5rem;color:var(--purple)}
 .gapverdict{background:var(--wash);border:1px solid var(--gold);border-radius:16px;padding:18px 22px;margin-bottom:18px;line-height:1.95;font-size:.94rem;color:var(--ink)}
 .gapverdict b{color:var(--gold-deep)}
 .gaphd{font-size:.92rem;letter-spacing:2px;color:var(--ink-dim);margin:0 0 12px;text-align:center}
@@ -924,7 +924,7 @@ footer .disc .sub{display:block;margin-top:12px}
 .gapaction li{font-size:.9rem;color:var(--ink);line-height:1.85;margin-bottom:9px}
 .gapaction li:last-child{margin-bottom:0}
 .gapaction li b{color:var(--gold-deep)}
-.gapmotto{text-align:center;font-family:"Ma Shan Zheng",serif;font-size:1.35rem;color:var(--gold);letter-spacing:3px;margin:18px 0 2px}
+.gapmotto{text-align:center;font-family:"LXGW WenKai TC",serif;font-size:1.35rem;color:var(--gold);letter-spacing:3px;margin:18px 0 2px}
 
 @media(max-width:640px){
   .scorewrap{grid-template-columns:1fr}
@@ -971,7 +971,7 @@ footer .disc .sub{display:block;margin-top:12px}
   .wrap{max-width:100%;padding:0;margin:0}
   #result{display:block!important;margin:0}
   #reportHead{display:block;text-align:center;margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid var(--gold-deep)}
-  #reportHead .rt{font-family:"Ma Shan Zheng",serif;font-size:2.2rem;color:var(--gold-deep);letter-spacing:6px}
+  #reportHead .rt{font-family:"LXGW WenKai TC",serif;font-size:2.2rem;color:var(--gold-deep);letter-spacing:6px}
   #reportHead .rs{color:#666;font-size:.8rem;letter-spacing:3px;margin-top:6px}
   .sec-title{margin:18px 0 12px;page-break-after:avoid}
   .sec-title .cn{font-size:1.5rem}
@@ -995,7 +995,7 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-page+.rp-page{margin-top:34px;border-top:1px solid #efe6cf;padding-top:26px}
 #reportPrint .rp-head{text-align:center;border-bottom:none;padding-bottom:2px;margin-bottom:4px}
 #reportPrint .rp-time{position:absolute;top:0;right:0;font-size:8.5px;color:#a89a78;letter-spacing:.3px;line-height:1.3}
-#reportPrint .rp-head .b{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:33px;color:#7a5a12;letter-spacing:9px;line-height:1.15}
+#reportPrint .rp-head .b{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:33px;color:#7a5a12;letter-spacing:9px;line-height:1.15}
 #reportPrint .rp-head .s{font-size:9.5px;color:#a68f52;letter-spacing:3px;margin-top:9px}
 #reportPrint .rp-head2{text-align:center;font-size:9.5px;color:#b09a5c;border-bottom:none;padding-bottom:16px;margin-bottom:14px;letter-spacing:4px;
   position:relative}
@@ -1141,7 +1141,7 @@ footer .disc .sub{display:block;margin-top:12px}
 @keyframes castIn{from{opacity:0}to{opacity:1}}
 @keyframes castOut{to{opacity:0;visibility:hidden}}
 .caststage-inner{position:relative;text-align:center;width:min(92vw,470px);padding:10px}
-.cast-title{font-family:"Ma Shan Zheng","Noto Serif TC",serif;font-size:1.7rem;color:var(--gold-deep);
+.cast-title{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:1.7rem;color:var(--gold-deep);
   letter-spacing:4px;margin-top:34px;opacity:0;animation:castUp .8s ease .35s forwards}
 .cast-sub{color:var(--ink-faint);font-size:.78rem;letter-spacing:3px;margin-top:9px;opacity:0;animation:castUp .8s ease .6s forwards}
 @keyframes castUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -1415,6 +1415,7 @@ footer .ftlegal a{color:var(--gold,#a9801c);text-decoration:none;cursor:pointer;
 footer .ftlegal a:hover{color:var(--gold-bright,#c2941d);border-color:var(--gold,#a9801c)}
 footer .ftlegal .ftsep{opacity:.5;margin:0 8px}
 footer .ftcopy{margin-top:10px;font-size:.78rem;color:var(--ink-faint,#9a93ad);letter-spacing:.6px}
+footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opacity:.5;letter-spacing:.8px}
 /* 路線B：個人收款 + 手動發碼 的付款說明區 */
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
   background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
@@ -1775,9 +1776,15 @@ footer .ftcopy{margin-top:10px;font-size:.78rem;color:var(--ink-faint,#9a93ad);l
   <div class="ftlegal"><a onclick="openLegal('terms')">服務條款</a><span class="ftsep">·</span><a onclick="openLegal('disclaimer')">免責聲明</a><span class="ftsep">·</span><a onclick="openLegal('privacy')">隱私權政策</a></div>
   <div class="ftcopy">© 2026 人生實用說明書系統 · 保留一切權利</div>
   <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
+  <div class="ftver" id="siteVersion"></div>
 </footer>
 
 <script>
+/* ================= 站台版本（改版只需改這裡） ================= */
+const SITE_VERSION="v1.6.0";
+const SITE_VERSION_DATE="2026.07.12";
+try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
+
 /* ================= 基礎常數 ================= */
 const GAN=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
 const ZHI=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
