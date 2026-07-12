@@ -1370,6 +1370,51 @@ footer .disc .sub{display:block;margin-top:12px}
   border-top:1px solid var(--line-soft,#eee);padding-top:12px}
 .inappgate .iag-force{font-size:.74rem;color:var(--ink-faint,#9a92b0);text-decoration:underline;cursor:pointer;text-align:left}
 .inappgate .iag-x{font-size:.82rem;color:var(--ink-soft,#6a6280);cursor:pointer;padding:4px 8px;white-space:nowrap}
+/* ===== 法律文件彈窗（服務條款／免責聲明／隱私權政策）：沿用米金紙感 ===== */
+.legalmodal{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-start;justify-content:center;
+  padding:26px 16px;background:rgba(24,16,40,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);overflow-y:auto}
+.legalmodal.on{display:flex}
+.legalmodal .lgm-card{width:100%;max-width:660px;margin:auto;background:var(--surface,#fff);border:1px solid var(--line,rgba(169,128,28,.3));
+  border-radius:18px;box-shadow:0 24px 64px rgba(20,10,45,.4);padding:0;overflow:hidden;animation:iagIn .22s ease}
+.legalmodal .lgm-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 20px;background:linear-gradient(180deg,var(--card,#fff),var(--card2,#faf8fd));border-bottom:1px solid var(--line-soft,rgba(120,100,60,.16))}
+.legalmodal .lgm-title{display:flex;align-items:center;gap:9px;font-size:1.06rem;font-weight:800;color:var(--gold-deep,#6f5210);letter-spacing:.5px}
+.legalmodal .lgm-seal{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;
+  background:var(--seal,#b3382c);color:#fff;font-size:.82rem;font-weight:700;box-shadow:0 1px 3px rgba(140,40,31,.4)}
+.legalmodal .lgm-x{border:none;background:transparent;font-size:1.5rem;line-height:1;color:var(--ink-dim,#5e5775);cursor:pointer;padding:2px 8px;border-radius:8px}
+.legalmodal .lgm-x:hover{background:var(--wash,rgba(245,225,170,.45))}
+.legalmodal .lgm-body{max-height:calc(90vh - 64px);overflow-y:auto;padding:20px 22px 26px;
+  color:var(--ink,#2c2440);font-size:.9rem;line-height:1.85;text-align:justify}
+.legalmodal .lgm-body h4{font-size:.98rem;font-weight:800;color:var(--purple,#7c5fb0);margin:20px 0 7px;letter-spacing:.4px}
+.legalmodal .lgm-body h4:first-child{margin-top:2px}
+.legalmodal .lgm-body p{margin:0 0 10px}
+.legalmodal .lgm-body ul{margin:0 0 12px;padding-left:1.25em}
+.legalmodal .lgm-body li{margin:0 0 6px}
+.legalmodal .lgm-body b{color:var(--gold-deep,#6f5210)}
+.legalmodal .lgm-body .lgm-hi{background:var(--seal-wash,rgba(179,56,44,.1));border-left:3px solid var(--seal,#b3382c);
+  border-radius:8px;padding:12px 14px;margin:0 0 12px}
+.legalmodal .lgm-body .lgm-hi b{color:var(--seal-deep,#8c281f)}
+.legalmodal .lgm-body .lgm-upd{margin-top:22px;padding-top:12px;border-top:1px dashed var(--line-soft,rgba(120,100,60,.16));
+  font-size:.8rem;color:var(--ink-faint,#9a93ad)}
+.legalmodal .lgm-body a{color:var(--purple,#7c5fb0);text-decoration:underline}
+/* 付款前同意框 */
+.payconsent{max-width:460px;margin:14px auto 2px;text-align:left;
+  background:var(--seal-wash,rgba(179,56,44,.08));border:1px solid var(--line-soft,rgba(120,100,60,.16));
+  border-radius:14px;padding:13px 15px;transition:box-shadow .2s,border-color .2s}
+.payconsent.shake{animation:pcShake .4s;border-color:var(--seal,#b3382c);box-shadow:0 0 0 3px rgba(179,56,44,.16)}
+@keyframes pcShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.payconsent label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.82rem;line-height:1.7;color:var(--ink,#2c2440)}
+.payconsent input[type=checkbox]{flex:0 0 auto;width:19px;height:19px;margin-top:1px;accent-color:var(--seal,#b3382c);cursor:pointer}
+.payconsent a{color:var(--purple,#7c5fb0);text-decoration:underline;cursor:pointer}
+.payconsent .pc-strong{color:var(--seal-deep,#8c281f);font-weight:700}
+.payconsent .pc-warn{display:none;margin-top:8px;font-size:.78rem;color:var(--seal-deep,#8c281f);font-weight:700}
+.payconsent.shake .pc-warn{display:block}
+/* 頁尾法律連結 */
+footer .ftlegal{margin:16px auto 6px;max-width:600px;line-height:2.1}
+footer .ftlegal a{color:var(--gold,#a9801c);text-decoration:none;cursor:pointer;border-bottom:1px solid var(--line-soft,rgba(120,100,60,.16));padding-bottom:1px}
+footer .ftlegal a:hover{color:var(--gold-bright,#c2941d);border-color:var(--gold,#a9801c)}
+footer .ftlegal .ftsep{opacity:.5;margin:0 8px}
+footer .ftcopy{margin-top:10px;font-size:.78rem;color:var(--ink-faint,#9a93ad);letter-spacing:.6px}
 /* 路線B：個人收款 + 手動發碼 的付款說明區 */
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
   background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
@@ -1727,6 +1772,8 @@ footer .disc .sub{display:block;margin-top:12px}
 <footer>
   <div class="disc">本系統採用真實曆法演算（農曆轉換、二十四節氣、六十甲子、紫微星系安星法則），結果具命理參考依據。然命理之說重在「知命而後造命」，吉凶皆為趨勢，非定數。本站內容僅供自我參詳與娛樂，重大抉擇仍請審慎獨立判斷。<span class="sub" style="opacity:.85">※ 演算說明：曆法推算適用 1900 年 1 月 31 日（庚子年正月初一）至 2100 年。節氣與立春定年採太陽視黃經演算，達「分」級精度，恰逢交節當日者亦能依出生時刻自動判定年柱／月柱邊界（天文模型誤差約數分鐘，臨界數分鐘內者仍建議再行核對）；農曆閏月以該月月份排盤。</span></div>
   <div class="ftcontact">聯絡我們（聖源大師）<span class="ctu">客服信箱：<a href="mailto:yuan780903@gmail.com">yuan780903@gmail.com</a></span><span class="ctdot"> · </span><span class="ctu">服務時間：平日 08:00–17:00</span></div>
+  <div class="ftlegal"><a onclick="openLegal('terms')">服務條款</a><span class="ftsep">·</span><a onclick="openLegal('disclaimer')">免責聲明</a><span class="ftsep">·</span><a onclick="openLegal('privacy')">隱私權政策</a></div>
+  <div class="ftcopy">© 2026 人生實用說明書系統 · 保留一切權利</div>
   <div>© 2026 人生實用說明書系統．聖源大師 版權所有 · 願君順遂 · ☯</div>
 </footer>
 
@@ -4081,6 +4128,120 @@ function showInAppGate(){
   m.classList.add('on');
   try{document.body.style.overflow='hidden';}catch(e){}
 }
+/* ===== 法律文件（服務條款／免責聲明／隱私權政策）＋付款前不退費同意 ===== */
+const LEGAL_UPDATED='2026 年 7 月';
+const LEGAL_DOCS={
+  terms:{seal:'約',title:'服務條款',html:
+     '<p>歡迎使用「人生實用說明書系統」（下稱「本站」，品牌代表：聖源大師）。當您瀏覽、使用本站服務或完成付款，即表示您已閱讀、瞭解並同意本服務條款之全部內容。若您不同意，請停止使用本站服務。</p>'
+    +'<h4>一、服務內容</h4>'
+    +'<p>本站提供以傳統命理（紫微斗數、八字、姓名學等）演算之<b>線上命理報告，屬數位內容／線上服務</b>。使用者於本站輸入出生資料後，系統即時演算並產生個人化報告；付費解鎖後可於本裝置閱讀完整報告內容，並可視情況匯出 PDF 或存為圖片。</p>'
+    +'<h4>二、使用規範</h4>'
+    +'<p>您同意以合法、正當之目的使用本站，且不得從事下列行為：</p>'
+    +'<ul>'
+    +'<li><b>禁止複製、重製、散布、公開傳輸、改作或販售</b>本站報告內容、文字、版面、圖像或程式之全部或一部。</li>'
+    +'<li><b>禁止對本站進行逆向工程、反編譯、反組譯</b>或以任何方式試圖取得原始碼、演算邏輯或商業機密。</li>'
+    +'<li><b>禁止使用自動化程式（爬蟲、機器人、腳本等）</b>大量擷取、抓取或存取本站內容與服務，或以任何方式干擾、破壞本站之正常運作與安全機制。</li>'
+    +'<li>不得規避、破解本站之付款與解鎖機制，或以不正當方法取得本應付費之內容。</li>'
+    +'</ul>'
+    +'<h4>三、智慧財產權</h4>'
+    +'<p>本站之報告內容、演算方法、文案、介面設計、商標及程式碼等，均為本站或授權人所有，受中華民國著作權法及相關法令保護。使用者所取得者僅為<b>個人、非商業用途之閱讀使用權</b>，本站並未移轉任何智慧財產權予使用者。</p>'
+    +'<h4>四、帳款與數位內容交付</h4>'
+    +'<p>本站報告採一次性付費解鎖。付款由第三方金流<b>綠界科技 ECPay</b> 處理，支援信用卡／ATM／超商等方式。付款完成並經系統確認後，<b>本服務即於使用者裝置上即時開通完整報告內容，視為數位內容已交付</b>。因本服務屬即時開通之數位內容／線上服務，一經開通即無法回復，故<b>依消費者保護法及通訊交易解除權合理例外情事適用準則，不適用 7 日猶豫期（解除權）</b>，使用者於付款前將另行勾選同意。</p>'
+    +'<h4>五、服務變更、中止與免責</h4>'
+    +'<p>本站得因維護、升級、不可抗力或其他營運需要，隨時新增、修改、暫停或終止全部或部分服務，並儘可能事前公告。命理報告之性質請詳見《免責聲明》，本站不對報告內容之準確性或使用結果負責。</p>'
+    +'<h4>六、準據法與管轄</h4>'
+    +'<p>本條款之解釋與適用，以及與本站服務有關之爭議，均以<b>中華民國法律</b>為準據法；如因此涉訟，除法律另有強制規定外，雙方合意以<b>臺灣臺南地方法院</b>為第一審管轄法院。</p>'
+    +'<h4>七、聯絡方式</h4>'
+    +'<p>如對本條款有任何疑問，請來信客服信箱：<a href="mailto:yuan780903@gmail.com">yuan780903@gmail.com</a>（服務時間：平日 08:00–17:00）。</p>'},
+  disclaimer:{seal:'免',title:'免責聲明',html:
+     '<div class="lgm-hi"><p>本站命理報告係以傳統命理（紫微斗數、八字等）演算，<b>僅供參考與娛樂之用，不構成醫療、心理、投資、理財、法律或任何專業建議</b>。</p></div>'
+    +'<p>本站<b>不保證報告內容之準確性、完整性、即時性或對特定目的之適用性</b>。命理之說重在「知命而後造命」，一切吉凶皆為趨勢與參考，並非定數，亦不代表必然發生之事實。</p>'
+    +'<p>使用者應本於<b>自由意志自行判斷與決策</b>，凡涉及健康、疾病、婚姻、感情、事業、財務、投資、法律訴訟或其他重大人生抉擇，均應諮詢合格之專業人士（如醫師、心理師、律師、會計師、理財顧問等），切勿僅以本報告作為決策之唯一依據。</p>'
+    +'<p><b>本站不對使用者因參考、信賴或使用本報告內容所生之任何直接、間接、附帶或衍生之損失或損害負責。</b>使用者一經使用本站服務，即視為已知悉並接受本免責聲明。</p>'
+    +'<p>本報告內容不得作為任何法律、醫療或金融文件之佐證，亦不得用以取代專業機構之正式評估。</p>'},
+  privacy:{seal:'私',title:'隱私權政策',html:
+     '<p>本站（人生實用說明書系統，聖源大師）非常重視您的隱私。本政策說明我們如何蒐集、使用與保護您的資料。請您於使用服務前詳細閱讀。</p>'
+    +'<h4>一、我們蒐集哪些資料</h4>'
+    +'<ul>'
+    +'<li><b>命理演算所需資料</b>：出生日期、出生時辰、性別，以及您自行填寫的姓名／稱呼；若您使用真太陽時校正，亦包含出生地。</li>'
+    +'<li><b>訂單相關資料</b>：於您付費時產生的訂單編號、付款金額、（若有）折扣碼或推薦碼。</li>'
+    +'</ul>'
+    +'<h4>二、資料如何處理、儲存於何處</h4>'
+    +'<ul>'
+    +'<li><b>命理計算全程於您的裝置（瀏覽器前端）進行</b>：您輸入的姓名、生日、時辰等，用於在本機即時排盤與產生報告，<b>並不會以明文上傳至本站伺服器</b>。</li>'
+    +'<li><b>解鎖與付款狀態存於您的裝置本機</b>：本站以瀏覽器 localStorage 於您的裝置記錄「此報告已解鎖」等狀態，以便您日後於同一瀏覽器免費重看；此資料存在您的裝置上，您可自行清除瀏覽器資料予以刪除。</li>'
+    +'<li><b>報告識別碼（生辰雜湊）</b>：為建立與查詢付款訂單，本站前端會將您的姓名與生辰經 <b>SHA-256 單向雜湊</b>運算為一組不可還原的識別碼（不含明文姓名或生日）送至後端，作為該筆報告與訂單的對應依據。</li>'
+    +'</ul>'
+    +'<h4>三、付款資訊</h4>'
+    +'<p>本站付款由第三方金流<b>綠界科技 ECPay</b> 處理。您的信用卡號、銀行帳號等付款資訊<b>係由綠界依其隱私政策蒐集與處理，本站不經手、不接觸、亦不留存任何卡號等付款資訊</b>。</p>'
+    +'<h4>四、後端為對帳與分潤所保存之資料</h4>'
+    +'<p>為完成付款確認、避免重複入帳、以及進行推薦分潤對帳，本站後端（部署於 Cloudflare）會就每筆交易保存下列必要資料：</p>'
+    +'<ul>'
+    +'<li>訂單編號、綠界交易編號、付款金額、付款時間；</li>'
+    +'<li>上述之<b>報告識別碼（生辰雜湊，非明文生辰）</b>；</li>'
+    +'<li>（若使用）折扣碼／KOL 推薦碼、該筆折扣與分潤金額。</li>'
+    +'</ul>'
+    +'<p>付款交易記錄一般保存約 30 日以供對帳；分潤成交記錄則保存於分潤資料庫以供結算。為防止機器人濫用，系統亦會於短時間內暫存來訪 IP 作為流量限制之用，逾時即自動清除。<b>本站不會將上述資料販售或提供予無關第三方。</b></p>'
+    +'<h4>五、Cookie 與本機儲存</h4>'
+    +'<p>本站使用瀏覽器 localStorage／sessionStorage 記錄解鎖狀態、同意紀錄與付款流程之暫存資料，以維持服務正常運作。您可透過清除瀏覽器資料移除這些資訊，惟可能導致已解鎖狀態需重新處理。</p>'
+    +'<h4>六、您的權利</h4>'
+    +'<p>您得就本站所保存之個人相關資料，<b>行使查詢、閱覽、更正或請求刪除</b>等權利。因命理與解鎖資料多存於您自己的裝置，您可自行清除；如需就後端訂單資料行使權利，請來信客服信箱：<a href="mailto:yuan780903@gmail.com">yuan780903@gmail.com</a>。</p>'
+    +'<h4>七、政策更新</h4>'
+    +'<p>本政策將因法令、服務或作業之調整而不時更新，更新後將於本頁公告，並自公告時起生效。</p>'}
+};
+function renderLegal(){
+  let m=document.getElementById('legalModal');
+  if(m)return m;
+  m=document.createElement('div');
+  m.id='legalModal';m.className='legalmodal';
+  m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');
+  m.innerHTML='<div class="lgm-card" onclick="event.stopPropagation()">'
+    +'<div class="lgm-head"><div class="lgm-title"><span class="lgm-seal" id="lgmSeal"></span><span id="lgmTitle"></span></div>'
+    +'<button type="button" class="lgm-x" onclick="closeLegal()" aria-label="關閉">×</button></div>'
+    +'<div class="lgm-body" id="lgmBody"></div></div>';
+  m.addEventListener('click',function(e){if(e.target===m)closeLegal();});
+  document.body.appendChild(m);
+  return m;
+}
+function openLegal(which){
+  const d=LEGAL_DOCS[which];if(!d)return;
+  const m=renderLegal();
+  const seal=document.getElementById('lgmSeal'),ti=document.getElementById('lgmTitle'),bo=document.getElementById('lgmBody');
+  if(seal)seal.textContent=d.seal;
+  if(ti)ti.textContent=d.title;
+  if(bo){bo.innerHTML=d.html+'<div class="lgm-upd">本文件最後更新：'+LEGAL_UPDATED+'　·　人生實用說明書系統（聖源大師）</div>';bo.scrollTop=0;}
+  m.classList.add('on');
+  try{document.body.style.overflow='hidden';}catch(e){}
+}
+function closeLegal(){
+  const m=document.getElementById('legalModal');
+  if(m)m.classList.remove('on');
+  try{document.body.style.overflow='';}catch(e){}
+}
+/* 付款前同意閘門：未同意即回傳 true（呼叫端應中止）。同意後記於 localStorage，之後自動勾選。 */
+const PAY_CONSENT_KEY='zw_pay_consent';
+function payConsentAgreed(){
+  const c=document.getElementById('payConsentChk');
+  if(c&&c.checked)return true;
+  try{if(localStorage.getItem(PAY_CONSENT_KEY)==='1'){if(c)c.checked=true;return true;}}catch(e){}
+  return false;
+}
+function payConsentSync(){
+  const c=document.getElementById('payConsentChk');
+  try{if(c&&c.checked)localStorage.setItem(PAY_CONSENT_KEY,'1');else localStorage.removeItem(PAY_CONSENT_KEY);}catch(e){}
+  const box=document.getElementById('payConsent');
+  if(box&&c&&c.checked)box.classList.remove('shake');
+}
+function payConsentGate(){
+  // 回傳 true = 未同意、已提示，呼叫端須中止付款；false = 已同意，放行。
+  if(payConsentAgreed())return false;
+  const box=document.getElementById('payConsent');
+  if(box){box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake');
+    try{box.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}}
+  const msg=document.getElementById('lcMsg');
+  if(msg){msg.textContent='請先閱讀並勾選同意《服務條款》與《隱私權政策》後，才能進行付款。';msg.className='lcmsg err';}
+  return true;
+}
 function expTimeStr(){
   const d=new Date(),p=n=>String(n).padStart(2,'0');
   const ampm=d.getHours()<12?'上午':'下午';let h=d.getHours()%12;if(h===0)h=12;
@@ -5911,6 +6072,8 @@ async function lpMaybeShowButton(){
 async function lcStartLinePay(){
   const msg=document.getElementById('lcMsg');
   if(!window.__LC){return;}
+  // 付款前同意閘門：未勾選同意《服務條款》《隱私權政策》與數位內容不退費，先擋下並提示
+  if(payConsentGate())return;
   // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
   if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
@@ -6003,6 +6166,8 @@ async function ecMaybeShowButton(){
 async function ecStartEcpay(){
   const msg=document.getElementById('lcMsg');
   if(!window.__LC){return;}
+  // 付款前同意閘門：未勾選同意《服務條款》《隱私權政策》與數位內容不退費，先擋下並提示
+  if(payConsentGate())return;
   // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
   if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
@@ -6700,6 +6865,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div id="ecBtnWrap" class="lpwrap" style="display:none">
       <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
       <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
+      <div id="payConsent" class="payconsent">
+        <label for="payConsentChk">
+          <input type="checkbox" id="payConsentChk" onchange="payConsentSync()">
+          <span>我已閱讀並同意 <a onclick="openLegal('terms')">《服務條款》</a> 與 <a onclick="openLegal('privacy')">《隱私權政策》</a>，並瞭解本服務為<span class="pc-strong">數位內容／線上服務，一經開通即無法退費</span>，我同意放棄消費者保護法第 19 條之 7 日解除權（猶豫期）。</span>
+        </label>
+        <div class="pc-warn">請先閱讀並勾選上方同意框，才能進行付款。</div>
+      </div>
     </div>
     <div id="pwManual" class="pwpay">
       <div class="pwpay-h">有萬用碼或折扣碼？</div>
