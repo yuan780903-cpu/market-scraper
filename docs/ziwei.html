@@ -1781,7 +1781,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.7.0";
+const SITE_VERSION="v1.8.0";
 const SITE_VERSION_DATE="2026.07.12";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -3603,7 +3603,7 @@ function scoreSection(scores){
   }).join("");
   return `<div class="sec-title"><span class="cn">命盤綜合評分</span><span class="en">Destiny Score</span></div>
   <div class="scorereveal" id="scoreReveal">
-    <button class="revealbtn" onclick="revealScore()"><span class="ic">卜</span>看我的命盤分數</button>
+    <button class="revealbtn" onclick="revealScore()"><span class="ic">✦</span>看我的命盤分數</button>
     <span class="revhint">點擊揭曉 — 系統即時演算你的命格總分與六大維度</span>
   </div>
   <div class="scorebody" id="scoreBody">
@@ -4785,8 +4785,10 @@ async function lcRefresh(){
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
   const fab=document.getElementById('pdfFab');if(fab){fab.classList.toggle('lockpdf',!unlocked);const fm=document.getElementById('pdfFabMsg');if(fm&&unlocked)fm.className='pdffabmsg';}
-  // 安全網：解鎖後才顯示「把報告存成圖片」，並清空舊訊息
-  const rib=document.getElementById('reportImgBox');if(rib){rib.classList.toggle('show',!!unlocked);if(!unlocked){const rm=document.getElementById('reportImgMsg');if(rm){rm.textContent='';rm.className='rimg-msg';}}}
+  // 安全網：僅在「已解鎖 且 處於無法下載 PDF 的 App 內建瀏覽器(LINE/FB/IG…)」時，才顯示「把報告存成圖片」卡；
+  // 一般瀏覽器已有 PDF 可用，隱藏此卡以免多餘。功能本身完整保留，只加顯示條件。
+  const ribShow=!!unlocked && (typeof isInAppBrowser==='function' ? isInAppBrowser() : false);
+  const rib=document.getElementById('reportImgBox');if(rib){rib.classList.toggle('show',ribShow);if(!ribShow){const rm=document.getElementById('reportImgMsg');if(rm){rm.textContent='';rm.className='rimg-msg';}}}
 }
 async function lcRedeem(code){
   const r=await fetch(LC_API.replace(/\/+$/,'')+'/redeem?code='+encodeURIComponent(code),{method:'GET',cache:'no-store'});
@@ -5548,19 +5550,31 @@ function shareCardRender(canvas){
   ctx.fillText(( (S.name||'命主').slice(0,8) )+' 的命盤',cx,240);
   ctx.fillStyle=C.inkDim;ctx.font='600 34px '+SC_FONT;
   ctx.fillText('命宮主星 '+(S.ming||'—')+'　·　日主 '+(S.dm||'—'),cx,296);
-  // 分數大字 + 硃砂印章圈
-  var scy=470, R=150;
+  // 分數大字 + 硃砂印章圈（分數字級依圓半徑與位數動態決定，確保穩妥容納於圓內；「命盤總分 / 100」置於圓框下方不裁切）
+  var scy=470, R=146;
   ctx.beginPath();ctx.arc(cx,scy,R,0,Math.PI*2);
   ctx.fillStyle='rgba(179,56,44,.06)';ctx.fill();
   ctx.lineWidth=10;ctx.strokeStyle=C.seal;ctx.stroke();
   ctx.lineWidth=3;ctx.strokeStyle='rgba(179,56,44,.45)';
   ctx.beginPath();ctx.arc(cx,scy,R-20,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle=C.goldDeep;ctx.font='900 168px '+SC_FONT;
-  ctx.fillText(String(S.total),cx,scy+48);
-  ctx.fillStyle=C.seal;ctx.font='700 36px '+SC_FONT;
-  ctx.fillText('命盤總分 / 100',cx,scy+116);
+  // 內圈可用直徑（扣掉內細框留白）作為分數寬度上限，動態收斂字級直到寬與高都容得下
+  var scoreStr=String(S.total);
+  var innerR=R-30, maxScoreW=innerR*2*0.86;
+  var scoreFs=(scoreStr.length>=3)?150:172;   // 3 位數(如 100)起手縮小
+  ctx.textBaseline='middle';
+  for(var _g=0;_g<24;_g++){
+    ctx.font='900 '+scoreFs+'px '+SC_FONT;
+    if(ctx.measureText(scoreStr).width<=maxScoreW && scoreFs<=innerR*1.55)break;
+    scoreFs-=6;
+  }
+  ctx.fillStyle=C.goldDeep;
+  ctx.fillText(scoreStr,cx,scy-scoreFs*0.04);   // 視覺置中（略上移補字腔）
+  ctx.textBaseline='alphabetic';
+  // 「命盤總分 / 100」放圓框正下方，與等第膠囊間再留白
+  ctx.fillStyle=C.seal;ctx.font='700 38px '+SC_FONT;
+  ctx.fillText('命盤總分 / 100',cx,scy+R+48);
   // 等第 + PR 膠囊
-  var badgeY=scy+R+40;
+  var badgeY=scy+R+80;
   ctx.font='800 42px '+SC_FONT;
   var badge=(S.grade||'')+'　PR '+S.pr;
   var bw=ctx.measureText(badge).width+80,bh=82;
@@ -5569,14 +5583,14 @@ function shareCardRender(canvas){
   ctx.fillStyle=bg;dmRoundRect(ctx,cx-bw/2,badgeY,bw,bh,bh/2);ctx.fill();
   ctx.fillStyle='#fff';ctx.fillText(badge,cx,badgeY+55);
   // 一句亮點結論 + 最強維度
-  var lineY=badgeY+bh+70;
+  var lineY=badgeY+bh+62;
   ctx.fillStyle=C.ink;ctx.font='700 40px '+SC_FONT;
   var hi=S.top?('最亮的一項是「'+S.top+'」'+(S.topv?('，'+S.topv+'分'):'')):'';
   if(hi)ctx.fillText(hi,cx,lineY);
   if(S.hook){ctx.fillStyle=C.inkDim;ctx.font='500 33px '+SC_FONT;
     dmWrap(ctx,S.hook,cx,lineY+52,W*0.82,46);}
   // 底部 QR + 導流（固定貼底，與上方留出安全間距）
-  var qrS=230, qrY=H-qrS-176;
+  var qrS=222, qrY=H-qrS-150;
   ctx.fillStyle=C.goldDeep;ctx.font='700 38px '+SC_FONT;
   ctx.fillText('掃碼／點連結，測你的命盤分數',cx,qrY-34);
   var qrOk=dmDrawQR(ctx,S.url,cx-qrS/2,qrY,qrS);
