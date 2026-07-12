@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, max-age=0, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="color-scheme" content="light only">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src 'self'; base-uri 'self'; form-action 'self' https://*.ecpay.com.tw; object-src 'none'; frame-ancestors 'none'">
@@ -668,6 +671,21 @@ footer .disc .sub{display:block;margin-top:12px}
   border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:var(--ink);box-shadow:0 12px 30px -14px var(--shadow)}
 .pdffabmsg.show{display:block}
 .pdffabmsg.err{border-color:#c2576f;color:#c2576f}
+/* 存成圖片安全網 */
+.reportimgbox{display:none;margin:18px 0 6px;padding:16px 16px 14px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(179,56,44,.06),rgba(169,128,28,.08));border:1px solid var(--gold,#a9801c)}
+.reportimgbox.show{display:block}
+.reportimgbox .rib-h{font-weight:800;color:var(--gold-deep,#6f5210);font-size:1rem;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.reportimgbox .rib-h .rib-seal{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;
+  background:var(--seal,#b3382c);color:#fff;font-size:.8rem;font-weight:800}
+.reportimgbox .rib-sub{font-size:.82rem;line-height:1.65;color:var(--ink-dim,#5e5775);margin-bottom:12px}
+.reportimgbox .rib-btns{display:flex;flex-wrap:wrap;gap:10px}
+.reportimgbox .rib-btn{flex:1 1 46%;min-width:150px;padding:13px 14px;border-radius:12px;font-size:.98rem;font-weight:800;
+  cursor:pointer;border:none;background:var(--purple,#6a3fb5);color:#fff}
+.reportimgbox .rib-btn.alt{background:#fff;color:var(--purple,#6a3fb5);border:1.5px solid var(--purple,#6a3fb5)}
+.reportimgbox .rib-btn:hover{transform:translateY(-1px)}
+.rimg-msg{margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--ink,#33294a);min-height:1em}
+.rimg-msg.err{color:#c2576f}
 .musicwrap{position:fixed;left:16px;bottom:18px;z-index:90}
 .musicfab{display:inline-flex;align-items:center;gap:7px;
   background:var(--card);color:var(--ink);border:1px solid var(--line-soft);border-radius:999px;
@@ -3976,17 +3994,25 @@ function renderNum(name,gender,sol,sub){
 }
 
 /* ===== PDF 列印 ===== */
-function isInAppBrowser(){
-  // 使用者可強制略過（避免 UA 誤判把真客戶鎖死）
-  try{if(window.__forceAllowInApp||sessionStorage.getItem('zw_force_inapp')==='1')return false;}catch(e){}
-  const ua=navigator.userAgent||"";
+function isInAppBrowser(ua){
+  ua=ua||navigator.userAgent||"";
+  // 使用者可強制略過（避免 UA 誤判把真客戶鎖死）；僅在未明確傳入 ua（真實環境判斷）時才看逃生旗標，
+  // 單元測試傳入 ua 字串時一律純看 UA，避免旗標污染測試。
+  if(arguments.length===0){
+    try{if(window.__forceAllowInApp||sessionStorage.getItem('zw_force_inapp')==='1')return false;}catch(e){}
+  }
   // 已知不支援 PDF 下載/列印的 App 內建瀏覽器：
   // LINE(Line/、LIFF)、Facebook(FBAN/FBAV/FB_IAB/FBIOS)、Messenger、Instagram、Threads(Barcelona)、
-  // 微信 WeChat(MicroMessenger)、Twitter/X、TikTok、Snapchat、KakaoTalk。
-  if(/\b(Line|LIFF|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Threads|Barcelona|MicroMessenger|Twitter|TikTok|Snapchat|KAKAOTALK)\b/i.test(ua))return true;
+  // 微信 WeChat(MicroMessenger)、Twitter/X、TikTok、Snapchat、KakaoTalk 等。
+  // 注意：不用 \b 前置邊界（部分 App 標記緊接非字元邊界或大小寫不一），改用寬鬆包含判斷。
+  if(/(Line\/|Line$|\bLine[ \/;]|LIFF|FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Threads|Barcelona|MicroMessenger|WeChat|Twitter|TwitterAndroid|TikTok|musical_ly|BytedanceWebview|Snapchat|KAKAOTALK|NAVER|DaumApps)/i.test(ua))return true;
   const iOS=/iPhone|iPad|iPod/i.test(ua);
-  if(iOS && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua))return true; // iOS WebView
-  if(/Android/i.test(ua) && /;\s*wv\b/i.test(ua))return true;                   // Android WebView
+  // iOS App 內建 WebView：一般不含「Safari」字樣（且非已知第三方瀏覽器）→ 判為 in-app。
+  if(iOS && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/i.test(ua))return true;
+  // Android WebView：含「; wv」；部分 App 省略 wv 但仍是 webview，關鍵字命中已於上方處理。
+  if(/Android/i.test(ua) && /;\s*wv\b/i.test(ua))return true;
+  // Android WebView 另一特徵：含 Version/4.0 且非 Chrome 品牌獨立瀏覽器（保守，不影響一般 Chrome）。
+  if(/Android/i.test(ua) && /\bVersion\/\d+\.\d+\b/i.test(ua) && !/Chrome\/\d+/i.test(ua))return true;
   return false;
 }
 /* ===== 付款前閘門：在進入金流前，若處於不支援下載的 App 內建瀏覽器就先擋下並引導改用外部瀏覽器 ===== */
@@ -4014,10 +4040,13 @@ function _openExternalBrowser(){
   }catch(e){location.href=location.href+(location.href.indexOf('?')>=0?'&':'?')+'openExternalBrowser=1';}
 }
 function _forceContinueInApp(){
+  // 一次性放行：設定旗標→關閉→進入付款後「立即清除」旗標，避免旗標長存導致之後的付款不再被攔（安全網不失效）。
   try{window.__forceAllowInApp=true;sessionStorage.setItem('zw_force_inapp','1');}catch(e){window.__forceAllowInApp=true;}
   closeInAppGate();
-  // 使用者選擇仍要在此付款：直接進入綠界流程
+  // 使用者選擇仍要在此付款：直接進入綠界流程（此時 gate 會因旗標放行）
   try{ecStartEcpay();}catch(e){}
+  // 進入金流後清除逃生旗標，讓 gate 重新武裝
+  setTimeout(function(){try{window.__forceAllowInApp=false;sessionStorage.removeItem('zw_force_inapp');}catch(e){}},1500);
 }
 function closeInAppGate(){
   const m=document.getElementById('inAppGate');
@@ -4043,7 +4072,7 @@ function showInAppGate(){
       +'<button type="button" class="iag-b primary" onclick="_openExternalBrowser()">用外部瀏覽器開啟本頁</button>'
       +'<button type="button" class="iag-b" onclick="_copyPageUrl(this)">複製本頁網址</button>'
       +'</div>'
-      +'<div class="iag-note">若「用外部瀏覽器開啟」沒有反應，請改用上方「複製本頁網址」，再自行貼到 Safari／Chrome 開啟。</div>'
+      +'<div class="iag-note">若「用外部瀏覽器開啟」沒有反應，請改用上方「複製本頁網址」，再自行貼到 Safari／Chrome 開啟。<br><b>已付款解鎖者：</b>就算在此瀏覽器，也可到報告區用「<b>把完整報告存成圖片</b>」把報告帶走，不必重新付款。</div>'
       +'<div class="iag-foot"><a href="javascript:void(0)" class="iag-force" onclick="_forceContinueInApp()">我了解付款後可能無法下載，仍要在此付款</a><span class="iag-x" onclick="closeInAppGate()">關閉</span></div>'
       +'</div>';
     m.addEventListener('click',function(e){if(e.target===m)closeInAppGate();});
@@ -4536,6 +4565,8 @@ async function lcRefresh(){
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
   const fab=document.getElementById('pdfFab');if(fab){fab.classList.toggle('lockpdf',!unlocked);const fm=document.getElementById('pdfFabMsg');if(fm&&unlocked)fm.className='pdffabmsg';}
+  // 安全網：解鎖後才顯示「把報告存成圖片」，並清空舊訊息
+  const rib=document.getElementById('reportImgBox');if(rib){rib.classList.toggle('show',!!unlocked);if(!unlocked){const rm=document.getElementById('reportImgMsg');if(rm){rm.textContent='';rm.className='rimg-msg';}}}
 }
 async function lcRedeem(code){
   const r=await fetch(LC_API.replace(/\/+$/,'')+'/redeem?code='+encodeURIComponent(code),{method:'GET',cache:'no-store'});
@@ -5390,6 +5421,238 @@ async function shareCardCopyLink(){
       scMsg('已複製導流文案與連結');}
     catch(e2){scMsg('複製失敗，連結：'+(window.__SHARE&&window.__SHARE.url||'lifeguidetw.com'),true);}
   }
+}
+
+/* ================= 安全網：把完整報告存成圖片（in-app 瀏覽器可用） =================
+   技術與 DM／精華卡同源：純 Canvas 2D、零外連。window.print 在 LINE/FB/IG 內建瀏覽器被擋，
+   本功能改用 canvas.toDataURL('image/png') 觸發下載（in-app 可用），把已解鎖的「完整報告」
+   內容全部抽成結構化文字，分頁繪成多張長圖，確保付了款一定能把報告帶走。 */
+var RI_FONT='"PingFang TC","Heiti TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif';
+/* 從 #premZone DOM 抽出結構化區塊：{type:'sec'|'div'|'h'|'lead'|'p'|'kv', text} */
+function reportImgBlocks(){
+  var zone=document.getElementById('premZone');
+  var blocks=[];
+  if(!zone||zone.classList.contains('locked'))return blocks;
+  var norm=function(s){return String(s==null?'':s).replace(/\s+/g,' ').trim();};
+  var push=function(type,text){text=norm(text);if(text)blocks.push({type:type,text:text});};
+  var walk=function(node){
+    for(var i=0;i<node.children.length;i++){
+      var el=node.children[i];
+      if(el.offsetParent===null && el.tagName!=='DETAILS'){/* 隱藏元素略過（仍容錯：0 尺寸不硬擋）*/ }
+      var cls=' '+(el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className||'')+' ';
+      var tag=el.tagName;
+      // 分節大標
+      if(/\bsec-title\b/.test(cls)){var cn=el.querySelector('.cn');push('sec',cn?cn.textContent:el.textContent);continue;}
+      // 分隔線標題
+      if(/\bdivider\b/.test(cls)){var sp=el.querySelector('span');push('div',sp?sp.textContent:el.textContent);continue;}
+      // 卡片標題
+      if(tag==='H3'){var h=el.cloneNode(true);var ic=h.querySelector('.ic');if(ic)ic.remove();push('h',h.textContent);continue;}
+      // 引導句
+      if(/\blead\b/.test(cls)){push('lead',el.textContent);continue;}
+      // 段落
+      if(tag==='P'){push('p',el.textContent);continue;}
+      // 喜用/忌 等鍵值列
+      if(/\bxj\b/.test(cls)){push('kv',el.textContent);continue;}
+      // 評分區：整體＋維度
+      if(/\bscoretotal\b/.test(cls)){
+        var g=el.querySelector('.grade'),gt=el.querySelector('.gtext'),num=el.querySelector('.ring .num b');
+        if(num)push('h','命盤總分 '+norm(num.textContent)+' / 100');
+        if(g)push('lead',g.textContent);
+        if(gt)push('p',gt.textContent);
+        continue;
+      }
+      // 神煞/關係等膠囊集合：抽純文字
+      if(/\b(shensha|tengods|baziGewrap|gewrap|triowrap)\b/.test(cls)){
+        var t=norm(el.textContent);if(t)push('p',t);continue;
+      }
+      // 標籤列
+      if(/\btags\b/.test(cls)){push('p',el.textContent);continue;}
+      // 其他容器：往下遞迴（但避免把已處理節點重複展開）
+      if(el.children.length){walk(el);}
+      else{ var leaf=norm(el.textContent); if(leaf && leaf.length>1) push('p',leaf); }
+    }
+  };
+  walk(zone);
+  // 去除相鄰完全重複
+  var out=[];for(var k=0;k<blocks.length;k++){var b=blocks[k];if(k>0&&out.length&&out[out.length-1].text===b.text&&out[out.length-1].type===b.type)continue;out.push(b);}
+  return out;
+}
+/* 把區塊清單排版繪製成多張長圖 canvas，回傳 canvas 陣列 */
+function reportImgRender(blocks){
+  var C=(typeof shareCardColors==='function')?shareCardColors():{gold:'#a9801c',goldDeep:'#6f5210',ink:'#2c2440',inkDim:'#5e5775',seal:'#b3382c',sealDeep:'#8c281f'};
+  var S=window.__SHARE||{};
+  var name=(S.name||(window.__ZW&&window.__ZW.name)||'命主');
+  var W=1080, PAD=70, CW=W-PAD*2, MAXH=4200;              // 每頁最大高度（in-app 記憶體友善）
+  var LH_P=52, LH_LEAD=54, GAP=26;
+  // 量測用 ctx
+  var meas=document.createElement('canvas').getContext('2d');
+  var wrapLines=function(text,font,maxW){
+    meas.font=font;var chars=String(text).split(''),line='',lines=[];
+    for(var i=0;i<chars.length;i++){var t=line+chars[i];
+      if(meas.measureText(t).width>maxW&&line){lines.push(line);line=chars[i];}else line=t;}
+    if(line)lines.push(line);return lines;
+  };
+  // 先把每個 block 展開成「繪製指令 + 高度」
+  var items=[];
+  items.push({kind:'header',h:250});
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.type==='sec'){items.push({kind:'sec',text:b.text,h:118});}
+    else if(b.type==='div'){items.push({kind:'div',text:b.text,h:82});}
+    else if(b.type==='h'){var hl=wrapLines(b.text,'800 40px '+RI_FONT,CW-30);items.push({kind:'h',lines:hl,h:hl.length*52+22});}
+    else if(b.type==='lead'){var ll=wrapLines(b.text,'700 34px '+RI_FONT,CW-30);items.push({kind:'lead',lines:ll,h:ll.length*LH_LEAD+18});}
+    else if(b.type==='kv'){var kl=wrapLines(b.text,'700 34px '+RI_FONT,CW-30);items.push({kind:'kv',lines:kl,h:kl.length*LH_LEAD+14});}
+    else{var pl=wrapLines(b.text,'400 33px '+RI_FONT,CW-30);items.push({kind:'p',lines:pl,h:pl.length*LH_P+GAP});}
+  }
+  items.push({kind:'footer',h:300});
+  // 分頁：累加高度超過 MAXH 就換頁（header 只在第 1 頁，footer 只在最後一頁）
+  var pages=[],cur=[],curH=0;
+  for(var j=0;j<items.length;j++){
+    var it=items[j];
+    if(it.kind==='footer'){ if(curH+it.h>MAXH){pages.push(cur);cur=[];curH=0;} cur.push(it);curH+=it.h;continue;}
+    if(curH+it.h>MAXH && cur.length){pages.push(cur);cur=[];curH=0;}
+    cur.push(it);curH+=it.h;
+  }
+  if(cur.length)pages.push(cur);
+  var total=pages.length;
+  var canvases=[];
+  for(var p=0;p<total;p++){
+    var page=pages[p];
+    var H=0;for(var q=0;q<page.length;q++)H+=page[q].h;
+    H=Math.max(H+PAD*2,900);
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    var ctx=cv.getContext('2d');
+    // 背景（米金仿舊紙）
+    var g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#fffbf2');g.addColorStop(.5,'#fdf6e9');g.addColorStop(1,'#f4e9d2');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // 金色外框
+    ctx.strokeStyle=C.gold;ctx.lineWidth=8;
+    if(typeof dmRoundRect==='function'){dmRoundRect(ctx,24,24,W-48,H-48,26);ctx.stroke();}
+    else{ctx.strokeRect(24,24,W-48,H-48);}
+    var y=PAD+10;
+    for(var r2=0;r2<page.length;r2++){
+      var it2=page[r2];
+      if(it2.kind==='header'){
+        ctx.textAlign='center';
+        ctx.fillStyle=C.gold;ctx.font='600 30px '+RI_FONT;
+        ctx.fillText('人 生 實 用 說 明 書 · 完 整 命 理 精 析',W/2,y+30);
+        ctx.fillStyle=C.goldDeep;ctx.font='900 62px '+RI_FONT;
+        ctx.fillText(String(name).slice(0,10)+' 的命理報告',W/2,y+110);
+        ctx.fillStyle=C.inkDim;ctx.font='500 28px '+RI_FONT;
+        var sub=(S.ming?('命宮主星 '+S.ming):'')+(S.total!=null?('　·　命盤總分 '+S.total):'');
+        ctx.fillText(sub||'lifeguidetw.com',W/2,y+162);
+        ctx.strokeStyle='rgba(169,128,28,.5)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(PAD+40,y+200);ctx.lineTo(W-PAD-40,y+200);ctx.stroke();
+        ctx.textAlign='left';
+        y+=it2.h;continue;
+      }
+      if(it2.kind==='footer'){
+        y+=30;
+        ctx.strokeStyle='rgba(169,128,28,.45)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(PAD+40,y);ctx.lineTo(W-PAD-40,y);ctx.stroke();
+        y+=52;
+        ctx.textAlign='center';
+        ctx.fillStyle=C.seal;ctx.font='800 40px '+RI_FONT;
+        ctx.fillText('lifeguidetw.com',W/2,y);y+=54;
+        ctx.fillStyle=C.inkDim;ctx.font='500 26px '+RI_FONT;
+        ctx.fillText('本報告命理計算全程於本機完成 · 完整內容僅本人可見',W/2,y);y+=40;
+        ctx.fillText('人生航路 · 東方紫微命理精析系統',W/2,y);
+        ctx.textAlign='left';
+        y+=it2.h-176;continue;
+      }
+      if(it2.kind==='sec'){
+        // 硃砂節標
+        ctx.fillStyle='rgba(179,56,44,.10)';
+        if(typeof dmRoundRect==='function'){dmRoundRect(ctx,PAD-14,y-6,CW+28,74,16);ctx.fill();}
+        ctx.fillStyle=C.seal;ctx.font='900 42px '+RI_FONT;ctx.textAlign='left';
+        ctx.fillText(it2.text,PAD+8,y+46);
+        y+=it2.h;continue;
+      }
+      if(it2.kind==='div'){
+        ctx.fillStyle=C.goldDeep;ctx.font='800 34px '+RI_FONT;ctx.textAlign='left';
+        ctx.fillText('◆ '+it2.text,PAD,y+40);
+        ctx.strokeStyle='rgba(169,128,28,.3)';ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(PAD,y+56);ctx.lineTo(W-PAD,y+56);ctx.stroke();
+        y+=it2.h;continue;
+      }
+      if(it2.kind==='h'){
+        ctx.fillStyle=C.ink;ctx.font='800 40px '+RI_FONT;ctx.textAlign='left';
+        for(var a=0;a<it2.lines.length;a++)ctx.fillText(it2.lines[a],PAD,y+40+a*52);
+        y+=it2.h;continue;
+      }
+      if(it2.kind==='lead'){
+        ctx.fillStyle=C.goldDeep;ctx.font='700 34px '+RI_FONT;ctx.textAlign='left';
+        for(var b2=0;b2<it2.lines.length;b2++)ctx.fillText(it2.lines[b2],PAD,y+34+b2*LH_LEAD);
+        y+=it2.h;continue;
+      }
+      if(it2.kind==='kv'){
+        ctx.fillStyle=C.sealDeep;ctx.font='700 34px '+RI_FONT;ctx.textAlign='left';
+        for(var c2=0;c2<it2.lines.length;c2++)ctx.fillText(it2.lines[c2],PAD,y+34+c2*LH_LEAD);
+        y+=it2.h;continue;
+      }
+      // p
+      ctx.fillStyle=C.ink;ctx.font='400 33px '+RI_FONT;ctx.textAlign='left';
+      for(var d2=0;d2<it2.lines.length;d2++)ctx.fillText(it2.lines[d2],PAD,y+33+d2*LH_P);
+      y+=it2.h;
+    }
+    // 頁碼
+    ctx.textAlign='right';ctx.fillStyle=C.inkDim;ctx.font='500 24px '+RI_FONT;
+    ctx.fillText((p+1)+' / '+total,W-PAD,H-32);
+    ctx.textAlign='left';
+    canvases.push(cv);
+  }
+  return canvases;
+}
+function reportImgMsg(t,err){
+  var el=document.getElementById('reportImgMsg');
+  if(el){el.textContent=t||'';el.className='rimg-msg'+(err?' err':'');}
+}
+function _cvToBlob(cv){
+  return new Promise(function(res,rej){
+    if(cv.toBlob){cv.toBlob(function(b){b?res(b):rej(new Error('blob null'));},'image/png');}
+    else{try{var u=cv.toDataURL('image/png');var bin=atob(u.split(',')[1]);var arr=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);res(new Blob([arr],{type:'image/png'}));}catch(e){rej(e);}}
+  });
+}
+/* 主入口：把完整報告存成圖片（自動下載每一張；支援 navigator.share 可分享） */
+async function reportSaveAsImage(doShare){
+  var zone=document.getElementById('premZone');
+  if(!zone||zone.classList.contains('locked')){reportImgMsg('請先解鎖完整報告，再存成圖片。',true);return;}
+  reportImgMsg('正在產生報告圖片…');
+  var blocks,cvs;
+  try{
+    blocks=reportImgBlocks();
+    if(!blocks.length){reportImgMsg('找不到報告內容，請重新排盤後再試。',true);return;}
+    cvs=reportImgRender(blocks);
+  }catch(e){reportImgMsg('圖片產生失敗：'+(e&&e.message||e),true);return;}
+  if(!cvs||!cvs.length){reportImgMsg('圖片產生失敗，請重新排盤後再試。',true);return;}
+  var name=(window.__SHARE&&window.__SHARE.name)||(window.__ZW&&window.__ZW.name)||'命理報告';
+  // 優先嘗試系統分享（in-app 亦常可用），失敗或不支援則逐張下載
+  if(doShare && navigator.share){
+    try{
+      var files=[];
+      for(var i=0;i<cvs.length;i++){var b=await _cvToBlob(cvs[i]);files.push(new File([b],name+'_命理報告_'+(i+1)+'.png',{type:'image/png'}));}
+      if(navigator.canShare&&navigator.canShare({files:files})){
+        await navigator.share({files:files,title:name+' 的命理報告',text:name+' 的完整命理精析報告'});
+        reportImgMsg('已開啟系統分享（共 '+cvs.length+' 張）。');return;
+      }
+    }catch(e){ if(e&&e.name==='AbortError'){reportImgMsg('');return;} /* 否則往下走下載 */ }
+  }
+  // 逐張觸發下載（in-app 瀏覽器可用，不走被擋的 window.print）
+  var okN=0;
+  for(var j=0;j<cvs.length;j++){
+    try{
+      var url=cvs[j].toDataURL('image/png');
+      var a=document.createElement('a');a.href=url;a.download=name+'_命理報告_'+String(j+1).padStart(2,'0')+'.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      okN++;
+      if(j<cvs.length-1)await new Promise(function(r){setTimeout(r,350);}); // 間隔避免瀏覽器合併攔截多檔下載
+    }catch(e){}
+  }
+  if(okN===cvs.length){reportImgMsg('✓ 已產生 '+cvs.length+' 張報告圖片並開始下載，請於相簿／下載中查看。');}
+  else if(okN>0){reportImgMsg('已下載 '+okN+' / '+cvs.length+' 張。若有缺漏，請再按一次或改用「分享」。',true);}
+  else{reportImgMsg('下載被瀏覽器阻擋，請改按「分享報告圖片」使用系統分享。',true);}
 }
 
 function engCard(label,code,sub){
@@ -6436,6 +6699,16 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   <div id="premZone" class="locked">
   ${scoreSection(scores)}
+
+  <div id="reportImgBox" class="reportimgbox">
+    <div class="rib-h"><span class="rib-seal">存</span>把完整報告存成圖片</div>
+    <div class="rib-sub">用 LINE／FB／IG 內建瀏覽器開啟、無法下載 PDF 時，改用這裡把<b>完整報告</b>存成圖片帶走（內容較多會分成多張長圖）。已付款解鎖者一定拿得到。</div>
+    <div class="rib-btns">
+      <button type="button" class="rib-btn" onclick="reportSaveAsImage(false)">⤓ 存成圖片（下載）</button>
+      <button type="button" class="rib-btn alt" onclick="reportSaveAsImage(true)">✦ 分享報告圖片</button>
+    </div>
+    <div id="reportImgMsg" class="rimg-msg"></div>
+  </div>
 
   <div class="divider"><span>日主旺衰 · 喜用神</span></div>
   <div class="lucksub"><span class="taphint">點此看「身強／身弱」白話解說與喜用神生活應用</span></div>
