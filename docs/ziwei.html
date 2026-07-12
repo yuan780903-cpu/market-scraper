@@ -4719,9 +4719,34 @@ async function discApply(){
     }
   }catch(e){__disc=null;updatePriceUI();if(msg){msg.textContent='✗ 無法連線，請稍後再試。';msg.className='discmsg err';}}
 }
+/* 跨瀏覽器/跨裝置自動復原：本機未解鎖時，憑「生辰雜湊 key」向 Worker 查一次
+   /lic/check；若後端回 paid:true（曾付款成功），比照既有流程寫入 zw_lic_<key> 並解鎖。
+   失敗安全：查詢失敗/逾時/回 false 一律維持未解鎖現狀，不報錯、不卡報告；每組 key 只查一次。 */
+const __lcChecked=Object.create(null);
+async function lcAutoRestore(payload){
+  try{
+    if(!payload)return false;
+    const key=await lcKey(payload);
+    if(localStorage.getItem('zw_lic_'+key)==='1')return true;   // 已解鎖，無需查
+    if(__lcChecked[key])return false;                            // 同一 key 只查一次
+    __lcChecked[key]=1;
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(key),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.paid){
+      try{localStorage.setItem('zw_lic_'+key,'1');}catch(e){}
+      return true;
+    }
+  }catch(e){/* 失敗安全：維持未解鎖 */}
+  return false;
+}
 async function lcRefresh(){
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
-  const unlocked=await lcIsUnlocked(window.__LC.payload);
+  let unlocked=await lcIsUnlocked(window.__LC.payload);
+  // 未解鎖時，先嘗試「同生辰＝已購買」的跨裝置自動復原；命中則寫入本機並重排讓報告自動開啟。
+  if(!unlocked){
+    const restored=await lcAutoRestore(window.__LC.payload);
+    if(restored){unlocked=true;try{run();}catch(e){}return;}
+  }
   z.classList.toggle('locked',!unlocked);
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
