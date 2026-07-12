@@ -1397,7 +1397,34 @@ footer .disc .sub{display:block;margin-top:12px}
 .supermsg.err{color:#c2576f}.supermsg.ok{color:#2f9b5e;font-weight:700}
 /* ===== 工程模式主控台 ===== */
 .superbox.eng{max-width:392px;max-height:88vh;overflow-y:auto;text-align:left}
+/* 已解鎖後（#engGate 顯示）改為寬版兩欄後台 */
+.superbox.eng.engwide{max-width:820px}
 .engsec{border-top:1px solid var(--line-soft,#eee);margin-top:15px;padding-top:13px}
+/* ── 兩欄後台版面：左側選單 + 右側內容 ── */
+.engshell{display:flex;gap:16px;margin-top:15px;border-top:1px solid var(--line-soft,#eee);padding-top:14px;align-items:flex-start}
+.engnav{flex:0 0 190px;position:sticky;top:0;align-self:flex-start}
+.engnav-group{margin-bottom:12px}
+.engnav-gt{font-size:.68rem;font-weight:800;letter-spacing:.8px;color:var(--ink-faint,#999);text-transform:uppercase;margin:0 0 5px 4px}
+.engnav-item{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;cursor:pointer;
+  font-size:.86rem;font-weight:700;color:var(--ink-dim,#555);padding:8px 11px;border-radius:9px;margin-bottom:3px;
+  font-family:inherit;transition:background .12s,color .12s,border-color .12s}
+.engnav-item:hover{background:var(--wash,#fbf4e3);color:var(--gold-deep,#7a5a12)}
+.engnav-item.active{background:linear-gradient(135deg,var(--gold-bright,#c2941d),var(--gold-deep,#6f5210));
+  color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.16)}
+.engbody{flex:1;min-width:0}
+/* 面板：非 active 隱藏；active 顯示。取消 .engsec 頂線（改由外殼分隔） */
+.engbody .eng-panel{display:none}
+.engbody .eng-panel.active{display:block}
+.engbody .eng-panel .engsec{border-top:none;margin-top:0;padding-top:0}
+/* 手機：選單改為頂部橫向捲動頁籤 */
+@media(max-width:640px){
+  .superbox.eng.engwide{max-width:392px}
+  .engshell{flex-direction:column;gap:10px}
+  .engnav{flex:none;width:100%;position:static;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .engnav-group{margin-bottom:0;display:flex;gap:6px;align-items:center;flex:0 0 auto}
+  .engnav-gt{display:none}
+  .engnav-item{width:auto;flex:0 0 auto;white-space:nowrap;margin-bottom:0;padding:7px 12px;font-size:.82rem;border:1px solid var(--line,#ddd)}
+}
 .englbl{font-size:.94rem;font-weight:800;color:var(--gold-deep,#7a5a12);margin-bottom:9px;letter-spacing:.5px}
 .engchk{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--ink-faint,#888);margin-top:8px;cursor:pointer}
 .engrow{display:flex;align-items:center;gap:9px;margin:8px 0;font-size:.86rem;flex-wrap:wrap}
@@ -4590,6 +4617,31 @@ function superOpen(){
       <div id="engAuthMsg" class="engout"></div>
     </div>
     <div id="engGate" style="display:none">
+    <div class="engshell">
+    <nav class="engnav" aria-label="工程模式選單">
+      <div class="engnav-group">
+        <div class="engnav-gt">價格 / 行銷</div>
+        <button type="button" class="engnav-item active" data-engpanel="engP_price">⓪ 價格修改</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_dm">⑦ DM 宣傳圖</button>
+      </div>
+      <div class="engnav-group">
+        <div class="engnav-gt">代碼管理</div>
+        <button type="button" class="engnav-item" data-engpanel="engP_disc">① 折扣碼</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_pass">② 直接通關碼</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_list">③ 已發代碼清單</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_kol">④ KOL 推薦碼</button>
+      </div>
+      <div class="engnav-group">
+        <div class="engnav-gt">報表</div>
+        <button type="button" class="engnav-item" data-engpanel="engP_report">⑤ KOL 月結報表</button>
+      </div>
+      <div class="engnav-group">
+        <div class="engnav-gt">其他</div>
+        <button type="button" class="engnav-item" data-engpanel="engP_local">⑥ 本機開通</button>
+      </div>
+    </nav>
+    <div class="engbody">
+    <div class="eng-panel active" id="engP_price">
     <div class="engsec">
       <div class="englbl">⓪ 價格修改（全站顯示與綠界收款金額）</div>
       <div class="engrow"><span class="engk">原價</span><input id="engPriceOrig" class="enginp2" type="number" min="1" placeholder="例如 888"><span class="engu">元（顯示刪除線）</span></div>
@@ -4604,6 +4656,8 @@ function superOpen(){
       <button class="engbtn" type="button" onclick="engSavePrice()">儲存價格</button>
       <div id="engPriceOut" class="engout"></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_disc">
     <div class="engsec">
       <div class="englbl">① 折扣碼</div>
       <div class="engrow"><span class="engk">折扣金額</span><input id="engDiscAmt" class="enginp2" type="number" min="1" placeholder="例如 50"><span class="engu">元</span></div>
@@ -4615,6 +4669,8 @@ function superOpen(){
       <button class="engbtn" type="button" onclick="engGenDisc()">生成折扣碼</button>
       <div id="engDiscOut" class="engout"></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_pass">
     <div class="engsec">
       <div class="englbl">② 直接通關碼（免付費・全站解鎖）</div>
       <div class="engrow"><span class="engk">類型</span><label class="engradio"><input type="radio" name="engPassKind" value="forever" checked onchange="engPassKind()"> 終身</label><label class="engradio"><input type="radio" name="engPassKind" value="limited" onchange="engPassKind()"> 限次數</label><input id="engPassUses" class="enginp2" type="number" min="1" value="1" style="max-width:76px;display:none"><span id="engPassUsesU" class="engu" style="display:none">次</span></div>
@@ -4625,10 +4681,14 @@ function superOpen(){
       <button class="engbtn" type="button" onclick="engGenPass()">生成通關碼</button>
       <div id="engPassOut" class="engout"></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_list">
     <div class="engsec">
       <div class="englbl">③ 已發代碼清單 <button class="englink" type="button" onclick="engLoadList()">重新整理</button></div>
       <div id="engListOut" class="englist"><div class="engempty">點「重新整理」載入目前所有折扣碼與通關碼。</div></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_kol">
     <div class="engsec">
       <div class="englbl">④ KOL 網紅推薦碼管理</div>
       <div class="engrow"><span class="engk">KOL 名稱</span><input id="engKolName" class="enginp2" placeholder="例如 小美老師" maxlength="40" autocomplete="off" spellcheck="false"></div>
@@ -4640,6 +4700,8 @@ function superOpen(){
       <div class="englbl" style="margin-top:12px">KOL 清單 <button class="englink" type="button" onclick="engKolLoad()">重新整理</button></div>
       <div id="engKolList" class="englist"><div class="engempty">點「重新整理」載入所有 KOL 碼。</div></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_report">
     <div class="engsec">
       <div class="englbl">⑤ KOL 月結報表</div>
       <div class="engrow"><span class="engk">選擇 KOL</span><select id="engRptKol" class="enginp2"><option value="">— 請先載入清單 —</option></select><button class="englink" type="button" onclick="engKolLoadForReport()">載入</button></div>
@@ -4648,12 +4710,16 @@ function superOpen(){
       <div id="engRptOut" class="engout"></div>
       <div id="engRptTable" class="englist"></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_local">
     <div class="engsec">
       <div class="englbl">⑥ 本機開通（在這台裝置預覽完整功能）</div>
       <input id="superInput" class="superinp" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="全能萬用密碼或任一通關碼">
       <button id="superGo" class="superbtn" type="button">開通此裝置</button>
       <div id="superMsg" class="supermsg"></div>
     </div>
+    </div>
+    <div class="eng-panel" id="engP_dm">
     <div class="engsec">
       <div class="englbl">⑦ DM 宣傳圖產生器（自動帶入目前價格・純前端）</div>
       <div class="engrow"><span class="engk">限時字樣</span><input id="dmBadge" class="enginp2" placeholder="限時結緣價" maxlength="12" autocomplete="off" spellcheck="false"></div>
@@ -4666,6 +4732,8 @@ function superOpen(){
       <button class="engbtn" type="button" onclick="dmDownload('square')">下載方形 1080×1080（IG/FB 貼文）</button>
       <button class="engbtn" type="button" onclick="dmDownload('story')">下載限動直式 1080×1920（限動）</button>
       <div id="dmOut" class="engout"></div>
+    </div>
+    </div>
     </div>
     </div>
   </div>`;
@@ -4689,6 +4757,8 @@ async function engVerify(){
   const gate=document.getElementById('engGate');
   if(j&&j.ok){
     if(gate)gate.style.display='';
+    const box=gate?gate.closest('.superbox'):null; if(box)box.classList.add('engwide');  // 解鎖後改寬版兩欄後台
+    engNavInit();                    // 綁定左側選單切換、預設顯示第一項
     engOut('engAuthMsg','✓ 驗證成功，已解鎖發碼功能。','ok');
     const vb=document.getElementById('engVerifyBtn');if(vb)vb.textContent='重新驗證';
     try{engLoadPrice();}catch(e){}   // 進入即帶出目前價格，方便直接修改
@@ -4713,6 +4783,20 @@ async function engFetch(path){
 }
 const ENG_ERR={forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼（ADMIN_SECRET）。',amount:'折扣金額需介於 1 ~ 原價之間。',badcode:'代碼需 2~24 位中英文或數字（不含空格與符號）。',exists:'此折扣碼已存在，請換一組。',conflict:'此代碼已被通關碼佔用，請換一組。',used:'此代碼先前已使用過。',expired:'此代碼已過期。',range:'數量範圍不正確。',ratelimited:'嘗試過於頻繁，請稍後再試。'};
 function engOut(id,html,cls){const el=document.getElementById(id);if(el){el.innerHTML=html;el.className='engout '+(cls||'');}}
+/* ===== 工程模式：左側選單導覽（純版面切換，不動任何功能邏輯） ===== */
+function engNavShow(pid){
+  const gate=document.getElementById('engGate'); if(!gate)return;
+  gate.querySelectorAll('.eng-panel').forEach(p=>p.classList.toggle('active',p.id===pid));
+  gate.querySelectorAll('.engnav-item').forEach(b=>b.classList.toggle('active',b.getAttribute('data-engpanel')===pid));
+}
+function engNavInit(){
+  const gate=document.getElementById('engGate'); if(!gate||gate.__navBound)return;
+  gate.__navBound=true;
+  gate.querySelectorAll('.engnav-item').forEach(b=>{
+    b.addEventListener('click',()=>engNavShow(b.getAttribute('data-engpanel')));
+  });
+  const first=gate.querySelector('.engnav-item'); if(first)engNavShow(first.getAttribute('data-engpanel'));
+}
 /* ===== 工程模式：價格修改（讀 /price/get 顯示、寫 /price/set；走 X-Admin-Secret） ===== */
 const PRICE_ERR={original:'原價需為 1 以上的整數。',promo:'限時優惠價需為 1 以上的整數。',promo_gt_original:'限時優惠價不可高於原價。',kv_write_failed:'寫入失敗，請稍後再試。',forbidden:'管理密碼錯誤。',secret_unset:'後端尚未設定管理密碼。'};
 async function engLoadPrice(){
