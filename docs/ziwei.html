@@ -6,7 +6,18 @@
 <meta name="color-scheme" content="light only">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://ziwei-lic.yuan780903.workers.dev; frame-src 'self'; base-uri 'self'; form-action 'self' https://*.ecpay.com.tw; object-src 'none'; frame-ancestors 'none'">
-<title>人生實用說明書系統 · 您的專屬人生導航 — 斗數十二宮 × 四柱八字</title>
+<title>人生實用說明書系統 · 你的人生方向盤 — 一本讀懂自己的使用手冊</title>
+<meta name="description" content="把你的命盤，翻譯成一本看得懂、用得上的「人生使用手冊」，握穩自己的人生方向盤。紫微斗數＋八字交叉印證，白話呈現，還可產出命盤重點精華卡分享。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="人生實用說明書系統">
+<meta property="og:title" content="人生實用說明書系統 · 你的人生方向盤">
+<meta property="og:description" content="一本讀懂自己的人生使用手冊——測出你的命盤分數與六大維度，握穩自己的人生方向盤。">
+<meta property="og:url" content="https://lifeguidetw.com">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="人生實用說明書系統 · 你的人生方向盤">
+<meta name="twitter:description" content="一本讀懂自己的人生使用手冊——測出你的命盤分數，測測看你贏過多少人？">
+<link rel="canonical" href="https://lifeguidetw.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -19,6 +30,18 @@
   --shadow:rgba(70,50,110,.18);
   --jade:#2f9b73; --rose:#c2576f;
   --gwash:rgba(47,155,115,.12); --rwash:rgba(194,87,111,.12);
+  /* —— 硬印點綴（硃砂／墨綠印章）：古書＋硃印識別，與競品金紫脫鉤 —— */
+  --seal:#b3382c;               /* 硃砂印泥紅 */
+  --seal-deep:#8c281f;          /* 深硃砂 */
+  --sealink:#2c6b52;            /* 墨綠印章 */
+  --seal-wash:rgba(179,56,44,.10);
+  /* —— 舊紙纖維噪點（純 CSS，不外連）—— */
+  --paper-noise:
+    repeating-linear-gradient(0deg,rgba(120,90,30,.014) 0,rgba(120,90,30,.014) 1px,transparent 1px,transparent 3px),
+    repeating-linear-gradient(90deg,rgba(120,90,30,.010) 0,rgba(120,90,30,.010) 1px,transparent 1px,transparent 4px),
+    radial-gradient(circle at 15% 22%,rgba(150,120,60,.05) 0,transparent 9px),
+    radial-gradient(circle at 78% 64%,rgba(150,120,60,.045) 0,transparent 12px),
+    radial-gradient(circle at 42% 88%,rgba(150,120,60,.04) 0,transparent 8px);
   /* —— 主題色（東方紫微 · 金紫紅；其餘主題於 body[data-theme] 覆寫）—— */
   --gold:#a9801c; --gold-bright:#c2941d; --gold-deep:#6f5210;
   --purple:#7c5fb0; --purple-glow:#8a63c4;
@@ -127,6 +150,9 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
 :focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px;border-radius:8px}
 /* ===== 背景裝飾 ===== */
 .sky{position:fixed;inset:0;z-index:-2;background:var(--bg);transition:background .6s ease}
+/* 舊紙纖維噪點層（純 CSS，鋪滿全站，仿手抄舊紙質感） */
+.sky::after{content:"";position:absolute;inset:0;background:var(--paper-noise);
+  background-size:auto,auto,220px 220px,260px 260px,180px 180px;opacity:.9;mix-blend-mode:multiply;pointer-events:none}
 .stars,.stars2{position:fixed;inset:0;z-index:-1;pointer-events:none}
 .stars{background-image:
   radial-gradient(2px 2px at 20% 30%,var(--gold-bright),transparent),
@@ -151,6 +177,44 @@ p,.introlead,.introcta,.feat p,.introbody p,.pwpay-note,footer .disc{text-wrap:p
 .divider span{font-family:"Ma Shan Zheng",serif;font-size:1.4rem;letter-spacing:4px;
   background:var(--head);-webkit-background-clip:text;background-clip:text;color:transparent}
 
+/* ===== 精華分享卡：CTA + 彈窗 ===== */
+.sharecard-cta{margin:26px auto 8px;max-width:720px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:20px 22px;
+  box-shadow:0 18px 44px -28px var(--shadow);text-align:center}
+.scc-head{display:flex;align-items:center;gap:14px;justify-content:center;text-align:left;margin-bottom:14px;flex-wrap:wrap}
+.scc-seal{flex:none;width:44px;height:44px;border-radius:8px;display:grid;place-items:center;
+  font-family:"Ma Shan Zheng",serif;font-size:1.5rem;color:#fff;
+  background:linear-gradient(135deg,var(--seal),var(--seal-deep));box-shadow:0 4px 12px rgba(179,56,44,.32)}
+.scc-head b{display:block;color:var(--gold-deep);font-size:1.08rem;letter-spacing:1px}
+.scc-head small{color:var(--ink-dim);font-size:.82rem;line-height:1.6}
+.scc-btn{background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));color:#fff;border:none;
+  font-family:inherit;font-weight:700;font-size:1.02rem;letter-spacing:3px;padding:14px 34px;border-radius:40px;
+  cursor:pointer;transition:.25s;box-shadow:0 10px 26px -10px rgba(111,82,16,.6)}
+.scc-btn:hover{transform:translateY(-2px);box-shadow:0 16px 32px -12px rgba(111,82,16,.7)}
+.scc-btn .ic{margin-right:8px}
+.scm-overlay{position:fixed;inset:0;z-index:9000;background:rgba(30,22,10,.55);
+  display:none;align-items:center;justify-content:center;padding:20px;-webkit-overflow-scrolling:touch;overflow:auto}
+.scm-overlay.on{display:flex}
+.scm-box{background:linear-gradient(160deg,#fffbf2,#faf1dd);border:1px solid var(--line);
+  border-radius:20px;max-width:420px;width:100%;padding:22px 22px 20px;box-shadow:0 30px 80px -20px rgba(40,25,0,.6);
+  max-height:92vh;overflow:auto}
+.scm-box h3{font-family:"Ma Shan Zheng",serif;color:var(--gold-deep);font-size:1.5rem;letter-spacing:3px;text-align:center;margin-bottom:4px}
+.scm-box .scm-sub{text-align:center;color:var(--ink-dim);font-size:.82rem;margin-bottom:14px}
+.scm-canvas-wrap{border-radius:14px;overflow:hidden;box-shadow:0 10px 30px -12px var(--shadow);
+  border:1px solid var(--line-soft);background:#fff}
+.scm-canvas-wrap canvas{display:block;width:100%;height:auto}
+.scm-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.scm-actions button{flex:1;min-width:120px;font-family:inherit;font-weight:700;font-size:.92rem;letter-spacing:1px;
+  padding:13px;border-radius:12px;cursor:pointer;transition:.2s;border:none}
+.scm-share{background:linear-gradient(135deg,var(--seal),var(--seal-deep));color:#fff;box-shadow:0 8px 20px -8px rgba(179,56,44,.6)}
+.scm-dl{background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));color:#fff}
+.scm-copy{background:#fff;border:1.5px solid var(--line)!important;color:var(--gold-deep)}
+.scm-actions button:hover{transform:translateY(-2px)}
+.scm-close{display:block;margin:14px auto 0;background:none;border:none;color:var(--ink-faint);
+  font-family:inherit;font-size:.86rem;letter-spacing:2px;cursor:pointer}
+.scm-msg{text-align:center;font-size:.82rem;margin-top:10px;min-height:18px;color:var(--jade);letter-spacing:.5px}
+.scm-msg.err{color:var(--rose)}
+
 /* ===== Hero ===== */
 header{position:relative;text-align:center;padding:78px 24px 30px}
 .bagua{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:380px;height:380px;
@@ -159,10 +223,16 @@ header{position:relative;text-align:center;padding:78px 24px 30px}
 .bagua::after{content:"";position:absolute;inset:70px;border:1px dashed var(--line-soft);border-radius:50%}
 @keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
 header .eyebrow{position:relative;letter-spacing:9px;color:var(--gold);font-size:.82rem;margin-bottom:18px}
-header h1{position:relative;font-size:clamp(2.6rem,7vw,4.6rem);font-weight:900;letter-spacing:8px;
-  background:var(--head);
+/* 硬印點綴（硃砂印）：僅預設綜合主題套用，不影響其他 data-theme */
+body:not([data-theme]) header .eyebrow::before,
+body[data-theme="comp"] header .eyebrow::before{content:"❖";color:var(--seal);margin-right:12px;font-size:.7rem;vertical-align:1px;letter-spacing:0;-webkit-text-fill-color:var(--seal)}
+body:not([data-theme]) header .eyebrow::after,
+body[data-theme="comp"] header .eyebrow::after{content:"❖";color:var(--seal);margin-left:12px;font-size:.7rem;vertical-align:1px;letter-spacing:0;-webkit-text-fill-color:var(--seal)}
+header h1{position:relative;font-family:"Ma Shan Zheng",serif;font-size:clamp(3rem,8.4vw,5.6rem);font-weight:400;letter-spacing:10px;
+  background:linear-gradient(175deg,#7a5a12 0%,#c2941d 34%,#f0d488 50%,#c2941d 66%,#6f5210 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 6px 16px var(--shadow));line-height:1.2}
+  filter:drop-shadow(0 2px 1px rgba(255,250,232,.6)) drop-shadow(0 5px 14px var(--shadow));
+  line-height:1.28;padding-bottom:.06em}
 header .sub{position:relative;color:var(--ink-dim);margin-top:16px;letter-spacing:3px;font-size:1.02rem}
 header .meta{position:relative;margin-top:26px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap;
   color:var(--ink-faint);font-size:.84rem;letter-spacing:2px}
@@ -1385,9 +1455,9 @@ footer .disc .sub{display:block;margin-top:12px}
 
 <header>
   <div class="bagua"></div>
-  <div class="eyebrow">紫微斗數 × 子平八字 · 雙軌並行</div>
+  <div class="eyebrow">一本讀懂自己的人生使用手冊</div>
   <h1>人生實用說明書系統</h1>
-  <div class="sub">您的專屬人生導航 — 看懂自己這本「人生說明書」，精準掌握人生方向盤</div>
+  <div class="sub">把你的命盤，翻譯成一本看得懂、用得上的「人生使用手冊」，握穩自己的人生方向盤。</div>
   <div class="meta">
     <div>曆法引擎 <b>農曆/節氣/干支精算</b></div>
     <div>命盤系統 <b>北派紫微斗數</b></div>
@@ -1396,7 +1466,7 @@ footer .disc .sub{display:block;margin-top:12px}
 </header>
 
 <section class="intro">
-  <p class="introlead">打破傳統命理框架，以「<b>斗數十二宮 × 四柱八字</b>」雙軌並行為核心，將傳承千年的玄學智慧與客觀邏輯的大數據精算結合，為您打造最具實用價值的命格解析。</p>
+  <p class="introlead">我們不寫嚇人的命書，而是把你的命盤，寫成一本<b>看得懂、用得上的人生使用手冊</b>——讓你在每個十字路口，都握得住自己的<b>人生方向盤</b>。</p>
   <div class="featgrid">
     <div class="feat"><div class="fic">雙</div><h4>雙系統交叉比對</h4><p>北派紫微宮位推演＋子平八字五行生剋，雙重驗證、排除單一系統盲區，解析更深更準。</p></div>
     <div class="feat"><div class="fic">曆</div><h4>高精度曆法引擎</h4><p>內建農曆、節氣、干支精算（西元 1900–2100），每一筆生辰轉換毫釐不差，忠實還原命格。</p></div>
@@ -1407,7 +1477,7 @@ footer .disc .sub{display:block;margin-top:12px}
     <summary>展開完整說明 — 為什麼你需要這本「人生說明書」</summary>
     <div class="introbody">
       <p>每個人的人生旅途中，難免會有迷惘、徘徊與不知所措的時刻。我們時常在十字路口猶豫，不知下一步該往哪裡走。但其實，當你真正閱讀並了解專屬於自己的「人生實用說明書」之後，相信你將更懂得如何為自己導航，精準掌握人生的方向盤。</p>
-      <p>本系統打破傳統命理的框架，以「<b>斗數十二宮 × 四柱八字</b>」雙軌並行為核心，將傳承千年的「傳統玄學」智慧，與強調客觀邏輯的「大數據精算」完美結合，為您打造最具科學性與實用價值的命格解析：</p>
+      <p>本系統把命理當成一份可以隨身翻閱的「使用手冊」——一邊細看紫微宮位、一邊對照八字五行，兩套算法交叉印證，再把結論翻成白話，讓你真的讀懂、也真的用得上：</p>
       <p><b>・雙系統交叉比對，精準無死角：</b>結合北派紫微斗數的細膩宮位推演，以及子平八字的五行生剋運算。透過雙重驗證，排除單一命理系統的盲區，讓命盤解析達到前所未有的深度與準度。</p>
       <p><b>・高精度曆法引擎，還原真實命格：</b>內建精密的農曆、節氣與干支精算技術（適用西元 1900–2100 年），確保每一個生辰數據的轉換都毫釐不差，忠實呈現您的先天命格與流年軌跡。</p>
       <p><b>・從宿命到造命的實用指南：</b>我們不談令人恐懼的宿命論，而是為您提供一份客觀的「人生策略指南」。幫助您看清自身的潛賦與盲點，讓您在事業、財富與人際關係中，都能在對的時間、做對的決定。</p>
@@ -1591,6 +1661,21 @@ footer .disc .sub{display:block;margin-top:12px}
     <button class="zwmclose" onclick="zwCloseModal()" aria-label="關閉">×</button>
     <div class="zwmhead"><span class="zwmtag" id="zwmTag"></span><h3 id="zwmTitle"></h3><div class="zwmsub" id="zwmSub"></div></div>
     <div class="zwmbody" id="zwmBody"></div>
+  </div>
+</div>
+
+<div id="shareCardModal" class="scm-overlay" onclick="if(event.target===this)shareCardClose()">
+  <div class="scm-box" role="dialog" aria-modal="true" aria-label="命盤重點分享卡">
+    <h3>命盤重點速覽</h3>
+    <div class="scm-sub">分享給朋友，勾他也來測測看 · 完整報告仍只有你看得到</div>
+    <div class="scm-canvas-wrap"><canvas id="shareCardCanvas"></canvas></div>
+    <div class="scm-actions">
+      <button type="button" class="scm-share" onclick="shareCardShare()">分享</button>
+      <button type="button" class="scm-dl" onclick="shareCardDownload()">下載圖片</button>
+      <button type="button" class="scm-copy" onclick="shareCardCopyLink()">複製連結</button>
+    </div>
+    <div class="scm-msg" id="shareCardMsg"></div>
+    <button type="button" class="scm-close" onclick="shareCardClose()">關閉</button>
   </div>
 </div>
 
@@ -5078,6 +5163,151 @@ function dmDownload(size){
     if(out){out.className='engout ok';out.textContent='✓ 已產生 '+(size==='story'?'限動直式':'方形')+' PNG 並觸發下載。';}
   }catch(e){ if(out){out.className='engout err';out.textContent='下載失敗：'+(e&&e.message||e);} }
 }
+
+/* ================= 使用者精華分享卡（重點速覽 · 病毒獲客） =================
+   技術與 DM 產生器同源：Canvas 2D + 本機 ZWQR，米金紙感、零外連。
+   內容僅為「重點速覽」，完整報告仍鎖本人。 */
+var SC_FONT='"PingFang TC","Heiti TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif';
+function shareCardColors(){
+  // 沿用網站米金＋硃砂印章色（讀 CSS 變數，讀不到給安全預設）
+  var cs=getComputedStyle(document.body);
+  var pick=function(n,fb){var v=cs.getPropertyValue(n).trim();return v||fb;};
+  return {
+    gold:pick('--gold','#a9801c'),goldBright:pick('--gold-bright','#c2941d'),goldDeep:pick('--gold-deep','#6f5210'),
+    ink:pick('--ink','#2c2440'),inkDim:pick('--ink-dim','#5e5775'),
+    seal:pick('--seal','#b3382c'),sealDeep:pick('--seal-deep','#8c281f')
+  };
+}
+/* 繪製一張 1080×1350 直式精華卡到 canvas */
+function shareCardRender(canvas){
+  var S=window.__SHARE; if(!S)return false;
+  var C=shareCardColors();
+  var W=1080,H=1350; canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext('2d'); var cx=W/2;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  // 舊紙底 + 金紫柔光（沿用 dmBackground 質感，直式版）
+  var g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#fffbf2');g.addColorStop(.45,'#fdf6e9');g.addColorStop(1,'#f3e7cf');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  var rg=ctx.createRadialGradient(W*0.85,H*0.04,0,W*0.85,H*0.04,W*0.75);
+  rg.addColorStop(0,'rgba(251,232,198,.85)');rg.addColorStop(1,'rgba(251,232,198,0)');
+  ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  var rg2=ctx.createRadialGradient(W*0.08,H*1.0,0,W*0.08,H*1.0,W*0.7);
+  rg2.addColorStop(0,'rgba(236,224,251,.7)');rg2.addColorStop(1,'rgba(236,224,251,0)');
+  ctx.fillStyle=rg2;ctx.fillRect(0,0,W,H);
+  // 舊紙纖維噪點（輕點）
+  ctx.save();ctx.globalAlpha=.05;
+  for(var i=0;i<160;i++){ctx.fillStyle=(i%2)?'#8a6a2a':'#b8945a';
+    ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*2+1,Math.random()*2+1);}
+  ctx.restore();
+  // 金色雙外框
+  ctx.strokeStyle=C.gold;ctx.lineWidth=Math.round(W*0.011);
+  var m=Math.round(W*0.045);dmRoundRect(ctx,m,m,W-m*2,H-m*2,Math.round(W*0.03));ctx.stroke();
+  ctx.strokeStyle='rgba(169,128,28,.4)';ctx.lineWidth=Math.round(W*0.0035);
+  var m2=Math.round(W*0.062);dmRoundRect(ctx,m2,m2,W-m2*2,H-m2*2,Math.round(W*0.022));ctx.stroke();
+  // eyebrow
+  ctx.fillStyle=C.gold;ctx.font='600 34px '+SC_FONT;
+  dmSpaced(ctx,'人 生 實 用 說 明 書 · 命 盤 重 點 速 覽',cx,150,32,8);
+  // 命主稱呼
+  ctx.fillStyle=C.goldDeep;ctx.font='900 68px '+SC_FONT;
+  ctx.fillText(( (S.name||'命主').slice(0,8) )+' 的命盤',cx,240);
+  ctx.fillStyle=C.inkDim;ctx.font='600 34px '+SC_FONT;
+  ctx.fillText('命宮主星 '+(S.ming||'—')+'　·　日主 '+(S.dm||'—'),cx,296);
+  // 分數大字 + 硃砂印章圈
+  var scy=470, R=150;
+  ctx.beginPath();ctx.arc(cx,scy,R,0,Math.PI*2);
+  ctx.fillStyle='rgba(179,56,44,.06)';ctx.fill();
+  ctx.lineWidth=10;ctx.strokeStyle=C.seal;ctx.stroke();
+  ctx.lineWidth=3;ctx.strokeStyle='rgba(179,56,44,.45)';
+  ctx.beginPath();ctx.arc(cx,scy,R-20,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=C.goldDeep;ctx.font='900 168px '+SC_FONT;
+  ctx.fillText(String(S.total),cx,scy+48);
+  ctx.fillStyle=C.seal;ctx.font='700 36px '+SC_FONT;
+  ctx.fillText('命盤總分 / 100',cx,scy+116);
+  // 等第 + PR 膠囊
+  var badgeY=scy+R+40;
+  ctx.font='800 42px '+SC_FONT;
+  var badge=(S.grade||'')+'　PR '+S.pr;
+  var bw=ctx.measureText(badge).width+80,bh=82;
+  var bg=ctx.createLinearGradient(cx-bw/2,0,cx+bw/2,0);
+  bg.addColorStop(0,C.seal);bg.addColorStop(1,C.goldBright);
+  ctx.fillStyle=bg;dmRoundRect(ctx,cx-bw/2,badgeY,bw,bh,bh/2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillText(badge,cx,badgeY+55);
+  // 一句亮點結論 + 最強維度
+  var lineY=badgeY+bh+70;
+  ctx.fillStyle=C.ink;ctx.font='700 40px '+SC_FONT;
+  var hi=S.top?('最亮的一項是「'+S.top+'」'+(S.topv?('，'+S.topv+'分'):'')):'';
+  if(hi)ctx.fillText(hi,cx,lineY);
+  if(S.hook){ctx.fillStyle=C.inkDim;ctx.font='500 33px '+SC_FONT;
+    dmWrap(ctx,S.hook,cx,lineY+52,W*0.82,46);}
+  // 底部 QR + 導流（固定貼底，與上方留出安全間距）
+  var qrS=230, qrY=H-qrS-176;
+  ctx.fillStyle=C.goldDeep;ctx.font='700 38px '+SC_FONT;
+  ctx.fillText('掃碼／點連結，測你的命盤分數',cx,qrY-34);
+  var qrOk=dmDrawQR(ctx,S.url,cx-qrS/2,qrY,qrS);
+  ctx.fillStyle=C.seal;ctx.font='800 46px '+SC_FONT;
+  ctx.fillText('lifeguidetw.com',cx,qrY+qrS+62);
+  return true;
+}
+function scMsg(t,err){var el=document.getElementById('shareCardMsg');if(el){el.textContent=t||'';el.className='scm-msg'+(err?' err':'');}}
+function shareCardOpen(){
+  if(!window.__SHARE){alert('請先產生命盤報告');return;}
+  var ov=document.getElementById('shareCardModal');
+  var cv=document.getElementById('shareCardCanvas');
+  var ok=false;try{ok=shareCardRender(cv);}catch(e){ok=false;}
+  if(!ok){alert('分享卡產生失敗，請重新排盤');return;}
+  scMsg('');ov.classList.add('on');
+}
+function shareCardClose(){var ov=document.getElementById('shareCardModal');if(ov)ov.classList.remove('on');}
+function shareCardText(){
+  var S=window.__SHARE||{};
+  return '我的命盤分數 '+(S.total!=null?S.total:'')+' 分（'+(S.grade||'')+'），你也來測測看 👉 '+(S.url||'https://lifeguidetw.com');
+}
+function shareCardBlob(){
+  return new Promise(function(res,rej){
+    var cv=document.getElementById('shareCardCanvas');
+    if(!cv){rej(new Error('no canvas'));return;}
+    if(cv.toBlob){cv.toBlob(function(b){b?res(b):rej(new Error('blob null'));},'image/png');}
+    else{try{var u=cv.toDataURL('image/png');var bin=atob(u.split(',')[1]);var arr=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);res(new Blob([arr],{type:'image/png'}));}catch(e){rej(e);}}
+  });
+}
+async function shareCardShare(){
+  var S=window.__SHARE||{}; var txt=shareCardText();
+  try{
+    var blob=await shareCardBlob();
+    var file=new File([blob],'my-destiny-score.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:txt,title:'我的命盤重點速覽',url:S.url});
+      scMsg('已開啟分享');return;
+    }
+    if(navigator.share){await navigator.share({text:txt,title:'我的命盤重點速覽',url:S.url});scMsg('已開啟分享');return;}
+  }catch(e){ if(e&&e.name==='AbortError'){scMsg('');return;} }
+  // 不支援 navigator.share：fallback 下載圖 + 複製文案
+  shareCardDownload();
+  try{await navigator.clipboard.writeText(txt);scMsg('此裝置不支援系統分享，已下載圖片並複製導流文案，可貼到 IG／LINE／FB');}
+  catch(e){scMsg('已下載圖片，請手動分享到 IG／LINE／FB');}
+}
+function shareCardDownload(){
+  try{
+    var cv=document.getElementById('shareCardCanvas');
+    var url=cv.toDataURL('image/png');
+    var a=document.createElement('a');a.href=url;a.download='我的命盤重點_lifeguidetw.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    scMsg('已下載精華卡 PNG');
+  }catch(e){scMsg('下載失敗：'+(e&&e.message||e),true);}
+}
+async function shareCardCopyLink(){
+  var txt=shareCardText();
+  try{await navigator.clipboard.writeText(txt);scMsg('已複製導流文案與連結');}
+  catch(e){
+    try{var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+      scMsg('已複製導流文案與連結');}
+    catch(e2){scMsg('複製失敗，連結：'+(window.__SHARE&&window.__SHARE.url||'lifeguidetw.com'),true);}
+  }
+}
+
 function engCard(label,code,sub){
   return '<div class="engres"><div class="engresk">'+label+'</div><div class="engrescode">'+code+'</div>'+(sub?'<div class="engressub">'+sub+'</div>':'')+'<button class="engcopy" type="button" onclick="engCopy(\''+code+'\',this)">複製</button></div>';
 }
@@ -6083,6 +6313,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <span>中宮：命主／身主／斗君／五行局／生年八字／陰陽男女</span>
   </div>
 
+  <div class="sharecard-cta" id="shareCardCta">
+    <div class="scc-head"><span class="scc-seal">印</span><div><b>分享我的命盤重點</b><small>產一張米金紙感精華卡（重點速覽），完整報告仍只有你看得到</small></div></div>
+    <button class="scc-btn" type="button" onclick="shareCardOpen()"><span class="ic">✦</span> 分享我的命盤重點</button>
+  </div>
+
   <div id="paywall" class="paywall">
     <div class="pwlock">鎖</div>
     <h3>解鎖 ${name} 的完整命理精析</h3>
@@ -6259,6 +6494,19 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
   `;
   res.innerHTML=html;
+
+  // ===== 存精華分享卡所需資料（重點速覽，非全文）=====
+  try{
+    const _ds=[...scores.dims].sort((a,b)=>b.v-a.v);
+    window.__SHARE={
+      name:name, gender:gender,
+      ming:mingStarTxt, dm:dm+'（'+GAN_WX[dm]+'）',
+      total:scores.total, grade:(scores.gradeTier||'')+' · '+(scores.grade||'')+'格', pr:scores.pr,
+      top:_ds[0]?_ds[0].k:'', topv:_ds[0]?_ds[0].v:0,
+      hook:(scores.gradeText||'').replace(/\s+/g,'').slice(0,20),
+      url:'https://lifeguidetw.com'
+    };
+  }catch(e){window.__SHARE=null;}
 
   // ===== 雙面 A4 精華報告（列印 / PDF 專用） =====
   const _hua=h=>h?({lu:'祿',quan:'權',ke:'科',ji:'忌'})[h]:'';
