@@ -1781,7 +1781,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.6.0";
+const SITE_VERSION="v1.7.0";
 const SITE_VERSION_DATE="2026.07.12";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -2091,15 +2091,21 @@ function marriageYears(bz,gender,birthY,startY,span){
 
 /* 紫微大限 */
 function bigLimits(zw,bz,gender,curAge){
-  const yangYear=GAN_YY[bz.year.gan]==="陽";
+  // 大限起法之陰陽順逆，依紫微所採之(農曆)年干支陰陽，與命盤一致
+  const yangYear=GAN_YY[zw.yearGan]==="陽";
   const forward=(yangYear&&gender==="男")||(!yangYear&&gender==="女");
-  const limits={};let curBranch=-1;
+  const limits={};let curBranch=-1,firstBranch=-1;
   for(let k=0;k<12;k++){
     const b=forward?((zw.ming+k)%12):(((zw.ming-k)%12+12)%12);
+    if(k===0)firstBranch=b;
     const start=zw.ju+k*10;limits[b]={start,end:start+9};
     if(curAge>=start&&curAge<=start+9)curBranch=b;
   }
-  return {limits,curBranch,forward};
+  // 童限：虛歲小於五行局數（尚未起運），curBranch 留 -1。
+  // preLimit 標記＋curLimLabel 供顯示層取用，避免 palaceName[-1]=undefined。
+  const preLimit=curBranch<0;
+  const curLimLabel=preLimit?"未起運（童限）":zw.palaceName[curBranch];
+  return {limits,curBranch,forward,preLimit,firstBranch,curLimLabel};
 }
 
 /* 格局偵測（紫微） */
@@ -2168,15 +2174,13 @@ function detectBaziGe(bz){
 }
 
 /* ================= 紫微斗數 ================= */
-const WUXING_JU={ /* 命宮納音五行局：key=命宮干支 */ };
-// 以命宮天干地支查納音定局
-const NAYIN_JU={
- "甲子":4,"乙丑":4,"丙寅":6,"丁卯":6,"戊辰":3,"己巳":3,"庚午":5,"辛未":5,"壬申":4,"癸酉":4,
- "甲戌":6,"乙亥":6,"丙子":2,"丁丑":2,"戊寅":5,"己卯":5,"庚辰":4,"辛巳":4,"壬午":3,"癸未":3,
- "甲申":2,"乙酉":2,"丙戌":5,"丁亥":5,"戊子":6,"己丑":6,"庚寅":3,"辛卯":3,"壬辰":2,"癸巳":2,
- "甲午":5,"乙未":5,"丙申":3,"丁酉":3,"戊戌":4,"己亥":4,"庚子":2,"辛丑":2,"壬寅":6,"癸卯":6,
- "甲辰":4,"乙巳":4,"丙午":2,"丁未":2,"戊申":3,"己酉":3,"庚戌":5,"辛亥":5,"壬子":4,"癸丑":4,
- "甲寅":6,"乙卯":6,"丙辰":3,"丁巳":3,"戊午":5,"己未":5,"庚申":4,"辛酉":4,"壬戌":6,"癸亥":6};
+// 五行局：以命宮干支之「納音五行」定局。納音一律由既有 naYin() 求得
+// （NAYIN30 表已稽核正確），不再使用硬寫的 60 組對照表，避免後 30 組筆誤。
+const NAYIN_ELEM_JU={金:4,木:3,水:2,火:6,土:5}; // 納音五行 → 局數
+function juByNaYin(gan,zhi){
+  const ny=naYin(gan,zhi);            // 例：甲午→沙中金
+  return NAYIN_ELEM_JU[ny.slice(-1)]; // 取末字五行→局數（沙中金→金→4）
+}
 const JU_NAME={2:"水二局",3:"木三局",4:"金四局",5:"土五局",6:"火六局"};
 
 const SIHUA={ // 年干四化：[祿,權,科,忌]
@@ -2201,7 +2205,7 @@ function calcZiwei(lunar,hour,yearGan,yearZhi,gender){
   const palaceGan={};
   for(let b=0;b<12;b++){const order=((b-2)+12)%12;palaceGan[b]=GAN[(yinStem+order)%10];}
   const mingGZ=palaceGan[ming]+ZHI[ming];
-  const ju=NAYIN_JU[mingGZ];
+  const ju=juByNaYin(palaceGan[ming],ZHI[ming]); // 命宮納音定五行局
   // 安紫微
   let i=Math.ceil(ld/ju);
   let rem=ju*i-ld;
@@ -2296,11 +2300,13 @@ function calcZiwei(lunar,hour,yearGan,yearZhi,gender){
   for(let age=1;age<=84;age++){xiaoXian[((XIAOSTART[yearZhi]+(male?1:-1)*(age-1))%12+12)%12].push(age);}
   // 命主、身主、斗君
   const MINGZHU=["貪狼","巨門","祿存","文曲","廉貞","武曲","破軍","武曲","廉貞","文曲","祿存","巨門"];
-  const SHENZHU=["火星","天相","天梁","天同","文昌","天機","鈴星","天相","天梁","天同","文昌","天機"];
+  // 身主：子午皆火星（與資料源 iztro 一致）；午年(index 6)原誤為鈴星，已更正為火星。
+  const SHENZHU=["火星","天相","天梁","天同","文昌","天機","火星","天相","天梁","天同","文昌","天機"];
   const mingZhu=MINGZHU[ming], shenZhu=SHENZHU[yZhi];
   const douJun=((2-(lm-1)+hZhi)%12+12)%12;
   return {ming,shen,ju,juName:JU_NAME[ju],palaceGan,palaceName,stars,mingGZ,
     boShi,changSheng,jiangPre,suiPre,xiaoXian,mingZhu,shenZhu,douJun,
+    yearGan,yearZhi,  // 紫微所採之(農曆)年干支，供下游生年四化等一致取用
     yinYang:(yangYear?"陽":"陰")+(male?"男":"女")};
 }
 
@@ -3469,7 +3475,11 @@ function run(){
 
     const lunar=solar2lunar(cy,cm,cd);
     const bz=calcBazi(cy,cm,cd,chh,cmm);
-    const zw=calcZiwei(lunar,chh,bz.year.gan,bz.year.zhi,gender);
+    // 紫微定年採「農曆年」（正月初一為界），與命理通行慣例及畫面顯示之農曆年一致。
+    // 八字四柱仍用立春定年（bz.year 不動）。兩者刻意分流，勿混用。
+    const _zwYearGan=GAN[((lunar.year-4)%10+10)%10];
+    const _zwYearZhi=ZHI[((lunar.year-4)%12+12)%12];
+    const zw=calcZiwei(lunar,chh,_zwYearGan,_zwYearZhi,gender);
     const wx=wuxingCount(bz);
     const curAge=2026-y+1;                          // 虛歲
     const adv={
@@ -4336,8 +4346,8 @@ function buildAIText(){
   if(lunar)P("農曆："+lunar.year+" 年 "+(lunar.isLeap?"閏":"")+LUNAR_M[lunar.month-1]+"月"+LUNAR_D[lunar.day]);
   P("生肖："+SHENGXIAO[bz.year.zhi]+"　陰陽性別："+zw.yinYang+"　日主："+dm+"（"+GAN_WX[dm]+GAN_YY[dm]+"）　五行局："+zw.juName);
   P("命宮："+zw.palaceGan[zw.ming]+ZHI[zw.ming]+"　身宮："+zw.palaceGan[zw.shen]+ZHI[zw.shen]+"　命主星："+zw.mingZhu+"　身主星："+zw.shenZhu+"　斗君："+ZHI[zw.douJun]+"宮");
-  const cl0=adv.limits.limits[adv.limits.curBranch];
-  P("目前虛歲："+adv.curAge+"　起運 "+lk.startAge+" 歲（"+(lk.forward?"順行":"逆行")+"）　現行大限："+zw.palaceName[adv.limits.curBranch]+(cl0?("（"+cl0.start+"–"+cl0.end+" 歲）"):""));
+  const cl0=adv.limits.curBranch>=0?adv.limits.limits[adv.limits.curBranch]:null;
+  P("目前虛歲："+adv.curAge+"　起運 "+lk.startAge+" 歲（"+(lk.forward?"順行":"逆行")+"）　現行大限："+adv.limits.curLimLabel+(cl0?("（"+cl0.start+"–"+cl0.end+" 歲）"):""));
 
   SEC("子平八字（四柱八字）");
   [["年",bz.year],["月",bz.month],["日",bz.day],["時",bz.hour]].forEach(function(e){
@@ -4420,8 +4430,8 @@ function buildAIText(){
     const b=e[0];P(e[1]+" "+zw.palaceName[b]+"（"+zw.palaceGan[b]+ZHI[b]+"）："+_aiStars(zw,b));
   });
 
-  SEC("生年四化（"+bz.year.gan+"干引動）");
-  const loc=_flyStarLoc(zw),syh=SIHUA[bz.year.gan];
+  SEC("生年四化（"+zw.yearGan+"干引動）");
+  const loc=_flyStarLoc(zw),syh=SIHUA[zw.yearGan];
   ["祿","權","科","忌"].forEach(function(k,i){
     const star=syh[i],tb=loc[star];
     P("化"+k+"："+star+(tb!=null?(" → 入【"+zw.palaceName[tb]+"】宮"):""));
@@ -6574,7 +6584,7 @@ function zwFlySyn(){
   document.querySelectorAll('.flybtn').forEach(x=>x.classList.remove('on'));
   const btn=document.getElementById('flybtn-syn');if(btn)btn.classList.add('on');
   _flyClear();
-  const loc=_flyStarLoc(zw),stem=bz.year.gan,arr=SIHUA[stem];
+  const loc=_flyStarLoc(zw),stem=zw.yearGan,arr=SIHUA[stem];
   const segs=[],rows=[];
   FLY_KEYS.forEach((k,i)=>{
     const star=arr[i],tb=loc[star];
@@ -6692,7 +6702,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     return "—";
   };
 
-  const sihuaArr=SIHUA[bz.year.gan];
+  const sihuaArr=SIHUA[zw.yearGan];
 
   // ===== 旺衰 / 喜用神 =====
   const st=adv.strength;
@@ -6835,13 +6845,13 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   })();
   const flyBtns=Array.from({length:12},(_,b)=>
     `<button class="flybtn ${b===zw.ming?'on':''}" id="flybtn-${b}" onclick="zwFly(${b})">${zw.palaceName[b]}<small style="opacity:.6;margin-left:3px">${zw.palaceGan[b]}</small></button>`
-  ).join("")+`<button class="flybtn syn" id="flybtn-syn" onclick="zwFlySyn()">生年四化（${bz.year.gan}干）</button>`;
+  ).join("")+`<button class="flybtn syn" id="flybtn-syn" onclick="zwFlySyn()">生年四化（${zw.yearGan}干）</button>`;
 
   // ===== 流年 2026 丙午 =====
   const lnSihua=SIHUA["丙"];
   const lnBranch=6, lnPalaceName=zw.palaceName[lnBranch];
   const lnStars=(zw.stars[lnBranch]||[]).map(s=>s.name).join("、")||"空宮";
-  const curLimName=adv.limits.curBranch>=0?zw.palaceName[adv.limits.curBranch]:"—";
+  const curLimName=adv.limits.curLimLabel;
 
   // ===== 綜合個人化論斷 =====
   const dirTxt=lk.forward?"順行":"逆行";
@@ -7023,7 +7033,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <p>福德宮坐 <b style="color:var(--gold)">${palaceOf("福德")}</b>，主精神享受、興趣與福澤。修心養性、培養雅好，能安頓內在、提升人生的厚度與品質。</p>
     </div>
     <div class="rcard wide">
-      <h3><span class="ic">化</span>生年四化 · ${bz.year.gan}干</h3>
+      <h3><span class="ic">化</span>生年四化 · ${zw.yearGan}干</h3>
       <p>你出生那一年的天干，會讓四顆星各自帶上一種「四化」能量。本命生年四化為：
         <b style="color:var(--jade)">${sihuaArr[0]}化祿</b>（財福與好機緣所在，可積極把握）、
         <b style="color:#e0a85a">${sihuaArr[1]}化權</b>（能掌權、有擔當、扛得起局面之處）、
@@ -7159,7 +7169,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 神煞
   const ssTxt=adv.ss&&adv.ss.length?adv.ss.map(s=>`${s.name}（${s.at}柱）`).join("、"):"無顯著神煞";
   // 生年四化飛星
-  const flyLoc=_flyStarLoc(zw),syhArr=SIHUA[bz.year.gan];
+  const flyLoc=_flyStarLoc(zw),syhArr=SIHUA[zw.yearGan];
   const flyKv=["祿","權","科","忌"].map((k,i)=>{const star=syhArr[i],tb=flyLoc[star];return `<span>化${k} <b>${star}</b>${tb!=null?` → ${zw.palaceName[tb]}`:''}</span>`;}).join("");
   // 命宮三方四正
   const sfszRows=[[zw.ming,"本宮·命宮"],[(zw.ming+6)%12,"對宮·遷移"],[(zw.ming+4)%12,"三合之一"],[(zw.ming+8)%12,"三合之一"]].map(e=>{const b=e[0];const ms=(zw.stars[b]||[]).filter(s=>s.type==="main").map(s=>s.name+_huaTxt(s.hua));return `<span><b>${e[1]}</b> ${zw.palaceName[b]}（${zw.palaceGan[b]}${ZHI[b]}）：${ms.length?ms.join("、"):'空宮'}</span>`;}).join("");
@@ -7423,7 +7433,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">神煞 · 白話</div>
     <div class="rp-row">${ssTxt}</div>
     ${ssProse}
-    <div class="rp-sec">生年四化飛星（${bz.year.gan} 干引動）· 白話</div>
+    <div class="rp-sec">生年四化飛星（${zw.yearGan} 干引動）· 白話</div>
     <div class="rp-kv">${flyKv}</div>
     ${flyProse}
     <div class="rp-sec">宮干四化飛星（飛線盤）· 交叉合參 · 白話</div>
