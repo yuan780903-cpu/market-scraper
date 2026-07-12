@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.0";
+const SITE_VERSION="v1.9.1";
 const SITE_VERSION_DATE="2026.07.12";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -4145,6 +4145,30 @@ function showInAppGate(){
   }
   m.classList.add('on');
   try{document.body.style.overflow='hidden';}catch(e){}
+}
+/* ===== 載入即警示：頁面一載入就偵測 App 內建瀏覽器並立即引導改用外部瀏覽器，
+   讓使用者在填折扣碼／排盤／付款「之前」就先轉移，避免白填折扣碼、白走流程。
+   重用既有 isInAppBrowser()/showInAppGate()，只加「載入時觸發」這一層；
+   若使用者按過「我了解仍要繼續」（設 zw_force_inapp 逃生旗標）本工作階段就不再重跳。
+   付款時的 inAppPayGate() 仍保留當第二道防線。 ===== */
+function showInAppGateOnLoad(){
+  try{
+    // isInAppBrowser()（不帶參數）本身已尊重逃生旗標：設過旗標即回 false，不會重跳。
+    if(!isInAppBrowser())return;
+  }catch(e){return;}
+  showInAppGate();
+  // 載入版：把「先轉移瀏覽器，再填折扣碼與付款」的順序講清楚（僅載入時顯示一次，付款版不變動）。
+  try{
+    const card=document.querySelector('#inAppGate .iag-card');
+    if(card && !card.querySelector('.iag-loadhi')){
+      const hi=document.createElement('p');
+      hi.className='iag-p iag-hi iag-loadhi';
+      hi.innerHTML='您正在用 <b>LINE／FB／IG 內建瀏覽器</b>開啟本頁。請<b>先改用 Safari／Chrome 開啟本頁</b>，<b>再填折扣碼與付款</b>，才能順利取得報告。<br>（在內建瀏覽器先填折扣碼、排盤都只是白做工，付款紀錄也不會跟著轉移。）';
+      const t=card.querySelector('.iag-t');
+      if(t && t.parentNode)t.parentNode.insertBefore(hi,t.nextSibling);
+      else card.insertBefore(hi,card.firstChild);
+    }
+  }catch(e){}
 }
 /* ===== 法律文件（服務條款／免責聲明／隱私權政策）＋付款前不退費同意 ===== */
 const LEGAL_UPDATED='2026 年 7 月';
@@ -7969,6 +7993,9 @@ function updateMusicUI(){
   }
   updateMusicUI();
 })();
+/* 載入即警示：DOM 已就緒（此 script 位於 </body> 前），若處於 App 內建瀏覽器且未設逃生旗標，
+   立即跳出「請先改用外部瀏覽器，再填折扣碼與付款」引導。一般瀏覽器完全不受影響、不跳任何東西。 */
+try{setTimeout(function(){try{showInAppGateOnLoad();}catch(e){}},0);}catch(e){}
 </script>
 </body>
 </html>
