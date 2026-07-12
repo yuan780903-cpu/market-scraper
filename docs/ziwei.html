@@ -4674,6 +4674,19 @@ async function lcKey(p){
   const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
   return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
 }
+/* 姓名雜湊（僅供「跨瀏覽器/裝置憑姓名復原」比對用，永不外傳明文姓名）。
+   正規化規則（前後端必須一致）：Unicode NFKC 正規化 → 去除所有空白 → 轉小寫。
+   回傳完整 64 位 SHA-256 hex。空姓名回空字串（呼叫端據此略過查詢）。 */
+async function lcNameHash(name){
+  try{
+    const raw=String(name==null?'':name);
+    let norm; try{norm=raw.normalize('NFKC');}catch(e){norm=raw;}
+    norm=norm.replace(/\s+/g,'').toLowerCase();
+    if(!norm)return '';
+    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(norm));
+    return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){return '';}
+}
 async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
 /* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay 付款解鎖 ===== */
 let __disc=null;   // {code,amount,reuse,base,final}
@@ -4723,14 +4736,18 @@ async function discApply(){
    /lic/check；若後端回 paid:true（曾付款成功），比照既有流程寫入 zw_lic_<key> 並解鎖。
    失敗安全：查詢失敗/逾時/回 false 一律維持未解鎖現狀，不報錯、不卡報告；每組 key 只查一次。 */
 const __lcChecked=Object.create(null);
-async function lcAutoRestore(payload){
+async function lcAutoRestore(payload,name){
   try{
     if(!payload)return false;
     const key=await lcKey(payload);
     if(localStorage.getItem('zw_lic_'+key)==='1')return true;   // 已解鎖，無需查
-    if(__lcChecked[key])return false;                            // 同一 key 只查一次
-    __lcChecked[key]=1;
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(key),{cache:'no-store'});
+    const nh=await lcNameHash(name);                            // 姓名雜湊（去空白/NFKC/小寫）
+    const cacheKey=key+'|'+nh;                                   // key+姓名 各查一次即可
+    if(__lcChecked[cacheKey])return false;
+    __lcChecked[cacheKey]=1;
+    // 「同生辰＋同姓名＝已購買」：帶 key 與 nh 給後端比對。僅知生日不知姓名者無法解鎖。
+    const nhQ=nh?('&nh='+encodeURIComponent(nh)):'';
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(key)+nhQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.paid){
       try{localStorage.setItem('zw_lic_'+key,'1');}catch(e){}
@@ -4744,7 +4761,7 @@ async function lcRefresh(){
   let unlocked=await lcIsUnlocked(window.__LC.payload);
   // 未解鎖時，先嘗試「同生辰＝已購買」的跨裝置自動復原；命中則寫入本機並重排讓報告自動開啟。
   if(!unlocked){
-    const restored=await lcAutoRestore(window.__LC.payload);
+    const restored=await lcAutoRestore(window.__LC.payload,window.__LC.name);
     if(restored){unlocked=true;try{run();}catch(e){}return;}
   }
   z.classList.toggle('locked',!unlocked);
@@ -6203,8 +6220,11 @@ async function ecStartEcpay(){
   const ret=location.origin+location.pathname;
   const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
   const kolQ=(__kol&&__kol.code)?('&kol='+encodeURIComponent(__kol.code)):'';
+  // 姓名雜湊（跨裝置憑姓名復原用）：前端算好才傳，永不傳明文姓名；此欄不進綠界 POST、不影響簽章。
+  const nh=await lcNameHash(window.__LC.name);
+  const nhQ=nh?('&nh='+encodeURIComponent(nh)):'';
   try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ+kolQ,{cache:'no-store'});
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ+kolQ+nhQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.ok&&j.action&&j.params){
       const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
@@ -6825,8 +6845,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   // 存全域供觸控彈窗讀取
   window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch,birthYear:sol.y,sol,lunar};
-  // 付費解鎖身分（姓名｜生日｜時間｜性別）
-  window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender)};
+  // 付費解鎖身分（姓名｜生日｜時間｜性別）；額外保留原始姓名供「跨裝置憑姓名復原」用。
+  window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender),name:name};
 
   const html=`
   <div class="sec-title"><span class="cn">命格總覽</span><span class="en">Natal Chart Overview</span></div>
