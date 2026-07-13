@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.2";
+const SITE_VERSION="v1.9.3";
 const SITE_VERSION_DATE="2026.07.12";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -4312,7 +4312,16 @@ function runPdfExport(fromFab){
     return;
   }
   const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
-  if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。手機若沒反應，請改用 Safari／Chrome 開啟本頁。';}
+  // 明確的失敗提示（列印不支援／被擋／靜默無反應時共用）
+  const FAIL_MSG='✗ 這個環境無法直接下載 PDF（列印視窗沒有開啟）。請改用電腦版 Safari／Chrome 開啟本頁再下載；若在手機，請往下捲到報告區用「<b>存成圖片</b>」把完整報告帶走。';
+  const showFail=()=>{
+    if(note){note.innerHTML=FAIL_MSG;note.style.color='#c2576f';}
+    showFabMsg(FAIL_MSG,true);
+  };
+  // 防呆：若這個環境根本沒有可用的列印功能，直接給提示，別讓使用者「按了沒反應」。
+  if(typeof window.print!=='function'){showFail();return;}
+  if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。若沒有跳出列印視窗，請改用電腦版 Safari／Chrome 開啟本頁，或往下用「存成圖片」保存報告。';}
+  if(fromFab)showFabMsg('已開啟列印視窗，請選「另存為 PDF」。若沒反應，請改用電腦版瀏覽器或往下用「存成圖片」。',false);
   // 讓「另存為 PDF」的預設檔名帶上排盤人姓名（瀏覽器以 document.title 為建議檔名）
   const _D=window.__ZW,_subj=(_D&&_D.name)?String(_D.name).trim():'';
   const _origTitle=document.title;
@@ -4322,12 +4331,27 @@ function runPdfExport(fromFab){
     window.addEventListener('afterprint',_restoreTitle);
     setTimeout(_restoreTitle,60000);
   }
+  // 靜默失敗偵測：正常瀏覽器呼叫 window.print() 會觸發 beforeprint（或阻塞式開窗）。
+  // 若某環境 window.print() 既不丟例外、也不真的開列印視窗（靜默 no-op），
+  // 就在短暫延遲後判定為失敗並給明確提示，避免「按了完全沒反應」。
+  let _printFired=false;
+  const _onBefore=()=>{_printFired=true;window.removeEventListener('beforeprint',_onBefore);};
+  window.addEventListener('beforeprint',_onBefore);
+  const _t0=Date.now();
   try{window.print();}
   catch(e){
-    const err='✗ 此瀏覽器不支援直接列印，請改用 Safari／Chrome 開啟本頁再下載。';
-    if(note){note.textContent=err;note.style.color='#c2576f';}
-    if(fromFab)showFabMsg(err,true);
+    window.removeEventListener('beforeprint',_onBefore);
+    showFail();
+    return;
   }
+  // window.print() 在多數瀏覽器是阻塞的：回來時已過了明顯時間，或 beforeprint 已觸發 → 視為成功。
+  const _blocked=(Date.now()-_t0)>350;
+  if(_printFired||_blocked){window.removeEventListener('beforeprint',_onBefore);return;}
+  // 非阻塞且未觸發 beforeprint：再給一小段時間確認，仍無動靜就判定為靜默失敗。
+  setTimeout(()=>{
+    window.removeEventListener('beforeprint',_onBefore);
+    if(!_printFired)showFail();
+  },700);
 }
 document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
 document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
