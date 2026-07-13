@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.1";
+const SITE_VERSION="v1.9.2";
 const SITE_VERSION_DATE="2026.07.12";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -7592,7 +7592,7 @@ kolSelfCheckHash();
    但透過 <audio> 媒體元素播放則不受靜音開關影響（與聽音樂、看影片同一條音訊路徑）。
    因此這裡改為：用 OfflineAudioContext 在瀏覽器端「離線合成」一段約 20 秒的自然音 WAV，
    產生 Blob 後交給 <audio loop> 播放 → 手機（即使靜音）也聽得到、且完全離線、免外部音檔。 */
-let __musicOn=false, __curSound=null, __vol=0.7, __fadeTimer=null;
+let __musicOn=false, __curSound=null, __vol=0.32, __fadeTimer=null;
 let __audioEl=null, __unlocked=false;
 const __wavCache={};   // choice -> blob URL（首次播放才合成，之後沿用）
 const SND_NAME={dawn:'晨曦暖陽',calm:'靜心放鬆',dream:'療癒星空',rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴'};
@@ -7795,7 +7795,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.92;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,261.63],0.03);              // 極輕暖底
+    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
     const prog=[
       {b:130.81,n:[261.63,329.63,392.00,523.25]},              // C ：C3 / C4 E4 G4 C5
       {b:98.00, n:[293.66,392.00,493.88,587.33]},              // G ：G2 / D4 G4 B4 D5
@@ -7821,7 +7821,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,261.63],0.028);             // 極輕暖底（幾乎不可聞，只增溫潤）
+    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
     // 溫暖民謠和弦進行 C–Am–F–G（低音根音＋高聲部，最適合指彈）
     const prog=[
       {b:130.81,n:[261.63,329.63,392.00]},                     // C ：C3 / C4 E4 G4
@@ -7846,7 +7846,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.82;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[110.00,164.81,220.00],0.03);              // 極輕暖底
+    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
     const prog=[
       {b:110.00,n:[440.00,554.37,659.25,880.00]},              // A ：A2 / A4 C#5 E5 A5
       {b:82.41, n:[493.88,659.25,830.61,987.77]},              // E ：E2 / B4 E5 G#5 B5
