@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.4";
+const SITE_VERSION="v1.9.5";
 const SITE_VERSION_DATE="2026.07.13";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -4323,14 +4323,15 @@ function runPdfExport(fromFab){
   if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。若沒有跳出列印視窗，請改用電腦版 Safari／Chrome 開啟本頁，或往下用「存成圖片」保存報告。';}
   if(fromFab)showFabMsg('已開啟列印視窗，請選「另存為 PDF」。若沒反應，請改用電腦版瀏覽器或往下用「存成圖片」。',false);
   // 讓「另存為 PDF」的預設檔名帶上排盤人姓名（瀏覽器以 document.title 為建議檔名）
-  const _D=window.__ZW,_subj=(_D&&_D.name)?String(_D.name).trim():'';
+  // 檔名格式：〈排盤姓名〉的人生實用說明書；姓名空白時 fallback；並去除檔名非法字元。
+  const _D=window.__ZW;
+  let _subj=(_D&&_D.name)?String(_D.name).trim():'';
+  _subj=_subj.replace(/[\/\\:*?"<>|]/g,'').trim();
   const _origTitle=document.title;
-  if(_subj){
-    document.title=_subj+'_命理精析報告_人生實用說明書系統';
-    const _restoreTitle=()=>{document.title=_origTitle;window.removeEventListener('afterprint',_restoreTitle);};
-    window.addEventListener('afterprint',_restoreTitle);
-    setTimeout(_restoreTitle,60000);
-  }
+  document.title=_subj?(_subj+'的人生實用說明書'):'命主的人生實用說明書';
+  const _restoreTitle=()=>{document.title=_origTitle;window.removeEventListener('afterprint',_restoreTitle);};
+  window.addEventListener('afterprint',_restoreTitle);
+  setTimeout(_restoreTitle,60000);
   // 靜默失敗偵測：正常瀏覽器呼叫 window.print() 會觸發 beforeprint（或阻塞式開窗）。
   // 若某環境 window.print() 既不丟例外、也不真的開列印視窗（靜默 no-op），
   // 就在短暫延遲後判定為失敗並給明確提示，避免「按了完全沒反應」。
