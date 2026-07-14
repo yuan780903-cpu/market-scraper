@@ -1718,7 +1718,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">電腦：選「另存為 PDF」。手機：點瀏覽器「分享 / ⋯」→「列印」→ 縮放後存成 PDF。<br>「AI 分析文本」與「個人農民曆」已移至報告最末「命理應用工具」區，向下捲動即可使用。</span>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">點按即在本機產生完整 PDF 檔並下載（電腦與手機皆可，含 LINE／FB／IG 內建瀏覽器）。<br>「AI 分析文本」與「個人農民曆」已移至報告最末「命理應用工具」區，向下捲動即可使用。</span>
   </div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.5";
+const SITE_VERSION="v1.9.6";
 const SITE_VERSION_DATE="2026.07.13";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -4289,11 +4289,77 @@ function expTimeStr(){
   const ampm=d.getHours()<12?'上午':'下午';let h=d.getHours()%12;if(h===0)h=12;
   return `輸出時間 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${ampm}${h}時${p(d.getMinutes())}分${p(d.getSeconds())}秒`;
 }
-function runPdfExport(fromFab){
+/* ================= 真・PDF 前端產生器（手寫精簡 PDF，零外連） =================
+   重用 reportImgBlocks()/reportImgRender() 把「完整已解鎖報告」渲染成多張長圖 canvas，
+   再把每張 canvas → JPEG（DCTDecode 影像 XObject）組成一份合法 PDF blob。
+   不依賴 window.print()、不外連任何 CDN／函式庫；in-app 瀏覽器（LINE/FB/IG）也能走通。 */
+function buildPdfFromCanvases(canvases,quality){
+  if(!canvases||!canvases.length)throw new Error('沒有可輸出的報告頁面');
+  var q=(typeof quality==='number')?quality:0.9;
+  // Latin1 字串 → bytes（PDF 結構全為 ASCII）
+  var enc=function(s){var b=new Uint8Array(s.length);for(var i=0;i<s.length;i++)b[i]=s.charCodeAt(i)&0xff;return b;};
+  var chunks=[],offset=0,xref=[];
+  var put=function(u8){chunks.push(u8);offset+=u8.length;};
+  var putS=function(s){put(enc(s));};
+  // 檔頭 + 二進位標記註解（讓工具正確辨識為二進位 PDF）
+  putS('%PDF-1.3\n');
+  put(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+  var N=canvases.length,A4W=595.28;
+  // 先把每張 canvas 轉成 JPEG bytes 與頁面尺寸
+  var imgs=[];
+  for(var i=0;i<N;i++){
+    var cv=canvases[i];
+    var durl=cv.toDataURL('image/jpeg',q);
+    if(durl.indexOf('data:image/jpeg')!==0)throw new Error('此環境不支援 JPEG 輸出');
+    var bin=atob(durl.split(',')[1]);
+    var u8=new Uint8Array(bin.length);
+    for(var k=0;k<bin.length;k++)u8[k]=bin.charCodeAt(k);
+    imgs.push({bytes:u8,pxW:cv.width,pxH:cv.height,pw:A4W,ph:A4W*(cv.height/cv.width)});
+  }
+  // obj 1：Catalog
+  xref[1]=offset;putS('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  // obj 2：Pages
+  var kids='';for(i=0;i<N;i++)kids+=(3+i*3)+' 0 R ';
+  xref[2]=offset;putS('2 0 obj\n<< /Type /Pages /Kids ['+kids.replace(/\s+$/,'')+'] /Count '+N+' >>\nendobj\n');
+  // 每頁：Page + Contents + Image XObject
+  for(i=0;i<N;i++){
+    var im=imgs[i];
+    var pageNum=3+i*3,contentNum=4+i*3,imgNum=5+i*3;
+    var W=im.pw.toFixed(2),H=im.ph.toFixed(2);
+    xref[pageNum]=offset;
+    putS(pageNum+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /XObject << /Im'+i+' '+imgNum+' 0 R >> >> /Contents '+contentNum+' 0 R >>\nendobj\n');
+    var cs='q\n'+W+' 0 0 '+H+' 0 0 cm\n/Im'+i+' Do\nQ\n';
+    xref[contentNum]=offset;
+    putS(contentNum+' 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'endstream\nendobj\n');
+    xref[imgNum]=offset;
+    putS(imgNum+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+im.pxW+' /Height '+im.pxH+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+im.bytes.length+' >>\nstream\n');
+    put(im.bytes);
+    putS('\nendstream\nendobj\n');
+  }
+  // xref 表（每筆 20 bytes）
+  var xrefOffset=offset;
+  var total=(N>0?(5+(N-1)*3):2)+1; // 物件數（含 free obj 0）
+  putS('xref\n0 '+total+'\n');
+  putS('0000000000 65535 f \n');
+  for(var n=1;n<total;n++){
+    var off=xref[n]||0;
+    putS(('0000000000'+off).slice(-10)+' 00000 n \n');
+  }
+  putS('trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xrefOffset+'\n%%EOF\n');
+  return new Blob(chunks,{type:'application/pdf'});
+}
+function _pdfFileName(){
+  var D=window.__ZW;
+  var s=(D&&D.name)?String(D.name).trim():'';
+  s=s.replace(/[\/\\:*?"<>|]/g,'').trim();
+  return (s||'命主')+'的人生實用說明書.pdf';
+}
+async function runPdfExport(fromFab){
   const note=document.getElementById('pdfNote');
   const fmsg=document.getElementById('pdfFabMsg');
   const showFabMsg=(html,isErr)=>{if(!fmsg)return;fmsg.innerHTML=html;fmsg.className='pdffabmsg show'+(isErr?' err':'');};
   const hideFabMsg=()=>{if(fmsg){fmsg.className='pdffabmsg';}};
+  const setNote=(html,isErr)=>{if(note){note.innerHTML=html;note.style.color=isErr?'#c2576f':'';}if(fromFab)showFabMsg(html,!!isErr);};
   const z=document.getElementById('premZone');
   if(z&&z.classList.contains('locked')){
     const pw=document.getElementById('paywall');
@@ -4303,56 +4369,27 @@ function runPdfExport(fromFab){
     return;
   }
   hideFabMsg();
-  if(isInAppBrowser()){
-    // 內建瀏覽器（LINE/FB/IG 等）會封鎖列印，導致「按了沒反應」。引導改用系統瀏覽器。
-    const warn='※ 你正在 App 內建瀏覽器（如 LINE／FB），無法直接下載 PDF。請點畫面右上角的「<b>⋯</b>」或「分享」鈕，選「<b>用預設瀏覽器開啟</b>／在 Safari／Chrome 中開啟」，再按一次下載即可。';
-    if(note){note.innerHTML=warn;note.style.color='#c2576f';}
-    if(fromFab)showFabMsg(warn,true);
-    try{navigator.clipboard&&navigator.clipboard.writeText(location.href);}catch(e){}
-    return;
+  // 產生較久（多頁 canvas）給明確提示，避免「按了沒反應」；先讓提示繪出再做重活。
+  setNote('報告產生中…（完整多頁，約需 1～3 秒，請稍候）',false);
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    const blocks=reportImgBlocks();
+    if(!blocks||!blocks.length){setNote('✗ 找不到報告內容，請重新排盤後再試。',true);return;}
+    const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
+    const cvs=reportImgRender(blocks);
+    if(!cvs||!cvs.length)throw new Error('無法產生報告頁面');
+    const blob=buildPdfFromCanvases(cvs,0.9);
+    if(!blob||blob.size<100)throw new Error('PDF 產生為空');
+    const fname=_pdfFileName();
+    // 觸發下載：產生真 PDF blob 檔（in-app 若改開預覽／分享頁亦可，使用者可從那裡存檔）
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;a.rel='noopener';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}try{URL.revokeObjectURL(url);}catch(e){}},4000);
+    setNote('✓ 已產生完整 PDF（共 '+cvs.length+' 頁）並開始下載：'+fname+'。<br>若在 App 內建瀏覽器（LINE／FB／IG），可能改為開啟預覽／分享頁，請從那裡「儲存到檔案」或分享即可。',false);
+  }catch(e){
+    setNote('✗ PDF 產生失敗：'+((e&&e.message)||e)+'。請重新排盤後再試一次；若持續失敗，可往下捲到報告區用「<b>存成圖片</b>」把完整報告帶走。',true);
   }
-  const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
-  // 明確的失敗提示（列印不支援／被擋／靜默無反應時共用）
-  const FAIL_MSG='✗ 這個環境無法直接下載 PDF（列印視窗沒有開啟）。請改用電腦版 Safari／Chrome 開啟本頁再下載；若在手機，請往下捲到報告區用「<b>存成圖片</b>」把完整報告帶走。';
-  const showFail=()=>{
-    if(note){note.innerHTML=FAIL_MSG;note.style.color='#c2576f';}
-    showFabMsg(FAIL_MSG,true);
-  };
-  // 防呆：若這個環境根本沒有可用的列印功能，直接給提示，別讓使用者「按了沒反應」。
-  if(typeof window.print!=='function'){showFail();return;}
-  if(note){note.style.color='';note.textContent='已開啟列印視窗，請選「另存為 PDF」。若沒有跳出列印視窗，請改用電腦版 Safari／Chrome 開啟本頁，或往下用「存成圖片」保存報告。';}
-  if(fromFab)showFabMsg('已開啟列印視窗，請選「另存為 PDF」。若沒反應，請改用電腦版瀏覽器或往下用「存成圖片」。',false);
-  // 讓「另存為 PDF」的預設檔名帶上排盤人姓名（瀏覽器以 document.title 為建議檔名）
-  // 檔名格式：〈排盤姓名〉的人生實用說明書；姓名空白時 fallback；並去除檔名非法字元。
-  const _D=window.__ZW;
-  let _subj=(_D&&_D.name)?String(_D.name).trim():'';
-  _subj=_subj.replace(/[\/\\:*?"<>|]/g,'').trim();
-  const _origTitle=document.title;
-  document.title=_subj?(_subj+'的人生實用說明書'):'命主的人生實用說明書';
-  const _restoreTitle=()=>{document.title=_origTitle;window.removeEventListener('afterprint',_restoreTitle);};
-  window.addEventListener('afterprint',_restoreTitle);
-  setTimeout(_restoreTitle,60000);
-  // 靜默失敗偵測：正常瀏覽器呼叫 window.print() 會觸發 beforeprint（或阻塞式開窗）。
-  // 若某環境 window.print() 既不丟例外、也不真的開列印視窗（靜默 no-op），
-  // 就在短暫延遲後判定為失敗並給明確提示，避免「按了完全沒反應」。
-  let _printFired=false;
-  const _onBefore=()=>{_printFired=true;window.removeEventListener('beforeprint',_onBefore);};
-  window.addEventListener('beforeprint',_onBefore);
-  const _t0=Date.now();
-  try{window.print();}
-  catch(e){
-    window.removeEventListener('beforeprint',_onBefore);
-    showFail();
-    return;
-  }
-  // window.print() 在多數瀏覽器是阻塞的：回來時已過了明顯時間，或 beforeprint 已觸發 → 視為成功。
-  const _blocked=(Date.now()-_t0)>350;
-  if(_printFired||_blocked){window.removeEventListener('beforeprint',_onBefore);return;}
-  // 非阻塞且未觸發 beforeprint：再給一小段時間確認，仍無動靜就判定為靜默失敗。
-  setTimeout(()=>{
-    window.removeEventListener('beforeprint',_onBefore);
-    if(!_printFired)showFail();
-  },700);
 }
 document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
 document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
