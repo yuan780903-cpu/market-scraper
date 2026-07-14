@@ -1782,7 +1782,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.7";
+const SITE_VERSION="v1.9.8";
 const SITE_VERSION_DATE="2026.07.13";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -7828,11 +7828,12 @@ function __obChime(ctx,out,f,t,len,vol){  // 溫柔鐘聲（多泛音、緩起�
 }
 const __OB={
   rain(ctx,dur){
-    // 遠方細雨、悶而柔：大幅降低高頻沙沙聲＋降低整體密度與音量，聽了單純安定
-    const out=ctx.createGain();out.gain.value=0.34;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),hp=ctx.createBiquadFilter(),lp=ctx.createBiquadFilter();
-    hp.type='highpass';hp.frequency.value=120;lp.type='lowpass';lp.frequency.value=900;lp.Q.value=0.2;
-    s.connect(hp);hp.connect(lp);lp.connect(out);s.start();
+    // 極簡：單層白噪 → 超低通(cutoff 300Hz, 低Q) → 很輕的音量。
+    // 像很悶、很遠、很輕的一片柔和底噪；無高通/帶通/LFO/雨滴顆粒/高頻成分。
+    const out=ctx.createGain();out.gain.value=0.09;out.connect(ctx.destination);
+    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();
+    lp.type='lowpass';lp.frequency.value=300;lp.Q.value=0.3;
+    s.connect(lp);lp.connect(out);s.start();
   },
   ocean(ctx,dur){
     // 柔化海浪：降低整體音量與潮汐起伏幅度、大幅降高頻（低通中心下移），變得舒緩不吵
