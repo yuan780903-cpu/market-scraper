@@ -1718,7 +1718,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
     <div class="err" id="err"></div>
   </div>
 
-  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">點按即在本機產生完整 PDF 檔並下載（電腦與手機皆可，含 LINE／FB／IG 內建瀏覽器）。<br>「AI 分析文本」與「個人農民曆」已移至報告最末「命理應用工具」區，向下捲動即可使用。</span>
+  <div id="toolbar" class="toolbar"><button id="pdfBtn" class="pdfbtn">下載 PDF 專業報告</button><span class="tbnote" id="pdfNote">點按即以瀏覽器原生列印，印出完整專業排版報告；於列印視窗選「另存為 PDF」即可下載（建議用電腦或手機的 Safari／Chrome；LINE／FB／IG 內建瀏覽器無法列印）。<br>「AI 分析文本」與「個人農民曆」已移至報告最末「命理應用工具」區，向下捲動即可使用。</span>
   </div>
   <div id="result"></div>
   <div id="reportPrint" aria-hidden="true"></div>
@@ -1782,8 +1782,8 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v1.9.8";
-const SITE_VERSION_DATE="2026.07.13";
+const SITE_VERSION="v1.9.9";
+const SITE_VERSION_DATE="2026.07.15";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -4289,10 +4289,10 @@ function expTimeStr(){
   const ampm=d.getHours()<12?'上午':'下午';let h=d.getHours()%12;if(h===0)h=12;
   return `輸出時間 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${ampm}${h}時${p(d.getMinutes())}分${p(d.getSeconds())}秒`;
 }
-/* ================= 真・PDF 前端產生器（手寫精簡 PDF，零外連） =================
-   重用 reportImgBlocks()/reportImgRender() 把「完整已解鎖報告」渲染成多張長圖 canvas，
-   再把每張 canvas → JPEG（DCTDecode 影像 XObject）組成一份合法 PDF blob。
-   不依賴 window.print()、不外連任何 CDN／函式庫；in-app 瀏覽器（LINE/FB/IG）也能走通。 */
+/* ================= 【已停用｜v1.9.9 起不再作為下載路徑】圖片版 PDF 產生器 =================
+   v1.9.6 曾用它把報告畫成 canvas→JPEG 手組 PDF，但排版被簡化成圖片、不夠專業，
+   v1.9.9 已改回 window.print() 原生列印專業報告（見 runPdfExport）。
+   此函式本體保留但「不再被呼叫」，避免破壞其他引用；如需再次移除可安全刪除。 */
 function buildPdfFromCanvases(canvases,quality){
   if(!canvases||!canvases.length)throw new Error('沒有可輸出的報告頁面');
   var q=(typeof quality==='number')?quality:0.9;
@@ -4348,13 +4348,23 @@ function buildPdfFromCanvases(canvases,quality){
   putS('trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xrefOffset+'\n%%EOF\n');
   return new Blob(chunks,{type:'application/pdf'});
 }
-function _pdfFileName(){
+/* ===== 檔名機制：列印／另存 PDF 時瀏覽器以 document.title 作為預設檔名；
+   列印前設為「<命主>的人生實用說明書」，afterprint 還原成原站名（掛一次，避免重複／衝突）。 ===== */
+var _origTitle=document.title;
+function _restoreTitle(){try{document.title=_origTitle;}catch(e){}}
+window.addEventListener('afterprint',_restoreTitle);
+function _printDocTitle(){
   var D=window.__ZW;
   var s=(D&&D.name)?String(D.name).trim():'';
   s=s.replace(/[\/\\:*?"<>|]/g,'').trim();
-  return (s||'命主')+'的人生實用說明書.pdf';
+  return (s||'命主')+'的人生實用說明書';
 }
-async function runPdfExport(fromFab){
+/* ===== 下載 PDF 報告：走瀏覽器原生列印 window.print()，印出 #reportPrint 的完整專業排版報告
+   （卡片／命盤／配色／多頁，見 @media print + body.rp-on）。
+   保留：付費牆閘門、正確檔名（document.title→afterprint 還原）、in-app 內建瀏覽器
+   （LINE/FB/IG）無法列印時的明確失敗引導（不靜默沒反應）。
+   註：v1.9.6 的圖片版 PDF 產生器 buildPdfFromCanvases() 已停用、不再作為下載路徑。 ===== */
+function runPdfExport(fromFab){
   const note=document.getElementById('pdfNote');
   const fmsg=document.getElementById('pdfFabMsg');
   const showFabMsg=(html,isErr)=>{if(!fmsg)return;fmsg.innerHTML=html;fmsg.className='pdffabmsg show'+(isErr?' err':'');};
@@ -4369,27 +4379,31 @@ async function runPdfExport(fromFab){
     return;
   }
   hideFabMsg();
-  // 產生較久（多頁 canvas）給明確提示，避免「按了沒反應」；先讓提示繪出再做重活。
-  setNote('報告產生中…（完整多頁，約需 1～3 秒，請稍候）',false);
-  await new Promise(r=>setTimeout(r,50));
-  try{
-    const blocks=reportImgBlocks();
-    if(!blocks||!blocks.length){setNote('✗ 找不到報告內容，請重新排盤後再試。',true);return;}
-    const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
-    const cvs=reportImgRender(blocks);
-    if(!cvs||!cvs.length)throw new Error('無法產生報告頁面');
-    const blob=buildPdfFromCanvases(cvs,0.9);
-    if(!blob||blob.size<100)throw new Error('PDF 產生為空');
-    const fname=_pdfFileName();
-    // 觸發下載：產生真 PDF blob 檔（in-app 若改開預覽／分享頁亦可，使用者可從那裡存檔）
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=fname;a.rel='noopener';
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}try{URL.revokeObjectURL(url);}catch(e){}},4000);
-    setNote('✓ 已產生完整 PDF（共 '+cvs.length+' 頁）並開始下載：'+fname+'。<br>若在 App 內建瀏覽器（LINE／FB／IG），可能改為開啟預覽／分享頁，請從那裡「儲存到檔案」或分享即可。',false);
-  }catch(e){
-    setNote('✗ PDF 產生失敗：'+((e&&e.message)||e)+'。請重新排盤後再試一次；若持續失敗，可往下捲到報告區用「<b>存成圖片</b>」把完整報告帶走。',true);
+  // 報告已由排盤流程渲染進 #reportPrint（並掛 body.rp-on）；先確認內容存在
+  const rp=document.getElementById('reportPrint');
+  if(!rp||!rp.innerHTML.trim()||!document.body.classList.contains('rp-on')){
+    setNote('✗ 找不到報告內容，請重新排盤後再試。',true);return;
   }
+  // in-app 內建瀏覽器（LINE/FB/IG…）會靜默擋掉列印：明確引導、不要按了沒反應
+  const inApp=(typeof isInAppBrowser==='function')?isInAppBrowser():false;
+  if(typeof window.print!=='function'||inApp){
+    setNote('✗ 此環境（如 LINE／FB／IG 內建瀏覽器）無法列印下載 PDF。請改用電腦或手機的 <b>Safari／Chrome</b> 開啟本頁，再按「下載 PDF 報告」，於列印視窗選「另存為 PDF」即可。<br>已付款解鎖者也可往下捲到報告區用「<b>存成圖片</b>」把完整報告帶走。',true);
+    return;
+  }
+  // 更新報告輸出時間戳
+  const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
+  // 設定列印／另存 PDF 的預設檔名（document.title）；印完由 afterprint 還原原站名
+  try{document.title=_printDocTitle();}catch(e){}
+  try{
+    window.print();
+    setNote('已開啟列印視窗，請於印表機選單選「<b>另存為 PDF</b>」，即可下載完整專業排版報告：'+_printDocTitle()+'.pdf。',false);
+  }catch(e){
+    _restoreTitle();
+    setNote('✗ 無法開啟列印視窗。請改用電腦或手機的 <b>Safari／Chrome</b> 開啟本頁後再試，或往下捲到報告區用「<b>存成圖片</b>」保存報告。',true);
+    return;
+  }
+  // 保險：少數瀏覽器不觸發 afterprint 時，延時還原標題（與 afterprint 監聽為冪等）
+  setTimeout(_restoreTitle,3000);
 }
 document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
 document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
