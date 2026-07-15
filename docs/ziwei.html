@@ -1795,7 +1795,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 <!-- html2canvas 已於 v2.0.1 移除：下載改回瀏覽器原生列印 window.print() -->
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v2.0.3";
+const SITE_VERSION="v2.0.4";
 const SITE_VERSION_DATE="2026.07.15";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -3407,7 +3407,7 @@ function readFamMembers(){
     if(y<1900||y>2100)return;
     const tv=row.querySelector(".f-time").value;
     const hh=tv!==""?Number(tv):12;
-    arr.push({rel:row.querySelector(".f-rel").value,name:row.querySelector(".f-name").value.trim(),y,m,d,hh});
+    arr.push({rel:row.querySelector(".f-rel").value,name:esc4kol(row.querySelector(".f-name").value.trim()),y,m,d,hh});
   });
   return arr;
 }
@@ -3827,6 +3827,7 @@ const XISHEN={甲:"東北",己:"東北",乙:"西北",庚:"西北",丙:"西南",�
 const PENGZU_GAN={甲:"甲不開倉財物耗散",乙:"乙不栽植千株不長",丙:"丙不修灶必見災殃",丁:"丁不剃頭頭必生瘡",戊:"戊不受田田主不祥",己:"己不破券二比並亡",庚:"庚不經絡織機虛張",辛:"辛不合醬主人不嘗",壬:"壬不汲水更難提防",癸:"癸不詞訟理弱敵強"};
 const PENGZU_ZHI={子:"子不問卜自惹禍殃",丑:"丑不冠帶主不還鄉",寅:"寅不祭祀神鬼不嘗",卯:"卯不穿井水泉不香",辰:"辰不哭泣必主重喪",巳:"巳不遠行財物伏藏",午:"午不苫蓋屋主更張",未:"未不服藥毒氣入腸",申:"申不安床鬼祟入房",酉:"酉不會客醉坐顛狂",戌:"戌不吃犬作怪上床",亥:"亥不嫁娶不利新郎"};
 function renderHuangli(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const y=sol.y,m=sol.m,d=sol.d;
   const bz=calcBazi(y,m,d,12);
   const dGan=bz.day.gan,dZhi=bz.day.zhi;
@@ -3891,6 +3892,7 @@ function renderHuangli(name,gender,sol,sub){
 
 /* ===== 米卦（梅花易數 · 體用斷） ===== */
 function renderMige(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   // 撒米三撮（隨機米粒數）
   const c1=18+Math.floor(Math.random()*100), c2=18+Math.floor(Math.random()*100), c3=18+Math.floor(Math.random()*100);
   const up=(c1%8)||8, lo=(c2%8)||8;          // 先天卦數 1-8
@@ -3938,6 +3940,7 @@ function renderMige(name,gender,sol,sub){
 
 /* ===== 烏龜卦（金錢六爻 · 本卦變卦） ===== */
 function renderGuigua(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   // 搖卦六次，每次三錢：6老陰 7少陽 8少陰 9老陽
   const vals=[]; for(let i=0;i<6;i++){let v=0;for(let k=0;k<3;k++)v+=(Math.random()<0.5?2:3); vals.push(v);}
   const ben=vals.map(v=>(v===7||v===9)?1:0);
@@ -3982,6 +3985,7 @@ function renderGuigua(name,gender,sol,sub){
 
 /* ===== 西洋占星 ===== */
 function renderWestern(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const z=ZODIAC[sunSign(sol.m,sol.d)];
   const html=`
   <div class="sec-title"><span class="cn">西洋占星 · 太陽星座</span><span class="en">Western Astrology</span></div>
@@ -4007,6 +4011,7 @@ function renderWestern(name,gender,sol,sub){
 
 /* ===== 塔羅本命牌 ===== */
 function renderTarot(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const idx=tarotBirth(sol.y,sol.m,sol.d);
   const c=TAROT[idx];
   const html=`
@@ -4027,6 +4032,7 @@ function renderTarot(name,gender,sol,sub){
 
 /* ===== 印度吠陀 ===== */
 function renderVedic(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const v=vedic(sol.y,sol.m,sol.d);
   const nak=NAKSHATRA[v.nak];
   const guna=v.el==="水"?"Sattva（靈性內省）":v.el==="土"?"Tamas（穩定務實）":"Rajas（積極行動）";
@@ -4052,6 +4058,7 @@ function renderVedic(name,gender,sol,sub){
 
 /* ===== 生命靈數 ===== */
 function renderNum(name,gender,sol,sub){
+  name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const lp=lifePath(sol.y,sol.m,sol.d);
   const py=personalYear(sol.m,sol.d,2026);
   const nd=NUM_DESC[lp];
@@ -4766,7 +4773,7 @@ let LC_ORIG="888 元";    // ← 失敗安全的原價（顯示刪除線）
 // 目前生效的價格與文字標籤（由 /price/get 載入；先給預設值避免任何時序空窗）。
 let __price={
   original:888, promo:188,
-  labels:{title:"人生航路限時結緣價", unit:"／ 單份完整報告", origPrefix:"原價", restoreNote:"限時結緣價倒數 {cd} 後恢復原價 {orig}", currency:"元"}
+  labels:{title:"優惠價", unit:"／ 單份完整報告", origPrefix:"原價", restoreNote:"", currency:"元"}
 };
 function __priceCurrency(){return (__price&&__price.labels&&__price.labels.currency)||"元";}
 function __priceMoney(n){return String(n)+" "+__priceCurrency();}  // 例："188 元"
@@ -4781,20 +4788,8 @@ function __applyPriceStrings(){
 function __renderPriceNodes(){
   try{
     __applyPriceStrings();
-    const L=(__price&&__price.labels)||{};
-    // 原價刪除線列
-    const orig=document.querySelector('.paywall .pworig');
-    if(orig)orig.innerHTML=(L.origPrefix||'原價')+' <s>'+esc4kol(LC_ORIG)+'</s>';
-    // 倒數列「恢復原價」文案（{cd} 保留為倒數 <b> 節點，{orig} 換成原價字串）
-    const cd=document.getElementById('pwCountdown');
-    if(cd){
-      const note=(L.restoreNote||'限時結緣價倒數 {cd} 後恢復原價 {orig}');
-      const html=esc4kol(note)
-        .replace('{cd}','<b id="pwCdTime">--:--:--</b>')
-        .replace('{orig}',esc4kol(LC_ORIG));
-      cd.innerHTML=html;
-    }
-    // 優惠價主列（無折扣碼/KOL 時）→ 交給 updatePriceUI 統一處理
+    // R1 合規：不再顯示「原價刪除線」與「限時倒數恢復原價」（避免不實促銷）。
+    // 只以 updatePriceUI 顯示目前實際售價。
     updatePriceUI();
   }catch(e){}
 }
@@ -4807,7 +4802,7 @@ async function priceLoad(){
       __price={
         original:parseInt(j.original,10),
         promo:parseInt(j.promo,10),
-        labels:Object.assign({title:"人生航路限時結緣價",unit:"／ 單份完整報告",origPrefix:"原價",restoreNote:"限時結緣價倒數 {cd} 後恢復原價 {orig}",currency:"元"},(j.labels&&typeof j.labels==='object')?j.labels:{})
+        labels:Object.assign({title:"優惠價",unit:"／ 單份完整報告",origPrefix:"原價",restoreNote:"",currency:"元"},(j.labels&&typeof j.labels==='object')?j.labels:{})
       };
     }
   }catch(e){ /* 失敗安全：保留預設 */ }
@@ -4849,18 +4844,13 @@ function updatePriceUI(){
   }else if(__disc){
     el.innerHTML='<em>折扣後應付</em> <del>'+esc4kol(__disc.base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(__disc.final)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
   }else{
-    el.innerHTML='<em>'+esc4kol(L.title||'人生航路限時結緣價')+'</em> '+esc4kol(LC_PRICE)+' <span>'+esc4kol(unit)+'</span>';
+    el.innerHTML='<em>'+esc4kol(L.title||'優惠價')+'</em> '+esc4kol(LC_PRICE)+' <span>'+esc4kol(unit)+'</span>';
   }
 }
 function esc4kol(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-/* 限時結緣價：24 小時循環倒數（時分秒），到 0 自動歸零重新倒數 24:00:00，製造急迫感 */
-function __pwCdTick(){
-  const el=document.getElementById('pwCdTime');if(!el)return;
-  const day=86400000, ms=day-(Date.now()%day);
-  const p=n=>String(n).padStart(2,'0');
-  el.textContent=p(Math.floor(ms/3600000))+':'+p(Math.floor((ms%3600000)/60000))+':'+p(Math.floor((ms%60000)/1000));
-}
-setInterval(__pwCdTick,1000);
+/* R1 合規：已停用「限時循環倒數」計時器（原為永不真正結束的假限時，違反不實促銷）。
+   保留空函式避免其他呼叫點報錯；不再以 setInterval 啟動。 */
+function __pwCdTick(){ /* disabled for R1 compliance */ }
 async function discApply(){
   const inp=document.getElementById('discInput'),msg=document.getElementById('discMsg');
   const code=(inp?inp.value:'').trim().toUpperCase();
@@ -4987,16 +4977,16 @@ async function lcUnlock(){
 function superOpen(){
   if(document.getElementById('superMask'))return;
   const m=document.createElement('div');m.id='superMask';m.className='supermask';
-  let saved='';try{saved=localStorage.getItem('zw_admin_secret')||'';}catch(e){}
-  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  // M6：預設不記住管理密碼（不自動載入、不預先填入、勾選框預設不勾），
+  // 降低共用裝置上明文密碼外洩風險。使用者仍可自行勾選「記住於本機」持久化。
   m.innerHTML=`<div class="superbox eng" role="dialog" aria-label="工程模式">
     <button class="superx" type="button" aria-label="關閉">×</button>
     <div class="supertt">工程模式 · 維護者主控台</div>
     <div class="supersub">聖源大師專用。發碼需後端管理密碼；密碼僅存於此裝置、不會外傳，也不寫入網頁原始碼。</div>
     <div class="engsec">
       <div class="englbl">管理密碼（後端 ADMIN_SECRET）</div>
-      <input id="engSecret" class="superinp" type="password" autocomplete="off" spellcheck="false" placeholder="輸入管理密碼" value="${esc(saved)}">
-      <label class="engchk"><input type="checkbox" id="engRemember" ${saved?'checked':''}> 記住於本機（僅此裝置）</label>
+      <input id="engSecret" class="superinp" type="password" autocomplete="off" spellcheck="false" placeholder="輸入管理密碼" value="">
+      <label class="engchk"><input type="checkbox" id="engRemember"> 記住於本機（僅此裝置，預設不記住）</label>
       <button class="engbtn" type="button" id="engVerifyBtn" onclick="engVerify()">驗證並進入</button>
       <div id="engAuthMsg" class="engout"></div>
     </div>
@@ -6754,6 +6744,10 @@ function _flyBindResize(){
 }
 
 function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
+  // M2 防 XSS：保留原始姓名供付款金鑰／姓名雜湊（永不外傳明文、需前後端一致）；
+  // 顯示用的 name 一律經 esc4kol 轉義，避免 <img onerror> 之類注入。
+  const __rawName=name;
+  name=esc4kol(name);
   const res=document.getElementById("result");
   const leapTxt=lunar.isLeap?"閏":"";
   const shengxiao=SHENGXIAO[bz.year.zhi];
@@ -7008,7 +7002,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 存全域供觸控彈窗讀取
   window.__ZW={zw,adv,bz,dm,name,gender,lk,wx,liunian:liunianBranch,birthYear:sol.y,sol,lunar};
   // 付費解鎖身分（姓名｜生日｜時間｜性別）；額外保留原始姓名供「跨裝置憑姓名復原」用。
-  window.__LC={payload:lcPayload(name,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender),name:name};
+  window.__LC={payload:lcPayload(__rawName,sol.y,sol.m,sol.d,sol.hh,sol.mm,gender),name:__rawName};
 
   const html=`
   <div class="sec-title"><span class="cn">命格總覽</span><span class="en">Natal Chart Overview</span></div>
@@ -7066,9 +7060,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>2026 流年運程 ・ 綜合個人化論斷</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
-    <div class="pworig">原價 <s>${LC_ORIG}</s></div>
-    <div id="pwPriceLine" class="pwprice"><em>人生航路限時結緣價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
-    <div id="pwCountdown" class="pwcd">限時結緣價倒數 <b id="pwCdTime">--:--:--</b> 後恢復原價 ${LC_ORIG}</div>
+    <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div id="ecBtnWrap" class="lpwrap" style="display:none">
       <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
       <div class="lpsec">本系統付款採用 <b>綠界科技 ECPay</b> 第三方金流，支援信用卡／ATM／超商。交易全程由綠界加密處理，本站<b>不經手、不留存您的卡號等付款資訊</b>，安全有保障；完成付款後立即自動開啟完整報告。</div>
