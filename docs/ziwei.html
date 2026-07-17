@@ -460,9 +460,57 @@ header .meta b{color:var(--gold);font-weight:500}
 .luckcol .lz{font-size:1.7rem;font-weight:700;color:var(--ink);line-height:1.2}
 .luckcol .ltg{font-size:.72rem;color:var(--purple);margin-top:6px}
 .luckcol .lny{font-size:.66rem;color:var(--ink-faint);margin-top:3px}
-.lnrow{display:grid;grid-template-columns:repeat(10,minmax(80px,1fr));gap:10px;min-width:900px}
+.lnrow{display:flex;justify-content:center;gap:10px}
+.lnrow .lncol{min-width:130px;cursor:pointer}
 .lncol .la{font-size:.92rem;font-weight:700;letter-spacing:0;color:var(--gold-deep)}
 .lncol .ltg{font-weight:700;color:var(--purple)}
+.lncur{max-width:640px;margin:6px auto 0;line-height:1.85;font-size:.95rem;color:var(--ink)}
+.lnhero{position:relative;overflow:hidden;max-width:640px;margin:8px auto 0;display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;padding:20px 24px;border:1px solid rgba(150,110,200,.18);border-radius:22px;background:linear-gradient(140deg,rgba(238,231,251,.72),rgba(253,248,238,.9) 55%,rgba(246,238,224,.8));box-shadow:0 16px 44px -22px rgba(120,90,160,.5),0 2px 8px -4px rgba(120,90,20,.14)}
+.lnspark{position:absolute;width:20px;height:20px;pointer-events:none;opacity:.55;z-index:0}
+.lnspark path{fill:#b48ce0}
+.lnspark.s1{top:14px;right:24px;width:22px;height:22px}
+.lnspark.s2{bottom:18px;left:26px;width:15px;height:15px}
+.lnspark.s2 path{fill:#e0a83a}
+.lnspark.s3{top:46%;right:15px;width:12px;height:12px}
+.lnspark.s4{top:22px;left:34px;width:11px;height:11px}
+.lnspark.s4 path{fill:#e0a83a}
+.lnhero .lncol-hero,.lnhero .lnhero-info{position:relative;z-index:1}
+
+.lncol-hero{min-width:150px;flex:0 0 auto}
+.lnhero-info{flex:1 1 260px;min-width:240px;text-align:left}
+.lnhero-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.lnhero-chips span{font-size:.76rem;background:var(--wash,#faf3e2);border:1px solid var(--line,#e0d3ad);border-radius:8px;padding:3px 10px;color:var(--ink)}
+.lnhero-pc{font-weight:700;color:var(--gold-deep,#6f5210);margin-bottom:6px;font-size:1rem}
+.lnhero-desc{font-size:.88rem;line-height:1.8;color:var(--ink);margin:0 0 13px}
+.lnhero-btn{padding:11px 22px;border:none;border-radius:10px;cursor:pointer;font-weight:800;font-size:.9rem;color:#fff;
+  background:linear-gradient(135deg,#d9a93a,#9a6f17);box-shadow:0 5px 14px rgba(120,90,20,.25);transition:.15s}
+.lnhero-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(120,90,20,.32)}
+@media(max-width:560px){.lnhero{padding:16px;gap:14px}.lnhero-info{text-align:center;flex-basis:100%}.lnhero-chips{justify-content:center}}
+.lncur p{margin:8px 0}
+.lnupsell{max-width:640px;margin:16px auto 0;padding:14px 18px;border:1px solid var(--gold);border-radius:12px;
+  background:linear-gradient(135deg,rgba(217,169,58,.10),rgba(179,56,44,.06));color:var(--ink);font-size:.9rem;line-height:1.75;text-align:center}
+.lnbuybtn{padding:13px 20px;min-width:230px;box-sizing:border-box;border:none;border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#d9a93a,#9a6f17);box-shadow:0 5px 14px rgba(120,90,20,.25);transition:.15s}
+.lnbuybtn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(120,90,20,.32)}
+.lncmp-h{font-weight:800;color:var(--gold-deep,#6f5210);font-size:1.02rem;margin-bottom:8px}
+.lncmp{text-align:left;max-width:560px;margin:0 auto}
+.lncmp-row{display:flex;gap:8px;margin:7px 0;line-height:1.75;font-size:.9rem}
+.lncmp-row>b{flex:0 0 auto;color:var(--gold-deep,#6f5210)}
+.lncmp-row i{color:#b3382c;font-style:normal;font-weight:700}
+.lncmp-note{margin-top:10px;font-size:.9rem}
+.lncmp-btns{margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.lnbuybtn2{padding:13px 20px;min-width:230px;box-sizing:border-box;border:1.5px solid var(--gold,#c7a24a);border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:700;color:var(--gold-deep,#6f5210);background:transparent;transition:.15s}
+.lnbuybtn.signboard{position:relative;overflow:hidden;animation:lnbtnGlow 1.9s ease-in-out infinite}
+.lnbuybtn.signboard::after{content:"";position:absolute;top:0;left:-60%;width:42%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.9),transparent);transform:skewX(-22deg);animation:lnbtnShine 2.5s ease-in-out infinite;pointer-events:none}
+@keyframes lnbtnShine{0%,55%{left:-60%}100%{left:135%}}
+@keyframes lnbtnGlow{0%,100%{box-shadow:0 5px 14px rgba(120,90,20,.28)}50%{box-shadow:0 6px 22px rgba(224,178,74,.75),0 0 0 2px rgba(224,178,74,.42)}}
+@media(prefers-reduced-motion:reduce){.lnbuybtn.signboard{animation:none}.lnbuybtn.signboard::after{display:none}}
+.lnbuybtn2:hover{background:rgba(199,162,74,.12)}
+.lnlockbox{margin:14px 0 8px;padding:12px 14px;border:1px dashed var(--gold);border-radius:10px;text-align:center;font-weight:700;background:rgba(217,169,58,.08)}
+.lncsx{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin:8px 0}
+.lncsx input{margin-top:3px;flex:0 0 auto}
+.ln30{font-weight:900;color:#c8102e;white-space:nowrap;animation:ln30blink 1.05s ease-in-out infinite}
+@keyframes ln30blink{0%,100%{opacity:1;text-shadow:0 0 10px rgba(200,16,46,.65)}50%{opacity:.4;text-shadow:0 0 0 rgba(200,16,46,0)}}
+@media(prefers-reduced-motion:reduce){.ln30{animation:none}}
 
 /* 神煞 */
 .shensha{display:flex;flex-wrap:wrap;gap:12px}
@@ -1332,8 +1380,21 @@ footer .disc .sub{display:block;margin-top:12px}
 .paywall .pwcd{margin:4px auto 8px;font-size:.9rem;color:#b0402f;letter-spacing:.5px}
 .paywall .pwcd b{display:inline-block;min-width:88px;font-size:1.02rem;font-weight:800;color:#fff;background:#c2402f;
   border-radius:8px;padding:2px 9px;margin:0 2px;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.paywall .pwprice em{font-style:normal;font-size:.92rem;font-weight:700;color:var(--purple);margin-right:4px;
-  background:var(--pwash);border-radius:8px;padding:2px 8px;vertical-align:middle}
+/* 閃亮招牌效果：金／硃砂漸層徽章＋掃光＋呼吸微光 */
+.paywall .pwprice em{font-style:normal;font-size:.92rem;font-weight:800;color:#fff4d6;margin-right:6px;
+  display:inline-block;position:relative;overflow:hidden;vertical-align:middle;
+  padding:3px 12px;border-radius:9px;letter-spacing:.5px;
+  background:linear-gradient(120deg,#b3382c 0%,#c9542e 28%,#e0b24a 54%,#9a6f17 100%);
+  text-shadow:0 1px 2px rgba(90,20,10,.55);
+  box-shadow:0 2px 10px rgba(179,56,44,.32),inset 0 0 0 1px rgba(255,240,200,.35);
+  animation:pwGlow 2.6s ease-in-out infinite}
+.paywall .pwprice em::after{content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);
+  transform:skewX(-22deg);animation:pwShine 2.8s ease-in-out infinite}
+@keyframes pwShine{0%,58%{left:-60%}100%{left:130%}}
+@keyframes pwGlow{0%,100%{box-shadow:0 2px 10px rgba(179,56,44,.32),inset 0 0 0 1px rgba(255,240,200,.32)}
+  50%{box-shadow:0 3px 18px rgba(224,178,74,.62),inset 0 0 0 1px rgba(255,240,200,.55)}}
+@media (prefers-reduced-motion:reduce){.paywall .pwprice em{animation:none}.paywall .pwprice em::after{display:none}}
 .paywall .pwprice span{font-size:.84rem;font-weight:400;color:var(--ink-faint)}
 .paywall .pwbuy{font-size:.84rem;color:var(--purple);background:var(--pwash);border:1px dashed var(--purple);
   border-radius:12px;padding:9px 14px;margin:10px auto 14px;max-width:470px;line-height:1.75}
@@ -1497,8 +1558,8 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 @media(max-width:640px){
   .superbox.eng.engwide{max-width:392px}
   .engshell{flex-direction:column;gap:10px}
-  .engnav{flex:none;width:100%;position:static;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-  .engnav-group{margin-bottom:0;display:flex;gap:6px;align-items:center;flex:0 0 auto}
+  .engnav{flex:none;width:100%;position:static;display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px}
+  .engnav-group{margin-bottom:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .engnav-gt{display:none}
   .engnav-item{width:auto;flex:0 0 auto;white-space:nowrap;margin-bottom:0;padding:7px 12px;font-size:.82rem;border:1px solid var(--line,#ddd)}
 }
@@ -1795,7 +1856,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 <!-- html2canvas 已於 v2.0.1 移除：下載改回瀏覽器原生列印 window.print() -->
 <script>
 /* ================= 站台版本（改版只需改這裡） ================= */
-const SITE_VERSION="v2.0.4";
+const SITE_VERSION="v2.3.2";
 const SITE_VERSION_DATE="2026.07.15";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
@@ -4763,12 +4824,12 @@ function timeLabel(h){
 /* ===== 付費解鎖機制（一次性萬用碼・真正全球單次核銷） =====
    原理：你用本機「萬用碼工具」發出 0001~9999 的萬用碼，存進 Cloudflare
    Worker（免費）的 KV；客戶在此輸入萬用碼，本頁向 Worker 核銷：未用過→解鎖
-   並把該碼標記為已用，全世界只能用一次；16888 為無限次「超級萬用碼」。
+   並把該碼標記為已用，全世界只能用一次。
    命理計算全程在本機，不上傳任何個資；只把「4 位數字的碼」送去驗證。 */
 const LC_API=(function(){try{return localStorage.getItem('zw_lic_api')||"https://ziwei-lic.yuan780903.workers.dev";}catch(e){return "https://ziwei-lic.yuan780903.workers.dev";}})();
 /* 價格：預設寫死值＝失敗安全（/price/get 讀不到時顯示這組，畫面永不空白）。
    實際顯示與收款一律以後端 KV「price:current」為單一真相；工程模式可改價。 */
-let LC_PRICE="188 元";   // ← 失敗安全的結緣價（後端讀取失敗時顯示）
+let LC_PRICE="888 元";   // ← 失敗安全的結緣價（後端讀取失敗時顯示）
 let LC_ORIG="888 元";    // ← 失敗安全的原價（顯示刪除線）
 // 目前生效的價格與文字標籤（由 /price/get 載入；先給預設值避免任何時序空窗）。
 let __price={
@@ -4976,6 +5037,7 @@ async function lcUnlock(){
    → 寫入本機全站旗標 zw_lic_super=1 → 全站永久開通（不消耗、不過期）。 */
 function superOpen(){
   if(document.getElementById('superMask'))return;
+  try{siteHideMaint();}catch(e){}   // 維護中也能進工程模式：移除維護遮罩避免其動畫干擾輸入（iOS）
   const m=document.createElement('div');m.id='superMask';m.className='supermask';
   // M6：預設不記住管理密碼（不自動載入、不預先填入、勾選框預設不勾），
   // 降低共用裝置上明文密碼外洩風險。使用者仍可自行勾選「記住於本機」持久化。
@@ -4997,6 +5059,8 @@ function superOpen(){
         <div class="engnav-gt">價格 / 行銷</div>
         <button type="button" class="engnav-item active" data-engpanel="engP_price">⓪ 價格修改</button>
         <button type="button" class="engnav-item" data-engpanel="engP_dm">⑦ DM 宣傳圖</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_kolimg">⑨ KOL 限動圖</button>
+        <button type="button" class="engnav-item" data-engpanel="engP_kolcon">⑩ KOL 合約</button>
       </div>
       <div class="engnav-group">
         <div class="engnav-gt">代碼管理</div>
@@ -5010,7 +5074,8 @@ function superOpen(){
         <button type="button" class="engnav-item" data-engpanel="engP_report">⑤ KOL 月結報表</button>
       </div>
       <div class="engnav-group">
-        <div class="engnav-gt">其他</div>
+        <div class="engnav-gt">營運 / 系統</div>
+        <button type="button" class="engnav-item" data-engpanel="engP_site">⑧ 網站開關</button>
         <button type="button" class="engnav-item" data-engpanel="engP_local">⑥ 本機開通</button>
       </div>
     </nav>
@@ -5080,7 +5145,9 @@ function superOpen(){
       <div class="englbl">⑤ KOL 月結報表</div>
       <div class="engrow"><span class="engk">選擇 KOL</span><select id="engRptKol" class="enginp2"><option value="">— 請先載入清單 —</option></select><button class="englink" type="button" onclick="engKolLoadForReport()">載入</button></div>
       <div class="engrow"><span class="engk">月份</span><input id="engRptMonth" class="enginp2" type="month"><label class="engradio"><input type="checkbox" id="engRptAll"> 全部（不限月份）</label></div>
-      <button class="engbtn" type="button" onclick="engKolReport()">產生月結</button>
+      <div class="engrow"><span class="engk">自訂區間</span><input id="engRptFrom" class="enginp2" type="date" style="max-width:150px"><span class="engu">～</span><input id="engRptTo" class="enginp2" type="date" style="max-width:150px"></div>
+      <div class="engrow" style="font-size:.7rem;color:var(--ink-faint,#888)">填了自訂區間即以區間為準（優先於月份）。月結請選「月份」；跨月對帳用「自訂區間」。</div>
+      <button class="engbtn" type="button" onclick="engKolReport()">產生報表</button>
       <div id="engRptOut" class="engout"></div>
       <div id="engRptTable" class="englist"></div>
     </div>
@@ -5108,11 +5175,52 @@ function superOpen(){
       <div id="dmOut" class="engout"></div>
     </div>
     </div>
+    <div class="eng-panel" id="engP_site">
+    <div class="engsec">
+      <div class="englbl">⑧ 網站開關（維護模式）</div>
+      <div class="engrow" style="font-size:.78rem;color:var(--ink-faint,#888);line-height:1.6">關閉後，所有訪客都會看到「系統更新中」遮罩、無法使用網站；你隨時可再打開。狀態存在後端，對全部裝置即時生效。（維護中要再進工程模式：在遮罩畫面連點中央羅盤 7 下。）</div>
+      <div class="engrow"><span class="engk">目前狀態</span><b id="siteStatusTxt">按左側進入時讀取…</b> <button class="englink" type="button" onclick="engSiteRefresh()">重新整理</button></div>
+      <div class="engrow"><span class="engk">維護訊息</span><input id="siteMsgInp" class="enginp2" placeholder="網站正在維護升級，稍後回來 🙏" maxlength="60" autocomplete="off"></div>
+      <button class="engbtn" type="button" onclick="engSiteToggle('closed')" style="background:linear-gradient(135deg,#d16a5a,#a3352a)">🔴 關閉網站（進入維護）</button>
+      <button class="engbtn" type="button" onclick="engSiteToggle('open')">🟢 打開網站（恢復營運）</button>
+      <div id="siteOut" class="engout"></div>
+    </div>
+    </div>
+    <div class="eng-panel" id="engP_kolimg">
+    <div class="engsec">
+      <div class="englbl">⑨ KOL 推薦碼限動圖（給網紅發限動・純前端）</div>
+      <div class="engrow"><span class="engk">KOL 名稱</span><input id="kiName" class="enginp2" placeholder="選填，例：小美老師" maxlength="20" autocomplete="off"></div>
+      <div class="engrow"><span class="engk">推薦碼</span><input id="kiCode" class="enginp2" placeholder="例：MEIMEI" maxlength="24" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">粉絲折扣</span><input id="kiDisc" class="enginp2" type="number" min="0" value="100"><span class="engu">元（0＝不折扣，改顯示「專屬推薦通道」）</span></div>
+      <button class="engbtn" type="button" onclick="kiRefresh()">更新預覽</button>
+      <div class="dmprev" id="kiPrev"><div class="engempty">填好資料按「更新預覽」。</div></div>
+      <button class="engbtn" type="button" onclick="kiDownload()">下載限動圖 1080×1920</button>
+      <div id="kiOut" class="engout"></div>
+    </div>
+    </div>
+    <div class="eng-panel" id="engP_kolcon">
+    <div class="engsec">
+      <div class="englbl">⑩ KOL 合作合約（本機產生・列印或存 PDF）</div>
+      <div class="engrow" style="font-size:.72rem;color:var(--ink-faint,#888);line-height:1.5">填好資料按「產生合約」→ 新視窗開啟合約 → 按「列印／存成 PDF」下載。全程本機、不上傳。可先從清單帶入 KOL。</div>
+      <div class="engrow"><span class="engk">從清單帶入</span><select id="kcKol" class="enginp2" onchange="kcFill()"><option value="">— 手動輸入 —</option></select><button class="englink" type="button" onclick="kcLoadList()">載入清單</button></div>
+      <div class="engrow"><span class="engk">甲方名稱</span><input id="kcParty" class="enginp2" value="人生實用說明書系統" maxlength="30" autocomplete="off"></div>
+      <div class="engrow"><span class="engk">甲方代表人</span><input id="kcRep" class="enginp2" placeholder="你的簽署姓名" maxlength="20" autocomplete="off"></div>
+      <div class="engrow"><span class="engk">乙方 KOL 姓名</span><input id="kcName" class="enginp2" placeholder="網紅本名" maxlength="30" autocomplete="off"></div>
+      <div class="engrow"><span class="engk">乙方聯絡方式</span><input id="kcContact" class="enginp2" placeholder="LINE／電話／Email" maxlength="40" autocomplete="off"></div>
+      <div class="engrow"><span class="engk">推薦碼</span><input id="kcCode" class="enginp2" placeholder="例：MEIMEI" maxlength="24" autocomplete="off" spellcheck="false"></div>
+      <div class="engrow"><span class="engk">客戶折扣</span><input id="kcDisc" class="enginp2" type="number" min="0" value="0"><span class="engu">元</span></div>
+      <div class="engrow"><span class="engk">每單返佣</span><input id="kcComm" class="enginp2" type="number" min="0" value="0"><span class="engu">元</span></div>
+      <div class="engrow"><span class="engk">結算付款</span>月結後 <input id="kcDays" class="enginp2" type="number" min="1" value="7" style="max-width:80px"><span class="engu">日內匯款</span></div>
+      <div class="engrow"><span class="engk">合作起始日</span><input id="kcStart" class="enginp2" type="date" style="max-width:170px"></div>
+      <button class="engbtn" type="button" onclick="kcDownload()">產生合約（列印／存 PDF）</button>
+      <div id="kcOut" class="engout"></div>
+    </div>
+    </div>
     </div>
     </div>
   </div>`;
   document.body.appendChild(m);
-  const close=()=>{m.remove();};
+  const close=()=>{m.remove();try{siteLoad();}catch(e){}};   // 關工程模式後，網站若仍維護中則恢復維護畫面
   m.addEventListener('click',e=>{if(e.target===m)close();});
   m.querySelector('.superx').addEventListener('click',close);
   const inp=m.querySelector('#superInput');
@@ -5162,6 +5270,7 @@ function engNavShow(pid){
   const gate=document.getElementById('engGate'); if(!gate)return;
   gate.querySelectorAll('.eng-panel').forEach(p=>p.classList.toggle('active',p.id===pid));
   gate.querySelectorAll('.engnav-item').forEach(b=>b.classList.toggle('active',b.getAttribute('data-engpanel')===pid));
+  if(pid==='engP_site'){try{engSiteRefresh();}catch(e){}}   // 進入網站開關頁即讀目前狀態
 }
 function engNavInit(){
   const gate=document.getElementById('engGate'); if(!gate||gate.__navBound)return;
@@ -5507,65 +5616,71 @@ function dmRender(canvas,size){
   ctx.textAlign='center';ctx.textBaseline='alphabetic';
   dmBackground(ctx,W,H,C);
   var cx=W/2;
-  // 版面比例：方形緊湊置中；直式縱向鋪開、上下留白
+  // 版面：方形緊湊置中；直式縱向鋪開。有真實折扣才畫原價刪除線（避免 888/888 怪畫面）。
   var story=(size==='story');
-  var yEyebrow=story?300:140;
-  var yBrand  =story?400:220;
-  var yHook   =story?560:330;
-  var yBadge  =story?760:450;
-  var yPrice  =story?1000:660;
-  var yOrig   =story?1120:748;
-  var yQR     =story?1300:805;
-  var qrSize  =story?300:210;
-  var yUrl    =story?(yQR+qrSize+90):(yQR+qrSize+52);
-  // 頂部 eyebrow（間隔字）
-  ctx.fillStyle=C.gold;ctx.font='600 '+(story?42:38)+'px '+DM_FONT;
-  ctx.save();ctx.letterSpacing&&(ctx.letterSpacing='12px');
-  dmSpaced(ctx,'東 方 紫 微 · 人 生 航 路',cx,yEyebrow,story?40:36,12);ctx.restore();
+  var hasOrig=(d.original>d.promo);
+  var yEyebrow =story?300:132;
+  var yBrand   =story?400:212;
+  var yHook    =story?556:312;
+  var yBadge   =story?750:438;
+  var yPrice   =story?1010:622;              // 大字金額 baseline
+  var priceFont=story?290:196;
+  var yOrig    =story?1150:700;              // 僅 hasOrig 時
+  var qrSize   =story?300:168;
+  var yQrLabel =hasOrig?(story?1250:758):(story?1210:742);
+  var yQR      =yQrLabel+(story?34:26);
+  var yUrl     =yQR+qrSize+(story?66:40);
+  // 頂部 eyebrow（間隔字，手動字距）
+  ctx.fillStyle=C.gold;ctx.font='600 '+(story?40:34)+'px '+DM_FONT;
+  dmSpaced(ctx,'東 方 紫 微 · 人 生 航 路',cx,yEyebrow,story?40:34,story?12:9);
   // 品牌名（大標）
-  ctx.fillStyle=C.goldDeep;ctx.font='900 '+(story?96:78)+'px '+DM_FONT;
+  ctx.fillStyle=C.goldDeep;ctx.font='900 '+(story?96:74)+'px '+DM_FONT;
   ctx.fillText(d.brand,cx,yBrand);
-  // 廣告鉤子
-  ctx.fillStyle=C.ink;ctx.font='700 '+(story?54:46)+'px '+DM_FONT;
-  dmWrap(ctx,d.hook,cx,yHook,W*0.78,story?66:58);
+  // 廣告鉤子（自動折行）
+  ctx.fillStyle=C.ink;ctx.font='700 '+(story?52:42)+'px '+DM_FONT;
+  dmWrap(ctx,d.hook,cx,yHook,W*0.80,story?64:54);
   // 限時徽章（膠囊）
-  ctx.font='800 '+(story?46:40)+'px '+DM_FONT;
-  var bw=ctx.measureText(d.badge).width+ (story?90:80);
-  var bh=story?90:78;
+  ctx.font='800 '+(story?44:36)+'px '+DM_FONT;
+  var bw=ctx.measureText(d.badge).width+(story?90:72);
+  var bh=story?86:70;
   var bg=ctx.createLinearGradient(cx-bw/2,0,cx+bw/2,0);
   bg.addColorStop(0,C.purple);bg.addColorStop(1,C.goldBright);
   ctx.fillStyle=bg;dmRoundRect(ctx,cx-bw/2,yBadge-bh/2,bw,bh,bh/2);ctx.fill();
-  ctx.fillStyle='#ffffff';ctx.fillText(d.badge,cx,yBadge+ (story?16:14));
-  // 優惠價大字（金額＋單位）
+  ctx.fillStyle='#ffffff';ctx.fillText(d.badge,cx,yBadge+(story?15:12));
+  // 優惠價大字（金額＋單位，整組置中）
   var priceStr=String(d.promo);
-  ctx.fillStyle=C.goldDeep;ctx.font='900 '+(story?300:240)+'px '+DM_FONT;
+  ctx.font='900 '+priceFont+'px '+DM_FONT;
   var pw=ctx.measureText(priceStr).width;
-  ctx.font='800 '+(story?90:74)+'px '+DM_FONT;
+  var uFont=story?86:64;
+  ctx.font='800 '+uFont+'px '+DM_FONT;
   var cw=ctx.measureText(d.currency).width;
-  var groupW=pw+18+cw;var startX=cx-groupW/2;
+  var ggap=story?18:14;
+  var groupW=pw+ggap+cw;var startX=cx-groupW/2;
   ctx.textAlign='left';
-  ctx.fillStyle=C.goldDeep;ctx.font='900 '+(story?300:240)+'px '+DM_FONT;
+  ctx.fillStyle=C.goldDeep;ctx.font='900 '+priceFont+'px '+DM_FONT;
   ctx.fillText(priceStr,startX,yPrice);
-  ctx.font='800 '+(story?90:74)+'px '+DM_FONT;ctx.fillStyle=C.gold;
-  ctx.fillText(d.currency,startX+pw+18,yPrice- (story?12:8));
+  ctx.font='800 '+uFont+'px '+DM_FONT;ctx.fillStyle=C.gold;
+  ctx.fillText(d.currency,startX+pw+ggap,yPrice-(story?14:10));
   ctx.textAlign='center';
-  // 原價刪除線
-  ctx.fillStyle=C.inkDim;ctx.font='600 '+(story?56:48)+'px '+DM_FONT;
-  var origTxt=d.origPrefix+' '+d.original+' '+d.currency;
-  ctx.fillText(origTxt,cx,yOrig);
-  var otw=ctx.measureText(origTxt).width;
-  ctx.strokeStyle='#c2576f';ctx.lineWidth=story?7:6;
-  ctx.beginPath();ctx.moveTo(cx-otw/2,yOrig- (story?18:15));ctx.lineTo(cx+otw/2,yOrig- (story?18:15));ctx.stroke();
+  // 原價刪除線（僅在有真實折扣時才畫）
+  if(hasOrig){
+    ctx.fillStyle=C.inkDim;ctx.font='600 '+(story?54:44)+'px '+DM_FONT;
+    var origTxt=d.origPrefix+' '+d.original+' '+d.currency;
+    ctx.fillText(origTxt,cx,yOrig);
+    var otw=ctx.measureText(origTxt).width;
+    ctx.strokeStyle='#c2576f';ctx.lineWidth=story?7:5;
+    ctx.beginPath();ctx.moveTo(cx-otw/2,yOrig-(story?18:14));ctx.lineTo(cx+otw/2,yOrig-(story?18:14));ctx.stroke();
+  }
   // QR（本機產生）＋網址
   var qrOk=dmDrawQR(ctx,d.url,cx-qrSize/2,yQR,qrSize);
   if(qrOk){
-    ctx.fillStyle=C.goldDeep;ctx.font='700 '+(story?44:38)+'px '+DM_FONT;
-    ctx.fillText('掃碼立即結緣',cx,yQR-24);
-    ctx.fillStyle=C.purple;ctx.font='700 '+(story?42:36)+'px '+DM_FONT;
+    ctx.fillStyle=C.goldDeep;ctx.font='700 '+(story?42:34)+'px '+DM_FONT;
+    ctx.fillText('掃碼立即結緣',cx,yQrLabel);
+    ctx.fillStyle=C.purple;ctx.font='700 '+(story?40:32)+'px '+DM_FONT;
     ctx.fillText(d.url.replace(/^https?:\/\//,''),cx,yUrl);
   }else{
     // QR 失敗安全：改放大網址文字
-    ctx.fillStyle=C.goldDeep;ctx.font='800 '+(story?60:52)+'px '+DM_FONT;
+    ctx.fillStyle=C.goldDeep;ctx.font='800 '+(story?58:48)+'px '+DM_FONT;
     ctx.fillText(d.url.replace(/^https?:\/\//,''),cx,yQR+qrSize/2);
   }
   return qrOk;
@@ -6182,16 +6297,30 @@ let __rptRows=[],__rptMeta=null;
 async function engKolReport(){
   const code=((document.getElementById('engRptKol')||{}).value||'').trim();
   const all=(document.getElementById('engRptAll')||{}).checked;
-  const month=all?'':((document.getElementById('engRptMonth')||{}).value||'').trim();
+  const month=((document.getElementById('engRptMonth')||{}).value||'').trim();
+  const fv=((document.getElementById('engRptFrom')||{}).value||'').trim();
+  const tv=((document.getElementById('engRptTo')||{}).value||'').trim();
+  const useRange=!!(fv||tv);           // 自訂區間優先
+  const useMonth=(!useRange&&!all&&/^\d{4}-\d{2}$/.test(month));
   if(!code){engOut('engRptOut','請先選擇 KOL。','err');return;}
-  if(!all&&!/^\d{4}-\d{2}$/.test(month)){engOut('engRptOut','請選擇月份，或勾選「全部」。','err');return;}
+  if(!useRange&&!all&&!useMonth){engOut('engRptOut','請選擇月份、填自訂區間，或勾選「全部」。','err');return;}
   engOut('engRptOut','查詢中…','');
-  let j;try{ j=await engFetch('/kol/report?code='+encodeURIComponent(code)+(month?('&month='+encodeURIComponent(month)):'')); }
+  // 單月 → 後端月結（伺服器端已處理台北時區）；自訂區間／全部 → 撈全部後本機篩選。
+  let j;try{ j=await engFetch('/kol/report?code='+encodeURIComponent(code)+(useMonth?('&month='+encodeURIComponent(month)):'')); }
   catch(e){ engOut('engRptOut',(e&&e.msg)||'連線失敗。','err');return; }
   if(!(j&&j.ok)){ engOut('engRptOut',KOL_ERR[j&&j.reason]||'查詢失敗。','err');return; }
-  __rptRows=j.orders||[];__rptMeta={code:code,month:j.month};
-  const s=j.summary||{orders:0,totalAmount:0,totalCommission:0};
-  engOut('engRptOut','<b>'+kolEsc(code)+'</b>　'+(all?'全部':month)+'：成交 <b>'+s.orders+'</b> 單 · 總營收 <b>'+s.totalAmount+'</b> 元 · 應付分潤 <b>'+s.totalCommission+'</b> 元　<button class="englink" type="button" onclick="engKolCsv()">匯出 CSV</button>','ok');
+  let rows=j.orders||[]; let label=useMonth?month:(all?'全部':''); let fname=useMonth?month:(all?'all':'');
+  if(useRange){
+    let lo=-Infinity,hi=Infinity;
+    if(fv){const p=fv.split('-');lo=new Date(+p[0],+p[1]-1,+p[2],0,0,0,0).getTime();}
+    if(tv){const p=tv.split('-');hi=new Date(+p[0],+p[1]-1,+p[2],23,59,59,999).getTime();}
+    rows=rows.filter(r=>{const p=+r.paid_at||0;return p>=lo&&p<=hi;});
+    label=(fv||'…')+'～'+(tv||'…'); fname=(fv||'start')+'_'+(tv||'end');
+  }
+  __rptRows=rows;__rptMeta={code:code,month:label||'全部',fname:fname||'all'};
+  let totalAmount=0,totalCommission=0;
+  rows.forEach(r=>{totalAmount+=(parseInt(r.amount,10)||0);totalCommission+=(parseInt(r.commission,10)||0);});
+  engOut('engRptOut','<b>'+kolEsc(code)+'</b>　'+kolEsc(label||'全部')+'：成交 <b>'+rows.length+'</b> 單 · 總營收 <b>'+totalAmount+'</b> 元 · 應付分潤 <b>'+totalCommission+'</b> 元　<button class="englink" type="button" onclick="engKolCsv()">匯出 CSV</button>','ok');
   const box=document.getElementById('engRptTable');
   if(!__rptRows.length){ box.innerHTML='<div class="engempty">此區間無成交記錄。</div>';return; }
   box.innerHTML='<div class="engli" style="font-weight:700"><div class="englitxt">付款時間 · 綠界交易編號 · 金額 · 折扣 · 返佣</div></div>'+
@@ -6214,7 +6343,7 @@ function engKolCsv(){
   const csv='﻿'+lines.join('\r\n'); // BOM 讓 Excel 正確辨識 UTF-8
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='KOL_'+(__rptMeta&&__rptMeta.code||'report')+'_'+(__rptMeta&&__rptMeta.month||'all')+'.csv';
+  a.download='KOL_'+(__rptMeta&&__rptMeta.code||'report')+'_'+(__rptMeta&&(__rptMeta.fname||__rptMeta.month)||'all')+'.csv';
   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
 }
 async function superActivate(val){
@@ -6398,6 +6527,14 @@ async function ecHandleReturn(){
         const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(back),{cache:'no-store'});
         const j=await r.json();
         if(j&&j.paid&&j.key===pend.key){
+          if(pend.product==='liunian'){
+            // 流年批：標記該年解鎖 → 復原命盤 → 顯示流年批
+            try{localStorage.setItem('zw_ln_'+pend.key+'_'+pend.year,'1');}catch(e){}
+            localStorage.removeItem('zw_ec_pending');clean();
+            lpRestoreAndRender(pend.form);
+            setTimeout(function(){try{lnShow(pend.year);}catch(e){}},1200);
+            return true;
+          }
           try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
           localStorage.removeItem('zw_ec_pending');clean();
           lpRestoreAndRender(pend.form);return true;
@@ -6411,6 +6548,105 @@ async function ecHandleReturn(){
   }
   clean();return true;
 }
+
+/* ===== 流年批（30元・限舊客・年度回訪商品）===== */
+const LN_DOMAIN={命宮:"整體運勢與自我",兄弟:"手足與人際",夫妻:"感情與婚姻",子女:"子女、桃花與創作",財帛:"正財與理財",疾厄:"健康與身體",遷移:"外出、際遇與貴人",交友:"人際與部屬",僕役:"人際與部屬",官祿:"事業與工作",田宅:"家宅與不動產",福德:"福分、心性與享受",父母:"長輩與文書"};
+function lnDomain(p){return LN_DOMAIN[p]||((p||"該")+"領域");}
+function lnFindPalace(zw,starName){for(let b=0;b<12;b++){if((zw.stars[b]||[]).some(s=>s&&s.name===starName))return zw.palaceName[b];}return null;}
+function lnCurYear(){try{return new Date().getFullYear();}catch(e){return 2026;}}
+function lnUnlockedLocal(key,year){try{return localStorage.getItem('zw_ln_'+key+'_'+year)==='1';}catch(e){return false;}}
+async function lnStatus(key,nh,year){try{const r=await fetch(LC_API.replace(/\/+$/,'')+'/liunian/check?key='+encodeURIComponent(key)+'&year='+year+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});const j=await r.json();return {paid:!!(j&&j.paid),price:(j&&j.price)||100,returning:!!(j&&j.returning)};}catch(e){return {paid:false,price:100,returning:false};}}
+function lnBuildBody(year){
+  const D=window.__ZW;if(!D)return '';
+  const zw=D.zw,st=D.adv.strength,birthYear=D.birthYear;
+  const gi=((year-4)%10+10)%10, zi=((year-4)%12+12)%12;
+  const gan=GAN[gi],zhi=ZHI[zi],sx=SHENGXIAO[zhi],age=year-birthYear+1;
+  const pc=zw.palaceName[zi];
+  const stars=(zw.stars[zi]||[]).filter(s=>s.type==="main").map(s=>s.name);
+  const starTxt=stars.length?stars.join("、"):"空宮（借對宮論）";
+  const sh=SIHUA[gan], huaLabel=["祿","權","科","忌"], huaColor=["var(--jade)","#e0a85a","#7fa6d4","#d47f8f"];
+  const huaPhrase=["帶來財福與機緣，宜主動把握、積極經營","增強主導力與擔當，可擴展佈局，惟忌過於強勢","帶來名聲、貴人與文書之喜，利考試、合作與提案","為今年最需謹慎之處，宜守不宜攻、低調化解、莫強求硬碰"];
+  const huaPal=sh.map(s=>lnFindPalace(zw,s));
+  const huaHTML=sh.map((s,i)=>`<p><b style="color:${huaColor[i]}">化${huaLabel[i]}·${s}</b> 落入本命「<b>${huaPal[i]||"—"}</b>」宮 → 今年於<b>${lnDomain(huaPal[i])}</b>方面${huaPhrase[i]}。</p>`).join("");
+  const baseM=[2,4,6,8,0][gi%5], lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
+  const lmHTML=Array.from({length:12},(_,k)=>{const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg];const isXi=st.xi.includes(mwx),isJi=st.ji.includes(mwx);const mark=isXi?"吉":isJi?"留意":"平",cls=isXi?"lmgood":isJi?"lmbad":"lmmid";return `<div class="lmcell ${cls}"><div class="lmm">${lmLabels[k]}月</div><div class="lmgz">${mg}${mzh}</div><div class="lmmk">${mark}</div></div>`;}).join("");
+  const domainLine=(label,pals)=>{let good=null,bad=false;pals.forEach(p=>{const idx=huaPal.indexOf(p);if(idx===3)bad=true;else if(idx>=0)good=huaLabel[idx];});let t;if(good&&!bad)t=`今年逢化${good}引動，是進取的好時機，宜積極布局。`;else if(bad&&!good)t=`今年逢化忌，宜穩守、謹慎為要，避免衝動與過度擴張。`;else if(good&&bad)t=`機會與波動並存——把握化${good}之機，同時防範化忌之耗，張弛有度。`;else t=`大致平穩，按部就班、穩中求進即可。`;return `<p><b>${label}</b>：${t}</p>`;};
+  const yingqi=domainLine("財運",["財帛","福德"])+domainLine("事業",["官祿","命宮"])+domainLine("感情",["夫妻","子女"])+domainLine("健康",["疾厄"]);
+  return `
+    <div class="zwkv"><span>干支 <b>${gan}${zhi}</b></span><span>生肖 <b>${sx}年</b></span><span>虛歲 <b>${age} 歲</b></span></div>
+    <div class="zwsec">一、流年命宮 · ${pc}</div>
+    <p>${year} 年（${gan}${zhi}）流年命宮落在您本命的「<b style="color:var(--gold)">${pc}</b>」，坐星 <b>${starTxt}</b>。${PALACE_DESC[pc]||""}這一年的運勢主軸，即以此宮的星性與所主領域為核心。</p>
+    <div class="zwsec">二、流年四化 · 逐宮影響（${gan}干引動）</div>
+    ${huaHTML}
+    <div class="zwsec">三、當年四大應期</div>
+    ${yingqi}
+    <div class="zwsec">四、流月吉凶一覽（${year} 逐月）</div>
+    <div class="lmgrid">${lmHTML}</div>
+    <p class="lmnote">流月以節氣交接為界（約當國曆次月）。逢喜用神之月宜進取，逢忌神之月宜守成防耗。</p>
+    <div class="zwsec">五、開運建議</div>
+    <p>今年宜多親近喜用神五行（<b style="color:var(--jade)">${st.xi.join("、")}</b>）所屬之方位、色彩與行業能量；逢忌神（<b style="color:#d47f8f">${st.ji.join("、")}</b>）之月與化忌所在之宮，宜低調收斂、穩紮穩打。把握化祿化權之機、避開化忌之衝，順勢而為，這一年自能趨吉避凶、穩中求進。</p>`;
+}
+async function lnPrimaryCTA(){
+  // 行銷主軸＝完整報告(888)：舊客(已解鎖)→直接進流年批；新客→捲到完整報告付款區，別讓便宜品分流888。
+  try{ if(window.__LC && await lcIsUnlocked(window.__LC.payload)){ lnBuy(); return; } }catch(e){}
+  const pw=document.getElementById('paywall')||document.querySelector('.paywall');
+  if(pw){ try{pw.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){pw.scrollIntoView();} }
+}
+function lnShow(year){
+  const D=window.__ZW;if(!D){alert('請先在上方輸入生日、演算命盤。');return;}
+  const gi=((year-4)%10+10)%10,zi=((year-4)%12+12)%12;
+  zwOpenModal("流年批 · "+year+" 年",D.name+" · "+GAN[gi]+ZHI[zi]+"（"+SHENGXIAO[ZHI[zi]]+"年）","舊客專屬 · 當年超詳細流年批",lnBuildBody(year));
+}
+async function lnBuy(){
+  if(!window.__LC||!window.__ZW){alert('請先在上方輸入您的生日、演算命盤，再解鎖流年批。');return;}
+  const year=lnCurYear(), key=await lcKey(window.__LC.payload), nh=await lcNameHash(window.__LC.name);
+  if(lnUnlockedLocal(key,year)){lnShow(year);return;}
+  const st=await lnStatus(key,nh,year);
+  if(st.paid){try{localStorage.setItem('zw_ln_'+key+'_'+year,'1');}catch(e){}lnShow(year);return;}
+  lnPreview(year, st.price, st.returning);
+}
+function lnPreview(year, price, returning){
+  price=parseInt(price,10)||100;
+  const D=window.__ZW;const zi=((year-4)%12+12)%12;const pc=D.zw.palaceName[zi];
+  const tierNote=returning?'買過完整報告舊客專屬價':'新朋友單購價（買過完整報告的<span class="ln30">舊客僅 30 元</span>）';
+  const body=`
+    <div class="zwsec">${year} 年流年命宮 · ${pc}</div>
+    <p>今年您的流年命宮落在「<b style="color:var(--gold)">${pc}</b>」宮。<b>完整流年批</b>包含：流年命宮深論、流年四化逐宮影響、當年<b>財運／事業／感情／健康</b>四大應期、逐月吉凶一覽、開運建議。</p>
+    <div class="lnlockbox">🔒 解鎖 ${year} 完整流年批 · <b style="color:var(--gold)">${price} 元</b><br><span style="font-size:.82rem;color:var(--ink-faint)">${tierNote} · 一次解鎖此年，同裝置永久回看</span></div>
+    <label class="lncsx"><input type="checkbox" id="lnConsent"> 我已閱讀並同意《服務條款》《隱私權政策》，並同意數位內容於解鎖後不適用七日鑑賞期</label>
+    <button class="engbtn" type="button" onclick="lnStartPay(${year})" style="width:100%;margin-top:6px">綠界安全付款 · 解鎖流年批</button>
+    <div id="lnMsg" class="lcmsg" style="margin-top:8px"></div>`;
+  zwOpenModal("流年批 · "+year+" 年","解鎖 "+year+" 流年批","流年批 · "+price+" 元",body);
+}
+async function lnStartPay(year){
+  const msg=document.getElementById('lnMsg');
+  if(!window.__LC)return;
+  const cs=document.getElementById('lnConsent');
+  if(cs&&!cs.checked){if(msg){msg.textContent='請先勾選同意條款再付款。';msg.className='lcmsg err';}return;}
+  if(typeof inAppPayGate==='function'&&inAppPayGate())return;
+  const key=await lcKey(window.__LC.payload), nh=await lcNameHash(window.__LC.name);
+  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
+  form.gender=gender;
+  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,product:'liunian',year,ts:Date.now()}));}catch(e){}
+  if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
+  const ret=location.origin+location.pathname, nhQ=nh?('&nh='+encodeURIComponent(nh)):'';
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?product=liunian&year='+year+'&key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+nhQ,{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.action&&j.params){
+      const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
+      Object.keys(j.params).forEach(k=>{const i=document.createElement('input');i.type='hidden';i.name=k;i.value=j.params[k];f.appendChild(i);});
+      document.body.appendChild(f);f.submit();
+    }else if(j&&j.reason==='not_returning'){if(msg){msg.innerHTML='流年批為「完整報告舊客」專屬。系統查不到您購買完整報告的紀錄——請先解鎖完整報告，之後即可每年 30 元批流年。<br>（若您確實買過，請確認生日與姓名與當時一致，或加 LINE 客服 @910imdmw 協助）';msg.className='lcmsg err';}}
+    else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請稍後再試。';msg.className='lcmsg err';}
+  }catch(e){if(msg){msg.textContent='✗ 無法連線付款伺服器，請稍後再試。';msg.className='lcmsg err';}}
+}
+/* #liunian：LINE 年度群發連結入口——引導輸生日、演算命盤後解鎖流年批 */
+function lnCheckHash(){ if(location.hash==='#liunian'){ try{if(typeof siteHideMaint==='function')siteHideMaint();}catch(e){}
+  if(window.__ZW){lnBuy();} else { const f=document.getElementById('name'); if(f){try{f.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}f.focus();} try{setTimeout(function(){alert('輸入您的生日、演算命盤後，即可解鎖今年「流年批」（舊客 30 元）。');},300);}catch(e){} }
+} }
+window.addEventListener('hashchange',lnCheckHash);
+lnCheckHash();
 
 
 /* ===== 觸控彈窗：宮位／大運白話解說 ===== */
@@ -6875,19 +7111,32 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="lny">${naYin(p.gan,p.zhi)}</div></div>`;
   }).join("");
 
-  // ===== 批流年（現年起未來十年）=====
-  const PLN_START=2026, PLN_SPAN=10;
-  const liunianHTML=Array.from({length:PLN_SPAN},(_,k)=>{
-    const yy=PLN_START+k;
-    const gi=((yy-4)%10+10)%10, zi=((yy-4)%12+12)%12;
-    const gan=GAN[gi], zhi=ZHI[zi], pcBranch=zi, pcName=zw.palaceName[pcBranch];
-    const age=yy-sol.y+1, cur=yy===PLN_START;
-    return `<div class="luckcol lncol tap ${cur?'on':''}" onclick="zwLiunian(${yy})">
-      <div class="la">${yy}</div>
-      <div class="lg">${gan}</div><div class="lz">${zhi}</div>
-      <div class="ltg">${pcName}</div>
-      <div class="lny">${age}歲・${SHENGXIAO[zhi]}</div></div>`;
-  }).join("");
+  // ===== 流年（當年詳解；未來各年改由「流年批」年度回訪，見報告內引流）=====
+  const CUR_YEAR=(function(){try{return new Date().getFullYear();}catch(e){return 2026;}})();
+  const _lgi=((CUR_YEAR-4)%10+10)%10, _lzi=((CUR_YEAR-4)%12+12)%12;
+  const _lgan=GAN[_lgi], _lzhi=ZHI[_lzi], _lsx=SHENGXIAO[_lzhi];
+  const _lpc=zw.palaceName[_lzi], _lage=CUR_YEAR-sol.y+1;
+  const _lstars=(zw.stars[_lzi]||[]).filter(s=>s.type==="main").map(s=>s.name);
+  const _lstarTxt=_lstars.length?_lstars.join("、"):"空宮（借對宮論）";
+  const _lsh=SIHUA[_lgan];
+  // 免費只給「流年命宮」teaser；四化逐宮／流月／應期／開運＝流年批付費內容（lnBuy 把關，避免免費送）。
+  const liunianHTML=`<div class="lnhero">
+      <svg class="lnspark s1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z"/></svg>
+      <svg class="lnspark s2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z"/></svg>
+      <svg class="lnspark s3" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z"/></svg>
+      <svg class="lnspark s4" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z"/></svg>
+      <div class="luckcol lncol on lncol-hero">
+        <div class="la">${CUR_YEAR}</div><div class="lg">${_lgan}</div><div class="lz">${_lzhi}</div>
+        <div class="ltg">${_lpc}</div><div class="lny">${_lage}歲・${_lsx}</div>
+      </div>
+      <div class="lnhero-info">
+        <div class="lnhero-chips"><span>干支 ${_lgan}${_lzhi}</span><span>生肖 ${_lsx}年</span><span>虛歲 ${_lage}</span></div>
+        <div class="lnhero-pc">流年命宮 · <b>${_lpc}</b>（坐星 ${_lstarTxt}）</div>
+        <p class="lnhero-desc">${PALACE_DESC[_lpc]||""}今年運勢以此宮所主領域為核心。<br>完整的 <b>流年四化逐宮</b>、<b>財・官・感情・健康四大應期</b>、<b>逐月吉凶</b> 與 <b>開運建議</b>——都在流年批。</p>
+        <button class="lnhero-btn" type="button" onclick="lnBuy()">🔓 看 ${CUR_YEAR} 完整流年批 ▸</button>
+      </div>
+    </div>`;
+  const liunianDetailHTML="";
 
   // ===== 神煞 =====
   const ssHTML=adv.ss.length
@@ -7025,9 +7274,21 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="lucksub">起運 ${lk.startAge} 歲 · ${lk.forward?'順行':'逆行'}佈運 · 現行第 ${Math.max(1,Math.floor((adv.curAge-lk.startAge)/10)+1)} 步大運<br><span class="taphint">點選任一柱大運，看該十年運勢白話解說</span></div>
   <div class="luckwrap"><div class="luckrow">${luckHTML}</div></div>
 
-  <div class="divider"><span>批流年（流年運勢一覽）</span></div>
-  <div class="lucksub">${PLN_START} 年起未來十年 · 流年命宮逐年推移、每年四化各異<br><span class="taphint">點選任一年，看該年流年命宮、坐星、四化與運勢白話解說</span></div>
-  <div class="luckwrap"><div class="lnrow">${liunianHTML}</div></div>
+  <div class="divider"><span>今年流年運勢 · ${CUR_YEAR}</span></div>
+  <div class="lucksub">流年命宮逐年推移、每年四化各異——先看 ${CUR_YEAR} 命宮落點</div>
+  ${liunianHTML}
+  <div class="lnupsell">
+    <div class="lncmp-h">要先看哪個？完整報告 vs 流年批</div>
+    <div class="lncmp">
+      <div class="lncmp-row"><b>📖 完整報告</b><span>一次讀懂你的<b>命盤・性格・天賦・大限</b>——認識「你是誰」，一次擁有、永久回看。<i>這是地基，建議先看</i></span></div>
+      <div class="lncmp-row"><b>📅 流年批</b><span>只看「<b>當年</b>」運勢重點（財・官・感情・健康＋逐月吉凶），每年更新——認識「今年會怎樣」。</span></div>
+    </div>
+    <div class="lncmp-note">先看完整報告打底，之後每年只要 <span class="ln30">30 元</span> 加批流年；只想先看今年也可單購 100 元。</div>
+    <div class="lncmp-btns">
+      <button class="lnbuybtn signboard" type="button" onclick="lnPrimaryCTA()">🔓 先看完整報告（推薦）▸</button>
+      <button class="lnbuybtn2" type="button" onclick="lnBuy()">只單看 ${CUR_YEAR} 流年批</button>
+    </div>
+  </div>
 
   <div class="sec-title"><span class="cn">紫微斗數 · 命盤十二宮</span><span class="en">Zi Wei Dou Shu · Twelve Palaces</span></div>
   <div class="lucksub"><span class="taphint">點選任一宮位，看該宮星曜與宮職的白話解說</span></div>
@@ -7635,42 +7896,90 @@ ecHandleReturn();
 
 /* ===== KOL 自助查詢頁（唯讀）=====
    KOL 用網址 #kol 進入，輸入自己的推薦碼 → 只查得到自己這組碼的成交明細與累計分潤；
-   後端 /kol/self 只回該碼資料，無法看別人、無法修改。 */
+   後端 /kol/self 只回該碼資料，無法看別人、無法修改。支援自訂區間（本機篩選）＋匯出 CSV。 */
 function kolSelfEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let __kolSelf=null; // {code,name,status,orders:[...]}（本機保存，供區間切換即時重算）
 function kolSelfOpen(){
   if(document.getElementById('kolSelfMask'))return;
+  try{siteHideMaint();}catch(e){}   // 維護中開 KOL 查詢：移除維護遮罩，避免其動畫卡住輸入（iOS）
   const m=document.createElement('div');m.id='kolSelfMask';m.className='supermask';
   m.innerHTML='<div class="superbox eng" role="dialog" aria-label="KOL 分潤查詢">'+
     '<button class="superx" type="button" aria-label="關閉">×</button>'+
     '<div class="supertt">KOL 分潤查詢</div>'+
-    '<div class="supersub">輸入您的專屬推薦碼，查詢您的成交明細與累計分潤（唯讀，僅顯示您自己的資料）。</div>'+
+    '<div class="supersub">輸入您的專屬推薦碼，查詢您的成交明細與累計分潤（唯讀，僅顯示您自己的資料）。可自選區間對帳。</div>'+
     '<div class="engsec"><input id="kolSelfCode" class="superinp" type="text" inputmode="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="輸入您的推薦碼">'+
     '<button class="engbtn" type="button" id="kolSelfGo">查詢</button>'+
     '<div id="kolSelfMsg" class="engout"></div></div>'+
+    '<div id="kolSelfRange" style="display:none;margin-top:4px">'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+
+        '<button type="button" class="englink" data-range="tm">本月</button>'+
+        '<button type="button" class="englink" data-range="lm">上月</button>'+
+        '<button type="button" class="englink" data-range="d30">近30天</button>'+
+        '<button type="button" class="englink" data-range="all">全部</button>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.85rem">起 <input type="date" id="kolSelfFrom" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"> 迄 <input type="date" id="kolSelfTo" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px"> '+
+        '<button class="englink" type="button" id="kolSelfApply">套用</button> '+
+        '<button class="englink" type="button" id="kolSelfCsv">匯出 CSV</button></div>'+
+    '</div>'+
     '<div id="kolSelfResult"></div></div>';
   document.body.appendChild(m);
-  const close=()=>{m.remove();try{if(location.hash==='#kol')history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+  const close=()=>{m.remove();try{if(location.hash==='#kol')history.replaceState(null,'',location.pathname+location.search);}catch(e){}try{siteLoad();}catch(e){}};  // 關掉查詢窗後，網站若仍維護中則自動恢復維護畫面
   m.addEventListener('click',e=>{if(e.target===m)close();});
   m.querySelector('.superx').addEventListener('click',close);
   const inp=m.querySelector('#kolSelfCode');
   const go=()=>kolSelfQuery(inp.value);
   m.querySelector('#kolSelfGo').addEventListener('click',go);
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  m.querySelector('#kolSelfApply').addEventListener('click',kolSelfRender);
+  m.querySelector('#kolSelfCsv').addEventListener('click',kolSelfCsvExport);
+  m.querySelectorAll('[data-range]').forEach(b=>b.addEventListener('click',()=>kolSelfQuick(b.getAttribute('data-range'))));
   setTimeout(()=>inp.focus(),40);
 }
+function kolSelfYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function kolSelfQuick(kind){
+  const f=document.getElementById('kolSelfFrom'),t=document.getElementById('kolSelfTo');
+  const now=new Date();let from='',to='';
+  if(kind==='tm'){from=kolSelfYmd(new Date(now.getFullYear(),now.getMonth(),1));to=kolSelfYmd(now);}
+  else if(kind==='lm'){from=kolSelfYmd(new Date(now.getFullYear(),now.getMonth()-1,1));to=kolSelfYmd(new Date(now.getFullYear(),now.getMonth(),0));}
+  else if(kind==='d30'){const p=new Date(now);p.setDate(p.getDate()-29);from=kolSelfYmd(p);to=kolSelfYmd(now);}
+  if(f)f.value=from;if(t)t.value=to;kolSelfRender();
+}
+function kolSelfRangeMs(){
+  const fv=(document.getElementById('kolSelfFrom')||{}).value||'';
+  const tv=(document.getElementById('kolSelfTo')||{}).value||'';
+  let lo=-Infinity,hi=Infinity;
+  if(fv){const p=fv.split('-');lo=new Date(+p[0],+p[1]-1,+p[2],0,0,0,0).getTime();}
+  if(tv){const p=tv.split('-');hi=new Date(+p[0],+p[1]-1,+p[2],23,59,59,999).getTime();}
+  return {lo,hi,fv,tv};
+}
+function kolSelfFiltered(){
+  if(!__kolSelf)return [];
+  const {lo,hi}=kolSelfRangeMs();
+  return (__kolSelf.orders||[]).filter(r=>{const p=+r.paid_at||0;return p>=lo&&p<=hi;});
+}
 async function kolSelfQuery(val){
-  const msg=document.getElementById('kolSelfMsg'),out=document.getElementById('kolSelfResult');
+  const msg=document.getElementById('kolSelfMsg'),out=document.getElementById('kolSelfResult'),rg=document.getElementById('kolSelfRange');
   const code=String(val||'').trim();
   if(!code){if(msg){msg.textContent='請輸入推薦碼。';msg.className='engout err';}return;}
   if(msg){msg.textContent='查詢中…';msg.className='engout';}if(out)out.innerHTML='';
   let j;try{const r=await fetch(LC_API.replace(/\/+$/,'')+'/kol/self?code='+encodeURIComponent(code),{cache:'no-store'});j=await r.json();}
   catch(e){if(msg){msg.textContent='✗ 無法連線，請稍後再試。';msg.className='engout err';}return;}
-  if(!(j&&j.ok)){if(msg){msg.textContent='✗ 查無此推薦碼，請確認後再試。';msg.className='engout err';}return;}
+  if(!(j&&j.ok)){if(msg){msg.textContent='✗ 查無此推薦碼，請確認後再試。';msg.className='engout err';}__kolSelf=null;if(rg)rg.style.display='none';return;}
   if(msg){msg.textContent='';msg.className='engout';}
-  const rows=j.orders||[];
-  let html='<div class="engout ok" style="margin-top:6px"><b>'+kolSelfEsc(j.name)+'</b>（'+kolSelfEsc(j.code)+'）'+(j.status==='active'?'':'　·　目前停用')+
-    '<br>累計成交 <b>'+j.count+'</b> 單 · 累計消費金額 <b>'+(j.totalAmount|0)+'</b> 元 · 累計分潤 <b>'+(j.totalCommission|0)+'</b> 元</div>';
-  if(!rows.length){ html+='<div class="engempty">目前尚無成交記錄。</div>'; }
+  __kolSelf={code:j.code,name:j.name,status:j.status,orders:j.orders||[]};
+  if(rg)rg.style.display='';   // 預設全部（起訖皆空）
+  kolSelfRender();
+}
+function kolSelfRender(){
+  const out=document.getElementById('kolSelfResult');if(!out||!__kolSelf)return;
+  const rows=kolSelfFiltered();const {fv,tv}=kolSelfRangeMs();
+  const rangeLabel=(!fv&&!tv)?'全部期間':((fv||'…')+' ～ '+(tv||'…'));
+  let totalAmount=0,totalCommission=0;
+  rows.forEach(r=>{totalAmount+=(parseInt(r.amount,10)||0);totalCommission+=(parseInt(r.commission,10)||0);});
+  let html='<div class="engout ok" style="margin-top:6px"><b>'+kolSelfEsc(__kolSelf.name)+'</b>（'+kolSelfEsc(__kolSelf.code)+'）'+(__kolSelf.status==='active'?'':'　·　目前停用')+
+    '<br><span class="engmeta">區間：'+kolSelfEsc(rangeLabel)+'</span>'+
+    '<br>成交 <b>'+rows.length+'</b> 單 · 消費金額 <b>'+totalAmount+'</b> 元 · 您的分潤 <b>'+totalCommission+'</b> 元</div>';
+  if(!rows.length){ html+='<div class="engempty">此區間尚無成交記錄。</div>'; }
   else{
     html+='<div class="englist" style="margin-top:8px">'+rows.map(r=>{
       const t=new Date(r.paid_at||0);
@@ -7678,11 +7987,276 @@ async function kolSelfQuery(val){
       return '<div class="engli"><div class="englitxt">'+ts+'　<b>'+kolSelfEsc(r.merchant_no)+'</b><span class="engmeta">金額 '+(r.amount|0)+' 元 · 折扣 '+(r.discount|0)+' 元 · 您的分潤 '+(r.commission|0)+' 元</span></div></div>';
     }).join('')+'</div>';
   }
-  if(out)out.innerHTML=html;
+  out.innerHTML=html;
+}
+function kolSelfCsvExport(){
+  if(!__kolSelf)return;const rows=kolSelfFiltered();if(!rows.length)return;
+  const head=['付款時間','綠界訂單號','付款金額','該單折扣','您的分潤'];
+  const lines=[head.join(',')];
+  rows.forEach(r=>{
+    const t=new Date(r.paid_at||0);
+    const ts=isNaN(t.getTime())?'':(t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
+    const cell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    lines.push([cell(ts),cell(r.merchant_no),r.amount|0,r.discount|0,r.commission|0].join(','));
+  });
+  const {fv,tv}=kolSelfRangeMs();
+  const csv='﻿'+lines.join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='我的分潤_'+(__kolSelf.code||'kol')+'_'+((fv||'start')+'_'+(tv||'end'))+'.csv';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
 }
 function kolSelfCheckHash(){ if(location.hash==='#kol')kolSelfOpen(); }
 window.addEventListener('hashchange',kolSelfCheckHash);
 kolSelfCheckHash();
+
+/* ===== 網站營運開關（維護模式）=====
+   後端 /site/get 回 closed → 全站顯示「系統更新中」遮罩擋住互動。
+   失敗安全：讀取失敗一律當 open，不因網路波動把客人鎖在門外。
+   維護者後門：遮罩中央羅盤連點 7 下 → 開工程模式（可再打開網站）。 */
+function siteMaintSVG(){return '<svg viewBox="0 0 200 200" width="104" height="104" aria-hidden="true">'+
+  '<circle cx="100" cy="100" r="86" fill="none" stroke="#9c7a1e" stroke-width="7"/>'+
+  '<circle cx="100" cy="100" r="66" fill="none" stroke="#c7a24a" stroke-width="3"/>'+
+  '<path d="M100 46 L116 100 L100 122 L84 100 Z" fill="#b3382c"/>'+
+  '<path d="M100 154 L84 100 L100 122 L116 100 Z" fill="#9c7a1e"/>'+
+  '<circle cx="100" cy="100" r="9" fill="#725511"/></svg>';}
+function siteShowMaint(msg){
+  if(document.getElementById('maintMask'))return;
+  if(document.getElementById('kolSelfMask')||document.getElementById('superMask'))return;   // 已有 KOL查詢/工程模式視窗開著 → 不疊維護遮罩（避免卡住輸入）
+  const m=document.createElement('div');m.id='maintMask';
+  m.innerHTML='<style>#maintMask{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;'+
+    'background:radial-gradient(120% 120% at 50% 0%,#fdf8ec,#f2e8cf 55%,#e6d4ad);padding:26px;text-align:center;'+
+    "font-family:'Noto Serif TC','Songti TC',serif}"+
+    '#maintMask .mbox{max-width:460px}#maintMask .mlogo{display:flex;justify-content:center;margin-bottom:22px;cursor:default;-webkit-user-select:none;user-select:none}'+
+    '#maintMask .mlogo svg{animation:maintSpin 3.4s linear infinite;transform-origin:50% 50%}'+
+    '@keyframes maintSpin{to{transform:rotate(360deg)}}'+
+    '#maintMask .mtt{font-size:2rem;font-weight:800;color:#6f5210;letter-spacing:5px;margin-bottom:16px}'+
+    '#maintMask .msub{font-size:1.05rem;color:#5a4a2e;line-height:1.85;margin-bottom:24px}'+
+    '#maintMask .mbar{width:300px;max-width:74vw;height:9px;border-radius:99px;background:rgba(156,122,30,.18);margin:0 auto 8px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(120,90,20,.15)}'+
+    '#maintMask .mbar-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#c7a24a,#b3382c);box-shadow:0 0 8px rgba(179,56,44,.4)}'+
+    '#maintMask .mpct{font-size:.86rem;color:#9c7a1e;letter-spacing:1px;font-variant-numeric:tabular-nums;font-family:system-ui,sans-serif;margin-bottom:22px}'+
+    '#maintMask .mquote{min-height:1.5em;font-size:1.02rem;color:#8a6f2a;font-style:italic;letter-spacing:1px;transition:opacity .6s ease;opacity:1;margin-bottom:24px;padding:0 10px}'+
+    '#maintMask .mbrand{font-size:.82rem;color:#a08a55;letter-spacing:1px;font-family:system-ui,sans-serif;margin-bottom:12px}'+
+    '#maintMask .mcs{font-size:.9rem;color:#7a6a44;line-height:1.7;font-family:system-ui,sans-serif}'+
+    '#maintMask .mcs a{color:#b3382c;font-weight:700;text-decoration:none}'+
+    '@media(prefers-reduced-motion:reduce){#maintMask .mlogo svg{animation:none}}</style>'+
+    '<div class="mbox"><div class="mlogo" id="maintLogo">'+siteMaintSVG()+'</div>'+
+    '<div class="mtt">系統更新中</div>'+
+    '<div class="msub">'+kolSelfEsc(msg||'網站正在維護升級，稍後回來 🙏')+'</div>'+
+    '<div class="mbar"><div class="mbar-fill" id="maintFill"></div></div>'+
+    '<div class="mpct" id="maintPct">0%</div>'+
+    '<div class="mquote" id="maintQuote"></div>'+
+    '<div class="mbrand">人生實用說明書系統 · lifeguidetw.com</div>'+
+    '<div class="mcs">有急事？加官方 LINE 客服 <a href="https://line.me/R/ti/p/@910imdmw">@910imdmw</a><br>服務時間　平日 08:00–20:00</div></div>';
+  document.body.appendChild(m);
+  // 進度條 0~100%：整程 45 秒跑完再循環（rAF 驅動；遮罩移除即自動停止，不留計時器）
+  const fill=m.querySelector('#maintFill'), pct=m.querySelector('#maintPct');
+  const PERIOD=45000, t0=(window.performance&&performance.now)?performance.now():0;
+  function tick(now){
+    if(!document.getElementById('maintMask'))return;   // 已移除 → 停
+    const p=(((now||0)-t0)%PERIOD)/PERIOD, v=Math.round(p*100);
+    if(fill)fill.style.width=v+'%';
+    if(pct)pct.textContent=v+'%';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  // 下方正能量句子輪播（品牌向・每 4.2 秒淡入淡出；遮罩移除即自停）
+  const QUOTES=[
+    '讀懂自己，是這輩子最划算的投資 🧭',
+    '方向對了，每一步都算數',
+    '命，是天生的牌；運，是你怎麼打',
+    '看清自己，才走得穩、走得遠',
+    '你的人生，值得一本專屬說明書',
+    '好的開始，來自更了解自己',
+    '迷路不可怕，找回方向就好',
+    '認識自己越深，選擇越篤定',
+    '每個轉彎，都藏著更好的可能',
+    '握穩人生的方向盤，風浪也不怕'
+  ];
+  const qEl=m.querySelector('#maintQuote');
+  if(qEl){ let qi=0; qEl.textContent=QUOTES[0];
+    const qTimer=setInterval(function(){
+      if(!document.getElementById('maintMask')){clearInterval(qTimer);return;}
+      qEl.style.opacity='0';
+      setTimeout(function(){ qi=(qi+1)%QUOTES.length; qEl.textContent=QUOTES[qi]; qEl.style.opacity='1'; },600);
+    },4200);
+  }
+  // 維護者後門：連點羅盤 7 下 → 開工程模式
+  let n=0,t=0;
+  const logo=m.querySelector('#maintLogo');
+  if(logo)logo.addEventListener('pointerdown',()=>{const now=Date.now();n=(now-t<2500)?n+1:1;t=now;if(n>=7){n=0;superOpen();}});
+}
+function siteHideMaint(){const m=document.getElementById('maintMask');if(m)m.remove();}
+async function siteLoad(){
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/site/get',{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.status==='closed'){siteShowMaint(j.msg);} else {siteHideMaint();}
+  }catch(e){ /* 失敗安全：當 open，不顯示遮罩 */ }
+}
+/* 工程模式：網站開關控制 */
+async function engSiteToggle(status){
+  const msg=((document.getElementById('siteMsgInp')||{}).value||'').trim();
+  engOut('siteOut','處理中…','');
+  let j;try{ j=await engFetch('/site/set?status='+encodeURIComponent(status)+(msg?('&msg='+encodeURIComponent(msg)):'')); }
+  catch(e){ engOut('siteOut',(e&&e.msg)||'連線失敗。','err'); return; }
+  if(!(j&&j.ok)){ engOut('siteOut',ENG_ERR[j&&j.reason]||'設定失敗。','err'); return; }
+  engSiteRefresh();
+  // 本機也即時反映（不必重整）：關→顯示遮罩但維護者的工程模式在其上；開→移除遮罩
+  if(j.status==='closed'){ engOut('siteOut','✅ 網站已關閉，所有訪客會看到「系統更新中」。你可隨時再打開。','ok'); }
+  else { siteHideMaint(); engOut('siteOut','✅ 網站已打開，恢復正常營運。','ok'); }
+}
+async function engSiteRefresh(){
+  const el=document.getElementById('siteStatusTxt'); if(el)el.textContent='讀取中…';
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/site/get',{cache:'no-store'});
+    const j=await r.json();
+    if(el)el.innerHTML=(j&&j.status==='closed')?'<span style="color:#b3382c">🔴 已關閉（維護中）</span>':'<span style="color:#2f9b5e">🟢 營運中</span>';
+    const mi=document.getElementById('siteMsgInp'); if(mi&&j&&j.msg&&!mi.value)mi.value=j.msg;
+  }catch(e){ if(el)el.textContent='讀取失敗，請重試'; }
+}
+
+/* ===== 工程模式：KOL 推薦碼限動圖產生器（純前端，SVG→PNG，零外部請求） ===== */
+function kiEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function kiBuildSVG(){
+  var code=((document.getElementById('kiCode')||{}).value||'').trim()||'【推薦碼】';
+  var kol=((document.getElementById('kiName')||{}).value||'').trim();
+  var d=parseInt((document.getElementById('kiDisc')||{}).value,10); if(!(d>=0))d=0;
+  var hasD=d>0;
+  var by=kol?('由 '+kiEsc(kol)+' 推薦'):'官方合作推薦';
+  var line1=hasD?'結帳輸入即現折':'專屬推薦通道';
+  var big=hasD?(d+' 元'):'一起讀懂命盤';
+  var clen=(''+code).length, codeFont=clen<=8?90:(clen<=12?74:(clen<=17?56:44));
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="\'Noto Serif TC\',\'Songti TC\',\'Source Han Serif TC\',serif">'+
+    '<defs><radialGradient id="kpg" cx="50%" cy="0%" r="120%"><stop offset="0" stop-color="#fdf8ec"/><stop offset=".5" stop-color="#f7f0e1"/><stop offset="1" stop-color="#ecdfc4"/></radialGradient>'+
+    '<linearGradient id="kgd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6614"/><stop offset="1" stop-color="#c7a24a"/></linearGradient>'+
+    '<linearGradient id="kbtn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9a93a"/><stop offset="1" stop-color="#9a6f17"/></linearGradient></defs>'+
+    '<rect width="1080" height="1920" fill="url(#kpg)"/>'+
+    '<rect x="40" y="40" width="1000" height="1840" fill="none" stroke="#9c7a1e" stroke-width="3"/>'+
+    '<rect x="52" y="52" width="976" height="1816" fill="none" stroke="#c7a24a" stroke-width="1"/>'+
+    '<g transform="translate(540,300)"><circle r="92" fill="none" stroke="#9c7a1e" stroke-width="8"/><circle r="70" fill="none" stroke="#c7a24a" stroke-width="3.5"/>'+
+    '<path d="M0 -56 L16 0 L0 22 L-16 0 Z" fill="#b3382c"/><path d="M0 56 L-16 0 L0 22 L16 0 Z" fill="#9c7a1e"/><circle r="9" fill="#725511"/></g>'+
+    '<text x="540" y="470" text-anchor="middle" fill="#b3382c" font-size="30" letter-spacing="10">❖　人 生 實 用 說 明 書 系 統　❖</text>'+
+    '<text x="540" y="612" text-anchor="middle" fill="url(#kgd)" font-size="108" font-weight="700" letter-spacing="8">專屬結緣優惠</text>'+
+    '<text x="540" y="678" text-anchor="middle" fill="#6a5c3f" font-size="34" letter-spacing="3">紫微斗數 × 八字　·　命理報告網站</text>'+
+    '<text x="540" y="742" text-anchor="middle" fill="#b3382c" font-size="30" letter-spacing="2">'+by+'</text>'+
+    '<rect x="150" y="812" width="780" height="238" rx="26" fill="#fffdf5" stroke="#c7a24a" stroke-width="2.5"/>'+
+    '<text x="540" y="892" text-anchor="middle" fill="#8a7642" font-size="36" letter-spacing="6">結帳輸入推薦碼</text>'+
+    '<text x="540" y="988" text-anchor="middle" fill="#b3382c" font-size="'+codeFont+'" font-weight="700" letter-spacing="3" font-family="\'Menlo\',\'Noto Sans TC\',monospace">'+kiEsc(code)+'</text>'+
+    '<text x="540" y="1204" text-anchor="middle" fill="#725511" font-size="44" letter-spacing="3">'+line1+'</text>'+
+    '<text x="540" y="1348" text-anchor="middle" fill="#b3382c" font-size="'+(hasD?'150':'86')+'" font-weight="700" letter-spacing="4">'+big+'</text>'+
+    '<text x="540" y="1476" text-anchor="middle" fill="#5a4a2e" font-size="38">3 分鐘讀懂你的命盤</text>'+
+    '<text x="540" y="1532" text-anchor="middle" fill="#6a5c3f" font-size="32" letter-spacing="2">事業 ・ 財運 ・ 感情　全解析</text>'+
+    '<rect x="290" y="1588" width="500" height="116" rx="58" fill="url(#kbtn)"/>'+
+    '<text x="540" y="1663" text-anchor="middle" fill="#fff" font-size="52" font-weight="700" letter-spacing="4">立即測命盤</text>'+
+    '<text x="540" y="1762" text-anchor="middle" fill="#725511" font-size="46" letter-spacing="1" font-family="system-ui,sans-serif">lifeguidetw.com</text>'+
+    '<text x="540" y="1836" text-anchor="middle" fill="#8a7642" font-size="29" letter-spacing="1">認明官方 LINE　@910imdmw</text>'+
+    '</svg>';
+}
+function kiRefresh(){
+  var p=document.getElementById('kiPrev'); if(!p)return;
+  p.innerHTML=kiBuildSVG();
+  var s=p.querySelector('svg'); if(s){s.removeAttribute('width');s.removeAttribute('height');s.style.width='240px';s.style.height='auto';s.style.borderRadius='10px';s.style.boxShadow='0 6px 18px rgba(0,0,0,.14)';}
+  engOut('kiOut','','');
+}
+function kiDownload(){
+  var svg=kiBuildSVG();
+  var img=new Image();
+  img.onload=function(){
+    var W=2160,H=3840;
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    try{ cv.getContext('2d').drawImage(img,0,0,W,H);
+      cv.toBlob(function(blob){
+        if(!blob){engOut('kiOut','產生失敗，請重試。','err');return;}
+        var code=((((document.getElementById('kiCode')||{}).value)||'code').trim().replace(/[^0-9A-Za-z一-鿿]/g,''))||'code';
+        var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+        a.download='推薦碼限動_'+code+'.png';
+        document.body.appendChild(a);a.click();
+        setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},600);
+        engOut('kiOut','✅ 已下載，傳給網紅發限動即可。','ok');
+      },'image/png');
+    }catch(e){ engOut('kiOut','產生失敗，請改用 Chrome／Safari 再試。','err'); }
+  };
+  img.onerror=function(){ engOut('kiOut','產生失敗，請重試。','err'); };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+
+/* ===== 工程模式：KOL 合作合約產生器（本機產生，開新視窗列印／存 PDF；不上傳） ===== */
+function kcEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function kcLoadList(){
+  var sel=document.getElementById('kcKol'); if(!sel)return;
+  engOut('kcOut','載入中…','');
+  var j;try{ j=await engFetch('/kol/list'); }catch(e){ engOut('kcOut',(e&&e.msg)||'連線失敗。','err'); return; }
+  if(!(j&&j.ok)){ engOut('kcOut',(typeof KOL_ERR!=='undefined'&&KOL_ERR[j&&j.reason])||'載入失敗。','err'); return; }
+  var items=j.items||[];
+  sel.innerHTML='<option value="">— 手動輸入 —</option>'+items.map(function(k){
+    return '<option value="'+kcEsc(k.code)+'" data-name="'+kcEsc(k.name||'')+'" data-disc="'+(k.discount|0)+'" data-comm="'+(k.commission|0)+'">'+kcEsc(k.name||'')+'（'+kcEsc(k.code)+'）</option>';
+  }).join('');
+  engOut('kcOut', items.length?('已載入 '+items.length+' 位 KOL，選一位即自動帶入。'):'目前尚無 KOL 碼（可先到④建立，或直接手動輸入）。', items.length?'ok':'');
+}
+function kcFill(){
+  var sel=document.getElementById('kcKol'); if(!sel)return;
+  var o=sel.options[sel.selectedIndex]; if(!o||!o.value)return;
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+  set('kcCode',o.value); set('kcName',o.getAttribute('data-name')||''); set('kcDisc',o.getAttribute('data-disc')||'0'); set('kcComm',o.getAttribute('data-comm')||'0');
+}
+function kcBuildHTML(d){
+  var e=kcEsc;
+  var clause2 = d.disc>0
+    ? ('客戶於結帳輸入該推薦碼可享折扣 <b>'+d.disc+'</b> 元；每成交一筆，甲方給付乙方返佣 <b>'+d.comm+'</b> 元。')
+    : ('每成交一筆，甲方給付乙方返佣 <b>'+d.comm+'</b> 元（該推薦碼不另提供客戶折扣）。');
+  return '<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'+
+  '<meta name="viewport" content="width=device-width,initial-scale=1"><title>KOL 推薦分潤合作合約書</title>'+
+  '<style>@page{size:A4;margin:16mm}'+
+  "body{font-family:'Noto Serif TC','Songti TC',serif;color:#2a2318;line-height:1.9;max-width:740px;margin:0 auto;padding:26px 22px 60px;font-size:15px}"+
+  '.hd{text-align:center;border-bottom:2px solid #9c7a1e;padding-bottom:14px;margin-bottom:20px}'+
+  '.brand{color:#b3382c;letter-spacing:6px;font-size:12px}'+
+  'h1{font-size:23px;letter-spacing:5px;margin:8px 0 0}.meta{font-size:12.5px;color:#6a5c3f;margin-top:6px}'+
+  '.party{background:#faf6ec;border:1px solid #e0d3ad;border-radius:8px;padding:10px 15px;margin:12px 0;font-size:14.5px}'+
+  '.qbox{background:#fdf3e2;border:1.5px solid #d9a93a;border-radius:10px;padding:12px 16px;margin:18px 0;font-size:14px;line-height:1.75}'+
+  '.qbox .u{color:#b3382c;font-weight:700}'+
+  'ol{padding-left:1.3em}li{margin:9px 0}b{color:#7a3a12}'+
+  '.sig{display:flex;gap:34px;margin-top:46px}.sig>div{flex:1;font-size:14px}.sigline{border-bottom:1px solid #333;height:44px;margin-top:20px}'+
+  '.note{font-size:11.5px;color:#8a7c5a;margin-top:26px;border-top:1px dashed #ccc;padding-top:10px;line-height:1.7}'+
+  '.pbtn{position:fixed;top:12px;right:12px;padding:11px 20px;background:#9a6f17;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25)}'+
+  '@media print{.pbtn{display:none}}</style></head><body>'+
+  '<button class="pbtn" onclick="window.print()">列印／存成 PDF</button>'+
+  '<div class="hd"><div class="brand">❖ 人 生 實 用 說 明 書 系 統 ❖</div>'+
+  '<h1>推薦分潤合作合約書</h1><div class="meta">簽約日期：'+e(d.start)+'</div></div>'+
+  '<div class="party"><b>甲方（服務提供方）</b>：'+e(d.aName)+(d.aRep?('　代表人：'+e(d.aRep)):'')+'</div>'+
+  '<div class="party"><b>乙方（推廣合作方）</b>：'+e(d.bName)+(d.bContact?('　聯絡方式：'+e(d.bContact)):'')+'</div>'+
+  '<p>甲乙雙方本於誠信，就命理報告服務之推薦分潤合作，訂立條款如下：</p><ol>'+
+  '<li><b>合作內容</b>：乙方以甲方核發之專屬推薦碼「<b>'+e(d.code)+'</b>」，向其粉絲／客戶推廣甲方之命理報告服務（lifeguidetw.com）。</li>'+
+  '<li><b>優惠與分潤</b>：'+clause2+'</li>'+
+  '<li><b>成交認定</b>：以客戶透過綠界完成付款、並經甲方系統記錄之訂單為準；退款、爭議或未完成付款之訂單不予計算。</li>'+
+  '<li><b>結算與付款</b>：採月結制。每月月初結算上一自然月之成交，甲方於雙方對帳無誤後 <b>'+d.days+'</b> 日內以匯款方式給付乙方。</li>'+
+  '<li><b>明細查詢</b>：乙方可隨時於 lifeguidetw.com/#kol 輸入專屬推薦碼，查詢即時成交明細與累計分潤，雙方以同一系統數據為對帳依據。</li>'+
+  '<li><b>誠信義務</b>：乙方不得以不實宣稱、灌單、人頭自購套利或其他不當方式取得分潤；如經查證屬實，甲方得取消該等分潤並終止合作。</li>'+
+  '<li><b>保密</b>：雙方對於因本合作所知悉之客戶個人資料及商業資訊負保密義務，非經同意不得洩漏或作合作目的以外之使用。</li>'+
+  '<li><b>合作期間與終止</b>：本合約自 <b>'+e(d.start)+'</b> 起生效，未定期限；任一方得提前 30 日以書面（含通訊軟體訊息）通知他方終止。終止前已成交之分潤，甲方仍應依約結算給付。</li>'+
+  '<li><b>其他</b>：本合約未盡事宜，雙方得另行協議補充；如有爭議，雙方本於誠信協商解決。本合約一式二份，雙方各執一份為憑。</li></ol>'+
+  '<div class="qbox"><b>◆ 乙方專屬・即時分潤查詢</b><br>查詢網址：<span class="u">lifeguidetw.com/#kol</span>　·　您的推薦碼：<span class="u">'+e(d.code)+'</span><br>'+
+  '<span style="font-size:12.5px;color:#7a6a44">乙方可隨時輸入上述推薦碼，查看即時成交明細與累計分潤，並可自選區間、匯出 CSV 對帳。</span></div>'+
+  '<div class="sig"><div><b>甲方簽章</b><div class="sigline"></div>'+e(d.aName)+(d.aRep?('　代表人：'+e(d.aRep)):'')+'</div>'+
+  '<div><b>乙方簽章</b><div class="sigline"></div>'+e(d.bName)+'</div></div>'+
+  '<div class="note">※ 本合約為合作備忘性質之範本，實際權利義務以雙方合意為準；如涉重大金額或稅務疑義，建議另洽專業人士。命理報告為個人化參考，不涉醫療、投資等專業建議。</div>'+
+  '</body></html>';
+}
+function kcDownload(){
+  var g=function(id){return ((document.getElementById(id)||{}).value||'').trim();};
+  var d={ aName:g('kcParty')||'人生實用說明書系統', aRep:g('kcRep'), bName:g('kcName'), bContact:g('kcContact'),
+    code:g('kcCode'), disc:parseInt(g('kcDisc')||'0',10)||0, comm:parseInt(g('kcComm')||'0',10)||0,
+    days:parseInt(g('kcDays')||'7',10)||7, start:g('kcStart')||'____年__月__日' };
+  if(!d.bName){ engOut('kcOut','請填乙方（KOL）姓名。','err'); return; }
+  if(!d.code){ engOut('kcOut','請填推薦碼。','err'); return; }
+  var w=window.open('','_blank');
+  if(!w){ engOut('kcOut','瀏覽器擋了新視窗，請允許彈出視窗後再試。','err'); return; }
+  w.document.open(); w.document.write(kcBuildHTML(d)); w.document.close();
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
+  engOut('kcOut','✅ 已開啟合約新視窗，按右上「列印／存成 PDF」即可下載。','ok');
+}
+
+siteLoad();
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
 /* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
