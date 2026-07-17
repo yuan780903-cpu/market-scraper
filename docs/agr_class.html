@@ -100,7 +100,7 @@ td.crm{background:#fbfdfc}
 <header>
   <h1>產銷班互動式儀表板 <span style="font-weight:400;font-size:13px;color:var(--mut)">＋ CRM</span></h1>
   <span class="s">農糧署產銷班組織體系 · 全台 5,322 班</span>
-  <span class="upd">📅 資料更新：2026/07/17 19:25</span>
+  <span class="upd">📅 資料更新：2026/07/17 20:29</span>
 </header>
 <div class="wrap">
   <div class="slicers">
@@ -135,8 +135,9 @@ td.crm{background:#fbfdfc}
 
   <div class="tbar">
     <input id="q" type="search" placeholder="🔍 搜尋班名 / 地址 / 農會 / 班長…">
-    <button class="btn" onclick="saveCSV()">💾 存檔(匯出CRM)</button>
+    <button class="btn" onclick="saveCSV()">💾 存檔</button>
     <button class="btn sec" onclick="document.getElementById('imp').click()">📂 讀回存檔</button>
+    <button class="btn sec" onclick="openCfg()" id="cfgbtn">⚙️ 雲端設定</button>
     <input type="file" id="imp" accept=".csv" style="display:none" onchange="loadCSV(this)">
     <span class="cnt" id="tcnt"></span>
   </div>
@@ -319,20 +320,85 @@ function saveCRM(){
   const o=document.getElementById('ok');o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1400);
   renderKPI();renderTable();
 }
+/* ── 雲端設定(Google Apps Script) ── */
+const GKEY="agrgas_v1";
+const gasCfg=()=>{try{return JSON.parse(localStorage.getItem(GKEY))||{}}catch(e){return {}}};
+function markCfg(){document.getElementById('cfgbtn').textContent=gasCfg().url?"☁️ 雲端已連線":"⚙️ 雲端設定"}
+function openCfg(){
+  const c=gasCfg();
+  const h=`<button class="cls" onclick="closeDw()">✕</button><h2>☁️ 雲端設定</h2>
+   <div style="color:var(--mut);font-size:12px">設定後,按「存檔」會自動把 CRM 紀錄寫進你的 Google 雲端硬碟</div>
+   <div class="box"><h3>Google Apps Script</h3>
+     <label>網頁應用程式網址</label>
+     <input id="g_url" value="${(c.url||'').replace(/"/g,'&quot;')}" placeholder="https://script.google.com/macros/s/.../exec">
+     <label>TOKEN(你在 GAS 裡設的密碼)</label>
+     <input id="g_tok" value="${(c.token||'').replace(/"/g,'&quot;')}" placeholder="請改成你自己的密碼abc123">
+     <div style="margin-top:10px;display:flex;gap:8px">
+       <button class="btn" onclick="saveCfg()">儲存</button>
+       <button class="btn sec" onclick="testCfg()">測試連線</button>
+       ${c.url?`<button class="btn sec" onclick="clearCfg()" style="border-color:#c0504a;color:#c0504a">移除</button>`:``}
+     </div>
+     <div id="g_msg" style="margin-top:9px;font-size:12px"></div>
+   </div>
+   <div style="font-size:11.5px;color:var(--mut);margin-top:12px;line-height:1.6">
+     還沒設定過?桌面上的 <b>GAS_雲端存檔.gs</b> 檔案裡有完整步驟(約 3 分鐘)。<br>
+     沒設定也沒關係——「存檔」一樣會下載到你電腦。
+   </div>`;
+  const d=document.getElementById('dw');d.innerHTML=h;d.classList.add('on');
+  document.getElementById('ov').classList.add('on');
+}
+function saveCfg(){
+  const u=document.getElementById('g_url').value.trim(), t=document.getElementById('g_tok').value.trim();
+  if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){
+    msgCfg("網址格式不對,應該長這樣:https://script.google.com/macros/s/..../exec","#c0504a");return}
+  localStorage.setItem(GKEY,JSON.stringify({url:u,token:t}));
+  markCfg();msgCfg("已儲存 ✓","var(--a)");
+}
+function clearCfg(){localStorage.removeItem(GKEY);markCfg();msgCfg("已移除雲端設定","var(--mut)");}
+function msgCfg(s,c){const e=document.getElementById('g_msg');if(e){e.textContent=s;e.style.color=c||"var(--ink)"}}
+async function testCfg(){
+  const u=document.getElementById('g_url').value.trim(), t=document.getElementById('g_tok').value.trim();
+  if(!u){msgCfg("請先貼上網址","#c0504a");return}
+  msgCfg("測試中…","var(--mut)");
+  const r=await gasPost(u,t,"連線測試.csv","測試,OK\r\n1,連線成功");
+  msgCfg(r.ok?("✓ "+r.msg):("✗ "+r.msg), r.ok?"var(--a)":"#c0504a");
+}
+async function gasPost(url,token,filename,content){
+  try{
+    const res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({token,filename,content})});
+    return await res.json();
+  }catch(e){return {ok:false,msg:"連線失敗("+e+")。請確認 GAS 部署時「具有存取權的使用者」選了『所有人』。"}}
+}
+
 /* ── 存檔 / 讀回 ── */
 function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}
-function saveCSV(){
+function crmCSV(){
   const head=["classID","產銷班班名","縣市","區域","產業別","班長姓名","電話","CRM狀態","下次跟進","備註","更新日"];
   const out=[head.join(",")];
   R.forEach(r=>{const c=cget(r[C.id]); if(!hasCRM(r[C.id])&&!c.next)return;
     out.push([r[C.id],r[C.name],r[C.county],r[C.town],r[C.ind],c.leader||"",c.phone||"",
               c.status||"",c.next||"",c.note||"",c.ts||""].map(csvCell).join(","))});
+  return out;
+}
+async function saveCSV(){
+  const out=crmCSV();
   if(out.length<2){alert("目前還沒有任何 CRM 紀錄。\n點開任一班、填班長或備註後儲存,就會出現在存檔裡。");return}
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   const name=`產銷班CRM_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.csv`;
-  const b=new Blob(["﻿"+out.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const body=out.join("\r\n");
+  // 1) 下載到電腦
+  const b=new Blob(["﻿"+body],{type:"text/csv;charset=utf-8"});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();
-  alert(`已存檔:${name}\n共 ${out.length-1} 筆 CRM 紀錄。\n\n把它放進 Google 雲端硬碟就完成備份。`);
+  // 2) 若已設定雲端,順便上傳
+  const c=gasCfg();
+  if(c.url){
+    const r=await gasPost(c.url,c.token,name,body);
+    alert(r.ok? `已存檔:${name}\n共 ${out.length-1} 筆\n\n✓ 已下載到電腦\n☁️ ${r.msg}`
+              : `已下載到電腦:${name}(共 ${out.length-1} 筆)\n\n⚠️ 雲端上傳失敗:${r.msg}`);
+  }else{
+    alert(`已存檔:${name}\n共 ${out.length-1} 筆 CRM 紀錄。\n\n提示:按「⚙️ 雲端設定」接上 Google Apps Script,以後存檔就會自動上傳雲端硬碟。`);
+  }
 }
 function loadCSV(inp){
   const f=inp.files[0]; if(!f)return;
@@ -358,7 +424,7 @@ function loadCSV(inp){
   rd.readAsText(f);
 }
 function clearAll(){F={county:"",town:"",ind:"",st:""};q="";document.getElementById('q').value="";page=0;render()}
-function render(){renderSlicers();renderKPI();renderCharts();renderTable()}
+function render(){renderSlicers();renderKPI();renderCharts();renderTable();markCfg()}
 document.querySelectorAll('.mbtn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');metric=b.dataset.m;renderCharts();});
