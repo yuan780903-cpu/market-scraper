@@ -33,17 +33,59 @@ header .upd{margin-left:auto;font-size:11.5px;color:var(--mut);background:#f6f8f
 .kpi .v{font-size:25px;font-weight:800;margin-top:2px;letter-spacing:-.5px}
 .kpi .u{font-size:12px;font-weight:600;color:var(--mut);margin-left:3px}
 .kpi.k1 .v{color:var(--a)} .kpi.k2 .v{color:var(--b)} .kpi.k3 .v{color:var(--c)} .kpi.k4 .v{color:var(--s3)}
+.kpi.k5 .v{color:#a1683a} .kpi.k6 .v{color:#c85f5f} .kpi.k7 .v{color:#b58b2e}
 .kpi .note{font-size:10.5px;color:var(--mut);margin-top:3px}
 
-.metricbar{display:flex;gap:6px;margin-bottom:10px;align-items:center}
-.metricbar span{font-size:11.5px;color:var(--mut);font-weight:600;margin-right:4px}
-.mbtn{padding:6px 14px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--mut)}
-.mbtn.on{background:var(--a);border-color:var(--a);color:#fff}
-.charts{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;margin-bottom:12px}
+.cbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.cbar>span:first-child{font-size:11.5px;color:var(--mut);font-weight:600}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:12px;margin-bottom:12px}
 @media(max-width:900px){.charts{grid-template-columns:1fr}}
-.chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.chart h3{margin:0;font-size:13px;font-weight:700}
-.chart .hint{font-size:11px;color:var(--mut);margin:2px 0 8px}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-width:0}
+.chd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.chd h3{margin:0;font-size:13px;font-weight:700;flex:1;min-width:120px}
+.cctl{display:flex;gap:4px;align-items:center}
+.cctl select{padding:3px 5px;border:1px solid var(--line);border-radius:6px;font-size:11px;background:#fff;color:var(--mut);max-width:96px}
+.cctl .x{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:11px}
+.cctl .x:hover{background:#fdeaea;color:#c0504a;border-color:#c0504a}
+.cbody{min-height:60px}
+/* 直條圖 */
+.cols{display:flex;align-items:flex-end;gap:5px;height:230px;padding-top:16px;overflow-x:auto}
+.cwrap{flex:1;min-width:34px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer;border-radius:5px;padding:2px}
+.cwrap:hover{background:#f5f7f9}
+.cwrap.on{background:#fff7e0;outline:1px solid var(--c)}
+.cbar2{width:74%;border-radius:4px 4px 0 0;min-height:3px;transition:height .2s}
+.clab{font-size:10px;color:var(--mut);margin-top:5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;writing-mode:vertical-rl;height:52px}
+.cval{font-size:10px;color:var(--mut);margin-bottom:3px;font-variant-numeric:tabular-nums}
+/* 圓餅/環圈 */
+.pier{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.leg{flex:1;min-width:150px;max-height:200px;overflow:auto;font-size:11.5px}
+.li{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:5px;cursor:pointer}
+.li:hover{background:#f5f7f9}
+.li.on{background:#fff7e0;outline:1px solid var(--c)}
+.li i{width:10px;height:10px;border-radius:2px;flex:none}
+.li .ln{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li b{font-variant-numeric:tabular-nums}
+.li em{color:var(--mut);font-style:normal;width:44px;text-align:right}
+/* 樹狀圖 */
+.tree{position:relative;height:230px;width:100%}
+.tk{position:absolute;border:1.5px solid #fff;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center}
+.tk span{color:#fff;font-size:10.5px;line-height:1.3;padding:2px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.tk.on{outline:2.5px solid var(--c);z-index:2}
+/* KPI 卡圖 */
+.minicards{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
+.mc{border:1px solid var(--line);border-radius:9px;padding:11px;cursor:pointer;text-align:center}
+.mc:hover{background:#f5f7f9}
+.mc.on{background:#fff7e0;border-color:var(--c)}
+.mcv{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.mcv span{font-size:10.5px;font-weight:600;color:var(--mut);margin-left:2px}
+.mcl{font-size:11px;color:var(--mut);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 小表格 */
+table.mini{width:100%;border-collapse:collapse;font-size:12px}
+table.mini th{position:sticky;top:0;background:#f6f8f9;padding:5px 7px;font-size:11px}
+table.mini td{padding:4px 7px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.mini tr[data-l]{cursor:pointer}
+table.mini tr:hover td{background:#f5f7f9}
+table.mini tr.on td{background:#fff7e0}
 .rows{max-height:330px;overflow:auto}
 .brow{display:flex;align-items:center;gap:8px;padding:2px 4px;border-radius:5px;cursor:pointer}
 .brow:hover{background:#f5f7f9}
@@ -112,26 +154,15 @@ td.crm{background:#fbfdfc}
     <div class="fchips" id="chips"></div>
   </div>
 
-  <div class="kpis">
-    <div class="kpi k1"><div class="l">班數</div><div class="v" id="k_cnt">–</div></div>
-    <div class="kpi k2"><div class="l">班員</div><div class="v" id="k_mem">–<span class="u">人</span></div></div>
-    <div class="kpi k3"><div class="l">面積</div><div class="v" id="k_area">–<span class="u">公頃</span></div>
-      <div class="note" id="k_note"></div></div>
-    <div class="kpi k4"><div class="l">已建檔(CRM)</div><div class="v" id="k_crm">–<span class="u">班</span></div>
-      <div class="note">已填班長或備註的班數</div></div>
-  </div>
+  <div class="kpis" id="kpis"></div>
 
-  <div class="metricbar">
-    <span>圖表指標</span>
-    <button class="mbtn on" data-m="cnt">班數</button>
-    <button class="mbtn" data-m="mem">班員</button>
-    <button class="mbtn" data-m="area">面積</button>
+  <div class="cbar">
+    <span>圖表</span>
+    <button class="btn" onclick="addChart()">＋ 新增圖表</button>
+    <button class="btn sec" onclick="resetCharts()">↺ 回復預設</button>
+    <span style="font-size:11.5px;color:var(--mut)">每張圖可自選類型／維度／指標,點圖上的項目即篩選全頁</span>
   </div>
-
-  <div class="charts">
-    <div class="chart"><h3 id="c1title">依縣市</h3><div class="hint">▸ 點列可篩選</div><div class="rows" id="c1"></div></div>
-    <div class="chart"><h3>依產業別</h3><div class="hint">▸ 點列可篩選</div><div class="rows" id="c2"></div></div>
-  </div>
+  <div class="charts" id="charts"></div>
 
   <div class="tbar">
     <input id="q" type="search" placeholder="🔍 搜尋班名 / 地址 / 農會 / 班長…">
@@ -154,7 +185,7 @@ const R=JSON.parse(document.getElementById('D').textContent);
 const C={county:0,town:1,name:2,ind:3,mem:4,val:5,unit:6,addr:7,assoc:8,date:9,id:10,fix:11};
 const ST=["未聯絡","已聯絡","跟進中","已成交","婉拒"];
 const STC={"未聯絡":"var(--s0)","已聯絡":"var(--s1)","跟進中":"var(--s2)","已成交":"var(--s3)","婉拒":"var(--s4)"};
-let F={county:"",town:"",ind:"",st:""}, metric="cnt", page=0, sortI=-1, sortD=1, q="";
+let F={county:"",town:"",ind:"",st:""}, page=0, sortI=-1, sortD=1, q="";
 const PAGE=50;
 const isHa=r=>r[C.unit].indexOf("公頃")===0;
 
@@ -201,40 +232,219 @@ function sel(id,opts,cur,ph,cb){
   s.innerHTML="<option value=''>"+ph+"</option>"+opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join("");
   s.onchange=()=>cb(s.value);
 }
+/* ── 單位:公頃(含異體) / 頭 / 隻 / 箱 各自獨立,不可相加 ── */
+const UNITS=[{u:"公頃",lab:"面積",cls:"k3",test:r=>isHa(r),dec:1},
+             {u:"頭",lab:"畜牧規模",cls:"k5",test:r=>r[C.unit]==="頭",dec:0,note:"毛豬/牛/羊/鹿"},
+             {u:"隻",lab:"禽類規模",cls:"k6",test:r=>r[C.unit]==="隻",dec:0,note:"肉雞/蛋雞/水禽"},
+             {u:"箱",lab:"蜂箱",cls:"k7",test:r=>r[C.unit]==="箱",dec:0,note:"養蜂"}];
 function renderKPI(){
-  const x=rows();
-  document.getElementById('k_cnt').textContent=fmt(x.length);
-  document.getElementById('k_mem').innerHTML=fmt(x.reduce((s,r)=>s+r[C.mem],0))+"<span class='u'>人</span>";
-  const ha=x.filter(isHa);
-  document.getElementById('k_area').innerHTML=fmt(ha.reduce((s,r)=>s+r[C.val],0),1)+"<span class='u'>公頃</span>";
-  const live=x.length-ha.length;
-  document.getElementById('k_note').textContent=live?`不含 ${live} 個畜牧/蜂班(頭/隻/箱,不可與公頃相加)`:"";
-  document.getElementById('k_crm').innerHTML=fmt(x.filter(r=>hasCRM(r[C.id])).length)+"<span class='u'>班</span>";
+  const x=rows(), host=document.getElementById('kpis');host.innerHTML="";
+  const card=(cls,lab,val,unit,note)=>{
+    const d=document.createElement('div');d.className="kpi "+cls;
+    d.innerHTML=`<div class="l">${lab}</div><div class="v">${val}${unit?`<span class="u">${unit}</span>`:""}</div>`+
+      (note?`<div class="note">${note}</div>`:"");
+    host.appendChild(d);};
+  card("k1","班數",fmt(x.length),"");
+  card("k2","班員",fmt(x.reduce((s,r)=>s+r[C.mem],0)),"人");
+  UNITS.forEach(U=>{
+    const g=x.filter(U.test); if(!g.length)return;
+    card(U.cls,U.lab,fmt(g.reduce((s,r)=>s+r[C.val],0),U.dec),U.u,`${fmt(g.length)} 班${U.note?" · "+U.note:""}`);
+  });
+  card("k4","已建檔(CRM)",fmt(x.filter(r=>hasCRM(r[C.id])).length),"班","已填班長或備註");
 }
-function metricOf(l){
-  if(metric==="cnt")return l.length;
-  if(metric==="mem")return l.reduce((s,r)=>s+r[C.mem],0);
-  return l.filter(isHa).reduce((s,r)=>s+r[C.val],0);
+
+/* ── 圖表產生器:維度 / 指標 / 類型 ── */
+const yearOf=r=>{const m=/^(\d+)年/.exec(r[C.date]);return m?(Math.floor(+m[1]/10)*10)+"年代":"(未填)"};
+const DIMS={
+  county:{lab:"縣市",  get:r=>r[C.county]||"(未填)", fkey:"county"},
+  town:  {lab:"區域(鄉鎮)",get:r=>r[C.town]||"(未填)", fkey:"town"},
+  ind:   {lab:"產業別",get:r=>r[C.ind]||"(未填)",   fkey:"ind"},
+  assoc: {lab:"所屬農會",get:r=>r[C.assoc]||"(未填)"},
+  unit:  {lab:"規模單位",get:r=>r[C.unit]||"(未填)"},
+  year:  {lab:"設立年代",get:yearOf},
+  status:{lab:"CRM狀態",get:r=>cget(r[C.id]).status||"未聯絡", fkey:"st"},
+};
+const sum=(l,f)=>l.reduce((s,r)=>s+f(r),0);
+const MEAS={
+  cnt:    {lab:"班數",    fn:l=>l.length,                         dec:0,unit:"班",  col:"var(--a2)"},
+  mem:    {lab:"班員數",  fn:l=>sum(l,r=>r[C.mem]),               dec:0,unit:"人",  col:"var(--b)"},
+  area:   {lab:"面積(公頃)",fn:l=>sum(l.filter(isHa),r=>r[C.val]), dec:1,unit:"公頃",col:"var(--c)"},
+  avgmem: {lab:"平均班員",fn:l=>l.length?sum(l,r=>r[C.mem])/l.length:0, dec:1,unit:"人/班",col:"var(--b)"},
+  avgarea:{lab:"平均面積",fn:l=>{const h=l.filter(isHa);return h.length?sum(h,r=>r[C.val])/h.length:0}, dec:2,unit:"公頃/班",col:"var(--c)"},
+  head:   {lab:"畜牧(頭)",fn:l=>sum(l.filter(r=>r[C.unit]==="頭"),r=>r[C.val]), dec:0,unit:"頭",col:"#a1683a"},
+  bird:   {lab:"禽類(隻)",fn:l=>sum(l.filter(r=>r[C.unit]==="隻"),r=>r[C.val]), dec:0,unit:"隻",col:"#c85f5f"},
+  box:    {lab:"蜂箱(箱)",fn:l=>sum(l.filter(r=>r[C.unit]==="箱"),r=>r[C.val]), dec:0,unit:"箱",col:"#b58b2e"},
+  crm:    {lab:"已建檔班數",fn:l=>l.filter(r=>hasCRM(r[C.id])).length, dec:0,unit:"班",col:"var(--s3)"},
+};
+const TYPES={bar:"橫條圖",col:"直條圖",pie:"圓餅圖",donut:"環圈圖",line:"折線圖",
+             tree:"樹狀圖",lolli:"棒棒糖圖",table:"表格",card:"KPI卡"};
+const PAL=["#1a7a4c","#2b6cb0","#c8862a","#7a5cc0","#c85f5f","#2f9e8f","#a1683a","#8a9a2b","#b5487c","#4b7d9e",
+           "#6aa84f","#e0a63a","#5f6caf","#c0504a","#3f9e6d","#9e6b3f","#556b2f","#8b5a8c","#4682b4","#a0522d"];
+const CKEY="agrcharts_v1";
+const DEF=[{t:"bar",d:"county",m:"cnt"},{t:"bar",d:"ind",m:"cnt"}];
+let CHARTS=(()=>{try{const v=JSON.parse(localStorage.getItem(CKEY));return Array.isArray(v)&&v.length?v:DEF.slice()}catch(e){return DEF.slice()}})();
+const saveCharts=()=>localStorage.setItem(CKEY,JSON.stringify(CHARTS));
+function addChart(){CHARTS.push({t:"bar",d:"county",m:"cnt"});saveCharts();renderCharts()}
+function delChart(i){CHARTS.splice(i,1);saveCharts();renderCharts()}
+function setChart(i,k,v){CHARTS[i][k]=v;saveCharts();renderCharts()}
+function resetCharts(){CHARTS=DEF.slice();saveCharts();renderCharts()}
+
+function agg(list,dimKey,meaKey){
+  const D=DIMS[dimKey],M=MEAS[meaKey],m={};
+  list.forEach(r=>{const k=D.get(r);(m[k]=m[k]||[]).push(r)});
+  return Object.entries(m).map(([k,v])=>[k,M.fn(v)]).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
 }
-const MLAB={cnt:"班",mem:"人",area:"公頃"}, MCOL={cnt:"var(--a2)",mem:"var(--b)",area:"var(--c)"};
-function group(l,i){const m={};l.forEach(r=>{const k=r[i]||"(未填)";(m[k]=m[k]||[]).push(r)});
-  return Object.entries(m).map(([k,v])=>[k,metricOf(v)]).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])}
 function renderCharts(){
-  const x=rows(), byTown=!!F.county;
-  document.getElementById('c1title').textContent=byTown?`依區域(${F.county})`:"依縣市";
-  bars('c1',group(x,byTown?C.town:C.county),byTown?'town':'county');
-  bars('c2',group(x,C.ind),'ind');
+  const host=document.getElementById('charts');host.innerHTML="";
+  const x=rows();
+  CHARTS.forEach((cfg,i)=>{
+    // 選了縣市時,county 維度自動改看區域(Power BI 的向下鑽研)
+    let dim=cfg.d; if(dim==="county"&&F.county)dim="town";
+    const D=DIMS[dim],M=MEAS[cfg.m];
+    const data=agg(x,dim,cfg.m);
+    const box=document.createElement('div');box.className="chart";
+    box.innerHTML=`<div class="chd">
+        <h3>${D.lab} × ${M.lab}${dim!==cfg.d?' <span style="font-weight:400;color:var(--mut)">(已鑽研)</span>':''}</h3>
+        <div class="cctl">
+          <select onchange="setChart(${i},'t',this.value)">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}"${cfg.t===k?' selected':''}>${v}</option>`).join("")}</select>
+          <select onchange="setChart(${i},'d',this.value)">${Object.entries(DIMS).map(([k,v])=>`<option value="${k}"${cfg.d===k?' selected':''}>${v.lab}</option>`).join("")}</select>
+          <select onchange="setChart(${i},'m',this.value)">${Object.entries(MEAS).map(([k,v])=>`<option value="${k}"${cfg.m===k?' selected':''}>${v.lab}</option>`).join("")}</select>
+          <button class="x" onclick="delChart(${i})" title="移除這張圖">✕</button>
+        </div></div>
+      <div class="cbody" id="cb${i}"></div>`;
+    host.appendChild(box);
+    draw(document.getElementById('cb'+i),cfg.t,data,M,D.fkey,dim);
+  });
+  if(!CHARTS.length)host.innerHTML=`<div class="chart" style="text-align:center;color:var(--mut);padding:28px">
+    目前沒有圖表 · 按上方「＋ 新增圖表」開始</div>`;
 }
-function bars(el,data,key){
-  const h=document.getElementById(el);h.innerHTML="";
-  const max=Math.max(1,...data.map(d=>d[1])), dec=metric==="area"?1:0;
-  data.forEach(([lab,val])=>{
-    const d=document.createElement('div');d.className="brow"+(F[key]===lab?" on":"");
-    d.innerHTML=`<div class="blab" title="${lab}">${lab}</div>
-      <div class="btrack"><div class="bfill" style="width:${val/max*100}%;background:${MCOL[metric]}"></div></div>
-      <div class="bval">${fmt(val,dec)} ${MLAB[metric]}</div>`;
-    d.onclick=()=>{F[key]=F[key]===lab?"":lab;if(key==='county')F.town="";page=0;render()};
-    h.appendChild(d);});
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function clickDim(fkey,lab){ if(!fkey)return; F[fkey]=F[fkey]===lab?"":lab; if(fkey==='county')F.town=""; page=0; render(); }
+function isSel(fkey,lab){return fkey&&F[fkey]===lab}
+
+function draw(el,type,data,M,fkey,dim){
+  el.innerHTML="";
+  if(!data.length){el.innerHTML=`<div style="color:var(--mut);padding:18px;text-align:center">此條件下沒有資料</div>`;return}
+  const top=data.slice(0,type==="card"?4:(type==="pie"||type==="donut"?10:(type==="tree"?14:20)));
+  const max=Math.max(...top.map(d=>d[1])), tot=data.reduce((s,d)=>s+d[1],0);
+  const V=v=>fmt(v,M.dec);
+
+  if(type==="bar"||type==="lolli"){
+    const w=document.createElement('div');w.className="rows";
+    top.forEach(([lab,val])=>{
+      const d=document.createElement('div');d.className="brow"+(isSel(fkey,lab)?" on":"");
+      d.innerHTML=type==="bar"
+        ? `<div class="blab" title="${esc(lab)}">${esc(lab)}</div>
+           <div class="btrack"><div class="bfill" style="width:${val/max*100}%;background:${M.col}"></div></div>
+           <div class="bval">${V(val)} ${M.unit}</div>`
+        : `<div class="blab" title="${esc(lab)}">${esc(lab)}</div>
+           <div class="btrack" style="background:transparent;position:relative">
+             <div style="position:absolute;top:50%;left:0;height:2px;width:${val/max*100}%;background:${M.col};opacity:.45"></div>
+             <div style="position:absolute;top:50%;left:calc(${val/max*100}% - 5px);width:10px;height:10px;border-radius:50%;background:${M.col};transform:translateY(-50%)"></div>
+           </div>
+           <div class="bval">${V(val)} ${M.unit}</div>`;
+      d.onclick=()=>clickDim(fkey,lab); w.appendChild(d);});
+    el.appendChild(w);return;
+  }
+  if(type==="col"){
+    const w=document.createElement('div');w.className="cols";
+    top.slice(0,14).forEach(([lab,val])=>{
+      const d=document.createElement('div');d.className="cwrap"+(isSel(fkey,lab)?" on":"");
+      d.innerHTML=`<div class="cval">${V(val)}</div>
+        <div class="cbar2" style="height:${Math.max(3,val/max*100)}%;background:${M.col}"></div>
+        <div class="clab" title="${esc(lab)}">${esc(lab)}</div>`;
+      d.onclick=()=>clickDim(fkey,lab); w.appendChild(d);});
+    el.appendChild(w);return;
+  }
+  if(type==="pie"||type==="donut"){
+    const R0=type==="donut"?46:0, size=190, cx=95, cy=95, r=88;
+    let a0=-Math.PI/2, svg=`<svg viewBox="0 0 ${size} ${size}" style="width:190px;height:190px;flex:none">`;
+    const sumTop=top.reduce((s,d)=>s+d[1],0);
+    top.forEach(([lab,val],i)=>{
+      const a1=a0+val/sumTop*Math.PI*2, big=(a1-a0)>Math.PI?1:0;
+      const p=(rr,a)=>[cx+rr*Math.cos(a),cy+rr*Math.sin(a)];
+      const [x1,y1]=p(r,a0),[x2,y2]=p(r,a1),[x3,y3]=p(R0,a1),[x4,y4]=p(R0,a0);
+      svg+=`<path d="M${x1},${y1} A${r},${r} 0 ${big},1 ${x2},${y2} L${x3},${y3} ${R0?`A${R0},${R0} 0 ${big},0 ${x4},${y4}`:''} Z"
+        fill="${PAL[i%PAL.length]}" opacity="${isSel(fkey,lab)?1:.86}" stroke="#fff" stroke-width="1.2"
+        style="cursor:pointer" data-l="${esc(lab)}"><title>${esc(lab)}：${V(val)} ${M.unit}</title></path>`;
+      a0=a1;});
+    if(R0)svg+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="12" fill="var(--mut)">合計</text>
+                <text x="${cx}" y="${cy+13}" text-anchor="middle" font-size="14" font-weight="700">${V(tot)}</text>`;
+    svg+=`</svg>`;
+    const wrap=document.createElement('div');wrap.className="pier";
+    wrap.innerHTML=svg+`<div class="leg">`+top.map(([lab,val],i)=>
+      `<div class="li${isSel(fkey,lab)?" on":""}" data-l="${esc(lab)}"><i style="background:${PAL[i%PAL.length]}"></i>
+        <span class="ln" title="${esc(lab)}">${esc(lab)}</span><b>${V(val)}</b>
+        <em>${(val/sumTop*100).toFixed(1)}%</em></div>`).join("")+`</div>`;
+    el.appendChild(wrap);
+    wrap.querySelectorAll('[data-l]').forEach(n=>n.onclick=()=>clickDim(fkey,n.dataset.l));
+    return;
+  }
+  if(type==="line"){
+    // 折線圖:維度若是年代則依年代排序,否則依值
+    const d2=(dim==="year")?data.slice().sort((a,b)=>String(a[0]).localeCompare(String(b[0]))):top.slice().reverse();
+    const W=520,H=210,pl=52,pb=34,pt=12,pr=12;
+    const mx=Math.max(...d2.map(d=>d[1])), n=d2.length;
+    const px=i=>pl+(n<2?(W-pl-pr)/2:i*(W-pl-pr)/(n-1)), py=v=>H-pb-(v/mx)*(H-pb-pt);
+    let g="";
+    [0,.25,.5,.75,1].forEach(t=>{const y=H-pb-t*(H-pb-pt);
+      g+=`<line x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
+          <text x="${pl-7}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--mut)">${fmt(mx*t,M.dec)}</text>`;});
+    const pts=d2.map((d,i)=>`${px(i)},${py(d[1])}`).join(" ");
+    g+=`<polyline points="${pts}" fill="none" stroke="${M.col}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    g+=`<polygon points="${pl},${H-pb} ${pts} ${px(n-1)},${H-pb}" fill="${M.col}" opacity=".1"/>`;
+    d2.forEach((d,i)=>{g+=`<circle cx="${px(i)}" cy="${py(d[1])}" r="${isSel(fkey,d[0])?5:3.5}" fill="${M.col}"
+        style="cursor:pointer" data-l="${esc(d[0])}"><title>${esc(d[0])}：${V(d[1])} ${M.unit}</title></circle>`;
+      if(n<=14)g+=`<text x="${px(i)}" y="${H-pb+15}" text-anchor="middle" font-size="9.5" fill="var(--mut)"
+        transform="rotate(-28 ${px(i)} ${H-pb+15})">${esc(String(d[0]).slice(0,6))}</text>`;});
+    const s=document.createElement('div');s.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:230px">${g}</svg>`;
+    el.appendChild(s);
+    s.querySelectorAll('[data-l]').forEach(nd=>nd.onclick=()=>clickDim(fkey,nd.dataset.l));
+    return;
+  }
+  if(type==="tree"){
+    // 樹狀圖:簡易 squarify(依比例切列)
+    const W=100,H=100,items=top.map(([l,v])=>({l,v}));
+    const total=items.reduce((s,d)=>s+d.v,0);
+    let x0=0,y0=0,w=W,h=H,idx=0,out=[];
+    while(idx<items.length){
+      const remain=items.slice(idx).reduce((s,d)=>s+d.v,0);
+      const horiz=w>=h;
+      let take=[],acc=0;
+      for(let i=idx;i<items.length;i++){take.push(items[i]);acc+=items[i].v;
+        if(take.length>=Math.max(1,Math.round(Math.sqrt(items.length-idx))))break;}
+      const frac=acc/remain, band=horiz?w*frac:h*frac;
+      let off=0;
+      take.forEach(t=>{const part=t.v/acc, sw=horiz?band:w*part, sh=horiz?h*part:band;
+        out.push({...t,x:horiz?x0:x0+off,y:horiz?y0+off:y0,w:sw,h:sh});
+        off+=horiz?sh:sw;});
+      if(horiz){x0+=band;w-=band}else{y0+=band;h-=band}
+      idx+=take.length;
+    }
+    const g=out.map((o,i)=>`<div class="tk${isSel(fkey,o.l)?" on":""}" data-l="${esc(o.l)}"
+      style="left:${o.x}%;top:${o.y}%;width:${o.w}%;height:${o.h}%;background:${PAL[i%PAL.length]}">
+      <span>${esc(o.l)}<br><b>${V(o.v)}</b></span></div>`).join("");
+    const d=document.createElement('div');d.className="tree";d.innerHTML=g;el.appendChild(d);
+    d.querySelectorAll('[data-l]').forEach(n=>n.onclick=()=>clickDim(fkey,n.dataset.l));
+    return;
+  }
+  if(type==="card"){
+    const d=document.createElement('div');d.className="minicards";
+    d.innerHTML=top.map(([lab,val])=>`<div class="mc${isSel(fkey,lab)?" on":""}" data-l="${esc(lab)}">
+      <div class="mcv" style="color:${M.col}">${V(val)}<span>${M.unit}</span></div>
+      <div class="mcl">${esc(lab)}</div></div>`).join("");
+    el.appendChild(d);
+    d.querySelectorAll('[data-l]').forEach(n=>n.onclick=()=>clickDim(fkey,n.dataset.l));
+    return;
+  }
+  // table
+  const t=document.createElement('div');t.className="rows";
+  t.innerHTML=`<table class="mini"><thead><tr><th>${esc(DIMS[dim].lab)}</th><th style="text-align:right">${esc(M.lab)}</th><th style="text-align:right">佔比</th></tr></thead><tbody>`+
+    data.slice(0,50).map(([lab,val])=>`<tr class="${isSel(fkey,lab)?"on":""}" data-l="${esc(lab)}">
+      <td>${esc(lab)}</td><td style="text-align:right">${V(val)}</td>
+      <td style="text-align:right;color:var(--mut)">${(val/tot*100).toFixed(1)}%</td></tr>`).join("")+`</tbody></table>`;
+  el.appendChild(t);
+  t.querySelectorAll('[data-l]').forEach(n=>n.onclick=()=>clickDim(fkey,n.dataset.l));
 }
 /* 欄位: [標題, 取值fn, 是否CRM欄, 排序key] */
 const COLS=[
@@ -425,9 +635,6 @@ function loadCSV(inp){
 }
 function clearAll(){F={county:"",town:"",ind:"",st:""};q="";document.getElementById('q').value="";page=0;render()}
 function render(){renderSlicers();renderKPI();renderCharts();renderTable();markCfg()}
-document.querySelectorAll('.mbtn').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');metric=b.dataset.m;renderCharts();});
 document.getElementById('q').oninput=e=>{q=e.target.value;page=0;renderKPI();renderCharts();renderTable()};
 render();
 </script>
