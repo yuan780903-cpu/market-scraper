@@ -464,8 +464,10 @@ function renderTable(){
   const pages=Math.max(1,Math.ceil(x.length/PAGE));if(page>=pages)page=pages-1;
   const th=document.getElementById('th');th.innerHTML="";
   COLS.forEach(([lab,,typ],i)=>{const h=document.createElement('th');h.className=typ==="crm"?"crm":"";
-    h.textContent=lab+(sortI===i?(sortD>0?" ▲":" ▼"):"");
-    h.onclick=()=>{if(sortI===i)sortD=-sortD;else{sortI=i;sortD=1}renderTable()};th.appendChild(h);});
+    const isNum=(typ==="num"||typ==="scale");
+    h.textContent=lab+(isNum?" ⇅":"")+(sortI===i?(sortD>0?" ▲":" ▼"):"");
+    h.title=isNum?"點一下:由大到小;再點:由小到大":"點一下排序";
+    h.onclick=()=>{if(sortI===i)sortD=-sortD;else{sortI=i;sortD=isNum?-1:1}renderTable()};th.appendChild(h);});
   const tb=document.getElementById('tb');tb.innerHTML="";
   x.slice(page*PAGE,page*PAGE+PAGE).forEach(r=>{const tr=document.createElement('tr');tr.className="dr";
     COLS.forEach(([lab,f,typ])=>{const td=document.createElement('td');const v=f(r);
