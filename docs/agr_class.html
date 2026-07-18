@@ -138,6 +138,18 @@ td.crm{background:#fbfdfc}
 .ok{color:var(--a);font-size:11.5px;margin-left:8px;opacity:0;transition:.2s}
 .ok.on{opacity:1}
 .lnk{color:var(--b);text-decoration:none}
+.remind{background:#fff7e0;border:1px solid var(--c);border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:13px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.remind b{color:var(--c);font-variant-numeric:tabular-nums}
+.remind .rbtn{cursor:pointer;text-decoration:underline;color:var(--a)}
+.remind .rbtn.od{color:#c0504a}
+.acts{margin-top:5px;max-height:180px;overflow:auto}
+.act{display:flex;gap:7px;font-size:12px;padding:4px 2px;border-top:1px dashed var(--line);align-items:baseline}
+.act .ad{color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.act .at{background:#e8eef7;color:#2b6cb0;border-radius:4px;padding:0 5px;white-space:nowrap;font-size:11px}
+.act .ax{flex:1;white-space:normal}
+.act .adel{color:#c0504a;cursor:pointer;font-size:11px}
+.tagchip{display:inline-block;background:#e3f0e7;color:var(--a);border:1px solid #cfe6d6;border-radius:12px;padding:0 7px;font-size:10.5px;margin:1px 2px 1px 0;white-space:nowrap}
+.od{color:#c0504a;font-weight:700}
 </style>
 </head>
 <body>
@@ -154,6 +166,7 @@ td.crm{background:#fbfdfc}
       <div class="sl"><label>區域(鄉鎮)</label><select id="f_town"></select></div>
       <div class="sl"><label>聯絡狀況</label><select id="f_st"></select></div>
       <div class="sl" id="sl_area"><label>面積(公頃)</label><select id="f_area"></select></div>
+      <div class="sl" id="sl_tag"><label>標籤</label><select id="f_tag"></select></div>
       <button class="clr" onclick="clearAll()">✕ 清除篩選</button>
       <div class="fchips" id="chips"></div>
     </div>
@@ -163,6 +176,7 @@ td.crm{background:#fbfdfc}
     </div>
   </div>
 
+  <div class="remind" id="remind" style="display:none"></div>
   <div class="kpis" id="kpis"></div>
 
   <div class="cbar">
@@ -315,7 +329,7 @@ let cur=localStorage.getItem("agr_cur")||"agr";
 if(!DS[cur])cur="agr";
 const AREABANDS=[{k:"<1",lab:"1公頃以下",t:a=>a<1},{k:"1-3",lab:"1~3公頃",t:a=>a>=1&&a<3},
  {k:"3-5",lab:"3~5公頃",t:a=>a>=3&&a<5},{k:"5-10",lab:"5~10公頃",t:a=>a>=5&&a<10},{k:">10",lab:"10公頃以上",t:a=>a>=10}];
-let F={county:"",town:"",inds:new Set(),st:"",area:""}, page=0, sortI=-1, sortD=1, q="";
+let F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""}, page=0, sortI=-1, sortD=1, q="";
 const PAGE=50;
 
 /* ── CRM(本機) ── */
@@ -324,9 +338,39 @@ let CRM={}; try{CRM=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){CRM={}}
 const ck=r=>r.ds+"_"+r.id;
 const cget=r=>r.ds==="union"?(r.ex||{}):(CRM[ck(r)]||{});
 function cset(r,v){const k=ck(r);
-  if(!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡"))delete CRM[k];
-  else CRM[k]=v; localStorage.setItem(KEY,JSON.stringify(CRM));}
-const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡"))};
+  const empty=!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡")&&!(v.tags&&v.tags.length)&&!(v.acts&&v.acts.length);
+  if(empty)delete CRM[k]; else CRM[k]=v; localStorage.setItem(KEY,JSON.stringify(CRM));}
+const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length))};
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const parseTags=str=>(str||"").split(/[、,，]/).map(x=>x.trim()).filter(Boolean);
+function recPatch(r,obj){
+  if(r.ds==="union"){const u=UNIONS.find(x=>x.id===r.id);if(u){Object.assign(u,obj);saveU();ALL.union=unionRows();r.ex=u;}}
+  else{const k=ck(r);const merged={...(CRM[k]||{}),...obj};cset(r,merged);}
+}
+function crmExtraHTML(r){const c=cget(r);const tags=c.tags||[];const acts=c.acts||[];
+  return `<label>標籤(逗號分隔)</label>
+    <input id="e_tags" value="${esc(tags.join("、"))}" placeholder="潛力客戶、大戶、已用本廠肥、競品客戶、種水稻">
+    <label style="margin-top:12px">互動紀錄(每次通話/拜訪記一筆,不覆蓋)</label>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <input id="a_date" type="date" value="${todayStr()}" style="width:auto;flex:none;padding:6px">
+      <select id="a_type" style="width:auto;flex:none;padding:6px">${["電話","拜訪","LINE","報價","簡訊","成交","其他"].map(t=>`<option>${t}</option>`).join("")}</select>
+      <input id="a_text" placeholder="內容…" style="flex:1;min-width:110px">
+      <button class="btn" onclick="addAct()" style="flex:none;padding:6px 10px">＋記一筆</button>
+    </div>
+    <div class="acts" id="actList">${actListHTML(acts)}</div>`;
+}
+function actListHTML(acts){if(!acts||!acts.length)return `<div style="color:var(--mut);font-size:11.5px;padding:5px 0">尚無互動紀錄,記一筆開始追蹤</div>`;
+  return acts.map((a,i)=>({a,i})).reverse().map(({a,i})=>`<div class="act"><span class="ad">${esc(a.d)}</span><span class="at">${esc(a.t)}</span><span class="ax">${esc(a.x)}</span><span class="adel" onclick="delAct(${i})">✕</span></div>`).join("");
+}
+function addAct(){if(!cr)return;const d=document.getElementById('a_date').value,t=document.getElementById('a_type').value,x=document.getElementById('a_text').value.trim();
+  if(!x){document.getElementById('a_text').focus();return;}
+  const acts=(cget(cr).acts||[]).concat([{d:d||todayStr(),t,x}]);
+  recPatch(cr,{acts,tags:parseTags((document.getElementById('e_tags')||{}).value)});
+  document.getElementById('a_text').value="";
+  document.getElementById('actList').innerHTML=actListHTML(cget(cr).acts||[]);
+  renderKPI();renderTable();}
+function delAct(i){if(!cr)return;const acts=(cget(cr).acts||[]).slice();acts.splice(i,1);recPatch(cr,{acts});
+  document.getElementById('actList').innerHTML=actListHTML(cget(cr).acts||[]);renderTable();}
 
 /* ── 青農聯誼會:自建名錄(本機) ── */
 const UOFF=["新北市","臺北市","桃園市","新竹縣","苗栗縣","臺中市","彰化縣","南投縣","雲林縣","嘉義縣","臺南市","高雄市","屏東縣","宜蘭縣","花蓮縣","臺東縣","金門縣"];
@@ -346,6 +390,8 @@ function rows(){
   if(F.inds.size)x=x.filter(r=>r.inds.some(i=>F.inds.has(i)));
   if(F.st)    x=x.filter(r=>(cget(r).status||"未聯絡")===F.st);
   if(F.area){const b=AREABANDS.find(z=>z.k===F.area);if(b)x=x.filter(r=>r.unit.indexOf("公頃")===0&&b.t(r.area))}
+  if(F.tag)x=x.filter(r=>(cget(r).tags||[]).includes(F.tag));
+  if(F.due){const t=todayStr();x=x.filter(r=>{const c=cget(r);if(!c.next||c.status==="已成交"||c.status==="婉拒")return false;return F.due==="overdue"?c.next<t:c.next===t})}
   if(q){const s=q.toLowerCase();
     x=x.filter(r=>{const c=cget(r);
       return (r.name+r.addr+r.inds.join("")+(r.phone||"")+(r.ex.assoc||"")+(r.ex.org||"")+(c.leader||"")+(c.phone||"")+(c.note||"")).toLowerCase().includes(s)})}
@@ -359,7 +405,7 @@ function renderTop(){
   document.getElementById('upd').textContent="📅 資料更新："+cfg.ts;
   const cs=document.getElementById('f_cat');
   cs.innerHTML=Object.entries(DS).map(([k,v])=>`<option value="${k}"${k===cur?' selected':''}>${v.name}</option>`).join("");
-  cs.onchange=()=>{cur=cs.value;localStorage.setItem("agr_cur",cur);F={county:"",town:"",inds:new Set(),st:"",area:""};q="";document.getElementById('q').value="";page=0;sortI=-1;render()};
+  cs.onchange=()=>{cur=cs.value;localStorage.setItem("agr_cur",cur);F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;sortI=-1;render()};
   const list=ALL[cur];
   sel('f_county',[...new Set(list.map(r=>r.county))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'zh')),F.county,'全部縣市',
       v=>{F.county=v;F.town="";page=0;render()});
@@ -388,6 +434,8 @@ function renderTop(){
   if(F.county)addChip("縣市："+F.county,()=>{F.county="";F.town="";page=0;render()});
   if(F.town)addChip("區域："+F.town,()=>{F.town="";page=0;render()});
   if(F.st)addChip("狀態："+F.st,()=>{F.st="";page=0;render()});
+  if(F.tag)addChip("標籤："+F.tag,()=>{F.tag="";page=0;render()});
+  if(F.due)addChip("跟進："+(F.due==="overdue"?"逾期":"今日"),()=>{F.due="";page=0;render()});
   if(F.area){const b=AREABANDS.find(z=>z.k===F.area);addChip("面積："+(b?b.lab:F.area),()=>{F.area="";page=0;render()})}
   F.inds.forEach(i=>addChip(cfg.indLab+"："+i,()=>{F.inds.delete(i);page=0;render()}));
 }
@@ -395,6 +443,25 @@ function sel(id,opts,cur2,ph,cb){const s=document.getElementById(id);
   s.innerHTML=`<option value=''>${ph}</option>`+opts.map(o=>`<option${o===cur2?' selected':''}>${esc(o)}</option>`).join("");
   s.onchange=()=>cb(s.value);}
 
+function renderReminder(){const t=todayStr();const el=document.getElementById('remind');
+  const list=ALL[cur].filter(r=>{const c=cget(r);return c.next&&c.status!=="已成交"&&c.status!=="婉拒"});
+  const od=list.filter(r=>cget(r).next<t).length, td=list.filter(r=>cget(r).next===t).length, up=list.filter(r=>cget(r).next>t).length;
+  if(!od&&!td&&!up){el.style.display="none";return;}
+  el.style.display="";
+  el.innerHTML=`⏰ 跟進提醒　`+
+    (od?`<span class="rbtn od" onclick="F.due='overdue';F.st='';page=0;render()">逾期 <b>${od}</b> 筆</span>`:``)+
+    (td?`<span class="rbtn" onclick="F.due='today';F.st='';page=0;render()">今日 <b>${td}</b> 筆</span>`:``)+
+    (up?`<span style="color:var(--mut)">未來 ${up} 筆</span>`:``)+
+    (F.due?`　<span class="rbtn" onclick="F.due='';page=0;render()">✕ 取消提醒篩選</span>`:``);
+}
+function renderTagSlicer(){
+  const tags=[...new Set(ALL[cur].flatMap(r=>cget(r).tags||[]))].sort((a,b)=>a.localeCompare(b,'zh'));
+  const sl=document.getElementById('sl_tag'),se=document.getElementById('f_tag');
+  sl.style.display=tags.length?'':'none';
+  if(!tags.includes(F.tag))F.tag=tags.includes(F.tag)?F.tag:"";
+  se.innerHTML="<option value=''>全部標籤</option>"+tags.map(t=>`<option${F.tag===t?' selected':''}>${esc(t)}</option>`).join("");
+  se.onchange=()=>{F.tag=se.value;page=0;render()};
+}
 function renderKPI(){
   const cfg=DS[cur],x=rows(),host=document.getElementById('kpis');host.innerHTML="";
   cfg.kpis(x).forEach(([lab,val,unit,note])=>{const d=document.createElement('div');d.className="kpi";
@@ -531,7 +598,10 @@ function renderTable(){
   x.slice(page*PAGE,page*PAGE+PAGE).forEach(r=>{const tr=document.createElement('tr');tr.className="dr";
     COLS.forEach(([lab,f,typ])=>{const td=document.createElement('td');const v=f(r);
       if(typ==="crm")td.className="crm";
-      if(lab==="聯絡狀況"){const s=cget(r).status||"未聯絡";td.innerHTML=`<span class="pill" style="background:${STC[s]}1f;color:${STC[s]}">${s}</span>`}
+      if(lab==="聯絡狀況"){const c=cget(r);const s=c.status||"未聯絡";let ex2="";
+        if(c.next&&s!=="已成交"&&s!=="婉拒"){const t=todayStr();if(c.next<t)ex2=`<span class="od"> ⏰逾期</span>`;else if(c.next===t)ex2=`<span class="od" style="color:#c8862a"> ⏰今日</span>`;}
+        const tg=(c.tags||[]).slice(0,4).map(x=>`<span class="tagchip">${esc(x)}</span>`).join("");
+        td.innerHTML=`<span class="pill" style="background:${STC[s]}1f;color:${STC[s]}">${s}</span>${ex2} ${tg}`}
       else if(typ==="num"){td.className="num";td.textContent=fmt(v)}
       else if(typ==="scale"){td.className="num";td.textContent=fmt(v,2);
         if(r.ex.fix){const s=document.createElement('span');s.className="fix";s.textContent=" ✎";s.title="官方原始資料登打錯誤,已人工校正";td.appendChild(s)}}
@@ -561,13 +631,14 @@ function openDw(r){if(r.ds==="union"){openUnion(r);return;}cr=r;const cfg=DS[cur
     <label>電話 / 手機</label><input id="e_phone" value="${esc(c.phone||r.phone||'')}" placeholder="例:0912-345-678">
     <label>聯絡狀態</label><select id="e_status">${ST.map(s=>`<option${(c.status||'未聯絡')===s?' selected':''}>${s}</option>`).join("")}</select>
     <label>下次跟進日</label><input id="e_next" type="date" value="${esc(c.next||'')}">
-    <label>備註 / 拜訪紀錄</label><textarea id="e_note" placeholder="通話內容、需求、用肥習慣、報價…">${esc(c.note||'')}</textarea>
+    <label>備註</label><textarea id="e_note" placeholder="需求、用肥習慣、田區位置…">${esc(c.note||'')}</textarea>
+    ${crmExtraHTML(r)}
     <div style="margin-top:10px"><button class="btn" onclick="saveCRM()">儲存</button></div></div>`;
   const d=document.getElementById('dw');d.innerHTML=h;d.classList.add('on');document.getElementById('ov').classList.add('on');
 }
 function closeDw(){document.getElementById('dw').classList.remove('on');document.getElementById('ov').classList.remove('on')}
-function saveCRM(){const g=id=>document.getElementById(id).value.trim();
-  cset(cr,{leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),ts:new Date().toISOString().slice(0,10)});
+function saveCRM(){const g=id=>document.getElementById(id).value.trim();const c0=cget(cr);
+  cset(cr,{...c0,leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),tags:parseTags(g('e_tags')),ts:todayStr()});
   const o=document.getElementById('ok');o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1400);renderKPI();renderTable();}
 
 /* ── 雲端設定 ── */
@@ -640,7 +711,7 @@ function newUnion(){
   const u={id:"U"+(mx+1),county:F.county||"臺南市",town:"",name:"",title:"分會長",leader:"",phone:"",addr:"",assoc:"",status:"未聯絡",note:""};
   UNIONS.push(u);saveU();ALL.union=unionRows();openUnion({ds:"union",id:u.id,ex:u});
 }
-function openUnion(r){const u=UNIONS.find(x=>x.id===r.id)||r.ex;
+function openUnion(r){const u=UNIONS.find(x=>x.id===r.id)||r.ex;cr={ds:"union",id:u.id,ex:u};
   const TITLES=["縣市總會","總會長","分會","分會長","會長","副會長","秘書","幹部"];
   let h=`<button class="cls" onclick="closeDw()">✕</button><h2>${u.name?esc(u.name):"新增聯誼會"}</h2>
    <div style="color:var(--mut);font-size:12px">青農聯誼會 · 你可自行維護(存本機,可匯出上雲)</div>
@@ -654,7 +725,8 @@ function openUnion(r){const u=UNIONS.find(x=>x.id===r.id)||r.ex;
      <label>住址</label><input id="u_addr" value="${esc(u.addr||'')}">
      <label>所屬農會</label><input id="u_assoc" value="${esc(u.assoc||'')}">
      <label>聯絡狀況</label><select id="u_status">${ST.map(x=>`<option${(u.status||'未聯絡')===x?' selected':''}>${x}</option>`).join("")}</select>
-     <label>備註 / 拜訪紀錄</label><textarea id="u_note">${esc(u.note||'')}</textarea>
+     <label>備註</label><textarea id="u_note">${esc(u.note||'')}</textarea>
+     ${crmExtraHTML({ds:"union",id:u.id,ex:u})}
      <div style="margin-top:10px;display:flex;gap:8px">
        <button class="btn" onclick="saveUnion('${u.id}')">儲存</button>
        <button class="btn sec" onclick="delUnion('${u.id}')" style="border-color:#c0504a;color:#c0504a">刪除</button>
@@ -666,7 +738,7 @@ function saveUnion(id){const g=x=>document.getElementById(x).value.trim();
   Object.assign(u,{county:g('u_county'),town:g('u_town'),
     name:g('u_name')||(g('u_county')+(g('u_town')||'')+"青農聯誼會"),
     title:g('u_title'),leader:g('u_leader'),phone:g('u_phone'),addr:g('u_addr'),
-    assoc:g('u_assoc'),status:g('u_status'),note:g('u_note')});
+    assoc:g('u_assoc'),status:g('u_status'),note:g('u_note'),tags:parseTags((document.getElementById('e_tags')||{}).value)});
   saveU();ALL.union=unionRows();
   const o=document.getElementById('ok');if(o){o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1200);}
   renderKPI();renderTable();
@@ -674,11 +746,11 @@ function saveUnion(id){const g=x=>document.getElementById(x).value.trim();
 function delUnion(id){if(!confirm("確定刪除這個聯誼會?"))return;
   UNIONS=UNIONS.filter(x=>x.id!==id);saveU();ALL.union=unionRows();closeDw();render();
 }
-function clearAll(){F={county:"",town:"",inds:new Set(),st:"",area:""};q="";document.getElementById('q').value="";page=0;render()}
+function clearAll(){F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;render()}
 function render(){ALL.union=unionRows();
   document.getElementById('q').placeholder="🔍 搜尋"+DS[cur].nameLab+" / "+DS[cur].crmName+"…";
   document.getElementById('addUnionBtn').style.display=cur==="union"?"":"none";
-  renderTop();renderKPI();renderCharts();renderTable();markCfg();}
+  renderTop();renderReminder();renderTagSlicer();renderKPI();renderCharts();renderTable();markCfg();}
 document.getElementById('q').oninput=e=>{q=e.target.value;page=0;renderKPI();renderCharts();renderTable()};
 render();
 </script>
