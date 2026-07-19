@@ -227,7 +227,7 @@ const TAP=(PAY.tap||[]).map(r=>({ds:"tap",id:String(r[10])||r[2],name:r[2],count
 // 農會: [名稱,縣市,區域,會址,電話,傳真,層級,id]
 const FA=(PAY.fa||[]).map(r=>({ds:"fa",id:String(r[7]),name:r[0],county:r[1],town:r[2],
   addr:r[3],phone:r[4],inds:[r[6]],area:0,unit:"",ex:{fax:r[5]}}));
-const ALL={agr:AGR,organic:ORG,tap:TAP,youth:YOUTH,fa:FA,union:[]};
+const ALL={agr:AGR,organic:ORG,tap:TAP,youth:YOUTH,fa:FA};
 
 const sum=(l,f)=>l.reduce((s,r)=>s+f(r),0);
 const yearOf=r=>{const m=/^(\d+)年|民國(\d+)/.exec(r.ex.date||"");const y=m?+(m[1]||m[2]):0;
@@ -304,18 +304,7 @@ const DS={
    cols:[["會址",r=>r.addr],["傳真",r=>r.ex.fax]],
    detail:r=>[["會址",r.addr],["電話",r.phone],["傳真",r.ex.fax],["層級",r.inds.join("")]],
  },
- union:{name:"青農聯誼會", short:"青農聯誼會", src:"各縣市青年農民聯誼會(官方17縣市+可自建)", ts:"可自行維護",
-   crmName:"會長姓名", nameLab:"聯誼會名稱", indLab:"職稱", blkHd:"職稱",
-   link:r=>`https://academy.moa.gov.tw/YF/yf_local.php`,
-   kpis:l=>{const A=[["聯誼會數",fmt(l.length),"",""]];
-     A.push(["涵蓋縣市",fmt(new Set(l.map(r=>r.county).filter(Boolean)).size),"縣市",""]);
-     A.push(["已填會長",fmt(l.filter(r=>r.ex.leader).length),"個",""]);
-     A.push(["已聯絡",fmt(l.filter(r=>(r.ex.status||"未聯絡")!=="未聯絡").length),"個",""]);return A;},
-   dims:{county:"縣市",town:"區域",title:"職稱",status:"聯絡狀況"},
-   meas:{cnt:"數量",crm:"已建檔"},
-   cols:[["住址",r=>r.addr],["所屬農會",r=>r.ex.assoc]],
-   detail:r=>[],
- }
+
 };
 const DIM_GET={county:r=>r.county||"(未填)",town:r=>r.town||"(未填)",
   assoc:r=>r.ex.assoc||"(未填)",unit:r=>r.unit||"(未填)",year:yearOf,
@@ -763,7 +752,7 @@ function delUnion(id){if(!confirm("確定刪除這個聯誼會?"))return;
   UNIONS=UNIONS.filter(x=>x.id!==id);saveU();ALL.union=unionRows();closeDw();render();
 }
 function clearAll(){F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;render()}
-function render(){ALL.union=unionRows();
+function render(){if(DS.union)ALL.union=unionRows();
   document.getElementById('q').placeholder="🔍 搜尋"+DS[cur].nameLab+" / "+DS[cur].crmName+"…";
   document.getElementById('addUnionBtn').style.display=cur==="union"?"":"none";
   renderTop();renderReminder();renderTagSlicer();renderKPI();renderCharts();renderTable();markCfg();}
