@@ -620,6 +620,8 @@
               <div class="field" style="margin:0;"><label>單位成本 (元/kg)　<span class="mini">可直接改</span></label><input id="oPrice" type="number" step="0.1" value="0"></div>
               <div class="unit-out" id="oUnitNote">扣補助後單位成本:<b>—</b></div>
             </div>
+            <div class="field" style="margin:10px 0 0;"><label>額外施工費用 (元/分地)　<span class="mini">選填。撒佈/工資/機械等,會加進我方每分地成本一起比較</span></label>
+              <input id="oLabor" type="number" step="1" min="0" value="0" placeholder="例:300"></div>
           </div>
           <div class="subcard" style="border:1px dashed var(--green-d);margin-top:10px;">
             <div class="subcard-h" style="color:var(--green-d);">🦠 生物菌種（選填,加入報告）</div>
@@ -1191,28 +1193,28 @@ function cropMicroReq(crop){
 
 /* ---------- 台灣縣市→鄉鎮二級選單資料 ---------- */
 const TAIWAN_AREAS={
-  '基隆市':['仁愛區','中山區','中正區','安樂區','暖暖區','七堵區'],
-  '台北市':['中山區','中正區','大安區','大同區','信義區','南港區','松山區','萬華區','文山區'],
-  '新北市':['板橋區','新莊區','泰山區','林口區','淡水區','三芝區','石門區','八里區','五股區','蘆洲區','三重區','永和區','中和區','土城區','樹林區','鶯歌區','三峽區','汐止區','瑞芳區','貢寮區','平溪區','雙溪區','烏來區'],
-  '桃園市':['桃園區','中壢區','平鎮區','八德區','楊梅區','蘆竹區','龜山區','龍潭區','新屋區','觀音區','復興區'],
-  '新竹市':['東區','北區','香山區'],
-  '新竹縣':['竹北市','湖口鄉','新豐鄉','新埤鄉','關西鎮','芎蕉鄉','寶山鄉','竹東鎮','五峰鄉','橫山鄉','尖石鄉','北埔鄉','峨眉鄉'],
-  '苗栗縣':['苗栗市','通霄鎮','苑裡鎮','竹南鎮','頭份鎮','三灣鄉','南庄鄉','獅潭鄉','後龍鎮','造橋鄉','頭屋鄉','公館鄉','大湖鄉','泰安鄉','銅鑼鄉','三義鄉','西湖鄉','卓蘭鎮'],
-  '台中市':['中區','東區','南區','西區','北區','北屯區','西屯區','南屯區','太平區','大里區','霧峰區','烏日區','大肚區','龍井區','沙鹿區','梧棲區','清水區','大甲區','外埔區','大安區','中山區','新社區','東勢區','和平區','石岡區','潭子區'],
-  '彰化縣':['彰化市','員林鎮','溪湖鎮','花壇鄉','芬園鄉','大村鄉','埔心鄉','埔鹽鄉','永靖鄉','伸港鄉','線西鄉','和美鎮','二林鎮','大城鄉','芳苑鄉','田尾鄉','田中鎮','北斗鎮','社頭鄉','二水鄉'],
-  '南投縣':['南投市','埔里鎮','草屯鎮','竹山鎮','集集鎮','名間鄉','鹿谷鄉','中寮鄉','仁愛鄉','信義鄉','水里鄉','魚池鄉'],
-  '嘉義縣':['太保市','朴子市','布袋鎮','民雄鄉','大林鎮','新港鄉','溪口鄉','六腳鄉','東石鄉','義竹鄉','鹿草鄉','中埔鄉','竹山鎮','梅山鄉','番路鄉','阿里山鄉','水上鄉','七星鄉'],
-  '嘉義市':['東區','西區'],
-  '雲林縣':['斗六市','斗南鎮','虎尾鎮','西螺鎮','土庫鎮','北港鎮','古坑鄉','莿桐鄉','林內鄉','麥寮鄉','臺西鄉','東勢鄉','褒忠鄉','四湖鄉','口湖鄉'],
-  '台南市':['新營區','鹽水區','白河區','柳營區','後壁區','東山區','麻豆區','下營區','六甲區','官田區','大內區','善化區','新市區','永康區','成功區','安定區','山上區','玉井區','楠西區','南化區','仁德區','歸仁區','關廟區','龍崗區','東牌區','西港區','七股區','將軍區','北門區','安南區','安平區','中西區'],
-  '高雄市':['新興區','興隆區','苓雅區','前金區','鹽埕區','鼓山區','旗津區','左營區','楠梓區','小港區','仁大區','大社區','岡山區','路竹區','阿蓮區','田寮區','燕巢區','永安區','湖內區','茄萣區','旗山區','美濃區','六龜區','內門區','杉林區','甲仙區','桃源區','那瑪夏區','茂林區','高雄市'],
-  '屏東縣':['屏東市','潮州鎮','東港鎮','恆春鎮','萬丹鄉','長治鄉','麟洛鄉','九如鄉','里港鄉','鹽埤鄉','高樹鄉','林邊鄉','南州鄉','新埤鄉','枋寮鄉','枋山鄉','春日鄉','獅子鄉','牡丹鄉','滿州鄉'],
-  '宜蘭縣':['宜蘭市','羅東鎮','蘇澳鎮','頭城鎮','礁溪鄉','壯圍鄉','員山鄉','三星鄉','冬山鄉','五結鄉','南澳鄉'],
-  '花蓮縣':['花蓮市','鳳林鎮','玉里鎮','新城鄉','秀林鄉','吉安鄉','壽豐鄉','豐濱鄉','光復鄉','富里鄉','卓溪鄉','萬榮鄉'],
-  '台東縣':['台東市','成功鎮','關山鎮','長濱鄉','海端鄉','池上鄉','東河鄉','鹿野鄉','延平鄉','金峰鄉','大武鄉','達仁鄉','蘭嶼鄉','綠島鄉'],
-  '澎湖縣':['馬公市','湖西鄉','白沙鄉','西嶼鄉'],
-  '金門縣':['金城鎮','金湖鎮','金沙鎮','金寧鄉','烈嶼鄉'],
-  '連江縣':['南竿鄉','北竿鄉','莒光鄉','東莒鄉'],
+  '基隆市':['七堵區','中山區','中正區','仁愛區','安樂區','信義區','暖暖區'],
+  '台北市':['士林區','大同區','大安區','中山區','中正區','內湖區','文山區','北投區','松山區','信義區','南港區','萬華區'],
+  '新北市':['八里區','三芝區','三重區','三峽區','土城區','中和區','五股區','平溪區','永和區','石門區','石碇區','汐止區','坪林區','板橋區','林口區','金山區','泰山區','烏來區','貢寮區','淡水區','深坑區','新店區','新莊區','瑞芳區','萬里區','樹林區','雙溪區','蘆洲區','鶯歌區'],
+  '桃園市':['八德區','大園區','大溪區','中壢區','平鎮區','桃園區','復興區','新屋區','楊梅區','龍潭區','龜山區','蘆竹區','觀音區'],
+  '新竹市':['北區','東區','香山區'],
+  '新竹縣':['竹北市','竹東鎮','新埔鎮','關西鎮','五峰鄉','北埔鄉','尖石鄉','芎林鄉','峨眉鄉','湖口鄉','新豐鄉','橫山鄉','寶山鄉'],
+  '苗栗縣':['苗栗市','頭份市','竹南鎮','卓蘭鎮','後龍鎮','苑裡鎮','通霄鎮','三義鄉','三灣鄉','大湖鄉','公館鄉','西湖鄉','南庄鄉','泰安鄉','造橋鄉','獅潭鄉','銅鑼鄉','頭屋鄉'],
+  '台中市':['大甲區','大安區','大肚區','大里區','大雅區','中區','太平區','北屯區','北區','外埔區','石岡區','后里區','西屯區','西區','沙鹿區','和平區','東區','東勢區','南屯區','南區','烏日區','神岡區','梧棲區','清水區','新社區','潭子區','龍井區','豐原區','霧峰區'],
+  '彰化縣':['員林市','彰化市','二林鎮','北斗鎮','田中鎮','和美鎮','鹿港鎮','溪湖鎮','二水鄉','大村鄉','大城鄉','永靖鄉','田尾鄉','竹塘鄉','伸港鄉','秀水鄉','社頭鄉','芬園鄉','花壇鄉','芳苑鄉','埔心鄉','埔鹽鄉','埤頭鄉','溪州鄉','福興鄉','線西鄉'],
+  '南投縣':['南投市','竹山鎮','埔里鎮','草屯鎮','集集鎮','中寮鄉','仁愛鄉','水里鄉','名間鄉','信義鄉','國姓鄉','魚池鄉','鹿谷鄉'],
+  '雲林縣':['斗六市','土庫鎮','斗南鎮','北港鎮','西螺鎮','虎尾鎮','二崙鄉','口湖鄉','大埤鄉','元長鄉','水林鄉','古坑鄉','四湖鄉','東勢鄉','林內鄉','崙背鄉','麥寮鄉','莿桐鄉','臺西鄉','褒忠鄉'],
+  '嘉義市':['西區','東區'],
+  '嘉義縣':['太保市','朴子市','大林鎮','布袋鎮','大埔鄉','中埔鄉','六腳鄉','水上鄉','民雄鄉','竹崎鄉','東石鄉','阿里山鄉','梅山鄉','鹿草鄉','番路鄉','新港鄉','溪口鄉','義竹鄉'],
+  '台南市':['七股區','下營區','大內區','山上區','中西區','仁德區','六甲區','北門區','北區','左鎮區','永康區','玉井區','白河區','安平區','安定區','安南區','西港區','佳里區','官田區','東山區','東區','南化區','南區','後壁區','柳營區','將軍區','麻豆區','善化區','新化區','新市區','新營區','楠西區','學甲區','龍崎區','歸仁區','關廟區','鹽水區'],
+  '高雄市':['三民區','大社區','大寮區','大樹區','小港區','仁武區','內門區','六龜區','左營區','永安區','田寮區','甲仙區','杉林區','那瑪夏區','岡山區','林園區','阿蓮區','前金區','前鎮區','美濃區','苓雅區','茂林區','茄萣區','桃源區','梓官區','鳥松區','湖內區','新興區','楠梓區','路竹區','鼓山區','旗山區','旗津區','鳳山區','橋頭區','燕巢區','彌陀區','鹽埕區'],
+  '屏東縣':['屏東市','東港鎮','恆春鎮','潮州鎮','九如鄉','三地門鄉','內埔鄉','竹田鄉','牡丹鄉','車城鄉','里港鄉','佳冬鄉','來義鄉','枋山鄉','枋寮鄉','林邊鄉','長治鄉','南州鄉','春日鄉','崁頂鄉','泰武鄉','琉球鄉','高樹鄉','新埤鄉','新園鄉','獅子鄉','萬丹鄉','萬巒鄉','滿州鄉','瑪家鄉','霧臺鄉','麟洛鄉','鹽埔鄉'],
+  '宜蘭縣':['宜蘭市','頭城鎮','羅東鎮','蘇澳鎮','三星鄉','大同鄉','五結鄉','冬山鄉','壯圍鄉','南澳鄉','員山鄉','礁溪鄉'],
+  '花蓮縣':['花蓮市','玉里鎮','鳳林鎮','光復鄉','吉安鄉','秀林鄉','卓溪鄉','富里鄉','新城鄉','瑞穗鄉','萬榮鄉','壽豐鄉','豐濱鄉'],
+  '台東縣':['臺東市','成功鎮','關山鎮','大武鄉','太麻里鄉','池上鄉','卑南鄉','延平鄉','東河鄉','金峰鄉','長濱鄉','海端鄉','鹿野鄉','達仁鄉','綠島鄉','蘭嶼鄉'],
+  '澎湖縣':['馬公市','七美鄉','白沙鄉','西嶼鄉','望安鄉','湖西鄉'],
+  '金門縣':['金沙鎮','金城鎮','金湖鎮','金寧鄉','烈嶼鄉','烏坵鄉'],
+  '連江縣':['北竿鄉','東引鄉','南竿鄉','莒光鄉'],
 };
 
 /* ---------- 常見農業菌種清單 ---------- */
@@ -1684,7 +1686,7 @@ function renderCpStrains(i){
 }
 /* ---------- 業務話術生成 ---------- */
 function buildSalesTalk({crop,validProds,o,oStrains,totCN,totCOM,oOM,totCCost,totCUse,ourUse,basisLabel,area,custName,bizMode,growEnv}){
-  const costO=ourUse*o.price;
+  const costO=(ourUse*o.price+(o.labor||0));
   const diff=totCCost-costO;                       // >0 表示我方較便宜
   const diffPct=totCCost>0?Math.abs(diff/totCCost*100):0;
   const omDiff=oOM-totCOM;
@@ -1984,7 +1986,7 @@ function runConvert(){
   const validProds=custProds.filter(p=>p.use>0);
   if(!validProds.length){alert('請至少為一個客戶肥料填入「一分地使用量」');return;}
 
-  const o={name:document.getElementById('oName').value||'我方產品',n:gv('oN'),p:gv('oP'),k:gv('oK'),om:gv('oOM'),cu:gv('oCu'),zn:gv('oZn'),price:gv('oPrice'),minr:readOMinr()};
+  const o={name:document.getElementById('oName').value||'我方產品',n:gv('oN'),p:gv('oP'),k:gv('oK'),om:gv('oOM'),cu:gv('oCu'),zn:gv('oZn'),price:gv('oPrice'),labor:gv('oLabor'),minr:readOMinr()};
   const crop=CROPS[+document.getElementById('crop').value]||CROPS[0];
   const basis=document.getElementById('basis').value;
   const custName=document.getElementById('custName').value||'客戶';
@@ -2088,7 +2090,7 @@ function runConvert(){
   // 耕作面積全區成本
   let areaHtml='';
   if(area>0){
-    const costC_total=totCCost*area,costO_total=ourUse*area*o.price;
+    const costC_total=totCCost*area,costO_total=(ourUse*o.price+(o.labor||0))*area;
     const d_total=costC_total-costO_total;
     areaHtml=`<h3 style="color:var(--brown);margin-top:18px;">全耕作面積成本比較(${fmt(area)} 分地 ≈ ${(area/10.3).toFixed(2)} 公頃 / ${(area/9.7).toFixed(2)} 甲)</h3>
       <div class="result-grid">
@@ -2203,7 +2205,7 @@ function runConvert(){
       // 重金屬濃度提醒(以 ppm 計,上限 Cu≤100、Zn≤500)
       const ourCuPpm=o.cu, ourZnPpm=o.zn;
       const hmWarn=(ourCuPpm>100||ourZnPpm>500)?`<div class="note" style="margin:8px 0 0;">⚠️ 我方產品標示 Cu ${fmt(ourCuPpm)} ppm、Zn ${fmt(ourZnPpm)} ppm,${(ourCuPpm>100||ourZnPpm>500)?'部分數值接近或超過普肥重金屬上限(Cu≤100、Zn≤500 ppm),':''}長期施用宜留意累積,正式以化驗報告為準。</div>`:'';
-      const dCost=totCCost-ourUse*o.price;
+      const dCost=totCCost-(ourUse*o.price+(o.labor||0));
       return `<div class="micro-cost-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;break-inside:avoid;page-break-inside:avoid;">
       <div style="break-inside:avoid;page-break-inside:avoid;">
         <div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;margin-bottom:8px;">有機質與微量元素差異(我方 − 原肥)</div>
@@ -2218,9 +2220,10 @@ function runConvert(){
         <div style="font-size:11px;font-weight:700;color:var(--brown);text-transform:uppercase;margin-bottom:8px;">成本(每分地)</div>
         <div class="result-grid" style="grid-template-columns:repeat(3,1fr);">
           <div class="stat cost"><div class="v" style="font-size:18px;">${totCCost.toFixed(0)}</div><div class="l">原肥 (元/分)</div></div>
-          <div class="stat cost"><div class="v" style="font-size:18px;">${(ourUse*o.price).toFixed(0)}</div><div class="l">我方 (元/分)</div></div>
+          <div class="stat cost"><div class="v" style="font-size:18px;">${((ourUse*o.price+(o.labor||0))).toFixed(0)}</div><div class="l">我方 (元/分)</div></div>
           <div class="stat ${dCost>=0?'':'warn'}"><div class="v" style="font-size:16px;">${dCost>=0?'省':'多'}<br>${Math.abs(dCost).toFixed(0)}</div><div class="l">差額 (元/分)</div></div>
         </div>
+        ${(o.labor||0)>0?`<div class="mini" style="margin-top:6px;color:var(--muted);">我方每分地成本＝肥料 ${(ourUse*o.price).toFixed(0)} 元＋額外施工費 ${(o.labor||0).toFixed(0)} 元。</div>`:''}
       </div>
     </div>`;})()}
 
@@ -2230,14 +2233,14 @@ function runConvert(){
 
     <h3>施肥評估與建議</h3>
     <p class="mini" style="margin-top:-4px;">針對「${crop.name}」由換算結果自動研判,僅供施肥規劃參考。</p>
-    ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:ourUse*o.price,cOther:allOther});const tlabel={good:'效益',warn:'注意',info:'說明'};return `<ol class="doc-list">`+ins.map(x=>`<li class="doc-item doc-${x.type}"><div class="doc-t"><span class="doc-tag">${tlabel[x.type]||'說明'}</span>${x.t}</div><div class="doc-b">${x.b}</div></li>`).join('')+`</ol>`;})()}
+    ${(()=>{const ins=buildDoctor({crop,county,c:cAgg,o,basis,basisLabel,ourUse,cN:totCN,cP:totCP,cK:totCK,cOM:totCOM,oN,oP,oK,oOM,costC:totCCost,costO:(ourUse*o.price+(o.labor||0)),cOther:allOther});const tlabel={good:'效益',warn:'注意',info:'說明'};return `<ol class="doc-list">`+ins.map(x=>`<li class="doc-item doc-${x.type}"><div class="doc-t"><span class="doc-tag">${tlabel[x.type]||'說明'}</span>${x.t}</div><div class="doc-b">${x.b}</div></li>`).join('')+`</ol>`;})()}
 
     <div class="report-disclaimer"><b>說明：</b>本報告之養分含量、礦化率（當季氮素有效率）及成本等數值，係依肥料登記證標示值與文獻通則參考值試算，僅供施肥規劃與產品比較參考。有機質肥料之有機態氮須經土壤微生物礦化方為作物當季吸收，其有效率受土溫、濕度、碳氮比與微生物活性影響而異。正式採購與施肥決策，請以實際土壤檢測及肥料化驗報告為準。</div>
     </div>
     <div class="report-footer">愛護臺灣土地<span class="leaf">🌱</span>種出好田地</div>
   </div>`;
 
-  const costC=totCCost, costO=ourUse*o.price;
+  const costC=totCCost, costO=(ourUse*o.price+(o.labor||0));
 
   // 純文字報告(供複製)
   const strip=s=>s.replace(/<[^>]+>/g,'');
@@ -2270,7 +2273,8 @@ function runConvert(){
     `  客戶原肥 : 全氮 ${totCN.toFixed(2)} × 礦化率 ${cAvgMinr.toFixed(0)}% = 有效氮 ${totCAvailN.toFixed(2)}\n`+
     `  我方產品 : 全氮 ${oN.toFixed(2)} × 礦化率 ${o.minr.toFixed(0)}% = 有效氮 ${oAvailN.toFixed(2)}\n`;
   if(costC>0||costO>0)rpt+=`\n成本(每分地):原肥 ${costC.toFixed(0)} 元 → 我方 ${costO.toFixed(0)} 元(${costC-costO>=0?'省':'多'} ${Math.abs(costC-costO).toFixed(0)} 元)`;
-  if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${(ourUse*area*o.price).toFixed(0)} 元`;
+  if(area>0)rpt+=`\n成本(${area}分地全場):原肥 ${(totCCost*area).toFixed(0)} 元 → 我方 ${((ourUse*o.price+(o.labor||0))*area).toFixed(0)} 元`;
+  if((o.labor||0)>0)rpt+=`\n  (我方每分地含額外施工費 ${(o.labor||0).toFixed(0)} 元;肥料本身 ${(ourUse*o.price).toFixed(0)} 元)`;
   if(illegalProds.length||legalProds.length){
     rpt+=`\n\n【肥料品目合法性判定】\n`;
     if(legalProds.length)rpt+=`  ✓ 合法登記品目:${legalProds.map(p=>`${p.name||'品項'}(${p.cat} ${fertItemName(p.cat)})`).join('、')}\n`;
