@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麻豆區果樹產銷班第30班 — 肥料登記</title>
+<style>
+  :root{
+    --green:#2e7d32; --green-d:#1b5e20; --bg:#f4f6f2; --card:#fff;
+    --line:#d9e0d4; --ink:#20261e; --muted:#6b7466; --red:#c62828; --amber:#ef6c00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; -webkit-text-size-adjust:100%;}
+  .wrap{max-width:540px; margin:0 auto; padding:20px 16px 48px;}
+  header{text-align:center; margin-bottom:20px;}
+  header .yr{font-size:13px; color:var(--muted); letter-spacing:.05em;}
+  header h1{font-size:19px; margin:4px 0 0; color:var(--green-d);}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:18px; box-shadow:0 2px 10px rgba(0,0,0,.04); margin-bottom:16px;}
+  .card h2{font-size:15px; margin:0 0 14px; color:var(--green-d);
+    display:flex; align-items:center; gap:8px;}
+  .card h2 .num{background:var(--green); color:#fff; width:22px; height:22px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:13px;}
+  label{display:block; font-size:13px; font-weight:600; margin:0 0 6px; color:var(--ink);}
+  select, input{width:100%; font-size:17px; padding:12px; border:1.5px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--ink); appearance:none;}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right 12px center; padding-right:38px;}
+  select:focus, input:focus{outline:none; border-color:var(--green);}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .field{margin-bottom:12px;} .field:last-child{margin-bottom:0;}
+  .quota{display:none;} .quota.show{display:block;}
+  .quota .box{display:flex; justify-content:space-between; align-items:baseline;
+    padding:10px 2px; border-bottom:1px dashed var(--line);}
+  .quota .box:last-child{border-bottom:none;}
+  .quota .k{font-size:14px; color:var(--muted);} .quota .v{font-size:18px; font-weight:700;}
+  .buy{display:none;} .buy.show{display:block;}
+  .item{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; position:relative;}
+  .item .del{position:absolute; top:8px; right:10px; border:none; background:none; color:var(--muted);
+    font-size:20px; line-height:1; cursor:pointer;}
+  .addbtn{width:100%; padding:12px; border:1.5px dashed var(--green); background:#fff; color:var(--green-d);
+    border-radius:10px; font-size:15px; font-weight:600; cursor:pointer;}
+  .summary{margin-top:14px; border-radius:14px; padding:16px; text-align:center;
+    background:linear-gradient(135deg,var(--green),var(--green-d)); color:#fff;}
+  .summary.over{background:linear-gradient(135deg,#d32f2f,#b71c1c);}
+  .summary .lbl{font-size:13px; opacity:.92;}
+  .summary .big{font-size:30px; font-weight:800; margin-top:2px;}
+  .summary .sub{font-size:14px; margin-top:6px; opacity:.95;}
+  .warn{color:var(--red); font-weight:700; font-size:13px; margin-top:8px; display:none;}
+  .warn.show{display:block;}
+  .hint{font-size:12px; color:var(--muted); text-align:center; margin-top:6px;}
+  .note{font-size:12px; color:var(--amber); margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="yr">115年度國產有機質肥料推廣計畫</div>
+    <h1>臺南市麻豆區果樹產銷班第30班</h1>
+  </header>
+
+  <!-- 1. 班員 -->
+  <div class="card">
+    <h2><span class="num">1</span>選擇班員</h2>
+    <div class="field">
+      <label for="member">班員姓名</label>
+      <select id="member"><option value="">— 點此選擇 —</option></select>
+    </div>
+    <div class="field">
+      <label for="phone">聯絡電話（可修改）</label>
+      <input id="phone" type="tel" inputmode="numeric" placeholder="選姓名後帶出，可直接修改">
+      <div class="note">※ 電話為手寫辨識，請當場核對修正</div>
+    </div>
+    <div class="quota" id="quota">
+      <div class="box"><span class="k">經營面積</span><span class="v"><span id="area">—</span> 公頃</span></div>
+      <div class="box"><span class="k">可購買（申請）上限</span><span class="v" style="color:var(--green-d)"><span id="limit">—</span> 公斤</span></div>
+    </div>
+  </div>
+
+  <!-- 2. 購肥 -->
+  <div class="card buy" id="buy">
+    <h2><span class="num">2</span>購肥登記</h2>
+    <div id="items"></div>
+    <button class="addbtn" id="add">＋ 再加一項肥料</button>
+
+    <div class="summary" id="summary">
+      <div class="lbl">本次登記合計</div>
+      <div class="big"><span id="total">0</span> 公斤</div>
+      <div class="sub">上限 <span id="limit2">—</span>　剩餘 <span id="remain">—</span> 公斤</div>
+    </div>
+    <div class="warn" id="warn">⚠ 已超過可購買上限，請調整包數！</div>
+  </div>
+
+  <p class="hint">公斤數 = 規格 × 包數　｜　可購買上限 = 經營面積 × 10,000</p>
+</div>
+
+<script>
+  // 班員：姓名 n、面積(公頃) a、電話 p（手寫辨識，僅供帶出，可修改）
+  const members = [
+    {n:"陳耀祥",a:2.0761,p:"0937827305"},{n:"曾素蓮",a:0.4387,p:""},{n:"黃正俊",a:0.2639,p:"0932208882"},
+    {n:"劉利霞",a:0.3232,p:"0918993260"},{n:"劉易宜",a:0.1984,p:""},{n:"謝麗美",a:0.1880,p:""},{n:"羅秀美",a:0.1493,p:""},
+    {n:"許李淑惠",a:0.5151,p:"0910688835"},{n:"許秀梅",a:0.2000,p:"0933365881"},{n:"郭幸慕",a:0.1659,p:"0961507810"},
+    {n:"郭連範",a:0.2153,p:"0928373569"},{n:"郭麗珠",a:0.1409,p:"0933308558"},{n:"陳永昌",a:0.3000,p:"0937669767"},
+    {n:"陳叔召",a:0.5478,p:"0928949767"},{n:"陳清水",a:0.7405,p:"0939313791"},{n:"陳智弘",a:0.4486,p:"0927558318"},
+    {n:"陳鍾慧玲",a:0.5200,p:"0932990529"},{n:"陳耀昌",a:0.6195,p:"0910688835"},
+    {n:"吳桂奇",a:0.1884,p:"0932990529"},{n:"吳泰德",a:0.3551,p:"0937612465"},{n:"吳智宇",a:0.5717,p:"0921409945"},
+    {n:"李秀蘭",a:0.2072,p:"0912005609"},{n:"李明娟",a:0.3516,p:""},{n:"李國隆",a:0.3271,p:"0937612465"},
+    {n:"李隆泰",a:0.1021,p:"0929327653"},{n:"李瑞義",a:0.3685,p:"0973751313"},{n:"李莖輝",a:0.2688,p:"0915277765"},
+    {n:"林文波",a:0.6861,p:"0910745752"},{n:"林文智",a:0.2983,p:"0978417643"},
+    {n:"陳信宏",a:0.9426,p:"0915829538"},{n:"方吳英娘",a:0.2580,p:"0929985101"},{n:"王宇鋒",a:0.4340,p:""},
+    {n:"王金成",a:0.4679,p:"0937719085"},{n:"王雲祥",a:0.5170,p:"0910688835"},{n:"王福春",a:0.4410,p:"0912005609"},
+    {n:"王啟義",a:0.6815,p:"0933002671"},{n:"何振輝",a:0.2000,p:"0933683838"},{n:"吳亦靜",a:0.1574,p:"0918993260"},
+    {n:"吳洪嘉惠",a:0.1910,p:"0912101218"},{n:"吳若妏",a:0.1385,p:"0973751313"},
+    {n:"林佩璇",a:0.5983,p:"0937612465"},{n:"林明智",a:0.2800,p:"0937362298"},{n:"林建良",a:0.3016,p:"0937612465"},
+    {n:"林欲義",a:0.3125,p:"0973751313"},{n:"林楚獻",a:0.1279,p:"0961507810"},{n:"林聖祥",a:0.6740,p:"0937612465"},
+    {n:"林裕仁",a:0.2278,p:""},{n:"邱美鳳",a:0.3000,p:"0911620629"},{n:"張美玲",a:0.4105,p:"0937612465"},
+    {n:"莊月桃",a:0.2153,p:"0921512056"},{n:"莊志銘",a:0.6406,p:"0937612465"}
+  ];
+
+  // 購肥品牌（品名 + 預設規格kg，皆可於畫面改）— 依登記表與品牌表整理，價格待確認
+  const brands = [
+    {n:"碩成2號",kg:25},{n:"田寶11號",kg:20},{n:"長弘333",kg:25},
+    {n:"福壽有機5號",kg:20},{n:"福壽新治808肥",kg:20},{n:"福壽新粉狀肥3號",kg:25},{n:"福壽新勤3號",kg:25},
+    {n:"農村黎粉有機3號",kg:25},{n:"太牛牌有機肥料",kg:25},{n:"333愛柏有機質肥料3號",kg:25},
+    {n:"泛合有機3號",kg:20},{n:"保元旺素有機3號",kg:20},{n:"麻豆1號",kg:20},
+    {n:"桶實1號",kg:20},{n:"領盛牌2號",kg:25},{n:"翔鹿3號",kg:20},{n:"有約肥3號",kg:20},
+    {n:"其他（自行輸入）",kg:20,other:true}
+  ];
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toLocaleString('en-US');
+  let curLimit = 0;
+
+  // 建立班員選單
+  members.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m.n; $('member').appendChild(o); });
+
+  $('member').addEventListener('change', e=>{
+    if(e.target.value===''){ $('quota').classList.remove('show'); $('buy').classList.remove('show'); $('phone').value=''; curLimit=0; return; }
+    const m = members[e.target.value];
+    curLimit = Math.round(m.a*10000);
+    $('area').textContent = m.a.toFixed(4);
+    $('limit').textContent = fmt(curLimit);
+    $('limit2').textContent = fmt(curLimit);
+    $('phone').value = m.p;
+    $('quota').classList.add('show');
+    $('buy').classList.add('show');
+    if($('items').children.length===0) addItem();
+    recalc();
+  });
+
+  // 新增一列購肥品項
+  function addItem(){
+    const div = document.createElement('div');
+    div.className = 'item';
+    const opts = brands.map((b,i)=>`<option value="${i}">${b.n}</option>`).join('');
+    div.innerHTML = `
+      <button class="del" title="刪除">×</button>
+      <div class="field">
+        <label>購肥品牌</label>
+        <select class="b-brand"><option value="">— 選擇品牌 —</option>${opts}</select>
+      </div>
+      <div class="field b-otherwrap" style="display:none">
+        <label>自行輸入品名</label>
+        <input class="b-other" type="text" placeholder="輸入肥料名稱">
+      </div>
+      <div class="grid2">
+        <div class="field"><label>規格(公斤)</label>
+          <select class="b-spec"><option value="20">20 kg</option><option value="25">25 kg</option></select>
+        </div>
+        <div class="field"><label>包數</label>
+          <input class="b-bags" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></div>
+      </div>
+      <div class="field" style="text-align:right; margin-top:2px; color:var(--muted); font-size:14px">
+        小計：<b class="b-kg" style="color:var(--ink)">0</b> 公斤
+      </div>`;
+    $('items').appendChild(div);
+
+    const brand = div.querySelector('.b-brand');
+    const spec  = div.querySelector('.b-spec');
+    const bags  = div.querySelector('.b-bags');
+    const otherWrap = div.querySelector('.b-otherwrap');
+
+    brand.addEventListener('change', ()=>{
+      const b = brands[brand.value];
+      if(b){ spec.value = String(b.kg); otherWrap.style.display = b.other ? 'block':'none'; }
+      recalc();
+    });
+    spec.addEventListener('change', recalc);
+    bags.addEventListener('input', recalc);
+    div.querySelector('.del').addEventListener('click', ()=>{
+      if($('items').children.length>1){ div.remove(); recalc(); }
+      else { brand.value=''; bags.value=''; otherWrap.style.display='none'; recalc(); }
+    });
+  }
+  $('add').addEventListener('click', ()=>{ addItem(); });
+
+  // 重算合計
+  function recalc(){
+    let total = 0;
+    $('items').querySelectorAll('.item').forEach(div=>{
+      const spec = parseInt(div.querySelector('.b-spec').value)||0;
+      const bags = parseInt(div.querySelector('.b-bags').value)||0;
+      const kg = spec*bags;
+      div.querySelector('.b-kg').textContent = fmt(kg);
+      total += kg;
+    });
+    $('total').textContent = fmt(total);
+    const remain = curLimit - total;
+    $('remain').textContent = fmt(remain);
+    const over = total > curLimit;
+    $('summary').classList.toggle('over', over);
+    $('warn').classList.toggle('show', over);
+  }
+</script>
+</body>
+</html>
