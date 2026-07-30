@@ -167,7 +167,7 @@
     <div class="scroll">
       <table id="ptbl">
         <thead><tr>
-          <th>編號</th><th>廠商</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>售價(元)</th><th>補助後單價(元)</th><th></th>
+          <th>序號</th><th>編號</th><th>廠商</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>售價(元)</th><th>補助後單價(元)</th><th></th>
         </tr></thead>
         <tbody id="ptbody"></tbody>
       </table>
@@ -513,7 +513,8 @@ function renderBrands(){
   const tb=$('ptbody'); tb.innerHTML='';
   BRANDS.forEach((b,i)=>{
     const tr=document.createElement('tr');
-    // 編號
+    tr.appendChild(cell('col-idx', i+1));   // 序號（自動）
+    // 編號（肥料登記證字號）
     let td=document.createElement('td'); const ec=document.createElement('input'); ec.className='w-code'; ec.value=b.code||'';
     ec.oninput=()=>{ b.code=ec.value; saveBrands(); }; td.appendChild(ec); tr.appendChild(td);
     // 廠商
