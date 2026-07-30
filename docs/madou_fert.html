@@ -424,8 +424,7 @@ function renderBody(){
 function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=(txt===undefined||txt===null)?'':txt; return td; }
 function calc(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
 function slackInfo(r){
-  const kg=kgOf(r), diff=limitOf(r)-kg;
-  if(kg===0) return {t:'未購', c:'muted'};
+  const diff=limitOf(r)-kgOf(r);
   if(diff>0) return {t:'可讓 '+fmt(diff), c:'lend'};
   if(diff<0) return {t:'借 '+fmt(-diff), c:'borrow'};
   return {t:'剛好', c:'lend'};
