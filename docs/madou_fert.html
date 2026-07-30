@@ -210,7 +210,7 @@
   </div>
 
   <p class="hint">
-    <b>額度可在班內調撥：</b>個人買不滿→餘額可「讓」給他人；個人超過自己額度→向班內「借」，只要「剩餘可調撥 ≥ 0（全班已登記 ≤ 全班可申請總額）」就合規；全班超額才會跳紅字。<br>
+    <b>額度規則：</b>個人購買不可超過「自己可申請 ＋ 下方調撥借入 − 調撥借出」。買不滿→綠字「可讓 N」；<b class="warn">超過→紅字「超額 N」</b>，請到下方「🔄 額度調撥」登記由誰借出補足，超額即會消掉變「剛好」。全班總量超過總額度另有紅色警告。<br>
     <span class="warn">※ 電話與訂購欄為手寫辨識，單價來自模糊價目表，金額僅供參考，請核對。</span><br>
     ☁ 上傳雲端／匯入檔案需正式版(GitHub Pages)；此即時預覽因安全限制無法對外連線。
     ⬇ Excel 下載 .xls；🖨 PDF 請於列印視窗選「另存為 PDF」。
@@ -362,7 +362,7 @@ function kgOf(r){ return kg1(r)+kg2(r); }
 function amtOf(r){ return Math.round(priceOf(r.b)*(parseInt(r.g)||0) + priceOf(r.b2)*(parseInt(r.g2)||0)); }
 
 const COLS = ["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
-  "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)","可讓/借用"];
+  "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)","可讓/超額"];
 const P2 = {6:1,7:1,8:1,9:1,10:1,11:1,12:1,13:1}; // 產品②群組欄索引(著色) 10-13
 
 /* ---------- 表頭 ---------- */
@@ -423,10 +423,13 @@ function renderBody(){
 }
 function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=(txt===undefined||txt===null)?'':txt; return td; }
 function calc(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
+function borrowedIn(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.to===name) s+=xkg(t); }); return s; }
+function lentOut(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.from===name) s+=xkg(t); }); return s; }
+function effectiveOf(r){ return limitOf(r) + borrowedIn(r.name) - lentOut(r.name); }
 function slackInfo(r){
-  const diff=limitOf(r)-kgOf(r);
-  if(diff>0) return {t:'可讓 '+fmt(diff), c:'lend'};
-  if(diff<0) return {t:'借 '+fmt(-diff), c:'borrow'};
+  const rem=effectiveOf(r)-kgOf(r);   // 可用額度(含調撥) − 實際購買
+  if(rem>0) return {t:'可讓 '+fmt(rem), c:'lend'};
+  if(rem<0) return {t:'超額 '+fmt(-rem), c:'borrow'};
   return {t:'剛好', c:'lend'};
 }
 function applySlack(td,r){ const s=slackInfo(r); td.textContent=s.t; td.classList.remove('lend','borrow','muted'); td.classList.add(s.c); }
@@ -554,29 +557,29 @@ function renderXfers(){
   TRANSFERS.forEach((t,i)=>{
     const tr=document.createElement('tr');
     tr.appendChild(cell('col-idx',i+1));
-    let td=document.createElement('td'); td.appendChild(memberSelect(t.from,v=>{t.from=v;saveXfers();})); tr.appendChild(td);
-    td=document.createElement('td'); td.appendChild(memberSelect(t.to,v=>{t.to=v;saveXfers();})); tr.appendChild(td);
+    let td=document.createElement('td'); td.appendChild(memberSelect(t.from,v=>{t.from=v;saveXfers();refreshCalc();})); tr.appendChild(td);
+    td=document.createElement('td'); td.appendChild(memberSelect(t.to,v=>{t.to=v;saveXfers();refreshCalc();})); tr.appendChild(td);
     // 產品
     td=document.createElement('td'); const bs=document.createElement('select'); bs.className='w-brand';
     bs.appendChild(opt('','— 選產品 —')); BRANDS.forEach(b=>bs.appendChild(opt(b.n,b.n)));
     if(t.b && !BRANDS.some(b=>b.n===t.b)) bs.appendChild(opt(t.b,t.b));
-    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} saveXfers(); renderXfers(); };
+    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} saveXfers(); renderXfers(); refreshCalc(); };
     td.appendChild(bs); tr.appendChild(td);
     // 性狀
     td=document.createElement('td'); const fs=document.createElement('select'); fs.className='w-form'; fs.appendChild(opt('',' ')); FORMS.forEach(o=>fs.appendChild(opt(o,o))); fs.value=t.f||''; fs.onchange=()=>{t.f=fs.value;saveXfers();}; td.appendChild(fs); tr.appendChild(td);
     // 規格
-    td=document.createElement('td'); const ss=document.createElement('select'); ss.className='w-spec'; ss.appendChild(opt('',' ')); SPECS.forEach(x=>ss.appendChild(opt(x,x+' kg'))); if(t.s!==''&&t.s!==undefined&&!SPECS.includes(parseInt(t.s))) ss.appendChild(opt(t.s,t.s+' kg')); ss.value=(t.s===''||t.s===undefined)?'':String(t.s); ss.onchange=()=>{ t.s=ss.value===''?'':parseInt(ss.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); }; td.appendChild(ss); tr.appendChild(td);
+    td=document.createElement('td'); const ss=document.createElement('select'); ss.className='w-spec'; ss.appendChild(opt('',' ')); SPECS.forEach(x=>ss.appendChild(opt(x,x+' kg'))); if(t.s!==''&&t.s!==undefined&&!SPECS.includes(parseInt(t.s))) ss.appendChild(opt(t.s,t.s+' kg')); ss.value=(t.s===''||t.s===undefined)?'':String(t.s); ss.onchange=()=>{ t.s=ss.value===''?'':parseInt(ss.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); refreshCalc(); }; td.appendChild(ss); tr.appendChild(td);
     // 包數
-    td=document.createElement('td'); const gi=document.createElement('input'); gi.type='number'; gi.min='0'; gi.inputMode='numeric'; gi.className='w-bags'; gi.value=t.g===undefined?'':t.g; gi.oninput=()=>{ t.g=gi.value===''?'':parseInt(gi.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); }; td.appendChild(gi); tr.appendChild(td);
+    td=document.createElement('td'); const gi=document.createElement('input'); gi.type='number'; gi.min='0'; gi.inputMode='numeric'; gi.className='w-bags'; gi.value=t.g===undefined?'':t.g; gi.oninput=()=>{ t.g=gi.value===''?'':parseInt(gi.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); refreshCalc(); }; td.appendChild(gi); tr.appendChild(td);
     // 公斤數
     tr.appendChild(calc(fmt(xkg(t))));
     // 刪除
-    td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑'; del.onclick=()=>{ TRANSFERS.splice(i,1); saveXfers(); renderXfers(); }; td.appendChild(del); tr.appendChild(td);
+    td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑'; del.onclick=()=>{ TRANSFERS.splice(i,1); saveXfers(); renderXfers(); refreshCalc(); }; td.appendChild(del); tr.appendChild(td);
     tb.appendChild(tr);
   });
   updateXferSummary();
 }
-$('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',to:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); };
+$('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',to:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); refreshCalc(); };
 
 /* ---------- 模式 ---------- */
 function setMode(edit){
