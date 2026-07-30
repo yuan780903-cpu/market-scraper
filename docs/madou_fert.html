@@ -154,6 +154,7 @@
     <button class="btn" id="bPdf" type="button">🖨 匯出 PDF</button>
     <button class="btn primary" id="bPhone" type="button">📱 存到手機</button>
     <button class="btn primary" id="bCloud" type="button">☁ 上傳雲端</button>
+    <button class="btn" id="bCloudLoad" type="button">☁ 讀取雲端</button>
     <button class="btn" id="bImport" type="button">📁 匯入檔案</button>
     <button class="btn" id="bReset" type="button" title="還原本班">↺ 還原</button>
     <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
@@ -675,9 +676,33 @@ $('bCloud').onclick=async ()=>{
   if(!CLOUD_ENDPOINT){ toast('尚未設定雲端網址'); return; }
   try{ toast('上傳中…');
     await fetch(CLOUD_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,transfers:TRANSFERS})});
+      body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,transfers:TRANSFERS,brands:BRANDS})});
     toast('✅ 已送出，請到 Google 試算表看新分頁');
   }catch(e){ toast('上傳失敗：'+e.message+'（預覽連結禁止對外連線，請用正式版）'); }
+};
+
+/* ---------- 讀取雲端（JSONP，避開跨網域限制） ---------- */
+$('bCloudLoad').onclick=()=>{
+  if(!CLOUD_ENDPOINT){ toast('尚未設定雲端網址'); return; }
+  toast('讀取雲端中…');
+  const cb='__cloudcb'+Date.now();
+  const s=document.createElement('script');
+  const timer=setTimeout(()=>{ cleanup(); toast('讀取逾時（請用正式版，並確認 GAS 已更新並重新部署）'); }, 15000);
+  function cleanup(){ clearTimeout(timer); try{ delete window[cb]; }catch(e){} s.remove(); }
+  window[cb]=(res)=>{
+    cleanup();
+    if(!res || !res.ok || !res.data){ toast('雲端讀取失敗：'+((res&&res.error)||'查無此班資料')); return; }
+    const d=res.data;
+    if(!confirm('從雲端讀取「'+curGroup+'」將覆蓋目前本機資料，確定？')) return;
+    rows=normalize(d.rows||[]); save();
+    if(Array.isArray(d.transfers)){ TRANSFERS=d.transfers; saveXfers(); }
+    if(Array.isArray(d.brands) && d.brands.length){ BRANDS=d.brands; saveBrands(); renderBrands(); }
+    renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
+    toast('✅ 已從雲端讀取 '+rows.length+' 列');
+  };
+  s.onerror=()=>{ cleanup(); toast('雲端讀取失敗（連線被擋，請用正式版 GitHub Pages）'); };
+  s.src=CLOUD_ENDPOINT+'?action=read&callback='+cb+'&class='+encodeURIComponent(curGroup)+'&t='+Date.now();
+  document.body.appendChild(s);
 };
 
 /* ---------- 還原 ---------- */
