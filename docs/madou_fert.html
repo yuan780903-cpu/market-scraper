@@ -3,215 +3,506 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>麻豆區果樹產銷班第30班 — 肥料登記</title>
+<title>麻豆區果樹產銷班第30班 — 產銷班肥料登記表</title>
 <style>
   :root{
-    --green:#2e7d32; --green-d:#1b5e20; --bg:#f4f6f2; --card:#fff;
-    --line:#d9e0d4; --ink:#20261e; --muted:#6b7466; --red:#c62828; --amber:#ef6c00;
+    --green:#2e7d32; --green-d:#1b5e20; --bg:#eef1ea; --card:#fff; --head:#e8efe2;
+    --line:#c9d3bf; --line-s:#dfe6d6; --ink:#1f261a; --muted:#67715d;
+    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20;
+    --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --green:#8bc34a; --green-d:#aed581; --bg:#12160e; --card:#1c2118; --head:#232b1c;
+      --line:#3a462e; --line-s:#2a3320; --ink:#e7ecdf; --muted:#9aa78c;
+      --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581;
+      --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238bc34a' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    }
+  }
+  :root[data-theme="light"]{
+    --green:#2e7d32; --green-d:#1b5e20; --bg:#eef1ea; --card:#fff; --head:#e8efe2;
+    --line:#c9d3bf; --line-s:#dfe6d6; --ink:#1f261a; --muted:#67715d;
+    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20;
+    --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  }
+  :root[data-theme="dark"]{
+    --green:#8bc34a; --green-d:#aed581; --bg:#12160e; --card:#1c2118; --head:#232b1c;
+    --line:#3a462e; --line-s:#2a3320; --ink:#e7ecdf; --muted:#9aa78c;
+    --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581;
+    --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238bc34a' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
   }
   *{box-sizing:border-box}
   body{margin:0; font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
-    background:var(--bg); color:var(--ink); line-height:1.5; -webkit-text-size-adjust:100%;}
-  .wrap{max-width:540px; margin:0 auto; padding:20px 16px 48px;}
-  header{text-align:center; margin-bottom:20px;}
-  header .yr{font-size:13px; color:var(--muted); letter-spacing:.05em;}
-  header h1{font-size:19px; margin:4px 0 0; color:var(--green-d);}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:18px; box-shadow:0 2px 10px rgba(0,0,0,.04); margin-bottom:16px;}
-  .card h2{font-size:15px; margin:0 0 14px; color:var(--green-d);
-    display:flex; align-items:center; gap:8px;}
-  .card h2 .num{background:var(--green); color:#fff; width:22px; height:22px; border-radius:50%;
-    display:inline-flex; align-items:center; justify-content:center; font-size:13px;}
-  label{display:block; font-size:13px; font-weight:600; margin:0 0 6px; color:var(--ink);}
-  select, input{width:100%; font-size:17px; padding:12px; border:1.5px solid var(--line);
-    border-radius:10px; background:#fff; color:var(--ink); appearance:none;}
-  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat; background-position:right 12px center; padding-right:38px;}
-  select:focus, input:focus{outline:none; border-color:var(--green);}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-  .field{margin-bottom:12px;} .field:last-child{margin-bottom:0;}
-  .quota{display:none;} .quota.show{display:block;}
-  .quota .box{display:flex; justify-content:space-between; align-items:baseline;
-    padding:10px 2px; border-bottom:1px dashed var(--line);}
-  .quota .box:last-child{border-bottom:none;}
-  .quota .k{font-size:14px; color:var(--muted);} .quota .v{font-size:18px; font-weight:700;}
-  .buy{display:none;} .buy.show{display:block;}
-  .item{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; position:relative;}
-  .item .del{position:absolute; top:8px; right:10px; border:none; background:none; color:var(--muted);
-    font-size:20px; line-height:1; cursor:pointer;}
-  .addbtn{width:100%; padding:12px; border:1.5px dashed var(--green); background:#fff; color:var(--green-d);
-    border-radius:10px; font-size:15px; font-weight:600; cursor:pointer;}
-  .summary{margin-top:14px; border-radius:14px; padding:16px; text-align:center;
-    background:linear-gradient(135deg,var(--green),var(--green-d)); color:#fff;}
-  .summary.over{background:linear-gradient(135deg,#d32f2f,#b71c1c);}
-  .summary .lbl{font-size:13px; opacity:.92;}
-  .summary .big{font-size:30px; font-weight:800; margin-top:2px;}
-  .summary .sub{font-size:14px; margin-top:6px; opacity:.95;}
-  .warn{color:var(--red); font-weight:700; font-size:13px; margin-top:8px; display:none;}
-  .warn.show{display:block;}
-  .hint{font-size:12px; color:var(--muted); text-align:center; margin-top:6px;}
-  .note{font-size:12px; color:var(--amber); margin-top:6px;}
+    background:var(--bg); color:var(--ink); line-height:1.45; -webkit-text-size-adjust:100%;}
+  .wrap{max-width:1180px; margin:0 auto; padding:16px 14px 60px;}
+  header{text-align:center; margin-bottom:14px;}
+  header .yr{font-size:13px; color:var(--muted); letter-spacing:.04em;}
+  header h1{font-size:20px; margin:3px 0 2px; color:var(--green-d); text-wrap:balance;}
+  header .sub{font-size:14px; color:var(--muted);}
+
+  .toolbar{position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0;
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center; border-bottom:1px solid var(--line-s); margin-bottom:12px;}
+  .seg{display:inline-flex; border:1.5px solid var(--green); border-radius:10px; overflow:hidden;}
+  .seg button{border:none; background:transparent; color:var(--green-d); font-size:14px; font-weight:600;
+    padding:9px 16px; cursor:pointer; font-family:inherit;}
+  .seg button.active{background:var(--green); color:#fff;}
+  .btn{border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-family:inherit;
+    font-size:14px; font-weight:600; padding:9px 14px; border-radius:10px; cursor:pointer; display:inline-flex; gap:6px; align-items:center;}
+  .btn:hover{border-color:var(--green);}
+  .btn.primary{background:var(--green); color:#fff; border-color:var(--green);}
+  .btn:focus-visible, .seg button:focus-visible{outline:2px solid var(--green); outline-offset:2px;}
+  .spacer{flex:1 1 auto;}
+  .count{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums;}
+
+  .tablecard{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .scroll{overflow-x:auto;}
+  table{border-collapse:collapse; width:100%; min-width:960px; font-size:14px;}
+  thead th{background:var(--head); color:var(--green-d); font-weight:700; font-size:13px;
+    padding:9px 8px; border:1px solid var(--line); white-space:nowrap; position:sticky; top:0;}
+  tbody td{padding:5px 8px; border:1px solid var(--line-s); vertical-align:middle; white-space:nowrap;}
+  tbody tr:nth-child(even) td{background:rgba(0,0,0,.015);}
+  .col-idx{color:var(--muted); text-align:center; font-variant-numeric:tabular-nums; width:34px;}
+  .calc{background:var(--calc)!important; color:var(--calc-ink); font-weight:700; text-align:right; font-variant-numeric:tabular-nums;}
+  .num{text-align:right; font-variant-numeric:tabular-nums;}
+  td.over{color:var(--red); font-weight:800;}
+
+  /* inputs in edit mode */
+  td input, td select{width:100%; font-size:14px; padding:6px 6px; border:1px solid var(--line);
+    border-radius:7px; background:var(--card); color:var(--ink); font-family:inherit;}
+  td select{appearance:none; background-image:var(--sel-arrow); background-repeat:no-repeat;
+    background-position:right 6px center; padding-right:24px;}
+  td input:focus, td select:focus{outline:2px solid var(--green); outline-offset:-1px; border-color:var(--green);}
+  td input.w-name{min-width:88px;} td input.w-phone{min-width:110px;} td input.w-area{min-width:78px;}
+  td input.w-bags{min-width:64px;} td input.w-place{min-width:96px;}
+  td select.w-brand{min-width:150px;} td select.w-form{min-width:78px;} td select.w-spec{min-width:82px;}
+  .delrow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px;}
+  .delrow:hover{color:var(--red);}
+
+  .foot{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; align-items:center; margin-top:12px;}
+  .totals{display:flex; gap:18px; flex-wrap:wrap; font-size:14px;}
+  .totals b{font-variant-numeric:tabular-nums; color:var(--green-d); font-size:16px;}
+  .hint{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.6;}
+  .hint .warn{color:var(--amber); font-weight:600;}
+  .banner{background:var(--calc); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+    font-size:13px; color:var(--ink); margin-bottom:12px; display:none;}
+  .banner.show{display:block;}
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--green-d); color:#fff;
+    padding:11px 18px; border-radius:10px; font-size:14px; box-shadow:0 6px 20px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition:opacity .25s; z-index:20;}
+  .toast.show{opacity:1;}
+
+  @media print{
+    .toolbar, .foot, .hint, .banner, .delrow, .col-act{display:none!important;}
+    body{background:#fff;} .wrap{max-width:none; padding:0;}
+    .tablecard{border:none;} table{min-width:0; font-size:11px;}
+    thead th{background:#e8efe2!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .calc{background:#f2f7ec!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  }
+  @media (max-width:640px){ header h1{font-size:17px;} .btn,.seg button{padding:8px 11px; font-size:13px;} }
 </style>
+
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="yr">115年度國產有機質肥料推廣計畫</div>
+    <div class="yr">115年度國產有機質肥料推廣計畫產銷班申請表</div>
     <h1>臺南市麻豆區果樹產銷班第30班</h1>
+    <div class="sub">共 <span id="memcount">51</span> 位班員　·　可申請公斤 = 經營面積 × 10,000　·　公斤數 = 規格 × 包數</div>
   </header>
 
-  <!-- 1. 班員 -->
-  <div class="card">
-    <h2><span class="num">1</span>選擇班員</h2>
-    <div class="field">
-      <label for="member">班員姓名</label>
-      <select id="member"><option value="">— 點此選擇 —</option></select>
+  <div class="toolbar">
+    <div class="seg" role="tablist">
+      <button id="mView" class="active" type="button">👁 閱覽模式</button>
+      <button id="mEdit" type="button">✎ 編輯模式</button>
     </div>
-    <div class="field">
-      <label for="phone">聯絡電話（可修改）</label>
-      <input id="phone" type="tel" inputmode="numeric" placeholder="選姓名後帶出，可直接修改">
-      <div class="note">※ 電話為手寫辨識，請當場核對修正</div>
-    </div>
-    <div class="quota" id="quota">
-      <div class="box"><span class="k">經營面積</span><span class="v"><span id="area">—</span> 公頃</span></div>
-      <div class="box"><span class="k">可購買（申請）上限</span><span class="v" style="color:var(--green-d)"><span id="limit">—</span> 公斤</span></div>
+    <button class="btn" id="bAdd" type="button" style="display:none">＋ 新增一列</button>
+    <div class="spacer"></div>
+    <button class="btn" id="bExcel" type="button">⬇ 匯出 Excel</button>
+    <button class="btn" id="bPdf" type="button">🖨 匯出 PDF</button>
+    <button class="btn primary" id="bPhone" type="button" title="下載備份檔到手機/電腦">📱 存到手機</button>
+    <button class="btn primary" id="bCloud" type="button" title="上傳到雲端試算表">☁ 上傳雲端</button>
+    <button class="btn" id="bImport" type="button" title="讀回先前存的備份檔">📁 匯入檔案</button>
+    <button class="btn" id="bReset" type="button" title="還原成照片原始資料">↺ 還原</button>
+    <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+  </div>
+
+  <div class="banner" id="editBanner">
+    ✎ 編輯模式：點任一格即可修改。<span class="warn">黃色說明</span>：訂購欄（產品/性狀/規格/包數）目前多為空白或手寫辨識值，請核對；「可申請」「公斤數」為自動計算，不可改。變更會自動存在本機瀏覽器。
+  </div>
+
+  <div class="tablecard">
+    <div class="scroll">
+      <table id="tbl">
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- 2. 購肥 -->
-  <div class="card buy" id="buy">
-    <h2><span class="num">2</span>購肥登記</h2>
-    <div id="items"></div>
-    <button class="addbtn" id="add">＋ 再加一項肥料</button>
-
-    <div class="summary" id="summary">
-      <div class="lbl">本次登記合計</div>
-      <div class="big"><span id="total">0</span> 公斤</div>
-      <div class="sub">上限 <span id="limit2">—</span>　剩餘 <span id="remain">—</span> 公斤</div>
+  <div class="foot">
+    <div class="totals">
+      <div>合計公斤數：<b id="tKg">0</b> 公斤</div>
+      <div>合計包數：<b id="tBags">0</b> 包</div>
+      <div>可申請總量：<b id="tLimit">0</b> 公斤</div>
+      <div>合計金額：<b id="tAmt">0</b> 元</div>
     </div>
-    <div class="warn" id="warn">⚠ 已超過可購買上限，請調整包數！</div>
+    <div class="count" id="rowcount"></div>
   </div>
 
-  <p class="hint">公斤數 = 規格 × 包數　｜　可購買上限 = 經營面積 × 10,000</p>
+  <p class="hint">
+    <span class="warn">※ 電話、訂購欄與「補助後單價」為手寫／模糊價目表辨識，金額僅供參考，請於編輯模式核對；單價空白者請自行補（選產品會自動帶入已知單價）。</span><br>
+    ☁ 上傳雲端需在正式版（GitHub Pages）並設定 Google 試算表接收網址後才會生效；此即時預覽連結因安全限制無法對外連線。<br>
+    ⬇ 匯出 Excel 會下載 .xls 檔（可用 Excel/Google 試算表開啟）；🖨 匯出 PDF 請於列印視窗選「另存為 PDF」。
+  </p>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-  // 班員：姓名 n、面積(公頃) a、電話 p（手寫辨識，僅供帶出，可修改）
-  const members = [
-    {n:"陳耀祥",a:2.0761,p:"0937827305"},{n:"曾素蓮",a:0.4387,p:""},{n:"黃正俊",a:0.2639,p:"0932208882"},
-    {n:"劉利霞",a:0.3232,p:"0918993260"},{n:"劉易宜",a:0.1984,p:""},{n:"謝麗美",a:0.1880,p:""},{n:"羅秀美",a:0.1493,p:""},
-    {n:"許李淑惠",a:0.5151,p:"0910688835"},{n:"許秀梅",a:0.2000,p:"0933365881"},{n:"郭幸慕",a:0.1659,p:"0961507810"},
-    {n:"郭連範",a:0.2153,p:"0928373569"},{n:"郭麗珠",a:0.1409,p:"0933308558"},{n:"陳永昌",a:0.3000,p:"0937669767"},
-    {n:"陳叔召",a:0.5478,p:"0928949767"},{n:"陳清水",a:0.7405,p:"0939313791"},{n:"陳智弘",a:0.4486,p:"0927558318"},
-    {n:"陳鍾慧玲",a:0.5200,p:"0932990529"},{n:"陳耀昌",a:0.6195,p:"0910688835"},
-    {n:"吳桂奇",a:0.1884,p:"0932990529"},{n:"吳泰德",a:0.3551,p:"0937612465"},{n:"吳智宇",a:0.5717,p:"0921409945"},
-    {n:"李秀蘭",a:0.2072,p:"0912005609"},{n:"李明娟",a:0.3516,p:""},{n:"李國隆",a:0.3271,p:"0937612465"},
-    {n:"李隆泰",a:0.1021,p:"0929327653"},{n:"李瑞義",a:0.3685,p:"0973751313"},{n:"李莖輝",a:0.2688,p:"0915277765"},
-    {n:"林文波",a:0.6861,p:"0910745752"},{n:"林文智",a:0.2983,p:"0978417643"},
-    {n:"陳信宏",a:0.9426,p:"0915829538"},{n:"方吳英娘",a:0.2580,p:"0929985101"},{n:"王宇鋒",a:0.4340,p:""},
-    {n:"王金成",a:0.4679,p:"0937719085"},{n:"王雲祥",a:0.5170,p:"0910688835"},{n:"王福春",a:0.4410,p:"0912005609"},
-    {n:"王啟義",a:0.6815,p:"0933002671"},{n:"何振輝",a:0.2000,p:"0933683838"},{n:"吳亦靜",a:0.1574,p:"0918993260"},
-    {n:"吳洪嘉惠",a:0.1910,p:"0912101218"},{n:"吳若妏",a:0.1385,p:"0973751313"},
-    {n:"林佩璇",a:0.5983,p:"0937612465"},{n:"林明智",a:0.2800,p:"0937362298"},{n:"林建良",a:0.3016,p:"0937612465"},
-    {n:"林欲義",a:0.3125,p:"0973751313"},{n:"林楚獻",a:0.1279,p:"0961507810"},{n:"林聖祥",a:0.6740,p:"0937612465"},
-    {n:"林裕仁",a:0.2278,p:""},{n:"邱美鳳",a:0.3000,p:"0911620629"},{n:"張美玲",a:0.4105,p:"0937612465"},
-    {n:"莊月桃",a:0.2153,p:"0921512056"},{n:"莊志銘",a:0.6406,p:"0937612465"}
-  ];
+/* ---------- 產品 / 性狀 / 規格 選單資料 ---------- */
+// 產品：名稱 + 預設性狀 + 預設規格(kg)（皆可於編輯模式改）
+// p = 補助後單價(元/包)。空字串 = 價目表照片看不清，請於編輯模式補正
+const BRANDS = [
+  {n:"碩成2號", form:"粒狀", kg:25, p:""},
+  {n:"田寶11號", form:"粒狀", kg:20, p:80},
+  {n:"長弘333", form:"粒狀", kg:25, p:""},
+  {n:"福壽有機5號", form:"粒狀", kg:20, p:200},
+  {n:"福壽新治808肥", form:"粒狀", kg:20, p:200},
+  {n:"福壽新粉狀肥3號", form:"粉狀", kg:25, p:80},
+  {n:"福壽新勤3號", form:"粒狀", kg:25, p:""},
+  {n:"農村黎粉有機3號", form:"粉狀", kg:25, p:25},
+  {n:"太牛牌有機肥料", form:"粒狀", kg:25, p:30},
+  {n:"333愛柏有機質肥料3號", form:"粉狀", kg:25, p:30},
+  {n:"泛合有機3號", form:"粒狀", kg:20, p:200},
+  {n:"保元旺素有機3號", form:"粒狀", kg:20, p:90},
+  {n:"麻豆1號", form:"粒狀", kg:20, p:80},
+  {n:"桶實1號", form:"粒狀", kg:20, p:""},
+  {n:"領盛牌2號", form:"粒狀", kg:25, p:""},
+  {n:"翔鹿3號", form:"粒狀", kg:20, p:""},
+  {n:"有約肥3號", form:"粉狀", kg:20, p:""}
+];
+const FORMS = ["粒狀","粉狀","液態","其他"];
+const SPECS = [20,25,40];   // kg，其他可自行輸入
 
-  // 購肥品牌（品名 + 預設規格kg，皆可於畫面改）— 依登記表與品牌表整理，價格待確認
-  const brands = [
-    {n:"碩成2號",kg:25},{n:"田寶11號",kg:20},{n:"長弘333",kg:25},
-    {n:"福壽有機5號",kg:20},{n:"福壽新治808肥",kg:20},{n:"福壽新粉狀肥3號",kg:25},{n:"福壽新勤3號",kg:25},
-    {n:"農村黎粉有機3號",kg:25},{n:"太牛牌有機肥料",kg:25},{n:"333愛柏有機質肥料3號",kg:25},
-    {n:"泛合有機3號",kg:20},{n:"保元旺素有機3號",kg:20},{n:"麻豆1號",kg:20},
-    {n:"桶實1號",kg:20},{n:"領盛牌2號",kg:25},{n:"翔鹿3號",kg:20},{n:"有約肥3號",kg:20},
-    {n:"其他（自行輸入）",kg:20,other:true}
-  ];
+/* ---------- 班員 + 訂購原始資料 ---------- */
+// b=產品 f=性狀 s=規格kg g=包數（訂購欄多數留空，僅填清楚可辨的十幾筆當範例）
+const ORIGINAL = [
+  {name:"陳耀祥",phone:"0937827305",area:2.0761,place:"電聯",b:"",f:"",s:"",g:""},
+  {name:"曾素蓮",phone:"",area:0.4387,place:"電聯",b:"",f:"",s:"",g:""},
+  {name:"黃正俊",phone:"0932208882",area:0.2639,place:"電聯",b:"碩成2號",f:"粒狀",s:20,g:105},
+  {name:"劉利霞",phone:"0918993260",area:0.3232,place:"電話連絡",b:"保元旺素有機3號",f:"粒狀",s:20,g:160},
+  {name:"劉易宜",phone:"",area:0.1984,place:"電話連絡",b:"翔鹿3號",f:"粒狀",s:20,g:70},
+  {name:"謝麗美",phone:"",area:0.1880,place:"",b:"",f:"",s:"",g:""},
+  {name:"羅秀美",phone:"",area:0.1493,place:"電話連絡",b:"太牛牌有機肥料",f:"粒狀",s:25,g:50},
+  {name:"許李淑惠",phone:"0910688835",area:0.5151,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:206},
+  {name:"許秀梅",phone:"0933365881",area:0.2000,place:"北勢里農地",b:"長弘333",f:"粒狀",s:25,g:80},
+  {name:"郭幸慕",phone:"0961507810",area:0.1659,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:49},
+  {name:"郭連範",phone:"0928373569",area:0.2153,place:"電聯",b:"",f:"",s:20,g:100},
+  {name:"郭麗珠",phone:"0933308558",area:0.1409,place:"北勢農場",b:"有約肥3號",f:"粉狀",s:20,g:60},
+  {name:"陳永昌",phone:"0937669767",area:0.3000,place:"電聯",b:"",f:"",s:"",g:""},
+  {name:"陳叔召",phone:"0928949767",area:0.5478,place:"電話連絡",b:"",f:"",s:25,g:140},
+  {name:"陳清水",phone:"0939313791",area:0.7405,place:"電話聯絡",b:"桶實1號",f:"粒狀",s:20,g:250},
+  {name:"陳智弘",phone:"0927558318",area:0.4486,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:""},
+  {name:"陳鍾慧玲",phone:"0932990529",area:0.5200,place:"農村肥元根",b:"田寶11號",f:"粒狀",s:25,g:208},
+  {name:"陳耀昌",phone:"0910688835",area:0.6195,place:"北勢里麻善路",b:"長弘333",f:"粒狀",s:25,g:80},
+  {name:"吳桂奇",phone:"0932990529",area:0.1884,place:"電聯",b:"",f:"",s:25,g:42},
+  {name:"吳泰德",phone:"0937612465",area:0.3551,place:"電聯",b:"長弘333",f:"粒狀",s:25,g:142},
+  {name:"吳智宇",phone:"0921409945",area:0.5717,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:50},
+  {name:"李秀蘭",phone:"0912005609",area:0.2072,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:100},
+  {name:"李明娟",phone:"",area:0.3516,place:"",b:"",f:"",s:"",g:""},
+  {name:"李國隆",phone:"0937612465",area:0.3271,place:"電聯",b:"長弘333",f:"粒狀",s:25,g:110},
+  {name:"李隆泰",phone:"0929327653",area:0.1021,place:"電聯",b:"有約肥3號",f:"粉狀",s:20,g:30},
+  {name:"李瑞義",phone:"0973751313",area:0.3685,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:126},
+  {name:"李莖輝",phone:"0915277765",area:0.2688,place:"電聯",b:"翔鹿3號",f:"粒狀",s:20,g:40},
+  {name:"林文波",phone:"0910745752",area:0.6861,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:100},
+  {name:"林文智",phone:"0978417643",area:0.2983,place:"電聯",b:"福壽新勤3號",f:"粒狀",s:25,g:100},
+  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"田寶11號",f:"粒狀",s:20,g:250},
+  {name:"方吳英娘",phone:"0929985101",area:0.2580,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:100},
+  {name:"王宇鋒",phone:"",area:0.4340,place:"",b:"",f:"",s:"",g:""},
+  {name:"王金成",phone:"0937719085",area:0.4679,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:200},
+  {name:"王雲祥",phone:"0910688835",area:0.5170,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:64},
+  {name:"王福春",phone:"0912005609",area:0.4410,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:60},
+  {name:"王啟義",phone:"0933002671",area:0.6815,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:140},
+  {name:"何振輝",phone:"0933683838",area:0.2000,place:"寮子廓現地",b:"田寶11號",f:"粒狀",s:20,g:100},
+  {name:"吳亦靜",phone:"0918993260",area:0.1574,place:"電聯",b:"保元旺素有機3號",f:"粒狀",s:20,g:70},
+  {name:"吳洪嘉惠",phone:"0912101218",area:0.1910,place:"翔鹿",b:"翔鹿3號",f:"粒狀",s:20,g:20},
+  {name:"吳若妏",phone:"0973751313",area:0.1385,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:40},
+  {name:"林佩璇",phone:"0937612465",area:0.5983,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:239},
+  {name:"林明智",phone:"0937362298",area:0.2800,place:"電話聯絡",b:"田寶11號",f:"粒狀",s:20,g:40},
+  {name:"林建良",phone:"0937612465",area:0.3016,place:"電聯",b:"長弘333",f:"粒狀",s:25,g:120},
+  {name:"林欲義",phone:"0973751313",area:0.3125,place:"電話聯絡",b:"碩成2號",f:"粒狀",s:25,g:124},
+  {name:"林楚獻",phone:"0961507810",area:0.1279,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:51},
+  {name:"林聖祥",phone:"0937612465",area:0.6740,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:269},
+  {name:"林裕仁",phone:"",area:0.2278,place:"",b:"碩成2號",f:"粒狀",s:25,g:91},
+  {name:"邱美鳳",phone:"0911620629",area:0.3000,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:80},
+  {name:"張美玲",phone:"0937612465",area:0.4105,place:"電聯",b:"長弘333",f:"粒狀",s:25,g:164},
+  {name:"莊月桃",phone:"0921512056",area:0.2153,place:"電聯",b:"有約肥3號",f:"粉狀",s:20,g:50},
+  {name:"莊志銘",phone:"0937612465",area:0.6406,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:192}
+];
 
-  const $ = id => document.getElementById(id);
-  const fmt = n => n.toLocaleString('en-US');
-  let curLimit = 0;
+/* ---------- 狀態 ---------- */
+const LS_KEY = "madou_fert_v2";
+let rows = load();
+let editing = false;
 
-  // 建立班員選單
-  members.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m.n; $('member').appendChild(o); });
-
-  $('member').addEventListener('change', e=>{
-    if(e.target.value===''){ $('quota').classList.remove('show'); $('buy').classList.remove('show'); $('phone').value=''; curLimit=0; return; }
-    const m = members[e.target.value];
-    curLimit = Math.round(m.a*10000);
-    $('area').textContent = m.a.toFixed(4);
-    $('limit').textContent = fmt(curLimit);
-    $('limit2').textContent = fmt(curLimit);
-    $('phone').value = m.p;
-    $('quota').classList.add('show');
-    $('buy').classList.add('show');
-    if($('items').children.length===0) addItem();
-    recalc();
+function normalize(list){
+  return list.map(r=>{
+    const o={...r};
+    if(o.p===undefined || o.p===null || o.p===''){
+      const b=BRANDS.find(x=>x.n===o.b);
+      o.p = (b && b.p!=='') ? b.p : '';
+    }
+    return o;
   });
+}
+function load(){
+  try{ const s = localStorage.getItem(LS_KEY); if(s) return normalize(JSON.parse(s)); }catch(e){}
+  return normalize(ORIGINAL.map(r=>({...r})));
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(rows)); }catch(e){} }
+const fmt = n => (n||0).toLocaleString('en-US');
+const $ = id => document.getElementById(id);
 
-  // 新增一列購肥品項
-  function addItem(){
-    const div = document.createElement('div');
-    div.className = 'item';
-    const opts = brands.map((b,i)=>`<option value="${i}">${b.n}</option>`).join('');
-    div.innerHTML = `
-      <button class="del" title="刪除">×</button>
-      <div class="field">
-        <label>購肥品牌</label>
-        <select class="b-brand"><option value="">— 選擇品牌 —</option>${opts}</select>
-      </div>
-      <div class="field b-otherwrap" style="display:none">
-        <label>自行輸入品名</label>
-        <input class="b-other" type="text" placeholder="輸入肥料名稱">
-      </div>
-      <div class="grid2">
-        <div class="field"><label>規格(公斤)</label>
-          <select class="b-spec"><option value="20">20 kg</option><option value="25">25 kg</option></select>
-        </div>
-        <div class="field"><label>包數</label>
-          <input class="b-bags" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></div>
-      </div>
-      <div class="field" style="text-align:right; margin-top:2px; color:var(--muted); font-size:14px">
-        小計：<b class="b-kg" style="color:var(--ink)">0</b> 公斤
-      </div>`;
-    $('items').appendChild(div);
+const COLS = [
+  {k:"_idx", t:"#"},
+  {k:"name", t:"班員姓名"},
+  {k:"phone", t:"聯絡電話"},
+  {k:"area", t:"經營面積(公頃)"},
+  {k:"_limit", t:"可申請(公斤)"},
+  {k:"place", t:"交貨地點"},
+  {k:"b", t:"產品名稱"},
+  {k:"f", t:"性狀"},
+  {k:"s", t:"規格(公斤)"},
+  {k:"g", t:"包數"},
+  {k:"_kg", t:"公斤數"},
+  {k:"p", t:"補助後單價(元)"},
+  {k:"_amt", t:"金額(元)"}
+];
 
-    const brand = div.querySelector('.b-brand');
-    const spec  = div.querySelector('.b-spec');
-    const bags  = div.querySelector('.b-bags');
-    const otherWrap = div.querySelector('.b-otherwrap');
+function limitOf(r){ return Math.round((parseFloat(r.area)||0)*10000); }
+function kgOf(r){ return (parseInt(r.s)||0)*(parseInt(r.g)||0); }
+function amtOf(r){ return Math.round((parseFloat(r.p)||0)*(parseInt(r.g)||0)); }
 
-    brand.addEventListener('change', ()=>{
-      const b = brands[brand.value];
-      if(b){ spec.value = String(b.kg); otherWrap.style.display = b.other ? 'block':'none'; }
-      recalc();
-    });
-    spec.addEventListener('change', recalc);
-    bags.addEventListener('input', recalc);
-    div.querySelector('.del').addEventListener('click', ()=>{
-      if($('items').children.length>1){ div.remove(); recalc(); }
-      else { brand.value=''; bags.value=''; otherWrap.style.display='none'; recalc(); }
-    });
+/* ---------- 建表頭 ---------- */
+function renderHead(){
+  const tr = $('thead'); tr.innerHTML='';
+  COLS.forEach(c=>{ const th=document.createElement('th'); th.textContent=c.t; tr.appendChild(th); });
+  if(editing){ const th=document.createElement('th'); th.className='col-act'; th.textContent=''; tr.appendChild(th); }
+}
+
+/* ---------- 建表身 ---------- */
+function renderBody(){
+  const tb = $('tbody'); tb.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    const lim = limitOf(r), kg = kgOf(r);
+    const over = kg>lim && lim>0;
+
+    tr.appendChild(cell('col-idx', i+1));
+
+    if(editing){
+      tr.appendChild(inputCell(r,'name','w-name'));
+      tr.appendChild(inputCell(r,'phone','w-phone'));
+      tr.appendChild(inputCell(r,'area','w-area','number'));
+      tr.appendChild(calcCell(fmt(lim)));
+      tr.appendChild(inputCell(r,'place','w-place'));
+      tr.appendChild(brandCell(r));
+      tr.appendChild(selCell(r,'f','w-form',FORMS));
+      tr.appendChild(specCell(r));
+      tr.appendChild(inputCell(r,'g','w-bags','number'));
+      tr.appendChild(calcCell(fmt(kg), over));
+      tr.appendChild(inputCell(r,'p','w-bags','number'));
+      tr.appendChild(calcCell(fmt(amtOf(r))));
+      const act=document.createElement('td'); act.className='col-act';
+      const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.title='刪除此列'; del.textContent='🗑';
+      del.onclick=()=>{ rows.splice(i,1); save(); renderBody(); updateTotals(); updateCount(); };
+      act.appendChild(del); tr.appendChild(act);
+    } else {
+      tr.appendChild(cell('', r.name||''));
+      tr.appendChild(cell('', r.phone||''));
+      tr.appendChild(cell('num', r.area? (parseFloat(r.area)).toFixed(4):''));
+      tr.appendChild(calcCell(fmt(lim)));
+      tr.appendChild(cell('', r.place||''));
+      tr.appendChild(cell('', r.b||''));
+      tr.appendChild(cell('', r.f||''));
+      tr.appendChild(cell('num', r.s||''));
+      tr.appendChild(cell('num', r.g||''));
+      tr.appendChild(calcCell(fmt(kg), over));
+      tr.appendChild(cell('num', r.p||''));
+      tr.appendChild(calcCell(fmt(amtOf(r))));
+    }
+    tb.appendChild(tr);
+  });
+}
+function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=txt; return td; }
+function calcCell(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
+function inputCell(r,key,cls,type){
+  const td=document.createElement('td'); const inp=document.createElement('input');
+  inp.type=type||'text'; inp.className=cls; if(type==='number'){inp.min='0'; inp.step= key==='area'?'0.0001':'1';}
+  inp.value = r[key]===undefined?'':r[key];
+  inp.oninput=()=>{ r[key]= type==='number' ? (inp.value===''?'':(key==='area'?parseFloat(inp.value):parseInt(inp.value))) : inp.value; save(); refreshCalc(); };
+  td.appendChild(inp); return td;
+}
+function selCell(r,key,cls,opts){
+  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className=cls;
+  sel.appendChild(opt('',' '));
+  opts.forEach(o=>sel.appendChild(opt(o,o)));
+  sel.value = r[key]||'';
+  sel.onchange=()=>{ r[key]=sel.value; save(); };
+  td.appendChild(sel); return td;
+}
+function brandCell(r){
+  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className='w-brand';
+  sel.appendChild(opt('','— 選產品 —'));
+  BRANDS.forEach(b=>sel.appendChild(opt(b.n,b.n)));
+  sel.appendChild(opt('__other','其他（自行輸入）'));
+  // 若原值不在清單中，補一個選項
+  if(r.b && !BRANDS.some(b=>b.n===r.b)){ const o=opt(r.b,r.b); sel.insertBefore(o, sel.lastChild); }
+  sel.value = r.b||'';
+  sel.onchange=()=>{
+    if(sel.value==='__other'){ const v=prompt('輸入產品名稱：', r.b||''); r.b=v||''; }
+    else { r.b=sel.value; const b=BRANDS.find(x=>x.n===sel.value); if(b){ r.f=b.form; r.s=b.kg; if(b.p!=='') r.p=b.p; } }
+    save(); renderBody(); updateTotals();
+  };
+  td.appendChild(sel); return td;
+}
+function specCell(r){
+  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className='w-spec';
+  sel.appendChild(opt('',' '));
+  SPECS.forEach(s=>sel.appendChild(opt(s, s+' kg')));
+  sel.appendChild(opt('__other','其他'));
+  if(r.s && !SPECS.includes(parseInt(r.s))){ const o=opt(r.s, r.s+' kg'); sel.insertBefore(o, sel.lastChild); }
+  sel.value = r.s===''?'':String(r.s);
+  sel.onchange=()=>{
+    if(sel.value==='__other'){ const v=prompt('輸入規格公斤數：', r.s||''); r.s= v?parseInt(v):''; }
+    else { r.s = sel.value===''?'':parseInt(sel.value); }
+    save(); renderBody(); updateTotals();
+  };
+  td.appendChild(sel); return td;
+}
+function opt(v,t){ const o=document.createElement('option'); o.value=v; o.textContent=t; return o; }
+
+/* 只更新計算欄（打包數/面積時不整表重繪，避免游標跳走） */
+function refreshCalc(){
+  const trs = $('tbody').querySelectorAll('tr');
+  rows.forEach((r,i)=>{
+    const tr=trs[i]; if(!tr) return;
+    const calcs = tr.querySelectorAll('.calc');
+    const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
+    if(calcs[0]) calcs[0].textContent=fmt(lim);
+    if(calcs[1]){ calcs[1].textContent=fmt(kg); calcs[1].classList.toggle('over',over); }
+    if(calcs[2]) calcs[2].textContent=fmt(amtOf(r));
+  });
+  updateTotals();
+}
+function updateTotals(){
+  let kg=0,bags=0,lim=0,amt=0;
+  rows.forEach(r=>{ kg+=kgOf(r); bags+=parseInt(r.g)||0; lim+=limitOf(r); amt+=amtOf(r); });
+  $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim);
+  $('tAmt').textContent=fmt(amt);
+}
+function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 列'; $('memcount').textContent=rows.length; }
+
+/* ---------- 模式切換 ---------- */
+function setMode(edit){
+  editing=edit;
+  $('mView').classList.toggle('active',!edit);
+  $('mEdit').classList.toggle('active',edit);
+  $('bAdd').style.display = edit?'inline-flex':'none';
+  $('editBanner').classList.toggle('show',edit);
+  renderHead(); renderBody(); updateTotals(); updateCount();
+}
+$('mView').onclick=()=>setMode(false);
+$('mEdit').onclick=()=>setMode(true);
+$('bAdd').onclick=()=>{
+  rows.push({name:"",phone:"",area:"",place:"電聯",b:"",f:"",s:"",g:""});
+  save(); renderBody(); updateCount();
+  const tb=$('tbody'); tb.lastElementChild.scrollIntoView({block:'center'});
+};
+
+/* ---------- 匯出 Excel (.xls, HTML 表格) ---------- */
+$('bExcel').onclick=()=>{
+  const heads = COLS.map(c=>c.t);
+  let html = '<meta charset="utf-8"><table border="1"><tr>'+heads.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
+  rows.forEach((r,i)=>{
+    const cells=[i+1, r.name, r.phone, r.area, limitOf(r), r.place, r.b, r.f, r.s, r.g, kgOf(r), r.p, amtOf(r)];
+    html += '<tr>'+cells.map(c=>`<td>${esc(c==null?'':c)}</td>`).join('')+'</tr>';
+  });
+  html += '</table>';
+  downloadBlob(html, 'application/vnd.ms-excel', '麻豆30班_肥料登記.xls', true);
+  toast('已下載 Excel 檔');
+};
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function downloadBlob(content, type, filename, bom){
+  const parts = bom ? ['﻿'+content] : [content];
+  const blob=new Blob(parts,{type:type+';charset=utf-8'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },500);
+}
+function dstamp(){ const d=new Date(), p=n=>('0'+n).slice(-2);
+  return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes()); }
+
+/* ---------- 存到手機（下載 JSON 備份） ---------- */
+$('bPhone').onclick=()=>{
+  const payload={ class:'麻豆果樹30班', ts:new Date().toISOString(), rows };
+  downloadBlob(JSON.stringify(payload,null,2), 'application/json', '麻豆30班_肥料登記_'+dstamp()+'.json', false);
+  toast('已存到手機（下載備份檔）');
+};
+
+/* ---------- 匯入檔案（讀回 JSON 備份） ---------- */
+$('bImport').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      let text=String(reader.result).replace(/^﻿/,'');
+      const data=JSON.parse(text);
+      const list=Array.isArray(data)?data:(data.rows||[]);
+      if(!Array.isArray(list)||!list.length) throw new Error('檔案內沒有登記資料');
+      if(!confirm('匯入將覆蓋目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
+      rows=normalize(list); save(); renderHead(); renderBody(); updateTotals(); updateCount();
+      toast('✅ 已匯入 '+list.length+' 列');
+    }catch(err){ toast('匯入失敗：'+err.message+'（請選用「存到手機」下載的 .json 備份檔）'); }
+    e.target.value='';
+  };
+  reader.readAsText(f,'utf-8');
+};
+
+/* ---------- 匯出 PDF (列印) ---------- */
+$('bPdf').onclick=()=>{ const was=editing; if(was) setMode(false); setTimeout(()=>window.print(),150); };
+
+/* ---------- 上傳雲端 ---------- */
+// 正式部署時把這行改成你的 Google Apps Script 網址（/exec）
+const CLOUD_ENDPOINT = "";
+$('bCloud').onclick=async ()=>{
+  if(!CLOUD_ENDPOINT){
+    toast('尚未設定雲端網址：正式版部署後填入 Google 試算表接收網址即可啟用');
+    return;
   }
-  $('add').addEventListener('click', ()=>{ addItem(); });
+  try{
+    toast('上傳中…');
+    const res=await fetch(CLOUD_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({class:'麻豆果樹30班', ts:new Date().toISOString(), rows})});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    toast('✅ 已上傳雲端');
+  }catch(e){ toast('上傳失敗：'+e.message+'（此預覽連結禁止對外連線，請用正式版）'); }
+};
 
-  // 重算合計
-  function recalc(){
-    let total = 0;
-    $('items').querySelectorAll('.item').forEach(div=>{
-      const spec = parseInt(div.querySelector('.b-spec').value)||0;
-      const bags = parseInt(div.querySelector('.b-bags').value)||0;
-      const kg = spec*bags;
-      div.querySelector('.b-kg').textContent = fmt(kg);
-      total += kg;
-    });
-    $('total').textContent = fmt(total);
-    const remain = curLimit - total;
-    $('remain').textContent = fmt(remain);
-    const over = total > curLimit;
-    $('summary').classList.toggle('over', over);
-    $('warn').classList.toggle('show', over);
+/* ---------- 還原 ---------- */
+$('bReset').onclick=()=>{
+  if(confirm('確定還原成照片原始資料？會覆蓋目前所有編輯。')){
+    rows = normalize(ORIGINAL.map(r=>({...r}))); save(); renderHead(); renderBody(); updateTotals(); updateCount();
+    toast('已還原原始資料');
   }
+};
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3200); }
+
+/* ---------- init ---------- */
+setMode(false);
 </script>
+
 </body>
 </html>
