@@ -8,33 +8,33 @@
   :root{
     --green:#2e7d32; --green-d:#1b5e20; --bg:#eef1ea; --card:#fff; --head:#e8efe2;
     --line:#c9d3bf; --line-s:#dfe6d6; --ink:#1f261a; --muted:#67715d;
-    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20;
+    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20; --p2:#fbf7ee;
     --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
   }
   @media (prefers-color-scheme: dark){
     :root{
       --green:#8bc34a; --green-d:#aed581; --bg:#12160e; --card:#1c2118; --head:#232b1c;
       --line:#3a462e; --line-s:#2a3320; --ink:#e7ecdf; --muted:#9aa78c;
-      --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581;
+      --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581; --p2:#241f16;
       --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238bc34a' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
     }
   }
   :root[data-theme="light"]{
     --green:#2e7d32; --green-d:#1b5e20; --bg:#eef1ea; --card:#fff; --head:#e8efe2;
     --line:#c9d3bf; --line-s:#dfe6d6; --ink:#1f261a; --muted:#67715d;
-    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20;
+    --red:#c62828; --amber:#b25400; --calc:#f2f7ec; --calc-ink:#1b5e20; --p2:#fbf7ee;
     --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
   }
   :root[data-theme="dark"]{
     --green:#8bc34a; --green-d:#aed581; --bg:#12160e; --card:#1c2118; --head:#232b1c;
     --line:#3a462e; --line-s:#2a3320; --ink:#e7ecdf; --muted:#9aa78c;
-    --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581;
+    --red:#ff6b6b; --amber:#ffb156; --calc:#1e2716; --calc-ink:#aed581; --p2:#241f16;
     --sel-arrow:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238bc34a' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
   }
   *{box-sizing:border-box}
   body{margin:0; font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
     background:var(--bg); color:var(--ink); line-height:1.45; -webkit-text-size-adjust:100%;}
-  .wrap{max-width:1180px; margin:0 auto; padding:16px 14px 60px;}
+  .wrap{max-width:1320px; margin:0 auto; padding:16px 14px 60px;}
   .groupbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--card);
     border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px;}
   .groupbar label{font-size:14px; font-weight:700; color:var(--green-d); margin:0; white-space:nowrap;}
@@ -57,33 +57,45 @@
     font-size:14px; font-weight:600; padding:9px 14px; border-radius:10px; cursor:pointer; display:inline-flex; gap:6px; align-items:center;}
   .btn:hover{border-color:var(--green);}
   .btn.primary{background:var(--green); color:#fff; border-color:var(--green);}
+  .btn.active{background:var(--green-d); color:#fff; border-color:var(--green-d);}
   .btn:focus-visible, .seg button:focus-visible{outline:2px solid var(--green); outline-offset:2px;}
   .spacer{flex:1 1 auto;}
   .count{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums;}
 
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; display:none;}
+  .panel.show{display:block;}
+  .panel h2{font-size:16px; margin:0 0 4px; color:var(--green-d);}
+  .panel p{font-size:13px; color:var(--muted); margin:0 0 12px;}
+
   .tablecard{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
   .scroll{overflow-x:auto;}
-  table{border-collapse:collapse; width:100%; min-width:960px; font-size:14px;}
+  table{border-collapse:collapse; width:100%; font-size:14px;}
+  #tbl{min-width:1280px;}
+  #ptbl{min-width:560px;}
   thead th{background:var(--head); color:var(--green-d); font-weight:700; font-size:13px;
-    padding:9px 8px; border:1px solid var(--line); white-space:nowrap; position:sticky; top:0;}
-  tbody td{padding:5px 8px; border:1px solid var(--line-s); vertical-align:middle; white-space:nowrap;}
+    padding:8px 8px; border:1px solid var(--line); white-space:nowrap; position:sticky; top:0;}
+  th.p2, td.p2col{background:var(--p2);}
+  tbody td{padding:5px 7px; border:1px solid var(--line-s); vertical-align:middle; white-space:nowrap;}
   tbody tr:nth-child(even) td{background:rgba(0,0,0,.015);}
-  .col-idx{color:var(--muted); text-align:center; font-variant-numeric:tabular-nums; width:34px;}
+  tbody tr:nth-child(even) td.p2col{background:var(--p2);}
+  .col-idx{color:var(--muted); text-align:center; font-variant-numeric:tabular-nums; width:32px;}
   .calc{background:var(--calc)!important; color:var(--calc-ink); font-weight:700; text-align:right; font-variant-numeric:tabular-nums;}
   .num{text-align:right; font-variant-numeric:tabular-nums;}
   td.over{color:var(--red); font-weight:800;}
 
-  /* inputs in edit mode */
   td input, td select{width:100%; font-size:14px; padding:6px 6px; border:1px solid var(--line);
     border-radius:7px; background:var(--card); color:var(--ink); font-family:inherit;}
   td select{appearance:none; background-image:var(--sel-arrow); background-repeat:no-repeat;
     background-position:right 6px center; padding-right:24px;}
   td input:focus, td select:focus{outline:2px solid var(--green); outline-offset:-1px; border-color:var(--green);}
-  td input.w-name{min-width:88px;} td input.w-phone{min-width:110px;} td input.w-area{min-width:78px;}
-  td input.w-bags{min-width:64px;} td input.w-place{min-width:96px;}
-  td select.w-brand{min-width:150px;} td select.w-form{min-width:78px;} td select.w-spec{min-width:82px;}
+  td input.w-name{min-width:84px;} td input.w-phone{min-width:108px;} td input.w-area{min-width:74px;}
+  td input.w-bags{min-width:58px;} td input.w-place{min-width:92px;} td input.w-price{min-width:80px;}
+  td select.w-brand{min-width:132px;} td select.w-form{min-width:74px;} td select.w-spec{min-width:78px;}
+  td input.w-pname{min-width:150px;}
   .delrow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px;}
   .delrow:hover{color:var(--red);}
+  .addbtn{margin-top:10px; padding:9px 14px; border:1.5px dashed var(--green); background:transparent; color:var(--green-d);
+    border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
 
   .foot{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; align-items:center; margin-top:12px;}
   .totals{display:flex; gap:18px; flex-wrap:wrap; font-size:14px;}
@@ -94,17 +106,17 @@
     font-size:13px; color:var(--ink); margin-bottom:12px; display:none;}
   .banner.show{display:block;}
   .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--green-d); color:#fff;
-    padding:11px 18px; border-radius:10px; font-size:14px; box-shadow:0 6px 20px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition:opacity .25s; z-index:20;}
+    padding:11px 18px; border-radius:10px; font-size:14px; box-shadow:0 6px 20px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition:opacity .25s; z-index:20; max-width:90vw;}
   .toast.show{opacity:1;}
 
   @media print{
-    .toolbar, .foot, .hint, .banner, .delrow, .col-act{display:none!important;}
+    .toolbar,.foot,.hint,.banner,.delrow,.col-act,.groupbar,#prodPanel{display:none!important;}
     body{background:#fff;} .wrap{max-width:none; padding:0;}
-    .tablecard{border:none;} table{min-width:0; font-size:11px;}
+    .tablecard{border:none;} #tbl{min-width:0; font-size:10px;}
     thead th{background:#e8efe2!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
     .calc{background:#f2f7ec!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   }
-  @media (max-width:640px){ header h1{font-size:17px;} .btn,.seg button{padding:8px 11px; font-size:13px;} }
+  @media (max-width:640px){ header h1{font-size:17px;} .btn,.seg button{padding:8px 10px; font-size:13px;} }
 </style>
 
 </head>
@@ -117,7 +129,7 @@
   <header>
     <div class="yr">115年度國產有機質肥料推廣計畫產銷班申請表</div>
     <h1 id="title">臺南市麻豆區果樹產銷班第30班</h1>
-    <div class="sub">共 <span id="memcount">51</span> 位班員　·　可申請公斤 = 經營面積 × 10,000　·　公斤數 = 規格 × 包數</div>
+    <div class="sub">共 <span id="memcount">51</span> 位班員　·　每人最多可購 2 種產品　·　可申請公斤 = 面積 × 10,000</div>
   </header>
 
   <div class="toolbar">
@@ -125,27 +137,40 @@
       <button id="mView" class="active" type="button">👁 閱覽模式</button>
       <button id="mEdit" type="button">✎ 編輯模式</button>
     </div>
-    <button class="btn" id="bAdd" type="button" style="display:none">＋ 新增一列</button>
+    <button class="btn" id="bAdd" type="button" style="display:none">＋ 新增班員</button>
+    <button class="btn" id="bProducts" type="button">🧾 產品管理</button>
     <div class="spacer"></div>
     <button class="btn" id="bExcel" type="button">⬇ 匯出 Excel</button>
     <button class="btn" id="bPdf" type="button">🖨 匯出 PDF</button>
-    <button class="btn primary" id="bPhone" type="button" title="下載備份檔到手機/電腦">📱 存到手機</button>
-    <button class="btn primary" id="bCloud" type="button" title="上傳到雲端試算表">☁ 上傳雲端</button>
-    <button class="btn" id="bImport" type="button" title="讀回先前存的備份檔">📁 匯入檔案</button>
-    <button class="btn" id="bReset" type="button" title="還原成照片原始資料">↺ 還原</button>
+    <button class="btn primary" id="bPhone" type="button">📱 存到手機</button>
+    <button class="btn primary" id="bCloud" type="button">☁ 上傳雲端</button>
+    <button class="btn" id="bImport" type="button">📁 匯入檔案</button>
+    <button class="btn" id="bReset" type="button" title="還原本班">↺ 還原</button>
     <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
   </div>
 
+  <!-- 產品建置表 -->
+  <div class="panel" id="prodPanel">
+    <h2>🧾 產品建置表</h2>
+    <p>在這裡維護正確的產品名稱、性狀、規格與補助後單價；登記表的產品下拉選單與金額都會用這張表。變更自動儲存。</p>
+    <div class="scroll">
+      <table id="ptbl">
+        <thead><tr>
+          <th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>補助後單價(元)</th><th></th>
+        </tr></thead>
+        <tbody id="ptbody"></tbody>
+      </table>
+    </div>
+    <button class="addbtn" id="bAddProduct" type="button">＋ 新增產品</button>
+  </div>
+
   <div class="banner" id="editBanner">
-    ✎ 編輯模式：點任一格即可修改。<span class="warn">黃色說明</span>：訂購欄（產品/性狀/規格/包數）目前多為空白或手寫辨識值，請核對；「可申請」「公斤數」為自動計算，不可改。變更會自動存在本機瀏覽器。
+    ✎ 編輯模式：點格子修改。每人可填「產品①、產品②」兩種肥料（產品②留空代表只買一種）。<span class="warn">性狀/規格</span>選產品會自動帶入，可再改；「可申請、公斤數、金額」自動算不可改。單價請在「🧾 產品管理」維護。變更自動存本機。
   </div>
 
   <div class="tablecard">
     <div class="scroll">
-      <table id="tbl">
-        <thead><tr id="thead"></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
     </div>
   </div>
 
@@ -160,18 +185,19 @@
   </div>
 
   <p class="hint">
-    <span class="warn">※ 電話、訂購欄與「補助後單價」為手寫／模糊價目表辨識，金額僅供參考，請於編輯模式核對；單價空白者請自行補（選產品會自動帶入已知單價）。</span><br>
-    ☁ 上傳雲端需在正式版（GitHub Pages）並設定 Google 試算表接收網址後才會生效；此即時預覽連結因安全限制無法對外連線。<br>
-    ⬇ 匯出 Excel 會下載 .xls 檔（可用 Excel/Google 試算表開啟）；🖨 匯出 PDF 請於列印視窗選「另存為 PDF」。
+    <span class="warn">※ 電話與訂購欄為手寫辨識，單價來自模糊價目表，金額僅供參考，請核對。</span><br>
+    ☁ 上傳雲端／匯入檔案需正式版(GitHub Pages)；此即時預覽因安全限制無法對外連線。
+    ⬇ Excel 下載 .xls；🖨 PDF 請於列印視窗選「另存為 PDF」。
   </p>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ---------- 產品 / 性狀 / 規格 選單資料 ---------- */
-// 產品：名稱 + 預設性狀 + 預設規格(kg)（皆可於編輯模式改）
-// p = 補助後單價(元/包)。空字串 = 價目表照片看不清，請於編輯模式補正
-const BRANDS = [
+/* ---------- 選單基礎資料 ---------- */
+const FORMS = ["粒狀","粉狀","液態","其他"];
+const SPECS = [20,25,40];
+// 產品建置表預設值（可於「產品管理」增修，會存本機）；p=補助後單價，空=待補
+const DEFAULT_BRANDS = [
   {n:"碩成2號", form:"粒狀", kg:25, p:""},
   {n:"田寶11號", form:"粒狀", kg:20, p:80},
   {n:"長弘333", form:"粒狀", kg:25, p:""},
@@ -190,11 +216,26 @@ const BRANDS = [
   {n:"翔鹿3號", form:"粒狀", kg:20, p:""},
   {n:"有約肥3號", form:"粉狀", kg:20, p:""}
 ];
-const FORMS = ["粒狀","粉狀","液態","其他"];
-const SPECS = [20,25,40];   // kg，其他可自行輸入
 
-/* ---------- 班員 + 訂購原始資料 ---------- */
-// b=產品 f=性狀 s=規格kg g=包數（訂購欄多數留空，僅填清楚可辨的十幾筆當範例）
+/* ---------- 產銷班清單 ---------- */
+const GROUP30 = "臺南市麻豆區果樹產銷班第30班";
+const GROUPS = [
+  "臺南市麻豆區果樹產銷班第1班",
+  "臺南市麻豆區果樹(水果)產銷班第2班","臺南市麻豆區果樹(水果)產銷班第3班","臺南市麻豆區果樹(水果)產銷班第4班",
+  "臺南市麻豆區果樹(水果)產銷班第5班","臺南市麻豆區果樹(水果)產銷班第6班","臺南市麻豆區果樹(水果)產銷班第7班",
+  "臺南市麻豆區果樹(水果)產銷班第8班","臺南市麻豆區果樹(水果)產銷班第9班","臺南市麻豆區果樹(水果)產銷班第10班",
+  "臺南市麻豆區果樹(水果)產銷班第11班","臺南市麻豆區果樹(水果)產銷班第12班","臺南市麻豆區果樹(水果)產銷班第13班",
+  "臺南市麻豆區果樹(水果)產銷班第14班","臺南市麻豆區果樹(水果)產銷班第15班","臺南市麻豆區果樹(水果)產銷班第16班",
+  "臺南市麻豆區果樹(水果)產銷班第17班","臺南市麻豆區果樹(水果)產銷班第18班",
+  "臺南市麻豆區果樹產銷班第19班",
+  "臺南市麻豆區果樹(水果)產銷班第20班","臺南市麻豆區果樹(水果)產銷班第21班",
+  "臺南市麻豆區果樹產銷班第24班","臺南市麻豆區果樹產銷班第25班","臺南市麻豆區果樹產銷班第26班",
+  "臺南市麻豆區果樹產銷班第27班","臺南市麻豆區果樹產銷班第28班","臺南市麻豆區果樹產銷班第29班",
+  GROUP30,
+  "臺南市麻豆區果樹產銷班第31班","臺南市麻豆區果樹產銷班第32班"
+];
+
+/* ---------- 第30班預載資料（b/f/s/g=產品①，b2/f2/s2/g2=產品②） ---------- */
 const ORIGINAL = [
   {name:"陳耀祥",phone:"0937827305",area:2.0761,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"曾素蓮",phone:"",area:0.4387,place:"電聯",b:"",f:"",s:"",g:""},
@@ -225,7 +266,7 @@ const ORIGINAL = [
   {name:"李莖輝",phone:"0915277765",area:0.2688,place:"電聯",b:"翔鹿3號",f:"粒狀",s:20,g:40},
   {name:"林文波",phone:"0910745752",area:0.6861,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:100},
   {name:"林文智",phone:"0978417643",area:0.2983,place:"電聯",b:"福壽新勤3號",f:"粒狀",s:25,g:100},
-  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"田寶11號",f:"粒狀",s:20,g:250},
+  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"田寶11號",f:"粒狀",s:20,g:250,b2:"碩成2號",f2:"粒狀",s2:25,g2:150},
   {name:"方吳英娘",phone:"0929985101",area:0.2580,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:100},
   {name:"王宇鋒",phone:"",area:0.4340,place:"",b:"",f:"",s:"",g:""},
   {name:"王金成",phone:"0937719085",area:0.4679,place:"電聯",b:"田寶11號",f:"粒狀",s:20,g:200},
@@ -249,314 +290,299 @@ const ORIGINAL = [
   {name:"莊志銘",phone:"0937612465",area:0.6406,place:"電聯",b:"碩成2號",f:"粒狀",s:25,g:192}
 ];
 
-/* ---------- 狀態 ---------- */
-// 產銷班清單（依麻豆區果樹產銷班；只有第30班有預載資料，其餘班先空白待建，各班資料分開存）
-const GROUP30 = "臺南市麻豆區果樹產銷班第30班";
-const GROUPS = [
-  "臺南市麻豆區果樹產銷班第1班",
-  "臺南市麻豆區果樹(水果)產銷班第2班","臺南市麻豆區果樹(水果)產銷班第3班","臺南市麻豆區果樹(水果)產銷班第4班",
-  "臺南市麻豆區果樹(水果)產銷班第5班","臺南市麻豆區果樹(水果)產銷班第6班","臺南市麻豆區果樹(水果)產銷班第7班",
-  "臺南市麻豆區果樹(水果)產銷班第8班","臺南市麻豆區果樹(水果)產銷班第9班","臺南市麻豆區果樹(水果)產銷班第10班",
-  "臺南市麻豆區果樹(水果)產銷班第11班","臺南市麻豆區果樹(水果)產銷班第12班","臺南市麻豆區果樹(水果)產銷班第13班",
-  "臺南市麻豆區果樹(水果)產銷班第14班","臺南市麻豆區果樹(水果)產銷班第15班","臺南市麻豆區果樹(水果)產銷班第16班",
-  "臺南市麻豆區果樹(水果)產銷班第17班","臺南市麻豆區果樹(水果)產銷班第18班",
-  "臺南市麻豆區果樹產銷班第19班",
-  "臺南市麻豆區果樹(水果)產銷班第20班","臺南市麻豆區果樹(水果)產銷班第21班",
-  "臺南市麻豆區果樹產銷班第24班","臺南市麻豆區果樹產銷班第25班","臺南市麻豆區果樹產銷班第26班",
-  "臺南市麻豆區果樹產銷班第27班","臺南市麻豆區果樹產銷班第28班","臺南市麻豆區果樹產銷班第29班",
-  GROUP30,
-  "臺南市麻豆區果樹產銷班第31班","臺南市麻豆區果樹產銷班第32班"
-];
-let curGroup = GROUP30;
-let rows = loadGroup(curGroup);
-let editing = false;
+const $ = id => document.getElementById(id);
+const fmt = n => (n||0).toLocaleString('en-US');
 
-function normalize(list){
-  return list.map(r=>{
-    const o={...r};
-    if(o.p===undefined || o.p===null || o.p===''){
-      const b=BRANDS.find(x=>x.n===o.b);
-      o.p = (b && b.p!=='') ? b.p : '';
-    }
-    return o;
-  });
+/* ---------- 產品表(可編輯，存本機) ---------- */
+let BRANDS = loadBrands();
+function loadBrands(){
+  try{ const s=localStorage.getItem('madou_fert_brands_v1'); if(s) return JSON.parse(s); }catch(e){}
+  return DEFAULT_BRANDS.map(b=>({...b}));
 }
+function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v1', JSON.stringify(BRANDS)); }catch(e){} }
+function priceOf(name){ const b=BRANDS.find(x=>x.n===name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; }
+
+/* ---------- 班別資料狀態 ---------- */
+let curGroup = GROUP30;
+let editing = false;
 function keyFor(g){ return 'madou_fert_v3::' + g; }
+function normalize(list){
+  return list.map(r=>({
+    name:r.name||'', phone:r.phone||'', area:r.area===undefined?'':r.area, place:r.place||'',
+    b:r.b||'', f:r.f||'', s:r.s===undefined?'':r.s, g:r.g===undefined?'':r.g,
+    b2:r.b2||'', f2:r.f2||'', s2:r.s2===undefined?'':r.s2, g2:r.g2===undefined?'':r.g2
+  }));
+}
 function defaultsFor(g){ return g===GROUP30 ? normalize(ORIGINAL.map(r=>({...r}))) : []; }
 function loadGroup(g){
   try{
-    const s = localStorage.getItem(keyFor(g)); if(s) return normalize(JSON.parse(s));
-    if(g===GROUP30){ const o = localStorage.getItem('madou_fert_v2'); if(o) return normalize(JSON.parse(o)); }
+    const s=localStorage.getItem(keyFor(g)); if(s) return normalize(JSON.parse(s));
+    if(g===GROUP30){ const o=localStorage.getItem('madou_fert_v2'); if(o) return normalize(JSON.parse(o)); }
   }catch(e){}
   return defaultsFor(g);
 }
 function save(){ try{ localStorage.setItem(keyFor(curGroup), JSON.stringify(rows)); }catch(e){} }
-const fmt = n => (n||0).toLocaleString('en-US');
-const $ = id => document.getElementById(id);
+let rows = loadGroup(curGroup);
 
-const COLS = [
-  {k:"_idx", t:"#"},
-  {k:"name", t:"班員姓名"},
-  {k:"phone", t:"聯絡電話"},
-  {k:"area", t:"經營面積(公頃)"},
-  {k:"_limit", t:"可申請(公斤)"},
-  {k:"place", t:"交貨地點"},
-  {k:"b", t:"產品名稱"},
-  {k:"f", t:"性狀"},
-  {k:"s", t:"規格(公斤)"},
-  {k:"g", t:"包數"},
-  {k:"_kg", t:"公斤數"},
-  {k:"p", t:"補助後單價(元)"},
-  {k:"_amt", t:"金額(元)"}
-];
-
+/* ---------- 計算 ---------- */
 function limitOf(r){ return Math.round((parseFloat(r.area)||0)*10000); }
-function kgOf(r){ return (parseInt(r.s)||0)*(parseInt(r.g)||0); }
-function amtOf(r){ return Math.round((parseFloat(r.p)||0)*(parseInt(r.g)||0)); }
+function kg1(r){ return (parseInt(r.s)||0)*(parseInt(r.g)||0); }
+function kg2(r){ return (parseInt(r.s2)||0)*(parseInt(r.g2)||0); }
+function kgOf(r){ return kg1(r)+kg2(r); }
+function amtOf(r){ return Math.round(priceOf(r.b)*(parseInt(r.g)||0) + priceOf(r.b2)*(parseInt(r.g2)||0)); }
 
-/* ---------- 建表頭 ---------- */
+const COLS = ["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
+  "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)"];
+const P2 = {6:1,7:1,8:1,9:1,10:1,11:1,12:1,13:1}; // 產品②群組欄索引(著色) 10-13
+
+/* ---------- 表頭 ---------- */
 function renderHead(){
-  const tr = $('thead'); tr.innerHTML='';
-  COLS.forEach(c=>{ const th=document.createElement('th'); th.textContent=c.t; tr.appendChild(th); });
-  if(editing){ const th=document.createElement('th'); th.className='col-act'; th.textContent=''; tr.appendChild(th); }
+  const tr=$('thead'); tr.innerHTML='';
+  COLS.forEach((t,i)=>{ const th=document.createElement('th'); th.textContent=t; if(i>=10&&i<=13) th.className='p2'; tr.appendChild(th); });
+  if(editing){ const th=document.createElement('th'); th.className='col-act'; tr.appendChild(th); }
 }
 
-/* ---------- 建表身 ---------- */
+/* ---------- 表身 ---------- */
 function renderBody(){
-  const tb = $('tbody'); tb.innerHTML='';
+  const tb=$('tbody'); tb.innerHTML='';
   rows.forEach((r,i)=>{
-    const tr = document.createElement('tr');
-    const lim = limitOf(r), kg = kgOf(r);
-    const over = kg>lim && lim>0;
-
+    const tr=document.createElement('tr');
+    const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
     tr.appendChild(cell('col-idx', i+1));
-
     if(editing){
-      tr.appendChild(inputCell(r,'name','w-name'));
-      tr.appendChild(inputCell(r,'phone','w-phone'));
-      tr.appendChild(inputCell(r,'area','w-area','number'));
-      tr.appendChild(calcCell(fmt(lim)));
-      tr.appendChild(inputCell(r,'place','w-place'));
-      tr.appendChild(brandCell(r));
-      tr.appendChild(selCell(r,'f','w-form',FORMS));
-      tr.appendChild(specCell(r));
-      tr.appendChild(inputCell(r,'g','w-bags','number'));
-      tr.appendChild(calcCell(fmt(kg), over));
-      tr.appendChild(inputCell(r,'p','w-bags','number'));
-      tr.appendChild(calcCell(fmt(amtOf(r))));
+      tr.appendChild(inp(r,'name','w-name'));
+      tr.appendChild(inp(r,'phone','w-phone'));
+      tr.appendChild(inp(r,'area','w-area','number'));
+      tr.appendChild(calc(fmt(lim)));
+      tr.appendChild(inp(r,'place','w-place'));
+      tr.appendChild(brandCell(r,'b','f','s'));
+      tr.appendChild(formCell(r,'f'));
+      tr.appendChild(specCell(r,'s'));
+      tr.appendChild(inp(r,'g','w-bags','number'));
+      tr.appendChild(brandCell(r,'b2','f2','s2','p2col'));
+      tr.appendChild(formCell(r,'f2','p2col'));
+      tr.appendChild(specCell(r,'s2','p2col'));
+      tr.appendChild(inp(r,'g2','w-bags','number','p2col'));
+      tr.appendChild(calc(fmt(kg),over));
+      tr.appendChild(calc(fmt(amtOf(r))));
       const act=document.createElement('td'); act.className='col-act';
-      const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.title='刪除此列'; del.textContent='🗑';
+      const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.title='刪除'; del.textContent='🗑';
       del.onclick=()=>{ rows.splice(i,1); save(); renderBody(); updateTotals(); updateCount(); };
       act.appendChild(del); tr.appendChild(act);
     } else {
-      tr.appendChild(cell('', r.name||''));
-      tr.appendChild(cell('', r.phone||''));
-      tr.appendChild(cell('num', r.area? (parseFloat(r.area)).toFixed(4):''));
-      tr.appendChild(calcCell(fmt(lim)));
-      tr.appendChild(cell('', r.place||''));
-      tr.appendChild(cell('', r.b||''));
-      tr.appendChild(cell('', r.f||''));
-      tr.appendChild(cell('num', r.s||''));
-      tr.appendChild(cell('num', r.g||''));
-      tr.appendChild(calcCell(fmt(kg), over));
-      tr.appendChild(cell('num', r.p||''));
-      tr.appendChild(calcCell(fmt(amtOf(r))));
+      tr.appendChild(cell('', r.name));
+      tr.appendChild(cell('', r.phone));
+      tr.appendChild(cell('num', r.area!==''?(parseFloat(r.area)).toFixed(4):''));
+      tr.appendChild(calc(fmt(lim)));
+      tr.appendChild(cell('', r.place));
+      tr.appendChild(cell('', r.b));
+      tr.appendChild(cell('', r.f));
+      tr.appendChild(cell('num', r.s));
+      tr.appendChild(cell('num', r.g));
+      tr.appendChild(cell('p2col', r.b2));
+      tr.appendChild(cell('p2col', r.f2));
+      tr.appendChild(cell('num p2col', r.s2));
+      tr.appendChild(cell('num p2col', r.g2));
+      tr.appendChild(calc(fmt(kg),over));
+      tr.appendChild(calc(fmt(amtOf(r))));
     }
     tb.appendChild(tr);
   });
 }
-function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=txt; return td; }
-function calcCell(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
-function inputCell(r,key,cls,type){
-  const td=document.createElement('td'); const inp=document.createElement('input');
-  inp.type=type||'text'; inp.className=cls; if(type==='number'){inp.min='0'; inp.step= key==='area'?'0.0001':'1';}
-  inp.value = r[key]===undefined?'':r[key];
-  inp.oninput=()=>{ r[key]= type==='number' ? (inp.value===''?'':(key==='area'?parseFloat(inp.value):parseInt(inp.value))) : inp.value; save(); refreshCalc(); };
-  td.appendChild(inp); return td;
+function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=(txt===undefined||txt===null)?'':txt; return td; }
+function calc(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
+function inp(r,key,cls,type,extra){
+  const td=document.createElement('td'); if(extra)td.className=extra;
+  const el=document.createElement('input'); el.type=type||'text'; el.className=cls;
+  if(type==='number'){ el.min='0'; el.step=key==='area'?'0.0001':'1'; el.inputMode='numeric'; }
+  el.value=r[key]===undefined?'':r[key];
+  el.oninput=()=>{ r[key]= type==='number' ? (el.value===''?'':(key==='area'?parseFloat(el.value):parseInt(el.value))) : el.value; save(); refreshCalc(); };
+  td.appendChild(el); return td;
 }
-function selCell(r,key,cls,opts){
-  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className=cls;
-  sel.appendChild(opt('',' '));
-  opts.forEach(o=>sel.appendChild(opt(o,o)));
-  sel.value = r[key]||'';
-  sel.onchange=()=>{ r[key]=sel.value; save(); };
-  td.appendChild(sel); return td;
-}
-function brandCell(r){
-  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className='w-brand';
+function opt(v,t){ const o=document.createElement('option'); o.value=v; o.textContent=t; return o; }
+function brandCell(r,kb,kf,ks,extra){
+  const td=document.createElement('td'); if(extra)td.className=extra;
+  const sel=document.createElement('select'); sel.className='w-brand';
   sel.appendChild(opt('','— 選產品 —'));
   BRANDS.forEach(b=>sel.appendChild(opt(b.n,b.n)));
   sel.appendChild(opt('__other','其他（自行輸入）'));
-  // 若原值不在清單中，補一個選項
-  if(r.b && !BRANDS.some(b=>b.n===r.b)){ const o=opt(r.b,r.b); sel.insertBefore(o, sel.lastChild); }
-  sel.value = r.b||'';
+  if(r[kb] && !BRANDS.some(b=>b.n===r[kb])){ sel.insertBefore(opt(r[kb],r[kb]), sel.lastChild); }
+  sel.value=r[kb]||'';
   sel.onchange=()=>{
-    if(sel.value==='__other'){ const v=prompt('輸入產品名稱：', r.b||''); r.b=v||''; }
-    else { r.b=sel.value; const b=BRANDS.find(x=>x.n===sel.value); if(b){ r.f=b.form; r.s=b.kg; if(b.p!=='') r.p=b.p; } }
+    if(sel.value==='__other'){ const v=prompt('輸入產品名稱：', r[kb]||''); r[kb]=v||''; }
+    else { r[kb]=sel.value; const b=BRANDS.find(x=>x.n===sel.value); if(b){ r[kf]=b.form; r[ks]=b.kg; } }
     save(); renderBody(); updateTotals();
   };
   td.appendChild(sel); return td;
 }
-function specCell(r){
-  const td=document.createElement('td'); const sel=document.createElement('select'); sel.className='w-spec';
-  sel.appendChild(opt('',' '));
-  SPECS.forEach(s=>sel.appendChild(opt(s, s+' kg')));
+function formCell(r,key,extra){
+  const td=document.createElement('td'); if(extra)td.className=extra;
+  const sel=document.createElement('select'); sel.className='w-form';
+  sel.appendChild(opt('',' ')); FORMS.forEach(o=>sel.appendChild(opt(o,o)));
+  sel.value=r[key]||''; sel.onchange=()=>{ r[key]=sel.value; save(); };
+  td.appendChild(sel); return td;
+}
+function specCell(r,key,extra){
+  const td=document.createElement('td'); if(extra)td.className=extra;
+  const sel=document.createElement('select'); sel.className='w-spec';
+  sel.appendChild(opt('',' ')); SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
   sel.appendChild(opt('__other','其他'));
-  if(r.s && !SPECS.includes(parseInt(r.s))){ const o=opt(r.s, r.s+' kg'); sel.insertBefore(o, sel.lastChild); }
-  sel.value = r.s===''?'':String(r.s);
+  if(r[key]!=='' && r[key]!==undefined && !SPECS.includes(parseInt(r[key]))){ sel.insertBefore(opt(r[key],r[key]+' kg'), sel.lastChild); }
+  sel.value=(r[key]===''||r[key]===undefined)?'':String(r[key]);
   sel.onchange=()=>{
-    if(sel.value==='__other'){ const v=prompt('輸入規格公斤數：', r.s||''); r.s= v?parseInt(v):''; }
-    else { r.s = sel.value===''?'':parseInt(sel.value); }
+    if(sel.value==='__other'){ const v=prompt('輸入規格公斤數：', r[key]||''); r[key]=v?parseInt(v):''; }
+    else { r[key]=sel.value===''?'':parseInt(sel.value); }
     save(); renderBody(); updateTotals();
   };
   td.appendChild(sel); return td;
 }
-function opt(v,t){ const o=document.createElement('option'); o.value=v; o.textContent=t; return o; }
-
-/* 只更新計算欄（打包數/面積時不整表重繪，避免游標跳走） */
 function refreshCalc(){
-  const trs = $('tbody').querySelectorAll('tr');
-  rows.forEach((r,i)=>{
-    const tr=trs[i]; if(!tr) return;
-    const calcs = tr.querySelectorAll('.calc');
-    const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
-    if(calcs[0]) calcs[0].textContent=fmt(lim);
-    if(calcs[1]){ calcs[1].textContent=fmt(kg); calcs[1].classList.toggle('over',over); }
-    if(calcs[2]) calcs[2].textContent=fmt(amtOf(r));
+  const trs=$('tbody').querySelectorAll('tr');
+  rows.forEach((r,i)=>{ const tr=trs[i]; if(!tr)return;
+    const c=tr.querySelectorAll('.calc'); const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
+    if(c[0])c[0].textContent=fmt(lim);
+    if(c[1]){ c[1].textContent=fmt(kg); c[1].classList.toggle('over',over); }
+    if(c[2])c[2].textContent=fmt(amtOf(r));
   });
   updateTotals();
 }
 function updateTotals(){
   let kg=0,bags=0,lim=0,amt=0;
-  rows.forEach(r=>{ kg+=kgOf(r); bags+=parseInt(r.g)||0; lim+=limitOf(r); amt+=amtOf(r); });
-  $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim);
-  $('tAmt').textContent=fmt(amt);
+  rows.forEach(r=>{ kg+=kgOf(r); bags+=(parseInt(r.g)||0)+(parseInt(r.g2)||0); lim+=limitOf(r); amt+=amtOf(r); });
+  $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim); $('tAmt').textContent=fmt(amt);
 }
-function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 列'; $('memcount').textContent=rows.length; }
+function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 位班員'; $('memcount').textContent=rows.length; }
 
-/* ---------- 模式切換 ---------- */
+/* ---------- 產品建置表 ---------- */
+function renderBrands(){
+  const tb=$('ptbody'); tb.innerHTML='';
+  BRANDS.forEach((b,i)=>{
+    const tr=document.createElement('tr');
+    // 名稱
+    let td=document.createElement('td'); let el=document.createElement('input'); el.className='w-pname'; el.value=b.n;
+    el.oninput=()=>{ b.n=el.value; saveBrands(); }; td.appendChild(el); tr.appendChild(td);
+    // 性狀
+    td=document.createElement('td'); let sel=document.createElement('select'); sel.className='w-form';
+    FORMS.forEach(o=>sel.appendChild(opt(o,o))); sel.value=b.form||'粒狀';
+    sel.onchange=()=>{ b.form=sel.value; saveBrands(); }; td.appendChild(sel); tr.appendChild(td);
+    // 規格
+    td=document.createElement('td'); sel=document.createElement('select'); sel.className='w-spec';
+    SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
+    if(!SPECS.includes(parseInt(b.kg))) sel.appendChild(opt(b.kg,b.kg+' kg'));
+    sel.value=String(b.kg); sel.onchange=()=>{ b.kg=parseInt(sel.value); saveBrands(); }; td.appendChild(sel); tr.appendChild(td);
+    // 單價
+    td=document.createElement('td'); el=document.createElement('input'); el.type='number'; el.className='w-price'; el.min='0'; el.value=b.p;
+    el.oninput=()=>{ b.p=el.value===''?'':parseFloat(el.value); saveBrands(); }; td.appendChild(el); tr.appendChild(td);
+    // 刪除
+    td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑';
+    del.onclick=()=>{ if(confirm('刪除產品「'+b.n+'」？')){ BRANDS.splice(i,1); saveBrands(); renderBrands(); renderBody(); updateTotals(); } };
+    td.appendChild(del); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+}
+$('bAddProduct').onclick=()=>{ BRANDS.push({n:"新產品",form:"粒狀",kg:20,p:""}); saveBrands(); renderBrands(); renderBody(); };
+$('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.contains('show');
+  p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
+
+/* ---------- 模式 ---------- */
 function setMode(edit){
-  editing=edit;
-  $('mView').classList.toggle('active',!edit);
-  $('mEdit').classList.toggle('active',edit);
-  $('bAdd').style.display = edit?'inline-flex':'none';
-  $('editBanner').classList.toggle('show',edit);
+  editing=edit; $('mView').classList.toggle('active',!edit); $('mEdit').classList.toggle('active',edit);
+  $('bAdd').style.display=edit?'inline-flex':'none'; $('editBanner').classList.toggle('show',edit);
   renderHead(); renderBody(); updateTotals(); updateCount();
 }
 $('mView').onclick=()=>setMode(false);
 $('mEdit').onclick=()=>setMode(true);
-$('bAdd').onclick=()=>{
-  rows.push({name:"",phone:"",area:"",place:"電聯",b:"",f:"",s:"",g:""});
-  save(); renderBody(); updateCount();
-  const tb=$('tbody'); tb.lastElementChild.scrollIntoView({block:'center'});
-};
+$('bAdd').onclick=()=>{ rows.push(normalize([{}])[0]); rows[rows.length-1].place='電聯'; save(); renderBody(); updateCount();
+  $('tbody').lastElementChild.scrollIntoView({block:'center'}); };
 
-/* ---------- 匯出 Excel (.xls, HTML 表格) ---------- */
+/* ---------- 產銷班切換 ---------- */
+function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
+function fillGroups(){
+  const sel=$('group'); GROUPS.forEach(g=>sel.appendChild(opt(g,g))); sel.value=curGroup;
+  sel.onchange=()=>{ save(); curGroup=sel.value; rows=loadGroup(curGroup); $('title').textContent=curGroup;
+    renderHead(); renderBody(); updateTotals(); updateCount(); toast('已切換：'+curGroup); };
+}
+
+/* ---------- 匯出 Excel ---------- */
 $('bExcel').onclick=()=>{
-  const heads = COLS.map(c=>c.t);
-  let html = '<meta charset="utf-8"><table border="1">'
-    + `<tr><td colspan="${heads.length}" style="font-weight:bold">${esc(curGroup)}</td></tr>`
-    + '<tr>'+heads.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
+  const heads=["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
+    "產品①","性狀①","規格①","包數①","公斤①","金額①",
+    "產品②","性狀②","規格②","包數②","公斤②","金額②","公斤數合計","金額合計"];
+  let html='<meta charset="utf-8"><table border="1">'
+    +`<tr><td colspan="${heads.length}" style="font-weight:bold">${esc(curGroup)}</td></tr>`
+    +'<tr>'+heads.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
   rows.forEach((r,i)=>{
-    const cells=[i+1, r.name, r.phone, r.area, limitOf(r), r.place, r.b, r.f, r.s, r.g, kgOf(r), r.p, amtOf(r)];
-    html += '<tr>'+cells.map(c=>`<td>${esc(c==null?'':c)}</td>`).join('')+'</tr>';
+    const c=[i+1,r.name,r.phone,r.area,limitOf(r),r.place,
+      r.b,r.f,r.s,r.g,kg1(r),Math.round(priceOf(r.b)*(parseInt(r.g)||0)),
+      r.b2,r.f2,r.s2,r.g2,kg2(r),Math.round(priceOf(r.b2)*(parseInt(r.g2)||0)),
+      kgOf(r),amtOf(r)];
+    html+='<tr>'+c.map(x=>`<td>${esc(x==null?'':x)}</td>`).join('')+'</tr>';
   });
-  html += '</table>';
-  downloadBlob(html, 'application/vnd.ms-excel', glabel()+'_肥料登記.xls', true);
+  html+='</table>';
+  downloadBlob(html,'application/vnd.ms-excel',glabel()+'_肥料登記.xls',true);
   toast('已下載 Excel 檔');
 };
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function downloadBlob(content, type, filename, bom){
-  const parts = bom ? ['﻿'+content] : [content];
-  const blob=new Blob(parts,{type:type+';charset=utf-8'});
+function downloadBlob(content,type,filename,bom){
+  const blob=new Blob(bom?['﻿'+content]:[content],{type:type+';charset=utf-8'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
   a.href=url; a.download=filename; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },500);
 }
-function dstamp(){ const d=new Date(), p=n=>('0'+n).slice(-2);
+function dstamp(){ const d=new Date(),p=n=>('0'+n).slice(-2);
   return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes()); }
 
-/* ---------- 存到手機（下載 JSON 備份） ---------- */
+/* ---------- PDF ---------- */
+$('bPdf').onclick=()=>{ if(editing) setMode(false); setTimeout(()=>window.print(),150); };
+
+/* ---------- 存到手機 ---------- */
 $('bPhone').onclick=()=>{
-  const payload={ class:curGroup, ts:new Date().toISOString(), rows };
-  downloadBlob(JSON.stringify(payload,null,2), 'application/json', glabel()+'_肥料登記_'+dstamp()+'.json', false);
+  downloadBlob(JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,brands:BRANDS},null,2),
+    'application/json',glabel()+'_肥料登記_'+dstamp()+'.json',false);
   toast('已存到手機（下載備份檔）');
 };
 
-/* ---------- 匯入檔案（讀回 JSON 備份） ---------- */
+/* ---------- 匯入檔案 ---------- */
 $('bImport').onclick=()=>$('fileInput').click();
 $('fileInput').onchange=(e)=>{
-  const f=e.target.files[0]; if(!f) return;
-  const reader=new FileReader();
+  const f=e.target.files[0]; if(!f)return; const reader=new FileReader();
   reader.onload=()=>{
     try{
-      let text=String(reader.result).replace(/^﻿/,'');
-      const data=JSON.parse(text);
+      const data=JSON.parse(String(reader.result).replace(/^﻿/,''));
       const list=Array.isArray(data)?data:(data.rows||[]);
       if(!Array.isArray(list)||!list.length) throw new Error('檔案內沒有登記資料');
-      if(!confirm('匯入將覆蓋目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
-      rows=normalize(list); save(); renderHead(); renderBody(); updateTotals(); updateCount();
-      toast('✅ 已匯入 '+list.length+' 列');
-    }catch(err){ toast('匯入失敗：'+err.message+'（請選用「存到手機」下載的 .json 備份檔）'); }
+      if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
+      rows=normalize(list); save();
+      if(data.brands && Array.isArray(data.brands) && data.brands.length){ BRANDS=data.brands; saveBrands(); renderBrands(); }
+      renderHead(); renderBody(); updateTotals(); updateCount(); toast('✅ 已匯入 '+list.length+' 列');
+    }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
   };
   reader.readAsText(f,'utf-8');
 };
 
-/* ---------- 匯出 PDF (列印) ---------- */
-$('bPdf').onclick=()=>{ const was=editing; if(was) setMode(false); setTimeout(()=>window.print(),150); };
-
 /* ---------- 上傳雲端 ---------- */
-// Google Apps Script 網頁應用程式網址（/exec）
 const CLOUD_ENDPOINT = "https://script.google.com/macros/s/AKfycbx60TRJ-mqu8O5qFVgMxTkqAFBCmMOhAw1wxZe4OvW6pfHiw48AzrfVM2J2csa8oC2B1w/exec";
 $('bCloud').onclick=async ()=>{
-  if(!CLOUD_ENDPOINT){
-    toast('尚未設定雲端網址');
-    return;
-  }
-  try{
-    toast('上傳中…');
+  if(!CLOUD_ENDPOINT){ toast('尚未設定雲端網址'); return; }
+  try{ toast('上傳中…');
     await fetch(CLOUD_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({class:curGroup, ts:new Date().toISOString(), rows})});
-    toast('✅ 已送出上傳，請到 Google 試算表看是否新增分頁');
-  }catch(e){ toast('上傳失敗：'+e.message+'（Artifact 預覽禁止對外連線，請用正式版 GitHub Pages）'); }
+      body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows})});
+    toast('✅ 已送出，請到 Google 試算表看新分頁');
+  }catch(e){ toast('上傳失敗：'+e.message+'（預覽連結禁止對外連線，請用正式版）'); }
 };
 
 /* ---------- 還原 ---------- */
 $('bReset').onclick=()=>{
-  const msg = curGroup===GROUP30
-    ? '確定還原「'+curGroup+'」成照片原始資料？會覆蓋本班目前所有編輯。'
-    : '確定清空「'+curGroup+'」的資料？（此班無預載，還原＝清空）';
-  if(confirm(msg)){
-    rows = defaultsFor(curGroup); save(); renderHead(); renderBody(); updateTotals(); updateCount();
-    toast('已還原本班資料');
-  }
+  const msg=curGroup===GROUP30?'還原「'+curGroup+'」成照片原始資料？會覆蓋本班編輯。':'清空「'+curGroup+'」資料？（此班無預載）';
+  if(confirm(msg)){ rows=defaultsFor(curGroup); save(); renderHead(); renderBody(); updateTotals(); updateCount(); toast('已還原本班'); }
 };
 
 /* ---------- toast ---------- */
-let toastTimer;
-function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3200); }
-
-/* ---------- 產銷班切換 ---------- */
-function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
-function fillGroups(){
-  const sel=$('group');
-  GROUPS.forEach(g=>{ const o=document.createElement('option'); o.value=g; o.textContent=g; sel.appendChild(o); });
-  sel.value=curGroup;
-  sel.onchange=()=>{
-    save();
-    curGroup=sel.value;
-    rows=loadGroup(curGroup);
-    $('title').textContent=curGroup;
-    renderHead(); renderBody(); updateTotals(); updateCount();
-    toast('已切換：'+curGroup);
-  };
-}
+let tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),3400); }
 
 /* ---------- init ---------- */
-fillGroups();
-$('title').textContent=curGroup;
-setMode(false);
+fillGroups(); $('title').textContent=curGroup; setMode(false);
 </script>
 
 </body>
