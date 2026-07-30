@@ -149,7 +149,6 @@
     </div>
     <button class="btn" id="bAdd" type="button" style="display:none">＋ 新增班員</button>
     <button class="btn" id="bProducts" type="button">🧾 產品管理</button>
-    <button class="btn" id="bXfer" type="button">🔄 額度調撥</button>
     <div class="spacer"></div>
     <button class="btn" id="bExcel" type="button">⬇ 匯出 Excel</button>
     <button class="btn" id="bPdf" type="button">🖨 匯出 PDF</button>
@@ -175,19 +174,6 @@
     <button class="addbtn" id="bAddProduct" type="button">＋ 新增產品</button>
   </div>
 
-  <!-- 額度調撥記錄 -->
-  <div class="panel" id="xferPanel">
-    <h2>🔄 額度調撥記錄</h2>
-    <p>記錄班內誰把額度借給誰、借用哪個產品與數量。出借人＝額度沒用完的班員；借用人＝需求超過自己額度的班員。變更自動儲存，各班分開。</p>
-    <div class="scroll">
-      <table id="xtbl"><thead><tr>
-        <th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th><th></th>
-      </tr></thead><tbody id="xtbody"></tbody></table>
-    </div>
-    <button class="addbtn" id="bAddXfer" type="button">＋ 新增調撥</button>
-    <div style="margin-top:10px; font-size:14px;">調撥筆數：<b id="xCount">0</b>　·　調撥總公斤數：<b id="xKg">0</b> 公斤</div>
-  </div>
-
   <div class="banner" id="editBanner">
     ✎ 編輯模式：點格子修改。每人可填「產品①、產品②」兩種肥料（產品②留空代表只買一種）。<span class="warn">性狀/規格</span>選產品會自動帶入，可再改；「可申請、公斤數、金額」自動算不可改。單價請在「🧾 產品管理」維護。變更自動存本機。
   </div>
@@ -209,6 +195,19 @@
     <div class="count" id="rowcount"></div>
   </div>
   <div class="poolwarn" id="poolWarn"></div>
+
+  <!-- 額度調撥記錄（常駐於登記表下方） -->
+  <div class="panel show" id="xferPanel" style="margin-top:18px;">
+    <h2>🔄 額度調撥記錄</h2>
+    <p>記錄班內誰把額度借給誰、借用哪個產品與數量。出借人＝額度沒用完的班員；借用人＝需求超過自己額度的班員。變更自動儲存，各班分開。</p>
+    <div class="scroll">
+      <table id="xtbl"><thead><tr>
+        <th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th><th></th>
+      </tr></thead><tbody id="xtbody"></tbody></table>
+    </div>
+    <button class="addbtn" id="bAddXfer" type="button">＋ 新增調撥</button>
+    <div style="margin-top:10px; font-size:14px;">調撥筆數：<b id="xCount">0</b>　·　調撥總公斤數：<b id="xKg">0</b> 公斤</div>
+  </div>
 
   <p class="hint">
     <b>額度可在班內調撥：</b>個人買不滿→餘額可「讓」給他人；個人超過自己額度→向班內「借」，只要「剩餘可調撥 ≥ 0（全班已登記 ≤ 全班可申請總額）」就合規；全班超額才會跳紅字。<br>
@@ -579,8 +578,6 @@ function renderXfers(){
   updateXferSummary();
 }
 $('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',to:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); };
-$('bXfer').onclick=()=>{ const p=$('xferPanel'); const show=!p.classList.contains('show');
-  p.classList.toggle('show',show); $('bXfer').classList.toggle('active',show); if(show) renderXfers(); };
 
 /* ---------- 模式 ---------- */
 function setMode(edit){
@@ -598,7 +595,7 @@ function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
 function fillGroups(){
   const sel=$('group'); GROUPS.forEach(g=>sel.appendChild(opt(g,g))); sel.value=curGroup;
   sel.onchange=()=>{ save(); saveXfers(); curGroup=sel.value; rows=loadGroup(curGroup); TRANSFERS=loadTransfers(curGroup); $('title').textContent=curGroup;
-    renderHead(); renderBody(); updateTotals(); updateCount(); if($('xferPanel').classList.contains('show')) renderXfers(); toast('已切換：'+curGroup); };
+    renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers(); toast('已切換：'+curGroup); };
 }
 
 /* ---------- 匯出 Excel ---------- */
@@ -658,7 +655,7 @@ $('fileInput').onchange=(e)=>{
       if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
       rows=normalize(list); save();
       if(data.brands && Array.isArray(data.brands) && data.brands.length){ BRANDS=data.brands; saveBrands(); renderBrands(); }
-      if(data.transfers && Array.isArray(data.transfers)){ TRANSFERS=data.transfers; saveXfers(); if($('xferPanel').classList.contains('show')) renderXfers(); }
+      if(data.transfers && Array.isArray(data.transfers)){ TRANSFERS=data.transfers; saveXfers(); renderXfers(); }
       renderHead(); renderBody(); updateTotals(); updateCount(); toast('✅ 已匯入 '+list.length+' 列');
     }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
@@ -687,7 +684,7 @@ $('bReset').onclick=()=>{
 let tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),3400); }
 
 /* ---------- init ---------- */
-fillGroups(); $('title').textContent=curGroup; setMode(false);
+fillGroups(); $('title').textContent=curGroup; setMode(false); renderXfers();
 </script>
 
 </body>
