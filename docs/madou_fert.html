@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>麻豆區果樹產銷班第30班 — 產銷班肥料登記表</title>
+<title>麻豆區果樹產銷班 — 產銷班肥料登記表</title>
 <style>
   :root{
     --green:#2e7d32; --green-d:#1b5e20; --bg:#eef1ea; --card:#fff; --head:#e8efe2;
@@ -35,6 +35,13 @@
   body{margin:0; font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
     background:var(--bg); color:var(--ink); line-height:1.45; -webkit-text-size-adjust:100%;}
   .wrap{max-width:1180px; margin:0 auto; padding:16px 14px 60px;}
+  .groupbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px;}
+  .groupbar label{font-size:14px; font-weight:700; color:var(--green-d); margin:0; white-space:nowrap;}
+  .groupbar select{flex:1 1 220px; min-width:0; font-size:16px; padding:11px 12px; border:1.5px solid var(--green);
+    border-radius:10px; background:var(--card); color:var(--ink); appearance:none; font-family:inherit;
+    background-image:var(--sel-arrow); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
+  .groupbar select:focus{outline:2px solid var(--green); outline-offset:1px;}
   header{text-align:center; margin-bottom:14px;}
   header .yr{font-size:13px; color:var(--muted); letter-spacing:.04em;}
   header h1{font-size:20px; margin:3px 0 2px; color:var(--green-d); text-wrap:balance;}
@@ -103,9 +110,13 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="groupbar">
+    <label for="group">🔍 產銷班資料查詢</label>
+    <select id="group"></select>
+  </div>
   <header>
     <div class="yr">115年度國產有機質肥料推廣計畫產銷班申請表</div>
-    <h1>臺南市麻豆區果樹產銷班第30班</h1>
+    <h1 id="title">臺南市麻豆區果樹產銷班第30班</h1>
     <div class="sub">共 <span id="memcount">51</span> 位班員　·　可申請公斤 = 經營面積 × 10,000　·　公斤數 = 規格 × 包數</div>
   </header>
 
@@ -239,8 +250,25 @@ const ORIGINAL = [
 ];
 
 /* ---------- 狀態 ---------- */
-const LS_KEY = "madou_fert_v2";
-let rows = load();
+// 產銷班清單（依麻豆區果樹產銷班；只有第30班有預載資料，其餘班先空白待建，各班資料分開存）
+const GROUP30 = "臺南市麻豆區果樹產銷班第30班";
+const GROUPS = [
+  "臺南市麻豆區果樹產銷班第1班",
+  "臺南市麻豆區果樹(水果)產銷班第2班","臺南市麻豆區果樹(水果)產銷班第3班","臺南市麻豆區果樹(水果)產銷班第4班",
+  "臺南市麻豆區果樹(水果)產銷班第5班","臺南市麻豆區果樹(水果)產銷班第6班","臺南市麻豆區果樹(水果)產銷班第7班",
+  "臺南市麻豆區果樹(水果)產銷班第8班","臺南市麻豆區果樹(水果)產銷班第9班","臺南市麻豆區果樹(水果)產銷班第10班",
+  "臺南市麻豆區果樹(水果)產銷班第11班","臺南市麻豆區果樹(水果)產銷班第12班","臺南市麻豆區果樹(水果)產銷班第13班",
+  "臺南市麻豆區果樹(水果)產銷班第14班","臺南市麻豆區果樹(水果)產銷班第15班","臺南市麻豆區果樹(水果)產銷班第16班",
+  "臺南市麻豆區果樹(水果)產銷班第17班","臺南市麻豆區果樹(水果)產銷班第18班",
+  "臺南市麻豆區果樹產銷班第19班",
+  "臺南市麻豆區果樹(水果)產銷班第20班","臺南市麻豆區果樹(水果)產銷班第21班",
+  "臺南市麻豆區果樹產銷班第24班","臺南市麻豆區果樹產銷班第25班","臺南市麻豆區果樹產銷班第26班",
+  "臺南市麻豆區果樹產銷班第27班","臺南市麻豆區果樹產銷班第28班","臺南市麻豆區果樹產銷班第29班",
+  GROUP30,
+  "臺南市麻豆區果樹產銷班第31班","臺南市麻豆區果樹產銷班第32班"
+];
+let curGroup = GROUP30;
+let rows = loadGroup(curGroup);
 let editing = false;
 
 function normalize(list){
@@ -253,11 +281,16 @@ function normalize(list){
     return o;
   });
 }
-function load(){
-  try{ const s = localStorage.getItem(LS_KEY); if(s) return normalize(JSON.parse(s)); }catch(e){}
-  return normalize(ORIGINAL.map(r=>({...r})));
+function keyFor(g){ return 'madou_fert_v3::' + g; }
+function defaultsFor(g){ return g===GROUP30 ? normalize(ORIGINAL.map(r=>({...r}))) : []; }
+function loadGroup(g){
+  try{
+    const s = localStorage.getItem(keyFor(g)); if(s) return normalize(JSON.parse(s));
+    if(g===GROUP30){ const o = localStorage.getItem('madou_fert_v2'); if(o) return normalize(JSON.parse(o)); }
+  }catch(e){}
+  return defaultsFor(g);
 }
-function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(rows)); }catch(e){} }
+function save(){ try{ localStorage.setItem(keyFor(curGroup), JSON.stringify(rows)); }catch(e){} }
 const fmt = n => (n||0).toLocaleString('en-US');
 const $ = id => document.getElementById(id);
 
@@ -421,13 +454,15 @@ $('bAdd').onclick=()=>{
 /* ---------- 匯出 Excel (.xls, HTML 表格) ---------- */
 $('bExcel').onclick=()=>{
   const heads = COLS.map(c=>c.t);
-  let html = '<meta charset="utf-8"><table border="1"><tr>'+heads.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
+  let html = '<meta charset="utf-8"><table border="1">'
+    + `<tr><td colspan="${heads.length}" style="font-weight:bold">${esc(curGroup)}</td></tr>`
+    + '<tr>'+heads.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
   rows.forEach((r,i)=>{
     const cells=[i+1, r.name, r.phone, r.area, limitOf(r), r.place, r.b, r.f, r.s, r.g, kgOf(r), r.p, amtOf(r)];
     html += '<tr>'+cells.map(c=>`<td>${esc(c==null?'':c)}</td>`).join('')+'</tr>';
   });
   html += '</table>';
-  downloadBlob(html, 'application/vnd.ms-excel', '麻豆30班_肥料登記.xls', true);
+  downloadBlob(html, 'application/vnd.ms-excel', glabel()+'_肥料登記.xls', true);
   toast('已下載 Excel 檔');
 };
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -443,8 +478,8 @@ function dstamp(){ const d=new Date(), p=n=>('0'+n).slice(-2);
 
 /* ---------- 存到手機（下載 JSON 備份） ---------- */
 $('bPhone').onclick=()=>{
-  const payload={ class:'麻豆果樹30班', ts:new Date().toISOString(), rows };
-  downloadBlob(JSON.stringify(payload,null,2), 'application/json', '麻豆30班_肥料登記_'+dstamp()+'.json', false);
+  const payload={ class:curGroup, ts:new Date().toISOString(), rows };
+  downloadBlob(JSON.stringify(payload,null,2), 'application/json', glabel()+'_肥料登記_'+dstamp()+'.json', false);
   toast('已存到手機（下載備份檔）');
 };
 
@@ -482,16 +517,19 @@ $('bCloud').onclick=async ()=>{
   try{
     toast('上傳中…');
     await fetch(CLOUD_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({class:'麻豆果樹30班', ts:new Date().toISOString(), rows})});
+      body:JSON.stringify({class:curGroup, ts:new Date().toISOString(), rows})});
     toast('✅ 已送出上傳，請到 Google 試算表看是否新增分頁');
   }catch(e){ toast('上傳失敗：'+e.message+'（Artifact 預覽禁止對外連線，請用正式版 GitHub Pages）'); }
 };
 
 /* ---------- 還原 ---------- */
 $('bReset').onclick=()=>{
-  if(confirm('確定還原成照片原始資料？會覆蓋目前所有編輯。')){
-    rows = normalize(ORIGINAL.map(r=>({...r}))); save(); renderHead(); renderBody(); updateTotals(); updateCount();
-    toast('已還原原始資料');
+  const msg = curGroup===GROUP30
+    ? '確定還原「'+curGroup+'」成照片原始資料？會覆蓋本班目前所有編輯。'
+    : '確定清空「'+curGroup+'」的資料？（此班無預載，還原＝清空）';
+  if(confirm(msg)){
+    rows = defaultsFor(curGroup); save(); renderHead(); renderBody(); updateTotals(); updateCount();
+    toast('已還原本班資料');
   }
 };
 
@@ -499,7 +537,25 @@ $('bReset').onclick=()=>{
 let toastTimer;
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3200); }
 
+/* ---------- 產銷班切換 ---------- */
+function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
+function fillGroups(){
+  const sel=$('group');
+  GROUPS.forEach(g=>{ const o=document.createElement('option'); o.value=g; o.textContent=g; sel.appendChild(o); });
+  sel.value=curGroup;
+  sel.onchange=()=>{
+    save();
+    curGroup=sel.value;
+    rows=loadGroup(curGroup);
+    $('title').textContent=curGroup;
+    renderHead(); renderBody(); updateTotals(); updateCount();
+    toast('已切換：'+curGroup);
+  };
+}
+
 /* ---------- init ---------- */
+fillGroups();
+$('title').textContent=curGroup;
 setMode(false);
 </script>
 
