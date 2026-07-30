@@ -71,7 +71,7 @@
   .scroll{overflow-x:auto;}
   table{border-collapse:collapse; width:100%; font-size:14px;}
   #tbl{min-width:1280px;}
-  #ptbl{min-width:720px;}
+  #ptbl{min-width:720px;} #xtbl{min-width:820px;}
   thead th{background:var(--head); color:var(--green-d); font-weight:700; font-size:13px;
     padding:8px 8px; border:1px solid var(--line); white-space:nowrap; position:sticky; top:0;}
   th.p2, td.p2col{background:var(--p2);}
@@ -149,6 +149,7 @@
     </div>
     <button class="btn" id="bAdd" type="button" style="display:none">＋ 新增班員</button>
     <button class="btn" id="bProducts" type="button">🧾 產品管理</button>
+    <button class="btn" id="bXfer" type="button">🔄 額度調撥</button>
     <div class="spacer"></div>
     <button class="btn" id="bExcel" type="button">⬇ 匯出 Excel</button>
     <button class="btn" id="bPdf" type="button">🖨 匯出 PDF</button>
@@ -172,6 +173,19 @@
       </table>
     </div>
     <button class="addbtn" id="bAddProduct" type="button">＋ 新增產品</button>
+  </div>
+
+  <!-- 額度調撥記錄 -->
+  <div class="panel" id="xferPanel">
+    <h2>🔄 額度調撥記錄</h2>
+    <p>記錄班內誰把額度借給誰、借用哪個產品與數量。出借人＝額度沒用完的班員；借用人＝需求超過自己額度的班員。變更自動儲存，各班分開。</p>
+    <div class="scroll">
+      <table id="xtbl"><thead><tr>
+        <th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th><th></th>
+      </tr></thead><tbody id="xtbody"></tbody></table>
+    </div>
+    <button class="addbtn" id="bAddXfer" type="button">＋ 新增調撥</button>
+    <div style="margin-top:10px; font-size:14px;">調撥筆數：<b id="xCount">0</b>　·　調撥總公斤數：<b id="xKg">0</b> 公斤</div>
   </div>
 
   <div class="banner" id="editBanner">
@@ -520,6 +534,54 @@ $('bAddProduct').onclick=()=>{ BRANDS.push({v:"",n:"新產品",form:"粒狀",kg:
 $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
 
+/* ---------- 額度調撥 ---------- */
+function xkeyFor(g){ return 'madou_fert_xfer_v1::' + g; }
+function loadTransfers(g){ try{ const s=localStorage.getItem(xkeyFor(g)); if(s) return JSON.parse(s); }catch(e){} return []; }
+function saveXfers(){ try{ localStorage.setItem(xkeyFor(curGroup), JSON.stringify(TRANSFERS)); }catch(e){} }
+let TRANSFERS = loadTransfers(curGroup);
+function xkg(t){ return (parseInt(t.s)||0)*(parseInt(t.g)||0); }
+function memberSelect(val,onchg){
+  const s=document.createElement('select'); s.className='w-brand'; s.appendChild(opt('','—'));
+  const names=[...new Set(rows.map(r=>r.name).filter(Boolean))];
+  names.forEach(n=>s.appendChild(opt(n,n)));
+  if(val && !names.includes(val)) s.appendChild(opt(val,val));
+  s.value=val||''; s.onchange=()=>onchg(s.value); return s;
+}
+function updateXferSummary(){
+  let total=0; TRANSFERS.forEach(t=>total+=xkg(t));
+  $('xCount').textContent=TRANSFERS.length; $('xKg').textContent=fmt(total);
+}
+function renderXfers(){
+  const tb=$('xtbody'); tb.innerHTML='';
+  TRANSFERS.forEach((t,i)=>{
+    const tr=document.createElement('tr');
+    tr.appendChild(cell('col-idx',i+1));
+    let td=document.createElement('td'); td.appendChild(memberSelect(t.from,v=>{t.from=v;saveXfers();})); tr.appendChild(td);
+    td=document.createElement('td'); td.appendChild(memberSelect(t.to,v=>{t.to=v;saveXfers();})); tr.appendChild(td);
+    // 產品
+    td=document.createElement('td'); const bs=document.createElement('select'); bs.className='w-brand';
+    bs.appendChild(opt('','— 選產品 —')); BRANDS.forEach(b=>bs.appendChild(opt(b.n,b.n)));
+    if(t.b && !BRANDS.some(b=>b.n===t.b)) bs.appendChild(opt(t.b,t.b));
+    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} saveXfers(); renderXfers(); };
+    td.appendChild(bs); tr.appendChild(td);
+    // 性狀
+    td=document.createElement('td'); const fs=document.createElement('select'); fs.className='w-form'; fs.appendChild(opt('',' ')); FORMS.forEach(o=>fs.appendChild(opt(o,o))); fs.value=t.f||''; fs.onchange=()=>{t.f=fs.value;saveXfers();}; td.appendChild(fs); tr.appendChild(td);
+    // 規格
+    td=document.createElement('td'); const ss=document.createElement('select'); ss.className='w-spec'; ss.appendChild(opt('',' ')); SPECS.forEach(x=>ss.appendChild(opt(x,x+' kg'))); if(t.s!==''&&t.s!==undefined&&!SPECS.includes(parseInt(t.s))) ss.appendChild(opt(t.s,t.s+' kg')); ss.value=(t.s===''||t.s===undefined)?'':String(t.s); ss.onchange=()=>{ t.s=ss.value===''?'':parseInt(ss.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); }; td.appendChild(ss); tr.appendChild(td);
+    // 包數
+    td=document.createElement('td'); const gi=document.createElement('input'); gi.type='number'; gi.min='0'; gi.inputMode='numeric'; gi.className='w-bags'; gi.value=t.g===undefined?'':t.g; gi.oninput=()=>{ t.g=gi.value===''?'':parseInt(gi.value); saveXfers(); const kc=tr.querySelector('.calc'); kc.textContent=fmt(xkg(t)); updateXferSummary(); }; td.appendChild(gi); tr.appendChild(td);
+    // 公斤數
+    tr.appendChild(calc(fmt(xkg(t))));
+    // 刪除
+    td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑'; del.onclick=()=>{ TRANSFERS.splice(i,1); saveXfers(); renderXfers(); }; td.appendChild(del); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+  updateXferSummary();
+}
+$('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',to:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); };
+$('bXfer').onclick=()=>{ const p=$('xferPanel'); const show=!p.classList.contains('show');
+  p.classList.toggle('show',show); $('bXfer').classList.toggle('active',show); if(show) renderXfers(); };
+
 /* ---------- 模式 ---------- */
 function setMode(edit){
   editing=edit; $('mView').classList.toggle('active',!edit); $('mEdit').classList.toggle('active',edit);
@@ -535,8 +597,8 @@ $('bAdd').onclick=()=>{ rows.push(normalize([{}])[0]); rows[rows.length-1].place
 function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
 function fillGroups(){
   const sel=$('group'); GROUPS.forEach(g=>sel.appendChild(opt(g,g))); sel.value=curGroup;
-  sel.onchange=()=>{ save(); curGroup=sel.value; rows=loadGroup(curGroup); $('title').textContent=curGroup;
-    renderHead(); renderBody(); updateTotals(); updateCount(); toast('已切換：'+curGroup); };
+  sel.onchange=()=>{ save(); saveXfers(); curGroup=sel.value; rows=loadGroup(curGroup); TRANSFERS=loadTransfers(curGroup); $('title').textContent=curGroup;
+    renderHead(); renderBody(); updateTotals(); updateCount(); if($('xferPanel').classList.contains('show')) renderXfers(); toast('已切換：'+curGroup); };
 }
 
 /* ---------- 匯出 Excel ---------- */
@@ -555,6 +617,12 @@ $('bExcel').onclick=()=>{
     html+='<tr>'+c.map(x=>`<td>${esc(x==null?'':x)}</td>`).join('')+'</tr>';
   });
   html+='</table>';
+  if(TRANSFERS.length){
+    html+='<br><table border="1"><tr><td colspan="7" style="font-weight:bold">額度調撥記錄</td></tr>'
+      +'<tr><th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th></tr>';
+    TRANSFERS.forEach((t,i)=>{ html+='<tr>'+[i+1,t.from,t.to,t.b,t.s,t.g,xkg(t)].map(x=>`<td>${esc(x==null?'':x)}</td>`).join('')+'</tr>'; });
+    html+='</table>';
+  }
   downloadBlob(html,'application/vnd.ms-excel',glabel()+'_肥料登記.xls',true);
   toast('已下載 Excel 檔');
 };
@@ -573,7 +641,7 @@ $('bPdf').onclick=()=>{ if(editing) setMode(false); setTimeout(()=>window.print(
 
 /* ---------- 存到手機 ---------- */
 $('bPhone').onclick=()=>{
-  downloadBlob(JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,brands:BRANDS},null,2),
+  downloadBlob(JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,brands:BRANDS,transfers:TRANSFERS},null,2),
     'application/json',glabel()+'_肥料登記_'+dstamp()+'.json',false);
   toast('已存到手機（下載備份檔）');
 };
@@ -590,6 +658,7 @@ $('fileInput').onchange=(e)=>{
       if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
       rows=normalize(list); save();
       if(data.brands && Array.isArray(data.brands) && data.brands.length){ BRANDS=data.brands; saveBrands(); renderBrands(); }
+      if(data.transfers && Array.isArray(data.transfers)){ TRANSFERS=data.transfers; saveXfers(); if($('xferPanel').classList.contains('show')) renderXfers(); }
       renderHead(); renderBody(); updateTotals(); updateCount(); toast('✅ 已匯入 '+list.length+' 列');
     }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
@@ -603,7 +672,7 @@ $('bCloud').onclick=async ()=>{
   if(!CLOUD_ENDPOINT){ toast('尚未設定雲端網址'); return; }
   try{ toast('上傳中…');
     await fetch(CLOUD_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows})});
+      body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,transfers:TRANSFERS})});
     toast('✅ 已送出，請到 Google 試算表看新分頁');
   }catch(e){ toast('上傳失敗：'+e.message+'（預覽連結禁止對外連線，請用正式版）'); }
 };
