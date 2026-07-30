@@ -472,20 +472,19 @@ $('fileInput').onchange=(e)=>{
 $('bPdf').onclick=()=>{ const was=editing; if(was) setMode(false); setTimeout(()=>window.print(),150); };
 
 /* ---------- 上傳雲端 ---------- */
-// 正式部署時把這行改成你的 Google Apps Script 網址（/exec）
-const CLOUD_ENDPOINT = "";
+// Google Apps Script 網頁應用程式網址（/exec）
+const CLOUD_ENDPOINT = "https://script.google.com/macros/s/AKfycbx60TRJ-mqu8O5qFVgMxTkqAFBCmMOhAw1wxZe4OvW6pfHiw48AzrfVM2J2csa8oC2B1w/exec";
 $('bCloud').onclick=async ()=>{
   if(!CLOUD_ENDPOINT){
-    toast('尚未設定雲端網址：正式版部署後填入 Google 試算表接收網址即可啟用');
+    toast('尚未設定雲端網址');
     return;
   }
   try{
     toast('上傳中…');
-    const res=await fetch(CLOUD_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    await fetch(CLOUD_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({class:'麻豆果樹30班', ts:new Date().toISOString(), rows})});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    toast('✅ 已上傳雲端');
-  }catch(e){ toast('上傳失敗：'+e.message+'（此預覽連結禁止對外連線，請用正式版）'); }
+    toast('✅ 已送出上傳，請到 Google 試算表看是否新增分頁');
+  }catch(e){ toast('上傳失敗：'+e.message+'（Artifact 預覽禁止對外連線，請用正式版 GitHub Pages）'); }
 };
 
 /* ---------- 還原 ---------- */
