@@ -194,6 +194,7 @@
     </div>
     <div class="count" id="rowcount"></div>
   </div>
+  <div class="poolwarn" id="overWarn"></div>
   <div class="poolwarn" id="poolWarn"></div>
 
   <!-- 額度調撥記錄（常駐於登記表下方） -->
@@ -491,8 +492,11 @@ function refreshCalc(){
   updateTotals();
 }
 function updateTotals(){
-  let kg=0,bags=0,lim=0,amt=0;
-  rows.forEach(r=>{ kg+=kgOf(r); bags+=(parseInt(r.g)||0)+(parseInt(r.g2)||0); lim+=limitOf(r); amt+=amtOf(r); });
+  let kg=0,bags=0,lim=0,amt=0; const over=[];
+  rows.forEach(r=>{ kg+=kgOf(r); bags+=(parseInt(r.g)||0)+(parseInt(r.g2)||0); lim+=limitOf(r); amt+=amtOf(r);
+    const rem=effectiveOf(r)-kgOf(r); if(rem<0 && r.name) over.push(r.name+' 超額 '+fmt(-rem)); });
+  const ow=$('overWarn');
+  if(ow){ if(over.length){ ow.textContent='⚠ 超額班員（請減少購買量，或到下方「額度調撥」由有餘額者借出補足）：'+over.join('　·　'); ow.classList.add('show'); } else ow.classList.remove('show'); }
   const slack=lim-kg;
   $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim); $('tAmt').textContent=fmt(amt);
   const st=$('tSlack'); if(st){ st.textContent=fmt(slack); st.classList.toggle('neg', slack<0); }
