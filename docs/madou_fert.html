@@ -189,6 +189,8 @@
     <div class="totals">
       <div>全班可申請總額：<b id="tLimit">0</b> 公斤</div>
       <div>已登記（合計公斤）：<b id="tKg">0</b> 公斤</div>
+      <div>跨班借入：<b id="tCrossIn">0</b> 公斤</div>
+      <div>跨班借出：<b id="tCrossOut">0</b> 公斤</div>
       <div>剩餘可調撥：<b id="tSlack">0</b> 公斤</div>
       <div>合計包數：<b id="tBags">0</b> 包</div>
       <div>合計金額：<b id="tAmt">0</b> 元</div>
@@ -201,7 +203,7 @@
   <!-- 額度調撥記錄（常駐於登記表下方） -->
   <div class="panel show" id="xferPanel" style="margin-top:18px;">
     <h2>🔄 額度調撥記錄</h2>
-    <p>記錄班內誰把額度借給誰、借用哪個產品與數量。出借人＝額度沒用完的班員；借用人＝需求超過自己額度的班員。變更自動儲存，各班分開。</p>
+    <p>記錄誰把額度借給誰、借用哪個產品與數量。出借人＝額度沒用完的班員、借用人＝需求超過自己額度的班員，<b>兩者皆可跨班挑選</b>（選單會標所屬班）。此為全班群共用總帳，跨班借入/借出會即時反映到各班額度池。變更自動儲存。</p>
     <div class="scroll">
       <table id="xtbl"><thead><tr>
         <th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th><th></th>
@@ -427,8 +429,9 @@ function renderBody(){
 }
 function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=(txt===undefined||txt===null)?'':txt; return td; }
 function calc(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
-function borrowedIn(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.to===name) s+=xkg(t); }); return s; }
-function lentOut(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.from===name) s+=xkg(t); }); return s; }
+// 只計入「當前班」的該班員(借用人/出借人)：跨班調撥依 fromG/toG 正確歸屬各班
+function borrowedIn(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.to===name && (t.toG||curGroup)===curGroup) s+=xkg(t); }); return s; }
+function lentOut(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.from===name && (t.fromG||curGroup)===curGroup) s+=xkg(t); }); return s; }
 function effectiveOf(r){ return limitOf(r) + borrowedIn(r.name) - lentOut(r.name); }
 function slackInfo(r){
   const rem=effectiveOf(r)-kgOf(r);   // 可用額度(含調撥) − 實際購買
@@ -500,11 +503,17 @@ function updateTotals(){
     const rem=effectiveOf(r)-kgOf(r); if(rem<0 && r.name) over.push(r.name+' 超額 '+fmt(-rem)); });
   const ow=$('overWarn');
   if(ow){ if(over.length){ ow.textContent='⚠ 超額班員（請減少購買量，或到下方「額度調撥」由有餘額者借出補足）：'+over.join('　·　'); ow.classList.add('show'); } else ow.classList.remove('show'); }
-  const slack=lim-kg;
+  let crossIn=0,crossOut=0;   // 跨班：從其他班借入 / 借給其他班
+  TRANSFERS.forEach(t=>{ const k=xkg(t);
+    if(t.toG===curGroup && t.fromG!==curGroup) crossIn+=k;
+    if(t.fromG===curGroup && t.toG!==curGroup) crossOut+=k; });
+  const slack=lim+crossIn-crossOut-kg;
   $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim); $('tAmt').textContent=fmt(amt);
+  if($('tCrossIn')) $('tCrossIn').textContent=fmt(crossIn);
+  if($('tCrossOut')) $('tCrossOut').textContent=fmt(crossOut);
   const st=$('tSlack'); if(st){ st.textContent=fmt(slack); st.classList.toggle('neg', slack<0); }
   const pw=$('poolWarn');
-  if(pw){ if(slack<0){ pw.textContent='⚠ 全班已登記超過可申請總額 '+fmt(-slack)+' 公斤，請調整（額度不足以調撥）。'; pw.classList.add('show'); } else pw.classList.remove('show'); }
+  if(pw){ if(slack<0){ pw.textContent='⚠ 本班已登記超過可用額度（含跨班調撥）'+fmt(-slack)+' 公斤，請調整或增加借入。'; pw.classList.add('show'); } else pw.classList.remove('show'); }
 }
 function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 位班員'; $('memcount').textContent=rows.length; }
 
@@ -550,29 +559,48 @@ $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.con
   p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
 
 /* ---------- 額度調撥 ---------- */
-function xkeyFor(g){ return 'madou_fert_xfer_v1::' + g; }
-function loadTransfers(g){ try{ const s=localStorage.getItem(xkeyFor(g)); if(s) return JSON.parse(s); }catch(e){} return []; }
-function saveXfers(){ try{ localStorage.setItem(xkeyFor(curGroup), JSON.stringify(TRANSFERS)); }catch(e){} }
-let TRANSFERS = loadTransfers(curGroup);
+// 調撥＝全班群共用總帳(跨班)。每筆 {from,fromG,to,toG,b,f,s,g}
+const XFER_KEY='madou_fert_xfer_g_v1';
+function loadXfers(){
+  try{ const s=localStorage.getItem(XFER_KEY); if(s) return JSON.parse(s); }catch(e){}
+  const out=[];   // 由舊版各班 per-班 調撥自動遷移(標所屬班)
+  try{ GROUPS.forEach(g=>{ const s=localStorage.getItem('madou_fert_xfer_v1::'+g);
+    if(s) JSON.parse(s).forEach(t=>out.push({from:t.from||'',fromG:t.fromG||g,to:t.to||'',toG:t.toG||g,b:t.b||'',f:t.f||'',s:t.s===undefined?'':t.s,g:t.g===undefined?'':t.g})); }); }catch(e){}
+  return out;
+}
+function saveXfers(){ try{ localStorage.setItem(XFER_KEY, JSON.stringify(TRANSFERS)); }catch(e){} }
+let TRANSFERS = loadXfers();
 function xkg(t){ return (parseInt(t.s)||0)*(parseInt(t.g)||0); }
-function memberSelect(val,onchg){
+function gshort(g){ return (g||'').replace('臺南市麻豆區果樹',''); }
+let XMEMBERS=[];
+function allGroupMembers(){
+  const out=[];
+  GROUPS.forEach(g=>{ const rs = g===curGroup ? rows : loadGroup(g);
+    [...new Set(rs.map(r=>r.name).filter(Boolean))].forEach(n=>out.push({g:g,n:n})); });
+  return out;
+}
+const XSEP='␟';
+function memberSelect(valName, valGroup, onchg){
   const s=document.createElement('select'); s.className='w-brand'; s.appendChild(opt('','—'));
-  const names=[...new Set(rows.map(r=>r.name).filter(Boolean))];
-  names.forEach(n=>s.appendChild(opt(n,n)));
-  if(val && !names.includes(val)) s.appendChild(opt(val,val));
-  s.value=val||''; s.onchange=()=>onchg(s.value); return s;
+  XMEMBERS.forEach(m=>s.appendChild(opt(m.g+XSEP+m.n, m.n+'（'+gshort(m.g)+'）')));
+  const cur = valName ? ((valGroup||curGroup)+XSEP+valName) : '';
+  if(cur && !XMEMBERS.some(m=>(m.g+XSEP+m.n)===cur)) s.appendChild(opt(cur, valName+'（'+gshort(valGroup||curGroup)+'）'));
+  s.value=cur;
+  s.onchange=()=>{ const v=s.value; if(!v){ onchg('',''); return; } const p=v.split(XSEP); onchg(p[1]||'', p[0]||''); };
+  return s;
 }
 function updateXferSummary(){
   let total=0; TRANSFERS.forEach(t=>total+=xkg(t));
   $('xCount').textContent=TRANSFERS.length; $('xKg').textContent=fmt(total);
 }
 function renderXfers(){
+  XMEMBERS=allGroupMembers();
   const tb=$('xtbody'); tb.innerHTML='';
   TRANSFERS.forEach((t,i)=>{
     const tr=document.createElement('tr');
     tr.appendChild(cell('col-idx',i+1));
-    let td=document.createElement('td'); td.appendChild(memberSelect(t.from,v=>{t.from=v;saveXfers();refreshCalc();})); tr.appendChild(td);
-    td=document.createElement('td'); td.appendChild(memberSelect(t.to,v=>{t.to=v;saveXfers();refreshCalc();})); tr.appendChild(td);
+    let td=document.createElement('td'); td.appendChild(memberSelect(t.from,t.fromG,(name,group)=>{t.from=name;t.fromG=group;saveXfers();refreshCalc();})); tr.appendChild(td);
+    td=document.createElement('td'); td.appendChild(memberSelect(t.to,t.toG,(name,group)=>{t.to=name;t.toG=group;saveXfers();refreshCalc();})); tr.appendChild(td);
     // 產品
     td=document.createElement('td'); const bs=document.createElement('select'); bs.className='w-brand';
     bs.appendChild(opt('','— 選產品 —')); BRANDS.forEach(b=>bs.appendChild(opt(b.n,b.n)));
@@ -593,7 +621,7 @@ function renderXfers(){
   });
   updateXferSummary();
 }
-$('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',to:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); refreshCalc(); };
+$('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',fromG:curGroup,to:'',toG:curGroup,b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); refreshCalc(); };
 
 /* ---------- 模式 ---------- */
 function setMode(edit){
@@ -610,7 +638,7 @@ $('bAdd').onclick=()=>{ rows.push(normalize([{}])[0]); rows[rows.length-1].place
 function glabel(){ return curGroup.replace('臺南市麻豆區',''); }
 function fillGroups(){
   const sel=$('group'); GROUPS.forEach(g=>sel.appendChild(opt(g,g))); sel.value=curGroup;
-  sel.onchange=()=>{ save(); saveXfers(); curGroup=sel.value; rows=loadGroup(curGroup); TRANSFERS=loadTransfers(curGroup); $('title').textContent=curGroup;
+  sel.onchange=()=>{ save(); curGroup=sel.value; rows=loadGroup(curGroup); $('title').textContent=curGroup;
     renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers(); toast('已切換：'+curGroup); };
 }
 
@@ -631,9 +659,9 @@ $('bExcel').onclick=()=>{
   });
   html+='</table>';
   if(TRANSFERS.length){
-    html+='<br><table border="1"><tr><td colspan="7" style="font-weight:bold">額度調撥記錄</td></tr>'
-      +'<tr><th>#</th><th>出借人</th><th>借用人</th><th>產品名稱</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th></tr>';
-    TRANSFERS.forEach((t,i)=>{ html+='<tr>'+[i+1,t.from,t.to,t.b,t.s,t.g,xkg(t)].map(x=>`<td>${esc(x==null?'':x)}</td>`).join('')+'</tr>'; });
+    html+='<br><table border="1"><tr><td colspan="9" style="font-weight:bold">額度調撥記錄</td></tr>'
+      +'<tr><th>#</th><th>出借人</th><th>出借班</th><th>借用人</th><th>借用班</th><th>產品名稱</th><th>規格(公斤)</th><th>包數</th><th>公斤數</th></tr>';
+    TRANSFERS.forEach((t,i)=>{ html+='<tr>'+[i+1,t.from,gshort(t.fromG),t.to,gshort(t.toG),t.b,t.s,t.g,xkg(t)].map(x=>`<td>${esc(x==null?'':x)}</td>`).join('')+'</tr>'; });
     html+='</table>';
   }
   downloadBlob(html,'application/vnd.ms-excel',glabel()+'_肥料登記.xls',true);
