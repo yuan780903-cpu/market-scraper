@@ -71,7 +71,7 @@
   .scroll{overflow-x:auto;}
   table{border-collapse:collapse; width:100%; font-size:14px;}
   #tbl{min-width:1280px;}
-  #ptbl{min-width:720px;} #xtbl{min-width:820px;}
+  #ptbl{min-width:900px;} #xtbl{min-width:820px;}
   thead th{background:var(--head); color:var(--green-d); font-weight:700; font-size:13px;
     padding:8px 8px; border:1px solid var(--line); white-space:nowrap; position:sticky; top:0;}
   th.p2, td.p2col{background:var(--p2);}
@@ -101,7 +101,7 @@
   td input.w-name{min-width:84px;} td input.w-phone{min-width:108px;} td input.w-area{min-width:74px;}
   td input.w-bags{min-width:58px;} td input.w-place{min-width:92px;} td input.w-price{min-width:80px;}
   td select.w-brand{min-width:132px;} td select.w-form{min-width:74px;} td select.w-spec{min-width:78px;}
-  td input.w-pname{min-width:150px;} td input.w-vendor{min-width:120px;}
+  td input.w-pname{min-width:150px;} td input.w-vendor{min-width:120px;} td input.w-code{min-width:88px;}
   .delrow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px;}
   .delrow:hover{color:var(--red);}
   .addbtn{margin-top:10px; padding:9px 14px; border:1.5px dashed var(--green); background:transparent; color:var(--green-d);
@@ -167,7 +167,7 @@
     <div class="scroll">
       <table id="ptbl">
         <thead><tr>
-          <th>廠商</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>補助後單價(元)</th><th></th>
+          <th>編號</th><th>廠商</th><th>產品名稱</th><th>性狀</th><th>規格(公斤)</th><th>售價(元)</th><th>補助後單價(元)</th><th></th>
         </tr></thead>
         <tbody id="ptbody"></tbody>
       </table>
@@ -224,25 +224,21 @@
 /* ---------- 選單基礎資料 ---------- */
 const FORMS = ["粒狀","粉狀","液態","其他"];
 const SPECS = [20,25,40];
-// 產品建置表預設值（可於「產品管理」增修，會存本機）；p=補助後單價，空=待補
+// 依官方「有機質肥料品牌表」建置。code=編號 v=廠商 n=品名 form=性狀 kg=規格 list=售價 p=補助後單價 alias=班員登記簡稱(自動對應官方品名)
 const DEFAULT_BRANDS = [
-  {v:"碩成實業", n:"碩成2號", form:"粒狀", kg:25, p:""},
-  {v:"麻豆區農會", n:"田寶11號", form:"粒狀", kg:20, p:80},
-  {v:"長虹公司", n:"長弘333", form:"粒狀", kg:25, p:""},
-  {v:"福壽實業", n:"福壽有機5號", form:"粒狀", kg:20, p:200},
-  {v:"福壽實業", n:"福壽新治808肥", form:"粒狀", kg:20, p:200},
-  {v:"福壽實業", n:"福壽新粉狀肥3號", form:"粉狀", kg:25, p:80},
-  {v:"福壽實業", n:"福壽新勤3號", form:"粒狀", kg:25, p:""},
-  {v:"", n:"農村黎粉有機3號", form:"粉狀", kg:25, p:25},
-  {v:"大成實業", n:"太牛牌有機肥料", form:"粒狀", kg:25, p:30},
-  {v:"長虹公司", n:"333愛柏有機質肥料3號", form:"粉狀", kg:25, p:30},
-  {v:"翔鹿公司", n:"泛合有機3號", form:"粒狀", kg:20, p:200},
-  {v:"吾肥土農業生技", n:"保元旺素有機3號", form:"粒狀", kg:20, p:90},
-  {v:"麻豆區農會", n:"麻豆1號", form:"粒狀", kg:20, p:80},
-  {v:"", n:"桶實1號", form:"粒狀", kg:20, p:""},
-  {v:"", n:"領盛牌2號", form:"粒狀", kg:25, p:""},
-  {v:"翔鹿公司", n:"翔鹿3號", form:"粒狀", kg:20, p:""},
-  {v:"", n:"有約肥3號", form:"粉狀", kg:20, p:""}
+  {code:"0085163", v:"福壽實業", n:"福壽有機肥7號", form:"粒狀", kg:20, list:240, p:200, alias:["福壽有機5號","福壽有機7號"]},
+  {code:"0085185", v:"福壽實業", n:"福壽新洽發機肥", form:"粉狀", kg:20, list:120, p:80, alias:[]},
+  {code:"0085267", v:"福壽實業", n:"福壽新勤堆肥3號", form:"粉狀", kg:25, list:130, p:30, alias:["福壽新勤3號","福壽新粉狀肥3號"]},
+  {code:"0270011", v:"崇容實業", n:"農村牌肥之根1號", form:"粉狀", kg:25, list:125, p:25, alias:["農村黎粉有機3號"]},
+  {code:"0237008", v:"大成實業", n:"碩成牌有機肥料2號", form:"粉狀", kg:25, list:130, p:30, alias:["碩成2號","硯成2號"]},
+  {code:"1180002", v:"宏生實業", n:"宏生好肥底有機肥料", form:"粒狀", kg:20, list:220, p:140, alias:[]},
+  {code:"0256015", v:"豐修實業(欣農)", n:"太牛牌強效有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["太牛牌有機肥料"]},
+  {code:"0436004", v:"長虹公司", n:"333發酵有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["長弘333","長虹333","333愛柏有機質肥料3號"]},
+  {code:"0831008", v:"翔鹿公司", n:"混合有機質肥3號", form:"粒狀", kg:20, list:240, p:200, alias:["翔鹿3號","泛合有機3號"]},
+  {code:"1023001", v:"吾肥土農業生技", n:"保立旺168有機質肥", form:"粉狀", kg:20, list:130, p:90, alias:["保元旺素有機3號","保元旺160素有機3號"]},
+  {code:"0005017", v:"麻豆區農會", n:"田寶11號", form:"粒狀", kg:20, list:130, p:80, alias:[]},
+  {code:"0557003", v:"麻豆區農會", n:"糖實1號", form:"粒狀", kg:20, list:130, p:80, alias:["桶實1號"]},
+  {code:"", v:"", n:"有約肥3號", form:"粉狀", kg:20, list:"", p:"", alias:[]}
 ];
 
 /* ---------- 產銷班清單 ---------- */
@@ -324,26 +320,32 @@ const fmt = n => (n||0).toLocaleString('en-US');
 /* ---------- 產品表(可編輯，存本機) ---------- */
 let BRANDS = loadBrands();
 function loadBrands(){
-  try{ const s=localStorage.getItem('madou_fert_brands_v1'); if(s){
-    const list=JSON.parse(s);
-    list.forEach(b=>{ if(b.v===undefined){ const d=DEFAULT_BRANDS.find(x=>x.n===b.n); b.v=d?d.v:''; } });
-    return list;
-  } }catch(e){}
+  try{ const s=localStorage.getItem('madou_fert_brands_v2'); if(s) return JSON.parse(s); }catch(e){}
   return DEFAULT_BRANDS.map(b=>({...b}));
 }
-function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v1', JSON.stringify(BRANDS)); }catch(e){} }
+function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v2', JSON.stringify(BRANDS)); }catch(e){} }
 function priceOf(name){ const b=BRANDS.find(x=>x.n===name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; }
+function resolveProduct(name){ if(!name) return null;
+  return BRANDS.find(b=>b.n===name) || BRANDS.find(b=>(b.alias||[]).includes(name)) || null; }
 
 /* ---------- 班別資料狀態 ---------- */
 let curGroup = GROUP30;
 let editing = false;
 function keyFor(g){ return 'madou_fert_v3::' + g; }
+function migrateProd(o,kb,kf,ks){
+  const name=o[kb]; if(!name) return;
+  if(BRANDS.some(b=>b.n===name)) return;         // 已是官方品名，不動
+  const pr=resolveProduct(name);                  // 用別名對應官方品名
+  if(pr){ o[kb]=pr.n; if(!o[kf]) o[kf]=pr.form; if(o[ks]===''||o[ks]===undefined) o[ks]=pr.kg; }
+}
 function normalize(list){
-  return list.map(r=>({
-    name:r.name||'', phone:r.phone||'', area:r.area===undefined?'':r.area, place:r.place||'',
-    b:r.b||'', f:r.f||'', s:r.s===undefined?'':r.s, g:r.g===undefined?'':r.g,
-    b2:r.b2||'', f2:r.f2||'', s2:r.s2===undefined?'':r.s2, g2:r.g2===undefined?'':r.g2
-  }));
+  return list.map(r=>{
+    const o={ name:r.name||'', phone:r.phone||'', area:r.area===undefined?'':r.area, place:r.place||'',
+      b:r.b||'', f:r.f||'', s:r.s===undefined?'':r.s, g:r.g===undefined?'':r.g,
+      b2:r.b2||'', f2:r.f2||'', s2:r.s2===undefined?'':r.s2, g2:r.g2===undefined?'':r.g2 };
+    migrateProd(o,'b','f','s'); migrateProd(o,'b2','f2','s2');
+    return o;
+  });
 }
 function defaultsFor(g){ return g===GROUP30 ? normalize(ORIGINAL.map(r=>({...r}))) : []; }
 function loadGroup(g){
@@ -511,8 +513,11 @@ function renderBrands(){
   const tb=$('ptbody'); tb.innerHTML='';
   BRANDS.forEach((b,i)=>{
     const tr=document.createElement('tr');
+    // 編號
+    let td=document.createElement('td'); const ec=document.createElement('input'); ec.className='w-code'; ec.value=b.code||'';
+    ec.oninput=()=>{ b.code=ec.value; saveBrands(); }; td.appendChild(ec); tr.appendChild(td);
     // 廠商
-    let td=document.createElement('td'); let ev=document.createElement('input'); ev.className='w-vendor'; ev.value=b.v||'';
+    td=document.createElement('td'); const ev=document.createElement('input'); ev.className='w-vendor'; ev.value=b.v||'';
     ev.oninput=()=>{ b.v=ev.value; saveBrands(); }; td.appendChild(ev); tr.appendChild(td);
     // 名稱
     td=document.createElement('td'); let el=document.createElement('input'); el.className='w-pname'; el.value=b.n;
@@ -526,7 +531,10 @@ function renderBrands(){
     SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
     if(!SPECS.includes(parseInt(b.kg))) sel.appendChild(opt(b.kg,b.kg+' kg'));
     sel.value=String(b.kg); sel.onchange=()=>{ b.kg=parseInt(sel.value); saveBrands(); }; td.appendChild(sel); tr.appendChild(td);
-    // 單價
+    // 售價
+    td=document.createElement('td'); const ll=document.createElement('input'); ll.type='number'; ll.className='w-price'; ll.min='0'; ll.value=(b.list===undefined?'':b.list);
+    ll.oninput=()=>{ b.list=ll.value===''?'':parseFloat(ll.value); saveBrands(); }; td.appendChild(ll); tr.appendChild(td);
+    // 補助後單價
     td=document.createElement('td'); el=document.createElement('input'); el.type='number'; el.className='w-price'; el.min='0'; el.value=b.p;
     el.oninput=()=>{ b.p=el.value===''?'':parseFloat(el.value); saveBrands(); }; td.appendChild(el); tr.appendChild(td);
     // 刪除
@@ -536,7 +544,7 @@ function renderBrands(){
     tb.appendChild(tr);
   });
 }
-$('bAddProduct').onclick=()=>{ BRANDS.push({v:"",n:"新產品",form:"粒狀",kg:20,p:""}); saveBrands(); renderBrands(); renderBody(); };
+$('bAddProduct').onclick=()=>{ BRANDS.push({code:"",v:"",n:"新產品",form:"粒狀",kg:20,list:"",p:"",alias:[]}); saveBrands(); renderBrands(); renderBody(); };
 $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
 
