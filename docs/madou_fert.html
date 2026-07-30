@@ -82,6 +82,16 @@
   .calc{background:var(--calc)!important; color:var(--calc-ink); font-weight:700; text-align:right; font-variant-numeric:tabular-nums;}
   .num{text-align:right; font-variant-numeric:tabular-nums;}
   td.over{color:var(--red); font-weight:800;}
+  .slackcell{text-align:right; font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap;}
+  .slackcell.lend{color:var(--green-d);}
+  .slackcell.borrow{color:var(--red);}
+  .slackcell.muted{color:var(--muted); font-weight:400;}
+  .poolwarn{display:none; margin-top:10px; background:#fdecea; border:1px solid var(--red); color:var(--red);
+    border-radius:10px; padding:10px 12px; font-size:14px; font-weight:700;}
+  .poolwarn.show{display:block;}
+  @media (prefers-color-scheme: dark){ .poolwarn{background:#2a1414;} }
+  :root[data-theme="dark"] .poolwarn{background:#2a1414;}
+  .totals b.neg{color:var(--red);}
 
   td input, td select{width:100%; font-size:14px; padding:6px 6px; border:1px solid var(--line);
     border-radius:7px; background:var(--card); color:var(--ink); font-family:inherit;}
@@ -176,15 +186,18 @@
 
   <div class="foot">
     <div class="totals">
-      <div>合計公斤數：<b id="tKg">0</b> 公斤</div>
+      <div>全班可申請總額：<b id="tLimit">0</b> 公斤</div>
+      <div>已登記（合計公斤）：<b id="tKg">0</b> 公斤</div>
+      <div>剩餘可調撥：<b id="tSlack">0</b> 公斤</div>
       <div>合計包數：<b id="tBags">0</b> 包</div>
-      <div>可申請總量：<b id="tLimit">0</b> 公斤</div>
       <div>合計金額：<b id="tAmt">0</b> 元</div>
     </div>
     <div class="count" id="rowcount"></div>
   </div>
+  <div class="poolwarn" id="poolWarn"></div>
 
   <p class="hint">
+    <b>額度可在班內調撥：</b>個人買不滿→餘額可「讓」給他人；個人超過自己額度→向班內「借」，只要「剩餘可調撥 ≥ 0（全班已登記 ≤ 全班可申請總額）」就合規；全班超額才會跳紅字。<br>
     <span class="warn">※ 電話與訂購欄為手寫辨識，單價來自模糊價目表，金額僅供參考，請核對。</span><br>
     ☁ 上傳雲端／匯入檔案需正式版(GitHub Pages)；此即時預覽因安全限制無法對外連線。
     ⬇ Excel 下載 .xls；🖨 PDF 請於列印視窗選「另存為 PDF」。
@@ -336,7 +349,7 @@ function kgOf(r){ return kg1(r)+kg2(r); }
 function amtOf(r){ return Math.round(priceOf(r.b)*(parseInt(r.g)||0) + priceOf(r.b2)*(parseInt(r.g2)||0)); }
 
 const COLS = ["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
-  "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)"];
+  "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)","可讓/借用"];
 const P2 = {6:1,7:1,8:1,9:1,10:1,11:1,12:1,13:1}; // 產品②群組欄索引(著色) 10-13
 
 /* ---------- 表頭 ---------- */
@@ -351,7 +364,7 @@ function renderBody(){
   const tb=$('tbody'); tb.innerHTML='';
   rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
-    const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
+    const lim=limitOf(r), kg=kgOf(r);
     tr.appendChild(cell('col-idx', i+1));
     if(editing){
       tr.appendChild(inp(r,'name','w-name'));
@@ -367,8 +380,9 @@ function renderBody(){
       tr.appendChild(formCell(r,'f2','p2col'));
       tr.appendChild(specCell(r,'s2','p2col'));
       tr.appendChild(inp(r,'g2','w-bags','number','p2col'));
-      tr.appendChild(calc(fmt(kg),over));
+      tr.appendChild(calc(fmt(kg)));
       tr.appendChild(calc(fmt(amtOf(r))));
+      tr.appendChild(slackCell(r));
       const act=document.createElement('td'); act.className='col-act';
       const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.title='刪除'; del.textContent='🗑';
       del.onclick=()=>{ rows.splice(i,1); save(); renderBody(); updateTotals(); updateCount(); };
@@ -387,14 +401,24 @@ function renderBody(){
       tr.appendChild(cell('p2col', r.f2));
       tr.appendChild(cell('num p2col', r.s2));
       tr.appendChild(cell('num p2col', r.g2));
-      tr.appendChild(calc(fmt(kg),over));
+      tr.appendChild(calc(fmt(kg)));
       tr.appendChild(calc(fmt(amtOf(r))));
+      tr.appendChild(slackCell(r));
     }
     tb.appendChild(tr);
   });
 }
 function cell(cls,txt){ const td=document.createElement('td'); if(cls)td.className=cls; td.textContent=(txt===undefined||txt===null)?'':txt; return td; }
 function calc(txt,over){ const td=document.createElement('td'); td.className='calc'+(over?' over':''); td.textContent=txt; return td; }
+function slackInfo(r){
+  const kg=kgOf(r), diff=limitOf(r)-kg;
+  if(kg===0) return {t:'未購', c:'muted'};
+  if(diff>0) return {t:'可讓 '+fmt(diff), c:'lend'};
+  if(diff<0) return {t:'借 '+fmt(-diff), c:'borrow'};
+  return {t:'剛好', c:'lend'};
+}
+function applySlack(td,r){ const s=slackInfo(r); td.textContent=s.t; td.classList.remove('lend','borrow','muted'); td.classList.add(s.c); }
+function slackCell(r){ const td=document.createElement('td'); td.className='slackcell'; applySlack(td,r); return td; }
 function inp(r,key,cls,type,extra){
   const td=document.createElement('td'); if(extra)td.className=extra;
   const el=document.createElement('input'); el.type=type||'text'; el.className=cls;
@@ -443,17 +467,22 @@ function specCell(r,key,extra){
 function refreshCalc(){
   const trs=$('tbody').querySelectorAll('tr');
   rows.forEach((r,i)=>{ const tr=trs[i]; if(!tr)return;
-    const c=tr.querySelectorAll('.calc'); const lim=limitOf(r), kg=kgOf(r), over=kg>lim&&lim>0;
+    const c=tr.querySelectorAll('.calc'); const lim=limitOf(r), kg=kgOf(r);
     if(c[0])c[0].textContent=fmt(lim);
-    if(c[1]){ c[1].textContent=fmt(kg); c[1].classList.toggle('over',over); }
+    if(c[1])c[1].textContent=fmt(kg);
     if(c[2])c[2].textContent=fmt(amtOf(r));
+    const sc=tr.querySelector('.slackcell'); if(sc) applySlack(sc,r);
   });
   updateTotals();
 }
 function updateTotals(){
   let kg=0,bags=0,lim=0,amt=0;
   rows.forEach(r=>{ kg+=kgOf(r); bags+=(parseInt(r.g)||0)+(parseInt(r.g2)||0); lim+=limitOf(r); amt+=amtOf(r); });
+  const slack=lim-kg;
   $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim); $('tAmt').textContent=fmt(amt);
+  const st=$('tSlack'); if(st){ st.textContent=fmt(slack); st.classList.toggle('neg', slack<0); }
+  const pw=$('poolWarn');
+  if(pw){ if(slack<0){ pw.textContent='⚠ 全班已登記超過可申請總額 '+fmt(-slack)+' 公斤，請調整（額度不足以調撥）。'; pw.classList.add('show'); } else pw.classList.remove('show'); }
 }
 function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 位班員'; $('memcount').textContent=rows.length; }
 
