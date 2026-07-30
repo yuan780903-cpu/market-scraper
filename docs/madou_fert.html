@@ -367,7 +367,7 @@ function kg2(r){ return (parseInt(r.s2)||0)*(parseInt(r.g2)||0); }
 function kgOf(r){ return kg1(r)+kg2(r); }
 function amtOf(r){ return Math.round(priceOf(r.b)*(parseInt(r.g)||0) + priceOf(r.b2)*(parseInt(r.g2)||0)); }
 
-const COLS = ["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
+const COLS = ["序號","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
   "產品①","性狀①","規格①","包數①","產品②","性狀②","規格②","包數②","公斤數","金額(元)","可讓/超額"];
 const P2 = {6:1,7:1,8:1,9:1,10:1,11:1,12:1,13:1}; // 產品②群組欄索引(著色) 10-13
 
