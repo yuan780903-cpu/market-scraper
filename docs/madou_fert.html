@@ -389,13 +389,13 @@ const ORIGINAL = [
   {name:"方吳英娘",phone:"0929985101",area:0.258,place:"電聯",b:"田寶11號",f:"",s:20,g:100},
   {name:"王宇鋒",phone:"",area:0.434,place:"",b:"",f:"",s:"",g:""},
   {name:"王金成",phone:"0937719085",area:0.4679,place:"電聯",b:"田寶11號",f:"",s:20,g:200},
-  {name:"王雲祥",phone:"0910688835",area:0.517,place:"電聯",b:"碩成2號",f:"",s:25,g:64,b2:"碩成2號",f2:"",s2:25,g2:100},
+  {name:"王雲祥",phone:"0910688835",area:0.517,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"王福春",phone:"0912005609",area:0.441,place:"電聯",b:"田寶11號",f:"",s:20,g:60,b2:"碩成2號",f2:"",s2:20,g2:30},
   {name:"王啓義",phone:"0933002671",area:0.6815,place:"電聯",b:"田寶11號",f:"",s:20,g:140,b2:"翔鹿3號",f2:"",s2:20,g2:260},
   {name:"何振輝",phone:"0933683838",area:0.2,place:"寮子廓現地",b:"田寶11號",f:"",s:20,g:100},
-  {name:"吳亦靜",phone:"0918993260",area:0.1574,place:"電聯",b:"保立旺168",f:"",s:20,g:70},
+  {name:"吳亦靜",phone:"0918993260",area:0.1574,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"吳洪嘉惠",phone:"0912101218",area:0.191,place:"翔鹿/新東里47-7",b:"翔鹿3號",f:"",s:20,g:20},
-  {name:"吳若妏",phone:"0973751313",area:0.1385,place:"電聯",b:"碩成2號",f:"",s:25,g:40},
+  {name:"吳若妏",phone:"0973751313",area:0.1385,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"吳柊奇",phone:"0932990529",area:0.1884,place:"電聯",b:"肥之根1號",f:"",s:25,g:42},
   {name:"吳泰德",phone:"0937612465",area:0.3551,place:"電聯",b:"長虹333",f:"",s:25,g:142},
   {name:"吳智宇",phone:"0921409945",area:0.5717,place:"電聯",b:"碩成2號",f:"",s:25,g:50},
@@ -681,8 +681,15 @@ $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.con
 /* ---------- 額度調撥 ---------- */
 // 調撥＝全班群共用總帳(跨班)。每筆 {from,fromG,to,toG,b,f,s,g}
 // 調撥同樣只存記憶體，重開網頁清空
+// 30班預載調撥(依照片右側借用人；出借人=班員本人)。其餘較淡者請於「額度調撥」自行補
+const GROUP30_XFERS=[
+  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳耀昌",toG:"臺南市麻豆區果樹產銷班第30班",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:64},
+  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"張津雪",toG:"臺南市麻豆區果樹(水果)產銷班第3班",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:100},
+  {from:"吳亦靜",fromG:"臺南市麻豆區果樹產銷班第30班",to:"劉利霞",toG:"臺南市麻豆區果樹產銷班第30班",phone:"",b:"保立旺168有機質肥",f:"",s:20,g:70},
+  {from:"吳若妏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"韓明智",toG:"",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:40}
+];
 function saveXfers(){ /* 記憶體即可，不落地 */ }
-let TRANSFERS = [];
+let TRANSFERS = (curGroup===GROUP30) ? GROUP30_XFERS.map(t=>({...t})) : [];
 function xkg(t){ return (parseInt(t.s)||0)*(parseInt(t.g)||0); }
 function gshort(g){ return (g||'').replace('臺南市麻豆區果樹',''); }
 let XMEMBERS=[];
