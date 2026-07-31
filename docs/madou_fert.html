@@ -155,23 +155,45 @@
   .modalbox select{width:100%; font-size:16px; padding:11px; border:1.5px solid var(--green); border-radius:10px; background:var(--card); color:var(--ink); appearance:none; background-image:var(--sel-arrow); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px; margin-bottom:16px; font-family:inherit;}
   .modalbtns{display:flex; gap:10px; justify-content:flex-end;}
 
-  @page{ size:A4 landscape; margin:8mm; }
+  @page{ size:A4 landscape; margin:6mm; }
   @media print{
-    .toolbar,.foot,.hint,.banner,.delrow,.col-act,.groupbar,.topbar{display:none!important;}
-    body{background:#fff;} .wrap{max-width:none; padding:0;}
-    .tablecard{border:none;} .scroll{overflow:visible!important;}
-    #tbl{min-width:0!important; width:100%; font-size:8px; table-layout:fixed;}
-    #tbl th,#tbl td{padding:2px 2px!important; white-space:normal!important; word-break:break-word; overflow:hidden;}
-    #tbl td input,#tbl td select{font-size:8px!important; border:none!important; padding:0!important; background:transparent!important;}
-    thead th{background:#e8efe2!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
-    .calc{background:#f2f7ec!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .toolbar,.foot,.hint,.banner,.delrow,.col-act,.groupbar,.topbar,.famark{display:none!important;}
+    body{background:#fff;} .wrap{max-width:none!important; padding:0!important; margin:0!important;}
+    .tablecard{border:none!important; overflow:visible!important;} .scroll{overflow:visible!important;}
+    #tbl{min-width:0!important; width:100%!important; font-size:7.5px!important; table-layout:fixed!important;}
+    #tbl th,#tbl td{padding:1.5px 2px!important; white-space:normal!important; word-break:break-word!important; overflow-wrap:anywhere; overflow:visible!important; line-height:1.15; border:0.5px solid #b9b28f!important;}
+    #tbl .slackcol, #tbl .slackcell{display:none!important;}   /* 列印時隱藏「可讓/借用」輔助欄，騰出空間給其餘欄位 */
+    #tbl td input,#tbl td select{font-size:7.5px!important; border:none!important; padding:0!important; background:transparent!important; -webkit-appearance:none; appearance:none;}
+    thead th{background:#e7e9d3!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .calc{background:#eef1e0!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
     #prodPanel{display:none!important;}
-    #xferPanel, #settlePanel{page-break-before:always; border:none;}
+    #xferPanel, #settlePanel, #statsPanel{page-break-before:always; border:none;}
     body.hidexferprint #xferPanel{display:none!important;}
-    #xtbl, #stbl{min-width:0!important; width:100%; font-size:9px; table-layout:fixed;}
-    #xtbl th,#xtbl td,#stbl th,#stbl td{padding:2px 3px!important; white-space:normal!important; word-break:break-word;}
+    #xtbl, #stbl, #ptbl{min-width:0!important; width:100%!important; font-size:8.5px!important; table-layout:fixed!important;}
+    #xtbl th,#xtbl td,#stbl th,#stbl td,#ptbl th,#ptbl td{padding:2px 3px!important; white-space:normal!important; word-break:break-word!important; overflow:visible!important;}
   }
-  @media (max-width:640px){ header h1{font-size:17px;} .btn,.seg button{padding:8px 10px; font-size:13px;} }
+  /* ---- 平板 ---- */
+  @media (max-width:820px){
+    .wrap{padding:12px 10px 48px;}
+    header h1{font-size:18px;}
+    .avatar{height:44px; width:44px;} .brandtext .sys-title{font-size:14px;} .brandtext .sys-slogan{font-size:11.5px;}
+    .brandimg{height:28px;} .copyr{font-size:11px;}
+    .toolbar{gap:6px; padding:8px 0;} .btn,.seg button{padding:8px 11px; font-size:13px;}
+    .panel{padding:14px;} .statsgrid{gap:12px;}
+  }
+  /* ---- 手機 ---- */
+  @media (max-width:560px){
+    .wrap{padding:10px 8px 44px;}
+    .toolbar{position:static;}                 /* 手機不固定，避免多列按鈕擋住表格 */
+    header .yr{font-size:11px;} header h1{font-size:16px;} header .sub{font-size:12px;}
+    .brandtext .sys-slogan{display:none;}       /* 極窄畫面省空間 */
+    .avatar{height:40px; width:40px;} .brandtext .sys-title{font-size:13px;}
+    .brandimg{height:24px;} .copyr{font-size:10.5px;}
+    .btn,.seg button{padding:7px 9px; font-size:12.5px; border-radius:9px;} .chk{font-size:12px;}
+    table{font-size:13px;} tbody td{padding:5px 6px;}
+    .famark{font-size:12px; letter-spacing:.08em; margin-top:18px;}
+    .totals{gap:10px 14px; font-size:13px;}
+  }
 </style>
 
 </head>
@@ -470,7 +492,7 @@ const P2 = {6:1,7:1,8:1,9:1,10:1,11:1,12:1,13:1}; // 產品②群組欄索引(�
 /* ---------- 表頭 ---------- */
 function renderHead(){
   const tr=$('thead'); tr.innerHTML='';
-  COLS.forEach((t,i)=>{ const th=document.createElement('th'); th.textContent=t; if(i>=10&&i<=13) th.className='p2'; tr.appendChild(th); });
+  COLS.forEach((t,i)=>{ const th=document.createElement('th'); th.textContent=t; if(i>=10&&i<=13) th.className='p2'; if(i===16) th.className='slackcol'; tr.appendChild(th); });
   if(editing){ const th=document.createElement('th'); th.className='col-act'; tr.appendChild(th); }
 }
 
