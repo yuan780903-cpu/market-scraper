@@ -139,6 +139,8 @@
   td input.w-pname{min-width:150px;} td input.w-vendor{min-width:120px;} td input.w-code{min-width:88px;}
   .delrow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px;}
   .delrow:hover{color:var(--red);}
+  .swaprow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px; font-weight:700;}
+  .swaprow:hover{color:var(--green);}
   .moverow{border:1px solid var(--line); background:var(--card); color:var(--green-d); cursor:pointer; font-size:13px; font-weight:700; padding:2px 6px; border-radius:6px; margin-right:3px; line-height:1;}
   .moverow:hover{border-color:var(--green);}
   .moverow:disabled{opacity:.3; cursor:default;}
@@ -167,7 +169,7 @@
 
   @page{ size:A4 landscape; margin:6mm; }
   @media print{
-    .toolbar,.foot,.hint,.banner,.delrow,.col-act,.groupbar,.topbar,.famark{display:none!important;}
+    .toolbar,.foot,.hint,.banner,.delrow,.swaprow,.col-act,.groupbar,.topbar,.famark{display:none!important;}
     body{background:#fff;} .wrap{max-width:none!important; padding:0!important; margin:0!important;}
     .tablecard{border:none!important; overflow:visible!important;} .scroll{overflow:visible!important;}
     #tbl{min-width:0!important; width:100%!important; font-size:7.5px!important; table-layout:fixed!important;}
@@ -531,9 +533,11 @@ function renderBody(){
       tr.appendChild(calc(fmt(amtOf(r))));
       tr.appendChild(slackCell(r));
       const act=document.createElement('td'); act.className='col-act';
+      const sw=document.createElement('button'); sw.className='swaprow'; sw.type='button'; sw.title='產品①②左右互換'; sw.textContent='⇄';
+      sw.onclick=()=>{ [r.b,r.b2]=[r.b2,r.b]; [r.f,r.f2]=[r.f2,r.f]; [r.s,r.s2]=[r.s2,r.s]; [r.g,r.g2]=[r.g2,r.g]; save(); renderBody(); updateTotals(); };
       const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.title='刪除'; del.textContent='🗑';
       del.onclick=()=>{ rows.splice(i,1); save(); renderBody(); updateTotals(); updateCount(); };
-      act.appendChild(del); tr.appendChild(act);
+      act.appendChild(sw); act.appendChild(del); tr.appendChild(act);
     } else {
       tr.appendChild(cell('', r.name));
       tr.appendChild(cell('', r.phone));
