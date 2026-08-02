@@ -110,10 +110,17 @@
   td.splitcell.num .sc-top, td.splitcell.num .sc-bot{text-align:right; font-variant-numeric:tabular-nums;}
   .wrap.nongmode #xferPanel, .wrap.nongmode #settlePanel, .wrap.nongmode #statsPanel, .wrap.nongmode #prodPanel,
   .wrap.nongmode .poolwarn, .wrap.nongmode .foot{display:none!important;}
-  .slackcell{text-align:right; font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap;}
-  .slackcell.lend{color:var(--green-d);}
-  .slackcell.borrow{color:var(--red);}
-  .slackcell.muted{color:var(--muted); font-weight:400;}
+  .slackcell{background:var(--card)!important; padding:3px 5px!important; min-width:100px;}
+  tbody tr:nth-child(even) td.slackcell{background:var(--card)!important;}
+  .bar{position:relative; height:22px; border-radius:5px; overflow:hidden; display:flex; align-items:center; border:1px solid var(--line-s);}
+  .barfill{position:absolute; left:0; top:0; bottom:0; border-radius:5px 0 0 5px; transition:width .2s;}
+  .barfill.lend{background:rgba(107,142,90,.42);}
+  .barfill.borrow{background:rgba(181,70,47,.38);}
+  .barfill.even{background:transparent;}
+  .barnum{position:relative; z-index:1; padding:0 8px; font-variant-numeric:tabular-nums; font-weight:700; font-size:12.5px; white-space:nowrap;}
+  .barnum.lend{color:var(--green-d);}
+  .barnum.borrow{color:var(--red);}
+  .barnum.even{color:var(--muted);}
   .poolwarn{display:none; margin-top:10px; background:#fdecea; border:1px solid var(--red); color:var(--red);
     border-radius:10px; padding:10px 12px; font-size:14px; font-weight:700;}
   .poolwarn.show{display:block;}
@@ -132,6 +139,9 @@
   td input.w-pname{min-width:150px;} td input.w-vendor{min-width:120px;} td input.w-code{min-width:88px;}
   .delrow{border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:18px; padding:2px 6px;}
   .delrow:hover{color:var(--red);}
+  .moverow{border:1px solid var(--line); background:var(--card); color:var(--green-d); cursor:pointer; font-size:13px; font-weight:700; padding:2px 6px; border-radius:6px; margin-right:3px; line-height:1;}
+  .moverow:hover{border-color:var(--green);}
+  .moverow:disabled{opacity:.3; cursor:default;}
   .addbtn{margin-top:10px; padding:9px 14px; border:1.5px dashed var(--green); background:transparent; color:var(--green-d);
     border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
 
@@ -385,18 +395,18 @@ const GROUPS = [
 
 /* ---------- 第30班預載資料（b/f/s/g=產品①，b2/f2/s2/g2=產品②） ---------- */
 const ORIGINAL = [
-  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"田寶11號",f:"",s:20,g:250,b2:"碩成2號",f2:"",s2:25,g2:150},
-  {name:"方吳英娘",phone:"0929985101",area:0.258,place:"電聯",b:"田寶11號",f:"",s:20,g:100},
+  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"碩成2號",f:"",s:25,g:150},
+  {name:"方吳英娘",phone:"0929985101",area:0.258,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"王宇鋒",phone:"",area:0.434,place:"",b:"",f:"",s:"",g:""},
   {name:"王金成",phone:"0937719085",area:0.4679,place:"電聯",b:"田寶11號",f:"",s:20,g:200},
   {name:"王雲祥",phone:"0910688835",area:0.517,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"王福春",phone:"0912005609",area:0.441,place:"電聯",b:"田寶11號",f:"",s:20,g:60,b2:"碩成2號",f2:"",s2:20,g2:30},
-  {name:"王啓義",phone:"0933002671",area:0.6815,place:"電聯",b:"田寶11號",f:"",s:20,g:140,b2:"翔鹿3號",f2:"",s2:20,g2:260},
+  {name:"王福春",phone:"0912005609",area:0.441,place:"電聯",b:"田寶11號",f:"",s:20,g:60},
+  {name:"王啓義",phone:"0933002671",area:0.6815,place:"電聯",b:"田寶11號",f:"",s:20,g:140},
   {name:"何振輝",phone:"0933683838",area:0.2,place:"寮子廓現地",b:"田寶11號",f:"",s:20,g:100},
   {name:"吳亦靜",phone:"0918993260",area:0.1574,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"吳洪嘉惠",phone:"0912101218",area:0.191,place:"翔鹿/新東里47-7",b:"翔鹿3號",f:"",s:20,g:20},
   {name:"吳若妏",phone:"0973751313",area:0.1385,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"吳柊奇",phone:"0932990529",area:0.1884,place:"電聯",b:"肥之根1號",f:"",s:25,g:42},
+  {name:"吳柊奇",phone:"0932990529",area:0.1884,place:"電聯",b:"",f:"",s:"",g:""},
   {name:"吳泰德",phone:"0937612465",area:0.3551,place:"電聯",b:"長虹333",f:"",s:25,g:142},
   {name:"吳智宇",phone:"0921409945",area:0.5717,place:"電聯",b:"碩成2號",f:"",s:25,g:50},
   {name:"李秀蘭",phone:"0912005609",area:0.2072,place:"電聯",b:"田寶11號",f:"",s:20,g:100},
@@ -550,15 +560,22 @@ function calc(txt,over){ const td=document.createElement('td'); td.className='ca
 // 只計入「當前班」的該班員(借用人/出借人)：跨班調撥依 fromG/toG 正確歸屬各班
 function borrowedIn(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.to===name && (t.toG||curGroup)===curGroup) s+=xkg(t); }); return s; }
 function lentOut(name){ let s=0; if(name) TRANSFERS.forEach(t=>{ if(t.from===name && (t.fromG||curGroup)===curGroup) s+=xkg(t); }); return s; }
-function effectiveOf(r){ return limitOf(r) + borrowedIn(r.name) - lentOut(r.name); }
-function slackInfo(r){
-  const rem=effectiveOf(r)-kgOf(r);   // 可用額度(含調撥) − 實際購買
-  if(rem>0) return {t:'可讓 '+fmt(rem), c:'lend'};
-  if(rem<0) return {t:'超額 '+fmt(-rem), c:'borrow'};
-  return {t:'剛好', c:'lend'};
+// 借用人「借入」的肥料是掛在出借人名下(不佔自己額度)，故不加 borrowedIn；出借人借出則減少自己額度
+function effectiveOf(r){ return limitOf(r) - lentOut(r.name); }
+function slackMax(){ let m=1; rows.forEach(r=>{ const d=Math.abs(effectiveOf(r)-kgOf(r)); if(d>m)m=d; }); return m; }
+// 數據條：綠=可讓、紅=不夠(超額)、白=剛好；條上顯示數字＋公斤，寬度依全班最大值比例
+function applySlack(td,r,maxAbs){
+  maxAbs=maxAbs||slackMax();
+  const rem=effectiveOf(r)-kgOf(r);
+  const cls=rem>0?'lend':(rem<0?'borrow':'even');
+  const pct=Math.max(rem===0?0:6, Math.min(100, Math.abs(rem)/maxAbs*100));
+  td.innerHTML='';
+  const bar=document.createElement('div'); bar.className='bar';
+  const fill=document.createElement('div'); fill.className='barfill '+cls; fill.style.width=pct+'%';
+  const num=document.createElement('span'); num.className='barnum '+cls; num.textContent=fmt(Math.abs(rem))+' 公斤';
+  bar.appendChild(fill); bar.appendChild(num); td.appendChild(bar);
 }
-function applySlack(td,r){ const s=slackInfo(r); td.textContent=s.t; td.classList.remove('lend','borrow','muted'); td.classList.add(s.c); }
-function slackCell(r){ const td=document.createElement('td'); td.className='slackcell'; applySlack(td,r); return td; }
+function slackCell(r,maxAbs){ const td=document.createElement('td'); td.className='slackcell'; applySlack(td,r,maxAbs); return td; }
 function inp(r,key,cls,type,extra){
   const td=document.createElement('td'); if(extra)td.className=extra;
   const el=document.createElement('input'); el.type=type||'text'; el.className=cls;
@@ -578,7 +595,7 @@ function brandCell(r,kb,kf,ks,extra){
   sel.value=r[kb]||'';
   sel.onchange=()=>{
     if(sel.value==='__other'){ const v=prompt('輸入產品名稱：', r[kb]||''); r[kb]=v||''; }
-    else { r[kb]=sel.value; const b=BRANDS.find(x=>x.n===sel.value); if(b){ r[kf]=b.form; r[ks]=b.kg; } }
+    else { r[kb]=sel.value; const b=BRANDS.find(x=>x.n===sel.value); if(b){ r[kf]=b.form; r[ks]=b.kg; } else if(sel.value===''){ r[kf]=''; r[ks]=''; } }
     save(); renderBody(); updateTotals();
   };
   td.appendChild(sel); return td;
@@ -621,11 +638,12 @@ function updateTotals(){
     const rem=effectiveOf(r)-kgOf(r); if(rem<0 && r.name) over.push(r.name+' 超額 '+fmt(-rem)); });
   const ow=$('overWarn');
   if(ow){ if(over.length){ ow.textContent='⚠ 超額班員（請減少購買量，或到下方「額度調撥」由有餘額者借出補足）：'+over.join('　·　'); ow.classList.add('show'); } else ow.classList.remove('show'); }
-  let crossIn=0,crossOut=0;   // 跨班：從其他班借入 / 借給其他班
+  let crossIn=0,crossOut=0,lentHere=0;   // 跨班借入(他班替本班借用人申請,不佔本班) / 跨班借出 / 本班出借人申請的總量(佔本班額度)
   TRANSFERS.forEach(t=>{ const k=xkg(t);
-    if(t.toG===curGroup && t.fromG!==curGroup) crossIn+=k;
+    if(t.fromG===curGroup) lentHere+=k;                        // 本班出借人替他人申請 → 佔本班額度
+    if(t.toG===curGroup && t.fromG!==curGroup) crossIn+=k;      // 他班替本班借用人申請 → 不佔本班額度
     if(t.fromG===curGroup && t.toG!==curGroup) crossOut+=k; });
-  const slack=lim+crossIn-crossOut-kg;
+  const slack=lim - kg - lentHere;   // 本班剩餘 = 可申請總額 − 自購 − 本班出借人申請的調撥
   $('tKg').textContent=fmt(kg); $('tBags').textContent=fmt(bags); $('tLimit').textContent=fmt(lim); $('tAmt').textContent=fmt(amt);
   if($('tCrossIn')) $('tCrossIn').textContent=fmt(crossIn);
   if($('tCrossOut')) $('tCrossOut').textContent=fmt(crossOut);
@@ -683,10 +701,15 @@ $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.con
 // 調撥同樣只存記憶體，重開網頁清空
 // 30班預載調撥(依照片右側借用人；出借人=班員本人)。其餘較淡者請於「額度調撥」自行補
 const GROUP30_XFERS=[
-  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳耀昌",toG:"臺南市麻豆區果樹產銷班第30班",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:64},
-  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"張津雪",toG:"臺南市麻豆區果樹(水果)產銷班第3班",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:100},
-  {from:"吳亦靜",fromG:"臺南市麻豆區果樹產銷班第30班",to:"劉利霞",toG:"臺南市麻豆區果樹產銷班第30班",phone:"",b:"保立旺168有機質肥",f:"",s:20,g:70},
-  {from:"吳若妏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"韓明智",toG:"",phone:"",b:"碩成牌有機肥料2號",f:"",s:25,g:40}
+  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳耀昌",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0910688835",b:"碩成牌有機肥料2號",f:"",s:25,g:64},
+  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"張津雪",toG:"臺南市麻豆區果樹(水果)產銷班第3班",phone:"0963113298",b:"碩成牌有機肥料2號",f:"",s:25,g:100},
+  {from:"吳亦靜",fromG:"臺南市麻豆區果樹產銷班第30班",to:"劉利霞",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0918993260",b:"保立旺168有機質肥",f:"",s:20,g:70},
+  {from:"吳若妏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"林明智",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0973751313",b:"碩成牌有機肥料2號",f:"",s:25,g:40},
+  {from:"陳信宏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"對面財叔",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0956933738",b:"田寶11號",f:"",s:20,g:250},
+  {from:"方吳英娘",fromG:"臺南市麻豆區果樹產銷班第30班",to:"吳盈樑",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0929981101",b:"田寶11號",f:"",s:20,g:100},
+  {from:"王福春",fromG:"臺南市麻豆區果樹產銷班第30班",to:"李秀蘭",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0912005609",b:"碩成牌有機肥料2號",f:"",s:25,g:30},
+  {from:"王啓義",fromG:"臺南市麻豆區果樹產銷班第30班",to:"林建良",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0937612465",b:"混合有機質肥3號",f:"",s:20,g:200},
+  {from:"吳柊奇",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳鍾慧玲",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0932990529",b:"農村牌肥之根1號",f:"",s:25,g:42}
 ];
 function saveXfers(){ /* 記憶體即可，不落地 */ }
 let TRANSFERS = (curGroup===GROUP30) ? GROUP30_XFERS.map(t=>({...t})) : [];
@@ -734,7 +757,7 @@ function renderXfers(){
     td=document.createElement('td'); const bs=document.createElement('select'); bs.className='w-brand';
     bs.appendChild(opt('','— 選產品 —')); BRANDS.forEach(b=>bs.appendChild(opt(b.n,b.n)));
     if(t.b && !BRANDS.some(b=>b.n===t.b)) bs.appendChild(opt(t.b,t.b));
-    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} saveXfers(); renderXfers(); refreshCalc(); };
+    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} else if(bs.value===''){ t.f=''; t.s=''; } saveXfers(); renderXfers(); refreshCalc(); };
     td.appendChild(bs); tr.appendChild(td);
     // 性狀
     td=document.createElement('td'); const fs=document.createElement('select'); fs.className='w-form'; fs.appendChild(opt('',' ')); FORMS.forEach(o=>fs.appendChild(opt(o,o))); fs.value=t.f||''; fs.onchange=()=>{t.f=fs.value;saveXfers();}; td.appendChild(fs); tr.appendChild(td);
@@ -746,7 +769,13 @@ function renderXfers(){
     tr.appendChild(calc(fmt(xkg(t))));
     tr.appendChild(calc(fmt(xcost(t))));
     // 刪除
-    td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑'; del.onclick=()=>{ TRANSFERS.splice(i,1); saveXfers(); renderXfers(); refreshCalc(); }; td.appendChild(del); tr.appendChild(td);
+    td=document.createElement('td'); td.style.whiteSpace='nowrap';
+    const up=document.createElement('button'); up.className='moverow'; up.type='button'; up.textContent='↑'; up.title='上移'; up.disabled=(i===0);
+    up.onclick=()=>{ if(i>0){ const t2=TRANSFERS[i-1]; TRANSFERS[i-1]=TRANSFERS[i]; TRANSFERS[i]=t2; saveXfers(); renderXfers(); refreshCalc(); } };
+    const dn=document.createElement('button'); dn.className='moverow'; dn.type='button'; dn.textContent='↓'; dn.title='下移'; dn.disabled=(i===TRANSFERS.length-1);
+    dn.onclick=()=>{ if(i<TRANSFERS.length-1){ const t2=TRANSFERS[i+1]; TRANSFERS[i+1]=TRANSFERS[i]; TRANSFERS[i]=t2; saveXfers(); renderXfers(); refreshCalc(); } };
+    const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑'; del.onclick=()=>{ TRANSFERS.splice(i,1); saveXfers(); renderXfers(); refreshCalc(); };
+    td.appendChild(up); td.appendChild(dn); td.appendChild(del); tr.appendChild(td);
     tb.appendChild(tr);
   });
   updateXferSummary();
