@@ -520,12 +520,12 @@ function renderBody(){
       tr.appendChild(calc(fmt(lim)));
       tr.appendChild(inp(r,'place','w-place'));
       tr.appendChild(brandCell(r,'b','f','s'));
-      tr.appendChild(formCell(r,'f'));
-      tr.appendChild(specCell(r,'s'));
+      tr.appendChild(formCell(r,'f','b'));
+      tr.appendChild(specCell(r,'s','b'));
       tr.appendChild(inp(r,'g','w-bags','number'));
       tr.appendChild(brandCell(r,'b2','f2','s2','p2col'));
-      tr.appendChild(formCell(r,'f2','p2col'));
-      tr.appendChild(specCell(r,'s2','p2col'));
+      tr.appendChild(formCell(r,'f2','b2','p2col'));
+      tr.appendChild(specCell(r,'s2','b2','p2col'));
       tr.appendChild(inp(r,'g2','w-bags','number','p2col'));
       tr.appendChild(calc(fmt(kg)));
       tr.appendChild(calc(fmt(amtOf(r))));
@@ -600,14 +600,16 @@ function brandCell(r,kb,kf,ks,extra){
   };
   td.appendChild(sel); return td;
 }
-function formCell(r,key,extra){
+function formCell(r,key,bkey,extra){
+  if(bkey && !r[bkey]){ r[key]=''; } // 沒選產品→性狀歸零
   const td=document.createElement('td'); if(extra)td.className=extra;
   const sel=document.createElement('select'); sel.className='w-form';
   sel.appendChild(opt('',' ')); FORMS.forEach(o=>sel.appendChild(opt(o,o)));
   sel.value=r[key]||''; sel.onchange=()=>{ r[key]=sel.value; save(); };
   td.appendChild(sel); return td;
 }
-function specCell(r,key,extra){
+function specCell(r,key,bkey,extra){
+  if(bkey && !r[bkey]){ r[key]=''; } // 沒選產品→規格歸零
   const td=document.createElement('td'); if(extra)td.className=extra;
   const sel=document.createElement('select'); sel.className='w-spec';
   sel.appendChild(opt('',' ')); SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
