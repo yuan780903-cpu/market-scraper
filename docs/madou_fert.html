@@ -933,8 +933,52 @@ function fillGroups(){
     renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers(); toast('已切換：'+curGroup); };
 }
 
+/* ---------- 匯出 Excel（農會版：比照官方果30.xlsx 版面，可直接交農會） ---------- */
+function nongExcelHtml(){
+  const heads=["班員姓名","聯絡電話","作物別","經營面積(公頃)","可申請公斤","交貨地點","購肥品牌","規格(公斤)","包數","公斤數","實際申請(公頃)"];
+  const N=heads.length;
+  let h='<meta charset="utf-8"><table border="1">';
+  h+=`<tr><td colspan="${N}" style="font-weight:bold;text-align:center;font-size:16px">115年度國產有機質肥料推廣計畫產銷班申請表</td></tr>`;
+  h+=`<tr><td colspan="6" style="font-weight:bold">${esc(curGroup)}</td><td colspan="${N-6}">申請日期：　　　年　　月　　日</td></tr>`;
+  h+='<tr>'+heads.map(x=>`<th style="background:#e8efe0;font-weight:bold">${esc(x)}</th>`).join('')+'</tr>';
+  let sumArea=0,sumLim=0,sumActual=0;
+  rows.forEach(r=>{
+    const lines=[];
+    if(r.b && String(r.b).trim()!=='') lines.push({b:r.b,s:r.s,g:r.g});
+    if(r.b2 && String(r.b2).trim()!=='') lines.push({b:r.b2,s:r.s2,g:r.g2});
+    TRANSFERS.forEach(t=>{ if(t.from===r.name && (t.fromG||curGroup)===curGroup && (t.b||t.g)) lines.push({b:t.b,s:t.s,g:t.g}); });
+    if(!lines.length) lines.push({b:'',s:'',g:''});
+    const totalKg=lines.reduce((s,x)=>s+(parseInt(x.s)||0)*(parseInt(x.g)||0),0);
+    const actual=totalKg?(totalKg/10000).toFixed(4):'';
+    const rs=lines.length, span=rs>1?` rowspan="${rs}"`:'';
+    lines.forEach((x,li)=>{
+      const kg=(parseInt(x.s)||0)*(parseInt(x.g)||0);
+      let row='<tr>';
+      if(li===0){
+        row+=`<td${span}>${esc(r.name||'')}</td>`;
+        row+=`<td${span}>${esc(r.phone||'')}</td>`;
+        row+=`<td${span}>${esc(r.crop||'')}</td>`;
+        row+=`<td${span} style="text-align:right">${(r.area!==''&&r.area!=null)?(+r.area).toFixed(4):''}</td>`;
+        row+=`<td${span} style="text-align:right">${esc(fmt(limitOf(r)))}</td>`;
+        row+=`<td${span}>${esc(r.place||'')}</td>`;
+      }
+      row+=`<td>${esc(x.b||'')}</td>`;
+      row+=`<td style="text-align:right">${(x.s!==''&&x.s!=null)?esc(x.s):''}</td>`;
+      row+=`<td style="text-align:right">${(x.g!==''&&x.g!=null)?esc(x.g):''}</td>`;
+      row+=`<td style="text-align:right">${kg?fmt(kg):''}</td>`;
+      if(li===0) row+=`<td${span} style="text-align:right">${actual}</td>`;
+      row+='</tr>';
+      h+=row;
+    });
+    sumArea+=(+r.area)||0; sumLim+=limitOf(r); sumActual+=totalKg/10000;
+  });
+  h+=`<tr style="font-weight:bold;background:#e8efe0"><td>合計</td><td></td><td></td><td style="text-align:right">${sumArea.toFixed(4)}</td><td style="text-align:right">${fmt(sumLim)}</td><td></td><td></td><td></td><td></td><td></td><td style="text-align:right">${sumActual.toFixed(4)}</td></tr>`;
+  h+='</table>';
+  return h;
+}
 /* ---------- 匯出 Excel ---------- */
 $('bExcel').onclick=()=>{
+  if(nong){ saveFile(nongExcelHtml(),'application/vnd.ms-excel',glabel()+'_農會申請表_'+dstamp()+'.xls',true); toast('已匯出農會格式申請表'); return; }
   const heads=["#","班員姓名","聯絡電話","經營面積(公頃)","可申請(公斤)","交貨地點",
     "產品①","性狀①","規格①","包數①","公斤①","金額①",
     "產品②","性狀②","規格②","包數②","公斤②","金額②","公斤數合計","金額合計"];
