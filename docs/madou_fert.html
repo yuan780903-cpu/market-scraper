@@ -605,8 +605,8 @@ function brandCell(r,kb,kf,ks,extra){
   td.appendChild(sel); return td;
 }
 function formCell(r,key,bkey,extra){
-  // 性狀是產品固定屬性→永遠以「產品管理」為準；沒選產品→空
-  if(bkey){ const pr=r[bkey]?resolveProduct(r[bkey]):null; r[key]=pr?pr.form:''; }
+  // 沒選產品→歸零；有產品但性狀空白→帶入產品管理性狀(有值則保留，不洗掉你的編輯)
+  if(bkey){ if(!r[bkey]){ r[key]=''; } else if(!r[key]){ const pr=resolveProduct(r[bkey]); if(pr) r[key]=pr.form; } }
   const td=document.createElement('td'); if(extra)td.className=extra;
   const sel=document.createElement('select'); sel.className='w-form';
   sel.appendChild(opt('',' ')); FORMS.forEach(o=>sel.appendChild(opt(o,o)));
@@ -755,8 +755,8 @@ function renderXfers(){
   const dl=$('xmemberlist'); if(dl){ dl.innerHTML=''; const seen={}; XMEMBERS.forEach(m=>{ if(!seen[m.n]){ seen[m.n]=1; const o=document.createElement('option'); o.value=m.n; o.textContent=gshort(m.g); dl.appendChild(o); } }); }
   const tb=$('xtbody'); tb.innerHTML='';
   TRANSFERS.forEach((t,i)=>{
-    // 性狀永遠以產品管理為準；規格空白才帶入(可再改)
-    if(t.b){ const pr=resolveProduct(t.b); if(pr){ t.f=pr.form; if(t.s===''||t.s==null) t.s=pr.kg; } }
+    // 性狀/規格空白才帶入產品管理值(有值則保留，不洗掉你的編輯)
+    if(t.b){ const pr=resolveProduct(t.b); if(pr){ if(!t.f) t.f=pr.form; if(t.s===''||t.s==null) t.s=pr.kg; } }
     const tr=document.createElement('tr');
     tr.appendChild(cell('col-idx',i+1));
     let td=document.createElement('td'); td.appendChild(memberSelect(t.from,t.fromG,(name,group)=>{t.from=name;t.fromG=group;saveXfers();refreshCalc();})); tr.appendChild(td);
@@ -1039,12 +1039,17 @@ $('fileInput').onchange=async (e)=>{
     try{
       const data=JSON.parse(String(reader.result).replace(/^﻿/,''));
       const list=Array.isArray(data)?data:(data.rows||[]);
-      if(!Array.isArray(list)||!list.length) throw new Error('檔案內沒有登記資料');
-      if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料，共 '+list.length+' 列，確定？')){ e.target.value=''; return; }
-      rows=normalize(list); save();
-      if(data.brands && Array.isArray(data.brands) && data.brands.length){ BRANDS=data.brands; saveBrands(); renderBrands(); }
-      if(data.transfers && Array.isArray(data.transfers)){ TRANSFERS=data.transfers; saveXfers(); renderXfers(); }
-      renderHead(); renderBody(); updateTotals(); updateCount(); toast('✅ 已匯入 '+list.length+' 列');
+      const hasRows=Array.isArray(list)&&list.length;
+      const hasBrands=data.brands&&Array.isArray(data.brands)&&data.brands.length;
+      const hasXfers=data.transfers&&Array.isArray(data.transfers);
+      if(!hasRows && !hasBrands && !hasXfers) throw new Error('檔案內沒有可匯入的資料');
+      if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料'+(hasRows?('，共 '+list.length+' 列'):'（含產品管理）')+'，確定？')){ e.target.value=''; return; }
+      // 先還原產品管理，讓後續 normalize/帶入用最新產品清單
+      if(hasBrands){ BRANDS=data.brands; saveBrands(); renderBrands(); }
+      if(hasRows){ rows=normalize(list); save(); }
+      if(hasXfers){ TRANSFERS=data.transfers; saveXfers(); }
+      renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
+      toast('✅ 匯入完成'+(hasRows?('，共 '+list.length+' 列'):'（產品管理已還原）'));
     }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
   };
@@ -1121,9 +1126,9 @@ $('snapOk').onclick=async ()=>{
   if(!res || !res.ok || !res.data){ toast('讀取失敗：'+((res&&res.error)||'查無資料')); return; }
   const d=res.data;
   if(!confirm('用此存檔版本覆蓋「'+curGroup+'」目前本機資料，確定？')) return;
+  if(Array.isArray(d.brands) && d.brands.length){ BRANDS=d.brands; saveBrands(); renderBrands(); } // 先還原產品管理
   rows=normalize(d.rows||[]); save();
   if(Array.isArray(d.transfers)){ TRANSFERS=d.transfers; saveXfers(); }
-  if(Array.isArray(d.brands) && d.brands.length){ BRANDS=d.brands; saveBrands(); renderBrands(); }
   renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
   toast('✅ 已讀取此版本，共 '+rows.length+' 列');
 };
