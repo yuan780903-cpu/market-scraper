@@ -696,16 +696,18 @@ function renderBrands(){
     ll.oninput=()=>{ b.list=ll.value===''?'':parseFloat(ll.value); saveBrands(); }; td.appendChild(ll); tr.appendChild(td);
     // 補助後單價
     td=document.createElement('td'); el=document.createElement('input'); el.type='number'; el.className='w-price'; el.min='0'; el.value=b.p;
-    el.oninput=()=>{ b.p=el.value===''?'':parseFloat(el.value); saveBrands(); }; td.appendChild(el); tr.appendChild(td);
+    el.oninput=()=>{ b.p=el.value===''?'':parseFloat(el.value); saveBrands(); };
+    el.onchange=()=>{ updateTotals(); if($('xferPanel')) renderXfers(); refreshCalc(); }; // 改完補助後單價→即時更新金額
+    td.appendChild(el); tr.appendChild(td);
     // 刪除
     td=document.createElement('td'); const del=document.createElement('button'); del.className='delrow'; del.type='button'; del.textContent='🗑';
-    del.onclick=()=>{ if(confirm('刪除產品「'+b.n+'」？')){ BRANDS.splice(i,1); saveBrands(); renderBrands(); renderBody(); updateTotals(); } };
+    del.onclick=()=>{ if(confirm('刪除產品「'+b.n+'」？')){ BRANDS.splice(i,1); saveBrands(); renderBrands(); syncTables(); } };
     td.appendChild(del); tr.appendChild(td);
     tb.appendChild(tr);
   });
   if(brandsNormalized){ saveBrands(); } // 補回的預設值存檔，讓資料與顯示一致
 }
-$('bAddProduct').onclick=()=>{ BRANDS.push({code:"",v:"",n:"新產品",form:"粒狀",kg:20,list:"",p:"",alias:[]}); saveBrands(); renderBrands(); renderBody(); };
+$('bAddProduct').onclick=()=>{ BRANDS.push({code:"",v:"",n:"新產品",form:"粒狀",kg:20,list:"",p:"",alias:[]}); saveBrands(); renderBrands(); syncTables(); };
 $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
 
