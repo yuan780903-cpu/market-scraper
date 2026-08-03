@@ -888,7 +888,7 @@ function multiCell(vals,cls){
 function renderNong(){
   const cols=["序號","班員姓名","聯絡電話","作物別","經營面積(公頃)","可申請公斤","交貨地點","購肥品牌","規格(公斤)","包數","公斤數","實際申請(公頃)"];
   const thead=$('thead'); thead.innerHTML=''; cols.forEach(t=>{const th=document.createElement('th');th.textContent=t;thead.appendChild(th);});
-  const tb=$('tbody'); tb.innerHTML=''; let sumArea=0,sumLim=0;
+  const tb=$('tbody'); tb.innerHTML=''; let sumArea=0,sumLim=0,sumActual=0;
   rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
     // 產品明細行：自購①②ｍ + 借出他人的量(回歸到出借人這一列，代為申請)
@@ -908,13 +908,17 @@ function renderNong(){
     tr.appendChild(multiCell(lines.map(x=>x.s),'num'));
     tr.appendChild(multiCell(lines.map(x=>x.g),'num'));
     tr.appendChild(multiCell(lines.map(x=>{const kg=(parseInt(x.s)||0)*(parseInt(x.g)||0);return kg?fmt(kg):'';}),'num'));
-    tr.appendChild(cell('num', r.actual||''));
+    // 實際申請(公頃) = 實際申請總公斤數 ÷ 10000 (自動算)
+    const totalKg=lines.reduce((s,x)=>s+(parseInt(x.s)||0)*(parseInt(x.g)||0),0);
+    tr.appendChild(cell('num', totalKg?(totalKg/10000).toFixed(4):''));
+    sumActual+=totalKg/10000;
     tb.appendChild(tr); sumArea+=(+r.area)||0; sumLim+=limitOf(r);
   });
   const tr=document.createElement('tr');
   tr.appendChild(cell('col-idx','')); tr.appendChild(cell('','合計')); tr.appendChild(cell('','')); tr.appendChild(cell('',''));
   tr.appendChild(cell('num', sumArea.toFixed(4))); tr.appendChild(cell('num', fmt(sumLim)));
-  for(let k=0;k<6;k++) tr.appendChild(cell('',''));
+  for(let k=0;k<5;k++) tr.appendChild(cell('',''));
+  tr.appendChild(cell('num', sumActual?sumActual.toFixed(4):'')); // 實際申請合計
   tr.querySelectorAll('td').forEach(td=>{ td.style.fontWeight='700'; td.style.background='var(--head)'; });
   tb.appendChild(tr);
 }
