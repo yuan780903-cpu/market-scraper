@@ -605,7 +605,8 @@ function brandCell(r,kb,kf,ks,extra){
   td.appendChild(sel); return td;
 }
 function formCell(r,key,bkey,extra){
-  if(bkey && !r[bkey]){ r[key]=''; } // 沒選產品→性狀歸零
+  // 性狀是產品固定屬性→永遠以「產品管理」為準；沒選產品→空
+  if(bkey){ const pr=r[bkey]?resolveProduct(r[bkey]):null; r[key]=pr?pr.form:''; }
   const td=document.createElement('td'); if(extra)td.className=extra;
   const sel=document.createElement('select'); sel.className='w-form';
   sel.appendChild(opt('',' ')); FORMS.forEach(o=>sel.appendChild(opt(o,o)));
@@ -613,7 +614,8 @@ function formCell(r,key,bkey,extra){
   td.appendChild(sel); return td;
 }
 function specCell(r,key,bkey,extra){
-  if(bkey && !r[bkey]){ r[key]=''; } // 沒選產品→規格歸零
+  // 沒選產品→空；有產品但規格空→帶入產品規格(可再改)
+  if(bkey){ if(!r[bkey]){ r[key]=''; } else if(r[key]===''||r[key]===undefined){ const pr=resolveProduct(r[bkey]); if(pr) r[key]=pr.kg; } }
   const td=document.createElement('td'); if(extra)td.className=extra;
   const sel=document.createElement('select'); sel.className='w-spec';
   sel.appendChild(opt('',' ')); SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
@@ -662,6 +664,7 @@ function updateTotals(){
 function updateCount(){ $('rowcount').textContent='共 '+rows.length+' 位班員'; $('memcount').textContent=rows.length; }
 
 /* ---------- 產品建置表 ---------- */
+function syncTables(){ renderBody(); updateTotals(); if($('xferPanel')) renderXfers(); }
 function renderBrands(){
   const tb=$('ptbody'); tb.innerHTML='';
   BRANDS.forEach((b,i)=>{
@@ -675,16 +678,16 @@ function renderBrands(){
     ev.oninput=()=>{ b.v=ev.value; saveBrands(); }; td.appendChild(ev); tr.appendChild(td);
     // 名稱
     td=document.createElement('td'); let el=document.createElement('input'); el.className='w-pname'; el.value=b.n;
-    el.oninput=()=>{ b.n=el.value; saveBrands(); }; td.appendChild(el); tr.appendChild(td);
+    el.oninput=()=>{ b.n=el.value; saveBrands(); syncTables(); }; td.appendChild(el); tr.appendChild(td);
     // 性狀
     td=document.createElement('td'); let sel=document.createElement('select'); sel.className='w-form';
     FORMS.forEach(o=>sel.appendChild(opt(o,o))); sel.value=b.form||'粒狀';
-    sel.onchange=()=>{ b.form=sel.value; saveBrands(); }; td.appendChild(sel); tr.appendChild(td);
+    sel.onchange=()=>{ b.form=sel.value; saveBrands(); syncTables(); }; td.appendChild(sel); tr.appendChild(td);
     // 規格
     td=document.createElement('td'); sel=document.createElement('select'); sel.className='w-spec';
     SPECS.forEach(s=>sel.appendChild(opt(s,s+' kg')));
     if(!SPECS.includes(parseInt(b.kg))) sel.appendChild(opt(b.kg,b.kg+' kg'));
-    sel.value=String(b.kg); sel.onchange=()=>{ b.kg=parseInt(sel.value); saveBrands(); }; td.appendChild(sel); tr.appendChild(td);
+    sel.value=String(b.kg); sel.onchange=()=>{ b.kg=parseInt(sel.value); saveBrands(); syncTables(); }; td.appendChild(sel); tr.appendChild(td);
     // 售價
     td=document.createElement('td'); const ll=document.createElement('input'); ll.type='number'; ll.className='w-price'; ll.min='0'; ll.value=(b.list===undefined?'':b.list);
     ll.oninput=()=>{ b.list=ll.value===''?'':parseFloat(ll.value); saveBrands(); }; td.appendChild(ll); tr.appendChild(td);
@@ -749,8 +752,8 @@ function renderXfers(){
   const dl=$('xmemberlist'); if(dl){ dl.innerHTML=''; const seen={}; XMEMBERS.forEach(m=>{ if(!seen[m.n]){ seen[m.n]=1; const o=document.createElement('option'); o.value=m.n; o.textContent=gshort(m.g); dl.appendChild(o); } }); }
   const tb=$('xtbody'); tb.innerHTML='';
   TRANSFERS.forEach((t,i)=>{
-    // 有產品但性狀/規格空白 → 自動由產品帶入(含預載)
-    if(t.b){ const pr=resolveProduct(t.b); if(pr){ if(!t.f) t.f=pr.form; if(t.s===''||t.s==null) t.s=pr.kg; } }
+    // 性狀永遠以產品管理為準；規格空白才帶入(可再改)
+    if(t.b){ const pr=resolveProduct(t.b); if(pr){ t.f=pr.form; if(t.s===''||t.s==null) t.s=pr.kg; } }
     const tr=document.createElement('tr');
     tr.appendChild(cell('col-idx',i+1));
     let td=document.createElement('td'); td.appendChild(memberSelect(t.from,t.fromG,(name,group)=>{t.from=name;t.fromG=group;saveXfers();refreshCalc();})); tr.appendChild(td);
