@@ -311,6 +311,7 @@
     </div>
     <datalist id="xmemberlist"></datalist>
     <button class="addbtn" id="bAddXfer" type="button">＋ 新增調撥</button>
+    <button class="addbtn" id="bSortXfer" type="button" style="margin-left:8px;" title="把調撥列依上面登記表的班員(出借人)先後順序排好">↕ 依登記表順序排列</button>
     <div style="margin-top:10px; font-size:14px;">調撥筆數：<b id="xCount">0</b>　·　調撥總公斤數：<b id="xKg">0</b> 公斤　·　<b>收款總費用（扣補助後）：<span id="xCost">0</span> 元</b></div>
   </div>
 
@@ -795,6 +796,12 @@ function renderXfers(){
   updateXferSummary();
 }
 $('bAddXfer').onclick=()=>{ TRANSFERS.push({from:'',fromG:curGroup,to:'',toG:'',phone:'',b:'',f:'',s:'',g:''}); saveXfers(); renderXfers(); refreshCalc(); };
+$('bSortXfer').onclick=()=>{
+  // 依上面登記表班員(出借人)先後排；找不到的排最後；同一出借人維持原相對順序(穩定)
+  const idxOf=n=>{ const i=rows.findIndex(r=>r.name===n); return i<0?9999:i; };
+  TRANSFERS=TRANSFERS.map((t,i)=>({t,i})).sort((a,b)=> (idxOf(a.t.from)-idxOf(b.t.from)) || (a.i-b.i)).map(x=>x.t);
+  saveXfers(); renderXfers(); refreshCalc(); toast('已依登記表班員順序排列調撥');
+};
 
 /* ---------- 金額結算（含借額度購買） ---------- */
 function borrowedBuy(name){ let bags=0,amt=0;
