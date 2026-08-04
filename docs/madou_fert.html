@@ -256,7 +256,7 @@
     <button class="btn" id="bCloudLoad" type="button">☁ 讀取雲端</button>
     <button class="btn" id="bCloudSet" type="button" title="設定個人雲端網址">⚙ 雲端設定</button>
     <button class="btn" id="bImport" type="button">📁 匯入檔案</button>
-    <button class="btn" id="bReset" type="button" title="還原本班">↺ 還原</button>
+    <button class="btn" id="bReset" type="button" title="清空本班班員與調撥（產品管理保留）">↺ 清空本班</button>
     <input type="file" id="fileInput" accept=".json,.xlsx,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">
   </div>
 
@@ -397,59 +397,7 @@ const GROUPS = [
 ];
 
 /* ---------- 第30班預載資料（b/f/s/g=產品①，b2/f2/s2/g2=產品②） ---------- */
-const ORIGINAL = [
-  {name:"陳信宏",phone:"0915829538",area:0.9426,place:"電話連絡",b:"碩成2號",f:"",s:25,g:150},
-  {name:"方吳英娘",phone:"0929985101",area:0.258,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"王宇鋒",phone:"",area:0.434,place:"",b:"",f:"",s:"",g:""},
-  {name:"王金成",phone:"0937719085",area:0.4679,place:"電聯",b:"田寶11號",f:"",s:20,g:200},
-  {name:"王雲祥",phone:"0910688835",area:0.517,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"王福春",phone:"0912005609",area:0.441,place:"電聯",b:"田寶11號",f:"",s:20,g:60},
-  {name:"王啓義",phone:"0933002671",area:0.6815,place:"電聯",b:"田寶11號",f:"",s:20,g:140},
-  {name:"何振輝",phone:"0933683838",area:0.2,place:"寮子廓現地",b:"田寶11號",f:"",s:20,g:100},
-  {name:"吳亦靜",phone:"0918993260",area:0.1574,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"吳洪嘉惠",phone:"0912101218",area:0.191,place:"翔鹿/新東里47-7",b:"翔鹿3號",f:"",s:20,g:20},
-  {name:"吳若妏",phone:"0973751313",area:0.1385,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"吳柊奇",phone:"0932990529",area:0.1884,place:"電聯",b:"",f:"",s:"",g:""},
-  {name:"吳泰德",phone:"0937612465",area:0.3551,place:"電聯",b:"長虹333",f:"",s:25,g:142},
-  {name:"吳智宇",phone:"0921409945",area:0.5717,place:"電聯",b:"碩成2號",f:"",s:25,g:50},
-  {name:"李秀蘭",phone:"0912005609",area:0.2072,place:"電聯",b:"田寶11號",f:"",s:20,g:100},
-  {name:"李明娟",phone:"",area:0.3516,place:"",b:"",f:"",s:"",g:""},
-  {name:"李國隆",phone:"0937612465",area:0.3271,place:"電聯",b:"長虹333",f:"",s:25,g:110},
-  {name:"李隆泰",phone:"0929327653",area:0.1021,place:"電聯",b:"有約肥3號",f:"",s:20,g:30,b2:"田寶11號",f2:"",s2:20,g2:50},
-  {name:"李瑞義",phone:"0973751313",area:0.3685,place:"電聯",b:"碩成2號",f:"",s:25,g:126},
-  {name:"李堃煇",phone:"0915277765",area:0.2688,place:"電聯",b:"翔鹿3號",f:"",s:20,g:40,b2:"田寶1號",f2:"",s2:20,g2:38},
-  {name:"林文波",phone:"0910745752",area:0.6861,place:"電聯",b:"田寶11號",f:"",s:20,g:100},
-  {name:"林文智",phone:"0978417643",area:0.2983,place:"電聯",b:"福壽新勤3號",f:"",s:25,g:100},
-  {name:"林佩璇",phone:"0937612465",area:0.5983,place:"電聯",b:"碩成2號",f:"",s:25,g:239},
-  {name:"林明智",phone:"0937362298",area:0.28,place:"電話聯絡",b:"福壽7號",f:"",s:20,g:20,b2:"田寶11號",f2:"",s2:20,g2:40},
-  {name:"林建良",phone:"0937612465",area:0.3016,place:"電聯",b:"長虹333",f:"",s:25,g:120},
-  {name:"林欲義",phone:"0973751313",area:0.3125,place:"電話聯絡",b:"碩成2號",f:"",s:25,g:124},
-  {name:"林楚献",phone:"0961507810",area:0.1279,place:"電聯",b:"碩成2號",f:"",s:25,g:51},
-  {name:"林聖祥",phone:"0937612465",area:0.674,place:"電聯",b:"碩成2號",f:"",s:25,g:269},
-  {name:"林裕仁",phone:"0939951966",area:0.2278,place:"電聯",b:"碩成2號",f:"",s:25,g:91},
-  {name:"邱美鳳",phone:"0911620629",area:0.3,place:"電聯",b:"碩成2號",f:"",s:25,g:80},
-  {name:"張美玲",phone:"0937612465",area:0.4105,place:"電聯",b:"長虹333",f:"",s:25,g:164},
-  {name:"莊月桃",phone:"0921512056",area:0.2153,place:"電聯",b:"有約肥3號",f:"",s:20,g:50},
-  {name:"莊志銘",phone:"0937612465",area:0.6406,place:"電聯",b:"碩成2號",f:"",s:25,g:192,b2:"長虹333",f2:"",s2:25,g2:64},
-  {name:"許李淑惠",phone:"0910688835",area:0.5151,place:"電聯",b:"碩成2號",f:"",s:25,g:206},
-  {name:"許秀梅",phone:"0933365881",area:0.2,place:"北勢景敬視地",b:"長虹333",f:"",s:25,g:80},
-  {name:"郭幸蓁",phone:"0961507810",area:0.1659,place:"電聯",b:"碩成2號",f:"",s:25,g:49},
-  {name:"郭達範",phone:"0928373569",area:0.2153,place:"電聯",b:"有約肥3號",f:"",s:20,g:100},
-  {name:"郭麗珠",phone:"0933308558",area:0.1409,place:"北勢寮農地",b:"福壽7號",f:"",s:20,g:60},
-  {name:"陳永昌",phone:"0937669767",area:0.3,place:"油車里136號",b:"糖寶1號",f:"",s:20,g:40,b2:"田寶11號",f2:"",s2:20,g2:100},
-  {name:"陳叔召",phone:"0928949767",area:0.5478,place:"電話聯絡",b:"碩成2號",f:"",s:25,g:59,b2:"福壽新勤3號",f2:"",s2:25,g2:140},
-  {name:"陳清水",phone:"0939313791",area:0.7405,place:"電話聯絡",b:"糖寶1號",f:"",s:20,g:250,b2:"碩成2號",f2:"",s2:25,g2:95},
-  {name:"陳智弘",phone:"0927558318",area:0.4486,place:"電聯",b:"田寶11號",f:"",s:20,g:62},
-  {name:"陳鍾慧玲",phone:"0932990529",area:0.52,place:"北勢里152-1",b:"肥之根1號",f:"",s:25,g:208},
-  {name:"陳耀昌",phone:"0910688835",area:0.6195,place:"北勢里加拳邦33-7號",b:"福壽7號",f:"",s:20,g:200,b2:"碩成2號",f2:"",s2:25,g2:80},
-  {name:"陳耀祥",phone:"0937827305",area:2.0761,place:"北勢邦33-7對面",b:"福壽新勤3號",f:"",s:25,g:150,b2:"田寶11號",f2:"",s2:20,g2:430},
-  {name:"曾素蓮",phone:"0933551850",area:0.4387,place:"磚仔井42-5",b:"太牛牌",f:"",s:25,g:80,b2:"",f2:"",s2:20,g2:20},
-  {name:"黃正俊",phone:"0932208882",area:0.2639,place:"雜埠頭74-2號",b:"碩成2號",f:"",s:25,g:105},
-  {name:"劉利霞",phone:"0918993260",area:0.3232,place:"電話連絡",b:"福壽7號",f:"",s:20,g:30,b2:"保立旺168",f2:"",s2:20,g2:130},
-  {name:"劉易宜",phone:"0928714299",area:0.1984,place:"電話連絡",b:"翔鹿3號",f:"",s:20,g:70},
-  {name:"謝麗美",phone:"",area:0.188,place:"",b:"",f:"",s:"",g:""},
-  {name:"羅秀美",phone:"0928714299",area:0.1493,place:"電話連絡",b:"太牛牌",f:"",s:25,g:50}
-];
+const ORIGINAL = []; // 個資已移除，改由使用者匯入自己的檔案（第30班備份檔）
 
 const $ = id => document.getElementById(id);
 const fmt = n => (n||0).toLocaleString('en-US');
@@ -484,7 +432,7 @@ function normalize(list){
     return o;
   });
 }
-function defaultsFor(g){ return g===GROUP30 ? normalize(ORIGINAL.map(r=>({...r}))) : []; }
+function defaultsFor(g){ return []; } // 一律不預載班員；要載入請用「匯入檔案」
 // 登記資料只存「本次開啟」的記憶體(MEM)，不落地localStorage → 重開網頁自動清空回初始(產品管理與班列表除外)
 const MEM={};
 function loadGroup(g){ return MEM[g] ? normalize(MEM[g]) : defaultsFor(g); }
@@ -715,17 +663,7 @@ $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.con
 // 調撥＝全班群共用總帳(跨班)。每筆 {from,fromG,to,toG,b,f,s,g}
 // 調撥同樣只存記憶體，重開網頁清空
 // 30班預載調撥(依照片右側借用人；出借人=班員本人)。其餘較淡者請於「額度調撥」自行補
-const GROUP30_XFERS=[
-  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳耀昌",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0910688835",b:"碩成牌有機肥料2號",f:"",s:25,g:64},
-  {from:"王雲祥",fromG:"臺南市麻豆區果樹產銷班第30班",to:"張津雪",toG:"臺南市麻豆區果樹(水果)產銷班第3班",phone:"0963113298",b:"碩成牌有機肥料2號",f:"",s:25,g:100},
-  {from:"吳亦靜",fromG:"臺南市麻豆區果樹產銷班第30班",to:"劉利霞",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0918993260",b:"保立旺168有機質肥",f:"",s:20,g:70},
-  {from:"吳若妏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"林明智",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0973751313",b:"碩成牌有機肥料2號",f:"",s:25,g:40},
-  {from:"陳信宏",fromG:"臺南市麻豆區果樹產銷班第30班",to:"對面財叔",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0956933738",b:"田寶11號",f:"",s:20,g:250},
-  {from:"方吳英娘",fromG:"臺南市麻豆區果樹產銷班第30班",to:"吳盈樑",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0929981101",b:"田寶11號",f:"",s:20,g:100},
-  {from:"王福春",fromG:"臺南市麻豆區果樹產銷班第30班",to:"李秀蘭",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0912005609",b:"碩成牌有機肥料2號",f:"",s:25,g:30},
-  {from:"王啓義",fromG:"臺南市麻豆區果樹產銷班第30班",to:"林建良",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0937612465",b:"混合有機質肥3號",f:"",s:20,g:200},
-  {from:"吳柊奇",fromG:"臺南市麻豆區果樹產銷班第30班",to:"陳鍾慧玲",toG:"臺南市麻豆區果樹產銷班第30班",phone:"0932990529",b:"農村牌肥之根1號",f:"",s:25,g:42}
-];
+const GROUP30_XFERS=[]; // 個資已移除，改由使用者匯入自己的檔案
 function saveXfers(){ /* 記憶體即可，不落地 */ }
 let TRANSFERS = (curGroup===GROUP30) ? GROUP30_XFERS.map(t=>({...t})) : [];
 function xkg(t){ return (parseInt(t.s)||0)*(parseInt(t.g)||0); }
@@ -1192,8 +1130,10 @@ $('snapOk').onclick=async ()=>{
 
 /* ---------- 還原 ---------- */
 $('bReset').onclick=()=>{
-  const msg=curGroup===GROUP30?'還原「'+curGroup+'」成照片原始資料？會覆蓋本班編輯。':'清空「'+curGroup+'」資料？（此班無預載）';
-  if(confirm(msg)){ rows=defaultsFor(curGroup); save(); renderHead(); renderBody(); updateTotals(); updateCount(); toast('已還原本班'); }
+  if(confirm('清空「'+curGroup+'」的班員與調撥資料？（產品管理不受影響。要載回資料請用「📁匯入檔案」選你的備份檔）')){
+    rows=[]; TRANSFERS=[]; save(); saveXfers();
+    renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers(); toast('已清空本班（產品管理保留）');
+  }
 };
 
 /* ---------- toast ---------- */
