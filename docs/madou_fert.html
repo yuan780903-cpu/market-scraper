@@ -273,6 +273,7 @@
       </table>
     </div>
     <button class="addbtn" id="bAddProduct" type="button">＋ 新增產品</button>
+    <button class="addbtn" id="bResetBrands" type="button" style="margin-left:8px;" title="把產品清單還原成官方13項(會清掉自行新增或改壞的項目，例如誤打的「30」)">↺ 還原官方產品清單</button>
   </div>
 
   <div class="banner" id="editBanner">
@@ -658,6 +659,11 @@ function renderBrands(){
   if(brandsNormalized){ saveBrands(); } // 補回的預設值存檔，讓資料與顯示一致
 }
 $('bAddProduct').onclick=()=>{ BRANDS.push({code:"",v:"",n:"新產品",form:"粒狀",kg:20,list:"",p:"",alias:[]}); saveBrands(); renderBrands(); syncTables(); };
+$('bResetBrands').onclick=()=>{
+  if(confirm('把「產品管理」還原成官方13項？\n（會清掉你自行新增或改壞的項目，例如誤打成「30」的那筆；補助後單價也會回官方值）')){
+    BRANDS=DEFAULT_BRANDS.map(b=>({...b, alias:[...(b.alias||[])]})); saveBrands(); renderBrands(); syncTables(); toast('已還原官方13項產品清單');
+  }
+};
 $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bProducts').classList.toggle('active',show); if(show) renderBrands(); };
 
