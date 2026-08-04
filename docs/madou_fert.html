@@ -375,8 +375,8 @@ const DEFAULT_BRANDS = [
   {code:"0436004", v:"長虹公司", n:"333發酵有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["長弘333","長虹333","333愛柏有機質肥料3號"]},
   {code:"0831008", v:"翔鹿公司", n:"混合有機質肥3號", form:"粒狀", kg:20, list:240, p:200, alias:["翔鹿3號","泛合有機3號","翔鹿"]},
   {code:"1023001", v:"吾肥土農業生技", n:"保立旺168有機質肥", form:"粉狀", kg:20, list:130, p:90, alias:["保元旺素有機3號","保元旺160素有機3號","保立旺168","保立旺"]},
-  {code:"0005017", v:"麻豆區農會", n:"田寶11號", form:"粒狀", kg:20, list:130, p:80, alias:["田寶1號","田寶11"]},
-  {code:"0557003", v:"麻豆區農會", n:"糖寶1號", form:"粒狀", kg:20, list:130, p:80, alias:["桶實1號","糖實1號"]},
+  {code:"0005017", v:"麻豆區農會", n:"田寶11號", form:"粉狀", kg:20, list:130, p:80, alias:["田寶1號","田寶11"]},
+  {code:"0557003", v:"麻豆區農會", n:"糖寶1號", form:"粉狀", kg:20, list:130, p:80, alias:["桶實1號","糖實1號"]},
   {code:"", v:"", n:"有約肥3號", form:"粉狀", kg:20, list:"", p:"", alias:[]}
 ];
 
@@ -415,9 +415,11 @@ function healBrands(list){
   if(!Array.isArray(list)) return DEFAULT_BRANDS.map(b=>({...b}));
   list.forEach(b=>{
     const off = DEFAULT_BRANDS.find(d=>d.code && d.code===b.code);
-    if(off && (!b.n || /^\d+$/.test(String(b.n).trim()))) b.n=off.n;
-    if(!b.form || !FORMS.includes(b.form)) b.form = (off&&off.form)||FORMS[0];
-    if(off) b.alias=Array.from(new Set([...(b.alias||[]), ...(off.alias||[])])); // 補進官方別名(如大牛牌)，讓名稱差一字也算得出金額
+    if(off){
+      if(!b.n || /^\d+$/.test(String(b.n).trim())) b.n=off.n;        // 名稱誤植(如"30")→依編號對回官方名
+      b.form = off.form;                                             // 官方產品性狀一律以官方為準(如麻豆農會都是粉狀)
+      b.alias = Array.from(new Set([...(b.alias||[]), ...(off.alias||[])])); // 補進官方別名，名稱差一字也算得出金額
+    } else if(!b.form || !FORMS.includes(b.form)){ b.form=FORMS[0]; } // 非官方產品:空白/無效才補
   });
   return list;
 }
