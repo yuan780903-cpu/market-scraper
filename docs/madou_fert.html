@@ -632,8 +632,8 @@ function renderBrands(){
     // 名稱
     td=document.createElement('td'); let el=document.createElement('input'); el.className='w-pname'; el.value=b.n;
     el.oninput=()=>{ b.n=el.value; saveBrands(); syncTables(); }; td.appendChild(el); tr.appendChild(td);
-    // 性狀（若資料空白，補回預設值，避免顯示有值但資料為空）
-    if(!b.form){ b.form=FORMS[0]; brandsNormalized=true; }
+    // 性狀（空白或無效值→補回有效預設，避免下拉顯示空白）
+    if(!b.form || !FORMS.includes(b.form)){ b.form=FORMS[0]; brandsNormalized=true; }
     td=document.createElement('td'); let sel=document.createElement('select'); sel.className='w-form';
     FORMS.forEach(o=>sel.appendChild(opt(o,o))); sel.value=b.form;
     sel.onchange=()=>{ b.form=sel.value; saveBrands(); syncTables(); }; td.appendChild(sel); tr.appendChild(td);
@@ -1048,14 +1048,16 @@ $('fileInput').onchange=async (e)=>{
       const hasBrands=data.brands&&Array.isArray(data.brands)&&data.brands.length;
       const hasXfers=data.transfers&&Array.isArray(data.transfers);
       if(!hasRows && !hasBrands && !hasXfers) throw new Error('檔案內沒有可匯入的資料');
-      if(!confirm('匯入將覆蓋「'+curGroup+'」目前資料'+(hasRows?('，共 '+list.length+' 列'):'（含產品管理）')+'，確定？')){ e.target.value=''; return; }
-      // 先還原產品管理，讓後續 normalize/帶入用最新產品清單
-      if(hasBrands){ BRANDS=data.brands; saveBrands(); renderBrands(); }
+      if(!confirm('匯入將覆蓋「'+curGroup+'」目前的班員與調撥'+(hasRows?('，共 '+list.length+' 列'):'')+'，確定？')){ e.target.value=''; return; }
+      // 產品管理另外問：預設「保留你現在維護的」，避免舊檔把最新產品管理蓋回去
+      let doBrands=false;
+      if(hasBrands){ doBrands=confirm('這個檔案裡也含「產品管理」設定。\n\n要一併用檔案的產品管理覆蓋目前的嗎？\n\n・按「確定」＝用檔案的產品管理（例如要還原備份時選這個）\n・按「取消」＝保留你現在維護的產品管理（一般建議選這個）'); }
+      if(doBrands){ BRANDS=data.brands; saveBrands(); renderBrands(); } // 先還原產品管理，讓後續 normalize/帶入用最新產品清單
       if(hasRows){ rows=normalize(list); save(); }
       if(hasXfers){ TRANSFERS=data.transfers; saveXfers(); }
       renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
       dirty=false; // 剛匯入，內容與檔案一致
-      toast('✅ 匯入完成'+(hasRows?('，共 '+list.length+' 列'):'（產品管理已還原）'));
+      toast('✅ 匯入完成'+(hasRows?('，班員 '+list.length+' 列'):'')+(doBrands?'（產品管理已覆蓋）':'（產品管理保留）'));
     }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
   };
