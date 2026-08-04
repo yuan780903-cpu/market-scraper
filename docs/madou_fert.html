@@ -436,7 +436,8 @@ function defaultsFor(g){ return []; } // 一律不預載班員；要載入請用
 // 登記資料只存「本次開啟」的記憶體(MEM)，不落地localStorage → 重開網頁自動清空回初始(產品管理與班列表除外)
 const MEM={};
 function loadGroup(g){ return MEM[g] ? normalize(MEM[g]) : defaultsFor(g); }
-function save(){ MEM[curGroup]=rows.map(r=>({...r})); }
+let dirty=false; // 有未存檔的變更
+function save(){ MEM[curGroup]=rows.map(r=>({...r})); dirty=true; }
 let rows = loadGroup(curGroup);
 
 /* ---------- 計算 ---------- */
@@ -664,7 +665,7 @@ $('bProducts').onclick=()=>{ const p=$('prodPanel'); const show=!p.classList.con
 // 調撥同樣只存記憶體，重開網頁清空
 // 30班預載調撥(依照片右側借用人；出借人=班員本人)。其餘較淡者請於「額度調撥」自行補
 const GROUP30_XFERS=[]; // 個資已移除，改由使用者匯入自己的檔案
-function saveXfers(){ /* 記憶體即可，不落地 */ }
+function saveXfers(){ dirty=true; /* 記憶體即可，不落地 */ }
 let TRANSFERS = (curGroup===GROUP30) ? GROUP30_XFERS.map(t=>({...t})) : [];
 function xkg(t){ return (parseInt(t.s)||0)*(parseInt(t.g)||0); }
 function gshort(g){ return (g||'').replace('臺南市麻豆區果樹',''); }
@@ -960,9 +961,11 @@ function dstamp(){ const d=new Date(),p=n=>('0'+n).slice(-2);
 $('bPdf').onclick=()=>{ if(editing) setMode('view'); document.body.classList.toggle('hidexferprint', !$('pdfXfer').checked); setTimeout(()=>window.print(),150); };
 
 /* ---------- 存到手機 ---------- */
-$('bPhone').onclick=()=>{
-  saveFile(JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,brands:BRANDS,transfers:TRANSFERS},null,2),
-    'application/json',glabel()+'_肥料登記_'+dstamp()+'.json',false);
+$('bPhone').onclick=async ()=>{
+  // 檔名固定為產銷班名稱(不加時間)→ 可直接覆蓋同一個檔，不會產生一堆檔
+  const ok=await saveFile(JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,brands:BRANDS,transfers:TRANSFERS},null,2),
+    'application/json',glabel()+'_肥料登記.json',false);
+  if(ok) dirty=false; // 已存檔
 };
 
 /* ---------- 匯入檔案 ---------- */
@@ -1044,6 +1047,7 @@ $('fileInput').onchange=async (e)=>{
       if(hasRows){ rows=normalize(list); save(); }
       if(hasXfers){ TRANSFERS=data.transfers; saveXfers(); }
       renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
+      dirty=false; // 剛匯入，內容與檔案一致
       toast('✅ 匯入完成'+(hasRows?('，共 '+list.length+' 列'):'（產品管理已還原）'));
     }catch(err){ toast('匯入失敗：'+err.message); }
     e.target.value='';
@@ -1067,16 +1071,17 @@ async function saveFile(content,type,filename,bom){
     try{
       const h=await window.showSaveFilePicker({suggestedName:filename,types:[{description:filename,accept:{[type]:['.'+(filename.split('.').pop())]}}]});
       const w=await h.createWritable(); await w.write(new Blob(parts,{type})); await w.close();
-      toast('已儲存：'+filename); return;
-    }catch(e){ if(e && e.name==='AbortError') return; }
+      toast('已儲存：'+filename); return true;
+    }catch(e){ if(e && e.name==='AbortError') return false; }
   }
-  downloadBlob(content,type,filename,bom);
+  downloadBlob(content,type,filename,bom); return true;
 }
 $('bCloud').onclick=async ()=>{
   let url=cloudUrl(); if(!url){ url=askCloudUrl(); if(!url) return; }
   try{ toast('上傳中…');
     await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({class:curGroup,ts:new Date().toISOString(),rows,transfers:TRANSFERS,brands:BRANDS})});
+    dirty=false; // 已上傳雲端
     toast('✅ 已送出，請到 Google 試算表看新分頁');
   }catch(e){ toast('上傳失敗：'+e.message+'（預覽連結禁止對外連線，請用正式版）'); }
 };
@@ -1125,6 +1130,7 @@ $('snapOk').onclick=async ()=>{
   rows=normalize(d.rows||[]); save();
   if(Array.isArray(d.transfers)){ TRANSFERS=d.transfers; saveXfers(); }
   renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
+  dirty=false; // 剛從雲端讀取
   toast('✅ 已讀取此版本，共 '+rows.length+' 列');
 };
 
@@ -1139,8 +1145,16 @@ $('bReset').onclick=()=>{
 /* ---------- toast ---------- */
 let tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),3400); }
 
+/* ---------- 離開/重整前警示未存檔 ---------- */
+window.addEventListener('beforeunload', (e)=>{
+  if(dirty && (rows.length || TRANSFERS.length)){
+    e.preventDefault(); e.returnValue='您有尚未存檔的資料，離開將全部清除。請先按「📱存到手機」存檔！';
+    return e.returnValue;
+  }
+});
+
 /* ---------- init ---------- */
-fillGroups(); $('title').textContent=curGroup; setMode(false); renderXfers();
+fillGroups(); $('title').textContent=curGroup; setMode(false); renderXfers(); dirty=false;
 </script>
 
 </body>
