@@ -310,6 +310,7 @@
       </tr></thead><tbody id="xtbody"></tbody></table>
     </div>
     <datalist id="xmemberlist"></datalist>
+    <datalist id="xbrandlist"></datalist>
     <button class="addbtn" id="bAddXfer" type="button">＋ 新增調撥</button>
     <button class="addbtn" id="bSortXfer" type="button" style="margin-left:8px;" title="把調撥列依上面登記表的班員(出借人)先後順序排好">↕ 依登記表順序排列</button>
     <div style="margin-top:10px; font-size:14px;">調撥筆數：<b id="xCount">0</b>　·　調撥總公斤數：<b id="xKg">0</b> 公斤　·　<b>收款總費用（扣補助後）：<span id="xCost">0</span> 元</b></div>
@@ -695,6 +696,7 @@ function updateXferSummary(){
 function renderXfers(){
   XMEMBERS=allGroupMembers();
   const dl=$('xmemberlist'); if(dl){ dl.innerHTML=''; const seen={}; XMEMBERS.forEach(m=>{ if(!seen[m.n]){ seen[m.n]=1; const o=document.createElement('option'); o.value=m.n; o.textContent=gshort(m.g); dl.appendChild(o); } }); }
+  const bdl=$('xbrandlist'); if(bdl){ bdl.innerHTML=''; BRANDS.forEach(b=>{ const o=document.createElement('option'); o.value=b.n; bdl.appendChild(o); }); }
   const tb=$('xtbody'); tb.innerHTML='';
   TRANSFERS.forEach((t,i)=>{
     // 性狀/規格一律以「產品管理」為準（改產品管理會全表同步）
@@ -709,11 +711,10 @@ function renderXfers(){
     toInp.oninput=()=>{ t.to=toInp.value; const m=XMEMBERS.find(x=>x.n===toInp.value); t.toG=m?m.g:''; if(m){ t.phone=m.phone; phInp.value=m.phone; } saveXfers(); refreshCalc(); };
     td.appendChild(toInp); tr.appendChild(td);
     td=document.createElement('td'); td.appendChild(phInp); tr.appendChild(td);
-    // 產品
-    td=document.createElement('td'); const bs=document.createElement('select'); bs.className='w-brand';
-    bs.appendChild(opt('','— 選產品 —')); BRANDS.forEach(b=>bs.appendChild(opt(b.n,b.n)));
-    if(t.b && !BRANDS.some(b=>b.n===t.b)) bs.appendChild(opt(t.b,t.b));
-    bs.value=t.b||''; bs.onchange=()=>{ t.b=bs.value; const b=BRANDS.find(x=>x.n===bs.value); if(b){t.f=b.form;t.s=b.kg;} else if(bs.value===''){ t.f=''; t.s=''; } saveXfers(); renderXfers(); refreshCalc(); };
+    // 產品（可直接打字 + 下拉建議；比對到產品管理就自動帶性狀/規格，自訂名稱則手動選）
+    td=document.createElement('td'); const bs=document.createElement('input'); bs.className='w-brand'; bs.setAttribute('list','xbrandlist'); bs.placeholder='選或直接輸入'; bs.value=t.b||'';
+    bs.oninput=()=>{ t.b=bs.value; saveXfers(); };
+    bs.onchange=()=>{ t.b=bs.value; const pr=resolveProduct(t.b); if(pr){ t.f=pr.form; t.s=pr.kg; } else if(t.b===''){ t.f=''; t.s=''; } saveXfers(); renderXfers(); refreshCalc(); };
     td.appendChild(bs); tr.appendChild(td);
     // 性狀
     td=document.createElement('td'); const fs=document.createElement('select'); fs.className='w-form'; fs.appendChild(opt('',' ')); FORMS.forEach(o=>fs.appendChild(opt(o,o))); fs.value=t.f||''; fs.onchange=()=>{t.f=fs.value;saveXfers();}; td.appendChild(fs); tr.appendChild(td);
