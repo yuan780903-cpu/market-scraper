@@ -407,8 +407,18 @@ const fmt = n => (n||0).toLocaleString('en-US');
 /* ---------- 產品表(可編輯，存本機) ---------- */
 let BRANDS = loadBrands();
 function loadBrands(){
-  try{ const s=localStorage.getItem('madou_fert_brands_v3'); if(s) return JSON.parse(s); }catch(e){}
+  try{ const s=localStorage.getItem('madou_fert_brands_v3'); if(s) return healBrands(JSON.parse(s)); }catch(e){}
   return DEFAULT_BRANDS.map(b=>({...b}));
+}
+// 自動修復壞掉的產品資料：名稱是純數字/空白(明顯誤植，如"30")→ 依「編號」對回官方名稱；性狀空白/無效→補回
+function healBrands(list){
+  if(!Array.isArray(list)) return DEFAULT_BRANDS.map(b=>({...b}));
+  list.forEach(b=>{
+    const off = DEFAULT_BRANDS.find(d=>d.code && d.code===b.code);
+    if(off && (!b.n || /^\d+$/.test(String(b.n).trim()))) b.n=off.n;
+    if(!b.form || !FORMS.includes(b.form)) b.form = (off&&off.form)||FORMS[0];
+  });
+  return list;
 }
 function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v3', JSON.stringify(BRANDS)); }catch(e){} }
 function priceOf(name){ const b=BRANDS.find(x=>x.n===name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; }
@@ -1052,7 +1062,7 @@ $('fileInput').onchange=async (e)=>{
       // 產品管理另外問：預設「保留你現在維護的」，避免舊檔把最新產品管理蓋回去
       let doBrands=false;
       if(hasBrands){ doBrands=confirm('這個檔案裡也含「產品管理」設定。\n\n要一併用檔案的產品管理覆蓋目前的嗎？\n\n・按「確定」＝用檔案的產品管理（例如要還原備份時選這個）\n・按「取消」＝保留你現在維護的產品管理（一般建議選這個）'); }
-      if(doBrands){ BRANDS=data.brands; saveBrands(); renderBrands(); } // 先還原產品管理，讓後續 normalize/帶入用最新產品清單
+      if(doBrands){ BRANDS=healBrands(data.brands); saveBrands(); renderBrands(); } // 先還原產品管理(含自動修復)，讓後續 normalize/帶入用最新產品清單
       if(hasRows){ rows=normalize(list); save(); }
       if(hasXfers){ TRANSFERS=data.transfers; saveXfers(); }
       renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
@@ -1135,7 +1145,7 @@ $('snapOk').onclick=async ()=>{
   if(!res || !res.ok || !res.data){ toast('讀取失敗：'+((res&&res.error)||'查無資料')); return; }
   const d=res.data;
   if(!confirm('用此存檔版本覆蓋「'+curGroup+'」目前本機資料，確定？')) return;
-  if(Array.isArray(d.brands) && d.brands.length){ BRANDS=d.brands; saveBrands(); renderBrands(); } // 先還原產品管理
+  if(Array.isArray(d.brands) && d.brands.length){ BRANDS=healBrands(d.brands); saveBrands(); renderBrands(); } // 先還原產品管理(含自動修復)
   rows=normalize(d.rows||[]); save();
   if(Array.isArray(d.transfers)){ TRANSFERS=d.transfers; saveXfers(); }
   renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers();
@@ -1163,6 +1173,7 @@ window.addEventListener('beforeunload', (e)=>{
 });
 
 /* ---------- init ---------- */
+saveBrands(); // 把載入時自動修復過的產品清單寫回本機(清掉像"30"的誤植)
 fillGroups(); $('title').textContent=curGroup; setMode(false); renderXfers(); dirty=false;
 </script>
 
