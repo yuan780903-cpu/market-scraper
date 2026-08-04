@@ -371,7 +371,7 @@ const DEFAULT_BRANDS = [
   {code:"0270011", v:"崇容實業", n:"農村牌肥之根1號", form:"粉狀", kg:25, list:125, p:25, alias:["農村黎粉有機3號","肥之根1號","農村肥之根1號","農村肥元根1號","農村肥元根"]},
   {code:"0237008", v:"大成實業", n:"碩成牌有機肥料2號", form:"粉狀", kg:25, list:130, p:30, alias:["碩成2號","硯成2號"]},
   {code:"1180002", v:"宏生實業", n:"宏生好肥底有機肥料", form:"粒狀", kg:20, list:220, p:140, alias:[]},
-  {code:"0256015", v:"豐修實業(欣農)", n:"太牛牌強效有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["太牛牌有機肥料","太牛牌","太牛"]},
+  {code:"0256015", v:"豐修實業(欣農)", n:"太牛牌強效有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["太牛牌有機肥料","太牛牌","太牛","大牛牌強效有機質肥料","大牛牌有機肥料","大牛牌","大牛"]},
   {code:"0436004", v:"長虹公司", n:"333發酵有機質肥料", form:"粉狀", kg:25, list:130, p:30, alias:["長弘333","長虹333","333愛柏有機質肥料3號"]},
   {code:"0831008", v:"翔鹿公司", n:"混合有機質肥3號", form:"粒狀", kg:20, list:240, p:200, alias:["翔鹿3號","泛合有機3號","翔鹿"]},
   {code:"1023001", v:"吾肥土農業生技", n:"保立旺168有機質肥", form:"粉狀", kg:20, list:130, p:90, alias:["保元旺素有機3號","保元旺160素有機3號","保立旺168","保立旺"]},
@@ -417,11 +417,12 @@ function healBrands(list){
     const off = DEFAULT_BRANDS.find(d=>d.code && d.code===b.code);
     if(off && (!b.n || /^\d+$/.test(String(b.n).trim()))) b.n=off.n;
     if(!b.form || !FORMS.includes(b.form)) b.form = (off&&off.form)||FORMS[0];
+    if(off) b.alias=Array.from(new Set([...(b.alias||[]), ...(off.alias||[])])); // 補進官方別名(如大牛牌)，讓名稱差一字也算得出金額
   });
   return list;
 }
 function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v3', JSON.stringify(BRANDS)); }catch(e){} }
-function priceOf(name){ const b=BRANDS.find(x=>x.n===name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; }
+function priceOf(name){ const b=resolveProduct(name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; } // 用別名解析，名稱差一字(如大/太)也算得出金額
 function resolveProduct(name){ if(!name) return null;
   return BRANDS.find(b=>b.n===name) || BRANDS.find(b=>(b.alias||[]).includes(name)) || null; }
 
