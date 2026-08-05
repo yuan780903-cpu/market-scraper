@@ -327,6 +327,15 @@
       </tr></thead><tbody id="stbody"></tbody></table>
     </div>
     <div style="margin-top:10px; font-size:14px;">全班合計金額：<b id="stTotal">0</b> 元　·　合計包數：<b id="stBags">0</b> 包</div>
+
+    <h2 style="margin-top:22px;">🧾 借用人應收明細（調撥收款）</h2>
+    <p>依「調撥記錄」的借用人分組加總，列出每位借用人要收多少錢（同一人跟多人借會合併）。收款金額 = 補助後單價 × 包數。此為向借用人收的錢，不含班員自購。</p>
+    <div class="scroll">
+      <table id="bwtbl"><thead><tr>
+        <th>序號</th><th>借用人</th><th>電話</th><th>借用筆數</th><th>合計包數</th><th>合計公斤</th><th>應收金額(元)</th>
+      </tr></thead><tbody id="bwtbody"></tbody></table>
+    </div>
+    <div style="margin-top:10px; font-size:14px;">借用人應收總額：<b id="bwTotal">0</b> 元</div>
   </div>
 
   <!-- 包數統計 -->
@@ -788,6 +797,33 @@ function renderSettle(){
     tb.appendChild(tr);
   });
   $('stTotal').textContent=fmt(totalAmt); $('stBags').textContent=fmt(totalBags);
+  renderBorrowerSettle();
+}
+// 借用人應收明細：依調撥記錄的「借用人」分組加總
+function renderBorrowerSettle(){
+  const tb=$('bwtbody'); if(!tb) return; tb.innerHTML='';
+  const map={}; // 借用人 → {phone,cnt,bags,kg,amt}
+  TRANSFERS.forEach(t=>{
+    const name=(t.to||'').trim(); if(!name) return;
+    const g=parseInt(t.g)||0, s=parseInt(t.s)||0;
+    if(!map[name]) map[name]={phone:t.phone||'',cnt:0,bags:0,kg:0,amt:0};
+    if(t.phone && !map[name].phone) map[name].phone=t.phone;
+    map[name].cnt++; map[name].bags+=g; map[name].kg+=s*g; map[name].amt+=Math.round(priceOf(t.b)*g);
+  });
+  const names=Object.keys(map); let total=0;
+  names.forEach((name,i)=>{
+    const m=map[name]; total+=m.amt;
+    const tr=document.createElement('tr');
+    tr.appendChild(cell('col-idx', i+1));
+    tr.appendChild(cell('', name));
+    tr.appendChild(cell('', m.phone));
+    tr.appendChild(cell('num', m.cnt));
+    tr.appendChild(cell('num', fmt(m.bags)));
+    tr.appendChild(cell('num', fmt(m.kg)));
+    tr.appendChild(calc(fmt(m.amt)));
+    tb.appendChild(tr);
+  });
+  if($('bwTotal')) $('bwTotal').textContent=fmt(total);
 }
 $('bSettle').onclick=()=>{ const p=$('settlePanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bSettle').classList.toggle('active',show); if(show) renderSettle(); };
