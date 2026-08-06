@@ -170,6 +170,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .footer{{padding:14px;text-align:center;color:#888;font-size:11px;background:#f5f6f3}}
   .popup-content{{font-size:14px}}
   .popup-content strong{{color:#1f3a2e}}
+  /* 自訂區間選擇器 */
+  .custom-range{{display:none;padding:10px 14px;background:#f5f6f3;border-bottom:1px solid #e6e8eb;text-align:center;font-size:13px;color:#333}}
+  .custom-range.show{{display:block}}
+  .custom-range label{{margin:0 6px;font-weight:600;color:#1f3a2e}}
+  .custom-range input[type=date]{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit}}
+  .custom-range button{{padding:6px 14px;background:#2d6a4f;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px}}
+  .custom-range .hint{{font-size:11px;color:#888;margin-top:4px}}
 </style></head>
 <body>
 <div class="header">
@@ -181,6 +188,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <button data-mode="today">今日</button>
   <button data-mode="month" class="active">本月</button>
   <button data-mode="quarter">本季 (Q{quarter})</button>
+  <button data-mode="custom">📅 自訂區間</button>
+</div>
+
+<div class="custom-range" id="customRange">
+  <label>從</label><input type="date" id="dateStart" min="{data_start}" max="{today}" value="{data_start}">
+  <label>到</label><input type="date" id="dateEnd" min="{data_start}" max="{today}" value="{today}">
+  <button onclick="applyCustom()">套用</button>
+  <div class="hint">可選範圍：{data_start} ~ {today}（資料涵蓋過去 92 天）</div>
 </div>
 
 <div class="period" id="period-info"></div>
@@ -301,8 +316,9 @@ function render(mode) {{
 
   // 更新排名
   const sorted = [...DATA].sort((a, b) => b[mode] - a[mode]);
-  document.getElementById('ranking-title').textContent =
-    (mode === 'today' ? '今日' : mode === 'month' ? '本月' : '本季') + '累積雨量排名';
+  const modeName = mode === 'today' ? '今日' : mode === 'month' ? '本月'
+                 : mode === 'quarter' ? '本季' : '自訂區間';
+  document.getElementById('ranking-title').textContent = modeName + '累積雨量排名';
   const tbody = document.querySelector('#ranking-table tbody');
   tbody.innerHTML = '';
   sorted.slice(0, 10).forEach((c, i) => {{
@@ -332,7 +348,9 @@ function draw(geo, mode) {{
       const {{name, row}} = getDataForFeature(feature);
       const v = row ? row[mode] : 0;
       const {{color, label}} = pickBand(v, mode);
-      const modeLabel = mode === 'today' ? '今日' : mode === 'month' ? '本月累積' : '本季累積';
+      const modeLabel = mode === 'today' ? '今日'
+                       : mode === 'month' ? '本月累積'
+                       : mode === 'quarter' ? '本季累積' : '區間累積';
       layer.bindPopup(
         '<div class="popup-content"><strong>' + name + '</strong><br>' +
         modeLabel + '：' +
@@ -360,9 +378,39 @@ document.querySelectorAll('.toggle button').forEach(b => {{
   b.addEventListener('click', () => {{
     document.querySelectorAll('.toggle button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
-    render(b.dataset.mode);
+    const mode = b.dataset.mode;
+    // 「自訂區間」→ 顯示日期選擇 UI；其他 → 隱藏
+    document.getElementById('customRange').classList.toggle('show', mode === 'custom');
+    if (mode === 'custom') {{
+      applyCustom();  // 用預設值先算一次
+    }} else {{
+      render(mode);
+    }}
   }});
 }});
+
+function applyCustom() {{
+  const start = document.getElementById('dateStart').value;
+  const end   = document.getElementById('dateEnd').value;
+  if (!start || !end || start > end) {{
+    alert('請確認起訖日期（開始日不得晚於結束日）');
+    return;
+  }}
+  // 對每縣依 daily map 加總 start ~ end 的雨量
+  DATA.forEach(c => {{
+    let sum = 0;
+    if (c.daily) {{
+      for (const [d, mm] of Object.entries(c.daily)) {{
+        if (d >= start && d <= end) sum += Number(mm) || 0;
+      }}
+    }}
+    c.custom = Math.round(sum * 10) / 10;
+  }});
+  // 動態更新 PERIODS.custom 顯示字串
+  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+  PERIODS.custom = start + ' ~ ' + end + '（共 ' + days + ' 天）';
+  render('custom');
+}}
 
 render('month');
 </script>
@@ -370,6 +418,7 @@ render('month');
 
 
 def build_html(rows: list, today: date) -> str:
+    from datetime import timedelta
     quarter = (today.month - 1) // 3 + 1
 
     # 算各 mode 的統計期間
@@ -379,10 +428,14 @@ def build_html(rows: list, today: date) -> str:
     quarter_start = date(today.year, q_start_month, 1)
     quarter_days = (today - quarter_start).days + 1
 
+    # 自訂區間可選日期範圍 = 今天往前 92 天（Open-Meteo past_days 上限）
+    data_start = (today - timedelta(days=91)).isoformat()
+
     periods = {
         "today": f"{today.isoformat()}（全日）",
         "month": f"{month_start.isoformat()} ~ {today.isoformat()}（共 {month_days} 天）",
         "quarter": f"{quarter_start.isoformat()} ~ {today.isoformat()}（Q{quarter}，共 {quarter_days} 天）",
+        "custom": f"{data_start} ~ {today.isoformat()}（自訂區間，預設為過去 92 天）",
     }
 
     legend_rows = "\n  ".join(
@@ -394,6 +447,7 @@ def build_html(rows: list, today: date) -> str:
     return HTML_TEMPLATE.format(
         today=today.isoformat(),
         quarter=quarter,
+        data_start=data_start,
         data_json=json.dumps(rows, ensure_ascii=False),
         bands_json=json.dumps([[lo, hi, c, lbl] for lo, hi, c, lbl in COLOR_BANDS]),
         name_map_json=json.dumps(COUNTY_NAME_MAP, ensure_ascii=False),
@@ -418,6 +472,7 @@ def collect_rows(verbose: bool = True) -> list:
                 "today": agg["today"],
                 "month": agg["month"],
                 "quarter": agg["quarter"],
+                "daily": daily,   # 完整每日雨量 → 讓 JS 端算自訂區間
             })
             if verbose:
                 print(f"今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
