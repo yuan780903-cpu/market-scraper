@@ -3604,9 +3604,9 @@ function __palmAgeTone(age){
  if(age<=65)return{k:"中年・看收成",s:"你正進入收成與轉換的階段，經驗是你最大的資產。以下分析可作為調整節奏、傳承所長的參考。"};
  return{k:"長者・看福氣",s:"歲月沉澱出你的圓融與安穩。以下分析多談安康與自在，願你日子順心、福氣綿長。"};
 }
-function palmSec(h,inner){return '<div style="margin:0 0 18px;padding:18px 20px;background:#fffdf7;border:1px solid #eaddb4;border-radius:14px"><div style="font-weight:700;font-size:1.05rem;color:#a9801c;letter-spacing:1px;margin-bottom:10px">'+h+'</div>'+inner+'</div>';}
-function palmP(t){return '<p style="margin:0 0 8px;line-height:1.9;color:#4a3c1d">'+t+'</p>';}
-function palmRemind(t){return '<p style="margin:8px 0 0;padding:10px 12px;background:#f3ece0;border-radius:8px;font-size:.92rem;line-height:1.8;color:#7a6a44">◆ 溫和提醒：'+t+'</p>';}
+function palmSec(h,inner){return '<div class="palm-sec" style="margin:0 0 18px;padding:18px 20px;background:#fffdf7;border:1px solid #eaddb4;border-radius:14px"><div class="palm-sec-h" style="font-weight:700;font-size:1.05rem;color:#a9801c;letter-spacing:1px;margin-bottom:10px">'+h+'</div>'+inner+'</div>';}
+function palmP(t){return '<p class="palm-p" style="margin:0 0 8px;line-height:1.9;color:#4a3c1d">'+t+'</p>';}
+function palmRemind(t){return '<p class="palm-p" style="margin:8px 0 0;padding:10px 12px;background:#f3ece0;border-radius:8px;font-size:.92rem;line-height:1.8;color:#7a6a44">◆ 溫和提醒：'+t+'</p>';}
 async function renderPalm(age,hand,hasAlt,f){
  const handTxt=hand==="both"?"兩手並用":((hand==="right"?"右":"左")+"撇子");
  const payloadStr="palm:"+age+":"+hand+":"+JSON.stringify(f);
@@ -3668,7 +3668,7 @@ async function renderPalm(age,hand,hasAlt,f){
  const locked=!unlocked;
  const premBlock='<div id="palmPrem"'+(locked?' style="filter:blur(7px);pointer-events:none;user-select:none;max-height:640px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 58%,transparent);mask-image:linear-gradient(#000 58%,transparent)"':'')+'>'+prem+discBox+'</div>';
  const html=
-  '<div style="max-width:760px;margin:0 auto">'+
+  '<div class="palm-report" style="max-width:760px;margin:0 auto">'+
   '<div style="text-align:center;margin:0 0 6px"><div style="font-size:1.5rem;font-weight:700;color:#8a6a14;letter-spacing:2px">手相掌紋分析</div>'+
   '<div style="color:#9a8148;margin-top:6px">年齡 '+age+' · '+handTxt+' · 製表 2026</div></div>'+
   '<div style="margin:10px 0 18px;padding:10px 14px;background:#fbeee0;border-radius:8px;font-size:.85rem;color:#8a5a3a;text-align:center">AI 影像參考 · 民俗娛樂用途</div>'+
@@ -3676,7 +3676,8 @@ async function renderPalm(age,hand,hasAlt,f){
   '<div style="text-align:center;margin:22px 0 10px;color:#a9801c;font-weight:700;letter-spacing:2px">── 以下為完整深論 ──</div>'+
   premBlock+
   (locked?__palmPaywallHTML():'')+
-  '</div>';
+  '</div>'+
+  (unlocked?'<div style="text-align:center;margin:22px 0 6px"><button onclick="palmSaveImg()" style="padding:12px 22px;margin:5px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">下載報告圖片</button><button onclick="palmPrint()" style="padding:12px 22px;margin:5px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:700;cursor:pointer">列印／存 PDF</button></div>':'');
  const res=document.getElementById("result");
  if(res){res.innerHTML=html;res.scrollIntoView({behavior:"smooth",block:"start"});}
 }
@@ -3731,6 +3732,64 @@ async function palmCodeUnlock(){
  let res;try{res=await lcRedeem(code);}catch(e){if(msg){msg.textContent="✗ 無法連線驗證伺服器。";msg.style.color="#c0392b";}return;}
  if(res&&res.ok){try{localStorage.setItem("zw_lic_"+await lcKey(window.__LC.payload),"1");}catch(e){}__palmRerenderUnlocked();return;}
  if(msg){msg.textContent="✗ 此碼無法解鎖（掌紋報告支援萬用碼與付款）。";msg.style.color="#c0392b";}
+}
+/* ===== 掌相報告：下載圖片（純 Canvas 2D，CSP 安全、iOS 可用）＋ 列印/存 PDF ===== */
+function __palmWrap(ctx,text,maxw){
+ const out=[];let cur="";
+ for(const ch of String(text)){
+   if(ch==="\n"){out.push(cur);cur="";continue;}
+   if(ctx.measureText(cur+ch).width>maxw&&cur){out.push(cur);cur=ch;}else cur+=ch;
+ }
+ if(cur)out.push(cur);return out.length?out:[""];
+}
+function __rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function palmSaveImg(){
+ const rep=document.querySelector("#result .palm-report");if(!rep)return;
+ const W=820,PAD=44,CW=W-PAD*2,IN=18,FS_H=23,FS_P=17,LH=29,LHH=31;
+ const FONT=(b,s)=>(b?"700 ":"")+s+"px 'Noto Serif TC','Songti TC',serif";
+ const secs=[...rep.querySelectorAll(".palm-sec")].map(s=>({
+   h:((s.querySelector(".palm-sec-h")||{}).textContent||"").trim(),
+   ps:[...s.querySelectorAll(".palm-p")].map(p=>p.textContent.trim()).filter(Boolean)
+ }));
+ const sub=((rep.querySelector('[style*="color:#9a8148"]')||{}).textContent||"").trim();
+ const mx=document.createElement("canvas").getContext("2d");
+ let H=PAD+40+(sub?28:0)+16;const L=[];
+ for(const s of secs){
+   mx.font=FONT(1,FS_H);const hl=__palmWrap(mx,s.h,CW-IN*2);
+   mx.font=FONT(0,FS_P);const pls=s.ps.map(p=>__palmWrap(mx,p,CW-IN*2));
+   const cardH=IN+hl.length*LHH+6+pls.reduce((a,l)=>a+l.length*LH+8,0)+IN-8;
+   L.push({hl,pls,cardH});H+=cardH+16;
+ }
+ H+=42;
+ const sc=2,c=document.createElement("canvas");c.width=W*sc;c.height=H*sc;
+ const ctx=c.getContext("2d");ctx.scale(sc,sc);
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#fdf8ea");g.addColorStop(1,"#f2e4bf");
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ let y=PAD+30;ctx.textAlign="center";
+ ctx.fillStyle="#8a6a14";ctx.font=FONT(1,32);ctx.fillText("手相掌紋分析",W/2,y);y+=30;
+ if(sub){ctx.fillStyle="#9a8148";ctx.font=FONT(0,15);ctx.fillText(sub,W/2,y);y+=24;}
+ ctx.textAlign="left";
+ for(const card of L){
+   ctx.fillStyle="#fffdf7";ctx.strokeStyle="#eaddb4";ctx.lineWidth=1;
+   __rr(ctx,PAD,y,CW,card.cardH,13);ctx.fill();ctx.stroke();
+   let ty=y+IN+FS_H-4;ctx.fillStyle="#a9801c";ctx.font=FONT(1,FS_H);
+   for(const hl of card.hl){ctx.fillText(hl,PAD+IN,ty);ty+=LHH;}
+   ty+=4;ctx.fillStyle="#4a3c1d";ctx.font=FONT(0,FS_P);
+   for(const pl of card.pls){for(const ln of pl){ctx.fillText(ln,PAD+IN,ty);ty+=LH;}ty+=8;}
+   y+=card.cardH+16;
+ }
+ ctx.textAlign="center";ctx.fillStyle="#9a8148";ctx.font=FONT(0,14);
+ ctx.fillText("lifeguidetw.com　·　AI 影像參考　·　民俗娛樂用途",W/2,y+14);
+ try{const a=document.createElement("a");a.download="手相掌紋分析.png";a.href=c.toDataURL("image/png");a.click();}
+ catch(e){alert("此環境無法直接下載圖片，請改用「列印／存 PDF」或長按截圖。");}
+}
+function palmPrint(){
+ const rep=document.querySelector("#result .palm-report");if(!rep)return;
+ const w=window.open("","_blank");
+ if(!w){alert("請允許彈出視窗以列印，或改用「下載報告圖片」。");return;}
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>手相掌紋分析</title><style>@page{margin:14mm}body{font-family:"Noto Serif TC","Songti TC",serif;background:#fff;margin:0;padding:20px;color:#3a2c12}</style></head><body>'+rep.innerHTML+'</body></html>');
+ w.document.close();w.focus();
+ setTimeout(function(){try{w.print();}catch(e){}},500);
 }
 
 /* 家庭成員輸入 */
