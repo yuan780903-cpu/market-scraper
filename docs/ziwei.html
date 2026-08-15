@@ -3559,6 +3559,49 @@ function __palmImgB64(file){return new Promise((res,rej)=>{
   img.onerror=()=>{if(done)return;done=true;clearTimeout(to);rej(new Error("照片讀取失敗，格式可能不支援，請改用 JPG/PNG 或重拍"));};
   try{img.src=URL.createObjectURL(file);}catch(e){clearTimeout(to);rej(new Error("無法開啟照片檔"));}
 });}
+/* 在手掌照片上疊四條彩色掌紋線＋標籤＋圖例（示意標示）。orient:"right"|"left"（左手鏡像）。回傳 JPEG dataURL */
+function __palmAnnotate(file,orient){return new Promise((res)=>{
+  const img=new Image();const to=setTimeout(()=>res(null),15000);
+  img.onload=()=>{clearTimeout(to);try{
+    let W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+    const maxW=720;if(W>maxW){H=Math.round(H*maxW/W);W=maxW;}
+    const c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d");
+    g.drawImage(img,0,0,W,H);
+    g.fillStyle="rgba(0,0,0,0.15)";g.fillRect(0,0,W,H);
+    const mir=(orient==="left"),X=fx=>(mir?1-fx:fx)*W,Y=fy=>fy*H,lw=Math.max(3,W*0.0085);
+    function line(pts,color,dash){
+      g.setLineDash(dash?[lw*2.4,lw*1.8]:[]);g.lineWidth=lw;g.strokeStyle=color;g.lineCap="round";g.lineJoin="round";
+      g.shadowColor="rgba(0,0,0,0.6)";g.shadowBlur=lw;
+      g.beginPath();g.moveTo(X(pts[0][0]),Y(pts[0][1]));
+      for(let i=1;i<pts.length-1;i++){const xc=(X(pts[i][0])+X(pts[i+1][0]))/2,yc=(Y(pts[i][1])+Y(pts[i+1][1]))/2;g.quadraticCurveTo(X(pts[i][0]),Y(pts[i][1]),xc,yc);}
+      const n=pts.length-1;g.lineTo(X(pts[n][0]),Y(pts[n][1]));g.stroke();
+      g.shadowBlur=0;g.setLineDash([]);
+    }
+    line([[0.42,0.33],[0.37,0.42],[0.31,0.56],[0.34,0.72],[0.44,0.84]],"#2fb344",false); // 生命線 綠
+    line([[0.41,0.45],[0.50,0.52],[0.62,0.57],[0.73,0.59]],"#f2c40e",false);              // 智慧線 黃
+    line([[0.72,0.35],[0.60,0.33],[0.48,0.34],[0.39,0.38]],"#4dabf7",false);              // 感情線 藍
+    line([[0.53,0.84],[0.525,0.64],[0.52,0.48],[0.52,0.35]],"#e64980",true);              // 事業線 紫紅虛線
+    function tag(fx,fy,txt,color){
+      const fs=Math.round(W*0.03);g.font="bold "+fs+"px 'Noto Serif TC','Songti TC',serif";g.textBaseline="middle";
+      const tw=g.measureText(txt).width,px=X(fx),py=Y(fy);
+      g.fillStyle="rgba(0,0,0,0.6)";g.fillRect(px-6,py-fs*0.75,tw+12,fs*1.5);
+      g.fillStyle=color;g.fillText(txt,px,py);
+    }
+    tag(0.44,0.30,"生命線","#69db7c");tag(0.745,0.60,"智慧線","#ffe066");
+    tag(0.30,0.40,"感情線","#a5d8ff");tag(0.545,0.31,"事業線","#faa2c1");
+    // 圖例（右下）
+    const bx=W*0.985,by=H*0.985,lh=Math.round(W*0.036),fs2=Math.round(W*0.026),bw=W*0.30;
+    g.setLineDash([]);g.fillStyle="rgba(0,0,0,0.62)";g.fillRect(bx-bw,by-lh*4.6,bw,lh*4.6);
+    g.font="bold "+fs2+"px 'Noto Serif TC',serif";g.textBaseline="middle";
+    [["生命線","#2fb344"],["智慧線","#f2c40e"],["感情線","#4dabf7"],["事業線","#e64980"]].forEach((r,i)=>{
+      const yy=by-lh*4.6+lh*(i+0.7);g.strokeStyle=r[1];g.lineWidth=lw;g.beginPath();g.moveTo(bx-bw+10,yy);g.lineTo(bx-bw+38,yy);g.stroke();
+      g.fillStyle="#fff";g.fillText(r[0],bx-bw+46,yy);
+    });
+    res(c.toDataURL("image/jpeg",0.85));
+  }catch(e){res(null);}};
+  img.onerror=()=>{clearTimeout(to);res(null);};
+  img.src=URL.createObjectURL(file);
+});}
 async function palmRun(){
   const err=document.getElementById("palmErr");err.style.display="none";err.style.color="";
   const age=__palmAge();
@@ -3582,8 +3625,11 @@ async function palmRun(){
       j=await r.json();
     }finally{clearTimeout(to);stopTick();}
     if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":("回應異常："+((j&&j.reason)||"unknown")));
-    pct=100;bar("產生報告中…");
-    await renderPalm(age,palmHand,!!palmAltFile,j.features);
+    pct=100;bar("繪製掌紋圖…");
+    const mainO=(palmHand==="left")?"left":"right",altO=(mainO==="left")?"right":"left";
+    const annMain=await __palmAnnotate(palmMainFile,mainO);
+    const annAlt=palmAltFile?await __palmAnnotate(palmAltFile,altO):null;
+    await renderPalm(age,palmHand,!!palmAltFile,j.features,{main:annMain,alt:annAlt});
     err.style.color="#2f8a5a";err.innerHTML='<div style="font-weight:700;font-size:1.05rem">✓ 分析完成！</div><div style="margin-top:4px">報告已顯示於下方 ↓ 請往下捲動查看</div>';err.style.display="block";
   }catch(e){
     stopTick();
@@ -3644,11 +3690,12 @@ function __palmAgeTone(age){
 function palmSec(h,inner){return '<div class="palm-sec" style="margin:0 0 18px;padding:18px 20px;background:#fffdf7;border:1px solid #eaddb4;border-radius:14px"><div class="palm-sec-h" style="font-weight:700;font-size:1.05rem;color:#a9801c;letter-spacing:1px;margin-bottom:10px">'+h+'</div>'+inner+'</div>';}
 function palmP(t){return '<p class="palm-p" style="margin:0 0 8px;line-height:1.9;color:#4a3c1d">'+t+'</p>';}
 function palmRemind(t){return '<p class="palm-p" style="margin:8px 0 0;padding:10px 12px;background:#f3ece0;border-radius:8px;font-size:.92rem;line-height:1.8;color:#7a6a44">◆ 溫和提醒：'+t+'</p>';}
-async function renderPalm(age,hand,hasAlt,f){
+async function renderPalm(age,hand,hasAlt,f,ann){
  const handTxt=hand==="both"?"兩手並用":((hand==="right"?"右":"左")+"撇子");
+ ann=ann||(__palmLast&&__palmLast.ann)||{};
  const payloadStr="palm:"+age+":"+hand+":"+JSON.stringify(f);
  window.__LC={payload:payloadStr,name:""};
- __palmLast={age:age,hand:hand,hasAlt:hasAlt,features:f};
+ __palmLast={age:age,hand:hand,hasAlt:hasAlt,features:f,ann:ann};
  try{localStorage.setItem("zw_palm_last",JSON.stringify(__palmLast));}catch(e){}
  const unlocked=await lcIsUnlocked(payloadStr);
  const tone=__palmAgeTone(age);
@@ -3709,10 +3756,11 @@ async function renderPalm(age,hand,hasAlt,f){
   '<div style="text-align:center;margin:0 0 6px"><div style="font-size:1.5rem;font-weight:700;color:#8a6a14;letter-spacing:2px">手相掌紋分析</div>'+
   '<div style="color:#9a8148;margin-top:6px">年齡 '+age+' · '+handTxt+' · 製表 2026</div></div>'+
   '<div style="margin:10px 0 18px;padding:10px 14px;background:#fbeee0;border-radius:8px;font-size:.85rem;color:#8a5a3a;text-align:center">AI 影像參考 · 民俗娛樂用途</div>'+
+  __palmImgsHTML(ann,hand)+
   free+
   '<div style="text-align:center;margin:22px 0 10px;color:#a9801c;font-weight:700;letter-spacing:2px">── 以下為完整深論 ──</div>'+
   premBlock+
-  (locked?__palmPaywallHTML():__palmDownloadHTML())+
+  (locked?__palmPaywallHTML():'')+
   '</div>'+
   (unlocked?'<div style="text-align:center;margin:22px 0 6px"><button onclick="palmSaveImg()" style="padding:12px 22px;margin:5px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">下載報告圖片</button><button onclick="palmPrint()" style="padding:12px 22px;margin:5px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:700;cursor:pointer">列印／存 PDF</button></div>':'');
  const res=document.getElementById("result");
@@ -3735,6 +3783,16 @@ function __palmPaywallHTML(){
   +'</div>';
 }
 function __palmRerenderUnlocked(){return __palmLast?renderPalm(__palmLast.age,__palmLast.hand,__palmLast.hasAlt,__palmLast.features):Promise.resolve();}
+function __palmImgsHTML(ann,hand){
+ if(!ann||(!ann.main&&!ann.alt))return '';
+ const one=(src,t)=>src?('<div style="text-align:center;margin:0 0 12px"><img src="'+src+'" alt="掌紋標示" style="max-width:100%;border-radius:14px;border:1px solid #e3d199;box-shadow:0 8px 22px -12px rgba(120,90,20,.5)"><div style="font-size:.82rem;color:#8a7a4a;margin:5px 0 2px">'+t+'</div></div>'):'';
+ const mainLbl=(hand==="left")?"左手（慣用手）":"慣用手";
+ let h='<div class="palm-hands" style="margin:0 0 16px">';
+ h+=one(ann.main,mainLbl+"・掌紋位置標示（示意）");
+ if(ann.alt)h+=one(ann.alt,"另一手（先天輔看）・掌紋位置標示（示意）");
+ h+='<div style="text-align:center;font-size:.8rem;color:#9a8a5a;line-height:1.6">＊ 彩色線為掌紋位置示意；每個人掌紋略有差異，請對照自己手掌參看。手機可長按圖片保存。</div></div>';
+ return h;
+}
 function __palmDownloadHTML(){
  return '<div style="text-align:center;margin:26px 0 8px">'
   +'<button onclick="palmDownloadPDF()" style="'+PALM_BTN+'">下載 PDF 報告</button>'
