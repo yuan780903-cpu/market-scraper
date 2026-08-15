@@ -1837,7 +1837,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
       <div class="field full">
         <label>慣用手照片（後天・主看・必填）</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">直接拍照<input id="palmMainCam" type="file" accept="image/*" capture="environment" style="display:none"></label>
+          <button type="button" onclick="palmOpenCamera('main')" style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">開啟相機（對位框）</button>
           <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">從相簿／檔案選<input id="palmMainLib" type="file" accept="image/*" style="display:none"></label>
         </div>
         <div id="palmPrevMain" style="margin-top:10px"></div>
@@ -1845,7 +1845,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
       <div class="field full">
         <label>另一手照片（先天・輔看・選填）</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">直接拍照<input id="palmAltCam" type="file" accept="image/*" capture="environment" style="display:none"></label>
+          <button type="button" onclick="palmOpenCamera('alt')" style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">開啟相機（對位框）</button>
           <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">從相簿／檔案選<input id="palmAltLib" type="file" accept="image/*" style="display:none"></label>
         </div>
         <div id="palmPrevAlt" style="margin-top:10px"></div>
@@ -3559,6 +3559,69 @@ function __palmImgB64(file){return new Promise((res,rej)=>{
   img.onerror=()=>{if(done)return;done=true;clearTimeout(to);rej(new Error("照片讀取失敗，格式可能不支援，請改用 JPG/PNG 或重拍"));};
   try{img.src=URL.createObjectURL(file);}catch(e){clearTimeout(to);rej(new Error("無法開啟照片檔"));}
 });}
+/* ===== 自訂相機：即時影像＋虛線手掌對位框，幫使用者拍出好照片供 AI 判讀 ===== */
+let __palmCamStream=null,__palmCamTarget="main";
+function __palmCamGuideSVG(){
+  const mir=(palmHand==="left");
+  const t=mir?'transform="translate(300,0) scale(-1,1)"':'';
+  return '<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">'
+   +'<g '+t+' fill="rgba(230,190,90,0.07)" stroke="#ffe08a" stroke-width="4" stroke-dasharray="10 8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9">'
+   +'<rect x="92" y="170" width="120" height="150" rx="46"/>'
+   +'<rect x="100" y="70" width="26" height="112" rx="13"/>'
+   +'<rect x="132" y="54" width="26" height="128" rx="13"/>'
+   +'<rect x="164" y="66" width="26" height="116" rx="13"/>'
+   +'<rect x="196" y="92" width="24" height="92" rx="12"/>'
+   +'<path d="M92 214 Q54 224 56 266 Q59 300 96 284" fill="none"/>'
+   +'</g></svg>';
+}
+async function palmOpenCamera(which){
+  __palmCamTarget=which;
+  let m=document.getElementById("palmCam");
+  if(!m){
+    m=document.createElement("div");m.id="palmCam";
+    m.style.cssText="display:none;position:fixed;inset:0;z-index:100000;background:#000;flex-direction:column;align-items:center;justify-content:center;padding:12px";
+    m.innerHTML='<div style="position:relative;width:100%;max-width:480px;aspect-ratio:3/4;background:#111;border-radius:14px;overflow:hidden">'
+      +'<video id="palmCamVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover"></video>'
+      +'<div id="palmCamGuide" style="position:absolute;inset:0;pointer-events:none"></div>'
+      +'<div id="palmCamErr" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#fff;text-align:center;padding:26px;background:rgba(0,0,0,.7);font-size:.95rem;line-height:1.7"></div>'
+      +'</div>'
+      +'<div style="color:#ffe08a;margin:14px 0 4px;text-align:center;font-size:.92rem;line-height:1.7">把手掌對準<b>虛線框</b>　·　掌心朝上、五指張開<br>光線充足、對焦清楚，畫面越滿越準</div>'
+      +'<div style="display:flex;gap:18px;align-items:center;margin-top:6px">'
+      +'<button type="button" onclick="palmCloseCamera()" style="padding:12px 22px;background:#333;color:#fff;border:none;border-radius:30px;font-size:1rem;cursor:pointer">取消</button>'
+      +'<button type="button" onclick="palmCapture()" style="width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid #a9801c;cursor:pointer"></button>'
+      +'<div style="width:74px"></div></div>';
+    document.body.appendChild(m);
+  }
+  document.getElementById("palmCamGuide").innerHTML=__palmCamGuideSVG();
+  const err=document.getElementById("palmCamErr");err.style.display="none";
+  m.style.display="flex";
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("nogum");
+    __palmCamStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:1280}},audio:false});
+    const v=document.getElementById("palmCamVideo");v.srcObject=__palmCamStream;try{await v.play();}catch(e){}
+  }catch(e){
+    err.innerHTML="無法開啟相機（可能未授權或此瀏覽器不支援）。<br>請改用「<b>從相簿／檔案選</b>」上傳，或到瀏覽器設定允許相機權限後再試。";
+    err.style.display="flex";
+  }
+}
+function palmCloseCamera(){
+  try{if(__palmCamStream){__palmCamStream.getTracks().forEach(t=>t.stop());__palmCamStream=null;}}catch(e){}
+  const m=document.getElementById("palmCam");if(m)m.style.display="none";
+}
+function palmCapture(){
+  const v=document.getElementById("palmCamVideo");
+  if(!v||!v.videoWidth){return;}
+  const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+  c.toBlob(function(blob){
+    if(!blob){alert("拍攝失敗，請再試一次或改用相簿。");return;}
+    const file=new File([blob],"palm.jpg",{type:"image/jpeg"});
+    const prevId=(__palmCamTarget==="main")?"palmPrevMain":"palmPrevAlt";
+    if(__palmCamTarget==="main")palmMainFile=file;else palmAltFile=file;
+    const prev=document.getElementById(prevId);if(prev){prev.innerHTML="";const im=document.createElement("img");im.style.cssText="max-width:180px;border-radius:10px;border:1px solid #d9be7a";im.src=URL.createObjectURL(file);prev.appendChild(im);}
+    palmCloseCamera();
+  },"image/jpeg",0.9);
+}
 /* MediaPipe 手部關鍵點：自架模型，僅掌紋分析時載入（首次約 9MB wasm＋7.5MB 模型，之後快取；純在裝置上跑、照片不外傳） */
 let __handLM=null,__handLMp=null;
 function __loadHandLM(){
@@ -3939,11 +4002,25 @@ function palmSaveImg(){
 }
 function palmPrint(){
  const rep=document.querySelector("#result .palm-report");if(!rep)return;
+ const clone=rep.cloneNode(true);
+ clone.querySelectorAll("button").forEach(b=>b.remove());
+ // 去掉「── 以下為完整深論 ──」分隔與可能的付費牆殘留，讓 PDF 乾淨連貫
+ clone.querySelectorAll("div").forEach(d=>{if(/^──.*深論.*──$/.test((d.textContent||"").trim())&&d.children.length===0)d.remove();});
  const w=window.open("","_blank");
  if(!w){alert("請允許彈出視窗以列印，或改用「下載報告圖片」。");return;}
- w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>手相掌紋分析</title><style>@page{margin:14mm}body{font-family:"Noto Serif TC","Songti TC",serif;background:#fff;margin:0;padding:20px;color:#3a2c12}</style></head><body>'+rep.innerHTML+'</body></html>');
+ const css="@page{margin:11mm}"
+  +"*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}"
+  +"body{font-family:'Noto Serif TC','Songti TC','STSong',serif;background:#fff;margin:0;padding:0;color:#3a2c12}"
+  +".palm-report{max-width:640px;margin:0 auto;padding:2px 0}"
+  +".palm-sec{break-inside:avoid;page-break-inside:avoid;margin:0 0 10px !important;padding:13px 15px !important;border:1px solid #e6d9b0 !important;border-radius:12px !important;background:#fffdf7 !important}"
+  +".palm-sec-h{font-size:15.5px !important;color:#a9801c !important;margin-bottom:7px !important}"
+  +".palm-p{margin:0 0 5px !important;line-height:1.7 !important;font-size:13.5px !important}"
+  +".palm-hands{break-inside:avoid;page-break-inside:avoid;margin-bottom:10px !important}"
+  +".palm-hands img{max-height:300px !important;width:auto !important;max-width:100% !important;display:block;margin:0 auto}"
+  +"h1,.rp-head{margin:0 0 6px}img{max-width:100%}";
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>手相掌紋分析報告</title><style>'+css+'</style></head><body><div class="palm-report">'+clone.innerHTML+'</div></body></html>');
  w.document.close();w.focus();
- setTimeout(function(){try{w.print();}catch(e){}},500);
+ setTimeout(function(){try{w.print();}catch(e){}},600);
 }
 
 /* 家庭成員輸入 */
