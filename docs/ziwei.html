@@ -3567,27 +3567,28 @@ async function palmRun(){
   if(!palmMainFile){err.textContent="請拍照或上傳慣用手的手掌照片。";err.style.display="block";return;}
   if(!consent){err.textContent="請先勾選同意上傳與娛樂聲明。";err.style.display="block";return;}
   const btn=document.getElementById("palmBtn");const oldTxt=btn.textContent;btn.disabled=true;
-  const t0=Date.now(),log=[];
-  const dbg=(m)=>{log.push("["+((Date.now()-t0)/1000).toFixed(1)+"s] "+m);err.innerHTML=log.join("<br>");err.style.color="#5a4a28";err.style.display="block";};
-  dbg("① 處理照片…");
+  let pct=0,tick=null;
+  const bar=(t)=>{err.style.color="";err.style.display="block";err.innerHTML='<div style="font-weight:700;color:#a9801c;font-size:1.05rem">'+t+'　'+Math.floor(pct)+'%</div><div style="height:10px;background:#eadfc0;border-radius:6px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+Math.floor(pct)+'%;background:linear-gradient(90deg,#dcb857,#a9801c);border-radius:6px;transition:width .35s"></div></div>';};
+  const startTick=(t)=>{tick=setInterval(()=>{if(pct<96)pct+=Math.max(0.4,(97-pct)*0.045);bar(t);},350);};
+  const stopTick=()=>{if(tick){clearInterval(tick);tick=null;}};
+  pct=6;bar("處理照片中…");
   try{
     const b64=await __palmImgB64(palmMainFile);
-    dbg("① 完成，送出約 "+Math.round(b64.length/1000)+" KB");
-    dbg("② AI 判讀中…（可能需 10–40 秒，請耐心等）");
+    pct=16;startTick("AI 影像判讀中…");
     const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),75000);
-    let j,st=0;
+    let j;
     try{
       const r=await fetch(LC_API.replace(/\/+$/,"")+"/palm/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:b64,age:age,hand:palmHand}),signal:ctrl.signal});
-      st=r.status;dbg("② 收到回應 HTTP "+st);
       j=await r.json();
-    }finally{clearTimeout(to);}
-    if(!j||!j.ok||!j.features){dbg("✗ 判讀未成功（"+((j&&j.reason)||("HTTP "+st))+"）");btn.disabled=false;btn.textContent=oldTxt;return;}
-    dbg("③ 產生報告…");
+    }finally{clearTimeout(to);stopTick();}
+    if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":("回應異常："+((j&&j.reason)||"unknown")));
+    pct=100;bar("產生報告中…");
     await renderPalm(age,palmHand,!!palmAltFile,j.features);
     err.style.display="none";
   }catch(e){
-    const m=(e&&e.name==="AbortError")?"判讀逾時（75 秒未回應），請確認網路後再試":((e&&e.message)||e);
-    dbg("✗ 失敗："+m);err.style.color="#c0392b";
+    stopTick();
+    const m=(e&&e.name==="AbortError")?"判讀逾時（網路較慢或忙碌），請稍候再試一次":((e&&e.message)||e);
+    err.style.color="#c0392b";err.innerHTML="✗ 分析失敗："+m+"<br><span style=\"font-size:.85rem\">請確認照片清晰、光線充足後再試一次。</span>";err.style.display="block";
   }finally{btn.disabled=false;btn.textContent=oldTxt;}
 }
 
@@ -3711,7 +3712,7 @@ async function renderPalm(age,hand,hasAlt,f){
   free+
   '<div style="text-align:center;margin:22px 0 10px;color:#a9801c;font-weight:700;letter-spacing:2px">── 以下為完整深論 ──</div>'+
   premBlock+
-  (locked?__palmPaywallHTML():'')+
+  (locked?__palmPaywallHTML():__palmDownloadHTML())+
   '</div>'+
   (unlocked?'<div style="text-align:center;margin:22px 0 6px"><button onclick="palmSaveImg()" style="padding:12px 22px;margin:5px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">下載報告圖片</button><button onclick="palmPrint()" style="padding:12px 22px;margin:5px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:700;cursor:pointer">列印／存 PDF</button></div>':'');
  const res=document.getElementById("result");
@@ -3734,6 +3735,22 @@ function __palmPaywallHTML(){
   +'</div>';
 }
 function __palmRerenderUnlocked(){return __palmLast?renderPalm(__palmLast.age,__palmLast.hand,__palmLast.hasAlt,__palmLast.features):Promise.resolve();}
+function __palmDownloadHTML(){
+ return '<div style="text-align:center;margin:26px 0 8px">'
+  +'<button onclick="palmDownloadPDF()" style="'+PALM_BTN+'">下載 PDF 報告</button>'
+  +'<div style="font-size:.82rem;color:#8a7a4a;margin-top:8px;line-height:1.6">開啟列印視窗後，於印表機選單選「<b>另存為 PDF</b>」即可下載；手機也可直接截圖分享。</div>'
+  +'</div>';
+}
+function palmDownloadPDF(){
+ const node=document.querySelector("#result > div");if(!node)return;
+ const clone=node.cloneNode(true);
+ clone.querySelectorAll("button").forEach(b=>b.remove());
+ const w=window.open("","_blank");
+ if(!w){alert("請允許開啟新視窗，才能列印／存成 PDF。若無法開啟，可直接截圖保存報告。");return;}
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>手相掌紋分析報告</title><style>body{font-family:\'Noto Serif TC\',\'Songti TC\',\'STSong\',serif;margin:0;padding:24px;background:#fff;color:#2f2409;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}</style></head><body>'+clone.outerHTML+'</body></html>');
+ w.document.close();
+ setTimeout(function(){try{w.focus();w.print();}catch(e){}},600);
+}
 async function palmEcPay(){
  const msg=document.getElementById("palmPayMsg");
  const c=document.getElementById("palmPayConsent");
