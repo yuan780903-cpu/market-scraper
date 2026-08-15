@@ -1819,6 +1819,21 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
           </div>
         </div>
       </div>
+      <div style="text-align:center;margin:4px 0 14px">
+        <div style="display:inline-block;padding:14px 20px;border:2px dashed #cbab5a;border-radius:18px;background:#fffdf7">
+          <svg id="palmGuideSvg" width="150" height="176" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="拍照手掌擺位示意">
+            <g id="palmGuideG" fill="rgba(181,138,30,0.07)" stroke="#b58a1e" stroke-width="3" stroke-dasharray="8 6" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="52" y="112" width="118" height="130" rx="42"/>
+              <rect x="60" y="30" width="24" height="98" rx="12"/>
+              <rect x="90" y="16" width="24" height="112" rx="12"/>
+              <rect x="120" y="26" width="24" height="102" rx="12"/>
+              <rect x="150" y="50" width="22" height="80" rx="11"/>
+              <path d="M52 152 Q18 160 20 196 Q23 224 54 210" fill="none"/>
+            </g>
+          </svg>
+          <div style="font-size:.82rem;color:#8a7a4a;line-height:1.6;margin-top:6px">掌心朝上・五指張開<br>對準框內拍攝（目前：<b id="palmGuideHand" style="color:#a9801c">右手</b>）</div>
+        </div>
+      </div>
       <div class="field full">
         <label>慣用手照片（後天・主看・必填）</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -3502,9 +3517,15 @@ function __palmAge(){
   const mo=n.getMonth()-b.getMonth();if(mo<0||(mo===0&&n.getDate()<b.getDate()))a--;
   return a;
 }
+function palmSetGuide(){
+  const g=document.getElementById("palmGuideG"),lbl=document.getElementById("palmGuideHand");if(!g)return;
+  if(palmHand==="left"){g.setAttribute("transform","translate(220,0) scale(-1,1)");if(lbl)lbl.textContent="左手";}
+  else{g.removeAttribute("transform");if(lbl)lbl.textContent=(palmHand==="both"?"任一手":"右手");}
+}
 (function initPalm(){
   const seg=document.getElementById("palmHandSeg");
-  if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("button[data-h]");if(!b)return;[...seg.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");palmHand=b.dataset.h;});
+  if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("button[data-h]");if(!b)return;[...seg.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");palmHand=b.dataset.h;palmSetGuide();});
+  palmSetGuide();
   function bind(camId,libId,prevId,setter){
     [camId,libId].forEach(id=>{
       const inp=document.getElementById(id);if(!inp)return;
@@ -3528,7 +3549,7 @@ function __palmImgB64(file){return new Promise((res,rej)=>{
   img.onload=()=>{if(done)return;done=true;clearTimeout(to);try{
     let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
     if(!w||!h){rej(new Error("讀不到照片尺寸，請換一張照片"));return;}
-    const max=1024;if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+    const max=768;if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
     const c=document.createElement("canvas");c.width=w;c.height=h;
     c.getContext("2d").drawImage(img,0,0,w,h);
     const d=c.toDataURL("image/jpeg",0.82);
@@ -3546,24 +3567,27 @@ async function palmRun(){
   if(!palmMainFile){err.textContent="請拍照或上傳慣用手的手掌照片。";err.style.display="block";return;}
   if(!consent){err.textContent="請先勾選同意上傳與娛樂聲明。";err.style.display="block";return;}
   const btn=document.getElementById("palmBtn");const oldTxt=btn.textContent;btn.disabled=true;
-  const show=(t,c)=>{err.style.color=c||"";err.textContent=t;err.style.display="block";};
-  show("① 處理照片中…","#a9801c");
+  const t0=Date.now(),log=[];
+  const dbg=(m)=>{log.push("["+((Date.now()-t0)/1000).toFixed(1)+"s] "+m);err.innerHTML=log.join("<br>");err.style.color="#5a4a28";err.style.display="block";};
+  dbg("① 處理照片…");
   try{
     const b64=await __palmImgB64(palmMainFile);
-    show("② AI 影像判讀中，請稍候…（約 10–20 秒）","#a9801c");
-    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),60000);
-    let j;
+    dbg("① 完成，送出約 "+Math.round(b64.length/1000)+" KB");
+    dbg("② AI 判讀中…（可能需 10–40 秒，請耐心等）");
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),75000);
+    let j,st=0;
     try{
       const r=await fetch(LC_API.replace(/\/+$/,"")+"/palm/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:b64,age:age,hand:palmHand}),signal:ctrl.signal});
+      st=r.status;dbg("② 收到回應 HTTP "+st);
       j=await r.json();
     }finally{clearTimeout(to);}
-    if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":("判讀回應異常："+((j&&j.reason)||"unknown")));
-    show("③ 產生報告中…","#a9801c");
+    if(!j||!j.ok||!j.features){dbg("✗ 判讀未成功（"+((j&&j.reason)||("HTTP "+st))+"）");btn.disabled=false;btn.textContent=oldTxt;return;}
+    dbg("③ 產生報告…");
     await renderPalm(age,palmHand,!!palmAltFile,j.features);
     err.style.display="none";
   }catch(e){
-    const m=(e&&e.name==="AbortError")?"判讀逾時（約 60 秒未回應），請確認網路後再試":((e&&e.message)||e);
-    show("✗ 失敗："+m,"");
+    const m=(e&&e.name==="AbortError")?"判讀逾時（75 秒未回應），請確認網路後再試":((e&&e.message)||e);
+    dbg("✗ 失敗："+m);err.style.color="#c0392b";
   }finally{btn.disabled=false;btn.textContent=oldTxt;}
 }
 
