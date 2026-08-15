@@ -3521,18 +3521,22 @@ function __palmAge(){
   bind("palmAltCam","palmAltLib","palmPrevAlt",f=>{palmAltFile=f;});
   const btn=document.getElementById("palmBtn");if(btn)btn.addEventListener("click",palmRun);
 })();
-/* 照片壓縮到最長邊 1024px 的 JPEG base64，加快上傳並符合後端大小限制 */
+/* 照片壓縮到最長邊 1024px 的 JPEG base64（加逾時保護，iPhone HEIC/大圖也不會卡死） */
 function __palmImgB64(file){return new Promise((res,rej)=>{
-  const img=new Image();
-  img.onload=()=>{try{
-    const max=1024;let w=img.width,h=img.height;
-    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+  const img=new Image();let done=false;
+  const to=setTimeout(()=>{if(!done){done=true;rej(new Error("照片載入逾時，請改用較小的照片或重拍"));}},20000);
+  img.onload=()=>{if(done)return;done=true;clearTimeout(to);try{
+    let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+    if(!w||!h){rej(new Error("讀不到照片尺寸，請換一張照片"));return;}
+    const max=1024;if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
     const c=document.createElement("canvas");c.width=w;c.height=h;
     c.getContext("2d").drawImage(img,0,0,w,h);
-    res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
-  }catch(e){rej(e);}};
-  img.onerror=()=>rej(new Error("圖片讀取失敗"));
-  img.src=URL.createObjectURL(file);
+    const d=c.toDataURL("image/jpeg",0.82);
+    if(!d||d.length<100){rej(new Error("照片轉檔失敗，請改用 JPG/PNG 或重拍"));return;}
+    res(d.split(",")[1]);
+  }catch(e){rej(new Error("照片處理失敗（"+((e&&e.message)||e)+"）"));}};
+  img.onerror=()=>{if(done)return;done=true;clearTimeout(to);rej(new Error("照片讀取失敗，格式可能不支援，請改用 JPG/PNG 或重拍"));};
+  try{img.src=URL.createObjectURL(file);}catch(e){clearTimeout(to);rej(new Error("無法開啟照片檔"));}
 });}
 async function palmRun(){
   const err=document.getElementById("palmErr");err.style.display="none";err.style.color="";
@@ -3542,16 +3546,24 @@ async function palmRun(){
   if(!palmMainFile){err.textContent="請拍照或上傳慣用手的手掌照片。";err.style.display="block";return;}
   if(!consent){err.textContent="請先勾選同意上傳與娛樂聲明。";err.style.display="block";return;}
   const btn=document.getElementById("palmBtn");const oldTxt=btn.textContent;btn.disabled=true;
-  err.style.color="#a9801c";err.textContent="AI 影像判讀中，請稍候…（約 10–20 秒）";err.style.display="block";
+  const show=(t,c)=>{err.style.color=c||"";err.textContent=t;err.style.display="block";};
+  show("① 處理照片中…","#a9801c");
   try{
     const b64=await __palmImgB64(palmMainFile);
-    const r=await fetch(LC_API.replace(/\/+$/,"")+"/palm/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:b64,age:age,hand:palmHand})});
-    const j=await r.json();
-    if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":((j&&j.reason)||"判讀失敗"));
+    show("② AI 影像判讀中，請稍候…（約 10–20 秒）","#a9801c");
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),60000);
+    let j;
+    try{
+      const r=await fetch(LC_API.replace(/\/+$/,"")+"/palm/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:b64,age:age,hand:palmHand}),signal:ctrl.signal});
+      j=await r.json();
+    }finally{clearTimeout(to);}
+    if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":("判讀回應異常："+((j&&j.reason)||"unknown")));
+    show("③ 產生報告中…","#a9801c");
+    await renderPalm(age,palmHand,!!palmAltFile,j.features);
     err.style.display="none";
-    renderPalm(age,palmHand,!!palmAltFile,j.features);
   }catch(e){
-    err.style.color="";err.textContent="✗ AI 判讀暫時失敗（"+((e&&e.message)||e)+"）。請確認照片清晰、光線充足後再試一次。";err.style.display="block";
+    const m=(e&&e.name==="AbortError")?"判讀逾時（約 60 秒未回應），請確認網路後再試":((e&&e.message)||e);
+    show("✗ 失敗："+m,"");
   }finally{btn.disabled=false;btn.textContent=oldTxt;}
 }
 
