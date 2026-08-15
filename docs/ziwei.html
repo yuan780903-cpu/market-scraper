@@ -3638,17 +3638,26 @@ function __loadHandLM(){
 async function __detectHand(imgEl){
   try{const lm=await __loadHandLM();const r=lm.detect(imgEl);return (r&&r.landmarks&&r.landmarks[0])||null;}catch(e){return null;}
 }
-/* 由 21 個手部關鍵點推出四條掌紋的路徑（正規化 0–1；自動貼合此手的位置/角度/大小） */
+/* 由 21 個手部關鍵點推出四條掌紋路徑（用手掌自身座標系：手腕→中指＝掌長軸 up、拇指側＝橫軸 perp；
+   以 (u,r) 參數定位，u=沿掌長 0手腕→1指根，r=橫向 +拇指側/-小指側，故旋轉、透視、大小皆自動貼合）。回傳正規化 0–1 影像座標 */
 function __palmPathsFromLM(L){
-  const P=i=>[L[i].x,L[i].y],lp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
-  const W0=P(0),T1=P(1),T2=P(2),I5=P(5),M9=P(9),R13=P(13),Pk17=P(17);
-  const web=lp(T2,I5,0.5);
-  const ctr=[(W0[0]+I5[0]+M9[0]+R13[0]+Pk17[0])/5,(W0[1]+I5[1]+M9[1]+R13[1]+Pk17[1])/5];
+  const P=i=>[L[i].x,L[i].y];
+  const W0=P(0),T1=P(1),I5=P(5),M9=P(9),R13=P(13),Pk=P(17);
+  const mcp=[(I5[0]+M9[0]+R13[0]+Pk[0])/4,(I5[1]+M9[1]+R13[1]+Pk[1])/4];
+  let up=[mcp[0]-W0[0],mcp[1]-W0[1]];const uL=Math.hypot(up[0],up[1])||1e-4;up=[up[0]/uL,up[1]/uL];
+  let pp=[-up[1],up[0]];                                   // 垂直於 up
+  if((pp[0]*(T1[0]-W0[0])+pp[1]*(T1[1]-W0[1]))<0)pp=[-pp[0],-pp[1]]; // 讓 pp 指向拇指側
+  const palmLen=uL, palmWid=Math.hypot(I5[0]-Pk[0],I5[1]-Pk[1])||palmLen*0.9;
+  const pt=(u,r)=>[W0[0]+up[0]*u*palmLen+pp[0]*r*palmWid, W0[1]+up[1]*u*palmLen+pp[1]*r*palmWid];
   return {
-    life:[web, lp(web,T1,0.55), lp(T1,W0,0.5), lp(T1,W0,0.85)],
-    head:[lp(web,T1,0.18), ctr, lp(ctr,lp(W0,Pk17,0.5),0.6)],
-    heart:[lp(Pk17,W0,0.30), lp(R13,W0,0.24), lp(M9,W0,0.22), lp(I5,W0,0.26)],
-    fate:[lp(W0,ctr,0.1), ctr, lp(ctr,M9,0.6)]
+    // 感情線：最上、緊貼指根下方，小指側→食指側
+    heart:[pt(0.80,-0.42),pt(0.86,-0.12),pt(0.86,0.14),pt(0.80,0.34)],
+    // 智慧線：中段橫向，虎口下方斜向小指側掌緣
+    head:[pt(0.64,0.40),pt(0.56,0.10),pt(0.50,-0.16),pt(0.44,-0.42)],
+    // 生命線：虎口起，弧繞拇指根(金星丘)到腕部拇指側
+    life:[pt(0.72,0.36),pt(0.52,0.54),pt(0.28,0.50),pt(0.12,0.32)],
+    // 事業線：腕部中央直上中指根
+    fate:[pt(0.10,0.0),pt(0.48,0.0),pt(0.86,-0.02)]
   };
 }
 /* 在手掌照片上疊四條彩色掌紋線＋標籤＋圖例。優先用 MediaPipe 關鍵點精準定位，偵測不到才退回固定位置。回傳 JPEG dataURL */
@@ -3796,6 +3805,16 @@ function __palmAgeTone(age){
 function palmSec(h,inner){return '<div class="palm-sec" style="margin:0 0 18px;padding:18px 20px;background:#fffdf7;border:1px solid #eaddb4;border-radius:14px"><div class="palm-sec-h" style="font-weight:700;font-size:1.05rem;color:#a9801c;letter-spacing:1px;margin-bottom:10px">'+h+'</div>'+inner+'</div>';}
 function palmP(t){return '<p class="palm-p" style="margin:0 0 8px;line-height:1.9;color:#4a3c1d">'+t+'</p>';}
 function palmRemind(t){return '<p class="palm-p" style="margin:8px 0 0;padding:10px 12px;background:#f3ece0;border-radius:8px;font-size:.92rem;line-height:1.8;color:#7a6a44">◆ 溫和提醒：'+t+'</p>';}
+/* 個人化開運建議（整理自中西掌相文獻，正向可行、不涉醫療/投資/絕對預言） */
+const PALM_JOB={metal:"管理、經營、金融，或需要決斷與紀律的工作",wood:"研究、規劃、專業技術、法務等需要鑽研的領域",water:"創作、文案、設計、諮商、選品等美學與溝通相關",fire:"業務、公關、餐飲、活動等開創與需要活力的工作",earth:"行政、營運、品管、工程、教職等需要穩定累積的角色"};
+function __palmAdvice(f){
+  let job=PALM_JOB[f.hand]||"發揮你最擅長的領域";
+  if(f.head==="curved")job+="；你的想像力適合再加入創作、行銷、內容類發揮";
+  else if(f.head==="straight")job+="；你的邏輯力適合再加入分析、財務、工程類發揮";
+  const love={index:"你對感情有理想、忠誠；記得也用同樣標準去欣賞對方的好，別只放大缺點。",between:"你懂得經營感情、成熟穩重；偶爾製造一點小驚喜，關係會更保鮮。",middle:"你在感情裡較重視自我空間；多一點主動表達與換位思考，會讓對方更安心。"}[f.heart]||"真誠溝通，是你感情裡最好的養分。";
+  const luck={metal:"代表色白／金；把計畫寫下、按部就班，最能發揮你的穩健。",wood:"代表色綠；固定閱讀與學習的習慣，會不斷為你加分。",water:"代表色藍；布置一個能安定情緒與創作的小角落。",fire:"代表色紅；用規律運動導引你的熱情，避免虎頭蛇尾。",earth:"代表色大地色；規律作息與長線經營，是你最大的靠山。"}[f.hand]||"找到一個能讓自己安定的日常小儀式。";
+  return {job:job,love:love,luck:luck};
+}
 async function renderPalm(age,hand,hasAlt,f,ann){
  const handTxt=hand==="both"?"兩手並用":((hand==="right"?"右":"左")+"撇子");
  ann=ann||(__palmLast&&__palmLast.ann)||{};
@@ -3851,8 +3870,15 @@ async function renderPalm(age,hand,hasAlt,f,ann){
      ?palmP("你<b>兩手並用</b>（如左打右投），先天與後天的界線較靈活——這類人往往適應力強、能左右開弓。建議雙手都上傳，系統綜合參看，解讀更貼近你。")
      :palmP("傳統有「男左女右」之說，但更完整的做法是<b>雙手綜合</b>：慣用手（"+handTxt+"）代表<b>後天</b>的努力與現況，另一手代表<b>先天</b>的天賦與底子。"))+
    (hasAlt?palmP("你已上傳雙手，系統以慣用手為主、另一手為輔，先天後天對照更完整。"):palmP("你目前只上傳一隻手。若補上另一手照片，可再看你的先天底子，報告會更完整。")));
+ // 個人化開運建議（依手型＋主線，中西合參）
+ const adv=__palmAdvice(f);
+ prem+=palmSec("個人化開運建議 · 中西合參",
+   palmP("<b>適合發展方向</b>："+adv.job+"。")+
+   palmP("<b>感情相處</b>："+adv.love)+
+   palmP("<b>開運小提醒</b>："+adv.luck)+
+   palmRemind("以上為鼓勵性方向，非保證；手相是參考，人生仍靠自己經營。"));
  // 總評
- prem+=palmSec("綜合總評 · "+tone.k,palmP(tone.s)+palmP("整體而言，你的手相顯示「"+H.t.split("、")[0]+"」是你最鮮明的底色。把它用在對的方向（"+H.dir+"），並留意上面的溫和提醒，日子會越走越順。"));
+ prem+=palmSec("綜合總評 · "+tone.k,palmP(tone.s)+palmP("整體而言，你的手相顯示「"+H.t.split("、")[0]+"」是你最鮮明的底色。把它用在對的方向（"+H.dir+"），並留意上面的溫和提醒，日子會越走越順。")+palmP("<span style=\"font-size:.86rem;color:#8a7a52\">＊ 本報告以西洋手相看格局天賦（手型・掌丘）＋中國手相看五行與當下，中西合參，力求更貼近你。</span>"));
 
  const discBox='<div style="margin:16px 0 0;padding:14px 16px;background:#f3ece0;border-radius:10px;font-size:.82rem;line-height:1.8;color:#8a7a52">＊ '+PALM_DISC+'</div>';
  const locked=!unlocked;
