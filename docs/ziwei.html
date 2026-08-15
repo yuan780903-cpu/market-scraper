@@ -3584,7 +3584,7 @@ async function palmRun(){
     if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":("回應異常："+((j&&j.reason)||"unknown")));
     pct=100;bar("產生報告中…");
     await renderPalm(age,palmHand,!!palmAltFile,j.features);
-    err.style.display="none";
+    err.style.color="#2f8a5a";err.innerHTML='<div style="font-weight:700;font-size:1.05rem">✓ 分析完成！</div><div style="margin-top:4px">報告已顯示於下方 ↓ 請往下捲動查看</div>';err.style.display="block";
   }catch(e){
     stopTick();
     const m=(e&&e.name==="AbortError")?"判讀逾時（網路較慢或忙碌），請稍候再試一次":((e&&e.message)||e);
@@ -3716,7 +3716,7 @@ async function renderPalm(age,hand,hasAlt,f){
   '</div>'+
   (unlocked?'<div style="text-align:center;margin:22px 0 6px"><button onclick="palmSaveImg()" style="padding:12px 22px;margin:5px;background:#a9801c;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">下載報告圖片</button><button onclick="palmPrint()" style="padding:12px 22px;margin:5px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:700;cursor:pointer">列印／存 PDF</button></div>':'');
  const res=document.getElementById("result");
- if(res){res.innerHTML=html;res.scrollIntoView({behavior:"smooth",block:"start"});}
+ if(res){res.innerHTML=html;setTimeout(function(){try{res.scrollIntoView({block:"start"});}catch(e){}try{var y=res.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-8;window.scrollTo(0,y);}catch(e){}},160);}
 }
 const PALM_BTN="display:inline-block;width:100%;max-width:420px;padding:14px 20px;background:#b1841a;color:#fffdf5;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;letter-spacing:1px;cursor:pointer";
 function __palmPaywallHTML(){
