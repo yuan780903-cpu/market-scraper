@@ -2,8 +2,16 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, max-age=0, must-revalidate">
+<!-- PWA · 加入主畫面即成 App -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#141d33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="人生說明書">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="color-scheme" content="light only">
@@ -1665,6 +1673,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
           <option value="mige">米卦 · 梅花易數（隨機起卦・體用斷吉凶）</option>
           <option value="guigua">烏龜卦 · 金錢六爻（搖卦・本卦變卦）</option>
           <option value="huangli">黃曆擇日 · 每日宜忌（建除・黃道・沖煞）</option>
+          <option value="palm">手相掌紋 · AI 影像判讀（手型・三大主線・掌丘・流年）</option>
         </optgroup>
         <optgroup label="── 西洋／印度 ──">
           <option value="west">西洋占星 · 太陽星座</option>
@@ -1674,7 +1683,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
         </optgroup>
       </select>
     </div>
-    <div class="grid-in">
+    <div class="grid-in" id="birthGrid">
       <div class="field">
         <label>姓名（必填）</label>
         <input id="name" type="text" placeholder="您的稱呼" autocomplete="off">
@@ -1787,6 +1796,52 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
       <button type="button" class="addfam" id="addFamBtn">＋ 新增一位對象</button>
     </details>
 
+    <div id="palmPanel" style="display:none">
+      <div class="hint">系統以 <b>AI 影像判讀</b>你的手型、三大主線與掌丘，再依傳統東方掌相文獻產出報告。<b>照片僅供本次判讀、判讀後不留存</b>。手相屬民俗娛樂參考，非科學或醫療診斷。</div>
+      <div style="background:linear-gradient(135deg,#fdf6e3,#f6ecd0);border:1px solid #e3d199;border-radius:12px;padding:14px 16px;margin:10px 0 4px;font-size:.9rem;line-height:1.85;color:#5a4a28">
+        <div style="font-weight:700;color:#a9801c;margin-bottom:4px">◆ 拍照要點（拍得好，判讀才準）</div>
+        <div>・<b>雙手都拍最準</b>：慣用手＝後天（主看）、另一手＝先天（輔看），合看更完整。</div>
+        <div>・<b>光線充足</b>：在自然光或明亮處拍，避免陰影、避免閃光反光。</div>
+        <div>・<b>對焦清楚</b>：手掌放穩、對準對焦，讓掌紋線條看得清。</div>
+        <div>・<b>掌心朝上、五指自然張開</b>，拍到<b>整個手掌</b>（含手腕到指尖）。</div>
+      </div>
+      <div class="grid-in">
+        <div class="field">
+          <label>出生日期（自動推算年齡）</label>
+          <input id="palmBirth" type="date" value="1990-01-01">
+        </div>
+        <div class="field">
+          <label>慣用手</label>
+          <div class="seg" id="palmHandSeg">
+            <button type="button" data-h="right" class="on">右撇子</button>
+            <button type="button" data-h="left">左撇子</button>
+            <button type="button" data-h="both">兩手並用</button>
+          </div>
+        </div>
+      </div>
+      <div class="field full">
+        <label>慣用手照片（後天・主看・必填）</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">直接拍照<input id="palmMainCam" type="file" accept="image/*" capture="environment" style="display:none"></label>
+          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">從相簿／檔案選<input id="palmMainLib" type="file" accept="image/*" style="display:none"></label>
+        </div>
+        <div id="palmPrevMain" style="margin-top:10px"></div>
+      </div>
+      <div class="field full">
+        <label>另一手照片（先天・輔看・選填）</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#a9801c;color:#fff;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">直接拍照<input id="palmAltCam" type="file" accept="image/*" capture="environment" style="display:none"></label>
+          <label style="display:inline-flex;align-items:center;padding:11px 20px;background:#fff;color:#8a6a14;border:1.5px solid #cbab5a;border-radius:10px;font-weight:600;cursor:pointer;font-size:.92rem">從相簿／檔案選<input id="palmAltLib" type="file" accept="image/*" style="display:none"></label>
+        </div>
+        <div id="palmPrevAlt" style="margin-top:10px"></div>
+      </div>
+      <div class="field full">
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:.85rem;line-height:1.6;cursor:pointer"><input type="checkbox" id="palmConsent" style="margin-top:4px"> <span>我同意上傳手掌照片供 AI 影像判讀，瞭解照片僅供本次分析、判讀後不留存，且本報告為傳統手相民俗娛樂參考，非醫療／健康／投資建議。</span></label>
+      </div>
+      <button class="cast" id="palmBtn" type="button">開 始 掌 紋 分 析</button>
+      <div class="err" id="palmErr"></div>
+    </div>
+
     <button class="cast" id="castBtn">演 算 命 盤</button>
     <div class="err" id="err"></div>
   </div>
@@ -1855,6 +1910,8 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <!-- html2canvas 已於 v2.0.1 移除：下載改回瀏覽器原生列印 window.print() -->
 <script>
+/* PWA：註冊 service worker（加入主畫面即成 App；失敗不影響網站） */
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
 const SITE_VERSION_DATE="2026.07.15";
@@ -3428,10 +3485,253 @@ document.getElementById("castBtn").addEventListener("click",run);
 const sysSel=document.getElementById("system");
 function applyTheme(v){document.body.dataset.theme=v;}
 sysSel.addEventListener("change",()=>{
-  document.getElementById("famwrap").style.display=sysSel.value==="comp"?"":"none";
-  applyTheme(sysSel.value);
+  const isPalm=sysSel.value==="palm";
+  document.getElementById("famwrap").style.display=(sysSel.value==="comp")?"":"none";
+  const bg=document.getElementById("birthGrid"); if(bg)bg.style.display=isPalm?"none":"";
+  const pp=document.getElementById("palmPanel"); if(pp)pp.style.display=isPalm?"":"none";
+  const cb=document.getElementById("castBtn"); if(cb)cb.style.display=isPalm?"none":"";
+  applyTheme(isPalm?"comp":sysSel.value);   /* 掌紋暫用預設主題 */
 });
 applyTheme(sysSel.value);  /* 初始主題 */
+
+/* ===== 掌紋分析（手相）輸入處理 · 增量一：先跑通輸入流程，AI 判讀與報告引擎於下一步接上 ===== */
+let palmHand="right",palmMainFile=null,palmAltFile=null,__palmLast=null;
+function __palmAge(){
+  const v=document.getElementById("palmBirth").value;if(!v)return NaN;
+  const b=new Date(v),n=new Date();let a=n.getFullYear()-b.getFullYear();
+  const mo=n.getMonth()-b.getMonth();if(mo<0||(mo===0&&n.getDate()<b.getDate()))a--;
+  return a;
+}
+(function initPalm(){
+  const seg=document.getElementById("palmHandSeg");
+  if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("button[data-h]");if(!b)return;[...seg.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");palmHand=b.dataset.h;});
+  function bind(camId,libId,prevId,setter){
+    [camId,libId].forEach(id=>{
+      const inp=document.getElementById(id);if(!inp)return;
+      inp.addEventListener("change",()=>{
+        const f=inp.files&&inp.files[0];if(!f)return;setter(f);
+        const prev=document.getElementById(prevId);prev.innerHTML="";
+        const img=document.createElement("img");
+        img.style.cssText="max-width:180px;border-radius:10px;border:1px solid #d9be7a";
+        img.src=URL.createObjectURL(f);prev.appendChild(img);
+      });
+    });
+  }
+  bind("palmMainCam","palmMainLib","palmPrevMain",f=>{palmMainFile=f;});
+  bind("palmAltCam","palmAltLib","palmPrevAlt",f=>{palmAltFile=f;});
+  const btn=document.getElementById("palmBtn");if(btn)btn.addEventListener("click",palmRun);
+})();
+/* 照片壓縮到最長邊 1024px 的 JPEG base64，加快上傳並符合後端大小限制 */
+function __palmImgB64(file){return new Promise((res,rej)=>{
+  const img=new Image();
+  img.onload=()=>{try{
+    const max=1024;let w=img.width,h=img.height;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+    const c=document.createElement("canvas");c.width=w;c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
+  }catch(e){rej(e);}};
+  img.onerror=()=>rej(new Error("圖片讀取失敗"));
+  img.src=URL.createObjectURL(file);
+});}
+async function palmRun(){
+  const err=document.getElementById("palmErr");err.style.display="none";err.style.color="";
+  const age=__palmAge();
+  const consent=document.getElementById("palmConsent").checked;
+  if(!(age>=1&&age<=120)){err.textContent="請選擇出生日期（用於推算年齡）。";err.style.display="block";return;}
+  if(!palmMainFile){err.textContent="請拍照或上傳慣用手的手掌照片。";err.style.display="block";return;}
+  if(!consent){err.textContent="請先勾選同意上傳與娛樂聲明。";err.style.display="block";return;}
+  const btn=document.getElementById("palmBtn");const oldTxt=btn.textContent;btn.disabled=true;
+  err.style.color="#a9801c";err.textContent="AI 影像判讀中，請稍候…（約 10–20 秒）";err.style.display="block";
+  try{
+    const b64=await __palmImgB64(palmMainFile);
+    const r=await fetch(LC_API.replace(/\/+$/,"")+"/palm/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:b64,age:age,hand:palmHand})});
+    const j=await r.json();
+    if(!j||!j.ok||!j.features)throw new Error((j&&j.reason==="ratelimited")?"今日判讀次數較多，請稍後再試":((j&&j.reason)||"判讀失敗"));
+    err.style.display="none";
+    renderPalm(age,palmHand,!!palmAltFile,j.features);
+  }catch(e){
+    err.style.color="";err.textContent="✗ AI 判讀暫時失敗（"+((e&&e.message)||e)+"）。請確認照片清晰、光線充足後再試一次。";err.style.display="block";
+  }finally{btn.disabled=false;btn.textContent=oldTxt;}
+}
+
+/* ========== 掌相報告引擎（規則濃縮自 掌相文獻知識庫）========== */
+const PALM_DISC="本報告為傳統手相民俗文化與命理參考，僅供娛樂與自我探索，不具科學實證，非醫療／健康／投資／法律建議。人生走向操之在己，願本報告成為你趨吉避凶、正向前進的小提醒。內容整理自傳統通行說法，各派見解略有不同；流年為象徵性參考，非精準時間表。";
+const PALM_HAND={
+ metal:{n:"金形手（掌指方正・掌肉厚實）",t:"務實、有原則、講邏輯、具領導力、重承諾",dir:"適合管理、經營，或需要決斷與紀律的工作"},
+ wood:{n:"木形手（掌長指瘦・骨節分明）",t:"善於思考分析、重視知識、做事有條理",dir:"適合研究、規劃、專業技術，凡需鑽研的領域"},
+ water:{n:"水形手（掌柔線細・圓潤細緻）",t:"感受力強、有藝術與語文天賦、隨和有同理心",dir:"適合創作、文案、設計、溝通協調"},
+ fire:{n:"火形手（掌長指短・掌根寬闊）",t:"行動派、善交際公關、熱情而有洞察力",dir:"適合業務、公關、開創型工作（記得培養恆心，事就成得穩）"},
+ earth:{n:"土形手（掌厚方大・質地結實）",t:"敦厚踏實、腳踏實地、重信用、有耐力",dir:"適合需要穩定累積與實作的工作"}
+};
+const PALM_LIFE_D={deep:"深而清晰，代表精力充沛、體質底子好，做事有續航力。",shallow:"線條較細，步調較從容；把體力用在對的地方、規律作息，會越走越穩。"};
+const PALM_LIFE_C={wide:"弧度圓大、包住掌心（金星丘飽滿）——熱情、行動力足、生活圈廣、樂於付出。",narrow:"弧度較貼近拇指——步調保守、重安全感，適合穩紮穩打、步步為營。"};
+const PALM_HEAD={straight:"線條平直——理性、務實、重邏輯，擅長組織與數字。",curved:"末端向下（斜向月丘）——想像力豐富、有創意、感性，適合創作型發揮。",mid:"弧度適中——理性與感性平衡，能同時兼顧務實與創意。"};
+const PALM_HEART={index:"末端止於食指下（木星丘）——對感情有理想、要求高、忠誠專一。",between:"末端揚至食指與中指之間——感情態度成熟，能付出也懂經營。",middle:"末端偏向中指下——個性較獨立、重視自我，感情上多一點換位思考會更圓融。"};
+const PALM_FATE={
+ palm:"起於掌根中央——早年就有方向感，靠自身努力打底。",
+ moon:"起於月丘（掌根小指側）——事業靠人緣與貴人相助，很適合服務或面向大眾的工作。",
+ venus:"起於金星丘（拇指側）——早年得家庭與長輩助力較多。",
+ life:"起點貼著生命線——白手起家、靠自己一步步打拚有成。",
+ none:"事業線不明顯——這不代表沒有事業，多為自由、多元或自己開路的職涯型態，靠彈性與人脈一樣能發光。"
+};
+const PALM_MOUNT={
+ venus:["金星丘（拇指根）","愛與活力充沛、重感情、人緣好"],
+ jupiter:["木星丘（食指下）","有抱負與領導特質、自信"],
+ saturn:["土星丘（中指下）","沉穩、有耐性、負責任"],
+ apollo:["太陽丘（無名指下）","有才藝、審美佳、受人喜歡"],
+ mercury:["水星丘（小指下）","口才好、機靈、有生意頭腦"],
+ moon:["月丘（掌根小指側）","富想像力、直覺強、得大眾緣"]
+};
+function __palmSeed(age,hand,file){return (age*7)+(hand==="left"?3:1)+(file?(file.size%97):0);}
+function __pick(a,s){return a[((s%a.length)+a.length)%a.length];}
+function __palmStubFeatures(age,hand,file){
+ const s=__palmSeed(age,hand,file);
+ return{
+  hand:__pick(["metal","wood","water","fire","earth"],s),
+  lifeD:__pick(["deep","shallow"],s>>1),lifeC:__pick(["wide","narrow"],s>>2),
+  lifeFork:((s>>3)%2)===0,lifeRemind:((s>>4)%3)===0,
+  head:__pick(["straight","curved","mid"],s>>1),headFork:((s>>2)%2)===0,headConn:((s>>3)%2)===0,
+  heart:__pick(["index","between","middle"],s),heartLong:((s>>2)%2)===0,heartBranch:((s>>3)%2)===0,
+  fate:__pick(["palm","moon","venus","life","none"],s),
+  mount1:__pick(["venus","jupiter","saturn","apollo","mercury","moon"],s),
+  mount2:__pick(["moon","mercury","venus","jupiter","apollo","saturn"],s>>3)
+ };
+}
+function __palmAgeTone(age){
+ if(age<=30)return{k:"青年・看潛力",s:"你正處在探索與累積天賦的階段，手相看的是「底子與可能性」。以下優勢，值得你大膽去試、去發展。"};
+ if(age<=50)return{k:"壯年・看實現",s:"你正走在實現與經營的階段，重點是「把優勢用在對的地方」。以下分析幫你聚焦，該深耕或取捨會更清楚。"};
+ if(age<=65)return{k:"中年・看收成",s:"你正進入收成與轉換的階段，經驗是你最大的資產。以下分析可作為調整節奏、傳承所長的參考。"};
+ return{k:"長者・看福氣",s:"歲月沉澱出你的圓融與安穩。以下分析多談安康與自在，願你日子順心、福氣綿長。"};
+}
+function palmSec(h,inner){return '<div style="margin:0 0 18px;padding:18px 20px;background:#fffdf7;border:1px solid #eaddb4;border-radius:14px"><div style="font-weight:700;font-size:1.05rem;color:#a9801c;letter-spacing:1px;margin-bottom:10px">'+h+'</div>'+inner+'</div>';}
+function palmP(t){return '<p style="margin:0 0 8px;line-height:1.9;color:#4a3c1d">'+t+'</p>';}
+function palmRemind(t){return '<p style="margin:8px 0 0;padding:10px 12px;background:#f3ece0;border-radius:8px;font-size:.92rem;line-height:1.8;color:#7a6a44">◆ 溫和提醒：'+t+'</p>';}
+async function renderPalm(age,hand,hasAlt,f){
+ const handTxt=hand==="both"?"兩手並用":((hand==="right"?"右":"左")+"撇子");
+ const payloadStr="palm:"+age+":"+hand+":"+JSON.stringify(f);
+ window.__LC={payload:payloadStr,name:""};
+ __palmLast={age:age,hand:hand,hasAlt:hasAlt,features:f};
+ try{localStorage.setItem("zw_palm_last",JSON.stringify(__palmLast));}catch(e){}
+ const unlocked=await lcIsUnlocked(payloadStr);
+ const tone=__palmAgeTone(age);
+ const H=PALM_HAND[f.hand];
+ // 免費預覽區：手型 + 三大主線概述
+ let free='';
+ free+=palmSec("你的手型 · 五行判別",palmP("<b>"+H.n+"</b>")+palmP("性格傾向："+H.t+"。")+palmP("發展方向："+H.dir+"。"));
+ free+=palmSec("三大主線 · 概覽",
+   palmP("<b>生命線</b>（主健康活力與行動力）："+PALM_LIFE_D[f.lifeD])+
+   palmP("<b>智慧線</b>（主思考與決策）："+PALM_HEAD[f.head])+
+   palmP("<b>感情線</b>（主情感與人際）："+PALM_HEART[f.heart]));
+ // 付費完整區
+ let prem='';
+ // 生命線細論
+ let life=palmP(PALM_LIFE_C[f.lifeC]);
+ if(f.lifeFork)life+=palmP("生命線末端有分叉——象徵居住地或生活環境容易有變動，是「拓展、換舞台」的機會。");
+ if(f.lifeRemind)life+=palmRemind("線上出現島紋／鎖鏈狀，表示某段時期精力較分散、壓力較大——記得放慢步調、把事情排出優先順序，把運動與紓壓變成習慣，過了就順了。");
+ prem+=palmSec("生命線 · 細論",life);
+ // 智慧線
+ let head='';
+ if(f.headConn)head+=palmP("智慧線起點與生命線相連——個性謹慎、行事前會多想，也較在意他人看法。");
+ else head+=palmP("智慧線起點與生命線分開——果斷、獨立，敢於下決定。");
+ if(f.headFork)head+=palmP("末端分叉（俗稱「作家叉」）——思路多元、能一心多用，表達力好。");
+ prem+=palmSec("智慧線 · 細論",head);
+ // 感情線
+ let heart='';
+ heart+=palmP(f.heartLong?"感情線長而橫貫——重感情、付出多；別忘了也要好好照顧自己。":"感情線俐落——個性乾脆、重理性，情感表達較低調內斂。");
+ if(f.heartBranch)heart+=palmP("上方有多條細支線——桃花與人緣旺、社交活躍。");
+ prem+=palmSec("感情線 · 細論",heart);
+ // 事業線 + 流年
+ prem+=palmSec("事業線 · 走向與流年",
+   palmP(PALM_FATE[f.fate])+
+   palmP("<b>流年三段（象徵性參考）</b>：")+
+   palmP("・<b>早期（約 0–35 歲）</b>：打基礎、求學與職涯起步。")+
+   palmP("・<b>中期（約 35–50 歲）</b>：事業主戰場、實現與衝刺期；此段常與智慧線交會（約 35 歲），代表靠專業或智慧轉強。")+
+   palmP("・<b>晚期（約 50–70 歲）</b>：收成、沉澱與傳承；此段常與感情線交會（約 45–50 歲），代表人脈或感情影響事業走向。"));
+ // 掌丘
+ const m1=PALM_MOUNT[f.mount1],m2=PALM_MOUNT[f.mount2];
+ prem+=palmSec("掌丘 · 你的優勢區",
+   palmP("你較飽滿、能量集中的部位是 <b>"+m1[0]+"</b> 與 <b>"+m2[0]+"</b>：")+
+   palmP("・"+m1[0]+"："+m1[1]+"。")+
+   palmP("・"+m2[0]+"："+m2[1]+"。")+
+   palmP("這代表你的優勢集中在這些面向，善加發揮會很加分。"));
+ // 先天後天
+ prem+=palmSec("先天 × 後天 · 雙手對照",
+   (hand==="both"
+     ?palmP("你<b>兩手並用</b>（如左打右投），先天與後天的界線較靈活——這類人往往適應力強、能左右開弓。建議雙手都上傳，系統綜合參看，解讀更貼近你。")
+     :palmP("傳統有「男左女右」之說，但更完整的做法是<b>雙手綜合</b>：慣用手（"+handTxt+"）代表<b>後天</b>的努力與現況，另一手代表<b>先天</b>的天賦與底子。"))+
+   (hasAlt?palmP("你已上傳雙手，系統以慣用手為主、另一手為輔，先天後天對照更完整。"):palmP("你目前只上傳一隻手。若補上另一手照片，可再看你的先天底子，報告會更完整。")));
+ // 總評
+ prem+=palmSec("綜合總評 · "+tone.k,palmP(tone.s)+palmP("整體而言，你的手相顯示「"+H.t.split("、")[0]+"」是你最鮮明的底色。把它用在對的方向（"+H.dir+"），並留意上面的溫和提醒，日子會越走越順。"));
+
+ const discBox='<div style="margin:16px 0 0;padding:14px 16px;background:#f3ece0;border-radius:10px;font-size:.82rem;line-height:1.8;color:#8a7a52">＊ '+PALM_DISC+'</div>';
+ const locked=!unlocked;
+ const premBlock='<div id="palmPrem"'+(locked?' style="filter:blur(7px);pointer-events:none;user-select:none;max-height:640px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 58%,transparent);mask-image:linear-gradient(#000 58%,transparent)"':'')+'>'+prem+discBox+'</div>';
+ const html=
+  '<div style="max-width:760px;margin:0 auto">'+
+  '<div style="text-align:center;margin:0 0 6px"><div style="font-size:1.5rem;font-weight:700;color:#8a6a14;letter-spacing:2px">手相掌紋分析</div>'+
+  '<div style="color:#9a8148;margin-top:6px">年齡 '+age+' · '+handTxt+' · 製表 2026</div></div>'+
+  '<div style="margin:10px 0 18px;padding:10px 14px;background:#fbeee0;border-radius:8px;font-size:.85rem;color:#8a5a3a;text-align:center">AI 影像參考 · 民俗娛樂用途</div>'+
+  free+
+  '<div style="text-align:center;margin:22px 0 10px;color:#a9801c;font-weight:700;letter-spacing:2px">── 以下為完整深論 ──</div>'+
+  premBlock+
+  (locked?__palmPaywallHTML():'')+
+  '</div>';
+ const res=document.getElementById("result");
+ if(res){res.innerHTML=html;res.scrollIntoView({behavior:"smooth",block:"start"});}
+}
+const PALM_BTN="display:inline-block;width:100%;max-width:420px;padding:14px 20px;background:#b1841a;color:#fffdf5;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;letter-spacing:1px;cursor:pointer";
+function __palmPaywallHTML(){
+ const price=(typeof LC_PRICE!=="undefined")?LC_PRICE:"888 元";
+ const pay=window.__isApp
+  ?'<button onclick="palmIapBuy()" style="'+PALM_BTN+'">App Store 購買・解鎖完整手相</button>'
+  :'<button onclick="palmEcPay()" style="'+PALM_BTN+'"><span style="display:inline-block;background:#fff;color:#0a7d33;font-weight:800;padding:1px 7px;border-radius:5px;margin-right:8px;font-size:.85em">綠界 ECPay</span>安全付款・解鎖完整手相</button>';
+ return '<div style="margin:8px 0 0;padding:24px 20px;background:linear-gradient(135deg,#fdf6e3,#f5e8cc);border:1px solid #e3d199;border-radius:16px;text-align:center">'
+  +'<div style="font-size:1.2rem;font-weight:700;color:#8a6a14;margin-bottom:6px">解鎖完整手相報告</div>'
+  +'<div style="color:#5a4a28;font-size:.9rem;line-height:1.7;margin-bottom:12px">以上手型與三大主線免費瀏覽；解鎖後可看：生命線細論、事業線流年、掌丘優勢、先天後天對照與綜合總評。</div>'
+  +'<div style="font-size:1.7rem;font-weight:700;color:#a9801c;margin-bottom:14px">'+price+'</div>'
+  +'<label style="display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:.82rem;line-height:1.7;color:#5a4a28;margin:0 auto 14px;max-width:420px;cursor:pointer"><input type="checkbox" id="palmPayConsent" style="margin-top:3px"><span>我已閱讀並同意《服務條款》與《隱私權政策》，並瞭解本服務為數位內容，一經開通即無法退費。</span></label>'
+  +pay
+  +'<div style="margin-top:16px;font-size:.88rem;color:#7a6a44">有萬用碼？<br><input id="palmCode" type="text" maxlength="24" placeholder="輸入萬用碼" style="margin-top:6px;padding:9px 12px;border:1px solid #cbab5a;border-radius:8px;width:58%;max-width:240px"> <button onclick="palmCodeUnlock()" style="padding:9px 18px;background:#a9801c;color:#fff;border:none;border-radius:8px;cursor:pointer">確認</button></div>'
+  +'<div id="palmPayMsg" style="margin-top:10px;font-size:.9rem;min-height:18px"></div>'
+  +'</div>';
+}
+function __palmRerenderUnlocked(){return __palmLast?renderPalm(__palmLast.age,__palmLast.hand,__palmLast.hasAlt,__palmLast.features):Promise.resolve();}
+async function palmEcPay(){
+ const msg=document.getElementById("palmPayMsg");
+ const c=document.getElementById("palmPayConsent");
+ if(c&&!c.checked){if(msg){msg.textContent="請先勾選同意框，才能付款。";msg.style.color="#c0392b";}return;}
+ if(typeof inAppPayGate==="function"&&inAppPayGate())return;
+ const key=await lcKey(window.__LC.payload);
+ try{localStorage.setItem("zw_ec_pending",JSON.stringify({key:key,form:{},product:"palm",palm:__palmLast,ts:Date.now()}));}catch(e){}
+ if(msg){msg.textContent="正在前往綠界付款頁…";msg.style.color="#a9801c";}
+ const ret=location.origin+location.pathname;
+ try{
+   const r=await fetch(LC_API.replace(/\/+$/,"")+"/ecpay/request?key="+encodeURIComponent(key)+"&ret="+encodeURIComponent(ret),{cache:"no-store"});
+   const j=await r.json();
+   if(j&&j.ok&&j.action&&j.params){
+     const f=document.createElement("form");f.method="POST";f.action=j.action;f.style.display="none";
+     Object.keys(j.params).forEach(k=>{const i=document.createElement("input");i.type="hidden";i.name=k;i.value=j.params[k];f.appendChild(i);});
+     document.body.appendChild(f);f.submit();
+   }else if(msg){msg.textContent="✗ 無法建立付款，請改用萬用碼或稍後再試。";msg.style.color="#c0392b";}
+ }catch(e){if(msg){msg.textContent="✗ 無法連線付款伺服器，請稍後再試。";msg.style.color="#c0392b";}}
+}
+function palmIapBuy(){
+ const msg=document.getElementById("palmPayMsg");
+ const c=document.getElementById("palmPayConsent");
+ if(c&&!c.checked){if(msg){msg.textContent="請先勾選同意框，才能購買。";msg.style.color="#c0392b";}return;}
+ try{window.webkit.messageHandlers.iap.postMessage("buy");if(msg){msg.textContent="正在開啟 App Store 付款…";msg.style.color="#a9801c";}}
+ catch(e){if(msg){msg.textContent="目前無法開啟 App 內購。";msg.style.color="#c0392b";}}
+}
+async function palmCodeUnlock(){
+ const inp=document.getElementById("palmCode"),msg=document.getElementById("palmPayMsg");
+ const code=(inp.value||"").trim().replace(/\s+/g,"");
+ if(!/^[0-9A-Za-z一-鿿]{2,24}$/.test(code)){if(msg){msg.textContent="請輸入萬用碼。";msg.style.color="#c0392b";}return;}
+ if(msg){msg.textContent="驗證中…";msg.style.color="#a9801c";}
+ let res;try{res=await lcRedeem(code);}catch(e){if(msg){msg.textContent="✗ 無法連線驗證伺服器。";msg.style.color="#c0392b";}return;}
+ if(res&&res.ok){try{localStorage.setItem("zw_lic_"+await lcKey(window.__LC.payload),"1");}catch(e){}__palmRerenderUnlocked();return;}
+ if(msg){msg.textContent="✗ 此碼無法解鎖（掌紋報告支援萬用碼與付款）。";msg.style.color="#c0392b";}
+}
 
 /* 家庭成員輸入 */
 let famSeq=0;
@@ -4142,6 +4442,8 @@ function renderNum(name,gender,sol,sub){
 /* ===== PDF 列印 ===== */
 function isInAppBrowser(ua){
   ua=ua||navigator.userAgent||"";
+  // 官方 LifeGuide App（WKWebView，UA 帶 LifeGuideApp 標記）：具原生付款與 PDF 處理，一律放行、不視為受限內建瀏覽器。
+  if(/LifeGuideApp/i.test(ua))return false;
   // 使用者可強制略過（避免 UA 誤判把真客戶鎖死）；僅在未明確傳入 ua（真實環境判斷）時才看逃生旗標，
   // 單元測試傳入 ua 字串時一律純看 UA，避免旗標污染測試。
   if(arguments.length===0){
@@ -6474,7 +6776,29 @@ async function ecReady(){
   }catch(e){__ecInfo=null;}
   return __ecInfo;
 }
+/* ===== iOS 官方 App 內購（IAP）：以 Apple 內購取代綠界，符合 App Store 規範 ===== */
+window.__isApp = /LifeGuideApp/i.test(navigator.userAgent||'');
+function __iapBuy(){
+  const m=document.getElementById('lcMsg');
+  const c=document.getElementById('iapConsentChk');
+  if(c&&!c.checked){if(m){m.textContent='請先勾選同意框，才能購買。';m.className='lcmsg err';}return;}
+  try{window.webkit.messageHandlers.iap.postMessage('buy');if(m){m.textContent='正在開啟 App Store 付款…';m.className='lcmsg';}}
+  catch(e){if(m){m.textContent='目前無法開啟 App 內購，請稍後再試。';m.className='lcmsg err';}}
+}
+// 供原生端在內購成功後呼叫，走與付款相同的解鎖路徑
+window.__iapUnlock = async function(){
+  try{if(window.__LC)localStorage.setItem('zw_lic_'+await lcKey(window.__LC.payload),'1');}catch(e){}
+  if(window.__LC&&String(window.__LC.payload).indexOf('palm:')===0){__palmRerenderUnlocked();return;}
+  const m=document.getElementById('lcMsg');if(m){m.textContent='✓ 購買成功，完整報告已開啟！';m.className='lcmsg ok';}
+  try{await lcRefresh();}catch(e){}
+  const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});
+};
 async function ecMaybeShowButton(){
+  if(window.__isApp){   // App 內：顯示 Apple 內購鈕，隱藏綠界付款與折扣碼欄
+    const iap=document.getElementById('iapBtnWrap');if(iap)iap.style.display='';
+    const man=document.getElementById('pwManual');if(man)man.style.display='none';
+    return;
+  }
   const info=await ecReady();if(!info)return;
   // 只在正式金流(prod)對一般訪客顯示；測試(stage)需網址加 ?lptest=1 才出現，避免真實客人看到測試按鈕。
   const testMode=/[?&]lptest=1\b/.test(location.search);
@@ -6533,6 +6857,14 @@ async function ecHandleReturn(){
             localStorage.removeItem('zw_ec_pending');clean();
             lpRestoreAndRender(pend.form);
             setTimeout(function(){try{lnShow(pend.year);}catch(e){}},1200);
+            return true;
+          }
+          if(pend.product==='palm'){
+            // 掌紋：照片已隨綠界跳轉消失，用先前存下的 AI 特徵重繪解鎖後報告
+            try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
+            localStorage.removeItem('zw_ec_pending');clean();
+            try{const sys=document.getElementById('system');if(sys){sys.value='palm';sys.dispatchEvent(new Event('change'));}}catch(e){}
+            if(pend.palm){__palmLast=pend.palm;renderPalm(pend.palm.age,pend.palm.hand,pend.palm.hasAlt,pend.palm.features);}
             return true;
           }
           try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
@@ -7331,6 +7663,17 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
           <span>我已閱讀並同意 <a onclick="openLegal('terms')">《服務條款》</a> 與 <a onclick="openLegal('privacy')">《隱私權政策》</a>，並瞭解本服務為<span class="pc-strong">數位內容／線上服務，一經開通即無法退費</span>，我同意放棄消費者保護法第 19 條之 7 日解除權（猶豫期）。</span>
         </label>
         <div class="pc-warn">請先閱讀並勾選上方同意框，才能進行付款。</div>
+      </div>
+    </div>
+    <div id="iapBtnWrap" class="lpwrap" style="display:none">
+      <button id="iapBtn" class="lpbtn ecbtn" onclick="__iapBuy()"><span class="ecmark">App Store</span>購買・解鎖完整報告</button>
+      <div class="lpsec">透過 <b>App Store</b> 安全付款，由 Apple 處理，完成後立即開啟完整報告。</div>
+      <div id="iapConsent" class="payconsent">
+        <label for="iapConsentChk">
+          <input type="checkbox" id="iapConsentChk">
+          <span>我已閱讀並同意 <a onclick="openLegal('terms')">《服務條款》</a> 與 <a onclick="openLegal('privacy')">《隱私權政策》</a>，並瞭解本服務為<span class="pc-strong">數位內容，一經開通即無法退費</span>。</span>
+        </label>
+        <div class="pc-warn">請先閱讀並勾選上方同意框，才能購買。</div>
       </div>
     </div>
     <div id="pwManual" class="pwpay">
