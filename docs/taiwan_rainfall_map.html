@@ -175,6 +175,23 @@
   .fcst-bar-label{color:var(--cwa-text);font-weight:600;width:42px}
   .fcst-bar-range{color:var(--cwa-text-muted);font-size:10px;font-family:ui-monospace,Menlo,monospace}
   .fcst-legend-hint{margin-top:12px;padding-top:8px;border-top:1px solid var(--cwa-border);font-size:10px;color:var(--cwa-text-muted);line-height:1.6}
+  /* 預測縣市排名 */
+  .fcst-ranking{margin-top:16px;padding-top:12px;border-top:1px dashed var(--cwa-border)}
+  .fcst-ranking-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .fcst-ranking-head h4{margin:0;font-size:14px;font-weight:700;color:var(--cwa-primary)}
+  .fcst-ranking-head button{padding:5px 12px;border:1.5px solid var(--cwa-primary);background:#fff;color:var(--cwa-primary);font-size:12px;font-weight:600;border-radius:3px;cursor:pointer;font-family:inherit}
+  .fcst-ranking-head button:hover{background:var(--cwa-primary);color:#fff}
+  .fcst-ranking table{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--cwa-border)}
+  .fcst-ranking th{padding:8px 10px;background:var(--cwa-primary);color:#fff;text-align:left;font-weight:600;font-size:12px}
+  .fcst-ranking th.n{text-align:right}
+  .fcst-ranking td{padding:7px 10px;border-bottom:1px solid var(--cwa-border)}
+  .fcst-ranking tr:nth-child(odd) td{background:var(--cwa-hover)}
+  .fcst-ranking tr:hover td{background:var(--cwa-light)}
+  .fcst-ranking td.rank{width:44px;color:var(--cwa-text-muted);font-weight:700;text-align:center;font-family:ui-monospace,Menlo,monospace}
+  .fcst-ranking td.county{font-weight:600}
+  .fcst-ranking td.mm{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700;white-space:nowrap}
+  .fcst-ranking td.lvl{width:70px;text-align:center;font-size:11px;font-weight:700}
+  .fcst-ranking .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.1)}
 
   /* ===== 天氣分析 ===== */
   .analysis-block{border-left:4px solid var(--cwa-success)}
@@ -210,7 +227,7 @@
 
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-19 19:04</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-19 19:11</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <div class="accuracy-note">
@@ -314,13 +331,25 @@
   <div class="fcst-checkboxes" id="fcstCheckboxes"></div>
   <div class="fcst-day-tabs" id="fcstTabs"></div>
   <div class="fcst-info" id="fcstInfo" style="display:none"></div>
-  <div class="fcst-wrap">
+  <div class="fcst-wrap" id="fcstWrap">
     <div id="fcstMap"></div>
     <div class="fcst-legend">
       <div class="fcst-legend-title">顏色 → 日雨量 (mm)</div>
       <div id="fcstLegendBars"></div>
       <div class="fcst-legend-hint">📍 兩指縮放可看鄉鎮街道<br>👆 點縣市顯示詳細數字</div>
     </div>
+  </div>
+  <div class="fcst-ranking" id="fcstRanking">
+    <div class="fcst-ranking-head">
+      <h4 id="fcstRankingTitle">📊 22 縣市預測雨量排名（多→少）</h4>
+      <button id="fcstSortToggle" onclick="toggleFcstSort()">⇅ 反轉排序</button>
+    </div>
+    <table><thead><tr>
+      <th style="width:44px">名次</th>
+      <th>縣市</th>
+      <th style="width:70px">等級</th>
+      <th class="n">預測雨量</th>
+    </tr></thead><tbody id="fcstRankingBody"></tbody></table>
   </div>
 </div>
 
@@ -361,7 +390,7 @@
 </div>
 
 <div class="footer">
-  產出於 2026-08-19 19:04　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
+  產出於 2026-08-19 19:11　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
 </div>
 
 <script>
@@ -729,6 +758,48 @@ function renderForecastMap(dateArr) {
   } else {
     fetch(GEOJSON_URL).then(r => r.json()).then(g => { window._geo = g; drawIt(g); });
   }
+
+  // 同步更新縣市排名
+  renderFcstRanking(dateArr, isMultiDay);
+}
+
+// 縣市排名：預設多→少，可反轉
+let fcstSortDesc = true;
+let lastFcstDateArr = null;
+let lastFcstMultiDay = false;
+
+function toggleFcstSort() {
+  fcstSortDesc = !fcstSortDesc;
+  if (lastFcstDateArr) renderFcstRanking(lastFcstDateArr, lastFcstMultiDay);
+}
+
+function renderFcstRanking(dateArr, isMultiDay) {
+  lastFcstDateArr = dateArr;
+  lastFcstMultiDay = isMultiDay;
+  const rows = DATA.map(c => ({
+    name: c.name,
+    mm: sumForecastForDates(c, dateArr),
+  })).sort((a, b) => fcstSortDesc ? b.mm - a.mm : a.mm - b.mm);
+  const rangeLbl = isMultiDay
+    ? (dateArr[0] + ' ~ ' + dateArr[dateArr.length-1] + '（累積 ' + dateArr.length + ' 天）')
+    : (dateArr[0] + ' 單日');
+  document.getElementById('fcstRankingTitle').textContent =
+    '📊 22 縣市預測雨量排名 · ' + rangeLbl + '（' + (fcstSortDesc ? '多→少' : '少→多') + '）';
+  document.getElementById('fcstSortToggle').textContent =
+    fcstSortDesc ? '⇅ 改為 少→多' : '⇅ 改為 多→少';
+  const tbody = document.getElementById('fcstRankingBody');
+  tbody.innerHTML = '';
+  rows.forEach((r, i) => {
+    const c = fcstColorForSum(r.mm, isMultiDay);
+    const lbl = fcstLabelForSum(r.mm, isMultiDay);
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="rank">' + (i + 1) + '</td>' +
+      '<td class="county">' + r.name + '</td>' +
+      '<td class="lvl" style="color:' + c + '"><span class="swatch" style="background:' + c + '"></span>' + lbl + '</td>' +
+      '<td class="mm" style="color:' + c + '">' + r.mm.toFixed(1) + ' mm</td>';
+    tbody.appendChild(tr);
+  });
 }
 
 // 預設載入第一天預測
