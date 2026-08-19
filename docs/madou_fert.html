@@ -983,6 +983,11 @@ function fillGroups(){
   sel.onchange=()=>{ save(); curGroup=sel.value; rows=loadGroup(curGroup); $('title').textContent=curGroup;
     renderHead(); renderBody(); updateTotals(); updateCount(); renderXfers(); toast('已切換：'+curGroup); };
 }
+// 確保某班別在下拉選單裡(匯入檔案帶出的班別若清單沒有就自動加入)並選取
+function ensureGroup(name){ if(!name) return; const sel=$('group');
+  if(![...sel.options].some(o=>o.value===name)) sel.appendChild(opt(name,name));
+  curGroup=name; sel.value=name; $('title').textContent=name;
+}
 
 /* ---------- 匯出 Excel（農會版：比照官方果30.xlsx 版面，可直接交農會） ---------- */
 function nongExcelHtml(){
@@ -1124,6 +1129,8 @@ async function parseXlsxRoster(file){
     });
   });
   let hr=0; for(let r=1;r<=12;r++){ if(String(grid['A'+r]||'').indexOf('班員')>=0){ hr=r; break; } } if(!hr)hr=3;
+  // 從表頭抓「班別名稱」(含"產銷班第N班"的那格，通常在第2列)
+  let className=''; for(let r=1;r<hr;r++){ for(const col of 'ABCDE'){ const v=String(grid[col+r]||'').trim(); if(/產銷班第?.{0,3}班/.test(v) && v.indexOf('申請表')<0){ className=v; break; } } if(className) break; }
   // 掃表頭找「不足」欄(班員超額登記待調撥的量)
   let shortCol=''; for(const col of 'ABCDEFGHIJKLMNOPQR'){ if(String(grid[col+hr]||'').indexOf('不足')>=0){ shortCol=col; break; } }
   const t1=v=>String(v||'').split(/\s{2,}/)[0].trim();                       // 同格多產品取第1個
@@ -1145,6 +1152,7 @@ async function parseXlsxRoster(file){
       out.push(o);
     }
   }
+  out.className=className; // 把班別名稱附在回傳陣列上
   return out;
 }
 $('bImport').onclick=()=>$('fileInput').click();
@@ -1154,10 +1162,13 @@ $('fileInput').onchange=async (e)=>{
     try{
       const roster=await parseXlsxRoster(f);
       if(!roster.length) throw new Error('未讀到班員資料（請確認是官方申請表格式）');
-      if(!confirm('由「'+f.name+'」建置「'+curGroup+'」班員初始資料，共 '+roster.length+' 人，將覆蓋目前資料，確定？')){ e.target.value=''; return; }
+      const cls=roster.className||'';
+      const target=cls||curGroup;
+      if(!confirm('由「'+f.name+'」建置'+(cls?('「'+cls+'」（檔案表頭偵測到的班別）'):('「'+curGroup+'」'))+'班員初始資料，共 '+roster.length+' 人，將覆蓋目前資料，確定？')){ e.target.value=''; return; }
+      if(cls){ ensureGroup(cls); } // 自動帶出並切換到檔案的班別
       rows=normalize(roster); save(); TRANSFERS.length=0; renderHead(); renderBody(); updateTotals(); updateCount(); if($('xferPanel'))renderXfers();
       const nShort=rows.filter(r=>parseInt(r.short)>0).length;
-      toast('✅ 已由 Excel 建置 '+roster.length+' 位班員'+(nShort?('，其中 '+nShort+' 位有超額(不足)，請看「包數統計」的超額待調撥缺口'):''));
+      toast('✅ 已建置「'+target+'」'+roster.length+' 位班員'+(nShort?('，其中 '+nShort+' 位超額，請看「包數統計」超額待調撥缺口'):''));
     }catch(err){ toast('Excel 匯入失敗：'+err.message); }
     e.target.value=''; return;
   }
