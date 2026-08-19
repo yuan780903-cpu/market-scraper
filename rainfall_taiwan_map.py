@@ -315,6 +315,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .fcst-ranking td.lvl{{width:70px;text-align:center;font-size:11px;font-weight:700}}
   .fcst-ranking .swatch{{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.1)}}
 
+  /* ===== 節氣 × 基肥影響區塊 ===== */
+  .term-detail-block{{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #f9a825}}
+  .term-detail-block h3{{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #f9a825;background:linear-gradient(90deg,#fff8e1 0%,transparent 60%)}}
+  .term-detail-block .term-hi{{color:#e65100;font-weight:900}}
+  .term-detail-lead{{padding:10px 14px;background:#fff8e1;color:#7a5a00;font-size:13px;font-weight:600;border-radius:3px;margin-bottom:10px;line-height:1.6}}
+  .term-detail-list{{margin:0;padding:0;list-style:none}}
+  .term-detail-list li{{padding:8px 12px;border-bottom:1px dashed var(--cwa-border);font-size:13px;line-height:1.6;color:var(--cwa-text)}}
+  .term-detail-list li:last-child{{border-bottom:none}}
+  .term-detail-list li:hover{{background:var(--cwa-hover)}}
+  .term-detail-foot{{margin-top:12px;padding:10px 12px;background:var(--cwa-hover);border-radius:3px;font-size:11px;color:var(--cwa-text-muted);line-height:1.7}}
+  .term-detail-foot strong{{color:var(--cwa-primary)}}
+
   /* ===== 天氣分析 ===== */
   .analysis-block{{border-left:4px solid var(--cwa-success)}}
   .analysis-block h3{{border-left-color:var(--cwa-success)}}
@@ -516,6 +528,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <th style="width:70px">等級</th>
       <th class="n">預測雨量</th>
     </tr></thead><tbody id="fcstRankingBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== 節氣 × 有機質基肥出貨影響 ===================== -->
+<div class="term-detail-block">
+  <h3>{term_emoji} 本節氣 · <span class="term-hi">{term_name}</span> — 有機質肥料（基肥）出貨影響</h3>
+  <div class="term-detail-lead">{term_hint}</div>
+  <ul class="term-detail-list">
+    {term_details_html}
+  </ul>
+  <div class="term-detail-foot">
+    ※ 有機質肥料 = 種植前 / 收成後所施的<strong>基肥</strong>，改良土壤、緩釋供養；不同於化肥追肥。<br>
+    ※ 節氣依陽曆推算，實際農時因作物品種、地區、氣候略有差異。
   </div>
 </div>
 
@@ -1317,43 +1342,129 @@ def analyze_pattern(rows: list) -> str:
     return " ".join(parts)
 
 
-# 24 節氣 + 農事提示 emoji
+# 24 節氣 + 有機質肥料(基肥)出貨影響
+# 有機質肥料 = 種植前 or 收成後所施的基肥，改良土壤、緩釋供養
+# 主要客群：果樹、葉菜、茶葉、有機認證農戶
+# 節氣時序排列（1 月放最前，符合陽曆），避免 tuple 比較跨年 bug
 SOLAR_TERMS = [
-    ((2, 4),  "立春", "🌱", "春耕開始，正是施基肥時機"),
-    ((2, 19), "雨水", "💧", "春雨漸增，注意排水防肥料流失"),
-    ((3, 5),  "驚蟄", "🐛", "蟄蟲甦醒，加強防治病蟲害"),
-    ((3, 20), "春分", "🌸", "晝夜平分，追肥好時節"),
-    ((4, 5),  "清明", "🌿", "清明前後種瓜點豆，備肥旺季"),
-    ((4, 20), "穀雨", "🌧", "雨生百穀，注意連日陰雨影響"),
-    ((5, 5),  "立夏", "☀️", "夏季開始，追肥、抗旱雙管齊下"),
-    ((5, 21), "小滿", "🌾", "麥穀漸滿，果樹進入膨大期"),
-    ((6, 6),  "芒種", "🌾", "梅雨進入尾聲，準備夏耕施肥"),
-    ((6, 21), "夏至", "🌞", "日長之至，注意炎熱對施肥影響"),
-    ((7, 7),  "小暑", "🥵", "小暑大暑，避開高溫時段施肥"),
-    ((7, 23), "大暑", "🔥", "極熱期，強烈建議清晨或傍晚出貨"),
-    ((8, 8),  "立秋", "🍂", "秋涼將近，準備秋作備肥"),
-    ((8, 23), "處暑", "🌤", "暑氣漸消，適合追肥與整地"),
-    ((9, 8),  "白露", "🌫", "白露秋分夜，果樹收成期"),
-    ((9, 23), "秋分", "🍁", "晝夜再平分，二期稻作追肥"),
-    ((10, 8), "寒露", "❄️", "寒氣漸生，注意水稻收穫期"),
-    ((10, 23),"霜降", "🌨", "秋末將至，冬作備肥開始"),
-    ((11, 7), "立冬", "🍂", "冬季開始，果樹冬肥旺季"),
-    ((11, 22),"小雪", "❄️", "冬季施肥續行，防連續陰雨"),
-    ((12, 7), "大雪", "☃️", "深冬時節，備肥期"),
-    ((12, 22),"冬至", "🥟", "冬至陽生，蓄積肥料庫存"),
-    ((1, 6),  "小寒", "🥶", "寒冬，注意保暖與客戶關懷"),
-    ((1, 20), "大寒", "🥶", "全年最冷，農事調度為主"),
+    ((1, 6),  "小寒", "🥶", "深冬寒盛，果樹修剪後基肥期", [
+        "🍎 果樹修剪後施基肥，儲備春發養分",
+        "🥬 冬季葉菜末期，收成後整地基肥",
+        "🍵 茶園休眠期，可施基肥改良土壤（茶區禁禽畜糞，用植物渣粕 5-13）",
+        "💡 出貨建議：果樹客戶備冬基肥旺季，主動洽談"]),
+    ((1, 20), "大寒", "🥶", "全年最冷，春耕備肥啟動", [
+        "🍎 果樹冬肥收尾、修剪後基肥",
+        "🥬 冬葉菜末收，準備春作整地",
+        "💡 出貨建議：規劃春節後春耕備肥、掌握客戶備貨潮"]),
+    ((2, 4),  "立春", "🌱", "春耕開始，一期稻整地基肥", [
+        "🌾 南部一期稻整地施基肥（收成前 20 天禁施）",
+        "🍎 果樹春肥期（芒果、荔枝、龍眼開花前基肥）",
+        "🥬 春葉菜播種前整地基肥",
+        "💡 出貨建議：南部果樹、水稻客戶備肥高峰"]),
+    ((2, 19), "雨水", "💧", "春雨漸增，搶乾期施基肥", [
+        "🌧 有機基肥吸附性強，比化肥耐雨，優先在雨前施用",
+        "🍎 果樹謝花前基肥（增果穩果）",
+        "💡 出貨建議：搶雨停 3-5 天空檔加速出貨"]),
+    ((3, 5),  "驚蟄", "🐛", "萬物復甦，果樹春基肥旺季", [
+        "🍎 中南部果樹（芒果、荔枝）結果前基肥",
+        "🥬 春葉菜整地基肥",
+        "🍵 高山茶春茶採收前基肥（禁禽畜糞、用植物渣粕）",
+        "💡 出貨建議：中南部果樹客戶備肥高峰、茶區出貨"]),
+    ((3, 20), "春分", "🌸", "晝夜平分，全區春肥沖刺", [
+        "🍎 果樹持續施基肥（幼果期補養）",
+        "🥬 春葉菜生長期",
+        "💡 出貨建議：全區客戶備肥最旺，注意庫存"]),
+    ((4, 5),  "清明", "🌿", "種瓜點豆，短期葉菜備肥", [
+        "🍉 春夏瓜果（西瓜、鳳梨）播種前基肥",
+        "🥬 短期葉菜整地基肥",
+        "🍵 春茶採收前 30 天禁施（風味關鍵）",
+        "💡 出貨建議：西瓜、鳳梨、芒果農戶備肥期"]),
+    ((4, 20), "穀雨", "🌧", "雨生百穀，梅雨前搶出貨", [
+        "🌾 一期稻抽穗前追肥期",
+        "🍎 果樹幼果膨大前基肥",
+        "💡 出貨建議：北中部注意梅雨影響，加速出貨"]),
+    ((5, 5),  "立夏", "☀️", "夏季開始，果實膨大期", [
+        "🍎 果樹幼果膨大期，施有機肥+鉀肥",
+        "🥬 夏季葉菜播種前整地",
+        "💡 出貨建議：果樹重要施肥週、庫存充足"]),
+    ((5, 21), "小滿", "🌾", "採收前 30 天禁施基肥", [
+        "🍎 荔枝、芒果採收前禁施有機肥（避免影響風味）",
+        "🌾 一期稻結實期，準備收後整地",
+        "💡 出貨建議：果樹客戶減量、備二期稻整地基肥"]),
+    ((6, 6),  "芒種", "🌾", "梅雨尾聲，二期稻整地基肥", [
+        "🌾 南部一期稻 6/10 起採收，收後整地施基肥",
+        "🌾 二期稻整地基肥（收後 20 天內）",
+        "🍎 荔枝採收期，收後施基肥恢復樹勢",
+        "💡 出貨建議：南部水稻農戶收後整地基肥高峰"]),
+    ((6, 21), "夏至", "🌞", "日長極致，二期稻播種備基肥", [
+        "🌾 二期稻整地基肥期",
+        "🍇 葡萄、龍眼採收前 30 天禁施",
+        "💡 出貨建議：中南部水稻客戶備肥沖刺"]),
+    ((7, 7),  "小暑", "🥵", "高溫多雨，清晨出貨時段", [
+        "🌾 二期稻分蘗期（追肥為主，非基肥重點）",
+        "🍍 鳳梨採收期",
+        "☝ 高溫下有機肥發酵快，慎選出貨/儲存",
+        "💡 出貨建議：清晨傍晚出貨、避午後雷雨"]),
+    ((7, 23), "大暑", "🔥", "極熱期，秋作準備期", [
+        "🍎 秋作果樹（釋迦、火龍果）補養基肥",
+        "🥬 秋葉菜播種前整地基肥開始",
+        "💡 出貨建議：與客戶約清晨交貨、注意肥料倉溫"]),
+    ((8, 8),  "立秋", "🍂", "秋涼將近，秋作基肥開始", [
+        "🌾 二期稻抽穗結實（禁施基肥）",
+        "🥬 秋葉菜整地基肥開始（種前基肥）",
+        "🍎 秋作果樹（柚子、柑橘、蜜棗）膨大期，重要施肥",
+        "💡 出貨建議：中南部秋作備肥、颱風季前調度庫存"]),
+    ((8, 23), "處暑", "🌤", "暑氣漸消，秋葉菜整地基肥", [
+        "🍎 柑橘、柚子膨大期補養",
+        "🥬 秋葉菜整地基肥（種植前基肥重要）",
+        "💡 出貨建議：果樹客戶進入重要施肥週"]),
+    ((9, 8),  "白露", "🌫", "露水漸生，收成前減量", [
+        "🍎 柚子採收前 30 天禁施基肥（麻豆文旦重要）",
+        "🍵 秋茶採收後施基肥恢復茶樹",
+        "💡 出貨建議：茶葉客戶秋肥期、水稻收成前減量"]),
+    ((9, 23), "秋分", "🍁", "秋收開始，收後基肥期", [
+        "🌾 中部二期稻開始收成，收後整地基肥",
+        "🍎 麻豆文旦採收期",
+        "💡 出貨建議：麻豆、水稻客戶收後整地基肥"]),
+    ((10, 8), "寒露", "❄️", "寒氣漸生，二期稻收後基肥", [
+        "🌾 二期稻收成中，收後整地基肥旺季",
+        "🍊 柑橘採收前禁施",
+        "🥬 冬季葉菜（高麗菜、大白菜）整地基肥",
+        "💡 出貨建議：水稻收後基肥旺季全面啟動"]),
+    ((10, 23),"霜降", "🌨", "秋末冬作備肥", [
+        "🌾 二期稻收成後整地基肥",
+        "🍎 果樹採收後施冬基肥（重要！儲備春發養分）",
+        "🥬 冬葉菜生長期",
+        "💡 出貨建議：冬作備肥高峰、果樹採收後施基肥"]),
+    ((11, 7), "立冬", "🍂", "果樹冬基肥旺季（果農重點）", [
+        "🍎 果樹採收後施冬基肥（1 年 1 次最重要施肥）",
+        "🥬 冬葉菜生長期",
+        "🌾 休耕田整地基肥",
+        "💡 出貨建議：果樹冬肥高峰，客戶備貨最熱烈"]),
+    ((11, 22),"小雪", "❄️", "冬肥沖刺，注意連日雨", [
+        "🍎 柑橘、柚子採收後施冬基肥",
+        "🥬 冬葉菜生長期",
+        "💡 出貨建議：冬肥沖刺、注意北部東北季風雨季"]),
+    ((12, 7), "大雪", "☃️", "深冬時節，年終備肥期", [
+        "🍎 果樹冬肥收尾期",
+        "🥬 冬葉菜（結球期）追肥",
+        "💡 出貨建議：年底衝業績、規劃明年春耕客戶"]),
+    ((12, 22),"冬至", "🥟", "冬至陽生，蓄勢年後", [
+        "🍎 果樹修剪期，修剪後施基肥",
+        "🥬 冬葉菜採收前",
+        "💡 出貨建議：年關前最後出貨機會、規劃春節後備貨"]),
 ]
 
 
 def _current_solar_term(today: date):
-    """回傳 (name, emoji, hint) — 找最近一個已過的節氣"""
+    """回傳 (name, emoji, hint, details_list) — 找最近一個已過的節氣
+    (SOLAR_TERMS 已按時序排列，避免跨年 tuple 比較 bug)"""
     md = (today.month, today.day)
-    matched = SOLAR_TERMS[-1]  # 大寒（跨年 fallback）
+    matched = SOLAR_TERMS[0]  # fallback = 小寒
     for term in SOLAR_TERMS:
         if term[0] <= md:
             matched = term
-    return matched[1], matched[2], matched[3]
+    return matched[1], matched[2], matched[3], matched[4]
 
 
 def _detect_typhoon_alert(news_items: list) -> bool:
@@ -1454,7 +1565,10 @@ def build_html(rows: list, today: date) -> str:
     ) or '<li style="color:#888">（本次未抓到相關新聞）</li>'
 
     # 節氣 + 颱風警戒 + 吉祥物
-    term_name, term_emoji, term_hint = _current_solar_term(today)
+    term_name, term_emoji, term_hint, term_details = _current_solar_term(today)
+    term_details_html = "\n    ".join(
+        f'<li>{line}</li>' for line in term_details
+    )
     typhoon_alert = _detect_typhoon_alert(news_items)
     mascot_emoji, mascot_mood, mascot_lines = _mascot_mood(rows)
 
@@ -1474,6 +1588,7 @@ def build_html(rows: list, today: date) -> str:
         term_name=term_name,
         term_emoji=term_emoji,
         term_hint=term_hint,
+        term_details_html=term_details_html,
         typhoon_class=("typhoon-alert" if typhoon_alert else ""),
         typhoon_banner=(
             '<div class="typhoon-strip">🌀 <strong>颱風警戒中</strong>　'
