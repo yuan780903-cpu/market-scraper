@@ -197,6 +197,40 @@
   .fcst-ranking td.lvl{width:70px;text-align:center;font-size:11px;font-weight:700}
   .fcst-ranking .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.1)}
 
+  /* ===== 基肥作物篩選 ===== */
+  .crops-block{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid var(--cwa-success)}
+  .crops-block h3{margin:0 0 12px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid var(--cwa-success);background:linear-gradient(90deg,#e8f5e9 0%,transparent 60%)}
+  .crops-filters{padding:12px;background:var(--cwa-hover);border:1px solid var(--cwa-border);border-radius:3px;margin-bottom:12px}
+  .crops-f-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px}
+  .crops-f-row label{font-weight:600;color:var(--cwa-text);white-space:nowrap}
+  .crops-f-row select{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px;font-family:inherit;background:#fff;color:var(--cwa-text)}
+  .crops-summary{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:14px 18px;background:var(--cwa-light);color:var(--cwa-text);border-left:4px solid var(--cwa-success);border-radius:3px;margin-bottom:12px;font-size:13px}
+  .crops-summary .stat{color:var(--cwa-text);display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}
+  .crops-summary .stat strong{color:var(--cwa-success);font-size:22px;font-family:ui-monospace,Menlo,monospace;margin:0 2px;font-weight:900;line-height:1}
+  .crops-summary .stat .unit{color:var(--cwa-text-muted);font-size:12px}
+  .crops-summary .this-month{color:var(--cwa-warning);font-weight:700;font-size:13px}
+  .crops-table-wrap{overflow-x:auto;border:1px solid var(--cwa-border);border-radius:3px}
+  .crops-table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+  .crops-table th{padding:9px 10px;background:var(--cwa-primary);color:#fff;text-align:left;font-weight:600;font-size:12px;white-space:nowrap}
+  .crops-table td{padding:8px 10px;border-bottom:1px solid var(--cwa-border);vertical-align:middle}
+  .crops-table tr:nth-child(odd) td{background:var(--cwa-hover)}
+  .crops-table tr:hover td{background:var(--cwa-light)}
+  .crops-table tr.match-month td{background:#fff9c4 !important;border-left:3px solid var(--cwa-warning)}
+  .crops-table td.cat{font-size:20px;text-align:center;line-height:1}
+  .crops-table td.name{font-weight:600;color:var(--cwa-text)}
+  .crops-table td.months{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--cwa-text-muted)}
+  .crops-table td.months .m{display:inline-block;padding:1px 5px;background:#e8f0f8;color:var(--cwa-primary);border-radius:2px;margin:1px 2px;font-weight:600}
+  .crops-table td.months .m.now{background:var(--cwa-warning);color:#fff}
+  .crops-table td.regions{color:var(--cwa-text-muted);font-size:12px}
+  .crops-table td.kg{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--cwa-primary)}
+  .crops-table td.prob{text-align:center;font-weight:700}
+  .crops-table td.prob.h{color:var(--cwa-danger)}
+  .crops-table td.prob.m{color:var(--cwa-warning)}
+  .crops-table td.prob.l{color:var(--cwa-text-muted)}
+  .crops-table td.note{font-size:11px;color:var(--cwa-text-muted)}
+  .crops-foot{margin-top:12px;padding:10px 12px;background:var(--cwa-hover);border-radius:3px;font-size:11px;color:var(--cwa-text-muted);line-height:1.8}
+  .crops-foot strong{color:var(--cwa-primary)}
+
   /* ===== 節氣 × 基肥影響區塊 ===== */
   .term-detail-block{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #f9a825}
   .term-detail-block h3{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #f9a825;background:linear-gradient(90deg,#fff8e1 0%,transparent 60%)}
@@ -293,7 +327,7 @@
 
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-20 06:58</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-20 07:11</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <div class="accuracy-note">
@@ -435,6 +469,70 @@
   </div>
 </div>
 
+<!-- ===================== 基肥施用時機 · 作物交叉篩選 ===================== -->
+<div class="crops-block">
+  <h3>🌱 基肥施用時機 · 作物 × 地區 × 面積 × 機率 交叉篩選</h3>
+  <div class="crops-filters">
+    <div class="crops-f-row">
+      <label>作物類別</label>
+      <select id="fltCat">
+        <option value="">全部</option>
+        <option value="果樹">🍎 果樹</option>
+        <option value="葉菜">🥬 葉菜</option>
+        <option value="瓜果類">🍅 瓜果類</option>
+        <option value="根莖類">🥔 根莖類</option>
+        <option value="茶葉">🍵 茶葉</option>
+      </select>
+      <label>地區</label>
+      <select id="fltRegion">
+        <option value="">全部</option>
+        <option value="北部">北部</option>
+        <option value="中部">中部</option>
+        <option value="南部" selected>南部（主要業務區）</option>
+        <option value="東部">東部</option>
+      </select>
+      <label>栽培面積</label>
+      <select id="fltArea">
+        <option value="0">不限（每甲用量顯示）</option>
+        <option value="0.5">&lt; 0.5 甲</option>
+        <option value="1">0.5-1 甲</option>
+        <option value="3">1-3 甲</option>
+        <option value="5">3-5 甲</option>
+        <option value="10">5-10 甲</option>
+        <option value="20">10 甲以上</option>
+      </select>
+      <label>使用機率</label>
+      <select id="fltProb">
+        <option value="">全部</option>
+        <option value="高">高（年 2-3 次基肥）</option>
+        <option value="中">中（年 1-2 次基肥）</option>
+      </select>
+      <label>僅顯示本月適合</label>
+      <input type="checkbox" id="fltThisMonth" style="width:16px;height:16px;accent-color:var(--cwa-primary);cursor:pointer">
+    </div>
+  </div>
+  <div class="crops-summary" id="cropsSummary"></div>
+  <div class="crops-table-wrap">
+    <table class="crops-table">
+      <thead><tr>
+        <th style="width:38px">類別</th>
+        <th>作物</th>
+        <th style="width:220px">基肥適用月份</th>
+        <th style="width:100px">主要地區</th>
+        <th style="width:90px;text-align:right">量/甲 (kg)</th>
+        <th style="width:60px;text-align:center">機率</th>
+        <th>備註</th>
+      </tr></thead>
+      <tbody id="cropsTbody"></tbody>
+    </table>
+  </div>
+  <div class="crops-foot">
+    ※ 每甲用量為業界一般值；實際依土質、樹齡、產量目標調整。<br>
+    ※ 使用機率：<strong>高</strong>=年 2-3 次基肥；<strong>中</strong>=年 1-2 次；<strong>低</strong>=1-2 年 1 次。<br>
+    ※ 果樹採收前 30 天禁施；茶區（尤其 &gt;1000m 高山茶）禁禽畜糞、只用植物渣粕（5-13）。
+  </div>
+</div>
+
 <!-- ===================== 天氣分析 ===================== -->
 <div class="analysis-block">
   <h3>🌦️ 未來一週天氣分析</h3>
@@ -472,7 +570,7 @@
 </div>
 
 <div class="footer">
-  產出於 2026-08-20 06:58　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
+  產出於 2026-08-20 07:11　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
 </div>
 
 <script>
@@ -907,6 +1005,88 @@ function renderFcstRanking(dateArr, isMultiDay) {
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {
   renderForecastMap([FORECAST_DATES[0]]);
+}
+
+// ============ 🌱 基肥作物交叉篩選 ============
+const CROPS = [{"cat": "果樹", "name": "芒果", "emoji": "🥭", "months": [11, 12, 1, 2], "regions": ["南部", "中部"], "kgPerHa": 1500, "prob": "高", "note": "採收前30天禁施"}, {"cat": "果樹", "name": "荔枝", "emoji": "🍒", "months": [10, 11, 12], "regions": ["中部", "南部"], "kgPerHa": 1500, "prob": "高", "note": "6月採收前禁施"}, {"cat": "果樹", "name": "龍眼", "emoji": "🍯", "months": [11, 12, 1], "regions": ["南部", "中部"], "kgPerHa": 1200, "prob": "中", "note": ""}, {"cat": "果樹", "name": "香蕉", "emoji": "🍌", "months": [3, 4, 5, 9, 10], "regions": ["南部", "中部"], "kgPerHa": 2500, "prob": "高", "note": "年多次基肥"}, {"cat": "果樹", "name": "鳳梨", "emoji": "🍍", "months": [2, 3, 10, 11], "regions": ["南部", "中部"], "kgPerHa": 1800, "prob": "高", "note": ""}, {"cat": "果樹", "name": "木瓜", "emoji": "🥭", "months": [3, 4, 9, 10], "regions": ["南部"], "kgPerHa": 2000, "prob": "中", "note": ""}, {"cat": "果樹", "name": "蓮霧", "emoji": "🌸", "months": [5, 6, 7], "regions": ["南部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "果樹", "name": "番石榴", "emoji": "🥝", "months": [3, 4, 10, 11], "regions": ["中部", "南部"], "kgPerHa": 2000, "prob": "高", "note": "四季採收"}, {"cat": "果樹", "name": "酪梨", "emoji": "🥑", "months": [11, 12, 1], "regions": ["中部", "南部"], "kgPerHa": 1200, "prob": "中", "note": ""}, {"cat": "果樹", "name": "火龍果", "emoji": "🐉", "months": [3, 4, 10, 11], "regions": ["南部", "中部"], "kgPerHa": 1800, "prob": "高", "note": "夜間補光需高肥"}, {"cat": "果樹", "name": "釋迦", "emoji": "🍏", "months": [3, 4, 9, 10], "regions": ["東部"], "kgPerHa": 2000, "prob": "中", "note": "台東主力"}, {"cat": "果樹", "name": "椪柑", "emoji": "🍊", "months": [11, 12, 1], "regions": ["中部"], "kgPerHa": 1500, "prob": "高", "note": "採收前30天禁施"}, {"cat": "果樹", "name": "桶柑", "emoji": "🍊", "months": [11, 12, 1], "regions": ["中部", "北部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "果樹", "name": "麻豆文旦", "emoji": "🍋", "months": [11, 12, 1], "regions": ["南部"], "kgPerHa": 1500, "prob": "高", "note": "麻豆為主"}, {"cat": "果樹", "name": "水梨", "emoji": "🍐", "months": [10, 11, 12], "regions": ["中部"], "kgPerHa": 1500, "prob": "中", "note": "高山"}, {"cat": "果樹", "name": "葡萄", "emoji": "🍇", "months": [3, 4, 9, 10], "regions": ["中部"], "kgPerHa": 1500, "prob": "中", "note": "彰化"}, {"cat": "果樹", "name": "蜜棗", "emoji": "🌰", "months": [6, 7, 8], "regions": ["南部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "果樹", "name": "百香果", "emoji": "💜", "months": [3, 4, 9, 10], "regions": ["南部", "東部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "葉菜", "name": "高麗菜", "emoji": "🥬", "months": [8, 9, 10, 11], "regions": ["中部", "南部"], "kgPerHa": 1500, "prob": "高", "note": "梨山冬季採收"}, {"cat": "葉菜", "name": "結球白菜", "emoji": "🥬", "months": [9, 10, 11], "regions": ["中部", "南部"], "kgPerHa": 1200, "prob": "高", "note": ""}, {"cat": "葉菜", "name": "青江菜", "emoji": "🥬", "months": [2, 3, 9, 10], "regions": ["南部", "北部"], "kgPerHa": 800, "prob": "中", "note": "短期作物"}, {"cat": "葉菜", "name": "菠菜", "emoji": "🌿", "months": [10, 11, 12], "regions": ["中部", "南部"], "kgPerHa": 800, "prob": "中", "note": ""}, {"cat": "葉菜", "name": "萵苣(大陸妹)", "emoji": "🥗", "months": [9, 10, 11], "regions": ["中部"], "kgPerHa": 1000, "prob": "高", "note": ""}, {"cat": "葉菜", "name": "地瓜葉", "emoji": "🍃", "months": [3, 4, 5, 9, 10], "regions": ["南部"], "kgPerHa": 1000, "prob": "高", "note": "多期採收"}, {"cat": "葉菜", "name": "空心菜", "emoji": "🌱", "months": [3, 4, 5, 6, 7], "regions": ["南部"], "kgPerHa": 800, "prob": "中", "note": "短期作物"}, {"cat": "葉菜", "name": "小白菜", "emoji": "🌿", "months": [2, 3, 9, 10, 11], "regions": ["南部", "中部"], "kgPerHa": 800, "prob": "高", "note": "常年供應"}, {"cat": "瓜果類", "name": "西瓜", "emoji": "🍉", "months": [2, 3, 4], "regions": ["南部", "中部"], "kgPerHa": 2000, "prob": "高", "note": ""}, {"cat": "瓜果類", "name": "洋香瓜", "emoji": "🍈", "months": [2, 3, 9, 10], "regions": ["南部"], "kgPerHa": 1800, "prob": "中", "note": ""}, {"cat": "瓜果類", "name": "番茄", "emoji": "🍅", "months": [9, 10, 11], "regions": ["南部", "中部"], "kgPerHa": 1500, "prob": "高", "note": ""}, {"cat": "瓜果類", "name": "辣椒/彩椒", "emoji": "🌶️", "months": [2, 3, 9, 10], "regions": ["南部"], "kgPerHa": 1200, "prob": "中", "note": ""}, {"cat": "瓜果類", "name": "茄子", "emoji": "🍆", "months": [3, 4, 9, 10], "regions": ["南部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "瓜果類", "name": "絲瓜/苦瓜", "emoji": "🥒", "months": [3, 4, 5, 9, 10], "regions": ["南部"], "kgPerHa": 1500, "prob": "中", "note": ""}, {"cat": "瓜果類", "name": "小黃瓜", "emoji": "🥒", "months": [3, 4, 9, 10], "regions": ["南部", "中部"], "kgPerHa": 1200, "prob": "中", "note": ""}, {"cat": "根莖類", "name": "洋蔥", "emoji": "🧅", "months": [9, 10, 11], "regions": ["南部"], "kgPerHa": 1800, "prob": "高", "note": "屏東為主"}, {"cat": "根莖類", "name": "蒜頭", "emoji": "🧄", "months": [9, 10, 11], "regions": ["中部", "南部"], "kgPerHa": 1200, "prob": "高", "note": "雲林主產"}, {"cat": "根莖類", "name": "馬鈴薯", "emoji": "🥔", "months": [10, 11, 12], "regions": ["中部"], "kgPerHa": 2000, "prob": "中", "note": ""}, {"cat": "根莖類", "name": "白蘿蔔", "emoji": "⚪", "months": [9, 10, 11], "regions": ["南部", "中部"], "kgPerHa": 1000, "prob": "中", "note": ""}, {"cat": "根莖類", "name": "地瓜", "emoji": "🍠", "months": [3, 4, 8, 9], "regions": ["南部", "中部"], "kgPerHa": 1500, "prob": "高", "note": "金山、雲林"}, {"cat": "根莖類", "name": "薑", "emoji": "🫚", "months": [2, 3, 4], "regions": ["中部", "南部"], "kgPerHa": 1800, "prob": "中", "note": ""}, {"cat": "茶葉", "name": "高山茶 (>1000m)", "emoji": "🍵", "months": [1, 2, 10, 11], "regions": ["中部"], "kgPerHa": 1500, "prob": "高", "note": "禁禽畜糞、用植物渣粕 5-13"}, {"cat": "茶葉", "name": "包種茶", "emoji": "🍵", "months": [1, 2, 10, 11], "regions": ["北部"], "kgPerHa": 1500, "prob": "中", "note": "坪林、深坑"}, {"cat": "茶葉", "name": "金萱/烏龍", "emoji": "🍵", "months": [1, 2, 10, 11], "regions": ["中部", "北部"], "kgPerHa": 1500, "prob": "中", "note": ""}];
+const PROB_MULT = {'高': 2.5, '中': 1.5, '低': 0.5};   // 使用機率 → 年基肥次數係數
+
+(function initCropsFilter() {
+  ['fltCat', 'fltRegion', 'fltArea', 'fltProb', 'fltThisMonth'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', renderCrops);
+  });
+  renderCrops();
+})();
+
+function renderCrops() {
+  const cat = document.getElementById('fltCat').value;
+  const region = document.getElementById('fltRegion').value;
+  const areaHa = parseFloat(document.getElementById('fltArea').value) || 0;
+  const prob = document.getElementById('fltProb').value;
+  const onlyThisMonth = document.getElementById('fltThisMonth').checked;
+  const currentMonth = new Date().getMonth() + 1;
+
+  let filtered = CROPS.filter(c => {
+    if (cat && c.cat !== cat) return false;
+    if (region && !c.regions.includes(region)) return false;
+    if (prob && c.prob !== prob) return false;
+    if (onlyThisMonth && !c.months.includes(currentMonth)) return false;
+    return true;
+  });
+
+  // 排序：本月適合放前面 > 使用機率高 > 每甲用量大
+  filtered.sort((a, b) => {
+    const am = a.months.includes(currentMonth) ? 0 : 1;
+    const bm = b.months.includes(currentMonth) ? 0 : 1;
+    if (am !== bm) return am - bm;
+    const pOrder = {'高': 0, '中': 1, '低': 2};
+    if (pOrder[a.prob] !== pOrder[b.prob]) return pOrder[a.prob] - pOrder[b.prob];
+    return b.kgPerHa - a.kgPerHa;
+  });
+
+  // 統計
+  const matchThisMonth = filtered.filter(c => c.months.includes(currentMonth));
+  const summary = document.getElementById('cropsSummary');
+  let annualEstKg = 0;
+  if (areaHa > 0) {
+    filtered.forEach(c => {
+      annualEstKg += c.kgPerHa * areaHa * (PROB_MULT[c.prob] || 1);
+    });
+  }
+  summary.innerHTML =
+    '<span class="stat">符合條件 <strong>' + filtered.length + '</strong><span class="unit">種作物</span></span>' +
+    '<span class="stat">本月（' + currentMonth + '月）適合 <strong>' + matchThisMonth.length + '</strong><span class="unit">種</span></span>' +
+    (areaHa > 0 ? '<span class="stat">預估年度需求 <strong>' + Math.round(annualEstKg).toLocaleString() + '</strong><span class="unit">kg/戶</span></span>' : '') +
+    (matchThisMonth.length ? '<span class="this-month">🎯 本月適合：' + matchThisMonth.slice(0, 5).map(c => c.emoji + c.name).join('、') + (matchThisMonth.length > 5 ? '…' : '') + '</span>' : '');
+
+  // 表格
+  const tbody = document.getElementById('cropsTbody');
+  tbody.innerHTML = '';
+  filtered.forEach(c => {
+    const isMatch = c.months.includes(currentMonth);
+    const tr = document.createElement('tr');
+    if (isMatch) tr.className = 'match-month';
+    const monthsHtml = c.months.map(m =>
+      '<span class="m' + (m === currentMonth ? ' now' : '') + '">' + m + '月</span>'
+    ).join('');
+    const probClass = c.prob === '高' ? 'h' : (c.prob === '中' ? 'm' : 'l');
+    const kgTotal = areaHa > 0 ? (c.kgPerHa * areaHa).toLocaleString() : c.kgPerHa.toLocaleString();
+    const kgLabel = areaHa > 0 ? (kgTotal + '<br><span style="font-size:10px;color:#888">總量</span>')
+                                : c.kgPerHa.toLocaleString();
+    tr.innerHTML =
+      '<td class="cat">' + c.emoji + '</td>' +
+      '<td class="name">' + c.name + '</td>' +
+      '<td class="months">' + monthsHtml + '</td>' +
+      '<td class="regions">' + c.regions.join('、') + '</td>' +
+      '<td class="kg">' + kgLabel + '</td>' +
+      '<td class="prob ' + probClass + '">' + c.prob + '</td>' +
+      '<td class="note">' + (c.note || '—') + '</td>';
+    tbody.appendChild(tr);
+  });
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">無符合條件的作物，請放寬篩選</td></tr>';
+  }
 }
 
 // ============ 🐔 天氣吉祥物對話輪播 ============
