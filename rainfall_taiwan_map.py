@@ -128,117 +128,189 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  *{{box-sizing:border-box}}
-  body{{margin:0;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#f5f6f3;color:#1f2933}}
-  .header{{background:linear-gradient(135deg,#1f3a2e,#4caf73);color:white;padding:18px 16px;text-align:center}}
-  .header h1{{margin:0;font-size:20px;font-weight:700}}
-  .header p{{margin:4px 0 0;color:#d8efde;font-size:13px}}
-  .toggle{{display:flex;justify-content:center;gap:8px;padding:14px 14px 8px;background:#fff;border-bottom:none}}
-  .toggle button{{padding:10px 22px;border:2px solid #d6dade;background:#fff;color:#555;font-size:15px;font-weight:600;border-radius:24px;cursor:pointer;transition:all .15s}}
-  .toggle button.active{{background:#2d6a4f;color:#fff;border-color:#2d6a4f}}
-  .period{{padding:8px 16px 14px;background:#fff;border-bottom:1px solid #e6e8eb;text-align:center;font-size:13px;color:#555}}
-  .period strong{{color:#1f3a2e;font-weight:700;font-family:ui-monospace,Menlo,monospace}}
-  #map{{width:100%;height:60vh;background:#cfe9ff}}
-  .county-label{{background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.15);border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;color:#1f2933;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.1)}}
-  .county-label .mm{{color:#c92a2a;margin-left:3px}}
-  .legend{{padding:14px 16px;background:#fff;border-top:1px solid #e6e8eb}}
-  .legend-title{{font-weight:700;color:#1f3a2e;margin-bottom:8px;font-size:14px}}
-  .legend-row{{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}}
-  .legend-swatch{{width:24px;height:14px;border-radius:3px;flex-shrink:0;border:1px solid #ddd}}
-  .ranking{{padding:14px 16px;background:#fff;margin-top:8px}}
-  .ranking h3{{margin:0 0 10px;font-size:15px;color:#1f3a2e}}
-  .ranking table{{width:100%;border-collapse:collapse;font-size:13px}}
-  .ranking td{{padding:6px 4px;border-bottom:1px solid #f0f2f4}}
-  .ranking td.rank{{width:32px;color:#888;font-weight:600}}
-  .ranking td.county{{width:80px;font-weight:600}}
-  .ranking td.mm{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
-  .impact{{padding:14px 16px;background:#fff;margin-top:8px}}
-  .impact h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
-  .impact .group-title{{margin:10px 0 4px;font-size:13px;font-weight:700;color:#52616b}}
-  .impact .row{{display:flex;gap:10px;font-size:13px;margin:3px 0;align-items:baseline}}
-  .impact .rng{{width:90px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0}}
-  .impact .note{{color:#1f2933;flex:1}}
-  .impact .green{{color:#2d6a4f}}
-  .impact .amber{{color:#a05c00}}
-  .impact .red{{color:#c92a2a}}
-  .impact .gray{{color:#52616b}}
-  .impact .info-note{{margin-top:14px;padding:10px;background:#f5f6f3;border-left:3px solid #4caf73;border-radius:4px;font-size:12px;color:#52616b;line-height:1.6}}
-  .source{{padding:14px 16px;background:#fff;margin-top:8px;border-top:2px solid #e6e8eb}}
-  .source h3{{margin:0 0 10px;font-size:14px;color:#52616b}}
-  .source ul{{margin:0;padding-left:20px;font-size:12px;color:#52616b;line-height:1.7}}
-  .source li{{margin:3px 0}}
-  .source a{{color:#1864ab;text-decoration:none;word-break:break-all}}
-  .footer{{padding:14px;text-align:center;color:#888;font-size:11px;background:#f5f6f3}}
-  .popup-content{{font-size:14px}}
-  .popup-content strong{{color:#1f3a2e}}
-  /* 自訂區間選擇器 */
-  .custom-range{{display:none;padding:10px 14px;background:#f5f6f3;border-bottom:1px solid #e6e8eb;text-align:center;font-size:13px;color:#333}}
+  /* ===== CWA 風格設計系統 ===== */
+  :root{{
+    --cwa-primary:#0c4a8c;      /* 主藍 */
+    --cwa-dark:#003d7a;         /* 深藍 */
+    --cwa-light:#e8f0f8;        /* 淡藍底 */
+    --cwa-accent:#1976d2;       /* 資訊藍 */
+    --cwa-warning:#ef6c00;      /* 警示橙 */
+    --cwa-danger:#c62828;       /* 嚴重紅 */
+    --cwa-success:#2e7d32;      /* 綠色 */
+    --cwa-bg:#f4f6f9;           /* 頁面背景 */
+    --cwa-card:#ffffff;         /* 卡片底 */
+    --cwa-border:#dfe4ea;       /* 淺灰邊 */
+    --cwa-text:#1f2933;         /* 主文字 */
+    --cwa-text-muted:#6b7280;   /* 次文字 */
+    --cwa-text-light:#9aa5b1;   /* 淡文字 */
+    --cwa-hover:#f5f7fa;        /* hover 底 */
+  }}
+  *{{box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}}
+  html,body{{margin:0}}
+  body{{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.5;font-size:14px}}
+
+  /* ===== Header (深藍官方橫幅) ===== */
+  .header{{background:linear-gradient(180deg,var(--cwa-dark) 0%,var(--cwa-primary) 100%);color:#fff;padding:20px 20px 16px;border-bottom:3px solid #ffb300}}
+  .header h1{{margin:0;font-size:22px;font-weight:700;letter-spacing:.5px}}
+  .header p{{margin:6px 0 0;color:#cfe0f0;font-size:12px;letter-spacing:.3px}}
+
+  /* ===== 工具列 refresh-bar ===== */
+  .refresh-bar{{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--cwa-card);border-bottom:1px solid var(--cwa-border);font-size:13px}}
+  .refresh-bar > *{{margin:2px 0}}
+  .refresh-bar button{{padding:8px 18px;background:var(--cwa-primary);color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:.5px}}
+  .refresh-bar button:hover:not(:disabled){{background:var(--cwa-dark)}}
+  .refresh-bar button:disabled{{background:#8ba9c9;cursor:wait}}
+  .refresh-bar .refresh-time{{color:var(--cwa-text-muted);font-size:12px;font-family:ui-monospace,Menlo,monospace}}
+  .refresh-bar .cwa-link{{color:var(--cwa-primary);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border:1.5px solid var(--cwa-primary);border-radius:3px;transition:all .15s}}
+  .refresh-bar .cwa-link:hover{{background:var(--cwa-primary);color:#fff}}
+
+  /* ===== 警示條 (CWA 黃色警示條) ===== */
+  .accuracy-note{{padding:10px 16px;background:#fff8e1;border-left:4px solid var(--cwa-warning);border-bottom:1px solid #f0d878;font-size:12px;color:#7a5a00;line-height:1.6}}
+  .accuracy-note a{{color:var(--cwa-danger);text-decoration:none;font-weight:600}}
+  .accuracy-note strong{{color:var(--cwa-danger)}}
+
+  /* ===== 主 toggle (層級 tab) ===== */
+  .toggle{{display:flex;justify-content:flex-start;gap:0;padding:0;background:var(--cwa-card);border-bottom:2px solid var(--cwa-primary);overflow-x:auto}}
+  .toggle button{{padding:12px 22px;border:none;background:transparent;color:var(--cwa-text-muted);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit;white-space:nowrap;flex-shrink:0}}
+  .toggle button:hover{{background:var(--cwa-hover);color:var(--cwa-primary)}}
+  .toggle button.active{{color:var(--cwa-primary);border-bottom-color:var(--cwa-primary);background:var(--cwa-light)}}
+
+  /* ===== 統計期間橫幅 ===== */
+  .period{{padding:10px 16px;background:var(--cwa-light);border-bottom:1px solid var(--cwa-border);text-align:center;font-size:13px;color:var(--cwa-text)}}
+  .period strong{{color:var(--cwa-primary);font-weight:700;font-family:ui-monospace,Menlo,monospace}}
+
+  /* ===== 自訂區間 ===== */
+  .custom-range{{display:none;padding:12px 16px;background:var(--cwa-hover);border-bottom:1px solid var(--cwa-border);text-align:center;font-size:13px}}
   .custom-range.show{{display:block}}
-  .custom-range label{{margin:0 6px;font-weight:600;color:#1f3a2e}}
-  .custom-range input[type=date]{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit}}
-  .custom-range button{{padding:6px 14px;background:#2d6a4f;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px}}
-  .custom-range .hint{{font-size:11px;color:#888;margin-top:4px}}
-  /* 一鍵更新按鈕 & CWA 對照 */
-  .refresh-bar{{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid #e6e8eb;font-size:13px}}
-  .refresh-bar button{{padding:8px 16px;background:#1864ab;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}}
-  .refresh-bar button:hover:not(:disabled){{background:#144d85}}
-  .refresh-bar button:disabled{{background:#7bb3eb;cursor:wait}}
-  .refresh-bar .refresh-time{{color:#666;font-size:12px}}
-  .refresh-bar .cwa-link{{color:#1864ab;text-decoration:none;font-weight:600;font-size:12px;padding:6px 10px;border:1.5px solid #1864ab;border-radius:14px}}
-  .refresh-bar .cwa-link:hover{{background:#1864ab;color:#fff}}
-  .accuracy-note{{padding:8px 14px;background:#fff8e1;border-bottom:1px solid #f0d878;font-size:12px;color:#7a5a00;line-height:1.6;text-align:center}}
-  .accuracy-note a{{color:#c92a2a;text-decoration:none}}
-  /* 本月降雨日曆 */
-  .rainy-block{{padding:14px 16px;background:#fff;margin-top:8px}}
-  .rainy-block h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
-  .rainy-filters{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;font-size:13px}}
-  .rainy-filters label{{font-weight:600;color:#52616b}}
-  .rainy-filters select{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit;background:#fff}}
-  .rainy-summary{{padding:10px 12px;background:#e3f2fd;border-left:4px solid #1864ab;border-radius:4px;margin-bottom:12px;font-size:14px;color:#0d47a1}}
-  .rainy-summary strong{{font-size:20px;color:#c92a2a;margin:0 3px}}
-  .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px;margin-bottom:12px}}
-  .cal-head{{padding:4px;text-align:center;font-weight:700;background:#f5f6f3;color:#52616b;border-radius:3px}}
-  .cal-cell{{aspect-ratio:1;padding:3px;border:1px solid #e6e8eb;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;text-align:center;background:#fafafa;color:#333}}
-  .cal-cell.empty{{background:transparent;border:none}}
-  .cal-cell.dry{{background:#f5f6f3;color:#aaa}}
+  .custom-range label{{margin:0 6px;font-weight:600;color:var(--cwa-text)}}
+  .custom-range input[type=date]{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px;font-family:inherit;background:#fff}}
+  .custom-range button{{padding:6px 16px;background:var(--cwa-primary);color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px;font-family:inherit}}
+  .custom-range .hint{{font-size:11px;color:var(--cwa-text-muted);margin-top:6px}}
+
+  /* ===== 主地圖 ===== */
+  #map{{width:100%;height:60vh;background:#cfe9ff}}
+  .county-label{{background:rgba(255,255,255,0.92);border:1px solid rgba(0,0,0,0.2);border-radius:2px;padding:2px 6px;font-size:11px;font-weight:600;color:var(--cwa-text);white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.12)}}
+  .county-label .mm{{color:var(--cwa-danger);margin-left:3px;font-family:ui-monospace,Menlo,monospace}}
+
+  /* ===== 通用區塊卡片樣式 ===== */
+  .legend,.ranking,.impact,.source,.rainy-block,.forecast-block,.analysis-block,.news-block{{
+    padding:16px 20px;background:var(--cwa-card);margin-top:1px;
+  }}
+  .legend{{border-top:1px solid var(--cwa-border)}}
+  .legend-title,
+  .impact h3,.ranking h3,.rainy-block h3,.forecast-block h3,.analysis-block h3,.news-block h3,.source h3{{
+    margin:0 0 12px;font-size:15px;font-weight:700;color:var(--cwa-text);
+    padding:6px 0 6px 12px;border-left:4px solid var(--cwa-primary);
+    background:linear-gradient(90deg,var(--cwa-light) 0%,transparent 60%);
+  }}
+
+  /* ===== 色階圖例 ===== */
+  .legend-row{{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0}}
+  .legend-swatch{{width:28px;height:16px;border-radius:2px;flex-shrink:0;border:1px solid #ccc}}
+
+  /* ===== 排名表 (CWA 表格風) ===== */
+  .ranking table{{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--cwa-border)}}
+  .ranking thead{{display:none}}   /* 已用 h3 標題 */
+  .ranking td{{padding:8px 10px;border-bottom:1px solid var(--cwa-border)}}
+  .ranking tr:nth-child(odd){{background:var(--cwa-hover)}}
+  .ranking tr:hover{{background:var(--cwa-light)}}
+  .ranking td.rank{{width:40px;color:var(--cwa-text-muted);font-weight:700;text-align:center;font-family:ui-monospace,Menlo,monospace}}
+  .ranking td.county{{width:100px;font-weight:600;color:var(--cwa-text)}}
+  .ranking td.mm{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
+
+  /* ===== 影響級距表 ===== */
+  .impact .group-title{{margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--cwa-primary);background:var(--cwa-hover);padding:4px 10px;border-left:3px solid var(--cwa-primary)}}
+  .impact .row{{display:flex;gap:12px;font-size:13px;margin:4px 0;align-items:baseline;padding:4px 10px}}
+  .impact .row:nth-child(even){{background:var(--cwa-hover)}}
+  .impact .rng{{width:100px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0}}
+  .impact .note{{color:var(--cwa-text);flex:1}}
+  .impact .green{{color:var(--cwa-success)}}
+  .impact .amber{{color:var(--cwa-warning)}}
+  .impact .red{{color:var(--cwa-danger)}}
+  .impact .gray{{color:var(--cwa-text-muted)}}
+  .impact .info-note{{margin-top:14px;padding:12px 14px;background:var(--cwa-light);border-left:4px solid var(--cwa-primary);border-radius:2px;font-size:12px;color:var(--cwa-text);line-height:1.7}}
+  .impact .info-note strong{{color:var(--cwa-primary)}}
+
+  /* ===== 資料來源 ===== */
+  .source{{border-top:2px solid var(--cwa-border);background:var(--cwa-hover)}}
+  .source h3{{background:transparent;border-left-color:var(--cwa-text-muted);color:var(--cwa-text-muted)}}
+  .source ul{{margin:0;padding-left:20px;font-size:12px;color:var(--cwa-text-muted);line-height:1.8}}
+  .source li{{margin:4px 0}}
+  .source a{{color:var(--cwa-accent);text-decoration:none;word-break:break-all}}
+  .source a:hover{{text-decoration:underline}}
+
+  /* ===== 頁尾 ===== */
+  .footer{{padding:16px;text-align:center;color:var(--cwa-text-light);font-size:11px;background:var(--cwa-card);border-top:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+
+  /* ===== Popup ===== */
+  .popup-content{{font-size:14px}}
+  .popup-content strong{{color:var(--cwa-primary)}}
+
+  /* ===== 本月降雨日曆 ===== */
+  .rainy-filters{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;font-size:13px;padding:10px;background:var(--cwa-hover);border-radius:3px;border:1px solid var(--cwa-border)}}
+  .rainy-filters label{{font-weight:600;color:var(--cwa-text)}}
+  .rainy-filters select{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px;font-family:inherit;background:#fff;color:var(--cwa-text)}}
+  .rainy-summary{{padding:12px 14px;background:var(--cwa-primary);color:#fff;border-radius:3px;margin-bottom:12px;font-size:14px;line-height:1.8}}
+  .rainy-summary strong{{font-size:20px;color:#ffd54f;margin:0 4px;font-family:ui-monospace,Menlo,monospace}}
+  .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12px;margin-bottom:12px;background:var(--cwa-border);padding:2px;border-radius:3px}}
+  .cal-head{{padding:6px;text-align:center;font-weight:700;background:var(--cwa-primary);color:#fff;font-size:11px}}
+  .cal-head:first-child{{color:#ffd54f}}   /* 週日 */
+  .cal-head:last-child{{color:#ffcccc}}   /* 週六 */
+  .cal-cell{{aspect-ratio:1;padding:4px;display:flex;flex-direction:column;justify-content:space-between;text-align:center;background:#fff;color:var(--cwa-text)}}
+  .cal-cell.empty{{background:transparent}}
+  .cal-cell.dry{{background:#fafafa;color:var(--cwa-text-light)}}
   .cal-cell.rain-1{{background:#e3f2fd;color:#0d47a1}}
-  .cal-cell.rain-2{{background:#7bb3eb;color:#fff}}
-  .cal-cell.rain-3{{background:#f0c040;color:#5a3800}}
-  .cal-cell.rain-4{{background:#f08040;color:#fff}}
-  .cal-cell.rain-5{{background:#c92a2a;color:#fff}}
-  .cal-cell.today{{outline:2px solid #2d6a4f}}
-  .cal-cell .d{{font-size:13px;font-weight:700}}
+  .cal-cell.rain-2{{background:#64b5f6;color:#fff}}
+  .cal-cell.rain-3{{background:#1976d2;color:#fff}}
+  .cal-cell.rain-4{{background:#ef6c00;color:#fff}}
+  .cal-cell.rain-5{{background:#c62828;color:#fff}}
+  .cal-cell.today{{outline:3px solid #ffd54f;outline-offset:-3px;font-weight:900}}
+  .cal-cell .d{{font-size:14px;font-weight:700}}
   .cal-cell .mm{{font-size:10px;font-weight:600}}
-  .rainy-list{{max-height:200px;overflow-y:auto;background:#f5f6f3;padding:8px 12px;border-radius:4px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.8}}
-  .rainy-list .day{{display:inline-block;padding:2px 8px;margin:2px;background:#fff;border-radius:12px;border:1px solid #ddd}}
-  /* 未來 7 天預測地圖 */
-  .forecast-block{{padding:14px 16px;background:#fff;margin-top:8px}}
-  .forecast-block h3{{margin:0 0 10px;font-size:15px;color:#1f3a2e}}
-  .fcst-day-tabs{{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}}
-  .fcst-day-tabs button{{flex-shrink:0;padding:6px 12px;border:1.5px solid #d6dade;background:#fff;color:#555;font-size:12px;font-weight:600;border-radius:16px;cursor:pointer;line-height:1.2;font-family:inherit}}
-  .fcst-day-tabs button.active{{background:#1864ab;color:#fff;border-color:#1864ab}}
-  .fcst-wrap{{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}}
-  #fcstMap{{flex:1 1 300px;min-width:280px;height:400px;background:#cfe9ff;border-radius:6px}}
-  .fcst-legend{{flex:0 0 130px;padding:10px;background:#f5f6f3;border-radius:6px}}
-  .fcst-legend-title{{font-size:12px;font-weight:700;color:#1f3a2e;margin-bottom:8px}}
-  .fcst-bar{{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11px}}
-  .fcst-bar-color{{width:22px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid #ddd}}
-  .fcst-bar-label{{color:#333;font-weight:600;width:36px}}
-  .fcst-bar-range{{color:#666;font-size:10px}}
-  .fcst-legend-hint{{margin-top:10px;padding-top:8px;border-top:1px solid #ddd;font-size:10px;color:#666;line-height:1.5}}
-  /* 分析區塊 */
-  .analysis-block{{padding:14px 16px;background:#fff;margin-top:8px;border-left:4px solid #4caf73}}
-  .analysis-block h3{{margin:0 0 8px;font-size:15px;color:#1f3a2e}}
-  .analysis-text{{margin:0;font-size:13px;line-height:1.8;color:#333}}
-  /* 新聞區塊 */
-  .news-block{{padding:14px 16px;background:#fff;margin-top:8px}}
-  .news-block h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
-  .news-list{{margin:0;padding:0;list-style:none}}
-  .news-list li{{padding:8px 4px;border-bottom:1px solid #f0f2f4;font-size:13px;line-height:1.5}}
+  .rainy-list{{max-height:180px;overflow-y:auto;background:var(--cwa-hover);padding:10px 12px;border-radius:3px;font-size:12px;line-height:1.8;border:1px solid var(--cwa-border)}}
+  .rainy-list .day{{display:inline-block;padding:3px 10px;margin:3px;background:#fff;border-radius:2px;border:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+  .rainy-list .day b{{color:var(--cwa-danger)}}
+
+  /* ===== 未來 7 天預測地圖 ===== */
+  .fcst-day-tabs{{display:flex;gap:0;margin-bottom:12px;overflow-x:auto;border-bottom:1px solid var(--cwa-border)}}
+  .fcst-day-tabs button{{flex-shrink:0;padding:10px 16px;border:none;background:transparent;color:var(--cwa-text-muted);font-size:13px;font-weight:600;cursor:pointer;line-height:1.2;font-family:inherit;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .15s}}
+  .fcst-day-tabs button:hover{{background:var(--cwa-hover);color:var(--cwa-primary)}}
+  .fcst-day-tabs button.active{{color:var(--cwa-primary);border-bottom-color:var(--cwa-primary);background:var(--cwa-light)}}
+  .fcst-wrap{{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}}
+  #fcstMap{{flex:1 1 320px;min-width:280px;height:420px;background:#cfe9ff;border:1px solid var(--cwa-border);border-radius:3px}}
+  .fcst-legend{{flex:0 0 150px;padding:12px;background:var(--cwa-hover);border-radius:3px;border:1px solid var(--cwa-border)}}
+  .fcst-legend-title{{font-size:12px;font-weight:700;color:var(--cwa-primary);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--cwa-border)}}
+  .fcst-bar{{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11px}}
+  .fcst-bar-color{{width:26px;height:14px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}}
+  .fcst-bar-label{{color:var(--cwa-text);font-weight:600;width:42px}}
+  .fcst-bar-range{{color:var(--cwa-text-muted);font-size:10px;font-family:ui-monospace,Menlo,monospace}}
+  .fcst-legend-hint{{margin-top:12px;padding-top:8px;border-top:1px solid var(--cwa-border);font-size:10px;color:var(--cwa-text-muted);line-height:1.6}}
+
+  /* ===== 天氣分析 ===== */
+  .analysis-block{{border-left:4px solid var(--cwa-success)}}
+  .analysis-block h3{{border-left-color:var(--cwa-success)}}
+  .analysis-text{{margin:0;font-size:14px;line-height:1.9;color:var(--cwa-text);padding:8px 12px;background:var(--cwa-hover);border-radius:3px}}
+
+  /* ===== 新聞列表 ===== */
+  .news-list{{margin:0;padding:0;list-style:none;border:1px solid var(--cwa-border);border-radius:3px}}
+  .news-list li{{padding:10px 14px;border-bottom:1px solid var(--cwa-border);font-size:13px;line-height:1.5;background:#fff;transition:background .1s}}
   .news-list li:last-child{{border-bottom:none}}
-  .news-list a{{color:#1a5490;text-decoration:none}}
-  .news-list a:hover{{text-decoration:underline}}
-  .news-list .meta{{display:block;margin-top:2px;font-size:11px;color:#888}}
+  .news-list li:hover{{background:var(--cwa-hover)}}
+  .news-list a{{color:var(--cwa-primary);text-decoration:none;font-weight:500}}
+  .news-list a:hover{{text-decoration:underline;color:var(--cwa-dark)}}
+  .news-list .meta{{display:block;margin-top:4px;font-size:11px;color:var(--cwa-text-muted);font-family:ui-monospace,Menlo,monospace}}
+
+  /* ===== 響應式 ===== */
+  @media (max-width:640px){{
+    .header{{padding:16px 14px}}
+    .header h1{{font-size:18px}}
+    .toggle button{{padding:10px 14px;font-size:13px}}
+    .legend,.ranking,.impact,.source,.rainy-block,.forecast-block,.analysis-block,.news-block{{padding:12px 14px}}
+    .fcst-wrap{{flex-direction:column}}
+    .fcst-legend{{flex:1 1 auto;width:100%}}
+    #map{{height:50vh}}
+    #fcstMap{{height:360px}}
+  }}
 </style></head>
 <body>
 <div class="header">
