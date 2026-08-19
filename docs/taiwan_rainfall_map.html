@@ -207,6 +207,44 @@
   .news-list a:hover{text-decoration:underline;color:var(--cwa-dark)}
   .news-list .meta{display:block;margin-top:4px;font-size:11px;color:var(--cwa-text-muted);font-family:ui-monospace,Menlo,monospace}
 
+  /* ===== 節氣提示條（Header 內） ===== */
+  .term-strip{margin-top:10px;padding:6px 12px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;font-size:13px;color:#fff;letter-spacing:.5px}
+  .term-emoji{font-size:16px;margin-right:4px}
+  .term-name{font-weight:700;color:#ffd54f;margin-right:6px}
+  .term-hint{color:#e3f2fd;font-size:12px}
+
+  /* ===== 颱風警戒模式 ===== */
+  body.typhoon-alert .header{background:linear-gradient(180deg,#8b0000 0%,#c62828 100%);animation:typhoon-pulse 2s ease-in-out infinite;border-bottom-color:#fff59d}
+  .typhoon-strip{background:#c62828;color:#fff;padding:8px;text-align:center;font-size:14px;font-weight:700;letter-spacing:1px;animation:typhoon-slide 8s linear infinite;box-shadow:0 2px 8px rgba(198,40,40,.4);position:sticky;top:0;z-index:900}
+  @keyframes typhoon-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,213,79,.6)}50%{box-shadow:0 0 20px 4px rgba(255,213,79,.4)}}
+  @keyframes typhoon-slide{0%,100%{background:#c62828}50%{background:#e53935}}
+
+  /* ===== 天氣吉祥物 ===== */
+  .mascot{position:fixed;right:16px;bottom:20px;width:66px;height:66px;background:#fff;border-radius:50%;border:3px solid var(--cwa-primary);box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;z-index:1000;cursor:pointer;transition:transform .15s;animation:mascot-bounce 3s ease-in-out infinite}
+  .mascot:hover{transform:scale(1.1)}
+  .mascot-face{font-size:36px;line-height:1}
+  .mascot-sunny{border-color:#f9a825;animation-duration:2s}
+  .mascot-mild{border-color:#4caf50}
+  .mascot-rainy{border-color:#1976d2}
+  .mascot-storm{border-color:#c62828;animation:mascot-shake .3s ease-in-out infinite}
+  @keyframes mascot-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes mascot-shake{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,-2px) rotate(-4deg)}50%{transform:translate(2px,0) rotate(4deg)}75%{transform:translate(-2px,2px) rotate(-2deg)}}
+  .mascot-bubble{position:absolute;right:74px;bottom:8px;background:#fff;border:2px solid var(--cwa-primary);border-radius:14px;padding:8px 12px;font-size:12px;color:var(--cwa-text);white-space:nowrap;max-width:240px;min-width:140px;box-shadow:0 3px 10px rgba(0,0,0,.15);opacity:0;transform:translateX(10px);transition:all .3s;font-weight:600;text-align:right;line-height:1.4}
+  .mascot-bubble.show{opacity:1;transform:translateX(0)}
+  .mascot-bubble::after{content:"";position:absolute;right:-8px;top:16px;width:0;height:0;border-left:8px solid var(--cwa-primary);border-top:6px solid transparent;border-bottom:6px solid transparent}
+  @media (max-width:640px){
+    .mascot{width:54px;height:54px;right:10px;bottom:14px}
+    .mascot-face{font-size:28px}
+    .mascot-bubble{right:60px;font-size:11px;padding:6px 10px;max-width:180px;min-width:110px}
+  }
+
+  /* ===== 地圖豪雨粒子動畫 ===== */
+  .rain-particle{pointer-events:none;font-size:16px;line-height:1;opacity:0;animation:raindrop 1.4s linear infinite}
+  .rain-particle span{display:inline-block;animation-name:raindrop;animation-timing-function:linear;animation-iteration-count:infinite}
+  @keyframes raindrop{0%{transform:translateY(-24px);opacity:0}20%{opacity:.9}80%{opacity:.9}100%{transform:translateY(38px);opacity:0}}
+  .county-label.storm-lvl{animation:storm-pulse 1.6s ease-in-out infinite}
+  @keyframes storm-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08);filter:brightness(1.1)}}
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){
     .header{padding:16px 14px}
@@ -219,15 +257,27 @@
     #fcstMap{height:360px}
   }
 </style></head>
-<body>
+<body class="typhoon-alert">
+<div class="typhoon-strip">🌀 <strong>颱風警戒中</strong>　業務區可能停工，請以中央氣象署為準　🌀</div>
 <div class="header">
   <h1>🗺️ 全台累積雨量地圖</h1>
   <p>資料來源 Open-Meteo (ECMWF)　·　22 縣市</p>
+  <div class="term-strip">
+    <span class="term-emoji">🥶</span>
+    <span class="term-name">大寒</span>
+    <span class="term-hint">全年最冷，農事調度為主</span>
+  </div>
+</div>
+
+<!-- 天氣吉祥物 -->
+<div class="mascot mascot-rainy" id="mascot">
+  <div class="mascot-bubble" id="mascotBubble"></div>
+  <div class="mascot-face">😕</div>
 </div>
 
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-19 19:11</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-19 19:21</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <div class="accuracy-note">
@@ -368,9 +418,9 @@
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE5hb2pHTVRsYUdsUzJmYlV2VkYxOXM5aHFJcTU2aGdScFJjQW5rZ2ZDMnVTVDctTnQ2dXJtSHNwOTllUGRlc1NVZVlrdi1IQ1hT?oc=5" target="_blank" rel="noopener">天氣／沙德爾颱風「升級強颱直衝台灣」？專家：這2天最靠近， 氣象署曝最新路徑影響</a><span class="meta">風傳媒 · 08/19</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">沙德爾颱風最新動態｜颱風路徑預測、對台影響、未來一週天氣一次看</a><span class="meta">數位時代 · 08/19</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE5sYjhHUFk2NTl1Smllalo3Nm5pcENKTkNrdVlqcUlVQUo0T21yS3NXMUREcFVoUWx4MVdMaDcwZ0RhM1A2a1Fma0x2RjNjb2w2bDRqaldyUQ?oc=5" target="_blank" rel="noopener">第18號颱風「沙德爾」生成！往西北移動 路徑朝琉球南方海面</a><span class="meta">台視新聞網 · 08/19</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNbnJrWnYxUlNNbVY4YkFYQ0d3Z25EdXVtTF9oMkRPdHc3SXJjMkFMNEtPVkttRDBhZnpSdzhPRDlOblZWb1ZHWTF5V1JLb0RlS0pVZzBBSW83RUEtTUthWTFfcDhKaWhIMEhDeTZBTk9yQk1OaC00RGo5RFlVRldBQlhtc2Y4aHpkbnZTcGJQQ1JXMkVLeldqV0VROE1zRk9fN3ZR?oc=5" target="_blank" rel="noopener">【週末天氣】低壓帶報到全台變天！第18號颱風「沙德爾」最快本週生成，各地降雨重點、雨勢最猛時間點一次看</a><span class="meta">Women's Health · 08/19</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5GdHlyUmlUUVdhX1dXbEFHVGxBTXhYazd0Mld6X3NzNDU5Skp4TEo4Ym9pc1FacEJVejY3VGNHRWYzY2lJMkNaT1VWR3RQc3hmN0pWT2N3dkNnMFFvUmNqdUVZNG0?oc=5" target="_blank" rel="noopener">「沙德爾」颱風生成！ 對台影響、最新路徑曝光- 生活</a><span class="meta">自由時報 · 08/19</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTFA2TFQ5X0xkT0FIZEhFMlE1b2R2QUF2OVlNWDQ1aTd6VnZsdWE1MzJsZWppbXhybkk1UGc5V1JoV3ZuS21TV2RjOFRPQnF6MjRoclFHRw?oc=5" target="_blank" rel="noopener">低壓帶壟罩各地防大雨！颱風沙德爾最快今生成 強度恐中颱以上</a><span class="meta">寰宇新聞網 · 08/19</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNbnJrWnYxUlNNbVY4YkFYQ0d3Z25EdXVtTF9oMkRPdHc3SXJjMkFMNEtPVkttRDBhZnpSdzhPRDlOblZWb1ZHWTF5V1JLb0RlS0pVZzBBSW83RUEtTUthWTFfcDhKaWhIMEhDeTZBTk9yQk1OaC00RGo5RFlVRldBQlhtc2Y4aHpkbnZTcGJQQ1JXMkVLeldqV0VROE1zRk9fN3ZR?oc=5" target="_blank" rel="noopener">【週末天氣】低壓帶報到全台變天！第18號颱風「沙德爾」最快本週生成，各地降雨重點、雨勢最猛時間點一次看</a><span class="meta">Women's Health · 08/19</span></li>
   </ul>
 </div>
 
@@ -390,7 +440,7 @@
 </div>
 
 <div class="footer">
-  產出於 2026-08-19 19:11　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
+  產出於 2026-08-19 19:21　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
 </div>
 
 <script>
@@ -457,9 +507,11 @@ function render(mode) {
   tbody.innerHTML = '';
   sorted.slice(0, 10).forEach((c, i) => {
     const {color} = pickBand(c[mode], mode);
+    const isSingle = (mode === 'today');
+    const emj = (typeof fcstEmoji === 'function') ? fcstEmoji(c[mode], !isSingle) : '';
     const row = document.createElement('tr');
     row.innerHTML = '<td class="rank">' + (i + 1) + '</td>' +
-                    '<td class="county">' + c.name + '</td>' +
+                    '<td class="county">' + emj + ' ' + c.name + '</td>' +
                     '<td class="mm" style="color:' + color + '">' + c[mode].toFixed(1) + ' mm</td>';
     tbody.appendChild(row);
   });
@@ -741,13 +793,31 @@ function renderForecastMap(dateArr) {
         );
         if (row) {
           const center = layer.getBounds().getCenter();
+          // 豪雨級縣市 → label 加脈動 class
+          const isHeavy = isMultiDay ? mm >= 150 : mm >= 80;
+          const isStorm = isMultiDay ? mm >= 300 : mm >= 130;
+          const cls = 'county-label' + (isStorm ? ' storm-lvl' : '');
           L.marker([center.lat, center.lng], {
             icon: L.divIcon({
-              className: 'county-label',
+              className: cls,
               html: name.replace('縣','').replace('市','') + '<span class="mm">' + mm.toFixed(0) + '</span>',
               iconSize: null,
             }),
           }).addTo(fcstLabelLayer);
+          // 豪雨縣市加雨滴粒子 (多滴錯開時間)
+          if (isHeavy) {
+            const drops = ['💧','💧','💧'].map((_, di) =>
+              '<span style="display:inline-block;animation:raindrop 1.4s linear infinite;animation-delay:' + (di * 0.4) + 's">💧</span>'
+            ).join('');
+            L.marker([center.lat + 0.05, center.lng], {
+              icon: L.divIcon({
+                className: 'rain-particle',
+                html: drops,
+                iconSize: [48, 30],
+              }),
+              interactive: false,
+            }).addTo(fcstLabelLayer);
+          }
         }
       },
     }).addTo(fcstMap);
@@ -796,7 +866,7 @@ function renderFcstRanking(dateArr, isMultiDay) {
     tr.innerHTML =
       '<td class="rank">' + (i + 1) + '</td>' +
       '<td class="county">' + r.name + '</td>' +
-      '<td class="lvl" style="color:' + c + '"><span class="swatch" style="background:' + c + '"></span>' + lbl + '</td>' +
+      '<td class="lvl" style="color:' + c + '">' + fcstEmoji(r.mm, isMultiDay) + ' ' + lbl + '</td>' +
       '<td class="mm" style="color:' + c + '">' + r.mm.toFixed(1) + ' mm</td>';
     tbody.appendChild(tr);
   });
@@ -805,6 +875,49 @@ function renderFcstRanking(dateArr, isMultiDay) {
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {
   renderForecastMap([FORECAST_DATES[0]]);
+}
+
+// ============ 🐔 天氣吉祥物對話輪播 ============
+const MASCOT_LINES = ["🌧 本週雨多，出貨要看空檔", "建議提前跟客戶協調交貨日", "農路可能濕滑，注意工安", "施肥時機要避開雨後 24 小時"];
+(function initMascot() {
+  const bubble = document.getElementById('mascotBubble');
+  const mascot = document.getElementById('mascot');
+  let idx = 0;
+  let showTimer = null;
+  function showLine() {
+    bubble.textContent = MASCOT_LINES[idx % MASCOT_LINES.length];
+    bubble.classList.add('show');
+    clearTimeout(showTimer);
+    showTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
+    idx++;
+  }
+  // 首次載入 1.5 秒後顯示
+  setTimeout(showLine, 1500);
+  // 每 8 秒輪播
+  setInterval(showLine, 8000);
+  // 點吉祥物立即換一句
+  mascot.addEventListener('click', showLine);
+})();
+
+// ============ 排名等級 emoji 對應 ============
+function fcstEmoji(mm, isMultiDay) {
+  if (isMultiDay) {
+    if (mm >= 500) return '🌊';
+    if (mm >= 300) return '⛈';
+    if (mm >= 150) return '☔';
+    if (mm >= 80)  return '🌧';
+    if (mm >= 30)  return '💧';
+    if (mm >= 1)   return '☁';
+    return '☀';
+  }
+  if (mm >= 200) return '🌀';
+  if (mm >= 130) return '🌊';
+  if (mm >= 80)  return '⛈';
+  if (mm >= 50)  return '☔';
+  if (mm >= 30)  return '🌧';
+  if (mm >= 10)  return '💧';
+  if (mm >= 1)   return '☁';
+  return '☀';
 }
 
 // ============ 📆 本月降雨日曆 ============

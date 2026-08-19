@@ -329,6 +329,44 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .news-list a:hover{{text-decoration:underline;color:var(--cwa-dark)}}
   .news-list .meta{{display:block;margin-top:4px;font-size:11px;color:var(--cwa-text-muted);font-family:ui-monospace,Menlo,monospace}}
 
+  /* ===== 節氣提示條（Header 內） ===== */
+  .term-strip{{margin-top:10px;padding:6px 12px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;font-size:13px;color:#fff;letter-spacing:.5px}}
+  .term-emoji{{font-size:16px;margin-right:4px}}
+  .term-name{{font-weight:700;color:#ffd54f;margin-right:6px}}
+  .term-hint{{color:#e3f2fd;font-size:12px}}
+
+  /* ===== 颱風警戒模式 ===== */
+  body.typhoon-alert .header{{background:linear-gradient(180deg,#8b0000 0%,#c62828 100%);animation:typhoon-pulse 2s ease-in-out infinite;border-bottom-color:#fff59d}}
+  .typhoon-strip{{background:#c62828;color:#fff;padding:8px;text-align:center;font-size:14px;font-weight:700;letter-spacing:1px;animation:typhoon-slide 8s linear infinite;box-shadow:0 2px 8px rgba(198,40,40,.4);position:sticky;top:0;z-index:900}}
+  @keyframes typhoon-pulse{{0%,100%{{box-shadow:0 0 0 0 rgba(255,213,79,.6)}}50%{{box-shadow:0 0 20px 4px rgba(255,213,79,.4)}}}}
+  @keyframes typhoon-slide{{0%,100%{{background:#c62828}}50%{{background:#e53935}}}}
+
+  /* ===== 天氣吉祥物 ===== */
+  .mascot{{position:fixed;right:16px;bottom:20px;width:66px;height:66px;background:#fff;border-radius:50%;border:3px solid var(--cwa-primary);box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;z-index:1000;cursor:pointer;transition:transform .15s;animation:mascot-bounce 3s ease-in-out infinite}}
+  .mascot:hover{{transform:scale(1.1)}}
+  .mascot-face{{font-size:36px;line-height:1}}
+  .mascot-sunny{{border-color:#f9a825;animation-duration:2s}}
+  .mascot-mild{{border-color:#4caf50}}
+  .mascot-rainy{{border-color:#1976d2}}
+  .mascot-storm{{border-color:#c62828;animation:mascot-shake .3s ease-in-out infinite}}
+  @keyframes mascot-bounce{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-6px)}}}}
+  @keyframes mascot-shake{{0%,100%{{transform:translate(0,0) rotate(0)}}25%{{transform:translate(-2px,-2px) rotate(-4deg)}}50%{{transform:translate(2px,0) rotate(4deg)}}75%{{transform:translate(-2px,2px) rotate(-2deg)}}}}
+  .mascot-bubble{{position:absolute;right:74px;bottom:8px;background:#fff;border:2px solid var(--cwa-primary);border-radius:14px;padding:8px 12px;font-size:12px;color:var(--cwa-text);white-space:nowrap;max-width:240px;min-width:140px;box-shadow:0 3px 10px rgba(0,0,0,.15);opacity:0;transform:translateX(10px);transition:all .3s;font-weight:600;text-align:right;line-height:1.4}}
+  .mascot-bubble.show{{opacity:1;transform:translateX(0)}}
+  .mascot-bubble::after{{content:"";position:absolute;right:-8px;top:16px;width:0;height:0;border-left:8px solid var(--cwa-primary);border-top:6px solid transparent;border-bottom:6px solid transparent}}
+  @media (max-width:640px){{
+    .mascot{{width:54px;height:54px;right:10px;bottom:14px}}
+    .mascot-face{{font-size:28px}}
+    .mascot-bubble{{right:60px;font-size:11px;padding:6px 10px;max-width:180px;min-width:110px}}
+  }}
+
+  /* ===== 地圖豪雨粒子動畫 ===== */
+  .rain-particle{{pointer-events:none;font-size:16px;line-height:1;opacity:0;animation:raindrop 1.4s linear infinite}}
+  .rain-particle span{{display:inline-block;animation-name:raindrop;animation-timing-function:linear;animation-iteration-count:infinite}}
+  @keyframes raindrop{{0%{{transform:translateY(-24px);opacity:0}}20%{{opacity:.9}}80%{{opacity:.9}}100%{{transform:translateY(38px);opacity:0}}}}
+  .county-label.storm-lvl{{animation:storm-pulse 1.6s ease-in-out infinite}}
+  @keyframes storm-pulse{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.08);filter:brightness(1.1)}}}}
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){{
     .header{{padding:16px 14px}}
@@ -341,10 +379,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     #fcstMap{{height:360px}}
   }}
 </style></head>
-<body>
+<body class="{typhoon_class}">
+{typhoon_banner}
 <div class="header">
   <h1>🗺️ 全台累積雨量地圖</h1>
   <p>資料來源 Open-Meteo (ECMWF)　·　22 縣市</p>
+  <div class="term-strip">
+    <span class="term-emoji">{term_emoji}</span>
+    <span class="term-name">{term_name}</span>
+    <span class="term-hint">{term_hint}</span>
+  </div>
+</div>
+
+<!-- 天氣吉祥物 -->
+<div class="mascot mascot-{mascot_mood}" id="mascot">
+  <div class="mascot-bubble" id="mascotBubble"></div>
+  <div class="mascot-face">{mascot_emoji}</div>
 </div>
 
 <div class="refresh-bar">
@@ -566,9 +616,11 @@ function render(mode) {{
   tbody.innerHTML = '';
   sorted.slice(0, 10).forEach((c, i) => {{
     const {{color}} = pickBand(c[mode], mode);
+    const isSingle = (mode === 'today');
+    const emj = (typeof fcstEmoji === 'function') ? fcstEmoji(c[mode], !isSingle) : '';
     const row = document.createElement('tr');
     row.innerHTML = '<td class="rank">' + (i + 1) + '</td>' +
-                    '<td class="county">' + c.name + '</td>' +
+                    '<td class="county">' + emj + ' ' + c.name + '</td>' +
                     '<td class="mm" style="color:' + color + '">' + c[mode].toFixed(1) + ' mm</td>';
     tbody.appendChild(row);
   }});
@@ -850,13 +902,31 @@ function renderForecastMap(dateArr) {{
         );
         if (row) {{
           const center = layer.getBounds().getCenter();
+          // 豪雨級縣市 → label 加脈動 class
+          const isHeavy = isMultiDay ? mm >= 150 : mm >= 80;
+          const isStorm = isMultiDay ? mm >= 300 : mm >= 130;
+          const cls = 'county-label' + (isStorm ? ' storm-lvl' : '');
           L.marker([center.lat, center.lng], {{
             icon: L.divIcon({{
-              className: 'county-label',
+              className: cls,
               html: name.replace('縣','').replace('市','') + '<span class="mm">' + mm.toFixed(0) + '</span>',
               iconSize: null,
             }}),
           }}).addTo(fcstLabelLayer);
+          // 豪雨縣市加雨滴粒子 (多滴錯開時間)
+          if (isHeavy) {{
+            const drops = ['💧','💧','💧'].map((_, di) =>
+              '<span style="display:inline-block;animation:raindrop 1.4s linear infinite;animation-delay:' + (di * 0.4) + 's">💧</span>'
+            ).join('');
+            L.marker([center.lat + 0.05, center.lng], {{
+              icon: L.divIcon({{
+                className: 'rain-particle',
+                html: drops,
+                iconSize: [48, 30],
+              }}),
+              interactive: false,
+            }}).addTo(fcstLabelLayer);
+          }}
         }}
       }},
     }}).addTo(fcstMap);
@@ -905,7 +975,7 @@ function renderFcstRanking(dateArr, isMultiDay) {{
     tr.innerHTML =
       '<td class="rank">' + (i + 1) + '</td>' +
       '<td class="county">' + r.name + '</td>' +
-      '<td class="lvl" style="color:' + c + '"><span class="swatch" style="background:' + c + '"></span>' + lbl + '</td>' +
+      '<td class="lvl" style="color:' + c + '">' + fcstEmoji(r.mm, isMultiDay) + ' ' + lbl + '</td>' +
       '<td class="mm" style="color:' + c + '">' + r.mm.toFixed(1) + ' mm</td>';
     tbody.appendChild(tr);
   }});
@@ -914,6 +984,49 @@ function renderFcstRanking(dateArr, isMultiDay) {{
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {{
   renderForecastMap([FORECAST_DATES[0]]);
+}}
+
+// ============ 🐔 天氣吉祥物對話輪播 ============
+const MASCOT_LINES = {mascot_lines_json};
+(function initMascot() {{
+  const bubble = document.getElementById('mascotBubble');
+  const mascot = document.getElementById('mascot');
+  let idx = 0;
+  let showTimer = null;
+  function showLine() {{
+    bubble.textContent = MASCOT_LINES[idx % MASCOT_LINES.length];
+    bubble.classList.add('show');
+    clearTimeout(showTimer);
+    showTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
+    idx++;
+  }}
+  // 首次載入 1.5 秒後顯示
+  setTimeout(showLine, 1500);
+  // 每 8 秒輪播
+  setInterval(showLine, 8000);
+  // 點吉祥物立即換一句
+  mascot.addEventListener('click', showLine);
+}})();
+
+// ============ 排名等級 emoji 對應 ============
+function fcstEmoji(mm, isMultiDay) {{
+  if (isMultiDay) {{
+    if (mm >= 500) return '🌊';
+    if (mm >= 300) return '⛈';
+    if (mm >= 150) return '☔';
+    if (mm >= 80)  return '🌧';
+    if (mm >= 30)  return '💧';
+    if (mm >= 1)   return '☁';
+    return '☀';
+  }}
+  if (mm >= 200) return '🌀';
+  if (mm >= 130) return '🌊';
+  if (mm >= 80)  return '⛈';
+  if (mm >= 50)  return '☔';
+  if (mm >= 30)  return '🌧';
+  if (mm >= 10)  return '💧';
+  if (mm >= 1)   return '☁';
+  return '☀';
 }}
 
 // ============ 📆 本月降雨日曆 ============
@@ -1204,6 +1317,101 @@ def analyze_pattern(rows: list) -> str:
     return " ".join(parts)
 
 
+# 24 節氣 + 農事提示 emoji
+SOLAR_TERMS = [
+    ((2, 4),  "立春", "🌱", "春耕開始，正是施基肥時機"),
+    ((2, 19), "雨水", "💧", "春雨漸增，注意排水防肥料流失"),
+    ((3, 5),  "驚蟄", "🐛", "蟄蟲甦醒，加強防治病蟲害"),
+    ((3, 20), "春分", "🌸", "晝夜平分，追肥好時節"),
+    ((4, 5),  "清明", "🌿", "清明前後種瓜點豆，備肥旺季"),
+    ((4, 20), "穀雨", "🌧", "雨生百穀，注意連日陰雨影響"),
+    ((5, 5),  "立夏", "☀️", "夏季開始，追肥、抗旱雙管齊下"),
+    ((5, 21), "小滿", "🌾", "麥穀漸滿，果樹進入膨大期"),
+    ((6, 6),  "芒種", "🌾", "梅雨進入尾聲，準備夏耕施肥"),
+    ((6, 21), "夏至", "🌞", "日長之至，注意炎熱對施肥影響"),
+    ((7, 7),  "小暑", "🥵", "小暑大暑，避開高溫時段施肥"),
+    ((7, 23), "大暑", "🔥", "極熱期，強烈建議清晨或傍晚出貨"),
+    ((8, 8),  "立秋", "🍂", "秋涼將近，準備秋作備肥"),
+    ((8, 23), "處暑", "🌤", "暑氣漸消，適合追肥與整地"),
+    ((9, 8),  "白露", "🌫", "白露秋分夜，果樹收成期"),
+    ((9, 23), "秋分", "🍁", "晝夜再平分，二期稻作追肥"),
+    ((10, 8), "寒露", "❄️", "寒氣漸生，注意水稻收穫期"),
+    ((10, 23),"霜降", "🌨", "秋末將至，冬作備肥開始"),
+    ((11, 7), "立冬", "🍂", "冬季開始，果樹冬肥旺季"),
+    ((11, 22),"小雪", "❄️", "冬季施肥續行，防連續陰雨"),
+    ((12, 7), "大雪", "☃️", "深冬時節，備肥期"),
+    ((12, 22),"冬至", "🥟", "冬至陽生，蓄積肥料庫存"),
+    ((1, 6),  "小寒", "🥶", "寒冬，注意保暖與客戶關懷"),
+    ((1, 20), "大寒", "🥶", "全年最冷，農事調度為主"),
+]
+
+
+def _current_solar_term(today: date):
+    """回傳 (name, emoji, hint) — 找最近一個已過的節氣"""
+    md = (today.month, today.day)
+    matched = SOLAR_TERMS[-1]  # 大寒（跨年 fallback）
+    for term in SOLAR_TERMS:
+        if term[0] <= md:
+            matched = term
+    return matched[1], matched[2], matched[3]
+
+
+def _detect_typhoon_alert(news_items: list) -> bool:
+    """從天氣新聞判斷是否颱風警戒中"""
+    keywords_typhoon = ["颱風", "熱帶性低氣壓"]
+    keywords_alert = ["警報", "特報", "陸警", "海警", "登陸", "來襲", "接近"]
+    for n in news_items:
+        title = n.get("title", "")
+        if any(k in title for k in keywords_typhoon) and \
+           any(k in title for k in keywords_alert):
+            return True
+    return False
+
+
+def _mascot_mood(rows: list) -> tuple:
+    """依 4 大區未來 7 天平均降雨決定吉祥物表情 + 台詞
+    回傳 (emoji, mood_class, [台詞1, 台詞2, ...])"""
+    region_map = {"北": "桃園市", "中": "臺中市", "南": "臺南市", "東": "花蓮縣"}
+    avgs = []
+    for _, name in region_map.items():
+        row = next((r for r in rows if r["name"] == name), None)
+        if row and row.get("forecast"):
+            mms = [f["mm"] for f in row["forecast"]]
+            avgs.append(sum(mms) / len(mms) if mms else 0)
+    if not avgs:
+        return ("🐔", "normal", ["資料抓取中..."])
+    avg = sum(avgs) / len(avgs)
+
+    if avg < 5:
+        return ("😎", "sunny", [
+            "☀ 本週好天氣！可以積極推銷肥料囉～",
+            "客戶田面乾爽，正是出貨黃金期！",
+            "記得跟客戶說：\"這週訂單快下，避免下週下雨影響\"",
+            "業務員精神！去拜訪客戶啦～",
+        ])
+    elif avg < 15:
+        return ("😊", "mild", [
+            "🌤 天氣穩定，一切正常運作",
+            "小雨無妨，選晴天出貨即可",
+            "記得檢查客戶備肥狀況",
+            "適合排定觀摩會、農民座談",
+        ])
+    elif avg < 40:
+        return ("😕", "rainy", [
+            "🌧 本週雨多，出貨要看空檔",
+            "建議提前跟客戶協調交貨日",
+            "農路可能濕滑，注意工安",
+            "施肥時機要避開雨後 24 小時",
+        ])
+    else:
+        return ("😱", "storm", [
+            "⛈ 豪雨警戒！本週禁施建議",
+            "客戶田面積水，暫緩出貨",
+            "把握雨停空檔快速補撒",
+            "颱風前準備：確認肥料倉庫防水",
+        ])
+
+
 def build_html(rows: list, today: date) -> str:
     from datetime import timedelta
     quarter = (today.month - 1) // 3 + 1
@@ -1245,6 +1453,11 @@ def build_html(rows: list, today: date) -> str:
         for n in news_items
     ) or '<li style="color:#888">（本次未抓到相關新聞）</li>'
 
+    # 節氣 + 颱風警戒 + 吉祥物
+    term_name, term_emoji, term_hint = _current_solar_term(today)
+    typhoon_alert = _detect_typhoon_alert(news_items)
+    mascot_emoji, mascot_mood, mascot_lines = _mascot_mood(rows)
+
     return HTML_TEMPLATE.format(
         today=today.isoformat(),
         quarter=quarter,
@@ -1258,6 +1471,18 @@ def build_html(rows: list, today: date) -> str:
         forecast_dates_json=json.dumps(forecast_dates, ensure_ascii=False),
         analysis_text=analysis_text,
         news_html=news_html,
+        term_name=term_name,
+        term_emoji=term_emoji,
+        term_hint=term_hint,
+        typhoon_class=("typhoon-alert" if typhoon_alert else ""),
+        typhoon_banner=(
+            '<div class="typhoon-strip">🌀 <strong>颱風警戒中</strong>　'
+            '業務區可能停工，請以中央氣象署為準　🌀</div>'
+            if typhoon_alert else ""
+        ),
+        mascot_emoji=mascot_emoji,
+        mascot_mood=mascot_mood,
+        mascot_lines_json=json.dumps(mascot_lines, ensure_ascii=False),
     )
 
 
