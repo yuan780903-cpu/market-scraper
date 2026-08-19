@@ -75,8 +75,9 @@ COUNTY_NAME_MAP = {
 GEOJSON_URL = "https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json"
 
 
-def fetch_rainfall(lat: float, lon: float, past_days: int = 92) -> dict:
-    """回傳 {YYYY-MM-DD: precipitation_mm}（含今日）"""
+def fetch_rainfall(lat: float, lon: float, past_days: int = 92,
+                    forecast_days: int = 1) -> dict:
+    """回傳 {YYYY-MM-DD: precipitation_mm}（含今日 + 可選未來 N 天預測）"""
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -84,7 +85,7 @@ def fetch_rainfall(lat: float, lon: float, past_days: int = 92) -> dict:
         "daily": "precipitation_sum",
         "timezone": "Asia/Taipei",
         "past_days": past_days,
-        "forecast_days": 1,
+        "forecast_days": forecast_days,
     }
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
@@ -177,6 +178,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .custom-range input[type=date]{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit}}
   .custom-range button{{padding:6px 14px;background:#2d6a4f;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px}}
   .custom-range .hint{{font-size:11px;color:#888;margin-top:4px}}
+  /* 未來 7 天預測地圖 */
+  .forecast-block{{padding:14px 16px;background:#fff;margin-top:8px}}
+  .forecast-block h3{{margin:0 0 10px;font-size:15px;color:#1f3a2e}}
+  .fcst-day-tabs{{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}}
+  .fcst-day-tabs button{{flex-shrink:0;padding:6px 12px;border:1.5px solid #d6dade;background:#fff;color:#555;font-size:12px;font-weight:600;border-radius:16px;cursor:pointer;line-height:1.2;font-family:inherit}}
+  .fcst-day-tabs button.active{{background:#1864ab;color:#fff;border-color:#1864ab}}
+  .fcst-wrap{{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}}
+  #fcstMap{{flex:1 1 300px;min-width:280px;height:400px;background:#cfe9ff;border-radius:6px}}
+  .fcst-legend{{flex:0 0 130px;padding:10px;background:#f5f6f3;border-radius:6px}}
+  .fcst-legend-title{{font-size:12px;font-weight:700;color:#1f3a2e;margin-bottom:8px}}
+  .fcst-bar{{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11px}}
+  .fcst-bar-color{{width:22px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid #ddd}}
+  .fcst-bar-label{{color:#333;font-weight:600;width:36px}}
+  .fcst-bar-range{{color:#666;font-size:10px}}
+  .fcst-legend-hint{{margin-top:10px;padding-top:8px;border-top:1px solid #ddd;font-size:10px;color:#666;line-height:1.5}}
+  /* 分析區塊 */
+  .analysis-block{{padding:14px 16px;background:#fff;margin-top:8px;border-left:4px solid #4caf73}}
+  .analysis-block h3{{margin:0 0 8px;font-size:15px;color:#1f3a2e}}
+  .analysis-text{{margin:0;font-size:13px;line-height:1.8;color:#333}}
+  /* 新聞區塊 */
+  .news-block{{padding:14px 16px;background:#fff;margin-top:8px}}
+  .news-block h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
+  .news-list{{margin:0;padding:0;list-style:none}}
+  .news-list li{{padding:8px 4px;border-bottom:1px solid #f0f2f4;font-size:13px;line-height:1.5}}
+  .news-list li:last-child{{border-bottom:none}}
+  .news-list a{{color:#1a5490;text-decoration:none}}
+  .news-list a:hover{{text-decoration:underline}}
+  .news-list .meta{{display:block;margin-top:2px;font-size:11px;color:#888}}
 </style></head>
 <body>
 <div class="header">
@@ -240,6 +269,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="ranking" id="ranking">
   <h3 id="ranking-title">本月累積雨量排名</h3>
   <table id="ranking-table"><tbody></tbody></table>
+</div>
+
+<!-- ===================== 未來 7 天雨量預測 ===================== -->
+<div class="forecast-block">
+  <h3>🔮 未來 7 天雨量預測 · 全台縣市地圖</h3>
+  <div class="fcst-day-tabs" id="fcstTabs"></div>
+  <div class="fcst-wrap">
+    <div id="fcstMap"></div>
+    <div class="fcst-legend">
+      <div class="fcst-legend-title">顏色 → 日雨量 (mm)</div>
+      <div id="fcstLegendBars"></div>
+      <div class="fcst-legend-hint">📍 兩指縮放可看鄉鎮街道<br>👆 點縣市顯示詳細數字</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 天氣分析 ===================== -->
+<div class="analysis-block">
+  <h3>🌦️ 未來一週天氣分析</h3>
+  <p class="analysis-text">{analysis_text}</p>
+</div>
+
+<!-- ===================== 相關新聞 ===================== -->
+<div class="news-block">
+  <h3>📰 天氣 / 豪雨 / 颱風 相關新聞</h3>
+  <ul class="news-list">
+    {news_html}
+  </ul>
 </div>
 
 <div class="source">
@@ -413,8 +470,199 @@ function applyCustom() {{
 }}
 
 render('month');
+
+// ============ 未來 7 天預測地圖 ============
+const FORECAST_DATES = {forecast_dates_json};
+
+// 預測用色階（日雨量 mm → 顏色）— 對應「短期單日」影響級距
+const FCST_BANDS = [
+  [0, 1,    '#f5f6f3', '無雨',    '< 1'],
+  [1, 10,   '#cfe9ff', '零星',    '1-10'],
+  [10, 30,  '#7bb3eb', '小雨',    '10-30'],
+  [30, 50,  '#5cb85c', '中雨',    '30-50'],
+  [50, 80,  '#f0c040', '較大',    '50-80'],
+  [80, 130, '#f08040', '大雨',    '80-130'],
+  [130, 200,'#d63838', '豪雨',    '130-200'],
+  [200, 9999,'#8b1d8b','超大豪雨','> 200'],
+];
+
+function fcstColor(mm) {{
+  for (const [lo, hi, c] of FCST_BANDS) {{
+    if (mm >= lo && mm < hi) return c;
+  }}
+  return FCST_BANDS[0][2];
+}}
+function fcstLabel(mm) {{
+  for (const [lo, hi, c, lbl] of FCST_BANDS) {{
+    if (mm >= lo && mm < hi) return lbl;
+  }}
+  return '無雨';
+}}
+
+// 建圖例
+(function buildLegend() {{
+  const box = document.getElementById('fcstLegendBars');
+  FCST_BANDS.slice().reverse().forEach(([lo, hi, c, lbl, rng]) => {{
+    const row = document.createElement('div');
+    row.className = 'fcst-bar';
+    row.innerHTML = `<div class="fcst-bar-color" style="background:${{c}}"></div>` +
+                    `<div class="fcst-bar-label">${{lbl}}</div>` +
+                    `<div class="fcst-bar-range">${{rng}}</div>`;
+    box.appendChild(row);
+  }});
+}})();
+
+// 建日期 tabs
+const fcstTabs = document.getElementById('fcstTabs');
+FORECAST_DATES.forEach((d, i) => {{
+  const dt = new Date(d);
+  const wk = '日一二三四五六'[dt.getDay()];
+  const btn = document.createElement('button');
+  btn.textContent = (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
+  btn.dataset.date = d;
+  if (i === 0) btn.classList.add('active');
+  btn.addEventListener('click', () => {{
+    document.querySelectorAll('#fcstTabs button').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    renderForecastMap(d);
+  }});
+  fcstTabs.appendChild(btn);
+}});
+
+// 預測 Leaflet 地圖
+const fcstMap = L.map('fcstMap', {{zoomControl: true, attributionControl: false}}).setView([23.7, 121.0], 7);
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+  maxZoom: 16,   // 允許縮到街道級別看鄉鎮
+  opacity: 0.55,
+}}).addTo(fcstMap);
+L.control.attribution({{position: 'bottomright'}}).addAttribution('© OSM').addTo(fcstMap);
+
+let fcstGeoLayer = null;
+let fcstLabelLayer = L.layerGroup().addTo(fcstMap);
+
+function renderForecastMap(dateStr) {{
+  if (fcstGeoLayer) fcstMap.removeLayer(fcstGeoLayer);
+  fcstLabelLayer.clearLayers();
+
+  const drawIt = (geo) => {{
+    fcstGeoLayer = L.geoJSON(geo, {{
+      style: (feature) => {{
+        const {{row}} = getDataForFeature(feature);
+        const f = row && row.forecast ? row.forecast.find(x => x.d === dateStr) : null;
+        const mm = f ? f.mm : 0;
+        return {{fillColor: fcstColor(mm), weight: 0.8, color: '#fff', fillOpacity: 0.75}};
+      }},
+      onEachFeature: (feature, layer) => {{
+        const {{name, row}} = getDataForFeature(feature);
+        const f = row && row.forecast ? row.forecast.find(x => x.d === dateStr) : null;
+        const mm = f ? f.mm : 0;
+        const c = fcstColor(mm);
+        layer.bindPopup(
+          `<div class="popup-content"><strong>${{name}}</strong><br>` +
+          `${{dateStr}} 預測：<strong style="color:${{c}};font-size:16px">${{mm.toFixed(1)}} mm</strong><br>` +
+          `<span style="color:#888">（${{fcstLabel(mm)}}）</span></div>`
+        );
+        if (row) {{
+          const center = layer.getBounds().getCenter();
+          L.marker([center.lat, center.lng], {{
+            icon: L.divIcon({{
+              className: 'county-label',
+              html: name.replace('縣','').replace('市','') + '<span class="mm">' + mm.toFixed(0) + '</span>',
+              iconSize: null,
+            }}),
+          }}).addTo(fcstLabelLayer);
+        }}
+      }},
+    }}).addTo(fcstMap);
+  }};
+
+  if (window._geo) {{
+    drawIt(window._geo);
+  }} else {{
+    fetch(GEOJSON_URL).then(r => r.json()).then(g => {{ window._geo = g; drawIt(g); }});
+  }}
+}}
+
+// 預設載入第一天預測
+if (FORECAST_DATES.length > 0) {{
+  renderForecastMap(FORECAST_DATES[0]);
+}}
 </script>
 </body></html>"""
+
+
+def fetch_weather_news(max_items: int = 8) -> list:
+    """從 Google News RSS 抓最近天氣相關新聞"""
+    import feedparser
+    keywords = "天氣預報 OR 豪雨 OR 颱風 OR 鋒面 OR 大雨特報"
+    from urllib.parse import quote
+    url = f"https://news.google.com/rss/search?q={quote(keywords)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    try:
+        p = feedparser.parse(url)
+        out = []
+        for e in p.entries[:max_items]:
+            title = getattr(e, "title", "").strip()
+            link = getattr(e, "link", "").strip()
+            pub = ""
+            try:
+                pub = time.strftime("%m/%d", e.published_parsed)
+            except Exception:
+                pass
+            # 從 title 拆出媒體（Google News 格式："標題 - 媒體名"）
+            source = ""
+            if " - " in title:
+                title, source = title.rsplit(" - ", 1)
+            out.append({"title": title[:60], "link": link, "date": pub, "source": source})
+        return out
+    except Exception as e:
+        print(f"[!] 抓天氣新聞失敗: {e}")
+        return []
+
+
+def analyze_pattern(rows: list) -> str:
+    """依 4 大區未來 7 天平均降雨產生天氣分析描述（rule-based）"""
+    # 4 區代表：北=桃園、中=臺中、南=臺南、東=花蓮（用 COUNTIES 中對應項）
+    region_map = {"北": "桃園市", "中": "臺中市", "南": "臺南市", "東": "花蓮縣"}
+    region_forecast_avg = {}
+    for label, name in region_map.items():
+        row = next((r for r in rows if r["name"] == name), None)
+        if row and row.get("forecast"):
+            mm_list = [f["mm"] for f in row["forecast"]]
+            region_forecast_avg[label] = sum(mm_list) / len(mm_list) if mm_list else 0
+    if not region_forecast_avg:
+        return "（未取得預測資料）"
+
+    avg_all = sum(region_forecast_avg.values()) / len(region_forecast_avg)
+    n, m, s, e = (region_forecast_avg.get(k, 0) for k in "北中南東")
+
+    parts = []
+    # 整體降雨強度
+    if avg_all < 3:
+        parts.append("🌤 未來一週全台整體乾燥，日均降雨 < 3 mm，適合施肥出貨。")
+    elif avg_all < 15:
+        parts.append(f"⛅ 未來一週全台降雨溫和，日均約 {avg_all:.1f} mm，僅零星短陣雨。")
+    elif avg_all < 40:
+        parts.append(f"🌧 未來一週全台明顯降雨，日均約 {avg_all:.1f} mm，需留意出貨排程。")
+    else:
+        parts.append(f"⛈ 未來一週全台強降雨，日均 > {avg_all:.1f} mm，可能受颱風/鋒面/西南氣流影響。")
+
+    # 空間 pattern 判讀
+    if e > n and e > s and e > m and e > 20:
+        parts.append("東部明顯偏多 → 可能為東北季風迎風面/颱風外圍。")
+    if s > n and s > m and s > 20:
+        parts.append("南部偏多 → 可能為西南氣流影響（夏季常見）。")
+    if n > s and n > 20 and date.today().month in (10, 11, 12, 1, 2, 3):
+        parts.append("北部偏多 → 東北季風/鋒面影響（秋冬春常見）。")
+    if abs(n - s) < 5 and abs(m - e) < 5 and avg_all > 20:
+        parts.append("全台分布均勻 → 可能為滯留鋒面/颱風籠罩。")
+
+    # 業務提醒
+    if avg_all > 30:
+        parts.append("💡 業務建議：本週勿建議客戶施肥；出貨排程延後或改雨後補撒。")
+    elif avg_all < 5:
+        parts.append("💡 業務建議：本週適合積極洽談出貨，客戶田間可作業。")
+
+    return " ".join(parts)
 
 
 def build_html(rows: list, today: date) -> str:
@@ -444,6 +692,20 @@ def build_html(rows: list, today: date) -> str:
         f'<span style="color:#555">{lo}–{hi if hi < 9999 else "∞"} mm</span></div>'
         for lo, hi, c, label in COLOR_BANDS
     )
+
+    # === 未來 7 天預測 — 抽取日期列（第 1 個縣市的 forecast 當基準）===
+    first_forecast = next((r["forecast"] for r in rows if r.get("forecast")), [])
+    forecast_dates = [f["d"] for f in first_forecast[:7]]
+    # === 天氣分析 rule-based 文字 ===
+    analysis_text = analyze_pattern(rows)
+    # === 相關新聞 ===
+    news_items = fetch_weather_news(max_items=8)
+    news_html = "\n    ".join(
+        f'<li><a href="{n["link"]}" target="_blank" rel="noopener">{n["title"]}</a>'
+        f'<span class="meta">{n.get("source","")}{" · " + n["date"] if n.get("date") else ""}</span></li>'
+        for n in news_items
+    ) or '<li style="color:#888">（本次未抓到相關新聞）</li>'
+
     return HTML_TEMPLATE.format(
         today=today.isoformat(),
         quarter=quarter,
@@ -454,7 +716,12 @@ def build_html(rows: list, today: date) -> str:
         periods_json=json.dumps(periods, ensure_ascii=False),
         gen_time=time.strftime("%Y-%m-%d %H:%M"),
         legend_rows=legend_rows,
+        forecast_dates_json=json.dumps(forecast_dates, ensure_ascii=False),
+        analysis_text=analysis_text,
+        news_html=news_html,
     )
+
+
 
 
 def collect_rows(verbose: bool = True) -> list:
@@ -465,14 +732,18 @@ def collect_rows(verbose: bool = True) -> list:
         if verbose:
             print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ... ", end="", flush=True)
         try:
-            daily = fetch_rainfall(lat, lon, past_days=92)
+            daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7)
             agg = aggregate(daily, today)
+            # 拆出未來 7 天預測（從 today+1 開始）
+            today_str = today.isoformat()
+            forecast = sorted([(d, mm) for d, mm in daily.items() if d > today_str])[:7]
             rows.append({
                 "name": name, "lat": lat, "lon": lon,
                 "today": agg["today"],
                 "month": agg["month"],
                 "quarter": agg["quarter"],
                 "daily": daily,   # 完整每日雨量 → 讓 JS 端算自訂區間
+                "forecast": [{"d": d, "mm": mm} for d, mm in forecast],
             })
             if verbose:
                 print(f"今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
