@@ -178,6 +178,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .custom-range input[type=date]{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit}}
   .custom-range button{{padding:6px 14px;background:#2d6a4f;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;margin-left:6px}}
   .custom-range .hint{{font-size:11px;color:#888;margin-top:4px}}
+  /* 一鍵更新按鈕 & CWA 對照 */
+  .refresh-bar{{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid #e6e8eb;font-size:13px}}
+  .refresh-bar button{{padding:8px 16px;background:#1864ab;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}}
+  .refresh-bar button:hover:not(:disabled){{background:#144d85}}
+  .refresh-bar button:disabled{{background:#7bb3eb;cursor:wait}}
+  .refresh-bar .refresh-time{{color:#666;font-size:12px}}
+  .refresh-bar .cwa-link{{color:#1864ab;text-decoration:none;font-weight:600;font-size:12px;padding:6px 10px;border:1.5px solid #1864ab;border-radius:14px}}
+  .refresh-bar .cwa-link:hover{{background:#1864ab;color:#fff}}
+  .accuracy-note{{padding:8px 14px;background:#fff8e1;border-bottom:1px solid #f0d878;font-size:12px;color:#7a5a00;line-height:1.6;text-align:center}}
+  .accuracy-note a{{color:#c92a2a;text-decoration:none}}
   /* 未來 7 天預測地圖 */
   .forecast-block{{padding:14px 16px;background:#fff;margin-top:8px}}
   .forecast-block h3{{margin:0 0 10px;font-size:15px;color:#1f3a2e}}
@@ -210,7 +220,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <body>
 <div class="header">
   <h1>🗺️ 全台累積雨量地圖</h1>
-  <p>資料來源 Open-Meteo (ERA5)　·　22 縣市</p>
+  <p>資料來源 Open-Meteo (ECMWF)　·　22 縣市</p>
+</div>
+
+<div class="refresh-bar">
+  <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：{gen_time}</span>
+  <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
+</div>
+<div class="accuracy-note">
+  ⚠️ Open-Meteo 為 ECMWF 全球模型（11 km 分辨率），對台灣<strong>山區、颱風局部豪雨可能低估</strong>。
+  颱風/豪雨警報請以<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener"><strong>中央氣象署</strong></a>為準。
 </div>
 
 <div class="toggle">
@@ -302,7 +322,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="source">
   <h3>📚 資料來源 / 方法說明</h3>
   <ul>
-    <li><strong>雨量數據</strong>：Open-Meteo Forecast API（基於 ECMWF & ERA5 reanalysis），準度約 ±10%，分辨率約 11 km。
+    <li><strong>雨量數據</strong>：Open-Meteo Forecast API（基於 <a href="https://www.ecmwf.int/" target="_blank">ECMWF</a> 全球模型 + ERA5 reanalysis），分辨率約 <strong>11 km</strong>，準度 ±10%。
+      <br>⚠️ 全球模型對台灣<strong>山區地形性降雨</strong>（如中央山脈迎風面）及<strong>颱風局部強對流</strong>會低估。
+      官方預警請對照 <a href="https://www.cwa.gov.tw/" target="_blank" style="color:#c92a2a"><strong>中央氣象署</strong></a>（自營 WRF 模型 + 地面站校正，本地準度較高）。
       <br><a href="https://open-meteo.com/" target="_blank">https://open-meteo.com</a></li>
     <li><strong>縣市邊界</strong>：g0v 開源台灣縣市 GeoJSON（twCounty2010）。
       <br><a href="https://github.com/g0v/twgeojson" target="_blank">github.com/g0v/twgeojson</a></li>
@@ -586,6 +608,116 @@ function renderForecastMap(dateStr) {{
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {{
   renderForecastMap(FORECAST_DATES[0]);
+}}
+
+// ============ 🔄 一鍵更新：JS 端直接呼叫 Open-Meteo 22 縣市 ============
+async function refreshData() {{
+  const btn = document.getElementById('refreshBtn');
+  const timeSpan = document.getElementById('refreshTime');
+  btn.disabled = true;
+  btn.textContent = '⏳ 更新中... (0/22)';
+  let done = 0;
+  try {{
+    // 平行 fetch 22 縣市
+    const results = await Promise.all(DATA.map(async (c) => {{
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + c.lat +
+                  '&longitude=' + c.lon +
+                  '&daily=precipitation_sum&timezone=Asia%2FTaipei' +
+                  '&past_days=92&forecast_days=7';
+      const r = await fetch(url);
+      const j = await r.json();
+      const daily = {{}};
+      j.daily.time.forEach((t, i) => {{
+        daily[t] = Math.round((j.daily.precipitation_sum[i] || 0) * 10) / 10;
+      }});
+      done++;
+      btn.textContent = '⏳ 更新中... (' + done + '/22)';
+      return {{name: c.name, daily}};
+    }}));
+
+    // 用新資料重算 today/month/quarter/forecast
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = yyyy + '-' + mm + '-' + dd;
+    const monthPrefix = yyyy + '-' + mm + '-';
+    const q = Math.floor(now.getMonth() / 3);
+    const qMonths = new Set([q*3+1, q*3+2, q*3+3]);
+
+    results.forEach(({{name, daily}}) => {{
+      const c = DATA.find(x => x.name === name);
+      if (!c) return;
+      c.daily = daily;
+      c.today = daily[todayStr] || 0;
+      let mo = 0, qr = 0;
+      const fcast = [];
+      Object.entries(daily).forEach(([d, val]) => {{
+        if (d.startsWith(monthPrefix)) mo += val;
+        const parts = d.split('-');
+        if (parts[0] === String(yyyy) && qMonths.has(parseInt(parts[1]))) qr += val;
+        if (d > todayStr) fcast.push({{d, mm: val}});
+      }});
+      c.month = Math.round(mo * 10) / 10;
+      c.quarter = Math.round(qr * 10) / 10;
+      c.forecast = fcast.sort((a, b) => a.d < b.d ? -1 : 1).slice(0, 7);
+    }});
+
+    // 更新 PERIODS 顯示（今日日期可能已跨天）
+    PERIODS.today = todayStr + '（全日）';
+
+    // 重繪主地圖
+    const activeMode = document.querySelector('.toggle button.active').dataset.mode;
+    if (activeMode === 'custom') {{
+      applyCustom();
+    }} else {{
+      render(activeMode);
+    }}
+
+    // 重繪預測地圖（若日期變了要重建 tabs）
+    const firstRow = DATA.find(x => x.forecast && x.forecast.length);
+    if (firstRow) {{
+      const newDates = firstRow.forecast.map(f => f.d);
+      const changed = JSON.stringify(newDates) !== JSON.stringify(FORECAST_DATES);
+      if (changed) {{
+        FORECAST_DATES.length = 0;
+        newDates.forEach(d => FORECAST_DATES.push(d));
+        // 重建 tabs
+        const tabsEl = document.getElementById('fcstTabs');
+        tabsEl.innerHTML = '';
+        FORECAST_DATES.forEach((d, i) => {{
+          const dt = new Date(d);
+          const wk = '日一二三四五六'[dt.getDay()];
+          const b = document.createElement('button');
+          b.textContent = (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
+          b.dataset.date = d;
+          if (i === 0) b.classList.add('active');
+          b.addEventListener('click', () => {{
+            document.querySelectorAll('#fcstTabs button').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            renderForecastMap(d);
+          }});
+          tabsEl.appendChild(b);
+        }});
+      }}
+      renderForecastMap(FORECAST_DATES[0]);
+    }}
+
+    const timeStr = now.toTimeString().slice(0, 5);
+    btn.textContent = '✓ 已更新 ' + timeStr;
+    timeSpan.textContent = '📡 資料時間：' + todayStr + ' ' + timeStr + '（前端即時更新）';
+    setTimeout(() => {{
+      btn.textContent = '🔄 立即更新雨量資料';
+      btn.disabled = false;
+    }}, 4000);
+  }} catch (e) {{
+    console.error(e);
+    btn.textContent = '⚠ 更新失敗，請重試';
+    setTimeout(() => {{
+      btn.textContent = '🔄 立即更新雨量資料';
+      btn.disabled = false;
+    }}, 3000);
+  }}
 }}
 </script>
 </body></html>"""
