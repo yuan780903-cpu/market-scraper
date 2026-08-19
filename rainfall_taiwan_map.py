@@ -188,6 +188,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .refresh-bar .cwa-link:hover{{background:#1864ab;color:#fff}}
   .accuracy-note{{padding:8px 14px;background:#fff8e1;border-bottom:1px solid #f0d878;font-size:12px;color:#7a5a00;line-height:1.6;text-align:center}}
   .accuracy-note a{{color:#c92a2a;text-decoration:none}}
+  /* 本月降雨日曆 */
+  .rainy-block{{padding:14px 16px;background:#fff;margin-top:8px}}
+  .rainy-block h3{{margin:0 0 10px;font-size:15px;color:#1864ab}}
+  .rainy-filters{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;font-size:13px}}
+  .rainy-filters label{{font-weight:600;color:#52616b}}
+  .rainy-filters select{{padding:5px 8px;border:1px solid #ccd6e0;border-radius:5px;font-size:13px;font-family:inherit;background:#fff}}
+  .rainy-summary{{padding:10px 12px;background:#e3f2fd;border-left:4px solid #1864ab;border-radius:4px;margin-bottom:12px;font-size:14px;color:#0d47a1}}
+  .rainy-summary strong{{font-size:20px;color:#c92a2a;margin:0 3px}}
+  .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px;margin-bottom:12px}}
+  .cal-head{{padding:4px;text-align:center;font-weight:700;background:#f5f6f3;color:#52616b;border-radius:3px}}
+  .cal-cell{{aspect-ratio:1;padding:3px;border:1px solid #e6e8eb;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;text-align:center;background:#fafafa;color:#333}}
+  .cal-cell.empty{{background:transparent;border:none}}
+  .cal-cell.dry{{background:#f5f6f3;color:#aaa}}
+  .cal-cell.rain-1{{background:#e3f2fd;color:#0d47a1}}
+  .cal-cell.rain-2{{background:#7bb3eb;color:#fff}}
+  .cal-cell.rain-3{{background:#f0c040;color:#5a3800}}
+  .cal-cell.rain-4{{background:#f08040;color:#fff}}
+  .cal-cell.rain-5{{background:#c92a2a;color:#fff}}
+  .cal-cell.today{{outline:2px solid #2d6a4f}}
+  .cal-cell .d{{font-size:13px;font-weight:700}}
+  .cal-cell .mm{{font-size:10px;font-weight:600}}
+  .rainy-list{{max-height:200px;overflow-y:auto;background:#f5f6f3;padding:8px 12px;border-radius:4px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.8}}
+  .rainy-list .day{{display:inline-block;padding:2px 8px;margin:2px;background:#fff;border-radius:12px;border:1px solid #ddd}}
   /* 未來 7 天預測地圖 */
   .forecast-block{{padding:14px 16px;background:#fff;margin-top:8px}}
   .forecast-block h3{{margin:0 0 10px;font-size:15px;color:#1f3a2e}}
@@ -289,6 +312,26 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="ranking" id="ranking">
   <h3 id="ranking-title">本月累積雨量排名</h3>
   <table id="ranking-table"><tbody></tbody></table>
+</div>
+
+<!-- ===================== 本月降雨日曆 ===================== -->
+<div class="rainy-block">
+  <h3>📆 本月下雨日期 · 依縣市 / 雨量閾值篩選</h3>
+  <div class="rainy-filters">
+    <label>地區</label>
+    <select id="rainyCounty"></select>
+    <label>雨量閾值</label>
+    <select id="rainyThreshold">
+      <option value="1">≥ 1 mm（有雨即算）</option>
+      <option value="10">≥ 10 mm（小雨以上）</option>
+      <option value="30" selected>≥ 30 mm（中雨以上）</option>
+      <option value="50">≥ 50 mm（大雨以上）</option>
+      <option value="80">≥ 80 mm（豪雨）</option>
+    </select>
+  </div>
+  <div class="rainy-summary" id="rainySummary"></div>
+  <div class="cal-grid" id="rainyCalendar"></div>
+  <div class="rainy-list" id="rainyList"></div>
 </div>
 
 <!-- ===================== 未來 7 天雨量預測 ===================== -->
@@ -610,6 +653,110 @@ if (FORECAST_DATES.length > 0) {{
   renderForecastMap(FORECAST_DATES[0]);
 }}
 
+// ============ 📆 本月降雨日曆 ============
+(function initRainyCalendar() {{
+  // 縣市 select（依 DATA 順序）
+  const cs = document.getElementById('rainyCounty');
+  DATA.forEach(c => {{
+    const opt = document.createElement('option');
+    opt.value = c.name;
+    opt.textContent = c.name;
+    if (c.name === '臺南市') opt.selected = true;   // 預設用戶主業務區
+    cs.appendChild(opt);
+  }});
+  cs.addEventListener('change', renderRainyCalendar);
+  document.getElementById('rainyThreshold').addEventListener('change', renderRainyCalendar);
+  renderRainyCalendar();
+}})();
+
+function renderRainyCalendar() {{
+  const countyName = document.getElementById('rainyCounty').value;
+  const threshold = Number(document.getElementById('rainyThreshold').value);
+  const c = DATA.find(x => x.name === countyName);
+  if (!c || !c.daily) return;
+
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = now.getMonth() + 1;
+  const monthPrefix = yyyy + '-' + String(mm).padStart(2, '0') + '-';
+  const todayStr = yyyy + '-' + String(mm).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  const daysInMonth = new Date(yyyy, mm, 0).getDate();
+  const firstDay = new Date(yyyy, mm - 1, 1).getDay();  // 0=週日
+
+  // 統計本月符合條件的日期
+  const matchDays = [];
+  let totalRainDays = 0;  // 有雨的天數（不管閾值）
+  let totalMm = 0;
+  for (let d = 1; d <= daysInMonth; d++) {{
+    const key = monthPrefix + String(d).padStart(2, '0');
+    const val = c.daily[key];
+    if (val === undefined) continue;
+    if (val >= 1) totalRainDays++;
+    totalMm += val;
+    if (val >= threshold) matchDays.push({{d, val, date: key}});
+  }}
+
+  // 摘要
+  const summary = document.getElementById('rainySummary');
+  summary.innerHTML =
+    '📍 <strong style="color:#1f3a2e">' + countyName + '</strong>' +
+    ' · ' + yyyy + ' 年 ' + mm + ' 月　|　' +
+    '本月累計降雨 <strong>' + totalMm.toFixed(1) + '</strong> mm　|　' +
+    '有雨（≥1mm）共 <strong>' + totalRainDays + '</strong> 天　|　' +
+    '達 ≥' + threshold + 'mm 共 <strong>' + matchDays.length + '</strong> 天';
+
+  // 月曆
+  const cal = document.getElementById('rainyCalendar');
+  cal.innerHTML = '';
+  ['日','一','二','三','四','五','六'].forEach(w => {{
+    const h = document.createElement('div');
+    h.className = 'cal-head';
+    h.textContent = w;
+    cal.appendChild(h);
+  }});
+  // 填 firstDay 個空格
+  for (let i = 0; i < firstDay; i++) {{
+    const e = document.createElement('div');
+    e.className = 'cal-cell empty';
+    cal.appendChild(e);
+  }}
+  // 每天格子
+  for (let d = 1; d <= daysInMonth; d++) {{
+    const key = monthPrefix + String(d).padStart(2, '0');
+    const val = c.daily[key];
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    if (val === undefined) {{
+      cell.className += ' empty';
+      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm" style="color:#ccc">-</div>';
+    }} else if (val < 1) {{
+      cell.className += ' dry';
+      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm">0</div>';
+    }} else {{
+      // 分級：1-10, 10-30, 30-50, 50-80, 80+
+      let lvl = 1;
+      if (val >= 80) lvl = 5;
+      else if (val >= 50) lvl = 4;
+      else if (val >= 30) lvl = 3;
+      else if (val >= 10) lvl = 2;
+      cell.className += ' rain-' + lvl;
+      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm">' + val.toFixed(0) + '</div>';
+    }}
+    if (key === todayStr) cell.className += ' today';
+    cal.appendChild(cell);
+  }}
+
+  // 日期列表
+  const list = document.getElementById('rainyList');
+  if (!matchDays.length) {{
+    list.innerHTML = '<span style="color:#888">本月尚無達 ≥' + threshold + 'mm 的日期</span>';
+  }} else {{
+    list.innerHTML = matchDays.map(x =>
+      '<span class="day">' + mm + '/' + x.d + '　<b>' + x.val.toFixed(1) + '</b> mm</span>'
+    ).join('');
+  }}
+}}
+
 // ============ 🔄 一鍵更新：JS 端直接呼叫 Open-Meteo 22 縣市 ============
 async function refreshData() {{
   const btn = document.getElementById('refreshBtn');
@@ -702,6 +849,9 @@ async function refreshData() {{
       }}
       renderForecastMap(FORECAST_DATES[0]);
     }}
+
+    // 重繪本月降雨日曆（新資料）
+    renderRainyCalendar();
 
     const timeStr = now.toTimeString().slice(0, 5);
     btn.textContent = '✓ 已更新 ' + timeStr;
