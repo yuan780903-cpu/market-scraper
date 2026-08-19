@@ -445,8 +445,27 @@ function healBrands(list){
 }
 function saveBrands(){ try{ localStorage.setItem('madou_fert_brands_v3', JSON.stringify(BRANDS)); }catch(e){} }
 function priceOf(name){ const b=resolveProduct(name); return b && b.p!=='' ? (parseFloat(b.p)||0) : 0; } // 用別名解析，名稱差一字(如大/太)也算得出金額
-function resolveProduct(name){ if(!name) return null;
-  return BRANDS.find(b=>b.n===name) || BRANDS.find(b=>(b.alias||[]).includes(name)) || null; }
+// 產品名正規化：去空白、修錯字(排→牌)、去廠商前綴、去通用綴詞(有機/質/肥料/公司/實業…)，只留核心
+function normProd(s){
+  return String(s||'').replace(/\s/g,'').replace(/排/g,'牌')
+    .replace(/^(臺南市)?麻豆區農會/,'')
+    .replace(/^(吾肥土農業生技|吾肥土|翔鹿公司|翔鹿|福壽實業|福壽|宏生實業|宏生|大成實業|大成|崇容實業|崇容|豐修實業\(欣農\)|豐修實業|豐修|欣農|長虹公司|長虹)/,'')
+    .replace(/公司|實業|農業生技|股份有限|有限/g,'')
+    .replace(/強效/g,'').replace(/發酵/g,'').replace(/顆粒/g,'')
+    .replace(/有機質?肥料?|質肥|堆肥|基肥/g,'');
+}
+function resolveProduct(name){ if(!name) return null; name=String(name).trim();
+  // 1) 完全相符 / 別名(精準優先)
+  let b=BRANDS.find(x=>x.n===name) || BRANDS.find(x=>(x.alias||[]).includes(name));
+  if(b) return b;
+  // 2) 智慧比對：正規化核心相同或互相包含(讓沒見過的廠商前綴/錯字變體也能自動對上)
+  const k=normProd(name); if(k.length<2) return null;
+  const hit=list=>BRANDS.find(x=>{
+    const cores=[x.n, ...(x.alias||[])].map(normProd).filter(c=>c.length>=2);
+    return cores.some(c=> c===k || (k.length>=c.length && k.includes(c)) || (c.length>=k.length && c.includes(k)));
+  });
+  return hit() || null;
+}
 
 /* ---------- 班別資料狀態 ---------- */
 let curGroup = GROUP30;
