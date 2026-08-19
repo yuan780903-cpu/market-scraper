@@ -272,6 +272,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rainy-list .day b{{color:var(--cwa-danger)}}
 
   /* ===== 未來 7 天預測地圖 ===== */
+  .fcst-mode-bar{{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}}
+  .fcst-mode-bar button{{padding:6px 14px;border:1.5px solid var(--cwa-border);background:#fff;color:var(--cwa-text-muted);font-size:12px;font-weight:600;border-radius:3px;cursor:pointer;font-family:inherit;transition:all .15s}}
+  .fcst-mode-bar button:hover{{background:var(--cwa-hover);color:var(--cwa-primary);border-color:var(--cwa-primary)}}
+  .fcst-mode-bar button.active{{background:var(--cwa-primary);color:#fff;border-color:var(--cwa-primary)}}
+  .fcst-checkboxes{{display:none;flex-wrap:wrap;gap:8px;padding:10px 12px;background:var(--cwa-hover);border-radius:3px;border:1px solid var(--cwa-border);margin-bottom:10px}}
+  .fcst-checkboxes.show{{display:flex}}
+  .fcst-checkboxes label{{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 10px;background:#fff;border:1px solid var(--cwa-border);border-radius:3px;font-family:inherit}}
+  .fcst-checkboxes label:hover{{background:var(--cwa-light)}}
+  .fcst-checkboxes input[type=checkbox]{{margin:0;accent-color:var(--cwa-primary)}}
+  .fcst-checkboxes label.checked{{background:var(--cwa-light);border-color:var(--cwa-primary);color:var(--cwa-primary);font-weight:700}}
+  .fcst-info{{padding:8px 12px;background:var(--cwa-light);border-left:3px solid var(--cwa-primary);border-radius:2px;margin-bottom:10px;font-size:12px;color:var(--cwa-text);line-height:1.6}}
+  .fcst-info strong{{color:var(--cwa-primary);font-family:ui-monospace,Menlo,monospace}}
   .fcst-day-tabs{{display:flex;gap:0;margin-bottom:12px;overflow-x:auto;border-bottom:1px solid var(--cwa-border)}}
   .fcst-day-tabs button{{flex-shrink:0;padding:10px 16px;border:none;background:transparent;color:var(--cwa-text-muted);font-size:13px;font-weight:600;cursor:pointer;line-height:1.2;font-family:inherit;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .15s}}
   .fcst-day-tabs button:hover{{background:var(--cwa-hover);color:var(--cwa-primary)}}
@@ -409,7 +421,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <!-- ===================== 未來 7 天雨量預測 ===================== -->
 <div class="forecast-block">
   <h3>🔮 未來 7 天雨量預測 · 全台縣市地圖</h3>
+  <div class="fcst-mode-bar">
+    <button data-mode="single" class="active">📅 單日</button>
+    <button data-mode="3day">📈 未來 3 天累積</button>
+    <button data-mode="7day">📈 未來 7 天累積</button>
+    <button data-mode="custom">✓ 自訂天數複選</button>
+  </div>
+  <div class="fcst-checkboxes" id="fcstCheckboxes"></div>
   <div class="fcst-day-tabs" id="fcstTabs"></div>
+  <div class="fcst-info" id="fcstInfo" style="display:none"></div>
   <div class="fcst-wrap">
     <div id="fcstMap"></div>
     <div class="fcst-legend">
@@ -649,21 +669,84 @@ function fcstLabel(mm) {{
   }});
 }})();
 
-// 建日期 tabs
+// 建單日 tabs
 const fcstTabs = document.getElementById('fcstTabs');
-FORECAST_DATES.forEach((d, i) => {{
-  const dt = new Date(d);
-  const wk = '日一二三四五六'[dt.getDay()];
-  const btn = document.createElement('button');
-  btn.textContent = (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
-  btn.dataset.date = d;
-  if (i === 0) btn.classList.add('active');
-  btn.addEventListener('click', () => {{
-    document.querySelectorAll('#fcstTabs button').forEach(x => x.classList.remove('active'));
-    btn.classList.add('active');
-    renderForecastMap(d);
+function buildDayTabs() {{
+  fcstTabs.innerHTML = '';
+  FORECAST_DATES.forEach((d, i) => {{
+    const dt = new Date(d);
+    const wk = '日一二三四五六'[dt.getDay()];
+    const btn = document.createElement('button');
+    btn.textContent = (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
+    btn.dataset.date = d;
+    if (i === 0) btn.classList.add('active');
+    btn.addEventListener('click', () => {{
+      document.querySelectorAll('#fcstTabs button').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      renderForecastMap([d]);
+    }});
+    fcstTabs.appendChild(btn);
   }});
-  fcstTabs.appendChild(btn);
+}}
+buildDayTabs();
+
+// 建自訂複選 checkbox
+const fcstCheckboxes = document.getElementById('fcstCheckboxes');
+function buildCheckboxes() {{
+  fcstCheckboxes.innerHTML = '';
+  FORECAST_DATES.forEach((d, i) => {{
+    const dt = new Date(d);
+    const wk = '日一二三四五六'[dt.getDay()];
+    const wrapper = document.createElement('label');
+    wrapper.dataset.date = d;
+    if (i < 3) wrapper.classList.add('checked');   // 預設勾前 3 天
+    wrapper.innerHTML =
+      '<input type="checkbox" ' + (i < 3 ? 'checked' : '') + '>' +
+      (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
+    const cb = wrapper.querySelector('input');
+    cb.addEventListener('change', () => {{
+      wrapper.classList.toggle('checked', cb.checked);
+      applyCustomForecast();
+    }});
+    fcstCheckboxes.appendChild(wrapper);
+  }});
+}}
+buildCheckboxes();
+
+function applyCustomForecast() {{
+  const picked = [...fcstCheckboxes.querySelectorAll('input:checked')]
+    .map(cb => cb.closest('label').dataset.date);
+  if (picked.length === 0) {{
+    document.getElementById('fcstInfo').innerHTML = '⚠ 請至少勾選 1 天';
+    return;
+  }}
+  renderForecastMap(picked);
+}}
+
+// 模式切換 (單日 / 3天 / 7天 / 自訂)
+let fcstMode = 'single';
+document.querySelectorAll('.fcst-mode-bar button').forEach(b => {{
+  b.addEventListener('click', () => {{
+    document.querySelectorAll('.fcst-mode-bar button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    fcstMode = b.dataset.mode;
+    const tabsEl = document.getElementById('fcstTabs');
+    const cbEl = document.getElementById('fcstCheckboxes');
+    const infoEl = document.getElementById('fcstInfo');
+    tabsEl.style.display = (fcstMode === 'single') ? 'flex' : 'none';
+    cbEl.style.display = (fcstMode === 'custom') ? 'flex' : 'none';
+    infoEl.style.display = (fcstMode === 'single') ? 'none' : 'block';
+    if (fcstMode === 'single') {{
+      const activeBtn = document.querySelector('#fcstTabs button.active') || document.querySelector('#fcstTabs button');
+      if (activeBtn) renderForecastMap([activeBtn.dataset.date]);
+    }} else if (fcstMode === '3day') {{
+      renderForecastMap(FORECAST_DATES.slice(0, 3));
+    }} else if (fcstMode === '7day') {{
+      renderForecastMap(FORECAST_DATES.slice(0, 7));
+    }} else if (fcstMode === 'custom') {{
+      applyCustomForecast();
+    }}
+  }});
 }});
 
 // 預測 Leaflet 地圖
@@ -677,27 +760,64 @@ L.control.attribution({{position: 'bottomright'}}).addAttribution('© OSM').addT
 let fcstGeoLayer = null;
 let fcstLabelLayer = L.layerGroup().addTo(fcstMap);
 
-function renderForecastMap(dateStr) {{
+// 依日期陣列，回傳每縣加總 mm
+function sumForecastForDates(row, dateArr) {{
+  if (!row || !row.forecast) return 0;
+  const set = new Set(dateArr);
+  let s = 0;
+  row.forecast.forEach(f => {{ if (set.has(f.d)) s += f.mm; }});
+  return Math.round(s * 10) / 10;
+}}
+
+// 依累積 mm 決定色階（單日模式用「單日級距」，多日累積用主圖級距）
+function fcstColorForSum(mm, isMultiDay) {{
+  if (!isMultiDay) return fcstColor(mm);
+  // 多日累積用主圖 COLOR_BANDS 級距（0-30, 30-80, 80-150, 150-300, 300-500, 500-800, 800+）
+  for (const [lo, hi, c] of BANDS) {{
+    if (mm >= lo && mm < hi) return c;
+  }}
+  return BANDS[0][2];
+}}
+function fcstLabelForSum(mm, isMultiDay) {{
+  if (!isMultiDay) return fcstLabel(mm);
+  for (const [lo, hi, c, lbl] of BANDS) {{
+    if (mm >= lo && mm < hi) return lbl;
+  }}
+  return BANDS[0][3];
+}}
+
+function renderForecastMap(dateArr) {{
   if (fcstGeoLayer) fcstMap.removeLayer(fcstGeoLayer);
   fcstLabelLayer.clearLayers();
+
+  const isMultiDay = dateArr.length > 1;
+  const title = isMultiDay
+    ? '📅 累積期間：<strong>' + dateArr[0] + ' ~ ' + dateArr[dateArr.length-1] + '</strong>　共 <strong>' + dateArr.length + '</strong> 天'
+    : '';
+  if (isMultiDay) {{
+    document.getElementById('fcstInfo').innerHTML = title +
+      '<br><span style="color:#666;font-size:11px">※ 累積雨量使用主圖級距（≥30 mm 略多、≥150 mm 多雨、≥300 mm 豪雨等），與單日級距不同</span>';
+  }}
 
   const drawIt = (geo) => {{
     fcstGeoLayer = L.geoJSON(geo, {{
       style: (feature) => {{
         const {{row}} = getDataForFeature(feature);
-        const f = row && row.forecast ? row.forecast.find(x => x.d === dateStr) : null;
-        const mm = f ? f.mm : 0;
-        return {{fillColor: fcstColor(mm), weight: 0.8, color: '#fff', fillOpacity: 0.75}};
+        const mm = sumForecastForDates(row, dateArr);
+        return {{fillColor: fcstColorForSum(mm, isMultiDay), weight: 0.8, color: '#fff', fillOpacity: 0.75}};
       }},
       onEachFeature: (feature, layer) => {{
         const {{name, row}} = getDataForFeature(feature);
-        const f = row && row.forecast ? row.forecast.find(x => x.d === dateStr) : null;
-        const mm = f ? f.mm : 0;
-        const c = fcstColor(mm);
+        const mm = sumForecastForDates(row, dateArr);
+        const c = fcstColorForSum(mm, isMultiDay);
+        const lbl = fcstLabelForSum(mm, isMultiDay);
+        const rangeLbl = isMultiDay
+          ? (dateArr[0] + ' ~ ' + dateArr[dateArr.length-1] + ' 累積')
+          : (dateArr[0] + ' 預測');
         layer.bindPopup(
           `<div class="popup-content"><strong>${{name}}</strong><br>` +
-          `${{dateStr}} 預測：<strong style="color:${{c}};font-size:16px">${{mm.toFixed(1)}} mm</strong><br>` +
-          `<span style="color:#888">（${{fcstLabel(mm)}}）</span></div>`
+          `${{rangeLbl}}：<strong style="color:${{c}};font-size:16px">${{mm.toFixed(1)}} mm</strong><br>` +
+          `<span style="color:#888">（${{lbl}}）</span></div>`
         );
         if (row) {{
           const center = layer.getBounds().getCenter();
@@ -722,7 +842,7 @@ function renderForecastMap(dateStr) {{
 
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {{
-  renderForecastMap(FORECAST_DATES[0]);
+  renderForecastMap([FORECAST_DATES[0]]);
 }}
 
 // ============ 📆 本月降雨日曆 ============
@@ -901,25 +1021,19 @@ async function refreshData() {{
       if (changed) {{
         FORECAST_DATES.length = 0;
         newDates.forEach(d => FORECAST_DATES.push(d));
-        // 重建 tabs
-        const tabsEl = document.getElementById('fcstTabs');
-        tabsEl.innerHTML = '';
-        FORECAST_DATES.forEach((d, i) => {{
-          const dt = new Date(d);
-          const wk = '日一二三四五六'[dt.getDay()];
-          const b = document.createElement('button');
-          b.textContent = (dt.getMonth()+1) + '/' + dt.getDate() + '(' + wk + ')';
-          b.dataset.date = d;
-          if (i === 0) b.classList.add('active');
-          b.addEventListener('click', () => {{
-            document.querySelectorAll('#fcstTabs button').forEach(x => x.classList.remove('active'));
-            b.classList.add('active');
-            renderForecastMap(d);
-          }});
-          tabsEl.appendChild(b);
-        }});
+        buildDayTabs();       // 重建單日 tabs
+        buildCheckboxes();    // 重建複選 checkbox
       }}
-      renderForecastMap(FORECAST_DATES[0]);
+      // 依當前模式重繪
+      if (fcstMode === 'single') {{
+        renderForecastMap([FORECAST_DATES[0]]);
+      }} else if (fcstMode === '3day') {{
+        renderForecastMap(FORECAST_DATES.slice(0, 3));
+      }} else if (fcstMode === '7day') {{
+        renderForecastMap(FORECAST_DATES.slice(0, 7));
+      }} else if (fcstMode === 'custom') {{
+        applyCustomForecast();
+      }}
     }}
 
     // 重繪本月降雨日曆（新資料）
