@@ -250,8 +250,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rainy-filters{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;font-size:13px;padding:10px;background:var(--cwa-hover);border-radius:3px;border:1px solid var(--cwa-border)}}
   .rainy-filters label{{font-weight:600;color:var(--cwa-text)}}
   .rainy-filters select{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px;font-family:inherit;background:#fff;color:var(--cwa-text)}}
-  .rainy-summary{{padding:12px 14px;background:var(--cwa-primary);color:#fff;border-radius:3px;margin-bottom:12px;font-size:14px;line-height:1.8}}
-  .rainy-summary strong{{font-size:20px;color:#ffd54f;margin:0 4px;font-family:ui-monospace,Menlo,monospace}}
+  .rainy-summary{{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:14px 18px;background:var(--cwa-light);color:var(--cwa-text);border-left:4px solid var(--cwa-primary);border-radius:3px;margin-bottom:12px;font-size:13px}}
+  .rainy-summary .loc{{color:var(--cwa-primary);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:4px}}
+  .rainy-summary .date{{color:var(--cwa-text-muted);font-family:ui-monospace,Menlo,monospace;font-size:13px}}
+  .rainy-summary .stat{{color:var(--cwa-text);display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}}
+  .rainy-summary .stat strong{{color:var(--cwa-danger);font-size:22px;font-family:ui-monospace,Menlo,monospace;margin:0 2px;font-weight:900;line-height:1}}
+  .rainy-summary .stat .unit{{color:var(--cwa-text-muted);font-size:12px}}
   .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12px;margin-bottom:12px;background:var(--cwa-border);padding:2px;border-radius:3px}}
   .cal-head{{padding:6px;text-align:center;font-weight:700;background:var(--cwa-primary);color:#fff;font-size:11px}}
   .cal-head:first-child{{color:#ffd54f}}   /* 週日 */
@@ -1097,14 +1101,14 @@ function renderRainyCalendar() {{
     if (val >= threshold) matchDays.push({{d, val, date: key}});
   }}
 
-  // 摘要
+  // 摘要（改 span 分項，避免深藍底吃掉字）
   const summary = document.getElementById('rainySummary');
   summary.innerHTML =
-    '📍 <strong style="color:#1f3a2e">' + countyName + '</strong>' +
-    ' · ' + yyyy + ' 年 ' + mm + ' 月　|　' +
-    '本月累計降雨 <strong>' + totalMm.toFixed(1) + '</strong> mm　|　' +
-    '有雨（≥1mm）共 <strong>' + totalRainDays + '</strong> 天　|　' +
-    '達 ≥' + threshold + 'mm 共 <strong>' + matchDays.length + '</strong> 天';
+    '<span class="loc">📍 ' + countyName + '</span>' +
+    '<span class="date">' + yyyy + ' 年 ' + mm + ' 月</span>' +
+    '<span class="stat">本月累計 <strong>' + totalMm.toFixed(1) + '</strong><span class="unit">mm</span></span>' +
+    '<span class="stat">有雨(≥1mm) <strong>' + totalRainDays + '</strong><span class="unit">天</span></span>' +
+    '<span class="stat">達 ≥' + threshold + 'mm <strong>' + matchDays.length + '</strong><span class="unit">天</span></span>';
 
   // 月曆
   const cal = document.getElementById('rainyCalendar');
