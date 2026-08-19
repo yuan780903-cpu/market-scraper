@@ -348,6 +348,17 @@
       <div><h3>規格</h3><table class="ststbl"><tbody id="stSpecT"></tbody></table></div>
     </div>
     <div style="margin-top:10px; font-size:14px;">合計包數：<b id="stAll">0</b> 包</div>
+
+    <div id="shortWrap" style="display:none; margin-top:22px;">
+      <h2>🚚 超額待調撥缺口</h2>
+      <p>匯入官方檔若含「不足數量」欄（班員超額登記、待找額度的量），會自動列在這裡，等著跨班／向有餘額者調撥補足。</p>
+      <div class="scroll">
+        <table id="shorttbl"><thead><tr>
+          <th>序號</th><th>班員姓名</th><th>電話</th><th>登記品牌</th><th>不足(包)</th><th>換算公斤</th>
+        </tr></thead><tbody id="shortbody"></tbody></table>
+      </div>
+      <div style="margin-top:10px; font-size:14px;">超額待調撥合計：<b id="shortTotalBags">0</b> 包　＝　<b id="shortTotalKg">0</b> 公斤　·　<b id="shortCount">0</b> 位班員</div>
+    </div>
   </div>
 
   <p class="hint">
@@ -451,7 +462,8 @@ function normalize(list){
   return list.map(r=>{
     const o={ name:r.name||'', phone:r.phone||'', area:r.area===undefined?'':r.area, place:r.place||'',
       b:r.b||'', f:r.f||'', s:r.s===undefined?'':r.s, g:r.g===undefined?'':r.g,
-      b2:r.b2||'', f2:r.f2||'', s2:r.s2===undefined?'':r.s2, g2:r.g2===undefined?'':r.g2 };
+      b2:r.b2||'', f2:r.f2||'', s2:r.s2===undefined?'':r.s2, g2:r.g2===undefined?'':r.g2,
+      short:(r.short===undefined||r.short==='')?'':r.short };
     migrateProd(o,'b','f','s'); migrateProd(o,'b2','f2','s2');
     return o;
   });
@@ -844,6 +856,31 @@ function renderStats(){
       tr.appendChild(a); tr.appendChild(c); tb.appendChild(tr); }); };
   fill('stProd',byProd); fill('stFormT',byForm); fill('stSpecT',bySpec);
   $('stAll').textContent=fmt(total);
+  renderShortGap();
+}
+// 超額待調撥缺口：列出有「不足數量」的班員(匯入官方檔的不足欄)並加總
+function renderShortGap(){
+  const wrap=$('shortWrap'); if(!wrap) return;
+  const list=rows.map((r,i)=>({r,i})).filter(x=>{ const v=parseInt(x.r.short); return v>0; });
+  if(!list.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  const tb=$('shortbody'); tb.innerHTML='';
+  let bags=0,kg=0;
+  list.forEach((x,idx)=>{
+    const r=x.r; const v=parseInt(r.short)||0; const spec=parseInt(r.s)||parseInt(r.s2)||0; const k=v*spec;
+    bags+=v; kg+=k;
+    const tr=document.createElement('tr');
+    tr.appendChild(cell('col-idx', idx+1));
+    tr.appendChild(cell('', r.name||''));
+    tr.appendChild(cell('', r.phone||''));
+    tr.appendChild(cell('', r.b||r.b2||''));
+    tr.appendChild(cell('num', fmt(v)));
+    tr.appendChild(cell('num', spec?fmt(k):'—'));
+    tb.appendChild(tr);
+  });
+  $('shortTotalBags').textContent=fmt(bags);
+  $('shortTotalKg').textContent=fmt(kg);
+  $('shortCount').textContent=list.length;
 }
 $('bStats').onclick=()=>{ const p=$('statsPanel'); const show=!p.classList.contains('show');
   p.classList.toggle('show',show); $('bStats').classList.toggle('active',show); if(show) renderStats(); };
@@ -1068,10 +1105,21 @@ async function parseXlsxRoster(file){
     });
   });
   let hr=0; for(let r=1;r<=12;r++){ if(String(grid['A'+r]||'').indexOf('班員')>=0){ hr=r; break; } } if(!hr)hr=3;
+  // 掃表頭找「不足」欄(班員超額登記待調撥的量)
+  let shortCol=''; for(const col of 'ABCDEFGHIJKLMNOPQR'){ if(String(grid[col+hr]||'').indexOf('不足')>=0){ shortCol=col; break; } }
+  const t1=v=>String(v||'').split(/\s{2,}/)[0].trim();                       // 同格多產品取第1個
+  const t2=v=>{ const p=String(v||'').split(/\s{2,}/); return p.length>1?p[1].trim():''; }; // 第2個
+  const phoneOf=v=>{ const m=String(v||'').match(/\d{8,}/); return m?m[0]:t1(v); };          // 電話欄可能夾第2個人名，只取號碼
   const out=[];
   for(let r=hr+1;r<=hr+400;r++){
     const name=String(grid['A'+r]||'').trim();
-    if(name && name!=='合計'){ out.push({name, phone:String(grid['B'+r]||'').trim(), area:(parseFloat(grid['E'+r])||''), place:'', b:'', f:'', s:'', g:''}); }
+    if(name && name!=='合計'){
+      const o={name, phone:phoneOf(grid['B'+r]), area:(parseFloat(grid['E'+r])||''), place:String(grid['G'+r]||'').trim(),
+        b:t1(grid['H'+r]), f:'', s:(parseInt(t1(grid['I'+r]))||''), g:(parseInt(t1(grid['J'+r]))||''),
+        b2:t2(grid['H'+r]), f2:'', s2:(parseInt(t2(grid['I'+r]))||''), g2:(parseInt(t2(grid['J'+r]))||'')};
+      if(shortCol){ const sv=parseInt(grid[shortCol+r]); if(sv) o.short=sv; }
+      out.push(o);
+    }
   }
   return out;
 }
@@ -1084,7 +1132,8 @@ $('fileInput').onchange=async (e)=>{
       if(!roster.length) throw new Error('未讀到班員資料（請確認是官方申請表格式）');
       if(!confirm('由「'+f.name+'」建置「'+curGroup+'」班員初始資料，共 '+roster.length+' 人，將覆蓋目前資料，確定？')){ e.target.value=''; return; }
       rows=normalize(roster); save(); TRANSFERS.length=0; renderHead(); renderBody(); updateTotals(); updateCount(); if($('xferPanel'))renderXfers();
-      toast('✅ 已由 Excel 建置 '+roster.length+' 位班員初始資料');
+      const nShort=rows.filter(r=>parseInt(r.short)>0).length;
+      toast('✅ 已由 Excel 建置 '+roster.length+' 位班員'+(nShort?('，其中 '+nShort+' 位有超額(不足)，請看「包數統計」的超額待調撥缺口'):''));
     }catch(err){ toast('Excel 匯入失敗：'+err.message); }
     e.target.value=''; return;
   }
