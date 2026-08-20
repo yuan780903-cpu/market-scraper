@@ -256,12 +256,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rainy-summary .stat{{color:var(--cwa-text);display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}}
   .rainy-summary .stat strong{{color:var(--cwa-danger);font-size:22px;font-family:ui-monospace,Menlo,monospace;margin:0 2px;font-weight:900;line-height:1}}
   .rainy-summary .stat .unit{{color:var(--cwa-text-muted);font-size:12px}}
-  .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12px;margin-bottom:12px;background:var(--cwa-border);padding:2px;border-radius:3px}}
-  .cal-head{{padding:6px;text-align:center;font-weight:700;background:var(--cwa-primary);color:#fff;font-size:11px}}
-  .cal-head:first-child{{color:#ffd54f}}   /* 週日 */
-  .cal-head:last-child{{color:#ffcccc}}   /* 週六 */
-  .cal-cell{{aspect-ratio:1;padding:4px;display:flex;flex-direction:column;justify-content:space-between;text-align:center;background:#fff;color:var(--cwa-text)}}
-  .cal-cell.empty{{background:transparent}}
+  .cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12px;margin:0 auto 12px;background:var(--cwa-border);padding:2px;border-radius:3px;max-width:640px}}
+  .cal-head{{padding:5px 4px;text-align:center;font-weight:700;background:var(--cwa-primary);color:#fff;font-size:11px}}
+  .cal-head:first-child{{color:#ffd54f}}
+  .cal-head:last-child{{color:#ffcccc}}
+  .cal-cell{{min-height:52px;padding:4px 5px;display:flex;flex-direction:column;justify-content:space-between;text-align:center;background:#fff;color:var(--cwa-text);cursor:pointer;transition:transform .1s;position:relative}}
+  .cal-cell:hover:not(.empty){{transform:scale(1.05);z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
+  .cal-cell.empty{{background:transparent;cursor:default}}
   .cal-cell.dry{{background:#fafafa;color:var(--cwa-text-light)}}
   .cal-cell.rain-1{{background:#e3f2fd;color:#0d47a1}}
   .cal-cell.rain-2{{background:#64b5f6;color:#fff}}
@@ -269,8 +270,42 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .cal-cell.rain-4{{background:#ef6c00;color:#fff}}
   .cal-cell.rain-5{{background:#c62828;color:#fff}}
   .cal-cell.today{{outline:3px solid #ffd54f;outline-offset:-3px;font-weight:900}}
-  .cal-cell .d{{font-size:14px;font-weight:700}}
-  .cal-cell .mm{{font-size:10px;font-weight:600}}
+  .cal-cell .d{{font-size:13px;font-weight:700;line-height:1.1;display:flex;justify-content:space-between;align-items:baseline}}
+  .cal-cell .wk{{font-size:9px;opacity:.65;font-weight:600;margin-left:2px}}
+  .cal-cell .mm{{font-size:11px;font-weight:700;font-family:ui-monospace,Menlo,monospace}}
+  @media (max-width:640px){{
+    .cal-cell{{min-height:44px;padding:3px}}
+    .cal-cell .d{{font-size:12px}}
+    .cal-cell .wk{{font-size:8px}}
+    .cal-cell .mm{{font-size:10px}}
+  }}
+  /* 雨量視覺化 modal */
+  .rain-modal{{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:16px}}
+  .rain-modal.show{{display:flex;animation:modal-fade .2s ease-out}}
+  @keyframes modal-fade{{from{{opacity:0}}to{{opacity:1}}}}
+  .rm-content{{background:#fff;border-radius:6px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);position:relative}}
+  .rm-head{{padding:14px 18px;background:var(--cwa-primary);color:#fff;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px}}
+  .rm-head .close{{background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 4px;line-height:1;font-weight:normal}}
+  .rm-body{{padding:20px}}
+  .rm-viz{{position:relative;height:220px;display:flex;align-items:flex-end;justify-content:center;gap:20px;background:linear-gradient(to bottom,#87ceeb 0%,#b3e5fc 100%);border-radius:4px;overflow:hidden;margin-bottom:14px}}
+  .rm-drops{{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:hidden}}
+  .rm-drop{{position:absolute;font-size:20px;animation:rm-fall linear infinite;opacity:.8}}
+  @keyframes rm-fall{{0%{{transform:translateY(-20px);opacity:0}}10%{{opacity:1}}90%{{opacity:1}}100%{{transform:translateY(240px);opacity:0}}}}
+  .rm-cup{{position:relative;width:90px;height:180px;background:linear-gradient(to right,rgba(255,255,255,.5),rgba(255,255,255,.75),rgba(255,255,255,.5));border:3px solid #fff;border-top:none;border-radius:0 0 12px 12px;z-index:2;box-shadow:0 4px 10px rgba(0,0,0,.2)}}
+  .rm-cup .water{{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,#2196f3,#0d47a1);transition:height 1s ease-out;border-radius:0 0 8px 8px}}
+  .rm-cup .water::before{{content:"";position:absolute;top:-6px;left:0;right:0;height:8px;background:radial-gradient(ellipse at center,rgba(255,255,255,.6) 0%,transparent 60%)}}
+  .rm-cup .scale{{position:absolute;top:0;bottom:0;right:-42px;width:38px;display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;color:#fff;font-size:10px;font-family:ui-monospace,Menlo,monospace;text-shadow:0 1px 2px rgba(0,0,0,.5)}}
+  .rm-cup .scale span{{display:block}}
+  .rm-value{{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.95);padding:8px 12px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
+  .rm-value .num{{font-size:28px;font-weight:900;color:var(--cwa-danger);font-family:ui-monospace,Menlo,monospace;line-height:1}}
+  .rm-value .unit{{font-size:12px;color:var(--cwa-text-muted);margin-left:2px}}
+  .rm-value .lvl{{font-size:12px;color:var(--cwa-primary);font-weight:700;margin-top:3px}}
+  .rm-cmps{{list-style:none;padding:0;margin:0}}
+  .rm-cmps li{{padding:10px 12px;border-bottom:1px solid var(--cwa-border);font-size:13px;color:var(--cwa-text);line-height:1.5}}
+  .rm-cmps li:last-child{{border-bottom:none}}
+  .rm-cmps li strong{{color:var(--cwa-primary);font-weight:700}}
+  .rm-impact{{margin-top:14px;padding:12px 14px;background:var(--cwa-light);border-left:4px solid var(--cwa-primary);border-radius:3px;font-size:13px;color:var(--cwa-text);line-height:1.7}}
+  .rm-impact .label{{font-weight:700;color:var(--cwa-primary);display:block;margin-bottom:4px}}
   .rainy-list{{max-height:180px;overflow-y:auto;background:var(--cwa-hover);padding:10px 12px;border-radius:3px;font-size:12px;line-height:1.8;border:1px solid var(--cwa-border)}}
   .rainy-list .day{{display:inline-block;padding:3px 10px;margin:3px;background:#fff;border-radius:2px;border:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
   .rainy-list .day b{{color:var(--cwa-danger)}}
@@ -468,6 +503,31 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="mascot mascot-{mascot_mood}" id="mascot">
   <div class="mascot-bubble" id="mascotBubble"></div>
   <div class="mascot-face">{mascot_emoji}</div>
+</div>
+
+<!-- 雨量視覺化 modal -->
+<div class="rain-modal" id="rainModal" onclick="if(event.target===this)closeRainModal()">
+  <div class="rm-content">
+    <div class="rm-head">
+      <span id="rmTitle">雨量視覺化</span>
+      <button class="close" onclick="closeRainModal()">×</button>
+    </div>
+    <div class="rm-body">
+      <div class="rm-viz">
+        <div class="rm-drops" id="rmDrops"></div>
+        <div class="rm-cup">
+          <div class="water" id="rmWater" style="height:0%"></div>
+          <div class="scale"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+        </div>
+        <div class="rm-value">
+          <span class="num" id="rmNum">0</span><span class="unit">mm</span>
+          <div class="lvl" id="rmLvl"></div>
+        </div>
+      </div>
+      <ul class="rm-cmps" id="rmCmps"></ul>
+      <div class="rm-impact" id="rmImpact"></div>
+    </div>
+  </div>
 </div>
 
 <div class="refresh-bar">
@@ -1354,6 +1414,95 @@ function fcstEmoji(mm, isMultiDay) {{
   return '☀';
 }}
 
+// ============ 💧 雨量視覺化 Modal ============
+function openRainModal(dateStr, mm, county, wk) {{
+  const modal = document.getElementById('rainModal');
+  document.getElementById('rmTitle').textContent = dateStr + ' (' + wk + ') · ' + county;
+  document.getElementById('rmNum').textContent = mm.toFixed(1);
+
+  // 等級 + 說明
+  let lvl = '無雨', lvlColor = '#888';
+  if (mm >= 200) {{ lvl = '超大豪雨 · 極端災害級'; lvlColor = '#8b1d8b'; }}
+  else if (mm >= 130) {{ lvl = '豪雨 · 嚴重致災'; lvlColor = '#c62828'; }}
+  else if (mm >= 80) {{ lvl = '大雨 · 農路積水'; lvlColor = '#ef6c00'; }}
+  else if (mm >= 50) {{ lvl = '較大 · 影響出貨'; lvlColor = '#f0c040'; }}
+  else if (mm >= 30) {{ lvl = '中雨 · 養分流失'; lvlColor = '#5cb85c'; }}
+  else if (mm >= 10) {{ lvl = '小雨 · 補充水分'; lvlColor = '#1976d2'; }}
+  else if (mm >= 1)  {{ lvl = '零星降雨 · 無影響'; lvlColor = '#7bb3eb'; }}
+  const lvlEl = document.getElementById('rmLvl');
+  lvlEl.textContent = lvl;
+  lvlEl.style.color = lvlColor;
+
+  // 量杯水位動畫 (以 100mm 為 100% 上限)
+  const waterPct = Math.min(mm, 100);
+  const waterEl = document.getElementById('rmWater');
+  waterEl.style.height = '0%';
+  waterEl.style.background = 'linear-gradient(180deg,' + lvlColor + '80,' + lvlColor + ')';
+  setTimeout(() => {{ waterEl.style.height = waterPct + '%'; }}, 100);
+
+  // 雨滴動畫 (依 mm 決定滴數，最多 30 個)
+  const dropsEl = document.getElementById('rmDrops');
+  dropsEl.innerHTML = '';
+  const dropCount = Math.min(Math.max(Math.round(mm / 3), 3), 30);
+  for (let i = 0; i < dropCount; i++) {{
+    const drop = document.createElement('div');
+    drop.className = 'rm-drop';
+    drop.style.left = (5 + Math.random() * 90) + '%';
+    drop.style.animationDuration = (0.8 + Math.random() * 0.9) + 's';
+    drop.style.animationDelay = (Math.random() * 2) + 's';
+    drop.style.fontSize = (14 + Math.random() * 10) + 'px';
+    drop.textContent = '💧';
+    dropsEl.appendChild(drop);
+  }}
+
+  // 生活對照
+  const litersPerSqm = mm.toFixed(1);   // 1mm = 1 L/㎡
+  const carWashes = (mm * 1 / 40).toFixed(1);   // 洗車一次約 40L/㎡
+  const bathtubs = (mm * 1000 / 200 / 5).toFixed(1);   // 一甲=10000㎡；浴缸約 200L；...簡單版
+  const cmps = [];
+
+  cmps.push('📏 <strong>' + litersPerSqm + ' L/㎡</strong> — 每 1 m² 面積接住的水量');
+  cmps.push('🌾 <strong>' + Math.round(mm * 10000 / 1000).toLocaleString() + ' 公噸/甲</strong> — 1 甲田地共承接的雨水');
+  if (mm >= 1 && mm < 30) {{
+    cmps.push('☕ 相當於 ' + Math.round(mm * 4) + ' 杯馬克杯的水（撒在 1 m² 內）');
+    cmps.push('👟 一雙鞋子踩過會有淺淺水漬');
+  }} else if (mm >= 30 && mm < 80) {{
+    cmps.push('🪣 相當於 ' + (mm/10).toFixed(1) + ' 個提桶的水（撒在 1 m² 內）');
+    cmps.push('🌱 果樹表層土 3-8 cm 濕潤，養分流失 10-30%');
+    cmps.push('🚗 相當於自助洗車 ' + carWashes + ' 次的水量');
+  }} else if (mm >= 80 && mm < 150) {{
+    cmps.push('🛁 相當於 1 個標準浴缸的水量灌注在 2-3 m²');
+    cmps.push('🚜 農路積水、機具進不去');
+    cmps.push('⚠ 嚴重養分流失、粒肥泡爛');
+  }} else {{
+    cmps.push('🌊 <strong>災害級降雨</strong>！相當於瞬間傾倒');
+    cmps.push('⛔ 田面積水、微生物轉厭氧、肥效歸零');
+    cmps.push('🏠 都會區可能淹水、山區恐土石流');
+  }}
+  document.getElementById('rmCmps').innerHTML = cmps.map(c => '<li>' + c + '</li>').join('');
+
+  // 對業務影響
+  let impact;
+  if (mm < 30) {{
+    impact = '<span class="label">✅ 對施肥出貨無影響</span>可正常施肥、正常出貨；有機肥可保留水分緩釋。';
+  }} else if (mm < 80) {{
+    impact = '<span class="label">⚠ 當日施肥效果打折</span>養分流失 10-20%，建議雨後 2-3 天再補撒，或改在早晨施用避開午後陣雨。';
+  }} else if (mm < 150) {{
+    impact = '<span class="label">🚫 禁施 + 出貨延後</span>農路積水、機具進不易，粒狀肥泡爛。建議延後出貨 1-2 天。';
+  }} else {{
+    impact = '<span class="label">🚨 嚴重致災</span>田面積水、微生物厭氧、根系活性降。停止一切施肥出貨作業，等田面乾透（3-5 天）。';
+  }}
+  document.getElementById('rmImpact').innerHTML = impact;
+
+  modal.classList.add('show');
+}}
+function closeRainModal() {{
+  document.getElementById('rainModal').classList.remove('show');
+}}
+document.addEventListener('keydown', e => {{
+  if (e.key === 'Escape') closeRainModal();
+}});
+
 // ============ 📆 本月降雨日曆 ============
 (function initRainyCalendar() {{
   // 縣市 select（依 DATA 順序）
@@ -1425,23 +1574,27 @@ function renderRainyCalendar() {{
   for (let d = 1; d <= daysInMonth; d++) {{
     const key = monthPrefix + String(d).padStart(2, '0');
     const val = c.daily[key];
+    const wkIdx = new Date(yyyy, mm - 1, d).getDay();
+    const wkChar = '日一二三四五六'[wkIdx];
     const cell = document.createElement('div');
     cell.className = 'cal-cell';
+    const dHtml = '<div class="d">' + d + '<span class="wk">' + wkChar + '</span></div>';
     if (val === undefined) {{
       cell.className += ' empty';
-      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm" style="color:#ccc">-</div>';
+      cell.innerHTML = dHtml + '<div class="mm" style="color:#ccc">-</div>';
     }} else if (val < 1) {{
       cell.className += ' dry';
-      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm">0</div>';
+      cell.innerHTML = dHtml + '<div class="mm">0</div>';
+      cell.addEventListener('click', () => openRainModal(key, val, countyName, wkChar));
     }} else {{
-      // 分級：1-10, 10-30, 30-50, 50-80, 80+
       let lvl = 1;
       if (val >= 80) lvl = 5;
       else if (val >= 50) lvl = 4;
       else if (val >= 30) lvl = 3;
       else if (val >= 10) lvl = 2;
       cell.className += ' rain-' + lvl;
-      cell.innerHTML = '<div class="d">' + d + '</div><div class="mm">' + val.toFixed(0) + '</div>';
+      cell.innerHTML = dHtml + '<div class="mm">' + val.toFixed(0) + '</div>';
+      cell.addEventListener('click', () => openRainModal(key, val, countyName, wkChar));
     }}
     if (key === todayStr) cell.className += ' today';
     cal.appendChild(cell);
