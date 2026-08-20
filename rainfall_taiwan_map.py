@@ -1986,16 +1986,27 @@ TOWN_CROPS = [
 ]
 
 
-def _detect_typhoon_alert(news_items: list) -> bool:
-    """從天氣新聞判斷是否颱風警戒中"""
-    keywords_typhoon = ["颱風", "熱帶性低氣壓"]
-    keywords_alert = ["警報", "特報", "陸警", "海警", "登陸", "來襲", "接近"]
-    for n in news_items:
-        title = n.get("title", "")
-        if any(k in title for k in keywords_typhoon) and \
-           any(k in title for k in keywords_alert):
-            return True
-    return False
+def _detect_typhoon_alert(news_items: list = None) -> bool:
+    """判斷是否颱風警戒中 — 只採信 CWA 官方警特報 API (W-C0033-001)
+    避免歷史新聞或年度統計文章誤觸。無 key 或 API 掛掉時 → 不啟動 (safe fallback)"""
+    key = os.environ.get("CWA_API_KEY", "").strip()
+    if not key:
+        return False
+    try:
+        url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001"
+        r = requests.get(url, params={"Authorization": key}, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        for loc in data.get("records", {}).get("location", []):
+            hazards = loc.get("hazardConditions", {}).get("hazards", [])
+            for h in hazards:
+                phenomena = h.get("info", {}).get("phenomena", "")
+                if "颱風" in phenomena:
+                    return True
+        return False
+    except Exception as e:
+        print(f"[!] CWA typhoon check 失敗（不啟動警戒）: {e}")
+        return False
 
 
 def _mascot_mood(rows: list) -> tuple:
