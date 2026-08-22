@@ -1238,6 +1238,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </footer>
 
 <script>
+// 歷史雨量資料 (最先定義, 避免 TDZ)
+window.HISTORY = {history_json};
 const DATA = {data_json};
 const BANDS = {bands_json};
 const NAME_MAP = {name_map_json};       // GeoJSON 縣市名 → 我們資料的縣市名
@@ -1966,8 +1968,7 @@ function renderAdvAnalysis() {{
   el.style.display = '';
 }}
 
-// ============ 📊 歷史雨量比較 (Python 端預打包) ============
-const HISTORY = {history_json};
+// ============ 📊 歷史雨量比較 (Python 端預打包 · HISTORY 已於 script 頂端定義) ============
 
 // 月份選單預設當月 (HTML 已 hardcode 12 個 option)
 (function initHistMonth() {{
@@ -3270,11 +3271,29 @@ def collect_rows(verbose: bool = True) -> list:
     return rows
 
 
-def collect_history_stats(verbose: bool = True, n_years: int = 10) -> dict:
+def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bool = True) -> dict:
     """一次撈全台 22 縣市過去 N 年每日雨量 → 聚合成月統計 → 前端 embed 用。
-    資料來源：Open-Meteo Archive (ERA5 全球再分析,以 CWA 縣市代表座標採樣)"""
+    資料來源：Open-Meteo Archive (ERA5 全球再分析,以 CWA 縣市代表座標採樣)
+    有本地 cache; 用 --refresh-history 可強制重抓"""
     import urllib.request, urllib.parse
     today = date.today()
+    cache_path = DOCS_DIR / "history_cache.json"
+
+    # 讀 cache: 若當月未更新才重抓
+    if use_cache and cache_path.exists():
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+            cached_updated = cached.get("updated", "")
+            # 同月就用 cache (歷史資料本來就月粒度, 當月每天更新沒意義)
+            if cached_updated[:7] == today.isoformat()[:7]:
+                if verbose:
+                    print(f"[歷史] 使用本地 cache ({cached_updated}, {len(cached.get('data', {}))} 縣市)")
+                return cached
+        except Exception as e:
+            if verbose:
+                print(f"[歷史] cache 讀取失敗, 重抓: {e}")
+
     end_year = today.year
     start_year = end_year - n_years + 1
     start_date = f"{start_year}-01-01"
@@ -3326,6 +3345,17 @@ def collect_history_stats(verbose: bool = True, n_years: int = 10) -> dict:
             if verbose:
                 print(f" FAIL: {e}")
             result["data"][name] = {}
+
+    # 寫本地 cache
+    try:
+        DOCS_DIR.mkdir(parents=True, exist_ok=True)
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False)
+        if verbose:
+            print(f"[歷史] cache 寫入 {cache_path}")
+    except Exception as e:
+        if verbose:
+            print(f"[歷史] cache 寫入失敗: {e}")
     return result
 
 
