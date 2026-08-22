@@ -153,9 +153,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .brand-bar{{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
   .brand-left{{display:flex;align-items:center;gap:14px}}
   .brand-logos{{display:flex;align-items:center;gap:8px}}
-  .brand-dachan{{width:38px;height:38px;background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"PMingLiU","STKaiti",serif;font-size:22px;font-weight:900;box-shadow:0 2px 4px rgba(0,0,0,.3);border:2px solid #fff}}
-  .brand-shuocheng{{padding:6px 10px;background:#fff;color:#1b5e20;border-radius:4px;font-weight:900;font-size:14px;letter-spacing:2px;border:1.5px solid #d4a017;display:inline-flex;align-items:center;gap:4px}}
-  .brand-shuocheng::before{{content:"🌱";font-size:14px}}
+  .brand-dachan{{width:44px;height:44px;background:radial-gradient(circle at 35% 30%,#e53935 0%,#c62828 40%,#8b0000 100%);color:#fff8dc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"STKaiti","BiauKai","PMingLiU",serif;font-size:26px;font-weight:900;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.3);border:2.5px solid #fff;letter-spacing:-2px}}
+  .brand-shuocheng{{padding:7px 12px 7px 8px;background:linear-gradient(180deg,#fff 0%,#f5f5f5 100%);color:#1b5e20;border-radius:6px;font-weight:900;font-size:15px;letter-spacing:3px;border:2px solid #2e7d32;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(0,0,0,.15),inset 0 -1px 2px rgba(0,0,0,.05);font-family:"STKaiti","BiauKai","PMingLiU",serif;position:relative}}
+  .brand-shuocheng::before{{content:"🌾";font-size:16px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}}
+  .brand-shuocheng::after{{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#d4a017;border-radius:50%;border:1.5px solid #fff}}
   .brand-name{{display:flex;flex-direction:column;line-height:1.2}}
   .brand-name .co{{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}}
   .brand-name .dept{{font-size:11px;color:#c8e6c9;letter-spacing:.3px;margin-top:2px}}
@@ -712,6 +713,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body.projector .rm-cmps li{{font-size:15px;padding:12px 14px}}
   body.projector .rm-impact{{font-size:15px}}
 
+  /* ===== 浮動版權水印 (右下角固定) ===== */
+  .copyright-badge{{position:fixed;left:14px;bottom:14px;z-index:999;background:linear-gradient(135deg,rgba(27,94,32,.95),rgba(46,125,50,.95));color:#fff;padding:6px 12px 6px 8px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);border:1.5px solid rgba(212,160,23,.5);letter-spacing:.5px;pointer-events:none;user-select:none}}
+  .copyright-badge .seal{{background:#d4a017;color:#1b5e20;font-weight:900;padding:2px 7px;border-radius:10px;font-family:"STKaiti","BiauKai",serif;letter-spacing:2px;font-size:11px}}
+  @media (max-width:640px){{
+    .copyright-badge{{left:8px;bottom:8px;font-size:10px;padding:5px 10px 5px 6px}}
+    .copyright-badge .seal{{font-size:10px;padding:2px 6px}}
+  }}
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){{
     .header{{padding:16px 14px}}
@@ -757,6 +766,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <span class="term-name">{term_name}</span>
     <span class="term-hint">{term_hint}</span>
   </div>
+</div>
+
+<!-- 浮動版權水印 (跟隨滾動固定左下角) -->
+<div class="copyright-badge">
+  <span>© 系統版權所有</span>
+  <span class="seal">莊 政 遠</span>
 </div>
 
 <!-- 天氣吉祥物 -->
@@ -1035,7 +1050,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <option value="臺東縣">東部 · 臺東</option>
     </select>
     <label>月份</label>
-    <select id="histMonth"></select>
+    <select id="histMonth">
+      <option value="1">1 月</option>
+      <option value="2">2 月</option>
+      <option value="3">3 月</option>
+      <option value="4">4 月</option>
+      <option value="5">5 月</option>
+      <option value="6">6 月</option>
+      <option value="7">7 月</option>
+      <option value="8">8 月</option>
+      <option value="9">9 月</option>
+      <option value="10">10 月</option>
+      <option value="11">11 月</option>
+      <option value="12">12 月</option>
+    </select>
     <label>對照範圍</label>
     <select id="histYears">
       <option value="3">近 3 年</option>
@@ -1934,17 +1962,11 @@ const HIST_LATLON = {{
 }};
 window._histCache = {{}};
 
-// 建月份下拉 (預設當月)
+// 月份選單預設當月 (HTML 已 hardcode 12 個 option)
 (function initHistMonth() {{
   const sel = document.getElementById('histMonth');
-  const curM = new Date().getMonth() + 1;
-  for (let m = 1; m <= 12; m++) {{
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = m + ' 月';
-    if (m === curM) opt.selected = true;
-    sel.appendChild(opt);
-  }}
+  if (!sel) return;
+  sel.value = String(new Date().getMonth() + 1);
 }})();
 
 async function fetchYearMonth(lat, lon, year, month) {{

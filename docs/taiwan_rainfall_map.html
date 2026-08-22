@@ -31,9 +31,10 @@
   .brand-bar{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}
   .brand-left{display:flex;align-items:center;gap:14px}
   .brand-logos{display:flex;align-items:center;gap:8px}
-  .brand-dachan{width:38px;height:38px;background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"PMingLiU","STKaiti",serif;font-size:22px;font-weight:900;box-shadow:0 2px 4px rgba(0,0,0,.3);border:2px solid #fff}
-  .brand-shuocheng{padding:6px 10px;background:#fff;color:#1b5e20;border-radius:4px;font-weight:900;font-size:14px;letter-spacing:2px;border:1.5px solid #d4a017;display:inline-flex;align-items:center;gap:4px}
-  .brand-shuocheng::before{content:"🌱";font-size:14px}
+  .brand-dachan{width:44px;height:44px;background:radial-gradient(circle at 35% 30%,#e53935 0%,#c62828 40%,#8b0000 100%);color:#fff8dc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"STKaiti","BiauKai","PMingLiU",serif;font-size:26px;font-weight:900;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.3);border:2.5px solid #fff;letter-spacing:-2px}
+  .brand-shuocheng{padding:7px 12px 7px 8px;background:linear-gradient(180deg,#fff 0%,#f5f5f5 100%);color:#1b5e20;border-radius:6px;font-weight:900;font-size:15px;letter-spacing:3px;border:2px solid #2e7d32;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(0,0,0,.15),inset 0 -1px 2px rgba(0,0,0,.05);font-family:"STKaiti","BiauKai","PMingLiU",serif;position:relative}
+  .brand-shuocheng::before{content:"🌾";font-size:16px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+  .brand-shuocheng::after{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#d4a017;border-radius:50%;border:1.5px solid #fff}
   .brand-name{display:flex;flex-direction:column;line-height:1.2}
   .brand-name .co{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}
   .brand-name .dept{font-size:11px;color:#c8e6c9;letter-spacing:.3px;margin-top:2px}
@@ -590,6 +591,14 @@
   body.projector .rm-cmps li{font-size:15px;padding:12px 14px}
   body.projector .rm-impact{font-size:15px}
 
+  /* ===== 浮動版權水印 (右下角固定) ===== */
+  .copyright-badge{position:fixed;left:14px;bottom:14px;z-index:999;background:linear-gradient(135deg,rgba(27,94,32,.95),rgba(46,125,50,.95));color:#fff;padding:6px 12px 6px 8px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);border:1.5px solid rgba(212,160,23,.5);letter-spacing:.5px;pointer-events:none;user-select:none}
+  .copyright-badge .seal{background:#d4a017;color:#1b5e20;font-weight:900;padding:2px 7px;border-radius:10px;font-family:"STKaiti","BiauKai",serif;letter-spacing:2px;font-size:11px}
+  @media (max-width:640px){
+    .copyright-badge{left:8px;bottom:8px;font-size:10px;padding:5px 10px 5px 6px}
+    .copyright-badge .seal{font-size:10px;padding:2px 6px}
+  }
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){
     .header{padding:16px 14px}
@@ -637,6 +646,12 @@
   </div>
 </div>
 
+<!-- 浮動版權水印 (跟隨滾動固定左下角) -->
+<div class="copyright-badge">
+  <span>© 系統版權所有</span>
+  <span class="seal">莊 政 遠</span>
+</div>
+
 <!-- 天氣吉祥物 -->
 <div class="mascot mascot-storm" id="mascot">
   <div class="mascot-bubble" id="mascotBubble"></div>
@@ -671,7 +686,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-22 15:28</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-22 17:17</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <div class="accuracy-note">
@@ -922,7 +937,20 @@
       <option value="臺東縣">東部 · 臺東</option>
     </select>
     <label>月份</label>
-    <select id="histMonth"></select>
+    <select id="histMonth">
+      <option value="1">1 月</option>
+      <option value="2">2 月</option>
+      <option value="3">3 月</option>
+      <option value="4">4 月</option>
+      <option value="5">5 月</option>
+      <option value="6">6 月</option>
+      <option value="7">7 月</option>
+      <option value="8">8 月</option>
+      <option value="9">9 月</option>
+      <option value="10">10 月</option>
+      <option value="11">11 月</option>
+      <option value="12">12 月</option>
+    </select>
     <label>對照範圍</label>
     <select id="histYears">
       <option value="3">近 3 年</option>
@@ -1018,14 +1046,14 @@
 <div class="news-block">
   <h3>📰 天氣 / 豪雨 / 颱風 相關新聞</h3>
   <ul class="news-list">
+    <li><a href="https://news.google.com/rss/articles/CBMigwNBVV95cUxOdW10N2Z1a19iWnM4X1ZnQWFFTmVrVGFaS0tQMHlYaWZWNGtKdWp1bEwwcUg1SHpZUTJlQWFvZmFtaURTN19XMVVzZk5rT2w5WHlPNXNRMzdfX0dXdVlLNUotUmhqVVo2SWhiaV9EVUpNU1hJbHJVNkF4bDhKbW1Kdjc0RFUwdmI2b2lRS2Y5aXZ3TDh5RTdIa2doM2NrVTRHRFFmWFZwY1hubnV2dUJhR29Fcl9xZjNXTVBuaVZ6R25RZk52NWYxZ3hMSDlZUUJSaGJxNDNuUC1aUzc1aS1rYXlmWEdvWWEzRHp4Sk9mMFU4WWVtV2tSb1JQcHgyUFRoTEliYlpIaXdFOF9Ua0pxOENUR2ZmV2pBSzJiZ0VJQmpIMFczUElhOEhjbURqZE5tNHNuS2p4U0Z2U1dZSEx5VjFlZndhWFBLblRIbFdvcEdPcTRCVXhkOHNLcTBkVVVpeGp1NnFSczdfbWJCTGNHWndhVERrVXRJemJlTXh3S2dnU1k?oc=5" target="_blank" rel="noopener">北北基等19縣市豪、大雨特報 氣象署將啟動大規模豪雨作業</a><span class="meta">Yahoo新聞 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1VdzV0TEJwYTdZZmU4anpvWFkweG1EelJVTmNLZ2xrY29KeEFsREJyMzk0OE9WY3h5cTJ4MUwxc2FvUEpVNnBYNnBfcEJ1NXEz0gFWQVVfeXFMT2JlT3VON3VUc29Hdl9yQUY3VjJmNHI3T3ZlMDhkZU9ZUm1PTkZrTDc2SElHa3pJeVJqUHJ6Zk5rWTc1YzItYTdCYmZpVGNyaXlhUG1ISHc?oc=5" target="_blank" rel="noopener">沙德爾颱風進逼！日氣象廳最新路徑驚見它下周三西折路線 關注是否成真</a><span class="meta">UDN · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiywJBVV95cUxOeWFQZjNTa0thUDNScGdta25zVGNoa0kyZkk1NmNPdGIwanhVVU92RGRZeHRSQVpPMEhYTkRENnBmN1ZjRVpMeDB0em1XWkhrRDk2VHpCSkdLZE44MzJzSDdMOHk0b2hiR2lVX2xqYTQyTUs1RElIVlVFWXhOMlVnZURhclVoa0Jxdm0tRE92WVZDSWFnTjFvNDlVUGdoN0c5NWt1YjV4UG9qQWZiY3d6NEEwLTJMdEM0NXQ5NFg4U25HY2QzTl95SGdLaTBBeDFEWWFGNmxsa2ZBTDJQX3ZnVFJiVXZaOVVpQjVKbFJqOWFlb0dORWN4TkpUcEstUktEN0RjSllVMkt3clV3cVp0RzEzVmUyTU1lYTRUb1dMLTRDWUlQaDV5el9aRE03NXh0Q1ZIamdrdUpwR2lQM0JfVlM1NFFKNVpxc21B?oc=5" target="_blank" rel="noopener">太平洋雙颱共舞！「紫檀」颱風生成了 氣象署曝最新路徑</a><span class="meta">Yahoo新聞 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFB6a3FDV204UEdfN0psVkphR2lTc0VuY1dGVzhHMkZJV0FVT1hkSVdKbXFIS1lBVDVIME1xQU5PV0FFclZVRElMMkV0V0Z6cW9IQTNPelhMODNFV3MxY3Br?oc=5" target="_blank" rel="noopener">吳德榮：8/25前防強降雨颱風沙德爾西進機率增、對台威脅升高| 生活</a><span class="meta">cna.com.tw · 08/22</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5NRU45cmstNjA4Vk0xbHJYTi1sV1hOaDJmeU9GS0JsTERLREl2VDJ0c2M1Z3p6MUVvR3lseGdyZ1hHb1dzcmxrd1pQZUVvNXZLaTE3SXhqY0hvM0FHWlAtTjVha3I?oc=5" target="_blank" rel="noopener">氣象署判斷TD22尚未成「簡拉維」颱風......但南部雨勢會增強- 生活</a><span class="meta">自由時報 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1ScVFiUEtmcWd3X2xiVnU4NXRlT05CQ3NucUZRaE9pSkZvanlrMWg2SG8tVE96Y3E5ekhuYXdnWGUzRFVTUE03Unk3cGpURWZw?oc=5" target="_blank" rel="noopener">快訊/颱風簡拉維生成了「就在台灣門口」！三颱共舞路徑曝，氣象署：它恐轉強颱直撲| 蔡惠芯 | 風生活</a><span class="meta">風傳媒 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE9rejFfZER3SUhteTdwMzFfNDE3R1ZxbDdKTEU3ZGhlbE9pM2IzdUUwSU81VG9nZEE1SzM4OWE4Y1FTSmR1NVVvSmtUNG5qR1E5QWlFR2k3ZkJRQUdFNVlURkN0am8?oc=5" target="_blank" rel="noopener">熱帶性低氣壓TD22接近台灣！若成颱風「簡拉維」馬上發警報- 生活</a><span class="meta">自由時報 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMigAFBVV95cUxORUluOUhsRE5yU1VXVlpjczE1Z2poQWZIWkVITktNZENIUHpucXR6SGttZVN0VkF2ZXRrVmMzdzJCdjJUUERrZ2NnSWVrOEFVbXlMZ1RLdGduRWtYUU1vR3NnajBWRnY3V0M3a3BocmVBWjZ5NlBpQnFaUFRzeXZldw?oc=5" target="_blank" rel="noopener">天氣／沙德爾颱風「靠近台灣」機率不小、恐成強颱！豪大雨開炸這幾天最猛，最新颱風路徑、10日預報先看</a><span class="meta">今周刊 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE9pMWJiZWxWcDk4X0tvTS1haEFoVHFpOUtFT19pMVVkOFlZSThTVEJUSzFJZlgyR1dLVWllak4yUjlNVlVISWpGNi05aFhlX0RMNU5JNA?oc=5" target="_blank" rel="noopener">台灣「颱風假」關鍵數據上升 沙德爾一路徑 恐造成直接影響</a><span class="meta">東森新聞 · 08/22</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMi0wJBVV95cUxPQWZNbUpWeEdUS2F1M1R3R2hDdHdhYlVrZXpmQkVDNV94eEpfTl9aM3lTVmU1bjRuVU5qUnFpSkFxb1E2UHRXcWJRVWx4NTNlcVR2YnJsY2hWNWw0Q3ExY1JXek9idUJYazRMcUo1REt4YkJEMldzem1XRTkzWkRmTV91WTdBYWszbzRBYTBWNG5RTW5ZN2hmdWtJZmNRZTk1b3pQYnNGWDVxaFdmQjhVNVd4cTUzSEV0bjBrNzU3RkRlUms2MkxjT1owbS02dkF1LVpyZlpscktDeWUtOWM2REptX2hlanZpOWhiWldvR3ByMDZvM190Zm1NTEt4TXQ5T3BXdHpJU1R6M25paWdNSEtBZnE4UUFwTlZFLTVZMFFaLUNTa2RMQk4xWGhCWWRpY0pid2FkbURoSTJIWThGTWZSSEV1bTNXTzY5Wm55U1NGOTQ?oc=5" target="_blank" rel="noopener">2颱風「都有可能朝台灣來」！專家示警這天路徑最關鍵</a><span class="meta">Yahoo新聞 · 08/22</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9RUmxTbmplcUd0MHNVNFotZW1ta3lsZGNNMmZHMG9BYTYxUGNIckE4NTd3OUdCWEJYT0V2Q1VONEhmdWYzQTBhSnBFU2VLaXUw0gFWQVVfeXFMUDkxN2dUSXF5RXEtcEVTMnJWdmZrbGJ0dzZfZzVkVTBoNkZPS3JMWXRHTjdLT0c4emJjbFg1UkNhd1FNQWE2LWs2aVlfX0ExZ1g3aGxFcVE?oc=5" target="_blank" rel="noopener">雨彈狂炸中南部 豪雨特報範圍擴大8縣市 台南高雄列淹水警戒</a><span class="meta">UDN · 08/22</span></li>
   </ul>
 </div>
 
@@ -1064,7 +1092,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-22 15:28</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-22 17:17</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -1828,17 +1856,11 @@ const HIST_LATLON = {
 };
 window._histCache = {};
 
-// 建月份下拉 (預設當月)
+// 月份選單預設當月 (HTML 已 hardcode 12 個 option)
 (function initHistMonth() {
   const sel = document.getElementById('histMonth');
-  const curM = new Date().getMonth() + 1;
-  for (let m = 1; m <= 12; m++) {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = m + ' 月';
-    if (m === curM) opt.selected = true;
-    sel.appendChild(opt);
-  }
+  if (!sel) return;
+  sel.value = String(new Date().getMonth() + 1);
 })();
 
 async function fetchYearMonth(lat, lon, year, month) {
