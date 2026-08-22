@@ -149,10 +149,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   html,body{{margin:0}}
   body{{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.6;font-size:15px}}
 
-  /* ===== Header (深藍官方橫幅) ===== */
-  .header{{background:linear-gradient(180deg,var(--cwa-dark) 0%,var(--cwa-primary) 100%);color:#fff;padding:20px 20px 16px;border-bottom:3px solid #ffb300}}
-  .header h1{{margin:0;font-size:22px;font-weight:700;letter-spacing:.5px}}
-  .header p{{margin:6px 0 0;color:#cfe0f0;font-size:12px;letter-spacing:.3px}}
+  /* ===== 頂部品牌條 (大成 · 碩成) ===== */
+  .brand-bar{{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
+  .brand-left{{display:flex;align-items:center;gap:14px}}
+  .brand-logos{{display:flex;align-items:center;gap:8px}}
+  .brand-dachan{{width:38px;height:38px;background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"PMingLiU","STKaiti",serif;font-size:22px;font-weight:900;box-shadow:0 2px 4px rgba(0,0,0,.3);border:2px solid #fff}}
+  .brand-shuocheng{{padding:6px 10px;background:#fff;color:#1b5e20;border-radius:4px;font-weight:900;font-size:14px;letter-spacing:2px;border:1.5px solid #d4a017;display:inline-flex;align-items:center;gap:4px}}
+  .brand-shuocheng::before{{content:"🌱";font-size:14px}}
+  .brand-name{{display:flex;flex-direction:column;line-height:1.2}}
+  .brand-name .co{{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}}
+  .brand-name .dept{{font-size:11px;color:#c8e6c9;letter-spacing:.3px;margin-top:2px}}
+  .brand-right{{display:flex;align-items:center;gap:12px;font-size:12px;color:#c8e6c9}}
+  .brand-right .stock{{padding:3px 10px;background:rgba(0,0,0,.2);border-radius:12px;font-family:ui-monospace,Menlo,monospace;color:#fff;font-weight:600}}
+
+  /* ===== 主 Header (業務戰情室) ===== */
+  .header{{background:linear-gradient(180deg,var(--cwa-dark) 0%,var(--cwa-primary) 100%);color:#fff;padding:22px 22px 18px;border-bottom:3px solid #d4a017;position:relative}}
+  .header::before{{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#d4a017 50%,transparent)}}
+  .header h1{{margin:0;font-size:24px;font-weight:900;letter-spacing:1.5px}}
+  .header h1 .icon{{margin-right:8px}}
+  .header .sub{{margin:8px 0 0;color:#cfe0f0;font-size:13px;letter-spacing:.5px}}
+  .header .sub .divider{{margin:0 8px;color:#5a7ba8}}
+  .header .badge{{display:inline-block;padding:2px 8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:10px;font-size:11px;color:#fff;margin-left:6px;letter-spacing:.5px}}
 
   /* ===== 工具列 refresh-bar ===== */
   .refresh-bar{{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--cwa-card);border-bottom:1px solid var(--cwa-border);font-size:13px}}
@@ -239,8 +256,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .source a{{color:var(--cwa-accent);text-decoration:none;word-break:break-all}}
   .source a:hover{{text-decoration:underline}}
 
-  /* ===== 頁尾 ===== */
-  .footer{{padding:16px;text-align:center;color:var(--cwa-text-light);font-size:11px;background:var(--cwa-card);border-top:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+  /* ===== 精美頁尾 (corporate 級) ===== */
+  .footer{{background:linear-gradient(180deg,#1b5e20 0%,#0d3f10 100%);color:#c8e6c9;padding:24px 22px 18px;border-top:3px solid #d4a017;box-shadow:0 -2px 8px rgba(0,0,0,.1)}}
+  .footer-grid{{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;font-size:12px;line-height:1.7}}
+  .footer-col h5{{margin:0 0 8px;font-size:13px;color:#d4a017;font-weight:700;letter-spacing:1px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.15)}}
+  .footer-col .row{{margin:4px 0}}
+  .footer-col .lbl{{color:#a5d6a7;margin-right:6px;font-weight:600}}
+  .footer-col .val{{color:#fff;font-family:ui-monospace,Menlo,monospace}}
+  .footer-copy{{max-width:1200px;margin:16px auto 0;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:11px;color:#a5d6a7}}
+  .footer-copy .sig{{display:inline-flex;align-items:center;gap:8px}}
+  .footer-copy .sig .stamp{{padding:4px 10px;background:#d4a017;color:#1b5e20;border-radius:3px;font-weight:900;letter-spacing:1px}}
+  .footer-copy a{{color:#fff;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.3)}}
+  @media (max-width:640px){{
+    .footer-grid{{grid-template-columns:1fr;gap:14px}}
+    .footer-copy{{flex-direction:column;text-align:center}}
+  }}
+
+  /* ===== 精美卡片陰影 (corporate) ===== */
+  .legend,.ranking,.impact,.source,.rainy-block,.forecast-block,.analysis-block,.news-block,
+  .crops-block,.towns-block,.history-block,.adv-block,.term-detail-block{{
+    box-shadow:0 1px 3px rgba(0,0,0,.04),0 0 0 1px rgba(0,0,0,.04);
+  }}
 
   /* ===== Popup ===== */
   .popup-content{{font-size:14px}}
@@ -690,9 +726,32 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </style></head>
 <body class="{typhoon_class}">
 {typhoon_banner}
+
+<!-- 頂部品牌條：大成 · 碩成 -->
+<div class="brand-bar">
+  <div class="brand-left">
+    <div class="brand-logos">
+      <div class="brand-dachan" title="大成長城 (1210)">大</div>
+      <div class="brand-shuocheng">碩成</div>
+    </div>
+    <div class="brand-name">
+      <span class="co">大成長城企業股份有限公司</span>
+      <span class="dept">有機肥料部　·　碩成有機質肥料</span>
+    </div>
+  </div>
+  <div class="brand-right">
+    <span class="stock">1210 · TWSE</span>
+    <span>{today}</span>
+  </div>
+</div>
+
 <div class="header">
-  <h1>🗺️ 全台累積雨量地圖</h1>
-  <p>資料來源 Open-Meteo (ECMWF)　·　22 縣市</p>
+  <h1><span class="icon">🗺️</span>業務戰情室 · 全台雨量與作物出貨分析<span class="badge">內部業務決策用</span></h1>
+  <p class="sub">
+    資料來源 Open-Meteo (ECMWF) & 中央氣象署<span class="divider">|</span>
+    覆蓋 22 縣市 91 特色農產鄉鎮<span class="divider">|</span>
+    103 種常見作物基肥資料庫
+  </p>
   <div class="term-strip">
     <span class="term-emoji">{term_emoji}</span>
     <span class="term-name">{term_name}</span>
@@ -1091,9 +1150,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </ul>
 </div>
 
-<div class="footer">
-  產出於 {gen_time}　·　資料涵蓋過去 92 天　·　大成長城企業有機肥料部
-</div>
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h5>🏢 公司資訊</h5>
+      <div class="row"><span class="lbl">公司</span><span class="val">大成長城企業股份有限公司</span></div>
+      <div class="row"><span class="lbl">上市編號</span><span class="val">1210 · TWSE</span></div>
+      <div class="row"><span class="lbl">部門</span><span class="val">有機肥料部</span></div>
+      <div class="row"><span class="lbl">品牌</span><span class="val">碩成有機質肥料</span></div>
+    </div>
+    <div class="footer-col">
+      <h5>📊 資料來源</h5>
+      <div class="row"><span class="lbl">氣象</span><span class="val">中央氣象署 · Open-Meteo (ECMWF)</span></div>
+      <div class="row"><span class="lbl">歷史</span><span class="val">ERA5 Reanalysis</span></div>
+      <div class="row"><span class="lbl">地理</span><span class="val">g0v 開源縣市 GeoJSON</span></div>
+      <div class="row"><span class="lbl">底圖</span><span class="val">OpenStreetMap</span></div>
+    </div>
+    <div class="footer-col">
+      <h5>👤 系統資訊</h5>
+      <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
+      <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">{gen_time}</span></div>
+      <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
+    </div>
+  </div>
+  <div class="footer-copy">
+    <span>© 大成長城企業股份有限公司 · 有機肥料部　保留所有權利</span>
+    <span class="sig">
+      <span>系統設計與維護</span>
+      <span class="stamp">莊 政 遠</span>
+    </span>
+  </div>
+</footer>
 
 <script>
 const DATA = {data_json};
