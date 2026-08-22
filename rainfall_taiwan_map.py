@@ -1038,7 +1038,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block">
-  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#666;font-weight:400">· 資料源：中央氣象署觀測點座標 × ERA5 全球再分析</span></h3>
+  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#666;font-weight:400">· 資料源：Open-Meteo ECMWF-IFS 9km，每縣市 3-5 點採樣取 MAX (含山區/平原/沿海)</span></h3>
   <div class="history-filters">
     <label>地區</label>
     <select id="histRegion">
@@ -3297,10 +3297,63 @@ def collect_rows(verbose: bool = True) -> list:
     return rows
 
 
+COUNTY_SAMPLE_POINTS = {
+    "臺北市": [(25.04, 121.51), (25.13, 121.55), (25.09, 121.42)],
+    "新北市": [(25.01, 121.46), (24.98, 121.54), (25.17, 121.65), (24.87, 121.53)],
+    "基隆市": [(25.13, 121.74), (25.11, 121.68), (25.08, 121.79)],
+    "桃園市": [(24.99, 121.31), (24.86, 121.24), (24.77, 121.16), (25.09, 121.20)],
+    "新竹市": [(24.81, 120.97), (24.79, 120.94)],
+    "新竹縣": [(24.84, 121.01), (24.70, 121.18), (24.72, 121.06)],
+    "宜蘭縣": [(24.70, 121.74), (24.60, 121.85), (24.85, 121.79), (24.42, 121.51)],
+    "苗栗縣": [(24.56, 120.82), (24.42, 120.95), (24.68, 121.02)],
+    "臺中市": [(24.15, 120.68), (24.35, 120.71), (24.19, 121.30), (24.10, 120.55)],
+    "彰化縣": [(24.07, 120.54), (23.98, 120.58), (24.05, 120.43)],
+    "南投縣": [(23.91, 120.69), (23.87, 120.90), (24.05, 121.15), (23.68, 120.98)],
+    "雲林縣": [(23.71, 120.43), (23.57, 120.30), (23.65, 120.58)],
+    "嘉義市": [(23.48, 120.45)],
+    "嘉義縣": [(23.45, 120.45), (23.50, 120.75), (23.51, 120.80), (23.32, 120.60)],
+    "臺南市": [(22.99, 120.21), (23.18, 120.25), (23.31, 120.32), (23.13, 120.46), (23.09, 120.38)],
+    "高雄市": [(22.62, 120.31), (22.79, 120.29), (22.88, 120.49), (22.98, 120.63), (23.05, 120.72)],
+    "屏東縣": [(22.55, 120.55), (22.35, 120.60), (22.00, 120.75), (22.75, 120.68)],
+    "花蓮縣": [(23.99, 121.60), (23.68, 121.44), (24.10, 121.35), (23.35, 121.31)],
+    "臺東縣": [(22.75, 121.15), (23.10, 121.37), (22.48, 120.98), (22.05, 121.02)],
+    "澎湖縣": [(23.57, 119.58), (23.66, 119.62)],
+    "金門縣": [(24.43, 118.32), (24.48, 118.40)],
+    "連江縣": [(26.16, 119.95), (26.35, 120.00)],
+}
+
+
+def _fetch_history_one_point(lat: float, lon: float, start: str, end: str) -> dict:
+    """單點 archive 抓 daily,回傳 {date: mm}"""
+    import urllib.request
+    for model_param in ["&models=ecmwf_ifs", ""]:  # 先試高解析,失敗 fallback era5
+        try:
+            url = (
+                "https://archive-api.open-meteo.com/v1/archive?"
+                f"latitude={lat}&longitude={lon}"
+                f"&start_date={start}&end_date={end}"
+                f"&daily=precipitation_sum&timezone=Asia%2FTaipei{model_param}"
+            )
+            with urllib.request.urlopen(url, timeout=60) as resp:
+                j = json.loads(resp.read().decode("utf-8"))
+            times = j.get("daily", {}).get("time", [])
+            precs = j.get("daily", {}).get("precipitation_sum", [])
+            daily = {}
+            for t, v in zip(times, precs):
+                if v is None: continue
+                daily[t] = float(v)
+            # ecmwf_ifs 若全 0 (該區無資料),試 fallback
+            if daily and sum(daily.values()) > 0:
+                return daily
+        except Exception:
+            continue
+    return {}
+
+
 def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bool = True, current_rows: list = None) -> dict:
-    """一次撈全台 22 縣市過去 N 年每日雨量 → 聚合成月統計 → 前端 embed 用。
-    資料來源：Open-Meteo Archive (ERA5 全球再分析,以 CWA 縣市代表座標採樣)
-    有本地 cache; 用 --refresh-history 可強制重抓"""
+    """一次撈全台 22 縣市過去 N 年每日雨量 → 每縣市多點採樣取 MAX → 聚合成月統計。
+    資料源:Open-Meteo Archive ECMWF-IFS (9km 高解析) + 每縣市 2-5 點涵蓋山區/平原/沿海
+    有本地 cache;要強制重抓可刪除 docs/history_cache.json"""
     import urllib.request, urllib.parse
     today = date.today()
     cache_path = DOCS_DIR / "history_cache.json"
@@ -3330,45 +3383,49 @@ def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bo
             "years": list(range(start_year, end_year + 1)),
             "counties": [c[0] for c in COUNTIES],
             "data": {},
-            "source": "Open-Meteo ERA5 · 以中央氣象署縣市代表座標採樣",
+            "source": "Open-Meteo ECMWF-IFS 9km · 每縣市多點採樣取 MAX",
             "updated": today.isoformat(),
         }
 
         for i, (name, lat, lon) in enumerate(COUNTIES, 1):
+            points = COUNTY_SAMPLE_POINTS.get(name, [(lat, lon)])
             if verbose:
-                print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} 抓 {n_years} 年 daily ...", end="", flush=True)
-            try:
-                url = (
-                    "https://archive-api.open-meteo.com/v1/archive?"
-                    f"latitude={lat}&longitude={lon}"
-                    f"&start_date={start_date}&end_date={end_date}"
-                    f"&daily=precipitation_sum&timezone=Asia%2FTaipei"
-                )
-                with urllib.request.urlopen(url, timeout=60) as resp:
-                    j = json.loads(resp.read().decode("utf-8"))
-                times = j.get("daily", {}).get("time", [])
-                precs = j.get("daily", {}).get("precipitation_sum", [])
-                months = {}
-                for t, v in zip(times, precs):
-                    if v is None: continue
-                    y = int(t[:4]); m = int(t[5:7])
-                    if y not in months: months[y] = {}
-                    if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
-                    months[y][m]["mm"] += float(v)
-                    if v >= 1: months[y][m]["rd"] += 1
-                    if v >= 80: months[y][m]["sd"] += 1
-                for y in months:
-                    for m in months[y]:
-                        months[y][m]["mm"] = round(months[y][m]["mm"], 1)
-                result["data"][name] = months
-                if verbose:
-                    yc = len(months); mc = sum(len(v) for v in months.values())
-                    print(f" ✓ {yc}年/{mc}月")
-                time.sleep(0.3)
-            except Exception as e:
-                if verbose:
-                    print(f" FAIL: {e}")
+                print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} {len(points)}點採樣 {n_years}年 ...", end="", flush=True)
+            # 每點抓 daily
+            point_daily_list = []
+            for p_lat, p_lon in points:
+                d = _fetch_history_one_point(p_lat, p_lon, start_date, end_date)
+                if d:
+                    point_daily_list.append(d)
+                time.sleep(0.25)
+            if not point_daily_list:
                 result["data"][name] = {}
+                if verbose: print(f" FAIL 全無資料")
+                continue
+
+            # 每一天取「多點 MAX」— 反映該縣市內任一區的最高降雨
+            all_dates = set()
+            for d in point_daily_list: all_dates.update(d.keys())
+            merged = {}
+            for date_str in all_dates:
+                vals = [d.get(date_str, 0.0) for d in point_daily_list]
+                merged[date_str] = max(vals)
+
+            months = {}
+            for t, v in merged.items():
+                y = int(t[:4]); m = int(t[5:7])
+                if y not in months: months[y] = {}
+                if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
+                months[y][m]["mm"] += v
+                if v >= 1: months[y][m]["rd"] += 1
+                if v >= 80: months[y][m]["sd"] += 1
+            for y in months:
+                for m in months[y]:
+                    months[y][m]["mm"] = round(months[y][m]["mm"], 1)
+            result["data"][name] = months
+            if verbose:
+                yc = len(months); mc = sum(len(v) for v in months.values())
+                print(f" ✓ {yc}年/{mc}月 ({len(point_daily_list)}點merge)")
 
         try:
             DOCS_DIR.mkdir(parents=True, exist_ok=True)
