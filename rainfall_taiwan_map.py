@@ -440,6 +440,65 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .history-report .label{{font-weight:700;color:#7b1fa2;display:block;margin-bottom:6px}}
   .history-report .biz{{margin-top:8px;padding:10px 12px;background:#fff;border-radius:3px}}
 
+  /* ===== 進階歷史比較 ===== */
+  .adv-block{{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #d84315}}
+  .adv-block h3{{margin:0 0 12px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #d84315;background:linear-gradient(90deg,#ffe0b2 0%,transparent 60%)}}
+  .adv-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:12px}}
+  .adv-group{{padding:10px 12px;background:var(--cwa-hover);border:1px solid var(--cwa-border);border-radius:3px}}
+  .adv-group-head{{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--cwa-text);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cwa-border)}}
+  .adv-group-head .quick{{display:flex;gap:4px}}
+  .adv-group-head .quick a{{color:var(--cwa-primary);font-size:11px;cursor:pointer;text-decoration:underline;font-weight:normal}}
+  .adv-cbs{{display:flex;flex-wrap:wrap;gap:5px}}
+  .adv-cbs label{{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#fff;border:1px solid var(--cwa-border);border-radius:14px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .1s}}
+  .adv-cbs label:hover{{background:var(--cwa-light)}}
+  .adv-cbs label.on{{background:#d84315;color:#fff;border-color:#d84315;font-weight:700}}
+  .adv-cbs input[type=checkbox]{{margin:0;accent-color:#d84315}}
+  .adv-actions{{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;font-size:13px}}
+  .adv-actions button{{padding:8px 16px;background:#d84315;color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}}
+  .adv-actions button:hover:not(:disabled){{background:#bf360c}}
+  .adv-actions button:disabled{{background:#ffab91;cursor:wait}}
+  .adv-actions .est{{color:var(--cwa-text-muted);font-size:12px}}
+  .adv-actions .est strong{{color:#d84315;font-weight:700}}
+  .adv-status{{padding:10px 12px;background:var(--cwa-light);border-left:3px solid #d84315;border-radius:2px;margin-bottom:10px;font-size:13px;color:var(--cwa-text);display:none}}
+  .adv-status.show{{display:block}}
+  .adv-view-tabs{{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--cwa-border)}}
+  .adv-view-tabs button{{padding:8px 16px;border:none;background:transparent;color:var(--cwa-text-muted);font-size:12px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;font-family:inherit}}
+  .adv-view-tabs button.active{{color:#d84315;border-bottom-color:#d84315;background:#ffe0b2}}
+  .adv-table-wrap{{overflow-x:auto;border:1px solid var(--cwa-border);border-radius:3px;margin-bottom:12px}}
+  .adv-table{{width:100%;border-collapse:collapse;font-size:12px;min-width:520px}}
+  .adv-table th{{padding:8px;background:#d84315;color:#fff;text-align:center;font-weight:600;font-size:11px;white-space:nowrap;cursor:pointer;user-select:none}}
+  .adv-table th:hover{{background:#bf360c}}
+  .adv-table th .sort{{opacity:.6;font-size:10px;margin-left:2px}}
+  .adv-table td{{padding:7px 8px;text-align:center;border-bottom:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+  .adv-table tr:nth-child(odd) td{{background:var(--cwa-hover)}}
+  .adv-table tr:hover td{{background:#ffe0b2}}
+  .adv-table td.year,.adv-table td.region{{font-weight:700;color:var(--cwa-primary)}}
+  .adv-table td.mm{{font-weight:700}}
+  .adv-table td.high{{background:#ffcdd2 !important;color:#b71c1c;font-weight:900}}
+  .adv-table td.low{{background:#c8e6c9 !important;color:#1b5e20;font-weight:900}}
+  /* 矩陣視圖 */
+  .adv-matrix{{width:100%;border-collapse:collapse;font-size:12px}}
+  .adv-matrix th,.adv-matrix td{{padding:6px;text-align:center;border:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace;min-width:60px}}
+  .adv-matrix thead th{{background:#d84315;color:#fff;font-weight:600;font-size:11px;white-space:nowrap}}
+  .adv-matrix tbody th{{background:var(--cwa-primary);color:#fff;font-weight:700;text-align:left;padding:6px 10px;white-space:nowrap}}
+  .adv-matrix td{{background:#fff;color:var(--cwa-text)}}
+  .adv-matrix td.mx-0{{background:#fafafa;color:#aaa}}
+  .adv-matrix td.mx-1{{background:#e3f2fd;color:#0d47a1}}
+  .adv-matrix td.mx-2{{background:#64b5f6;color:#fff}}
+  .adv-matrix td.mx-3{{background:#1976d2;color:#fff}}
+  .adv-matrix td.mx-4{{background:#f0c040;color:#5a3800}}
+  .adv-matrix td.mx-5{{background:#ef6c00;color:#fff}}
+  .adv-matrix td.mx-6{{background:#c62828;color:#fff}}
+  .adv-matrix td.mx-7{{background:#7b1fa2;color:#fff}}
+  .adv-matrix td .d{{font-size:9px;opacity:.7;margin-top:1px;display:block}}
+  /* 分析評語 */
+  .adv-analysis{{padding:14px 16px;background:#fff3e0;border-left:4px solid #d84315;border-radius:3px;font-size:13px;color:var(--cwa-text);line-height:1.8}}
+  .adv-analysis h4{{margin:0 0 10px;font-size:14px;color:#d84315;font-weight:700}}
+  .adv-analysis ul{{margin:6px 0;padding-left:22px}}
+  .adv-analysis li{{margin:4px 0}}
+  .adv-analysis strong{{color:#d84315}}
+  .adv-analysis .biz{{margin-top:12px;padding:10px 12px;background:#fff;border-radius:3px;border:1px solid var(--cwa-border)}}
+
   /* ===== 節氣 × 基肥影響區塊 ===== */
   .term-detail-block{{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #f9a825}}
   .term-detail-block h3{{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #f9a825;background:linear-gradient(90deg,#fff8e1 0%,transparent 60%)}}
@@ -833,6 +892,60 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </table>
   </div>
   <div class="history-report" id="histReport" style="display:none"></div>
+</div>
+
+<!-- ===================== 進階歷史比較 · 多維交叉分析 ===================== -->
+<div class="adv-block">
+  <h3>📈 進階歷史比較 · 年/月/地區三維交叉分析</h3>
+  <div class="adv-grid">
+    <div class="adv-group">
+      <div class="adv-group-head">
+        <span>📅 年份</span>
+        <div class="quick">
+          <a onclick="advQuick('year','last3')">近3年</a>
+          <a onclick="advQuick('year','last5')">近5年</a>
+          <a onclick="advQuick('year','clear')">清除</a>
+        </div>
+      </div>
+      <div class="adv-cbs" id="advYears"></div>
+    </div>
+    <div class="adv-group">
+      <div class="adv-group-head">
+        <span>📆 月份</span>
+        <div class="quick">
+          <a onclick="advQuick('month','all')">全選</a>
+          <a onclick="advQuick('month','q1')">Q1</a>
+          <a onclick="advQuick('month','q2')">Q2</a>
+          <a onclick="advQuick('month','q3')">Q3</a>
+          <a onclick="advQuick('month','q4')">Q4</a>
+          <a onclick="advQuick('month','clear')">清除</a>
+        </div>
+      </div>
+      <div class="adv-cbs" id="advMonths"></div>
+    </div>
+    <div class="adv-group">
+      <div class="adv-group-head">
+        <span>📍 地區</span>
+        <div class="quick">
+          <a onclick="advQuick('region','south')">南部</a>
+          <a onclick="advQuick('region','all')">全選</a>
+          <a onclick="advQuick('region','clear')">清除</a>
+        </div>
+      </div>
+      <div class="adv-cbs" id="advRegions"></div>
+    </div>
+  </div>
+  <div class="adv-actions">
+    <button id="advRun" onclick="runAdvancedCompare()">🔍 執行交叉比較</button>
+    <span class="est">預估請求：<strong id="advEst">0</strong> 個組合</span>
+  </div>
+  <div class="adv-status" id="advStatus"></div>
+  <div class="adv-view-tabs" id="advViewTabs" style="display:none">
+    <button data-view="matrix" class="active">📋 矩陣視圖</button>
+    <button data-view="flat">📊 明細表格 (可排序)</button>
+  </div>
+  <div class="adv-table-wrap" id="advTableWrap" style="display:none"></div>
+  <div class="adv-analysis" id="advAnalysis" style="display:none"></div>
 </div>
 
 <!-- ===================== 天氣分析 ===================== -->
@@ -1300,6 +1413,316 @@ function renderFcstRanking(dateArr, isMultiDay) {{
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {{
   renderForecastMap([FORECAST_DATES[0]]);
+}}
+
+// ============ 📈 進階歷史比較 (年/月/地區多維) ============
+(function initAdv() {{
+  const curYear = new Date().getFullYear();
+  const yearsWrap = document.getElementById('advYears');
+  for (let y = curYear; y >= curYear - 9; y--) {{
+    _makeAdvCb(yearsWrap, y, y + ' 年', y >= curYear - 2);
+  }}
+  const monthsWrap = document.getElementById('advMonths');
+  for (let m = 1; m <= 12; m++) {{
+    _makeAdvCb(monthsWrap, m, m + '月', m === new Date().getMonth() + 1);
+  }}
+  const regionsWrap = document.getElementById('advRegions');
+  Object.keys(HIST_LATLON).forEach(r => {{
+    _makeAdvCb(regionsWrap, r, r, r === '臺南市');
+  }});
+  updateAdvEst();
+}})();
+
+function _makeAdvCb(wrap, val, txt, checked) {{
+  const lb = document.createElement('label');
+  lb.dataset.val = val;
+  if (checked) lb.classList.add('on');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.value = val;
+  cb.checked = !!checked;
+  cb.addEventListener('change', () => {{
+    lb.classList.toggle('on', cb.checked);
+    updateAdvEst();
+  }});
+  lb.appendChild(cb);
+  lb.appendChild(document.createTextNode(' ' + txt));
+  wrap.appendChild(lb);
+}}
+
+function _advPicked(id) {{
+  return [...document.querySelectorAll('#' + id + ' input:checked')].map(c => c.value);
+}}
+function updateAdvEst() {{
+  const n = _advPicked('advYears').length * _advPicked('advMonths').length * _advPicked('advRegions').length;
+  document.getElementById('advEst').textContent = n;
+}}
+function advQuick(type, action) {{
+  const map = {{year: 'advYears', month: 'advMonths', region: 'advRegions'}};
+  const wrap = document.getElementById(map[type]);
+  const cbs = wrap.querySelectorAll('input');
+  cbs.forEach(cb => {{
+    const lb = cb.closest('label');
+    let should = cb.checked;
+    if (action === 'clear') should = false;
+    else if (action === 'all') should = true;
+    else if (type === 'year') {{
+      const y = parseInt(cb.value);
+      const cur = new Date().getFullYear();
+      if (action === 'last3') should = (y >= cur - 2);
+      else if (action === 'last5') should = (y >= cur - 4);
+    }} else if (type === 'month') {{
+      const m = parseInt(cb.value);
+      if (action === 'q1') should = (m <= 3);
+      else if (action === 'q2') should = (m >= 4 && m <= 6);
+      else if (action === 'q3') should = (m >= 7 && m <= 9);
+      else if (action === 'q4') should = (m >= 10);
+    }} else if (type === 'region' && action === 'south') {{
+      should = ['臺南市', '高雄市', '屏東縣'].includes(cb.value);
+    }}
+    cb.checked = should;
+    lb.classList.toggle('on', should);
+  }});
+  updateAdvEst();
+}}
+
+let _advResults = [];
+let _advSortKey = 'mm';
+let _advSortDesc = true;
+let _advView = 'matrix';
+
+async function runAdvancedCompare() {{
+  const years = _advPicked('advYears').map(Number).sort();
+  const months = _advPicked('advMonths').map(Number).sort((a,b)=>a-b);
+  const regions = _advPicked('advRegions');
+  if (!years.length || !months.length || !regions.length) {{
+    alert('請至少選 1 個年、1 個月、1 個地區');
+    return;
+  }}
+  const combos = [];
+  regions.forEach(r => years.forEach(y => months.forEach(m => combos.push({{r, y, m}}))));
+  if (combos.length > 60) {{
+    if (!confirm('您將發送 ' + combos.length + ' 個 API 請求（可能需 ' + Math.ceil(combos.length * 0.4) + ' 秒），確定繼續？')) return;
+  }}
+  const btn = document.getElementById('advRun');
+  const status = document.getElementById('advStatus');
+  btn.disabled = true;
+  status.className = 'adv-status show';
+  status.innerHTML = '⏳ 開始交叉抓取... 共 <strong>' + combos.length + '</strong> 個組合';
+
+  let done = 0;
+  try {{
+    _advResults = await Promise.all(combos.map(async ({{r, y, m}}) => {{
+      const [lat, lon] = HIST_LATLON[r];
+      const cacheKey = r + '_' + y + '_' + m;
+      let daily;
+      if (window._histCache[cacheKey]) {{
+        daily = window._histCache[cacheKey];
+      }} else {{
+        daily = await fetchYearMonth(lat, lon, y, m);
+        window._histCache[cacheKey] = daily;
+      }}
+      done++;
+      btn.textContent = '⏳ 撈取中 ' + done + '/' + combos.length;
+      let mm = 0, rainDays = 0, stormDays = 0;
+      Object.values(daily).forEach(v => {{
+        mm += v;
+        if (v >= 1) rainDays++;
+        if (v >= 80) stormDays++;
+      }});
+      return {{region: r, year: y, month: m, mm: Math.round(mm * 10) / 10, rainDays, stormDays}};
+    }}));
+    btn.textContent = '🔍 執行交叉比較';
+    btn.disabled = false;
+    status.innerHTML = '✅ 已載入 <strong>' + _advResults.length + '</strong> 個組合資料';
+    document.getElementById('advViewTabs').style.display = 'flex';
+    document.getElementById('advTableWrap').style.display = '';
+    renderAdvView();
+    renderAdvAnalysis();
+  }} catch (e) {{
+    console.error(e);
+    btn.textContent = '🔍 執行交叉比較';
+    btn.disabled = false;
+    status.innerHTML = '❌ 抓取失敗：' + e.message;
+  }}
+}}
+
+// 視圖切換
+document.querySelectorAll('#advViewTabs button').forEach(b => {{
+  b.addEventListener('click', () => {{
+    document.querySelectorAll('#advViewTabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    _advView = b.dataset.view;
+    renderAdvView();
+  }});
+}});
+
+function _mxLvl(mm) {{
+  if (mm < 1) return 0;
+  if (mm < 30) return 1;
+  if (mm < 80) return 2;
+  if (mm < 150) return 3;
+  if (mm < 300) return 4;
+  if (mm < 500) return 5;
+  if (mm < 800) return 6;
+  return 7;
+}}
+
+function renderAdvView() {{
+  const wrap = document.getElementById('advTableWrap');
+  if (_advView === 'matrix') {{
+    // 矩陣：row=地區+年，col=月
+    const regions = [...new Set(_advResults.map(r => r.region))];
+    const years = [...new Set(_advResults.map(r => r.year))].sort();
+    const months = [...new Set(_advResults.map(r => r.month))].sort((a,b)=>a-b);
+    let html = '<table class="adv-matrix"><thead><tr><th style="min-width:120px">地區 · 年份</th>';
+    months.forEach(m => {{ html += '<th>' + m + ' 月</th>'; }});
+    html += '</tr></thead><tbody>';
+    regions.forEach(r => {{
+      years.forEach(y => {{
+        html += '<tr><th>' + r + ' · ' + y + '</th>';
+        months.forEach(m => {{
+          const item = _advResults.find(x => x.region === r && x.year === y && x.month === m);
+          if (!item) {{ html += '<td>—</td>'; return; }}
+          const lvl = _mxLvl(item.mm);
+          html += '<td class="mx-' + lvl + '" title="' + item.rainDays + ' 天有雨">' +
+                  item.mm.toFixed(0) + '<span class="d">' + item.rainDays + 'd</span></td>';
+        }});
+        html += '</tr>';
+      }});
+    }});
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }} else {{
+    // Flat：可排序
+    const sorted = [..._advResults].sort((a, b) => {{
+      const av = a[_advSortKey], bv = b[_advSortKey];
+      if (typeof av === 'string') return _advSortDesc ? bv.localeCompare(av) : av.localeCompare(bv);
+      return _advSortDesc ? bv - av : av - bv;
+    }});
+    const maxMm = Math.max(..._advResults.map(r => r.mm));
+    const minMm = Math.min(..._advResults.map(r => r.mm));
+    const cols = [
+      ['region', '地區'], ['year', '年份'], ['month', '月份'],
+      ['mm', '累積 (mm)'], ['rainDays', '有雨天'], ['stormDays', '豪雨日'],
+    ];
+    let html = '<table class="adv-table"><thead><tr>';
+    cols.forEach(([k, lbl]) => {{
+      const isSort = _advSortKey === k;
+      const arrow = isSort ? (_advSortDesc ? '▼' : '▲') : '';
+      html += '<th onclick="advSortBy(\\'' + k + '\\')">' + lbl + ' <span class="sort">' + arrow + '</span></th>';
+    }});
+    html += '</tr></thead><tbody>';
+    sorted.forEach(r => {{
+      const hi = r.mm === maxMm ? ' high' : (r.mm === minMm ? ' low' : '');
+      html += '<tr>' +
+        '<td class="region">' + r.region + '</td>' +
+        '<td class="year">' + r.year + '</td>' +
+        '<td>' + r.month + '月</td>' +
+        '<td class="mm' + hi + '">' + r.mm.toFixed(1) + '</td>' +
+        '<td>' + r.rainDays + '</td>' +
+        '<td>' + r.stormDays + '</td>' +
+      '</tr>';
+    }});
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }}
+}}
+
+function advSortBy(k) {{
+  if (_advSortKey === k) _advSortDesc = !_advSortDesc;
+  else {{ _advSortKey = k; _advSortDesc = true; }}
+  renderAdvView();
+}}
+
+function renderAdvAnalysis() {{
+  const el = document.getElementById('advAnalysis');
+  if (!_advResults.length) {{ el.style.display = 'none'; return; }}
+  const rs = _advResults;
+  const maxItem = rs.reduce((a, b) => b.mm > a.mm ? b : a);
+  const minItem = rs.reduce((a, b) => b.mm < a.mm ? b : a);
+  const avgMm = rs.reduce((s, r) => s + r.mm, 0) / rs.length;
+  const avgRain = rs.reduce((s, r) => s + r.rainDays, 0) / rs.length;
+  const totalStorm = rs.reduce((s, r) => s + r.stormDays, 0);
+
+  // 年趨勢：同地區同月，比較年份序列
+  const trendLines = [];
+  const rs_by_rm = {{}};
+  rs.forEach(r => {{
+    const k = r.region + '_' + r.month;
+    if (!rs_by_rm[k]) rs_by_rm[k] = [];
+    rs_by_rm[k].push(r);
+  }});
+  Object.values(rs_by_rm).forEach(arr => {{
+    if (arr.length < 2) return;
+    arr.sort((a, b) => a.year - b.year);
+    const first = arr[0], last = arr[arr.length - 1];
+    const diff = last.mm - first.mm;
+    const pct = first.mm > 0 ? (diff / first.mm * 100) : 0;
+    if (Math.abs(pct) < 5) return;
+    const arrow = diff > 0 ? '📈 上升' : '📉 下降';
+    trendLines.push(first.region + ' ' + first.month + '月：' + first.year + '→' + last.year +
+                    ' <strong>' + arrow + ' ' + Math.abs(pct).toFixed(1) + '%</strong> (' +
+                    first.mm.toFixed(0) + ' → ' + last.mm.toFixed(0) + ' mm)');
+  }});
+
+  // 地區差異：同年同月，各地區比較
+  const regionDiffLines = [];
+  const rs_by_ym = {{}};
+  rs.forEach(r => {{
+    const k = r.year + '_' + r.month;
+    if (!rs_by_ym[k]) rs_by_ym[k] = [];
+    rs_by_ym[k].push(r);
+  }});
+  Object.values(rs_by_ym).forEach(arr => {{
+    if (arr.length < 2) return;
+    const hi = arr.reduce((a, b) => b.mm > a.mm ? b : a);
+    const lo = arr.reduce((a, b) => b.mm < a.mm ? b : a);
+    if (hi.region === lo.region) return;
+    const ratio = lo.mm > 0 ? (hi.mm / lo.mm) : 999;
+    if (ratio < 1.5) return;
+    regionDiffLines.push(hi.year + '年' + hi.month + '月：' +
+                         '<strong>' + hi.region + '</strong> (' + hi.mm.toFixed(0) + ' mm) 為 ' +
+                         '<strong>' + lo.region + '</strong> (' + lo.mm.toFixed(0) + ' mm) 的 ' +
+                         '<strong>' + ratio.toFixed(1) + ' 倍</strong>');
+  }});
+
+  // 業務判斷
+  const highRainCombos = rs.filter(r => r.mm >= 300).length;
+  const lowRainCombos = rs.filter(r => r.mm < 100).length;
+  const stormCombos = rs.filter(r => r.stormDays > 0).length;
+  let biz = '';
+  if (lowRainCombos > highRainCombos) {{
+    biz = '☀ 選定範圍偏乾季為主 → 大部分月份客戶田面可作業，<strong>整體出貨環境有利</strong>，銷量預估較穩。';
+  }} else if (highRainCombos > rs.length * 0.4) {{
+    biz = '🌧 選定範圍多雨季組合 → 施肥出貨時機受限，<strong>建議提前備料、選乾期沖刺</strong>。';
+  }} else {{
+    biz = '⛅ 選定範圍乾濕均衡 → 出貨可按平常規劃，關注月份間差異調度。';
+  }}
+  if (stormCombos > 0) {{
+    biz += '<br>⛈ 有 <strong>' + stormCombos + '</strong> 個組合出現豪雨日 (單日 ≥80mm)，該時段需嚴防出貨延誤。';
+  }}
+
+  let html = '<h4>📋 自動分析評語（' + rs.length + ' 個組合）</h4>';
+  html += '<ul>';
+  html += '<li>🔴 <strong>最高</strong>：' + maxItem.region + ' ' + maxItem.year + '年' + maxItem.month + '月 · <strong>' + maxItem.mm.toFixed(1) + ' mm</strong> (' + maxItem.rainDays + '天有雨)</li>';
+  html += '<li>🟢 <strong>最低</strong>：' + minItem.region + ' ' + minItem.year + '年' + minItem.month + '月 · <strong>' + minItem.mm.toFixed(1) + ' mm</strong> (' + minItem.rainDays + '天有雨)</li>';
+  html += '<li>📊 <strong>平均</strong>：' + avgMm.toFixed(1) + ' mm / 月，平均 ' + avgRain.toFixed(1) + ' 天有雨</li>';
+  html += '<li>⛈ 全範圍共出現 <strong>' + totalStorm + '</strong> 個豪雨日 (≥80mm)</li>';
+  html += '</ul>';
+  if (trendLines.length) {{
+    html += '<h4 style="margin-top:12px">📈 年度趨勢 (變化 &gt; 5%)</h4><ul>';
+    trendLines.slice(0, 8).forEach(l => html += '<li>' + l + '</li>');
+    html += '</ul>';
+  }}
+  if (regionDiffLines.length) {{
+    html += '<h4 style="margin-top:12px">📍 地區差異 (差 &gt; 1.5 倍)</h4><ul>';
+    regionDiffLines.slice(0, 6).forEach(l => html += '<li>' + l + '</li>');
+    html += '</ul>';
+  }}
+  html += '<div class="biz">💼 <strong>業務綜合判斷</strong>：<br>' + biz + '</div>';
+  el.innerHTML = html;
+  el.style.display = '';
 }}
 
 // ============ 📊 歷史雨量比較 ============
