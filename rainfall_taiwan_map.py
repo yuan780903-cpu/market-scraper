@@ -147,7 +147,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   }}
   *{{box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}}
   html,body{{margin:0}}
-  body{{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.5;font-size:14px}}
+  body{{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.6;font-size:15px}}
 
   /* ===== Header (深藍官方橫幅) ===== */
   .header{{background:linear-gradient(180deg,var(--cwa-dark) 0%,var(--cwa-primary) 100%);color:#fff;padding:20px 20px 16px;border-bottom:3px solid #ffb300}}
@@ -563,6 +563,119 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .county-label.storm-lvl{{animation:storm-pulse 1.6s ease-in-out infinite}}
   @keyframes storm-pulse{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.08);filter:brightness(1.1)}}}}
 
+  /* ===== 📽 投影模式：字體/圖示/按鈕全站放大 (適合會議室投影) ===== */
+  body.projector{{font-size:18px}}
+  body.projector .header{{padding:26px 22px 22px}}
+  body.projector .header h1{{font-size:30px;letter-spacing:1px}}
+  body.projector .header p{{font-size:15px}}
+  body.projector .term-strip{{font-size:16px;padding:8px 16px}}
+  body.projector .term-emoji{{font-size:20px}}
+  body.projector .term-name{{font-size:18px}}
+  body.projector .term-hint{{font-size:15px}}
+  body.projector .refresh-bar{{padding:14px 18px;font-size:15px}}
+  body.projector .refresh-bar button{{padding:11px 22px;font-size:15px}}
+  body.projector .refresh-bar .refresh-time{{font-size:14px}}
+  body.projector .refresh-bar .cwa-link{{font-size:14px;padding:9px 16px}}
+  body.projector .accuracy-note{{font-size:14px;padding:12px 18px;line-height:1.7}}
+  body.projector .toggle button{{padding:15px 28px;font-size:17px}}
+  body.projector .period{{font-size:15px;padding:14px 18px}}
+  body.projector .custom-range{{font-size:15px;padding:14px 18px}}
+  body.projector .custom-range input[type=date]{{padding:8px 12px;font-size:15px}}
+  body.projector .custom-range button{{padding:8px 20px;font-size:15px}}
+  body.projector .legend-title{{font-size:17px}}
+  body.projector .legend-row{{font-size:15px;margin:6px 0}}
+  body.projector .legend-swatch{{width:34px;height:20px}}
+  body.projector .county-label{{font-size:14px;padding:3px 8px}}
+  body.projector .county-label .mm{{font-size:14px}}
+  body.projector h3,body.projector .legend-title,body.projector .adv-block h3,body.projector .history-block h3,body.projector .term-detail-block h3,body.projector .crops-block h3,body.projector .towns-block h3,body.projector .rainy-block h3,body.projector .forecast-block h3,body.projector .analysis-block h3,body.projector .news-block h3,body.projector .impact h3,body.projector .ranking h3,body.projector .source h3{{font-size:20px;padding:8px 0 8px 14px}}
+  body.projector .ranking table{{font-size:16px}}
+  body.projector .ranking td{{padding:10px 12px}}
+  body.projector .impact .rng{{font-size:15px;width:120px}}
+  body.projector .impact .note{{font-size:15px}}
+  body.projector .impact .group-title{{font-size:15px;padding:6px 12px}}
+  body.projector .impact .info-note{{font-size:14px;padding:14px 16px;line-height:1.9}}
+  body.projector .term-detail-lead{{font-size:15px;padding:12px 16px}}
+  body.projector .term-detail-list li{{font-size:15px;padding:10px 14px}}
+  body.projector .term-detail-foot{{font-size:13px;padding:12px 14px}}
+  body.projector .crops-filters{{padding:14px}}
+  body.projector .crops-f-row{{font-size:15px;gap:10px 18px}}
+  body.projector .crops-f-row select{{padding:8px 12px;font-size:15px}}
+  body.projector .crops-summary{{font-size:16px;padding:16px 20px}}
+  body.projector .crops-summary .stat strong{{font-size:28px}}
+  body.projector .crops-table{{font-size:15px}}
+  body.projector .crops-table th{{font-size:14px;padding:11px 12px}}
+  body.projector .crops-table td{{padding:10px 12px}}
+  body.projector .crops-table td.cat{{font-size:26px}}
+  body.projector .crops-table td.months .m{{font-size:13px;padding:2px 8px}}
+  body.projector .towns-filters{{font-size:15px}}
+  body.projector .towns-filters select{{padding:8px 12px;font-size:15px}}
+  body.projector .towns-filters input[type=text]{{padding:8px 12px;font-size:15px}}
+  body.projector .towns-legend{{font-size:13px}}
+  body.projector .town-marker{{width:34px;height:34px;font-size:16px}}
+  body.projector .rainy-filters{{font-size:15px}}
+  body.projector .rainy-filters select{{padding:8px 12px;font-size:15px}}
+  body.projector .rainy-summary{{font-size:16px;padding:16px 20px}}
+  body.projector .rainy-summary .loc{{font-size:18px}}
+  body.projector .rainy-summary .stat strong{{font-size:28px}}
+  body.projector .rainy-list{{font-size:14px}}
+  body.projector .rainy-list .day{{font-size:14px;padding:5px 12px}}
+  body.projector .cal-cell{{min-height:64px}}
+  body.projector .cal-cell .d{{font-size:16px}}
+  body.projector .cal-cell .wk{{font-size:11px}}
+  body.projector .cal-cell .mm{{font-size:13px}}
+  body.projector .cal-head{{font-size:13px;padding:8px 4px}}
+  body.projector .fcst-mode-bar button{{font-size:14px;padding:9px 18px}}
+  body.projector .fcst-checkboxes label{{font-size:14px;padding:6px 14px}}
+  body.projector .fcst-info{{font-size:14px;padding:12px 16px}}
+  body.projector .fcst-day-tabs button{{font-size:15px;padding:12px 20px}}
+  body.projector .fcst-legend-title{{font-size:14px}}
+  body.projector .fcst-bar{{font-size:14px;margin:5px 0}}
+  body.projector .fcst-bar-color{{width:32px;height:18px}}
+  body.projector .fcst-bar-label{{font-size:13px;width:56px}}
+  body.projector .fcst-bar-range{{font-size:13px}}
+  body.projector .fcst-legend-hint{{font-size:12px}}
+  body.projector .fcst-ranking-head h4{{font-size:16px}}
+  body.projector .fcst-ranking-head button{{font-size:14px;padding:7px 14px}}
+  body.projector .fcst-ranking table{{font-size:15px}}
+  body.projector .fcst-ranking th{{font-size:14px;padding:11px 12px}}
+  body.projector .fcst-ranking td{{padding:10px 12px}}
+  body.projector .fcst-ranking td.lvl{{font-size:13px}}
+  body.projector .analysis-text{{font-size:16px;padding:14px 18px;line-height:2}}
+  body.projector .news-list li{{font-size:15px;padding:12px 16px}}
+  body.projector .news-list .meta{{font-size:12px}}
+  body.projector .source ul{{font-size:14px;line-height:2}}
+  body.projector .footer{{font-size:13px;padding:20px}}
+  body.projector .history-filters{{font-size:15px}}
+  body.projector .history-filters select{{padding:8px 12px;font-size:15px}}
+  body.projector .history-filters button{{padding:9px 20px;font-size:15px}}
+  body.projector .history-status{{font-size:15px;padding:12px 16px}}
+  body.projector .history-table{{font-size:15px}}
+  body.projector .history-table th{{font-size:14px;padding:11px 12px}}
+  body.projector .history-table td{{padding:10px 12px;font-size:15px}}
+  body.projector .history-report{{font-size:15px;padding:16px 20px;line-height:2}}
+  body.projector .adv-cbs label{{font-size:14px;padding:6px 14px}}
+  body.projector .adv-actions{{font-size:15px}}
+  body.projector .adv-actions button{{padding:10px 20px;font-size:15px}}
+  body.projector .adv-actions .est{{font-size:14px}}
+  body.projector .adv-status{{font-size:15px;padding:12px 16px}}
+  body.projector .adv-view-tabs button{{font-size:14px;padding:10px 18px}}
+  body.projector .adv-table{{font-size:14px}}
+  body.projector .adv-table th{{font-size:13px;padding:10px}}
+  body.projector .adv-table td{{padding:9px 10px}}
+  body.projector .adv-matrix th,body.projector .adv-matrix td{{font-size:14px;padding:9px;min-width:72px}}
+  body.projector .adv-matrix td .d{{font-size:11px}}
+  body.projector .adv-analysis{{font-size:15px;padding:16px 20px;line-height:2}}
+  body.projector .adv-analysis h4{{font-size:17px}}
+  body.projector .adv-analysis li{{margin:6px 0}}
+  body.projector .mascot{{width:82px;height:82px;right:20px;bottom:24px}}
+  body.projector .mascot-face{{font-size:46px}}
+  body.projector .mascot-bubble{{font-size:14px;max-width:300px;padding:10px 14px}}
+  body.projector .rm-content{{max-width:600px}}
+  body.projector .rm-head{{font-size:17px;padding:16px 20px}}
+  body.projector .rm-value .num{{font-size:34px}}
+  body.projector .rm-cmps li{{font-size:15px;padding:12px 14px}}
+  body.projector .rm-impact{{font-size:15px}}
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){{
     .header{{padding:16px 14px}}
@@ -620,6 +733,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
+  <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
   <span class="refresh-time" id="refreshTime">📡 資料時間：{gen_time}</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
@@ -2319,6 +2433,35 @@ function renderRainyCalendar() {{
       '<span class="day">' + mm + '/' + x.d + '　<b>' + x.val.toFixed(1) + '</b> mm</span>'
     ).join('');
   }}
+}}
+
+// ============ 📽 投影模式 toggle ============
+function toggleProjector() {{
+  const on = !document.body.classList.contains('projector');
+  document.body.classList.toggle('projector', on);
+  localStorage.setItem('rain_projector', on ? '1' : '0');
+  const btn = document.getElementById('projBtn');
+  if (btn) {{
+    btn.textContent = on ? '📽 一般模式' : '📽 投影模式';
+    btn.style.background = on ? '#4a148c' : '#7b1fa2';
+  }}
+  // 若 Leaflet 地圖已初始化,通知它重算尺寸
+  setTimeout(() => {{
+    if (typeof map !== 'undefined' && map.invalidateSize) map.invalidateSize();
+    if (typeof fcstMap !== 'undefined' && fcstMap.invalidateSize) fcstMap.invalidateSize();
+    if (typeof townsMap !== 'undefined' && townsMap.invalidateSize) townsMap.invalidateSize();
+  }}, 200);
+}}
+// 載入時還原狀態
+if (localStorage.getItem('rain_projector') === '1') {{
+  document.body.classList.add('projector');
+  document.addEventListener('DOMContentLoaded', () => {{
+    const btn = document.getElementById('projBtn');
+    if (btn) {{
+      btn.textContent = '📽 一般模式';
+      btn.style.background = '#4a148c';
+    }}
+  }});
 }}
 
 // ============ 🔄 一鍵更新：JS 端直接呼叫 Open-Meteo 22 縣市 ============
