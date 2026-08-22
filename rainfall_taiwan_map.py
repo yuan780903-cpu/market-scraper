@@ -411,6 +411,35 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .town-marker.flower{{border-color:#c2185b;color:#c2185b}}
   .town-marker.grain{{border-color:#5d4037;color:#5d4037}}
 
+  /* ===== 歷史雨量比較 ===== */
+  .history-block{{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #7b1fa2}}
+  .history-block h3{{margin:0 0 12px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #7b1fa2;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%)}}
+  .history-filters{{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 12px;background:var(--cwa-hover);border:1px solid var(--cwa-border);border-radius:3px;margin-bottom:12px;font-size:13px}}
+  .history-filters label{{font-weight:600;color:var(--cwa-text)}}
+  .history-filters select{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px;font-family:inherit;background:#fff}}
+  .history-filters button{{padding:7px 16px;background:#7b1fa2;color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}}
+  .history-filters button:hover:not(:disabled){{background:#4a148c}}
+  .history-filters button:disabled{{background:#b39ddb;cursor:wait}}
+  .history-status{{padding:10px 12px;background:var(--cwa-light);border-left:3px solid #7b1fa2;border-radius:2px;margin-bottom:12px;font-size:13px;color:var(--cwa-text);display:none}}
+  .history-status.show{{display:block}}
+  .history-chart{{padding:14px;background:#fafafa;border:1px solid var(--cwa-border);border-radius:3px;margin-bottom:12px;min-height:200px}}
+  .history-chart svg{{width:100%;height:auto;display:block}}
+  .history-table-wrap{{overflow-x:auto;border:1px solid var(--cwa-border);border-radius:3px;margin-bottom:12px}}
+  .history-table{{width:100%;border-collapse:collapse;font-size:13px}}
+  .history-table th{{padding:9px 10px;background:#7b1fa2;color:#fff;text-align:center;font-weight:600;font-size:12px;white-space:nowrap}}
+  .history-table td{{padding:8px 10px;text-align:center;border-bottom:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+  .history-table tr:nth-child(odd) td{{background:var(--cwa-hover)}}
+  .history-table tr:hover td{{background:var(--cwa-light)}}
+  .history-table td.yr{{font-weight:700;color:var(--cwa-primary)}}
+  .history-table td.mm{{font-weight:700;color:var(--cwa-text)}}
+  .history-table td.diff.up{{color:var(--cwa-danger);font-weight:700}}
+  .history-table td.diff.down{{color:var(--cwa-success);font-weight:700}}
+  .history-table tr.avg-row td{{background:#fff3e0 !important;font-weight:700}}
+  .history-table tr.current-row td{{background:#e8f5e9 !important;font-weight:700;color:#1b5e20}}
+  .history-report{{padding:14px 16px;background:var(--cwa-light);border-left:4px solid #7b1fa2;border-radius:3px;font-size:13px;color:var(--cwa-text);line-height:1.8}}
+  .history-report .label{{font-weight:700;color:#7b1fa2;display:block;margin-bottom:6px}}
+  .history-report .biz{{margin-top:8px;padding:10px 12px;background:#fff;border-radius:3px}}
+
   /* ===== 節氣 × 基肥影響區塊 ===== */
   .term-detail-block{{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #f9a825}}
   .term-detail-block h3{{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #f9a825;background:linear-gradient(90deg,#fff8e1 0%,transparent 60%)}}
@@ -757,6 +786,53 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <span><span class="dot" style="background:#c2185b"></span>花卉</span>
     <span><span class="dot" style="background:#5d4037"></span>雜糧/水稻</span>
   </div>
+</div>
+
+<!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
+<div class="history-block">
+  <h3>📊 歷史雨量比較 · 近 5 年同月對照 (向老闆報告用)</h3>
+  <div class="history-filters">
+    <label>地區</label>
+    <select id="histRegion">
+      <option value="桃園市">北部 · 桃園</option>
+      <option value="臺中市">中部 · 臺中</option>
+      <option value="臺南市" selected>南部 · 臺南（主業務區）</option>
+      <option value="高雄市">南部 · 高雄</option>
+      <option value="屏東縣">南部 · 屏東</option>
+      <option value="花蓮縣">東部 · 花蓮</option>
+      <option value="臺東縣">東部 · 臺東</option>
+    </select>
+    <label>月份</label>
+    <select id="histMonth"></select>
+    <label>對照範圍</label>
+    <select id="histYears">
+      <option value="3">近 3 年</option>
+      <option value="5" selected>近 5 年</option>
+      <option value="10">近 10 年</option>
+    </select>
+    <button id="histRun" onclick="loadHistoryData()">🔍 撈取比較</button>
+  </div>
+  <div class="history-status" id="histStatus"></div>
+  <div class="history-chart" id="histChart">
+    <div style="text-align:center;padding:40px 20px;color:var(--cwa-text-muted)">
+      👆 選好地區與月份，按「撈取比較」抓取 Open-Meteo Historical 資料 (ERA5, 免費)<br>
+      <span style="font-size:11px">首次撈取約 5-15 秒，撈過的組合會 cache</span>
+    </div>
+  </div>
+  <div class="history-table-wrap" id="histTableWrap" style="display:none">
+    <table class="history-table">
+      <thead><tr>
+        <th>年份</th>
+        <th>該月累積雨量</th>
+        <th>有雨天數 (≥1mm)</th>
+        <th>豪雨日 (≥80mm)</th>
+        <th>vs 均值差異</th>
+        <th>vs 均值 %</th>
+      </tr></thead>
+      <tbody id="histTbody"></tbody>
+    </table>
+  </div>
+  <div class="history-report" id="histReport" style="display:none"></div>
 </div>
 
 <!-- ===================== 天氣分析 ===================== -->
@@ -1224,6 +1300,217 @@ function renderFcstRanking(dateArr, isMultiDay) {{
 // 預設載入第一天預測
 if (FORECAST_DATES.length > 0) {{
   renderForecastMap([FORECAST_DATES[0]]);
+}}
+
+// ============ 📊 歷史雨量比較 ============
+const HIST_LATLON = {{
+  '桃園市': [24.99, 121.31], '臺中市': [24.15, 120.68], '臺南市': [22.99, 120.21],
+  '高雄市': [22.62, 120.31], '屏東縣': [22.55, 120.55], '花蓮縣': [23.99, 121.60], '臺東縣': [22.75, 121.15],
+}};
+window._histCache = {{}};
+
+// 建月份下拉 (預設當月)
+(function initHistMonth() {{
+  const sel = document.getElementById('histMonth');
+  const curM = new Date().getMonth() + 1;
+  for (let m = 1; m <= 12; m++) {{
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m + ' 月';
+    if (m === curM) opt.selected = true;
+    sel.appendChild(opt);
+  }}
+}})();
+
+async function fetchYearMonth(lat, lon, year, month) {{
+  // 抓某年某月每日雨量
+  const dim = new Date(year, month, 0).getDate();  // 該月天數
+  const start = year + '-' + String(month).padStart(2, '0') + '-01';
+  const end = year + '-' + String(month).padStart(2, '0') + '-' + String(dim).padStart(2, '0');
+  const url = 'https://archive-api.open-meteo.com/v1/archive?' +
+              'latitude=' + lat + '&longitude=' + lon +
+              '&start_date=' + start + '&end_date=' + end +
+              '&daily=precipitation_sum&timezone=Asia%2FTaipei';
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('archive API HTTP ' + r.status);
+  const j = await r.json();
+  const daily = {{}};
+  j.daily.time.forEach((t, i) => {{
+    daily[t] = Math.round((j.daily.precipitation_sum[i] || 0) * 10) / 10;
+  }});
+  return daily;
+}}
+
+async function loadHistoryData() {{
+  const region = document.getElementById('histRegion').value;
+  const month = parseInt(document.getElementById('histMonth').value);
+  const nYears = parseInt(document.getElementById('histYears').value);
+  const btn = document.getElementById('histRun');
+  const status = document.getElementById('histStatus');
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = 0; i < nYears; i++) years.push(currentYear - i);
+  years.sort();
+  const [lat, lon] = HIST_LATLON[region];
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 撈取中... (0/' + years.length + ')';
+  status.className = 'history-status show';
+  status.innerHTML = '正在抓取 <strong>' + region + '</strong> 過去 ' + nYears + ' 年 <strong>' + month + ' 月</strong>的歷史雨量資料...';
+
+  try {{
+    let done = 0;
+    const results = await Promise.all(years.map(async (year) => {{
+      const cacheKey = region + '_' + year + '_' + month;
+      let daily;
+      if (window._histCache[cacheKey]) {{
+        daily = window._histCache[cacheKey];
+      }} else {{
+        daily = await fetchYearMonth(lat, lon, year, month);
+        window._histCache[cacheKey] = daily;
+      }}
+      done++;
+      btn.textContent = '⏳ 撈取中... (' + done + '/' + years.length + ')';
+      // 統計
+      let sum = 0, rainDays = 0, stormDays = 0;
+      Object.values(daily).forEach(v => {{
+        sum += v;
+        if (v >= 1) rainDays++;
+        if (v >= 80) stormDays++;
+      }});
+      return {{
+        year, mm: Math.round(sum * 10) / 10,
+        rainDays, stormDays,
+        daily,
+      }};
+    }}));
+
+    btn.textContent = '🔍 撈取比較';
+    btn.disabled = false;
+
+    // 平均
+    const avgMm = results.reduce((s, r) => s + r.mm, 0) / results.length;
+    const avgDays = results.reduce((s, r) => s + r.rainDays, 0) / results.length;
+
+    // 表格
+    const tbody = document.getElementById('histTbody');
+    tbody.innerHTML = '';
+    results.forEach(r => {{
+      const diff = r.mm - avgMm;
+      const diffPct = avgMm > 0 ? (diff / avgMm * 100) : 0;
+      const upDown = diff >= 0 ? 'up' : 'down';
+      const arrow = diff >= 0 ? '▲' : '▼';
+      const tr = document.createElement('tr');
+      if (r.year === currentYear) tr.className = 'current-row';
+      tr.innerHTML =
+        '<td class="yr">' + r.year + '</td>' +
+        '<td class="mm">' + r.mm.toFixed(1) + ' mm</td>' +
+        '<td>' + r.rainDays + ' 天</td>' +
+        '<td>' + r.stormDays + ' 天</td>' +
+        '<td class="diff ' + upDown + '">' + arrow + Math.abs(diff).toFixed(1) + ' mm</td>' +
+        '<td class="diff ' + upDown + '">' + arrow + Math.abs(diffPct).toFixed(1) + '%</td>';
+      tbody.appendChild(tr);
+    }});
+    // 均值列
+    const avgTr = document.createElement('tr');
+    avgTr.className = 'avg-row';
+    avgTr.innerHTML =
+      '<td class="yr">近 ' + nYears + ' 年均</td>' +
+      '<td class="mm">' + avgMm.toFixed(1) + ' mm</td>' +
+      '<td>' + avgDays.toFixed(1) + ' 天</td>' +
+      '<td>—</td><td>—</td><td>—</td>';
+    tbody.appendChild(avgTr);
+    document.getElementById('histTableWrap').style.display = '';
+
+    // SVG 長條圖
+    renderHistChart(results, avgMm, region, month);
+
+    // 業務報告文字
+    renderHistReport(results, avgMm, avgDays, region, month, currentYear);
+
+    status.innerHTML = '✅ <strong>' + region + '</strong> · ' + month + ' 月 · 近 ' + nYears + ' 年資料已載入（Open-Meteo Historical，ERA5 reanalysis）';
+  }} catch (e) {{
+    console.error(e);
+    btn.textContent = '🔍 撈取比較';
+    btn.disabled = false;
+    status.innerHTML = '❌ 抓取失敗：' + e.message;
+  }}
+}}
+
+function renderHistChart(results, avgMm, region, month) {{
+  const W = 640, H = 260, pl = 46, pr = 20, pt = 30, pb = 40;
+  const cw = W - pl - pr, ch = H - pt - pb;
+  const maxMm = Math.max(...results.map(r => r.mm), avgMm, 50);
+  const bw = cw / results.length - 12;
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '">';
+  // 標題
+  svg += '<text x="' + (W/2) + '" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#7b1fa2">' + region + ' · ' + month + '月 歷年累積雨量對照</text>';
+  // Y 軸格線
+  for (let i = 0; i <= 4; i++) {{
+    const y = pt + ch * i / 4;
+    const val = Math.round(maxMm * (4 - i) / 4);
+    svg += '<line x1="' + pl + '" y1="' + y + '" x2="' + (W - pr) + '" y2="' + y + '" stroke="#e6e8eb" stroke-width="1"/>';
+    svg += '<text x="' + (pl - 4) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#888">' + val + '</text>';
+  }}
+  // 均值虛線
+  const avgY = pt + ch - (avgMm / maxMm) * ch;
+  svg += '<line x1="' + pl + '" y1="' + avgY + '" x2="' + (W - pr) + '" y2="' + avgY + '" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="6,4"/>';
+  svg += '<text x="' + (W - pr - 4) + '" y="' + (avgY - 4) + '" text-anchor="end" font-size="10" fill="#ff9800" font-weight="700">均值 ' + avgMm.toFixed(1) + ' mm</text>';
+  // Bars
+  const curYear = new Date().getFullYear();
+  results.forEach((r, i) => {{
+    const bx = pl + i * (cw / results.length) + 6;
+    const bh = (r.mm / maxMm) * ch;
+    const by = pt + ch - bh;
+    const isCur = r.year === curYear;
+    const color = isCur ? '#7b1fa2' : (r.mm > avgMm ? '#c62828' : '#1976d2');
+    svg += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="' + color + '" rx="3"/>';
+    svg += '<text x="' + (bx + bw/2) + '" y="' + (by - 4) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + color + '">' + r.mm.toFixed(0) + '</text>';
+    svg += '<text x="' + (bx + bw/2) + '" y="' + (H - pb + 16) + '" text-anchor="middle" font-size="11" fill="#333" font-weight="' + (isCur ? '900' : '600') + '">' + r.year + (isCur ? ' ★' : '') + '</text>';
+    svg += '<text x="' + (bx + bw/2) + '" y="' + (H - pb + 30) + '" text-anchor="middle" font-size="10" fill="#666">' + r.rainDays + '天有雨</text>';
+  }});
+  svg += '</svg>';
+  document.getElementById('histChart').innerHTML = svg;
+}}
+
+function renderHistReport(results, avgMm, avgDays, region, month, curYear) {{
+  const cur = results.find(r => r.year === curYear);
+  const maxYr = results.reduce((a, b) => b.mm > a.mm ? b : a);
+  const minYr = results.reduce((a, b) => b.mm < a.mm ? b : a);
+  const diff = cur ? (cur.mm - avgMm) : 0;
+  const diffPct = avgMm > 0 && cur ? (diff / avgMm * 100) : 0;
+
+  // 業務影響推估
+  let biz = '';
+  if (cur) {{
+    let bizLine;
+    if (cur.mm < 150 && avgMm >= 150) {{
+      bizLine = '☀ 本年偏乾 → 客戶田面可作業，<strong>預估銷量比往年同期 +10~20%</strong>，建議積極洽談出貨。';
+    }} else if (cur.mm < 300) {{
+      bizLine = '⛅ 雨量在正常範圍 → 出貨排程可依平常規劃，<strong>銷量預期持平</strong>。';
+    }} else if (cur.mm < 500) {{
+      bizLine = '🌧 雨量偏多 → 出貨排程要看空檔，<strong>銷量預期下滑 10~20%</strong>，備貨可縮量。';
+    }} else {{
+      bizLine = '⛈ 雨量顯著偏多 → 農路積水、田面禁施，<strong>銷量預期下滑 20~40%</strong>，加強年底補撒計劃。';
+    }}
+    biz = '<div class="biz">💼 <strong>' + curYear + ' 年 ' + month + ' 月業務判讀：</strong><br>' + bizLine + '</div>';
+  }}
+
+  const html =
+    '<span class="label">📋 向老闆報告摘要 (' + region + ' · ' + month + ' 月)</span>' +
+    '本地區近 ' + results.length + ' 年 ' + month + ' 月平均降雨 <strong>' + avgMm.toFixed(1) + ' mm</strong>，' +
+    '平均 <strong>' + avgDays.toFixed(1) + '</strong> 天有雨。' +
+    '最多為 <strong>' + maxYr.year + ' 年 ' + maxYr.mm.toFixed(0) + ' mm</strong>，' +
+    '最少為 <strong>' + minYr.year + ' 年 ' + minYr.mm.toFixed(0) + ' mm</strong>。' +
+    (cur ?
+      '本年 (' + curYear + ') 累積 <strong>' + cur.mm.toFixed(1) + ' mm</strong>，' +
+      (diff >= 0 ? '比均值高 ' : '比均值低 ') + '<strong>' + Math.abs(diff).toFixed(1) + ' mm (' + Math.abs(diffPct).toFixed(1) + '%)</strong>。'
+      : ''
+    ) +
+    biz;
+  const rep = document.getElementById('histReport');
+  rep.innerHTML = html;
+  rep.style.display = '';
 }}
 
 // ============ 🗺️ 鄉鎮特色農產地圖 ============
