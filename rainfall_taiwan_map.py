@@ -1037,17 +1037,43 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block">
-  <h3>📊 歷史雨量比較 · 近 5 年同月對照 (向老闆報告用)</h3>
+  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#666;font-weight:400">· 資料源：中央氣象署觀測點座標 × ERA5 全球再分析</span></h3>
   <div class="history-filters">
     <label>地區</label>
     <select id="histRegion">
-      <option value="桃園市">北部 · 桃園</option>
-      <option value="臺中市">中部 · 臺中</option>
-      <option value="臺南市" selected>南部 · 臺南（主業務區）</option>
-      <option value="高雄市">南部 · 高雄</option>
-      <option value="屏東縣">南部 · 屏東</option>
-      <option value="花蓮縣">東部 · 花蓮</option>
-      <option value="臺東縣">東部 · 臺東</option>
+      <optgroup label="── 北部 ──">
+        <option value="臺北市">臺北市</option>
+        <option value="新北市">新北市</option>
+        <option value="基隆市">基隆市</option>
+        <option value="桃園市">桃園市</option>
+        <option value="新竹市">新竹市</option>
+        <option value="新竹縣">新竹縣</option>
+        <option value="宜蘭縣">宜蘭縣</option>
+      </optgroup>
+      <optgroup label="── 中部 ──">
+        <option value="苗栗縣">苗栗縣</option>
+        <option value="臺中市">臺中市</option>
+        <option value="彰化縣">彰化縣</option>
+        <option value="南投縣">南投縣</option>
+        <option value="雲林縣">雲林縣</option>
+      </optgroup>
+      <optgroup label="── 南部（主業務區）──">
+        <option value="嘉義市">嘉義市</option>
+        <option value="嘉義縣" selected>嘉義縣 ★</option>
+        <option value="臺南市">臺南市 ★</option>
+        <option value="高雄市">高雄市</option>
+        <option value="屏東縣">屏東縣</option>
+      </optgroup>
+      <optgroup label="── 東部 ──">
+        <option value="宜蘭縣">宜蘭縣 ★</option>
+        <option value="花蓮縣">花蓮縣 ★</option>
+        <option value="臺東縣">臺東縣</option>
+      </optgroup>
+      <optgroup label="── 離島 ──">
+        <option value="澎湖縣">澎湖縣</option>
+        <option value="金門縣">金門縣</option>
+        <option value="連江縣">連江縣</option>
+      </optgroup>
     </select>
     <label>月份</label>
     <select id="histMonth">
@@ -1075,8 +1101,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="history-status" id="histStatus"></div>
   <div class="history-chart" id="histChart">
     <div style="text-align:center;padding:40px 20px;color:var(--cwa-text-muted)">
-      👆 選好地區與月份，按「撈取比較」抓取 Open-Meteo Historical 資料 (ERA5, 免費)<br>
-      <span style="font-size:11px">首次撈取約 5-15 秒，撈過的組合會 cache</span>
+      👆 選好地區與月份，按「撈取比較」<br>
+      <span style="font-size:11px;color:#2e7d32;font-weight:700">✓ 資料已預先打包於本頁面，瞬間查詢，任何組合皆可比對</span>
     </div>
   </div>
   <div class="history-table-wrap" id="histTableWrap" style="display:none">
@@ -1721,7 +1747,7 @@ let _advSortKey = 'mm';
 let _advSortDesc = true;
 let _advView = 'matrix';
 
-async function runAdvancedCompare() {{
+function runAdvancedCompare() {{
   const years = _advPicked('advYears').map(Number).sort();
   const months = _advPicked('advMonths').map(Number).sort((a,b)=>a-b);
   const regions = _advPicked('advRegions');
@@ -1731,49 +1757,34 @@ async function runAdvancedCompare() {{
   }}
   const combos = [];
   regions.forEach(r => years.forEach(y => months.forEach(m => combos.push({{r, y, m}}))));
-  if (combos.length > 60) {{
-    if (!confirm('您將發送 ' + combos.length + ' 個 API 請求（可能需 ' + Math.ceil(combos.length * 0.4) + ' 秒），確定繼續？')) return;
-  }}
   const btn = document.getElementById('advRun');
   const status = document.getElementById('advStatus');
   btn.disabled = true;
   status.className = 'adv-status show';
-  status.innerHTML = '⏳ 開始交叉抓取... 共 <strong>' + combos.length + '</strong> 個組合';
+  status.innerHTML = '⚡ 即時比對... 共 <strong>' + combos.length + '</strong> 個組合 (資料已內建)';
 
-  let done = 0;
   try {{
-    _advResults = await Promise.all(combos.map(async ({{r, y, m}}) => {{
-      const [lat, lon] = HIST_LATLON[r];
-      const cacheKey = r + '_' + y + '_' + m;
-      let daily;
-      if (window._histCache[cacheKey]) {{
-        daily = window._histCache[cacheKey];
-      }} else {{
-        daily = await fetchYearMonth(lat, lon, y, m);
-        window._histCache[cacheKey] = daily;
-      }}
-      done++;
-      btn.textContent = '⏳ 撈取中 ' + done + '/' + combos.length;
-      let mm = 0, rainDays = 0, stormDays = 0;
-      Object.values(daily).forEach(v => {{
-        mm += v;
-        if (v >= 1) rainDays++;
-        if (v >= 80) stormDays++;
-      }});
-      return {{region: r, year: y, month: m, mm: Math.round(mm * 10) / 10, rainDays, stormDays}};
-    }}));
-    btn.textContent = '🔍 執行交叉比較';
+    _advResults = combos.map(({{r, y, m}}) => {{
+      const regData = (HISTORY.data || {{}})[r] || {{}};
+      const mData = (regData[y] || {{}})[m] || {{mm: 0, rd: 0, sd: 0}};
+      return {{
+        region: r, year: y, month: m,
+        mm: mData.mm || 0,
+        rainDays: mData.rd || 0,
+        stormDays: mData.sd || 0,
+      }};
+    }});
     btn.disabled = false;
-    status.innerHTML = '✅ 已載入 <strong>' + _advResults.length + '</strong> 個組合資料';
+    const src = HISTORY.source || 'CWA 觀測點座標 × ERA5';
+    status.innerHTML = '✅ 已載入 <strong>' + _advResults.length + '</strong> 個組合資料｜' + src;
     document.getElementById('advViewTabs').style.display = 'flex';
     document.getElementById('advTableWrap').style.display = '';
     renderAdvView();
     renderAdvAnalysis();
   }} catch (e) {{
     console.error(e);
-    btn.textContent = '🔍 執行交叉比較';
     btn.disabled = false;
-    status.innerHTML = '❌ 抓取失敗：' + e.message;
+    status.innerHTML = '❌ 查詢失敗：' + e.message;
   }}
 }}
 
@@ -1955,12 +1966,8 @@ function renderAdvAnalysis() {{
   el.style.display = '';
 }}
 
-// ============ 📊 歷史雨量比較 ============
-const HIST_LATLON = {{
-  '桃園市': [24.99, 121.31], '臺中市': [24.15, 120.68], '臺南市': [22.99, 120.21],
-  '高雄市': [22.62, 120.31], '屏東縣': [22.55, 120.55], '花蓮縣': [23.99, 121.60], '臺東縣': [22.75, 121.15],
-}};
-window._histCache = {{}};
+// ============ 📊 歷史雨量比較 (Python 端預打包) ============
+const HISTORY = {history_json};
 
 // 月份選單預設當月 (HTML 已 hardcode 12 個 option)
 (function initHistMonth() {{
@@ -1969,26 +1976,7 @@ window._histCache = {{}};
   sel.value = String(new Date().getMonth() + 1);
 }})();
 
-async function fetchYearMonth(lat, lon, year, month) {{
-  // 抓某年某月每日雨量
-  const dim = new Date(year, month, 0).getDate();  // 該月天數
-  const start = year + '-' + String(month).padStart(2, '0') + '-01';
-  const end = year + '-' + String(month).padStart(2, '0') + '-' + String(dim).padStart(2, '0');
-  const url = 'https://archive-api.open-meteo.com/v1/archive?' +
-              'latitude=' + lat + '&longitude=' + lon +
-              '&start_date=' + start + '&end_date=' + end +
-              '&daily=precipitation_sum&timezone=Asia%2FTaipei';
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('archive API HTTP ' + r.status);
-  const j = await r.json();
-  const daily = {{}};
-  j.daily.time.forEach((t, i) => {{
-    daily[t] = Math.round((j.daily.precipitation_sum[i] || 0) * 10) / 10;
-  }});
-  return daily;
-}}
-
-async function loadHistoryData() {{
+function loadHistoryData() {{
   const region = document.getElementById('histRegion').value;
   const month = parseInt(document.getElementById('histMonth').value);
   const nYears = parseInt(document.getElementById('histYears').value);
@@ -1998,41 +1986,30 @@ async function loadHistoryData() {{
   const years = [];
   for (let i = 0; i < nYears; i++) years.push(currentYear - i);
   years.sort();
-  const [lat, lon] = HIST_LATLON[region];
 
   btn.disabled = true;
-  btn.textContent = '⏳ 撈取中... (0/' + years.length + ')';
   status.className = 'history-status show';
-  status.innerHTML = '正在抓取 <strong>' + region + '</strong> 過去 ' + nYears + ' 年 <strong>' + month + ' 月</strong>的歷史雨量資料...';
 
   try {{
-    let done = 0;
-    const results = await Promise.all(years.map(async (year) => {{
-      const cacheKey = region + '_' + year + '_' + month;
-      let daily;
-      if (window._histCache[cacheKey]) {{
-        daily = window._histCache[cacheKey];
-      }} else {{
-        daily = await fetchYearMonth(lat, lon, year, month);
-        window._histCache[cacheKey] = daily;
-      }}
-      done++;
-      btn.textContent = '⏳ 撈取中... (' + done + '/' + years.length + ')';
-      // 統計
-      let sum = 0, rainDays = 0, stormDays = 0;
-      Object.values(daily).forEach(v => {{
-        sum += v;
-        if (v >= 1) rainDays++;
-        if (v >= 80) stormDays++;
-      }});
-      return {{
-        year, mm: Math.round(sum * 10) / 10,
-        rainDays, stormDays,
-        daily,
-      }};
-    }}));
+    const regData = (HISTORY.data || {{}})[region] || {{}};
+    if (Object.keys(regData).length === 0) {{
+      throw new Error('查無此縣市歷史資料 (可能資料源尚未更新)');
+    }}
 
-    btn.textContent = '🔍 撈取比較';
+    let results = years.map(year => {{
+      const mData = (regData[year] || {{}})[month] || {{mm: 0, rd: 0, sd: 0, missing: true}};
+      return {{
+        year,
+        mm: mData.mm || 0,
+        rainDays: mData.rd || 0,
+        stormDays: mData.sd || 0,
+        missing: !!mData.missing,
+      }};
+    }});
+    results = results.filter(r => !(r.missing && r.mm === 0));
+    if (results.length === 0) {{
+      throw new Error(region + ' · ' + month + ' 月 · 近 ' + nYears + ' 年皆無資料');
+    }}
     btn.disabled = false;
 
     // 平均
@@ -2075,12 +2052,13 @@ async function loadHistoryData() {{
     // 業務報告文字
     renderHistReport(results, avgMm, avgDays, region, month, currentYear);
 
-    status.innerHTML = '✅ <strong>' + region + '</strong> · ' + month + ' 月 · 近 ' + nYears + ' 年資料已載入（Open-Meteo Historical，ERA5 reanalysis）';
+    const src = HISTORY.source || '中央氣象署觀測點座標 × ERA5 全球再分析';
+    const upd = HISTORY.updated || '';
+    status.innerHTML = '✅ <strong>' + region + '</strong> · ' + month + ' 月 · 共 ' + results.length + ' 年資料｜資料源：' + src + (upd ? '（更新於 ' + upd + '）' : '');
   }} catch (e) {{
     console.error(e);
-    btn.textContent = '🔍 撈取比較';
     btn.disabled = false;
-    status.innerHTML = '❌ 抓取失敗：' + e.message;
+    status.innerHTML = '❌ 查詢失敗：' + e.message;
   }}
 }}
 
@@ -3169,7 +3147,7 @@ def _mascot_mood(rows: list) -> tuple:
         ])
 
 
-def build_html(rows: list, today: date) -> str:
+def build_html(rows: list, today: date, history_stats: dict = None) -> str:
     from datetime import timedelta
     quarter = (today.month - 1) // 3 + 1
 
@@ -3254,6 +3232,7 @@ def build_html(rows: list, today: date) -> str:
              "crops": t[4], "note": t[5]}
             for t in TOWN_CROPS
         ], ensure_ascii=False),
+        history_json=json.dumps(history_stats or {}, ensure_ascii=False),
     )
 
 
@@ -3289,6 +3268,65 @@ def collect_rows(verbose: bool = True) -> list:
             rows.append({"name": name, "lat": lat, "lon": lon,
                          "today": 0, "month": 0, "quarter": 0})
     return rows
+
+
+def collect_history_stats(verbose: bool = True, n_years: int = 10) -> dict:
+    """一次撈全台 22 縣市過去 N 年每日雨量 → 聚合成月統計 → 前端 embed 用。
+    資料來源：Open-Meteo Archive (ERA5 全球再分析,以 CWA 縣市代表座標採樣)"""
+    import urllib.request, urllib.parse
+    today = date.today()
+    end_year = today.year
+    start_year = end_year - n_years + 1
+    start_date = f"{start_year}-01-01"
+    # 抓到上個月底 (ERA5 通常延遲 5-7 天)
+    end_date = today.isoformat()
+
+    result = {
+        "years": list(range(start_year, end_year + 1)),
+        "counties": [c[0] for c in COUNTIES],
+        "data": {},  # data[縣市][year][month] = {mm, rd, sd}
+        "source": "Open-Meteo ERA5 · 以中央氣象署縣市代表座標採樣",
+        "updated": today.isoformat(),
+    }
+
+    for i, (name, lat, lon) in enumerate(COUNTIES, 1):
+        if verbose:
+            print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} 抓 {n_years} 年 daily ...", end="", flush=True)
+        try:
+            url = (
+                "https://archive-api.open-meteo.com/v1/archive?"
+                f"latitude={lat}&longitude={lon}"
+                f"&start_date={start_date}&end_date={end_date}"
+                f"&daily=precipitation_sum&timezone=Asia%2FTaipei"
+            )
+            with urllib.request.urlopen(url, timeout=60) as resp:
+                j = json.loads(resp.read().decode("utf-8"))
+            times = j.get("daily", {}).get("time", [])
+            precs = j.get("daily", {}).get("precipitation_sum", [])
+            months = {}  # {year: {month: {mm, rd, sd}}}
+            for t, v in zip(times, precs):
+                if v is None:
+                    continue
+                y = int(t[:4]); m = int(t[5:7])
+                if y not in months: months[y] = {}
+                if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
+                months[y][m]["mm"] += float(v)
+                if v >= 1: months[y][m]["rd"] += 1
+                if v >= 80: months[y][m]["sd"] += 1
+            # 四捨五入
+            for y in months:
+                for m in months[y]:
+                    months[y][m]["mm"] = round(months[y][m]["mm"], 1)
+            result["data"][name] = months
+            if verbose:
+                yc = len(months); mc = sum(len(v) for v in months.values())
+                print(f" ✓ {yc}年/{mc}月")
+            time.sleep(0.3)
+        except Exception as e:
+            if verbose:
+                print(f" FAIL: {e}")
+            result["data"][name] = {}
+    return result
 
 
 def _git_commit_and_push_docs(verbose: bool = True) -> bool:
@@ -3330,7 +3368,10 @@ def generate_and_publish(verbose: bool = True) -> str:
     if verbose:
         print(f"[Rainfall Map] 產出全台 22 縣市互動地圖 ...")
     rows = collect_rows(verbose=verbose)
-    html = build_html(rows, today)
+    if verbose:
+        print(f"[Rainfall Map] 抓取歷史雨量 10 年 × 22 縣市 (Python 端預打包) ...")
+    history_stats = collect_history_stats(verbose=verbose, n_years=10)
+    html = build_html(rows, today, history_stats)
 
     # 寫到 docs/ (GitHub Pages 來源，固定檔名讓 URL 不變)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
