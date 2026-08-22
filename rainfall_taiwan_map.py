@@ -2202,6 +2202,19 @@ function renderTownsMap() {{
 document.getElementById('townFltCat').addEventListener('change', renderTownsMap);
 document.getElementById('townKw').addEventListener('input', renderTownsMap);
 renderTownsMap();
+// Leaflet 底圖 tile 需要 map 有正確尺寸才會 render, invalidate 多次確保
+setTimeout(() => townsMap.invalidateSize(), 100);
+setTimeout(() => townsMap.invalidateSize(), 600);
+window.addEventListener('load', () => setTimeout(() => townsMap.invalidateSize(), 100));
+// 用 IntersectionObserver 在 map 進入視窗時再 invalidate 一次
+if ('IntersectionObserver' in window) {{
+  const io = new IntersectionObserver((entries) => {{
+    entries.forEach(e => {{
+      if (e.isIntersecting) {{ townsMap.invalidateSize(); io.disconnect(); }}
+    }});
+  }}, {{threshold: 0.1}});
+  io.observe(document.getElementById('townsMap'));
+}}
 
 // ============ 🌱 基肥作物交叉篩選 ============
 const CROPS = {crops_json};
@@ -3284,7 +3297,7 @@ def collect_rows(verbose: bool = True) -> list:
     return rows
 
 
-def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bool = True) -> dict:
+def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bool = True, current_rows: list = None) -> dict:
     """一次撈全台 22 縣市過去 N 年每日雨量 → 聚合成月統計 → 前端 embed 用。
     資料來源：Open-Meteo Archive (ERA5 全球再分析,以 CWA 縣市代表座標採樣)
     有本地 cache; 用 --refresh-history 可強制重抓"""
@@ -3292,83 +3305,117 @@ def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bo
     today = date.today()
     cache_path = DOCS_DIR / "history_cache.json"
 
-    # 讀 cache: 若當月未更新才重抓
+    # 讀 cache: 若同月已有就直接用, 否則呼叫 API 抓一次
+    result = None
     if use_cache and cache_path.exists():
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
                 cached = json.load(f)
             cached_updated = cached.get("updated", "")
-            # 同月就用 cache (歷史資料本來就月粒度, 當月每天更新沒意義)
             if cached_updated[:7] == today.isoformat()[:7]:
                 if verbose:
                     print(f"[歷史] 使用本地 cache ({cached_updated}, {len(cached.get('data', {}))} 縣市)")
-                return cached
+                result = cached
         except Exception as e:
             if verbose:
                 print(f"[歷史] cache 讀取失敗, 重抓: {e}")
 
-    end_year = today.year
-    start_year = end_year - n_years + 1
-    start_date = f"{start_year}-01-01"
-    # 抓到上個月底 (ERA5 通常延遲 5-7 天)
-    end_date = today.isoformat()
+    if result is None:
+        end_year = today.year
+        start_year = end_year - n_years + 1
+        start_date = f"{start_year}-01-01"
+        end_date = today.isoformat()
 
-    result = {
-        "years": list(range(start_year, end_year + 1)),
-        "counties": [c[0] for c in COUNTIES],
-        "data": {},  # data[縣市][year][month] = {mm, rd, sd}
-        "source": "Open-Meteo ERA5 · 以中央氣象署縣市代表座標採樣",
-        "updated": today.isoformat(),
-    }
+        result = {
+            "years": list(range(start_year, end_year + 1)),
+            "counties": [c[0] for c in COUNTIES],
+            "data": {},
+            "source": "Open-Meteo ERA5 · 以中央氣象署縣市代表座標採樣",
+            "updated": today.isoformat(),
+        }
 
-    for i, (name, lat, lon) in enumerate(COUNTIES, 1):
-        if verbose:
-            print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} 抓 {n_years} 年 daily ...", end="", flush=True)
-        try:
-            url = (
-                "https://archive-api.open-meteo.com/v1/archive?"
-                f"latitude={lat}&longitude={lon}"
-                f"&start_date={start_date}&end_date={end_date}"
-                f"&daily=precipitation_sum&timezone=Asia%2FTaipei"
-            )
-            with urllib.request.urlopen(url, timeout=60) as resp:
-                j = json.loads(resp.read().decode("utf-8"))
-            times = j.get("daily", {}).get("time", [])
-            precs = j.get("daily", {}).get("precipitation_sum", [])
-            months = {}  # {year: {month: {mm, rd, sd}}}
-            for t, v in zip(times, precs):
-                if v is None:
-                    continue
-                y = int(t[:4]); m = int(t[5:7])
-                if y not in months: months[y] = {}
-                if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
-                months[y][m]["mm"] += float(v)
-                if v >= 1: months[y][m]["rd"] += 1
-                if v >= 80: months[y][m]["sd"] += 1
-            # 四捨五入
-            for y in months:
-                for m in months[y]:
-                    months[y][m]["mm"] = round(months[y][m]["mm"], 1)
-            result["data"][name] = months
+        for i, (name, lat, lon) in enumerate(COUNTIES, 1):
             if verbose:
-                yc = len(months); mc = sum(len(v) for v in months.values())
-                print(f" ✓ {yc}年/{mc}月")
-            time.sleep(0.3)
+                print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} 抓 {n_years} 年 daily ...", end="", flush=True)
+            try:
+                url = (
+                    "https://archive-api.open-meteo.com/v1/archive?"
+                    f"latitude={lat}&longitude={lon}"
+                    f"&start_date={start_date}&end_date={end_date}"
+                    f"&daily=precipitation_sum&timezone=Asia%2FTaipei"
+                )
+                with urllib.request.urlopen(url, timeout=60) as resp:
+                    j = json.loads(resp.read().decode("utf-8"))
+                times = j.get("daily", {}).get("time", [])
+                precs = j.get("daily", {}).get("precipitation_sum", [])
+                months = {}
+                for t, v in zip(times, precs):
+                    if v is None: continue
+                    y = int(t[:4]); m = int(t[5:7])
+                    if y not in months: months[y] = {}
+                    if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
+                    months[y][m]["mm"] += float(v)
+                    if v >= 1: months[y][m]["rd"] += 1
+                    if v >= 80: months[y][m]["sd"] += 1
+                for y in months:
+                    for m in months[y]:
+                        months[y][m]["mm"] = round(months[y][m]["mm"], 1)
+                result["data"][name] = months
+                if verbose:
+                    yc = len(months); mc = sum(len(v) for v in months.values())
+                    print(f" ✓ {yc}年/{mc}月")
+                time.sleep(0.3)
+            except Exception as e:
+                if verbose:
+                    print(f" FAIL: {e}")
+                result["data"][name] = {}
+
+        try:
+            DOCS_DIR.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False)
+            if verbose:
+                print(f"[歷史] cache 寫入 {cache_path}")
         except Exception as e:
             if verbose:
-                print(f" FAIL: {e}")
-            result["data"][name] = {}
+                print(f"[歷史] cache 寫入失敗: {e}")
 
-    # 寫本地 cache
-    try:
-        DOCS_DIR.mkdir(parents=True, exist_ok=True)
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(result, f, ensure_ascii=False)
+    # === 用地圖資料源覆蓋當年 (今年整年) — 讓數字與地圖顯示一致 ===
+    if current_rows:
+        cur_year = today.year
+        override_cnt = 0
+        for row in current_rows:
+            name = row.get("name")
+            daily = row.get("daily") or {}
+            if not daily or name not in result["data"]:
+                continue
+            cur_year_k = str(cur_year)  # JSON key 是 str
+            monthly = {}
+            for d_str, v in daily.items():
+                if not isinstance(v, (int, float)) or d_str[:4] != cur_year_k:
+                    continue
+                if d_str > today.isoformat():
+                    continue
+                m_k = str(int(d_str[5:7]))
+                if m_k not in monthly:
+                    monthly[m_k] = {"mm": 0.0, "rd": 0, "sd": 0}
+                monthly[m_k]["mm"] += float(v)
+                if v >= 1: monthly[m_k]["rd"] += 1
+                if v >= 80: monthly[m_k]["sd"] += 1
+            for m_k in monthly:
+                monthly[m_k]["mm"] = round(monthly[m_k]["mm"], 1)
+                monthly[m_k]["src"] = "forecast"
+            if monthly:
+                if cur_year_k not in result["data"][name]:
+                    result["data"][name][cur_year_k] = {}
+                # 清掉舊 int key (可能來自新抓那條路徑)
+                if cur_year in result["data"][name]:
+                    del result["data"][name][cur_year]
+                result["data"][name][cur_year_k].update(monthly)
+                override_cnt += 1
         if verbose:
-            print(f"[歷史] cache 寫入 {cache_path}")
-    except Exception as e:
-        if verbose:
-            print(f"[歷史] cache 寫入失敗: {e}")
+            print(f"[歷史] 用地圖 (Forecast API) 覆蓋 {cur_year} 年 · {override_cnt} 縣市 → 與上方地圖數字一致")
+        result["note"] = f"當年 ({cur_year}) 用 Open-Meteo Forecast API 高解析 (11km) 覆蓋，跟本頁上方地圖同源; 歷年為 ERA5 全球再分析 (25km) 可能對局部強降雨低估,主要比較趨勢"
     return result
 
 
@@ -3413,7 +3460,7 @@ def generate_and_publish(verbose: bool = True) -> str:
     rows = collect_rows(verbose=verbose)
     if verbose:
         print(f"[Rainfall Map] 抓取歷史雨量 10 年 × 22 縣市 (Python 端預打包) ...")
-    history_stats = collect_history_stats(verbose=verbose, n_years=10)
+    history_stats = collect_history_stats(verbose=verbose, n_years=10, current_rows=rows)
     html = build_html(rows, today, history_stats)
 
     # 寫到 docs/ (GitHub Pages 來源，固定檔名讓 URL 不變)
