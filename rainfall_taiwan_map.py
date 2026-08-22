@@ -152,11 +152,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   /* ===== 頂部品牌條 (大成 · 碩成) ===== */
   .brand-bar{{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
   .brand-left{{display:flex;align-items:center;gap:14px}}
-  .brand-logos{{display:flex;align-items:center;gap:8px}}
-  .brand-dachan{{width:44px;height:44px;background:radial-gradient(circle at 35% 30%,#e53935 0%,#c62828 40%,#8b0000 100%);color:#fff8dc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"STKaiti","BiauKai","PMingLiU",serif;font-size:26px;font-weight:900;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 -2px 4px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.3);border:2.5px solid #fff;letter-spacing:-2px}}
-  .brand-shuocheng{{padding:7px 12px 7px 8px;background:linear-gradient(180deg,#fff 0%,#f5f5f5 100%);color:#1b5e20;border-radius:6px;font-weight:900;font-size:15px;letter-spacing:3px;border:2px solid #2e7d32;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(0,0,0,.15),inset 0 -1px 2px rgba(0,0,0,.05);font-family:"STKaiti","BiauKai","PMingLiU",serif;position:relative}}
-  .brand-shuocheng::before{{content:"🌾";font-size:16px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}}
-  .brand-shuocheng::after{{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#d4a017;border-radius:50%;border:1.5px solid #fff}}
+  .brand-logos{{display:flex;align-items:center;gap:10px}}
+  /* 六邊形 clip-path,兩品牌形狀相同 */
+  .brand-hex{{width:78px;height:56px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:"STKaiti","BiauKai","STHeiti","PingFang TC","Microsoft JhengHei",serif;font-weight:900;letter-spacing:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);clip-path:polygon(20% 0%,80% 0%,100% 50%,80% 100%,20% 100%,0% 50%);border:none;padding:0 4px}}
+  .brand-dachan{{background:linear-gradient(135deg,#c62828 0%,#8b0000 100%);font-size:22px;letter-spacing:2px;position:relative}}
+  .brand-dachan::before{{content:"";position:absolute;inset:4px;clip-path:polygon(20% 0%,80% 0%,100% 50%,80% 100%,20% 100%,0% 50%);border:2px solid rgba(255,255,255,.5);pointer-events:none}}
+  .brand-shuocheng-img{{height:56px;width:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}}
   .brand-name{{display:flex;flex-direction:column;line-height:1.2}}
   .brand-name .co{{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}}
   .brand-name .dept{{font-size:11px;color:#c8e6c9;letter-spacing:.3px;margin-top:2px}}
@@ -740,8 +741,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="brand-bar">
   <div class="brand-left">
     <div class="brand-logos">
-      <div class="brand-dachan" title="大成長城 (1210)">大</div>
-      <div class="brand-shuocheng">碩成</div>
+      <div class="brand-hex brand-dachan" title="大成長城 (1210)">大成</div>
+      <img class="brand-shuocheng-img" src="data:image/png;base64,{shuocheng_logo_b64}" alt="碩成" title="碩成有機質肥料 (訂貨平台官方 logo)">
     </div>
     <div class="brand-name">
       <span class="co">大成長城企業股份有限公司</span>
@@ -3150,7 +3151,18 @@ def _mascot_mood(rows: list) -> tuple:
 
 def build_html(rows: list, today: date, history_stats: dict = None) -> str:
     from datetime import timedelta
+    import base64
     quarter = (today.month - 1) // 3 + 1
+
+    # 讀碩成 logo → base64 embed (訂貨/折讓平台的官方 logo)
+    shuocheng_logo_b64 = ""
+    logo_path = Path(__file__).resolve().parent / "shuocheng_logo.png"
+    if logo_path.exists():
+        try:
+            with open(logo_path, "rb") as f:
+                shuocheng_logo_b64 = base64.b64encode(f.read()).decode("ascii")
+        except Exception as e:
+            print(f"[Rainfall Map] 讀碩成 logo 失敗: {e}")
 
     # 算各 mode 的統計期間
     month_start = date(today.year, today.month, 1)
@@ -3234,6 +3246,7 @@ def build_html(rows: list, today: date, history_stats: dict = None) -> str:
             for t in TOWN_CROPS
         ], ensure_ascii=False),
         history_json=json.dumps(history_stats or {}, ensure_ascii=False),
+        shuocheng_logo_b64=shuocheng_logo_b64,
     )
 
 
