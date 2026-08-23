@@ -894,6 +894,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rank-block{{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #6a1b9a}}
   .rank-block h3{{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #6a1b9a;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}}
   .rank-src{{font-size:11px;color:#666;font-weight:600;background:#fff;padding:3px 8px;border-radius:10px;border:1px solid var(--cwa-border)}}
+  .rank-refresh-btn{{margin-left:auto;background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;border:none;padding:7px 14px;border-radius:20px;font-weight:900;cursor:pointer;font-size:12px;box-shadow:0 3px 8px rgba(46,125,50,.35);transition:all .15s;font-family:inherit;letter-spacing:.5px;white-space:nowrap}}
+  .rank-refresh-btn:hover{{transform:translateY(-2px);box-shadow:0 5px 12px rgba(46,125,50,.5)}}
+  .rank-refresh-btn:disabled{{background:#999;cursor:not-allowed;transform:none;box-shadow:none}}
+  .rank-actions-link{{font-size:11px;color:#6a1b9a;text-decoration:none;padding:5px 10px;border:1px solid #6a1b9a;border-radius:14px;font-weight:700;transition:all .1s;white-space:nowrap}}
+  .rank-actions-link:hover{{background:#6a1b9a;color:#fff}}
   .rank-kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}}
   .rank-kpi{{background:#fff;border:1.5px solid var(--cwa-border);border-left:4px solid #90a4ae;padding:10px 12px;border-radius:4px;text-align:center}}
   .rank-kpi.hi{{border-left-color:#c62828;background:#ffebee}}
@@ -1441,7 +1446,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- ===================== 農糧署有機肥廠商排名 (即時抓官網) ===================== -->
 <div id="rankBlock" class="unified-block rank-block">
-  <h3>🏭 有機質肥料廠商排名 <span class="rank-src" id="rankSrc">資料源:農糧署 · 115 年推薦名單</span></h3>
+  <h3>🏭 有機質肥料廠商排名
+    <span class="rank-src" id="rankSrc">資料源:農糧署 · 115 年推薦名單</span>
+    <button class="rank-refresh-btn" id="fertUpdateBtn" onclick="updateFertRankings()" title="立即從農糧署官網重抓最新推薦名單">🔄 一鍵更新</button>
+    <a class="rank-actions-link" href="https://github.com/yuan780903-cpu/market-scraper/actions/workflows/refresh-rankings.yml" target="_blank" title="到 GitHub Actions 手動觸發">📋 執行紀錄</a>
+  </h3>
 
   <div class="rank-kpi-grid">
     <div class="rank-kpi"><div class="lbl">總業者數</div><div class="val" id="rkTotSupp">–</div></div>
@@ -3481,6 +3490,93 @@ function _rerenderSales() {{
            '<span class="lf-val">' + val + '</span><span class="lf-lbl">' + lbl + '</span></div>';
   }}).join('');
 }})();
+
+// 一鍵更新: 觸發 GitHub Actions daily-rainfall workflow (內含 fert_rankings 抓取)
+async function updateFertRankings() {{
+  const btn = document.getElementById('fertUpdateBtn');
+  const origTxt = '🔄 一鍵更新';
+  const REPO = 'yuan780903-cpu/market-scraper';
+  const WF = 'refresh-rankings.yml';
+  const PAT_KEY = 'gh_pat_v1';
+
+  let pat = localStorage.getItem(PAT_KEY);
+  if (!pat) {{
+    pat = prompt('請貼 GitHub Personal Access Token (PAT)\\n\\n只存本機瀏覽器,不上傳雲端。\\n\\n取得方式:\\n1. 前往 https://github.com/settings/tokens\\n2. Generate new token (classic)\\n3. 勾選「workflow」scope\\n4. Generate → 複製貼上\\n\\n(下次按更新按鈕就不用再輸入了)');
+    if (!pat) return;
+    pat = pat.trim();
+    localStorage.setItem(PAT_KEY, pat);
+  }}
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 觸發 GitHub Actions...';
+  try {{
+    const r = await fetch('https://api.github.com/repos/' + REPO + '/actions/workflows/' + WF + '/dispatches', {{
+      method: 'POST',
+      headers: {{
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + pat,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      }},
+      body: JSON.stringify({{ ref: 'main' }}),
+    }});
+    if (r.status === 204) {{
+      btn.textContent = '✅ 已觸發,約 3-8 分鐘完成';
+      // 5 秒後啟動輪詢 workflow 狀態
+      setTimeout(() => pollFertUpdate(pat, btn, origTxt), 5000);
+    }} else if (r.status === 401 || r.status === 403) {{
+      localStorage.removeItem(PAT_KEY);
+      btn.textContent = '❌ PAT 無效 (再按重試)';
+      btn.disabled = false;
+      alert('PAT 驗證失敗\\n請確認:\\n1. Token 有「workflow」scope\\n2. Token 未過期');
+    }} else {{
+      const txt = await r.text();
+      btn.textContent = '❌ HTTP ' + r.status;
+      btn.disabled = false;
+      console.error('trigger failed:', txt);
+    }}
+  }} catch (e) {{
+    btn.textContent = '❌ ' + e.message;
+    btn.disabled = false;
+  }}
+}}
+
+async function pollFertUpdate(pat, btn, origTxt) {{
+  const REPO = 'yuan780903-cpu/market-scraper';
+  const start = new Date().toISOString();
+  let attempts = 0;
+  const timer = setInterval(async () => {{
+    attempts++;
+    try {{
+      const r = await fetch('https://api.github.com/repos/' + REPO + '/actions/runs?per_page=5&event=workflow_dispatch', {{
+        headers: {{'Authorization': 'Bearer ' + pat, 'Accept': 'application/vnd.github+json'}}
+      }});
+      if (!r.ok) return;
+      const j = await r.json();
+      const recent = (j.workflow_runs || [])[0];
+      if (!recent) return;
+      const status = recent.status;  // queued/in_progress/completed
+      const concl = recent.conclusion;  // success/failure/null
+      if (status === 'completed') {{
+        clearInterval(timer);
+        if (concl === 'success') {{
+          btn.textContent = '✅ 完成!重整頁面看新資料';
+          btn.style.background = 'linear-gradient(135deg,#1976d2,#0d47a1)';
+          btn.onclick = () => location.reload();
+          btn.disabled = false;
+        }} else {{
+          btn.textContent = '❌ Workflow 失敗:' + (concl||'?');
+          btn.disabled = false;
+        }}
+      }} else if (status === 'queued') {{
+        btn.textContent = '⏳ 排隊中... (' + attempts + ')';
+      }} else if (status === 'in_progress') {{
+        btn.textContent = '⚙️ 執行中... (' + attempts + ')';
+      }}
+    }} catch (e) {{}}
+    if (attempts > 60) {{ clearInterval(timer); btn.textContent = '⌛ 超時,重整看看'; btn.disabled = false; }}
+  }}, 8000);
+}}
 
 // ============ 🏭 廠商排名 (從農糧署即時抓取) ============
 (function initRankBlock() {{

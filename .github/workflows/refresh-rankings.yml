@@ -1,0 +1,49 @@
+name: 一鍵更新網站 (廠商排名+雨量地圖)
+
+# 從網頁「🔄 一鍵更新」按鈕觸發, 或手動到 Actions 頁面按 Run
+# 執行: 抓農糧署最新廠商推薦名單 + 抓 CODIS 歷史 + 重生網頁 → push docs/
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * 1'  # 每週一 台北 04:00 自動跑一次
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安裝套件
+        run: |
+          pip install -r requirements.txt
+          pip install pdfplumber
+
+      - name: 清 fert cache 強制重抓最新名單
+        run: rm -f docs/fert_rankings_cache.json
+
+      - name: 產生網頁 (含最新廠商排名+雨量+歷史)
+        run: python rainfall_taiwan_map.py
+
+      - name: Commit + push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: 一鍵更新網站 (廠商排名+雨量) $(date -u +%Y-%m-%d\ %H:%M)"
+            git pull --rebase origin main || git rebase --abort
+            git push
+          else
+            echo "無變動,跳過 commit"
+          fi
