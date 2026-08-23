@@ -742,12 +742,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body.projector .rm-cmps li{{font-size:15px;padding:12px 14px}}
   body.projector .rm-impact{{font-size:15px}}
 
-  /* ===== 浮動版權水印 (右下角固定) ===== */
-  .copyright-badge{{position:fixed;left:14px;bottom:14px;z-index:999;background:linear-gradient(135deg,rgba(27,94,32,.95),rgba(46,125,50,.95));color:#fff;padding:6px 12px 6px 8px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);border:1.5px solid rgba(212,160,23,.5);letter-spacing:.5px;pointer-events:none;user-select:none}}
-  .copyright-badge .seal{{background:#d4a017;color:#1b5e20;font-weight:900;padding:2px 7px;border-radius:10px;font-family:"STKaiti","BiauKai",serif;letter-spacing:2px;font-size:11px}}
-  @media (max-width:640px){{
-    .copyright-badge{{left:8px;bottom:8px;font-size:10px;padding:5px 10px 5px 6px}}
-    .copyright-badge .seal{{font-size:10px;padding:2px 6px}}
+  /* ===== 浮動版權水印 (左下角固定 · 顯眼放大版) ===== */
+  .copyright-badge{{position:fixed;left:190px;bottom:16px;z-index:999;background:linear-gradient(135deg,#c62828 0%,#8b0000 100%);color:#fff;padding:8px 18px 8px 8px;border-radius:40px;box-shadow:0 6px 20px rgba(198,40,40,.5),0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px;border:3px solid #ffd54f;user-select:none;transition:transform .15s}}
+  .copyright-badge:hover{{transform:translateY(-2px) scale(1.03)}}
+  .copyright-badge .cb-avatar{{width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid #ffd54f;background:#fff;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.3)}}
+  .copyright-badge .cb-text{{display:flex;flex-direction:column;gap:2px;line-height:1.2}}
+  .copyright-badge .cb-line1{{font-size:12px;font-weight:700;color:#fff8b3;letter-spacing:1.5px}}
+  .copyright-badge .cb-seal{{background:linear-gradient(180deg,#ffd54f,#f0a500);color:#8b0000;font-weight:900;padding:4px 12px;border-radius:14px;font-family:"STKaiti","BiauKai","STHeiti",serif;letter-spacing:4px;font-size:18px;box-shadow:inset 0 -1px 2px rgba(0,0,0,.2)}}
+  body:has(.cwa-sidebar.collapsed) .copyright-badge{{left:68px}}
+  @media (max-width:768px){{
+    .copyright-badge{{left:60px;bottom:10px;padding:6px 14px 6px 6px;gap:8px;border-width:2px}}
+    .copyright-badge .cb-avatar{{width:44px;height:44px;border-width:2px}}
+    .copyright-badge .cb-line1{{font-size:10px;letter-spacing:1px}}
+    .copyright-badge .cb-seal{{font-size:14px;padding:3px 8px;letter-spacing:3px}}
+  }}
+  @media (max-width:480px){{
+    .copyright-badge{{padding:5px 10px 5px 5px}}
+    .copyright-badge .cb-avatar{{width:36px;height:36px}}
+    .copyright-badge .cb-line1{{display:none}}
+    .copyright-badge .cb-seal{{font-size:13px;padding:3px 8px}}
   }}
 
   /* ===== 銷售分析區塊 (第 4 tab) ===== */
@@ -901,8 +914,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- 浮動版權水印 (跟隨滾動固定左下角) -->
 <div class="copyright-badge">
-  <span>© 系統版權所有</span>
-  <span class="seal">莊 政 遠</span>
+  <img class="cb-avatar" src="data:image/png;base64,{author_avatar_b64}" alt="莊政遠">
+  <div class="cb-text">
+    <div class="cb-line1">© 系統版權所有</div>
+    <div class="cb-seal">莊 政 遠</div>
+  </div>
 </div>
 
 <!-- 天氣吉祥物 -->
@@ -3936,6 +3952,15 @@ def build_html(rows: list, today: date, history_stats: dict = None) -> str:
                 dachan_logo_b64 = base64.b64encode(f.read()).decode("ascii")
         except Exception as e:
             print(f"[Rainfall Map] 讀大成 logo 失敗: {e}")
+    # 讀作者大頭照 (訂貨平台同一張)
+    author_avatar_b64 = ""
+    av_path = Path(__file__).resolve().parent / "author_avatar.png"
+    if av_path.exists():
+        try:
+            with open(av_path, "rb") as f:
+                author_avatar_b64 = base64.b64encode(f.read()).decode("ascii")
+        except Exception as e:
+            print(f"[Rainfall Map] 讀大頭照失敗: {e}")
 
     # 算各 mode 的統計期間
     month_start = date(today.year, today.month, 1)
@@ -4021,6 +4046,7 @@ def build_html(rows: list, today: date, history_stats: dict = None) -> str:
         history_json=json.dumps(history_stats or {}, ensure_ascii=False),
         shuocheng_logo_b64=shuocheng_logo_b64,
         dachan_logo_b64=dachan_logo_b64,
+        author_avatar_b64=author_avatar_b64,
         sales_json=json.dumps(SALES_DATA, ensure_ascii=False),
     )
 
