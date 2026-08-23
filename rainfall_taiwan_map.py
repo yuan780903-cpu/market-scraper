@@ -2395,9 +2395,13 @@ function loadHistoryData() {{
     // 業務報告文字
     renderHistReport(results, avgMm, avgDays, region, month, currentYear);
 
-    const src = HISTORY.source || '中央氣象署觀測點座標 × ERA5 全球再分析';
+    const src = HISTORY.source || '中央氣象署 CODIS';
     const upd = HISTORY.updated || '';
-    status.innerHTML = '✅ <strong>' + region + '</strong> · ' + month + ' 月 · 共 ' + results.length + ' 年資料｜資料源：' + src + (upd ? '（更新於 ' + upd + '）' : '');
+    const srcUrl = HISTORY.source_url || 'https://codis.cwa.gov.tw/StationData';
+    const stns = ((HISTORY.stations || {{}})[region] || []).map(s => s.name + '(' + s.id + ')').join('、');
+    status.innerHTML = '✅ <strong>' + region + '</strong> · ' + month + ' 月 · 共 ' + results.length + ' 年資料' +
+      '<br>📍 <strong>資料源</strong>：<a href="' + srcUrl + '" target="_blank" style="color:#c62828;font-weight:900">' + src + '</a>' + (upd ? '（' + upd + ' 更新）' : '') +
+      (stns ? '<br>🏛️ <strong>觀測站</strong>：' + stns + '（多站取 MAX 代表該縣市峰值降雨）' : '');
   }} catch (e) {{
     console.error(e);
     btn.disabled = false;
@@ -3958,56 +3962,88 @@ SALES_DATA = {
 }
 
 
-COUNTY_CWA_STATION = {
-    "臺北市": ("466920", "臺北"),
-    "新北市": ("466881", "板橋"),
-    "基隆市": ("466940", "基隆"),
-    "桃園市": ("467050", "新屋"),
-    "新竹市": ("467571", "新竹"),
-    "新竹縣": ("467571", "新竹"),
-    "宜蘭縣": ("467080", "宜蘭"),
-    "苗栗縣": ("467490", "臺中"),
-    "臺中市": ("467490", "臺中"),
-    "彰化縣": ("467490", "臺中"),
-    "南投縣": ("467650", "日月潭"),
-    "雲林縣": ("467480", "嘉義"),
-    "嘉義市": ("467480", "嘉義"),
-    "嘉義縣": ("467480", "嘉義"),
-    "臺南市": ("467410", "臺南"),
-    "高雄市": ("467440", "高雄"),
-    "屏東縣": ("467590", "恆春"),
-    "花蓮縣": ("466990", "花蓮"),
-    "臺東縣": ("467660", "臺東"),
-    "澎湖縣": ("467350", "澎湖"),
-    "金門縣": ("467110", "金門"),
-    "連江縣": ("467990", "馬祖"),
-}
-
-
-def fetch_cwa_codis_history(county: str, verbose: bool = True) -> dict:
-    """從 CWA CODIS 抓該縣市代表氣象站的全部歷史月資料(自 1897 起)
-    回傳 {year_str: {month_str: {mm, rd, sd, tavg, tmax, tmin}}}"""
-    import urllib.request, urllib.parse, http.cookiejar
-    if county not in COUNTY_CWA_STATION:
-        return {}
-    stn_id, stn_name = COUNTY_CWA_STATION[county]
-
-    # 每次呼叫都建 session 拿 cookie (CODIS WAF 要求)
+# 動態從 CODIS station_list 抓「全台所有 CWB 局屬有人站」分縣清單
+def _fetch_all_cwa_stations(verbose: bool = True) -> dict:
+    """回傳 {縣市: [(stn_id, stn_name), ...]}, 動態每次抓最新的 CODIS 現役站清單"""
+    import urllib.request, http.cookiejar
+    from collections import defaultdict
     cj = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-    ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    ua = "Mozilla/5.0"
     try:
-        # Step 1: 首頁拿 cookie
-        opener.open(urllib.request.Request(
-            "https://codis.cwa.gov.tw/StationData",
-            headers={"User-Agent": ua}), timeout=20)
-        # Step 2: POST /api/station
+        opener.open(urllib.request.Request("https://codis.cwa.gov.tw/StationData",
+            headers={"User-Agent": ua}), timeout=15)
+        r = opener.open(urllib.request.Request("https://codis.cwa.gov.tw/api/station_list",
+            headers={"User-Agent": ua}), timeout=30)
+        j = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        if verbose: print(f"[CWA] station_list FAIL: {e}, 用 fallback 靜態表")
+        return {}
+
+    by_county = defaultdict(list)
+    for group in j.get("data", []):
+        if group.get("stationAttribute") != "cwb":
+            continue
+        for s in group.get("item", []):
+            if s.get("stationEndDate"):  # 已停測
+                continue
+            county = s.get("countryName", "")
+            by_county[county].append((s["stationID"], s["stationName"]))
+    # 對沒有 CWB 主站的縣, 用鄰縣代表
+    fallback_neighbor = {
+        "新竹市": [("467571", "新竹")],
+        "苗栗縣": [("467280", "後龍")],
+        "雲林縣": [("467290", "古坑")],
+    }
+    for c, lst in fallback_neighbor.items():
+        if c not in by_county or not by_county[c]:
+            by_county[c] = lst
+    if verbose:
+        total = sum(len(v) for v in by_county.values())
+        print(f"[CWA] station_list ✓ {len(by_county)} 縣市 · {total} 個現役 CWB 有人站")
+    return dict(by_county)
+
+
+COUNTY_CWA_STATIONS = None  # lazy init
+
+
+def _ensure_stations(verbose: bool = True):
+    global COUNTY_CWA_STATIONS
+    if COUNTY_CWA_STATIONS is None:
+        COUNTY_CWA_STATIONS = _fetch_all_cwa_stations(verbose=verbose)
+        # fallback 若抓失敗
+        if not COUNTY_CWA_STATIONS:
+            COUNTY_CWA_STATIONS = {
+                "臺北市": [("466920","臺北")], "新北市": [("466881","新北"),("466900","淡水")],
+                "基隆市": [("466940","基隆")], "桃園市": [("467050","新屋")],
+                "新竹市": [("467571","新竹")], "新竹縣": [("467571","新竹")],
+                "宜蘭縣": [("467080","宜蘭")], "苗栗縣": [("467280","後龍")],
+                "臺中市": [("467490","臺中")], "彰化縣": [("467270","田中")],
+                "南投縣": [("467650","日月潭"),("467550","玉山")],
+                "雲林縣": [("467290","古坑")], "嘉義市": [("467480","嘉義")],
+                "嘉義縣": [("467530","阿里山")], "臺南市": [("467410","臺南"),("467420","永康")],
+                "高雄市": [("467441","高雄")], "屏東縣": [("467590","恆春")],
+                "花蓮縣": [("466990","花蓮")],
+                "臺東縣": [("467660","臺東"),("467540","大武"),("467610","成功"),("467620","蘭嶼")],
+                "澎湖縣": [("467350","澎湖"),("467300","東吉島")],
+                "金門縣": [("467110","金門")], "連江縣": [("467990","馬祖")],
+            }
+
+
+def _fetch_one_cwa_station(stn_id: str, verbose: bool = False) -> dict:
+    """單站抓 report_year → {year_str: {month_str: {mm, rd, sd, tavg, tmax, tmin}}}"""
+    import urllib.request, urllib.parse, http.cookiejar
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    ua = "Mozilla/5.0"
+    try:
+        opener.open(urllib.request.Request("https://codis.cwa.gov.tw/StationData",
+            headers={"User-Agent": ua}), timeout=15)
         body = urllib.parse.urlencode({
             "stn_ID": stn_id, "stn_type": "cwb",
             "type": "report_year", "date": f"{date.today().year}-01-01",
         }).encode()
-        req = urllib.request.Request(
-            "https://codis.cwa.gov.tw/api/station",
+        req = urllib.request.Request("https://codis.cwa.gov.tw/api/station",
             data=body, method="POST",
             headers={"User-Agent": ua,
                      "Referer": "https://codis.cwa.gov.tw/StationData",
@@ -4017,40 +4053,75 @@ def fetch_cwa_codis_history(county: str, verbose: bool = True) -> dict:
         resp = opener.open(req, timeout=60)
         j = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
-        if verbose:
-            print(f" CWA CODIS FAIL: {e}")
+        if verbose: print(f" station {stn_id} FAIL: {e}")
         return {}
-
     if j.get("code") != 200:
         return {}
-
     result = {}
     for row in j.get("data", []):
         for dt in row.get("dts", []):
             ym = dt.get("DataYearMonth", "")
-            if len(ym) < 7:
-                continue
+            if len(ym) < 7: continue
             y_k, m_k = ym[:4], str(int(ym[5:7]))
             p = dt.get("Precipitation") or {}
             at = dt.get("AirTemperature") or {}
-
-            mm = p.get("Accumulation")
-            rd = p.get("PrecipitationDays") or p.get("GE1Days") or 0
-            sd = p.get("GE50Days") or 0  # ≥50mm 豪雨日
-            tavg = at.get("Mean")
-            tmax = at.get("Maximum")
-            tmin = at.get("Minimum")
-
-            if y_k not in result:
-                result[y_k] = {}
+            if y_k not in result: result[y_k] = {}
             result[y_k][m_k] = {
-                "mm": round(float(mm), 1) if mm is not None else 0,
-                "rd": int(rd) if rd else 0,
-                "sd": int(sd) if sd else 0,
-                "tavg": tavg, "tmax": tmax, "tmin": tmin,
-                "src": "cwa",
+                "mm": round(float(p.get("Accumulation")), 1) if p.get("Accumulation") is not None else None,
+                "rd": p.get("PrecipitationDays") or p.get("GE1Days") or None,
+                "sd": p.get("GE50Days") or 0,
+                "tavg": at.get("Mean"),
+                "tmax": at.get("Maximum"),
+                "tmin": at.get("Minimum"),
             }
     return result
+
+
+def fetch_cwa_codis_history(county: str, verbose: bool = True) -> tuple:
+    """該縣所有 CWB 現役站抓 → merge (雨量取 MAX, 氣溫取平均) → 回傳 (data, stations_meta)"""
+    _ensure_stations(verbose=verbose)
+    stations = COUNTY_CWA_STATIONS.get(county, [])
+    if not stations:
+        return ({}, [])
+    per_station = {}
+    for stn_id, stn_name in stations:
+        d = _fetch_one_cwa_station(stn_id, verbose=verbose)
+        if d:
+            per_station[stn_id] = {"name": stn_name, "data": d}
+        time.sleep(0.3)
+    if not per_station:
+        return ({}, [])
+
+    # Merge: 每 (year, month) 取多站的 max 雨量、max 雨日、max 豪雨、avg 氣溫
+    all_ym = {}
+    for meta in per_station.values():
+        for y, months in meta["data"].items():
+            if y not in all_ym: all_ym[y] = {}
+            for m, v in months.items():
+                if m not in all_ym[y]:
+                    all_ym[y][m] = {"mms": [], "rds": [], "sds": [], "tavgs": [], "tmaxs": [], "tmins": []}
+                if v.get("mm") is not None: all_ym[y][m]["mms"].append(v["mm"])
+                if v.get("rd") is not None: all_ym[y][m]["rds"].append(v["rd"])
+                if v.get("sd") is not None: all_ym[y][m]["sds"].append(v["sd"])
+                if v.get("tavg") is not None: all_ym[y][m]["tavgs"].append(v["tavg"])
+                if v.get("tmax") is not None: all_ym[y][m]["tmaxs"].append(v["tmax"])
+                if v.get("tmin") is not None: all_ym[y][m]["tmins"].append(v["tmin"])
+    merged = {}
+    for y in all_ym:
+        merged[y] = {}
+        for m, agg in all_ym[y].items():
+            merged[y][m] = {
+                "mm": round(max(agg["mms"]), 1) if agg["mms"] else 0,
+                "rd": max(agg["rds"]) if agg["rds"] else 0,
+                "sd": max(agg["sds"]) if agg["sds"] else 0,
+                "tavg": round(sum(agg["tavgs"])/len(agg["tavgs"]), 1) if agg["tavgs"] else None,
+                "tmax": max(agg["tmaxs"]) if agg["tmaxs"] else None,
+                "tmin": min(agg["tmins"]) if agg["tmins"] else None,
+                "src": "cwa",
+                "nStn": len(per_station),
+            }
+    stations_meta = [{"id": sid, "name": m["name"]} for sid, m in per_station.items()]
+    return (merged, stations_meta)
 
 
 COUNTY_SAMPLE_POINTS = {
@@ -4133,21 +4204,23 @@ def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bo
         end_year = today.year
         start_year = end_year - n_years + 1
 
+        _ensure_stations(verbose=verbose)
         result = {
             "years": list(range(start_year, end_year + 1)),
             "counties": [c[0] for c in COUNTIES],
             "data": {},
-            "source": "中央氣象署 CODIS 觀測站官方歷史資料 (每縣市代表氣象局主站)",
-            "stations": {k: {"id": v[0], "name": v[1]} for k, v in COUNTY_CWA_STATION.items()},
+            "source": "中央氣象署 CODIS · 全台 CWB 局屬有人氣象站官方觀測 · 每縣多站取 MAX",
+            "source_url": "https://codis.cwa.gov.tw/StationData",
+            "stations": {},  # {縣市: [{id, name}]}
             "updated": today.isoformat(),
         }
 
         for i, (name, lat, lon) in enumerate(COUNTIES, 1):
-            stn = COUNTY_CWA_STATION.get(name)
+            stns = COUNTY_CWA_STATIONS.get(name, [])
             if verbose:
-                s_desc = f"{stn[0]}({stn[1]})" if stn else "無主站"
-                print(f"  [CWA {i:>2}/{len(COUNTIES)}] {name:<5} 站={s_desc} ...", end="", flush=True)
-            cwa_months = fetch_cwa_codis_history(name, verbose=False) if stn else {}
+                print(f"  [CWA {i:>2}/{len(COUNTIES)}] {name:<5} {len(stns)}站 ({','.join(s[1] for s in stns) or '無'}) ...", end="", flush=True)
+            cwa_months, stations_meta = fetch_cwa_codis_history(name, verbose=False) if stns else ({}, [])
+            result["stations"][name] = stations_meta
             if cwa_months:
                 result["data"][name] = cwa_months
                 # 檢查最近 5 年是否有缺月 → 用 Open-Meteo 補
