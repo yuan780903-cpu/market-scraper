@@ -5342,6 +5342,44 @@ SALES_DATA = {
 # 品目對照 5-01 植物渣粕 · 5-08 雞糞加工 · 5-09 禽畜糞堆肥 · 5-10 一般堆肥 ...
 # 抓 article_id=22431 (2元) + 22432 (2+2元) 找到 download ids, 下載 PDF, 解析統計
 
+def _parse_pdf_suppliers(pdf_path: str, pdfplumber_mod) -> list:
+    """從農糧署推薦名單 PDF 抽出每筆產品對應的業者名稱 (用 extract_tables 精準抓)
+    邏輯: 每個 row 若含 7 位登記證,取業者名欄位第一行 (不限 suffix,涵蓋公司/社/行/廠/個人戶)"""
+    import re
+    suppliers = []
+    try:
+        with pdfplumber_mod.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                tables = page.extract_tables()
+                for tbl in tables:
+                    if not tbl: continue
+                    # 找業者欄 index (在 header 找「業者名稱」關鍵字, 通常是 col 3)
+                    supp_col = 3  # 預設
+                    for i, cell in enumerate(tbl[0] if tbl else []):
+                        if cell and ('業者名稱' in str(cell) or '肥料業者' in str(cell)):
+                            supp_col = i
+                            break
+                    for row in tbl:
+                        if not row or len(row) <= supp_col: continue
+                        # 該 row 需含 7 位登記證才算資料 row
+                        has_reg = any(re.search(r'\b\d{7}\b', str(c or '')) for c in row)
+                        if not has_reg: continue
+                        supp_cell = row[supp_col]
+                        if not supp_cell: continue
+                        # 取第一行 (業者名), 過濾電話/地址行
+                        first_line = str(supp_cell).split('\n')[0].strip()
+                        # 清 0xxx- prefix
+                        first_line = re.sub(r'^\d{4}-', '', first_line).strip()
+                        # 排除純數字/純符號/太短
+                        if not first_line or len(first_line) < 3: continue
+                        if re.match(r'^[\d\-\(\)\s+]+$', first_line): continue
+                        if first_line in ('肥料業者名稱', '肥料業者\n電話\n地址', '肥料業者'): continue
+                        suppliers.append(first_line)
+    except Exception as e:
+        print(f"  [parse table] {e}")
+    return suppliers
+
+
 def fetch_fertilizer_rankings(verbose: bool = True, use_cache: bool = True) -> dict:
     """從農糧署官網抓最新有機質肥料品牌推薦名單, 統計每業者 × 品目 × 補助等級的產品數。
     緩存到 docs/fert_rankings_cache.json (7 天內用 cache, 過期或 refresh=True 重抓)"""
@@ -5423,16 +5461,10 @@ def fetch_fertilizer_rankings(verbose: bool = True, use_cache: bool = True) -> d
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
                     tf.write(data); tpath = tf.name
                 try:
-                    with pdfplumber.open(tpath) as pdf:
-                        all_text = "\n".join(p.extract_text() or "" for p in pdf.pages)
-                    # 解析: 找所有 <7位數字> <公司名>
-                    # pattern: 登記證字號後接業者名
-                    matches = re.findall(r'\b\d{7}\b\s+([一-龥][一-龥·\s]{2,30}?(?:股份有限公司|有限公司|合作社|農會|合作場|實業|貿易|企業|科技|農場|生物科技|工廠|工業))', all_text)
-                    # 每個 match = 一筆產品
+                    matches = _parse_pdf_suppliers(tpath, pdfplumber)
                     n_prods = len(matches)
                     cat_totals[(tier, code)]["n_prods"] += n_prods
                     for supp in matches:
-                        supp = re.sub(r'\s+', '', supp)
                         stats[supp][tier][code] += 1
                         cat_totals[(tier, code)]["suppliers"].add(supp)
                     if verbose: print(f"  [{did}] {code} ({tier}): {n_prods} 產品 {fname[:35]}")
