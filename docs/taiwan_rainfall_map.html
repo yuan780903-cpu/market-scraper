@@ -845,7 +845,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:26</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:28</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
@@ -1159,7 +1159,7 @@
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block" id="historyBlock">
-  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
+  <h3>📊 歷史雨量比較 · 近 10 年同月對照 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
   <div class="history-filters">
     <label>地區</label>
     <select id="histRegion">
@@ -1384,7 +1384,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:26</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:28</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -2654,7 +2654,7 @@ function renderHistReport(results, avgMm, avgDays, region, month, curYear) {
   }
 
   const html =
-    '<span class="label">📋 向老闆報告摘要 (' + region + ' · ' + month + ' 月)</span>' +
+    '<span class="label">📋 分析摘要 (' + region + ' · ' + month + ' 月)</span>' +
     '本地區近 ' + results.length + ' 年 ' + month + ' 月平均降雨 <strong>' + avgMm.toFixed(1) + ' mm</strong>，' +
     '平均 <strong>' + avgDays.toFixed(1) + '</strong> 天有雨。' +
     '最多為 <strong>' + maxYr.year + ' 年 ' + maxYr.mm.toFixed(0) + ' mm</strong>，' +

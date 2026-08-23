@@ -1273,7 +1273,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block" id="historyBlock">
-  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
+  <h3>📊 歷史雨量比較 · 近 10 年同月對照 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
   <div class="history-filters">
     <label>地區</label>
     <select id="histRegion">
@@ -2761,7 +2761,7 @@ function renderHistReport(results, avgMm, avgDays, region, month, curYear) {{
   }}
 
   const html =
-    '<span class="label">📋 向老闆報告摘要 (' + region + ' · ' + month + ' 月)</span>' +
+    '<span class="label">📋 分析摘要 (' + region + ' · ' + month + ' 月)</span>' +
     '本地區近 ' + results.length + ' 年 ' + month + ' 月平均降雨 <strong>' + avgMm.toFixed(1) + ' mm</strong>，' +
     '平均 <strong>' + avgDays.toFixed(1) + '</strong> 天有雨。' +
     '最多為 <strong>' + maxYr.year + ' 年 ' + maxYr.mm.toFixed(0) + ' mm</strong>，' +
