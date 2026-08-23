@@ -153,10 +153,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .brand-bar{{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
   .brand-left{{display:flex;align-items:center;gap:14px}}
   .brand-logos{{display:flex;align-items:center;gap:10px}}
-  /* 六邊形 clip-path,兩品牌形狀相同 */
-  .brand-hex{{width:78px;height:56px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:"STKaiti","BiauKai","STHeiti","PingFang TC","Microsoft JhengHei",serif;font-weight:900;letter-spacing:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);clip-path:polygon(20% 0%,80% 0%,100% 50%,80% 100%,20% 100%,0% 50%);border:none;padding:0 4px}}
-  .brand-dachan{{background:linear-gradient(135deg,#c62828 0%,#8b0000 100%);font-size:22px;letter-spacing:2px;position:relative}}
-  .brand-dachan::before{{content:"";position:absolute;inset:4px;clip-path:polygon(20% 0%,80% 0%,100% 50%,80% 100%,20% 100%,0% 50%);border:2px solid rgba(255,255,255,.5);pointer-events:none}}
+  .brand-dachan-svg{{height:56px;width:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}}
   .brand-shuocheng-img{{height:56px;width:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}}
   .brand-name{{display:flex;flex-direction:column;line-height:1.2}}
   .brand-name .co{{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}}
@@ -821,7 +818,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="brand-bar">
   <div class="brand-left">
     <div class="brand-logos">
-      <div class="brand-hex brand-dachan" title="大成長城 (1210)">大成</div>
+      <svg class="brand-dachan-svg" viewBox="0 0 180 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="大成長城 DaChan">
+        <title>大成長城企業 DaChan (1210)</title>
+        <defs>
+          <linearGradient id="dcRed" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="55%" stop-color="#dc2626"/>
+            <stop offset="100%" stop-color="#a30f0f"/>
+          </linearGradient>
+          <linearGradient id="dcGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffd54f"/>
+            <stop offset="100%" stop-color="#f0a500"/>
+          </linearGradient>
+        </defs>
+        <!-- 外層金邊六角 (盾牌形) -->
+        <path d="M45,10 L135,10 Q170,10 170,65 Q170,120 135,120 L45,120 Q10,120 10,65 Q10,10 45,10 Z" fill="url(#dcGold)"/>
+        <!-- 紅色內底 -->
+        <path d="M48,14 L132,14 Q166,14 166,65 Q166,116 132,116 L48,116 Q14,116 14,65 Q14,14 48,14 Z" fill="url(#dcRed)"/>
+        <!-- 內層金邊細線 -->
+        <path d="M50,20 L130,20 Q160,20 160,65 Q160,110 130,110 L50,110 Q20,110 20,65 Q20,20 50,20 Z" fill="none" stroke="#fff8b3" stroke-width="1.5" opacity="0.8"/>
+        <!-- 中文大成 -->
+        <text x="90" y="70" text-anchor="middle" font-family="'STHeiti','PingFang TC','Microsoft JhengHei','Heiti TC',sans-serif" font-size="38" font-weight="900" fill="#fff" font-style="italic" letter-spacing="1">大成</text>
+        <!-- 英文 DaChan -->
+        <text x="90" y="100" text-anchor="middle" font-family="Arial,'Helvetica Neue',sans-serif" font-size="20" font-weight="900" fill="#fff" font-style="italic" letter-spacing="0.5">DaChan</text>
+      </svg>
       <img class="brand-shuocheng-img" src="data:image/png;base64,{shuocheng_logo_b64}" alt="碩成" title="碩成有機質肥料 (訂貨平台官方 logo)">
     </div>
     <div class="brand-name">
