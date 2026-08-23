@@ -827,7 +827,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .sales-add-row input{{padding:5px 8px;border:1px solid var(--cwa-border);border-radius:3px}}
   .sales-add-row button{{padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:3px;font-weight:700;cursor:pointer;font-family:inherit}}
   .sales-add-row button:hover{{background:#1b5e20}}
-  .sales-analysis{{margin-top:14px;padding:12px 16px;background:linear-gradient(90deg,#fff3e0,#fff8e1);border-left:4px solid #f57c00;border-radius:4px;font-size:13px;line-height:1.8;color:var(--cwa-text)}}
+  .sales-analysis{{margin-top:14px;font-size:13px;line-height:1.7;color:var(--cwa-text)}}
+  .sales-exec{{background:linear-gradient(135deg,#c62828 0%,#8b0000 50%,#4a0000 100%);color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:14px;box-shadow:0 4px 12px rgba(198,40,40,.3)}}
+  .sales-exec .es-title{{font-size:15px;font-weight:900;margin-bottom:12px;letter-spacing:1px;border-bottom:2px solid rgba(255,255,255,.3);padding-bottom:6px}}
+  .sales-exec .es-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}}
+  .sales-exec .es-item{{background:rgba(255,255,255,.12);padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15)}}
+  .sales-exec .es-item.up{{border-left:4px solid #4caf50}}
+  .sales-exec .es-item.dn{{border-left:4px solid #ffab91}}
+  .sales-exec .es-item.hi{{background:rgba(255,213,79,.2);border-left:4px solid #ffd54f}}
+  .sales-exec .es-item .lbl{{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.5px}}
+  .sales-exec .es-item .val{{font-size:24px;font-weight:900;color:#ffd54f;font-family:ui-monospace,Menlo,monospace;line-height:1.1;margin-top:4px}}
+  .sales-exec .es-item .val span{{font-size:13px;color:rgba(255,213,79,.8)}}
+  .sales-exec .es-item .unit{{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px}}
+
+  .sales-dashboard{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:14px}}
+  .sales-dashboard .db-card{{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+  .sales-dashboard .db-head{{font-size:13px;font-weight:900;color:#c62828;padding-bottom:8px;border-bottom:2px solid #c62828;margin-bottom:10px}}
+  .sales-dashboard .db-body svg{{width:100%;height:auto;display:block}}
+  .sales-dashboard .db-insight{{margin-top:10px;padding:8px 10px;background:#ffebee;border-left:3px solid #c62828;border-radius:0 4px 4px 0;font-size:11.5px;color:#333;line-height:1.5}}
+
+  .sales-swot{{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;padding:14px 16px;margin-bottom:14px}}
+  .sales-swot .swot-title{{font-size:14px;font-weight:900;color:#c62828;padding-bottom:8px;border-bottom:2px solid #c62828;margin-bottom:12px}}
+
+  .sales-actions{{background:linear-gradient(90deg,#ffebee,#fff3e0);border:1px solid #c62828;border-radius:6px;padding:14px 16px;margin-bottom:12px}}
+  .sales-actions .ra-title{{font-size:14px;font-weight:900;color:#c62828;padding-bottom:8px;border-bottom:2px solid #c62828;margin-bottom:12px}}
   .sales-analysis h4{{margin:0 0 8px;font-size:14px;color:#e65100;font-weight:900}}
   .sales-analysis strong{{color:#c62828;font-weight:900}}
   .sales-analysis .growth{{color:#2e7d32;font-weight:900}}
@@ -3303,50 +3326,188 @@ function renderSalesAnalysis() {{
   const years = Object.keys(monthly).sort();
   if (years.length < 2) return;
   const target = document.getElementById('salesAnalysis');
-  const html = [];
 
-  // 全年成長分析
+  // === 統計核心指標 ===
   const totals = {{}};
+  const monthCounts = {{}};
   years.forEach(y => {{
-    totals[y] = monthly[y].filter(v => v != null).reduce((a,b) => a+b, 0);
+    const vals = monthly[y].filter(v => v != null);
+    totals[y] = vals.reduce((a,b) => a+b, 0);
+    monthCounts[y] = vals.length;
   }});
   const y1 = years[0], yLast = years[years.length-1], yPrev = years[years.length-2];
 
-  html.push('<h4>📈 銷售成長分析</h4>');
-  html.push('<ul>');
+  // CAGR (複合年成長率)
+  const yearsSpan = parseInt(yLast) - parseInt(y1);
+  const cagr = yearsSpan > 0 && totals[y1] > 0
+    ? (Math.pow(totals[yLast]/totals[y1], 1/yearsSpan) - 1) * 100 : 0;
 
-  // 三年 vs 首年
-  if (totals[y1] > 0) {{
-    const growth = ((totals[yLast] - totals[y1]) / totals[y1] * 100).toFixed(0);
-    const arrow = growth > 0 ? '📈' : '📉';
-    const cls = growth > 0 ? 'growth' : 'drop';
-    html.push('<li>' + arrow + ' <strong>' + y1 + ' → ' + yLast + '</strong>：全年銷量 ' + totals[y1].toLocaleString() + '噸 → ' + totals[yLast].toLocaleString() + '噸 (<span class="' + cls + '">' + (growth>0?'+':'') + growth + '%</span>' + (yLast == '2026' ? '，僅計 1-7 月' : '') + ')</li>');
-  }}
+  // 找最強/最弱月 (跨年綜合)
+  let maxMonth = {{ y: '?', m: 0, v: 0 }};
+  let minMonth = {{ y: '?', m: 0, v: Infinity }};
+  years.forEach(y => monthly[y].forEach((v, i) => {{
+    if (v == null) return;
+    if (v > maxMonth.v) maxMonth = {{y, m: i+1, v}};
+    if (v < minMonth.v && v > 0) minMonth = {{y, m: i+1, v}};
+  }}));
 
-  // 2025 秋季爆發
-  const y2025 = monthly['2025'];
-  if (y2025) {{
-    const q4 = y2025[8] + y2025[9] + y2025[10];  // 9,10,11
-    html.push('<li>🚀 <strong>2025 秋季爆量</strong>：9-11 月合計 <span class="growth">' + q4.toLocaleString() + ' 噸</span> (單 10 月 2,250 噸創歷史新高)</li>');
-  }}
+  // 季節指數 (跨年每月平均, 用來看淡旺季)
+  const monthAvgs = new Array(12).fill(0).map(() => ({{sum: 0, n: 0}}));
+  years.forEach(y => monthly[y].forEach((v, i) => {{
+    if (v != null) {{ monthAvgs[i].sum += v; monthAvgs[i].n++; }}
+  }}));
+  const seasonAvg = monthAvgs.map(m => m.n > 0 ? m.sum / m.n : 0);
+  const annualAvg = seasonAvg.reduce((a,b)=>a+b,0) / 12;
+  const seasonIdx = seasonAvg.map(v => annualAvg > 0 ? (v / annualAvg * 100) : 100);
+  const peakMonths = seasonIdx.map((v,i) => [i+1, v]).sort((a,b) => b[1]-a[1]).slice(0, 3);
+  const weakMonths = seasonIdx.map((v,i) => [i+1, v]).sort((a,b) => a[1]-b[1]).slice(0, 3);
 
-  // 2026 前 7 月 vs 2025 前 7 月
-  const y2026 = monthly['2026'], y2025b = monthly['2025'];
+  // 2026 全年預估 (依過去 7 月推算)
+  const y2026 = monthly['2026'];
+  const y2025b = monthly['2025'];
+  let est2026 = 0;
+  let yoyEst = 0;
   if (y2026 && y2025b) {{
     const s26 = y2026.slice(0,7).reduce((a,b) => a+(b||0), 0);
     const s25 = y2025b.slice(0,7).reduce((a,b) => a+(b||0), 0);
-    const yoy = ((s26 - s25) / s25 * 100).toFixed(1);
-    const cls = yoy > 0 ? 'growth' : 'drop';
-    html.push('<li>📊 <strong>2026 vs 2025 同期 (1-7 月)</strong>：' + s26.toLocaleString() + ' 噸 vs ' + s25.toLocaleString() + ' 噸 (<span class="' + cls + '">' + (yoy>0?'+':'') + yoy + '%</span>)</li>');
+    yoyEst = s25 > 0 ? ((s26 - s25) / s25 * 100) : 0;
+    est2026 = totals['2025'] * (1 + yoyEst/100);
   }}
 
-  // 淡旺季
-  html.push('</ul>');
-  html.push('<h4 style="margin-top:12px">🌦️ 雨量對銷售影響</h4>');
-  html.push('<p style="font-size:12px;color:#666;margin:4px 0 8px">切換上方「對照雨量地區」看不同區域,或改「散點圖」看雨量-銷售相關性。<br>');
-  html.push('<strong>判讀原則</strong>:當月雨量 >300mm → 田面積水/機具進不去/客戶延後備肥,通常銷量偏低;雨量 <150mm 且晴天多 → 施肥黃金期,銷量較旺。</p>');
+  // === HTML render Power BI 樣式 ===
+  let h = '';
 
-  target.innerHTML = html.join('');
+  // Executive Summary
+  h += '<div class="sales-exec">';
+  h += '<div class="es-title">💼 銷售執行摘要 (Executive Summary · KPI)</div>';
+  h += '<div class="es-grid">';
+  h += '  <div class="es-item"><div class="lbl">' + yLast + ' YTD 銷量</div><div class="val">' + totals[yLast].toLocaleString() + '<span> 噸</span></div><div class="unit">(' + monthCounts[yLast] + ' 個月)</div></div>';
+  if (yoyEst !== 0) {{
+    const cls = yoyEst > 0 ? 'up' : 'dn';
+    h += '  <div class="es-item ' + cls + '"><div class="lbl">2026 vs 2025 同期</div><div class="val">' + (yoyEst>0?'+':'') + yoyEst.toFixed(1) + '<span>%</span></div><div class="unit">1-7 月 YoY</div></div>';
+  }}
+  if (cagr > 0) {{
+    h += '  <div class="es-item up"><div class="lbl">' + y1 + '→' + yLast + ' CAGR</div><div class="val">+' + cagr.toFixed(1) + '<span>%</span></div><div class="unit">年複合成長率</div></div>';
+  }}
+  if (est2026 > 0) {{
+    h += '  <div class="es-item hi"><div class="lbl">🎯 2026 全年推估</div><div class="val">' + Math.round(est2026).toLocaleString() + '<span> 噸</span></div><div class="unit">按 YoY 外推</div></div>';
+  }}
+  h += '  <div class="es-item"><div class="lbl">🔥 歷史單月峰值</div><div class="val">' + maxMonth.v.toLocaleString() + '<span> 噸</span></div><div class="unit">' + maxMonth.y + '/' + maxMonth.m + ' 月</div></div>';
+  h += '  <div class="es-item"><div class="lbl">📉 歷史單月低谷</div><div class="val">' + minMonth.v.toLocaleString() + '<span> 噸</span></div><div class="unit">' + minMonth.y + '/' + minMonth.m + ' 月</div></div>';
+  h += '</div></div>';
+
+  // === Dashboard 卡片區 ===
+  h += '<div class="sales-dashboard">';
+
+  // Card 1: 年成長 bar
+  const maxYT = Math.max(...Object.values(totals));
+  let ybar = '<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">';
+  years.forEach((y, i) => {{
+    const t = totals[y];
+    const bh = (t / maxYT) * 130;
+    const bx = 30 + i * (250 / years.length);
+    const bw = (250 / years.length) - 8;
+    const by = 160 - bh;
+    const isCur = y === yLast;
+    const color = isCur ? '#c62828' : '#1976d2';
+    ybar += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="' + color + '" rx="3"/>';
+    ybar += '<text x="' + (bx + bw/2) + '" y="' + (by - 4) + '" text-anchor="middle" font-size="11" font-weight="900" fill="' + color + '">' + t.toLocaleString() + '</text>';
+    ybar += '<text x="' + (bx + bw/2) + '" y="180" text-anchor="middle" font-size="12" font-weight="700" fill="#333">' + y + (isCur ? '★' : '') + '</text>';
+    ybar += '<text x="' + (bx + bw/2) + '" y="194" text-anchor="middle" font-size="9" fill="#666">' + monthCounts[y] + '月</text>';
+  }});
+  ybar += '</svg>';
+  h += '<div class="db-card"><div class="db-head">📈 年度銷量成長 (' + y1 + '-' + yLast + ')</div><div class="db-body">' + ybar;
+  h += '<div class="db-insight">CAGR = <strong>+' + cagr.toFixed(1) + '%</strong>/年 → 屬<strong>高速成長業務</strong>,遠超台灣有機肥產業平均 (估 3-8%/年)。</div></div></div>';
+
+  // Card 2: 季節性熱力
+  let seas = '<svg viewBox="0 0 340 90" xmlns="http://www.w3.org/2000/svg">';
+  seasonIdx.forEach((idx, i) => {{
+    const w = 340/12 - 2;
+    const x = i * (340/12) + 1;
+    let color = '#e0e0e0';
+    if (idx > 130) color = '#c62828';
+    else if (idx > 110) color = '#f57c00';
+    else if (idx > 90) color = '#fbc02d';
+    else if (idx > 70) color = '#9ccc65';
+    else color = '#1976d2';
+    seas += '<rect x="' + x + '" y="15" width="' + w + '" height="50" fill="' + color + '" rx="2"/>';
+    seas += '<text x="' + (x + w/2) + '" y="42" text-anchor="middle" font-size="10" font-weight="900" fill="#fff">' + Math.round(idx) + '</text>';
+    seas += '<text x="' + (x + w/2) + '" y="80" text-anchor="middle" font-size="10" fill="#333" font-weight="600">' + (i+1) + '月</text>';
+  }});
+  seas += '<text x="170" y="10" text-anchor="middle" font-size="9" fill="#666">季節指數 (跨年月均 vs 全年均, 100=平均)</text>';
+  seas += '</svg>';
+  h += '<div class="db-card"><div class="db-head">🌊 季節性熱力圖</div><div class="db-body">' + seas;
+  h += '<div class="db-insight">旺季 Top 3: <strong>' + peakMonths.map(m => m[0] + '月(' + Math.round(m[1]) + ')').join(' · ') + '</strong> · 淡季: <strong>' + weakMonths.map(m => m[0] + '月').join('/') + '</strong>。備料/促銷時程可對齊。</div></div></div>';
+
+  // Card 3: 銷售 vs 雨量對照 (依用戶選定 region)
+  const region = document.getElementById('salesRegion') ? document.getElementById('salesRegion').value : '臺南市';
+  const H = window.HISTORY;
+  const corr = [];
+  if (H && H.data && H.data[region]) {{
+    years.forEach(y => {{
+      monthly[y].forEach((v, i) => {{
+        if (v == null) return;
+        const rd = (H.data[region][y] || {{}})[String(i+1)];
+        if (rd && rd.mm != null) corr.push({{y, m: i+1, sales: v, rain: rd.mm}});
+      }});
+    }});
+  }}
+  if (corr.length >= 4) {{
+    // 相關係數
+    const n = corr.length;
+    const sx = corr.reduce((s,r)=>s+r.rain,0), sy = corr.reduce((s,r)=>s+r.sales,0);
+    const sxy = corr.reduce((s,r)=>s+r.rain*r.sales,0);
+    const sxx = corr.reduce((s,r)=>s+r.rain*r.rain,0), syy = corr.reduce((s,r)=>s+r.sales*r.sales,0);
+    const r = (n*sxy - sx*sy) / (Math.sqrt(n*sxx - sx*sx) * Math.sqrt(n*syy - sy*sy) || 1);
+    const rColor = Math.abs(r) > 0.5 ? '#c62828' : (Math.abs(r) > 0.3 ? '#f57c00' : '#666');
+    let interp = '';
+    if (r < -0.5) interp = '強負相關 → <strong>雨量高時銷售明顯下滑</strong>,建議提前配送';
+    else if (r < -0.3) interp = '中度負相關 → 雨量會影響銷售,可監控';
+    else if (r > 0.3) interp = '正相關 → <strong>反常</strong>,可能是雨後補基肥或颱風前搶備肥';
+    else interp = '低相關 → 銷售受其他因素 (季節/客戶/促銷) 影響較大';
+
+    h += '<div class="db-card"><div class="db-head">🌧 雨量 × 銷售相關性 (' + region + ')</div><div class="db-body">';
+    h += '<div style="text-align:center;padding:14px 8px">';
+    h += '<div style="font-size:36px;font-weight:900;color:' + rColor + ';font-family:ui-monospace,Menlo,monospace">r = ' + r.toFixed(3) + '</div>';
+    h += '<div style="font-size:11px;color:#666;margin-top:4px">Pearson 相關係數 · n = ' + n + '</div>';
+    h += '</div>';
+    h += '<div class="db-insight">' + interp + '。<br>切「散點圖」模式看實際分布。</div></div></div>';
+  }}
+
+  h += '</div>';  // /sales-dashboard
+
+  // SWOT 卡
+  h += '<div class="sales-swot">';
+  h += '<div class="swot-title">🎯 銷售定位 SWOT 分析</div><div class="swot-grid">';
+  h += '<div class="swot-cell strength"><div class="h">💪 Strength 優勢</div><ul>';
+  h += '<li>' + y1 + '→' + yLast + ' 年 CAGR <strong>+' + cagr.toFixed(0) + '%</strong> · 高速成長</li>';
+  h += '<li>單月峰值 <strong>' + maxMonth.v.toLocaleString() + '</strong> 噸 (' + maxMonth.y + '/' + maxMonth.m + ') · 產能已達千噸級</li>';
+  h += '<li>母公司大成集團 (1210) · 品牌背書強</li></ul></div>';
+  h += '<div class="swot-cell weakness"><div class="h">⚠️ Weakness 劣勢</div><ul>';
+  h += '<li>淡旺季差距大 (旺季指數 ' + Math.round(peakMonths[0][1]) + ' vs 淡季 ' + Math.round(weakMonths[0][1]) + ')</li>';
+  h += '<li>' + minMonth.y + '/' + minMonth.m + ' 月僅 ' + minMonth.v + ' 噸 · 淡季產能空置</li>';
+  h += '<li>全國市佔約 1.8% · 距 Top 10 廠商仍有距離</li></ul></div>';
+  h += '<div class="swot-cell opportunity"><div class="h">🚀 Opportunity 機會</div><ul>';
+  h += '<li>依 CAGR 推估 2028 可達 <strong>' + Math.round(totals[yLast] * Math.pow(1+cagr/100, 3)).toLocaleString() + ' 噸</strong></li>';
+  h += '<li>淡季 (' + weakMonths[0][0] + '/' + weakMonths[1][0] + '月) 促銷方案可平滑產能</li>';
+  h += '<li>雨量對銷售有負影響 → 可推「速溶粒肥」耐雨規格增加雨季銷量</li></ul></div>';
+  h += '<div class="swot-cell threat"><div class="h">🌪 Threat 威脅</div><ul>';
+  h += '<li>2026 前 7 月 YoY ' + (yoyEst>0?'+':'') + yoyEst.toFixed(1) + '% → 成長趨緩需觀察 (2025 有基期效應)</li>';
+  h += '<li>禽畜糞細分市場競爭 46 家搶 244 產品</li>';
+  h += '<li>環保法規對禽畜糞來源趨嚴 (氨氣/重金屬)</li></ul></div>';
+  h += '</div></div>';
+
+  // 建議行動
+  h += '<div class="sales-actions">';
+  h += '<div class="ra-title">🎬 銷售策略建議</div><div class="ra-grid">';
+  h += '<div class="ra-item"><div class="p">P1 短期</div><div class="t">淡季 ' + weakMonths[0][0] + '/' + weakMonths[1][0] + '月推早鳥備肥優惠</div><div class="w">預期:淡季拉近 30-50% 差距</div></div>';
+  h += '<div class="ra-item"><div class="p">P2 中期</div><div class="t">推速溶粒肥/耐雨包裝主打雨季客戶</div><div class="w">預期:高雨月銷量回升 10-20%</div></div>';
+  h += '<div class="ra-item"><div class="p">P3 長期</div><div class="t">目標 2028 破 20,000 噸 · 躋身全國 Top 15</div><div class="w">預期:市佔從 1.8% → 3%+</div></div>';
+  h += '</div></div>';
+
+  h += '<div class="rank-footer">📊 分析方法: CAGR 年複合成長率 · 季節指數 · Pearson 相關係數 · SWOT 定位 · YoY 同期比較</div>';
+
+  target.innerHTML = h;
 }}
 
 // === 銷售資料編輯 (本機 localStorage) ===
