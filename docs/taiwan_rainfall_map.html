@@ -805,9 +805,54 @@
   .rank-table td.cats .cat{display:inline-block;background:#f3e5f5;color:#6a1b9a;padding:1px 6px;border-radius:8px;margin:1px 2px;font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:700}
   .rank-table tr:nth-child(odd) td{background:#fafafa}
   .rank-table tr:hover td{background:#f3e5f5}
-  .rank-analysis{margin-top:14px;padding:12px 16px;background:linear-gradient(90deg,#f3e5f5,#fff8e1);border-left:4px solid #6a1b9a;border-radius:4px;font-size:13px;line-height:1.7;color:var(--cwa-text)}
-  .rank-analysis h4{margin:0 0 8px;font-size:14px;color:#6a1b9a;font-weight:900}
-  .rank-analysis strong{color:#c62828;font-weight:900}
+  .rank-analysis{margin-top:14px;padding:0;background:transparent;font-size:13px;line-height:1.7;color:var(--cwa-text)}
+  /* Executive Summary */
+  .rank-exec-summary{background:linear-gradient(135deg,#4a148c 0%,#6a1b9a 50%,#7b1fa2 100%);color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:14px;box-shadow:0 4px 12px rgba(106,27,154,.3)}
+  .rank-exec-summary .es-title{font-size:15px;font-weight:900;margin-bottom:12px;letter-spacing:1px;border-bottom:2px solid rgba(255,255,255,.3);padding-bottom:6px}
+  .rank-exec-summary .es-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .rank-exec-summary .es-item{background:rgba(255,255,255,.12);padding:10px 12px;border-radius:6px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15)}
+  .rank-exec-summary .es-item .lbl{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.5px}
+  .rank-exec-summary .es-item .val{font-size:26px;font-weight:900;color:#ffd54f;font-family:ui-monospace,Menlo,monospace;line-height:1.1;margin-top:4px}
+  .rank-exec-summary .es-item .val span{font-size:14px;color:rgba(255,213,79,.8)}
+  .rank-exec-summary .es-item .unit{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px}
+
+  /* Dashboard 3 欄圖表區 */
+  .rank-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:16px}
+  .db-card{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .db-head{font-size:13px;font-weight:900;color:#6a1b9a;padding-bottom:8px;border-bottom:2px solid #6a1b9a;margin-bottom:10px}
+  .db-body svg{width:100%;height:auto;display:block}
+  .db-insight{margin-top:10px;padding:8px 10px;background:#f3e5f5;border-left:3px solid #6a1b9a;border-radius:0 4px 4px 0;font-size:11.5px;color:#333;line-height:1.5}
+
+  /* SWOT */
+  .rank-swot{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;padding:14px 16px;margin-bottom:14px}
+  .swot-title{font-size:14px;font-weight:900;color:#6a1b9a;padding-bottom:8px;border-bottom:2px solid #6a1b9a;margin-bottom:12px}
+  .swot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+  .swot-cell{padding:10px 12px;border-radius:5px;font-size:12px}
+  .swot-cell.strength{background:#e8f5e9;border-left:4px solid #2e7d32}
+  .swot-cell.weakness{background:#ffebee;border-left:4px solid #c62828}
+  .swot-cell.opportunity{background:#e3f2fd;border-left:4px solid #1976d2}
+  .swot-cell.threat{background:#fff3e0;border-left:4px solid #f57c00}
+  .swot-cell .h{font-weight:900;margin-bottom:6px;font-size:13px}
+  .swot-cell.strength .h{color:#2e7d32}
+  .swot-cell.weakness .h{color:#c62828}
+  .swot-cell.opportunity .h{color:#1976d2}
+  .swot-cell.threat .h{color:#f57c00}
+  .swot-cell ul{margin:0;padding-left:16px}
+  .swot-cell li{margin:3px 0;line-height:1.5}
+
+  /* 建議行動 */
+  .rank-actions{background:linear-gradient(90deg,#fff8e1,#fff3e0);border:1px solid #f57c00;border-radius:6px;padding:14px 16px;margin-bottom:12px}
+  .ra-title{font-size:14px;font-weight:900;color:#e65100;padding-bottom:8px;border-bottom:2px solid #e65100;margin-bottom:12px}
+  .ra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .ra-item{background:#fff;padding:10px 12px;border-radius:5px;border:1px solid #ffe0b2;position:relative}
+  .ra-item .p{position:absolute;top:-8px;left:8px;background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:900;letter-spacing:1px;box-shadow:0 2px 4px rgba(198,40,40,.3)}
+  .ra-item .t{margin-top:4px;font-size:13px;font-weight:700;color:#333;line-height:1.4}
+  .ra-item .w{margin-top:6px;font-size:11px;color:#666;padding-top:6px;border-top:1px dashed #ffe0b2}
+
+  /* Footer */
+  .rank-footer{padding:10px 14px;background:#f5f5f5;border-radius:4px;font-size:11px;color:#666;line-height:1.6}
+  .rank-footer a{color:#6a1b9a;font-weight:700;text-decoration:none}
+  .rank-footer a:hover{text-decoration:underline}
 
   /* ===== 統一 tab bar (三選一切換) ===== */
   .unified-tabs{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}
@@ -933,7 +978,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 11:48</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 12:48</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
@@ -1507,12 +1552,12 @@
   <ul class="news-list">
     <li><a href="https://news.google.com/rss/articles/CBMi_AJBVV95cUxNOHRBbWxxUTc5dVlMczUyeGtWRnVmR2VZRHNKdmM1YVpNdDB1Q0ZZTU9KRUljRGh4bXRFWE1jcjVLZGtTOWg2LWRiUlpmWDN4NURXSDI2RFZJUWtDenBRSHFBc25jNnVBLVNyYUszRlJZSkd1ZUgyZG1jRzZEOG5OSWRFeFFkVFFMTDliXzNQWXlxV0ZFb3FQa01SdG1OdFY3em9JdzlzaDhSTWt3SVNJNk1Kemg3dW40eHZiOUJ1dlZmb0NhcUU4UlkyaGVxeDVjd3QxamdaR3FHYnZtMzFzQ2lMWk02eFhZMGFuVVB5M3h4c2JLdXZwWDRleW4yYzk1V0ZqNHduQ3BRWXJhSXl5Z1NDTjNuN3JRLVEyY1F3X21uUjZtaEFORFNlaXVaamYta0ZPbHp4cE1aN3kxTW5tYlJpV1NLWkNkZWM3RlZqTnc3NmdfVWNJN0swTmVpTm92dEZvZ2RDdmVSNGZnaVJOenQxY0kyemlvNE9Kcw?oc=5" target="_blank" rel="noopener">全台17縣市豪、大雨特報！颱風沙德爾「增強逼近」 今3縣市停班課</a><span class="meta">Yahoo新聞 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SMVk3cGVlQllnd282VjV3YklSdlVWRGx4aDNrLUFsZTFQVEg4WGhKQVZGZUQ1VTRUYlkxWWFscllHZ3h3YlhJLTJMbGFFX1Ay0gFWQVVfeXFMTi1lMVFFT3RwV25DR1BEX1NPRkRfd01QNjA3d1Q4S3RORXRWWXluQVFSd19FdXRxcmNLWFZJT2Roc1BGQUUzNjVsVWFqQmFYOW10TFlJZnc?oc=5" target="_blank" rel="noopener">各國預報沙德爾颱風「直撲台灣」？ 南部雨勢恐延至周五</a><span class="meta">UDN · 08/23</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMi6wJBVV95cUxPcnc2QlV4VUczaDFOWVVjWlJ0ZUIyd0RaWktEVlVkQUo4RHRLY0J5Z0RJRUJoTTNxU1FvM2FwMjVIMUx5T3FSRmVvdmMyaHJmWlJocFhJaExNc0Y1clExZ0hVbFpZMVVFSHRiQVBOMEFGcVpvejk0ZEFqV19vSlJpZmxoeWxUdjBrNzZXcmlnS3JiTDVsWUNuNlU3VTBuTUtTMlFLaVJSbWZORmYweDdYYzhuZGhiY1gwd01lMDBudWJqTlVFNk1kQ1RTdlJWdHFtU2syMEh0X3V4N3JidkZGekpabEZMc2pMRnRTV2ZnRHVEYnpaSTB5ZzZKbk5nQTcxZ0QtTVdYeG5NMTJkODFTSGhETXpDUVlpZHpINEROb2pyU2wxN2NkV29jUXdYUTNyMzlJS3NvOTVKb3Bad2I1UGJYMUJlcnZncXp4czBPSXV3aG5RUnBDclpJNHh1TUdRaC1kMVFwaEpoTnc?oc=5" target="_blank" rel="noopener">報天氣 - 中央氣象署. . [直播]115年8月22日20:30發布_115年0822低壓帶及西南風豪雨事件</a><span class="meta">facebook.com · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Id09YM0JYUVc4MEJHQWdac2prRFFpX0UybWlSUkhnOFNlT3hFTjRULV92R0tlWjNuQU9jYVA3MzlFQmpFOGlvU3lBWEVrMTBydnplUTFGd0lpMnU3T3Jv?oc=5" target="_blank" rel="noopener">吳德榮：颱風沙德爾估27日襲台不排除登陸| 生活</a><span class="meta">cna.com.tw · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTFBZdzFmUjJRaEtBeE83WUlmQk0wNDdGc3lLZEVTMEJzOFVOckE0Y1dPRHNVMGFjQ3BiZndTZGw2bW83ZFBaZzB6Z0R2UkZJVWtT?oc=5" target="_blank" rel="noopener">一周天氣預報/ 沙德爾颱風估「這1天襲台」！專家曝路徑：恐以中颱之姿登陸，全台這3 天豪雨猛下到紫爆</a><span class="meta">風傳媒 · 08/23</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1tT3FkMnd5eEtOZ1BuMnExT3pBWDlkVkNSVU9icHk1aDV6c1NpbkQ3T2RVNko4SUc3c1RpVlRNMUoxMnoya3lOLS1rSnAxWkJEYVczaGxSMGNTLVhBRWc?oc=5" target="_blank" rel="noopener">明天還有豪雨假？4縣市「24小時雨量」上看400毫米 達停班課標準| 天氣</a><span class="meta">太報 TaiSounds · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE12dFdpdlNEcDVPSGhYSWtuanUyclZ2YVJLalAxM1Q4SXh6cGpqeG40VEFZUXZGdzZhbzBrZmtTOVZKYzZYQ3BWN2dENG1SOUdqcldOYWFjZWcydFhlUXRfcG81a2M?oc=5" target="_blank" rel="noopener">高雄豪雨狂炸！新興區24小時累積衝破350毫米達大豪雨等級- 生活</a><span class="meta">自由時報 · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiT0FVX3lxTE1jTkMtZVNQNXRKYWJFX1A0LTlLVmppQVRGaTFvVi1zZk9mWmRON1lnVzU0aEtFVVRNOW15NjFfZmgxUzBqNDIwN0p5bTBjM2M?oc=5" target="_blank" rel="noopener">三颱共舞還沒完！21號颱風「閃電」最快今生成 日氣象廳最新路徑曝</a><span class="meta">TVBS新聞網 · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SR2lycVlYclo3anJTWi1nN0RLOFhyU3ZiY3FTNDZBU3hhTWtldFplMGVPWDY2S0xfSlZrdTdnVnFxT2NZVEswMEV1RlliZWhv0gFWQVVfeXFMT1pScVFabVZ5N1pOc21EMzgxTU5pSEFoMjhzTmNhdlowOV9Ha2RCd25UOWVSeEFSa3Z2YkVIc0VkanlQRThjeW4wTF80RVl5aFc2eFBXR3c?oc=5" target="_blank" rel="noopener">2颱風+2熱低 粉專：西南風增強水氣增多</a><span class="meta">UDN · 08/22</span></li>
   </ul>
 </div>
 
@@ -1551,7 +1596,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 11:48</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 12:48</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -3443,35 +3488,184 @@ function renderRankAnalysis() {
   const R = window.FERT_RANKINGS;
   if (!R || !R.suppliers || !R.suppliers.length) return;
   const supps = R.suppliers;
-  const top3 = supps.slice(0, 3);
+  const T = R.total_products;
+  const N = R.total_suppliers;
   const dachan = supps.find(r => r.name.includes('大成') || r.name.includes('碩成'));
-  const el = document.getElementById('rankAnalysis');
 
-  let html = '<h4>📊 業務市場定位分析</h4>';
-  html += '<ul>';
-  html += '<li>🥇 <strong>Top 3 廠商</strong>：' + top3.map(t => t.name + ' (' + t.total + '產品)').join('、') + '</li>';
+  // === 集中度指標 (BI 標準) ===
+  const cr = (n) => supps.slice(0, n).reduce((s,r)=>s+r.total, 0);
+  const CR3 = cr(3), CR5 = cr(5), CR10 = cr(10);
+  const CR3pct = (CR3/T*100), CR5pct = (CR5/T*100), CR10pct = (CR10/T*100);
+  // HHI 指數 (Herfindahl-Hirschman Index): sum(marketShare^2) × 10000
+  const hhi = supps.reduce((s, r) => {
+    const share = r.total / T;
+    return s + share * share;
+  }, 0) * 10000;
+  let hhiLevel = '', hhiColor = '';
+  if (hhi < 1000) { hhiLevel = '低度集中(競爭激烈)'; hhiColor = '#2e7d32'; }
+  else if (hhi < 1800) { hhiLevel = '中度集中'; hhiColor = '#f57c00'; }
+  else { hhiLevel = '高度集中(寡佔)'; hhiColor = '#c62828'; }
+
+  // 品目結構分析
+  const codeStats = {};  // code -> prods/supps
+  supps.forEach(r => Object.entries(r.by_code).forEach(([c, n]) => {
+    if (!codeStats[c]) codeStats[c] = {prods: 0, supps: new Set()};
+    codeStats[c].prods += n;
+    codeStats[c].supps.add(r.name);
+  }));
+  const codeNames = {'5-01':'植物渣粕','5-08':'雞糞加工','5-09':'禽畜糞堆肥','5-10':'一般堆肥','5-11':'雜項堆肥','5-12':'混合有機質','5-13':'雜項有機質','7-03':'有機介質'};
+
+  // 補助結構
+  const tier22 = supps.reduce((s,r)=>s+(r.by_tier['2+2元']||0), 0);
+  const tier2 = supps.reduce((s,r)=>s+(r.by_tier['2元']||0), 0);
+
+  // 平均值
+  const avgProds = T / N;
+
+  // ===== HTML render =====
+  let html = '';
+
+  // 執行摘要
+  html += '<div class="rank-exec-summary">';
+  html += '<div class="es-title">📋 執行摘要 (Executive Summary)</div>';
+  html += '<div class="es-grid">';
+  html += '  <div class="es-item"><div class="lbl">市場總產品</div><div class="val">' + T + '</div><div class="unit">支</div></div>';
+  html += '  <div class="es-item"><div class="lbl">競爭廠商</div><div class="val">' + N + '</div><div class="unit">家</div></div>';
+  html += '  <div class="es-item"><div class="lbl">CR3 集中度</div><div class="val">' + CR3pct.toFixed(1) + '<span>%</span></div><div class="unit">Top 3 市佔</div></div>';
+  html += '  <div class="es-item"><div class="lbl">CR10 集中度</div><div class="val">' + CR10pct.toFixed(1) + '<span>%</span></div><div class="unit">Top 10 市佔</div></div>';
+  html += '  <div class="es-item"><div class="lbl">HHI 指數</div><div class="val" style="color:' + hhiColor + '">' + Math.round(hhi) + '</div><div class="unit" style="color:' + hhiColor + '">' + hhiLevel + '</div></div>';
+  html += '  <div class="es-item"><div class="lbl">平均產品/家</div><div class="val">' + avgProds.toFixed(1) + '</div><div class="unit">支/廠</div></div>';
+  html += '</div></div>';
+
+  // === Dashboard 圖表區 (grid 3 欄) ===
+  html += '<div class="rank-dashboard">';
+
+  // Chart 1: 補助結構 donut
+  const donutW = 220, cxD = 110, cyD = 90, r1 = 65, r2 = 40;
+  const total = tier22 + tier2;
+  const ang22 = tier22/total * Math.PI * 2;
+  const donutSvg = (() => {
+    const arc = (start, end, rOut, rIn, color) => {
+      const x1 = cxD + rOut*Math.sin(start), y1 = cyD - rOut*Math.cos(start);
+      const x2 = cxD + rOut*Math.sin(end), y2 = cyD - rOut*Math.cos(end);
+      const x3 = cxD + rIn*Math.sin(end), y3 = cyD - rIn*Math.cos(end);
+      const x4 = cxD + rIn*Math.sin(start), y4 = cyD - rIn*Math.cos(start);
+      const large = (end - start) > Math.PI ? 1 : 0;
+      return '<path d="M ' + x1 + ' ' + y1 + ' A ' + rOut + ' ' + rOut + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2 +
+             ' L ' + x3 + ' ' + y3 + ' A ' + rIn + ' ' + rIn + ' 0 ' + large + ' 0 ' + x4 + ' ' + y4 + ' Z" fill="' + color + '"/>';
+    };
+    let s = '<svg viewBox="0 0 ' + donutW + ' 200" xmlns="http://www.w3.org/2000/svg">';
+    s += arc(0, ang22, r1, r2, '#c62828');
+    s += arc(ang22, Math.PI*2, r1, r2, '#1976d2');
+    s += '<text x="' + cxD + '" y="' + (cyD-4) + '" text-anchor="middle" font-size="20" font-weight="900" fill="#333">' + T + '</text>';
+    s += '<text x="' + cxD + '" y="' + (cyD+14) + '" text-anchor="middle" font-size="10" fill="#666">總產品</text>';
+    s += '<text x="' + cxD + '" y="185" text-anchor="middle" font-size="11" font-weight="700" fill="#333">💰 補助等級結構</text>';
+    // legend
+    s += '<rect x="12" y="' + (cyD-20) + '" width="10" height="10" fill="#c62828"/><text x="26" y="' + (cyD-11) + '" font-size="10" fill="#333">2+2元 ' + tier22 + ' (' + (tier22/total*100).toFixed(0) + '%)</text>';
+    s += '<rect x="12" y="' + (cyD+8) + '" width="10" height="10" fill="#1976d2"/><text x="26" y="' + (cyD+17) + '" font-size="10" fill="#333">2元 ' + tier2 + ' (' + (tier2/total*100).toFixed(0) + '%)</text>';
+    s += '</svg>';
+    return s;
+  })();
+
+  html += '<div class="db-card"><div class="db-head">💰 補助等級結構分析</div><div class="db-body">' + donutSvg;
+  html += '<div class="db-insight">高階 2+2 元補助占 <strong style="color:#c62828">' + (tier22/total*100).toFixed(0) + '%</strong> — 顯示市場向<strong>優質標準</strong>傾斜,通過高階審核者品牌溢價空間較大。</div></div></div>';
+
+  // Chart 2: 品目佔比 horizontal bar
+  const codeList = Object.entries(codeStats).sort((a,b) => b[1].prods - a[1].prods);
+  let cbSvg = '<svg viewBox="0 0 340 ' + (codeList.length * 24 + 40) + '" xmlns="http://www.w3.org/2000/svg">';
+  const maxCode = Math.max(...codeList.map(([_,v]) => v.prods));
+  codeList.forEach(([c, v], i) => {
+    const w = (v.prods / maxCode) * 200;
+    const y = 10 + i * 24;
+    cbSvg += '<text x="4" y="' + (y+14) + '" font-size="10" font-weight="700" fill="#333">' + c + '</text>';
+    cbSvg += '<rect x="52" y="' + y + '" width="' + w + '" height="18" fill="url(#gradP)" rx="2"/>';
+    cbSvg += '<text x="' + (w + 58) + '" y="' + (y+14) + '" font-size="10" font-weight="700" fill="#6a1b9a">' + v.prods + ' (' + v.supps.size + ' 家)</text>';
+    cbSvg += '<text x="' + (w > 60 ? 56 : 52) + '" y="' + (y+14) + '" font-size="9" fill="' + (w > 60 ? '#fff' : '#555') + '">' + (codeNames[c] || '') + '</text>';
+  });
+  cbSvg += '<defs><linearGradient id="gradP" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7b1fa2"/><stop offset="100%" stop-color="#c2185b"/></linearGradient></defs>';
+  cbSvg += '</svg>';
+  html += '<div class="db-card"><div class="db-head">🧩 品目結構 (產品數 × 業者數)</div><div class="db-body">' + cbSvg;
+  const topCode = codeList[0];
+  html += '<div class="db-insight">最大細分 <strong>' + topCode[0] + ' ' + codeNames[topCode[0]] + '</strong>:' + topCode[1].prods + '產品/' + topCode[1].supps.size + '家,平均 ' + (topCode[1].prods/topCode[1].supps.size).toFixed(1) + ' 產品/家(競爭激烈)。</div></div></div>';
+
+  // Chart 3: Top 10 廠商水平長條 + 大成標示
+  const top10 = supps.slice(0, 10);
+  const maxT = top10[0].total;
+  let barSvg = '<svg viewBox="0 0 340 ' + (top10.length * 26 + 30) + '" xmlns="http://www.w3.org/2000/svg">';
+  top10.forEach((s, i) => {
+    const w = (s.total / maxT) * 200;
+    const y = 8 + i * 26;
+    const isDachan = s.name.includes('大成') || s.name.includes('碩成');
+    const color = isDachan ? '#c62828' : (i < 3 ? '#ff9800' : '#6a1b9a');
+    const name = s.name.length > 12 ? s.name.substring(0, 10) + '..' : s.name;
+    barSvg += '<text x="4" y="' + (y+13) + '" font-size="10" font-weight="900" fill="#333">#' + (i+1) + '</text>';
+    barSvg += '<text x="22" y="' + (y+13) + '" font-size="10" fill="' + (isDachan ? '#c62828' : '#333') + '" font-weight="' + (isDachan ? 900 : 600) + '">' + name + '</text>';
+    barSvg += '<rect x="128" y="' + y + '" width="' + w + '" height="16" fill="' + color + '" rx="2"/>';
+    barSvg += '<text x="' + (w + 132) + '" y="' + (y+12) + '" font-size="10" font-weight="900" fill="' + color + '">' + s.total + '</text>';
+  });
+  barSvg += '</svg>';
+  html += '<div class="db-card"><div class="db-head">🏆 Top 10 廠商產品數</div><div class="db-body">' + barSvg;
+  html += '<div class="db-insight">龍頭 <strong>' + top10[0].name + '</strong> ' + top10[0].total + ' 支,CR3 = ' + CR3pct.toFixed(1) + '%,顯示 <strong style="color:' + hhiColor + '">' + hhiLevel + '</strong>。</div></div></div>';
+
+  html += '</div>';  // /rank-dashboard
+
+  // 大成 SWOT 分析卡
   if (dachan) {
-    html += '<li>⭐ <strong>大成/碩成排名</strong>：全國第 <strong>' + dachan.rank + '</strong> 名 (共 ' + R.total_suppliers + ' 家) · 產品數 <strong>' + dachan.total + '</strong> · 涵蓋 ' + dachan.n_categories + ' 個品目';
-    if (dachan.by_tier['2+2元']) html += ' · 有 <strong>' + dachan.by_tier['2+2元'] + '</strong> 個高階補助 (2+2 元) 產品';
-    html += '</li>';
-    // 建議
-    if (dachan.n_categories < 3) {
-      html += '<li>💡 <strong>擴展建議</strong>：目前只涵蓋 ' + dachan.n_categories + ' 個品目,可考慮進軍其他細分市場提高市佔</li>';
-    }
-  } else {
-    html += '<li>ℹ️ 未在名單中偵測到大成/碩成品牌</li>';
+    const dachanShare = (dachan.total / T * 100);
+    const dachanCat = Object.entries(dachan.by_code).sort((a,b) => b[1]-a[1])[0];
+    // 大成 vs Top 10 平均
+    const top10Avg = top10.reduce((s,r)=>s+r.total, 0) / 10;
+    const gap = top10Avg - dachan.total;
+
+    // 未進軍品目
+    const notInCodes = Object.keys(codeStats).filter(c => !dachan.by_code[c]);
+    const bluOcean = notInCodes.filter(c => codeStats[c].supps.size < 15 && codeStats[c].prods > 5)
+      .map(c => c + ' ' + (codeNames[c]||'')).slice(0, 3);
+
+    html += '<div class="rank-swot">';
+    html += '<div class="swot-title">🎯 大成/碩成 SWOT 定位分析</div>';
+    html += '<div class="swot-grid">';
+    html += '  <div class="swot-cell strength"><div class="h">💪 Strength 優勢</div>';
+    html += '<ul><li>已進入農糧署 <strong>2+2 元高階補助</strong>白名單 (' + (dachan.by_tier['2+2元']||0) + ' 產品)</li>';
+    html += '<li>集中主戰場 <strong>' + dachanCat[0] + ' ' + (codeNames[dachanCat[0]]||'') + '</strong> (' + dachanCat[1] + ' 產品,深耕定位)</li>';
+    html += '<li>母公司規模 (大成長城 1210 · TWSE)<strong>資本雄厚</strong></li></ul></div>';
+
+    html += '  <div class="swot-cell weakness"><div class="h">⚠️ Weakness 劣勢</div>';
+    html += '<ul><li>全國排名第 <strong>#' + dachan.rank + '</strong>/' + N + ' · 市佔僅 <strong>' + dachanShare.toFixed(2) + '%</strong></li>';
+    html += '<li>品目布局窄 (' + dachan.n_categories + '個 vs Top 10 平均 ' + (top10.reduce((s,r)=>s+r.n_categories,0)/10).toFixed(1) + '個)</li>';
+    html += '<li>與 Top 10 平均產品數差距 <strong>-' + gap.toFixed(0) + ' 支</strong></li></ul></div>';
+
+    html += '  <div class="swot-cell opportunity"><div class="h">🚀 Opportunity 機會</div>';
+    html += '<ul><li><strong>藍海細分市場</strong>(業者少產品少): ' + (bluOcean.length ? bluOcean.join('、') : '需另行盤點') + '</li>';
+    html += '<li>市場 HHI = ' + Math.round(hhi) + ' (' + hhiLevel + ') → <strong>無寡佔對手</strong>,前 10 名內仍有搶佔空間</li>';
+    html += '<li>2025 銷量翻倍 → 產能與品牌力已達 top 20 級,推薦名單擴充後排名可迅速上升</li></ul></div>';
+
+    html += '  <div class="swot-cell threat"><div class="h">🌪 Threat 威脅</div>';
+    html += '<ul><li>Top 3 (' + top3.map(t => t.name.substring(0,6)).join('/') + ') 品牌力強勢,銷售通路先發</li>';
+    html += '<li>禽畜糞細分競爭最激烈: ' + (codeStats['5-09'] ? codeStats['5-09'].supps.size + ' 家搶 ' + codeStats['5-09'].prods + ' 產品' : '') + '</li>';
+    html += '<li>環保法規對禽畜糞來源、重金屬含量、氨氣排放趨嚴 → 中小廠退場,但同時大廠壓力也增</li></ul></div>';
+    html += '</div></div>';
   }
-  // 集中度
-  const top10Prods = supps.slice(0, 10).reduce((s, r) => s + r.total, 0);
-  const share10 = (top10Prods / R.total_products * 100).toFixed(1);
-  html += '<li>📈 <strong>市場集中度</strong>：Top 10 廠商佔 <strong>' + share10 + '%</strong> 產品數 (' + top10Prods + '/' + R.total_products + ') → ';
-  if (share10 > 60) html += '高度集中';
-  else if (share10 > 40) html += '中度集中';
-  else html += '分散競爭';
-  html += '</li>';
-  html += '</ul>';
-  html += '<p style="font-size:11px;color:#666;margin-top:8px">📌 資料每週自動從<a href="' + R.source_url + '" target="_blank" style="color:#6a1b9a"> 農糧署官網</a> 抓取更新。當農糧署修訂名單後 7 天內自動同步。</p>';
-  el.innerHTML = html;
+
+  // 建議行動
+  html += '<div class="rank-actions">';
+  html += '<div class="ra-title">🎬 建議行動方案 (Actionable Recommendations)</div>';
+  html += '<div class="ra-grid">';
+  html += '<div class="ra-item"><div class="p">P1 短期</div><div class="t">增加 5-09 禽畜糞堆肥新品牌通過推薦</div><div class="w">預期效果:排名從 #' + (dachan?dachan.rank:'?') + ' 前進 5-10 名</div></div>';
+  html += '<div class="ra-item"><div class="p">P2 中期</div><div class="t">跨足 5-12 混合有機質肥料 (第二大細分市場)</div><div class="w">預期效果:品目數 +1,總產品數翻倍</div></div>';
+  html += '<div class="ra-item"><div class="p">P3 長期</div><div class="t">佈局 5-13 雜項有機質 (2+2 元 · 藍海:僅 ' + (codeStats['5-13'] ? codeStats['5-13'].supps.size : '?') + ' 家)</div><div class="w">預期效果:進入獨佔區間,毛利率提升</div></div>';
+  html += '</div></div>';
+
+  // 資料源
+  const supp10 = supps.slice(0, 3);
+  const top3names = supp10.map(t => t.name);
+  html += '<div class="rank-footer">';
+  html += '📡 資料源: <a href="' + R.source_url + '" target="_blank">農糧署 · 115 年國產有機質肥料品牌推薦名單</a> · ';
+  html += '每 7 天自動同步 · 最後更新 ' + R.updated + '<br>';
+  html += '💡 分析方法: CR3/CR5/CR10 集中度比、HHI 賀芬達爾指數、SWOT 定位、藍海細分市場識別';
+  html += '</div>';
+
+  document.getElementById('rankAnalysis').innerHTML = html;
 }
 
 // CWA sidebar: smooth scroll + active state (仿 CODIS)

@@ -3620,7 +3620,7 @@ function renderRankAnalysis() {{
   else {{ hhiLevel = '高度集中(寡佔)'; hhiColor = '#c62828'; }}
 
   // 品目結構分析
-  const codeStats = {{}};  // code → {prods, suppliers}
+  const codeStats = {{}};  // code -> prods/supps
   supps.forEach(r => Object.entries(r.by_code).forEach(([c, n]) => {{
     if (!codeStats[c]) codeStats[c] = {{prods: 0, supps: new Set()}};
     codeStats[c].prods += n;
