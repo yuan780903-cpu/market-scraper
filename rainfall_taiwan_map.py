@@ -237,18 +237,33 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .ranking td.county{{width:100px;font-weight:600;color:var(--cwa-text)}}
   .ranking td.mm{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
 
-  /* ===== 影響級距表 ===== */
-  .impact .group-title{{margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--cwa-primary);background:var(--cwa-hover);padding:4px 10px;border-left:3px solid var(--cwa-primary)}}
-  .impact .row{{display:flex;gap:12px;font-size:13px;margin:4px 0;align-items:baseline;padding:4px 10px}}
-  .impact .row:nth-child(even){{background:var(--cwa-hover)}}
-  .impact .rng{{width:100px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0}}
-  .impact .note{{color:var(--cwa-text);flex:1}}
-  .impact .green{{color:var(--cwa-success)}}
-  .impact .amber{{color:var(--cwa-warning)}}
-  .impact .red{{color:var(--cwa-danger)}}
-  .impact .gray{{color:var(--cwa-text-muted)}}
-  .impact .info-note{{margin-top:14px;padding:12px 14px;background:var(--cwa-light);border-left:4px solid var(--cwa-primary);border-radius:2px;font-size:12px;color:var(--cwa-text);line-height:1.7}}
-  .impact .info-note strong{{color:var(--cwa-primary)}}
+  /* ===== 影響級距表 (fab 浮動 icon 展開) ===== */
+  .impact-fab-panel .group-title{{margin:10px 0 4px;font-size:12px;font-weight:700;color:var(--cwa-primary);background:var(--cwa-hover);padding:3px 8px;border-left:3px solid var(--cwa-primary)}}
+  .impact-fab-panel .row{{display:flex;gap:10px;font-size:11.5px;margin:2px 0;align-items:baseline;padding:3px 8px;line-height:1.4}}
+  .impact-fab-panel .row:nth-child(even){{background:var(--cwa-hover)}}
+  .impact-fab-panel .rng{{width:82px;font-weight:700;font-family:ui-monospace,Menlo,monospace;flex-shrink:0;font-size:11px}}
+  .impact-fab-panel .note{{color:var(--cwa-text);flex:1}}
+  .impact-fab-panel .green{{color:var(--cwa-success)}}
+  .impact-fab-panel .amber{{color:var(--cwa-warning)}}
+  .impact-fab-panel .red{{color:var(--cwa-danger)}}
+  .impact-fab-panel .gray{{color:var(--cwa-text-muted)}}
+  .impact-fab-panel .info-note{{margin-top:10px;padding:8px 10px;background:var(--cwa-light);border-left:4px solid var(--cwa-primary);border-radius:2px;font-size:11px;color:var(--cwa-text);line-height:1.6}}
+  .impact-fab-panel .info-note strong{{color:var(--cwa-primary)}}
+
+  /* fab 容器 */
+  .impact-fab{{position:fixed;right:16px;bottom:16px;z-index:998}}
+  .impact-fab-btn{{background:linear-gradient(135deg,#1976d2,#0d47a1);color:#fff;border:none;border-radius:26px;padding:10px 16px 10px 14px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;gap:6px;transition:transform .15s;font-family:inherit}}
+  .impact-fab-btn:hover{{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.4)}}
+  .impact-fab-btn span{{font-size:13px;letter-spacing:.5px}}
+  .impact-fab-panel{{position:absolute;right:0;bottom:52px;width:400px;max-width:calc(100vw - 32px);max-height:70vh;overflow-y:auto;background:#fff;border:1px solid var(--cwa-border);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:12px 14px;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .15s,transform .15s,visibility .15s}}
+  .impact-fab:hover .impact-fab-panel,.impact-fab.open .impact-fab-panel{{opacity:1;visibility:visible;transform:translateY(0)}}
+  .impact-fab-head{{font-size:14px;font-weight:900;color:var(--cwa-primary);padding-bottom:6px;border-bottom:2px solid var(--cwa-primary);margin-bottom:8px}}
+  @media (max-width:640px){{
+    .impact-fab{{right:8px;bottom:8px}}
+    .impact-fab-btn{{padding:8px 12px 8px 10px;font-size:12px}}
+    .impact-fab-btn span{{font-size:11px}}
+    .impact-fab-panel{{width:calc(100vw - 16px);max-height:60vh}}
+  }}
 
   /* ===== 資料來源 ===== */
   .source{{border-top:2px solid var(--cwa-border);background:var(--cwa-hover)}}
@@ -843,30 +858,36 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   {legend_rows}
 </div>
 
-<div class="impact">
-  <h3>💧 雨量對有機質肥料施用的影響程度</h3>
-  <div class="group-title">短期單日</div>
-  <div class="row"><div class="rng green">&lt; 30 mm</div><div class="note">可施肥；雨水帶入水分有助於溶肥滲入</div></div>
-  <div class="row"><div class="rng amber">30 – 80 mm</div><div class="note">表面顆粒被沖刷，氮素流失 10-20%，當日施肥效果打折</div></div>
-  <div class="row"><div class="rng red">&gt; 80 mm</div><div class="note">禁施；農路積水、機具進不去、粒肥泡爛</div></div>
+<!-- 「雨量對肥料影響」摺疊為右下角浮動 icon,hover 展開節省空間 -->
+<div class="impact-fab" id="impactFab">
+  <button class="impact-fab-btn" aria-label="雨量對肥料影響對照表">💧<span>肥料影響</span></button>
+  <div class="impact-fab-panel">
+    <div class="impact-fab-head">💧 雨量對有機質肥料施用的影響程度</div>
+    <div class="impact-fab-body">
+      <div class="group-title">短期單日</div>
+      <div class="row"><div class="rng green">&lt; 30 mm</div><div class="note">可施肥；雨水帶入水分有助於溶肥滲入</div></div>
+      <div class="row"><div class="rng amber">30 – 80 mm</div><div class="note">表面顆粒被沖刷，氮素流失 10-20%，當日施肥效果打折</div></div>
+      <div class="row"><div class="rng red">&gt; 80 mm</div><div class="note">禁施；農路積水、機具進不去、粒肥泡爛</div></div>
 
-  <div class="group-title">連續 3-5 天</div>
-  <div class="row"><div class="rng green">&lt; 50 mm</div><div class="note">田面 OK；正常出貨無虞</div></div>
-  <div class="row"><div class="rng amber">50 – 150 mm</div><div class="note">泥濘；農路機具不易進入，出貨延後 1-2 天</div></div>
-  <div class="row"><div class="rng red">&gt; 150 mm</div><div class="note">田面積水；微生物轉厭氧、根系活性降，有機質肥效大幅遞減</div></div>
+      <div class="group-title">連續 3-5 天</div>
+      <div class="row"><div class="rng green">&lt; 50 mm</div><div class="note">田面 OK；正常出貨無虞</div></div>
+      <div class="row"><div class="rng amber">50 – 150 mm</div><div class="note">泥濘；農路機具不易進入，出貨延後 1-2 天</div></div>
+      <div class="row"><div class="rng red">&gt; 150 mm</div><div class="note">田面積水；微生物轉厭氧、根系活性降，有機質肥效大幅遞減</div></div>
 
-  <div class="group-title">月累積（業務銷量判讀）</div>
-  <div class="row"><div class="rng green">&lt; 150 mm</div><div class="note">施肥黃金期，銷量旺 — 客戶積極備肥</div></div>
-  <div class="row"><div class="rng gray">150 – 300 mm</div><div class="note">普通，看空檔出貨 — 接單頻率正常</div></div>
-  <div class="row"><div class="rng amber">300 – 500 mm</div><div class="note">銷量下滑 20-30% — 客戶觀望、延後備肥</div></div>
-  <div class="row"><div class="rng red">&gt; 500 mm</div><div class="note">銷量低谷 — 田間無法作業，出貨幾乎停滯</div></div>
+      <div class="group-title">月累積（業務銷量判讀）</div>
+      <div class="row"><div class="rng green">&lt; 150 mm</div><div class="note">施肥黃金期，銷量旺 — 客戶積極備肥</div></div>
+      <div class="row"><div class="rng gray">150 – 300 mm</div><div class="note">普通，看空檔出貨 — 接單頻率正常</div></div>
+      <div class="row"><div class="rng amber">300 – 500 mm</div><div class="note">銷量下滑 20-30% — 客戶觀望、延後備肥</div></div>
+      <div class="row"><div class="rng red">&gt; 500 mm</div><div class="note">銷量低谷 — 田間無法作業，出貨幾乎停滯</div></div>
 
-  <div class="info-note">
-    <strong>📌 為什麼有機肥對雨量比化肥敏感？</strong><br>
-    1. <strong>顆粒比較大</strong>，雨水浸泡 1-2 天會泡爛、養分隨水流失到溝渠<br>
-    2. <strong>含微生物</strong>，連續陰雨 = 田面厭氧，菌相被破壞、肥效歸零<br>
-    3. <strong>多為粒狀/粉狀</strong>，需要機具撒佈，農路積水就根本無法出貨<br>
-    4. <strong>果樹/茶葉</strong>主要客戶在山區，雨季時連道路都不一定能通
+      <div class="info-note">
+        <strong>📌 為什麼有機肥對雨量比化肥敏感？</strong><br>
+        1. <strong>顆粒比較大</strong>，雨水浸泡 1-2 天會泡爛、養分隨水流失到溝渠<br>
+        2. <strong>含微生物</strong>，連續陰雨 = 田面厭氧，菌相被破壞、肥效歸零<br>
+        3. <strong>多為粒狀/粉狀</strong>，需要機具撒佈，農路積水就根本無法出貨<br>
+        4. <strong>果樹/茶葉</strong>主要客戶在山區，雨季時連道路都不一定能通
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2198,6 +2219,15 @@ function renderTownsMap() {{
   }});
   document.getElementById('townsCount').textContent = '共 ' + cnt + ' 個特色農產鄉鎮';
 }}
+
+// 影響級距 fab: 手機點擊 toggle (桌面 hover 觸發)
+(function initImpactFab() {{
+  const fab = document.getElementById('impactFab');
+  if (!fab) return;
+  const btn = fab.querySelector('.impact-fab-btn');
+  btn.addEventListener('click', (e) => {{ e.stopPropagation(); fab.classList.toggle('open'); }});
+  document.addEventListener('click', (e) => {{ if (!fab.contains(e.target)) fab.classList.remove('open'); }});
+}})();
 
 document.getElementById('townFltCat').addEventListener('change', renderTownsMap);
 document.getElementById('townKw').addEventListener('input', renderTownsMap);
