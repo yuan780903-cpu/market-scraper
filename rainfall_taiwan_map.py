@@ -952,7 +952,24 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rank-table td.n{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
   .rank-table td.n.big{{color:#c62828;font-size:14px}}
   .rank-table td.cats{{font-size:11px;color:#666}}
-  .rank-table td.cats .cat{{display:inline-block;background:#f3e5f5;color:#6a1b9a;padding:1px 6px;border-radius:8px;margin:1px 2px;font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:700}}
+  .rank-table td.cats .cat{{display:inline-block;background:#f3e5f5;color:#6a1b9a;padding:1px 6px;border-radius:8px;margin:1px 2px;font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:700;cursor:pointer;transition:all .1s}}
+  .rank-table td.cats .cat:hover{{background:#6a1b9a;color:#fff;transform:scale(1.1)}}
+  .code-link{{color:#6a1b9a;font-weight:900;cursor:pointer;text-decoration:underline dotted;font-family:ui-monospace,Menlo,monospace}}
+  .code-link:hover{{background:#6a1b9a;color:#fff;padding:1px 4px;border-radius:3px;text-decoration:none}}
+
+  /* 品目說明 Modal */
+  .code-info-modal{{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:9999;padding:16px;backdrop-filter:blur(4px)}}
+  .code-info-modal.open{{display:flex;animation:fadeIn .15s}}
+  .cim-card{{background:#fff;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px 24px;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative}}
+  .cim-close{{position:absolute;top:12px;right:14px;background:#f0f0f0;border:none;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;font-weight:900;color:#666;transition:all .1s}}
+  .cim-close:hover{{background:#c62828;color:#fff}}
+  .cim-code{{display:inline-block;color:#fff;padding:6px 14px;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-weight:900;font-size:18px;margin-bottom:6px;box-shadow:0 2px 6px rgba(0,0,0,.2)}}
+  .cim-name{{font-size:22px;font-weight:900;color:#333;margin-bottom:4px}}
+  .cim-source{{font-size:13px;font-weight:700;margin-bottom:14px}}
+  .cim-row{{display:flex;gap:12px;padding:8px 0;border-top:1px solid #eee}}
+  .cim-lbl{{width:100px;font-weight:900;color:#666;font-size:13px;flex-shrink:0}}
+  .cim-val{{flex:1;color:#333;font-size:13px;line-height:1.6}}
+  .cim-footer{{margin-top:14px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#888;text-align:center}}
   .rank-table tr:nth-child(odd) td{{background:#fafafa}}
   .rank-table tr:hover td{{background:#f3e5f5}}
   .rank-analysis{{margin-top:14px;padding:0;background:transparent;font-size:13px;line-height:1.7;color:var(--cwa-text)}}
@@ -3739,6 +3756,79 @@ async function pollFertUpdate(pat, btn, origTxt) {{
   }}, 8000);
 }}
 
+// 品目界定字典 (依農糧署 1090424 肥料種類品目及規格修正規定)
+const CODE_INFO = {{
+  '5-01': {{name:'植物渣粕肥料', source:'🌾 植物來源', src_color:'#2e7d32',
+    criteria:'榨油後副產品 (大豆粕/花生粕/菜籽粕/棉籽粕/椰纖)', spec:'有機質 ≥40% · N ≥4%',
+    examples:'大豆粕、花生粕、菜籽粕', uses:'有機認證農場、精緻蔬菜、有機茶園', tier:'2 元 (一般)'}},
+  '5-02': {{name:'副產植物質肥料', source:'🌾 植物來源', src_color:'#2e7d32',
+    criteria:'農食品加工植物副產品 (穀糠/樹皮/菇渣/酒糟)', spec:'有機質 ≥40%',
+    examples:'米糠、菇太空包、酒糟', uses:'土壤改良、綠肥', tier:'2 元 (一般)'}},
+  '5-03': {{name:'魚廢渣肥料', source:'🐟 動物來源', src_color:'#0288d1',
+    criteria:'魚類加工副產品 (魚粉/骨粉)', spec:'有機質 ≥40% · N ≥5%',
+    examples:'魚精肥、魚骨粉', uses:'高單價蔬菜/花卉', tier:'2 元'}},
+  '5-04': {{name:'動物廢渣肥料', source:'🐄 動物來源', src_color:'#c62828',
+    criteria:'屠宰副產品 (骨粉/血粉/羽毛粉)', spec:'有機質 ≥40%',
+    examples:'血粉肥、羽毛肥', uses:'有機蔬菜、觀葉植物', tier:'2 元'}},
+  '5-08': {{name:'雞糞加工肥料', source:'🐔 禽畜糞系', src_color:'#c62828',
+    criteria:'100% 雞糞高溫乾燥或造粒 (未經堆肥發酵)', spec:'有機質 ≥45% · N ≥1.5%',
+    examples:'雞糞粒、雞糞粉', uses:'果樹、大田作物、水稻', tier:'💰 2+2 元 (高階補助)'}},
+  '5-09': {{name:'禽畜糞堆肥', source:'🐔 禽畜糞系', src_color:'#c62828',
+    criteria:'禽畜糞 (雞/豬/牛/鴨/羊) + 好氣性堆肥發酵', spec:'有機質 ≥40% · C/N ≤20 (完熟指標)',
+    examples:'豬糞堆肥、牛糞堆肥、禽糞堆肥', uses:'★大成/碩成主戰場★ 果樹基肥、蔬果', tier:'💰 2+2 元 (高階補助)'}},
+  '5-10': {{name:'一般堆肥', source:'🔀 混合系', src_color:'#f57c00',
+    criteria:'植物+動物混合堆肥發酵', spec:'有機質 ≥30%',
+    examples:'綜合堆肥、農家堆肥', uses:'廣泛使用、土壤改良', tier:'2 元'}},
+  '5-11': {{name:'雜項堆肥', source:'🔀 混合系', src_color:'#f57c00',
+    criteria:'不屬 5-09/5-10 的其他堆肥 (菇渣/都市/菜市場廢棄物)', spec:'有機質 ≥30%',
+    examples:'菇類堆肥、都市有機堆肥', uses:'環保回收再利用型', tier:'2 元'}},
+  '5-12': {{name:'混合有機質肥料', source:'⚗️ 混合+化肥', src_color:'#7b1fa2',
+    criteria:'有機肥+化學肥料 N/P/K 添加', spec:'有機質 ≥30% + 無機成分',
+    examples:'有機化學複合肥', uses:'速效+長效兼顧、慣行農法', tier:'2 元'}},
+  '5-13': {{name:'雜項有機質肥料', source:'🧪 特殊/雜項', src_color:'#6a1b9a',
+    criteria:'5-01~5-12 都不算的其他 (含微生物/生物炭/特殊酵素)', spec:'因產品而異',
+    examples:'微生物肥、生物炭肥、酵素肥', uses:'特殊功能訴求、藍海市場', tier:'💰 2+2 元 (高階補助)'}},
+  '5-14': {{name:'液態雜項有機質肥料', source:'💧 液態', src_color:'#0288d1',
+    criteria:'液態版 5-13', spec:'液態、含微生物',
+    examples:'EM 菌液肥、發酵液肥', uses:'滴灌、葉面噴施', tier:'2 元'}},
+  '5-15': {{name:'液態有機質肥料', source:'💧 液態', src_color:'#0288d1',
+    criteria:'純有機質液態肥料', spec:'液態',
+    examples:'液態豆餅肥、魚精液肥', uses:'滴灌系統、水耕', tier:'2 元'}},
+  '7-02': {{name:'雜項有機質栽培介質', source:'🌱 栽培介質', src_color:'#5d4037',
+    criteria:'兩種以上有機質介質混合', spec:'介質類、非肥料',
+    examples:'椰纖+泥炭+珍珠石', uses:'育苗、盆栽', tier:'2 元'}},
+  '7-03': {{name:'有機質栽培介質', source:'🌱 栽培介質', src_color:'#5d4037',
+    criteria:'純單一有機質介質', spec:'介質類、非肥料',
+    examples:'100% 泥炭、100% 椰纖', uses:'育苗、精緻盆栽', tier:'2 元'}},
+}};
+
+function showCodeInfo(code) {{
+  const info = CODE_INFO[code];
+  if (!info) return;
+  let modal = document.getElementById('codeInfoModal');
+  if (!modal) {{
+    modal = document.createElement('div');
+    modal.id = 'codeInfoModal';
+    modal.className = 'code-info-modal';
+    modal.onclick = (e) => {{ if (e.target === modal) modal.classList.remove('open'); }};
+    document.body.appendChild(modal);
+  }}
+  modal.innerHTML =
+    '<div class="cim-card">' +
+    '<button class="cim-close" onclick="document.getElementById(\\'codeInfoModal\\').classList.remove(\\'open\\')">✕</button>' +
+    '<div class="cim-code" style="background:' + info.src_color + '">' + code + '</div>' +
+    '<div class="cim-name">' + info.name + '</div>' +
+    '<div class="cim-source" style="color:' + info.src_color + '">' + info.source + '</div>' +
+    '<div class="cim-row"><div class="cim-lbl">📖 界定原料</div><div class="cim-val">' + info.criteria + '</div></div>' +
+    '<div class="cim-row"><div class="cim-lbl">📊 規格標準</div><div class="cim-val">' + info.spec + '</div></div>' +
+    '<div class="cim-row"><div class="cim-lbl">🏷️ 常見產品</div><div class="cim-val">' + info.examples + '</div></div>' +
+    '<div class="cim-row"><div class="cim-lbl">🎯 主要用途</div><div class="cim-val">' + info.uses + '</div></div>' +
+    '<div class="cim-row"><div class="cim-lbl">💰 補助等級</div><div class="cim-val" style="color:#c62828;font-weight:900">' + info.tier + '</div></div>' +
+    '<div class="cim-footer">📌 依據: 農糧署 1090424 肥料種類品目及規格修正規定</div>' +
+    '</div>';
+  modal.classList.add('open');
+}}
+
 // ============ 🏭 廠商排名 (從農糧署即時抓取) ============
 (function initRankBlock() {{
   const R = window.FERT_RANKINGS || {{}};
@@ -3790,7 +3880,7 @@ function renderCatSummary() {{
       const cls = tier === '2+2元' ? 'tier-hi' : '';
       html += '<tr>';
       if (i === 0) html += '<td class="' + cls + '" rowspan="' + tiers[tier].length + '"><strong>' + tier + '</strong></td>';
-      html += '<td>' + c.code + '</td><td class="name">' + c.name + '</td>';
+      html += '<td><a class="code-link" onclick="showCodeInfo(\\'' + c.code + '\\')" title="點看界定">' + c.code + '</a></td><td class="name">' + c.name + '</td>';
       html += '<td>' + c.n_prods + '</td><td>' + c.n_suppliers + '</td>';
       html += '<td>' + (c.n_suppliers > 0 ? (c.n_prods / c.n_suppliers).toFixed(1) : '–') + '</td>';
       html += '</tr>';
@@ -3840,7 +3930,7 @@ function renderRankTable() {{
     const rankCls = r.dynRank <= 3 ? 'rank top3' : 'rank';
     const nameCls = isDachan ? 'name dachan' : 'name';
     const cats = Object.entries(r.by_code).sort((a,b) => b[1] - a[1])
-      .map(([c, n]) => '<span class="cat">' + c + ':' + n + '</span>').join('');
+      .map(([c, n]) => '<span class="cat" onclick="showCodeInfo(\\'' + c + '\\')" title="點看品目界定">' + c + ':' + n + '</span>').join('');
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="' + rankCls + '">#' + r.dynRank + '</td>' +
