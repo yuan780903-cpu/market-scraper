@@ -96,20 +96,21 @@ def fetch_rainfall(lat: float, lon: float, past_days: int = 92,
 
 
 def aggregate(daily: dict, today: date) -> dict:
-    """計算 今日 / 本月累積 / 本季累積 / 各月累積"""
+    """計算 今日 / 本月累積 / 本季累積 (只算到 today, 不含未來 forecast)"""
     today_str = today.isoformat()
     today_val = daily.get(today_str, 0)
 
-    # 本月：所有 today.year-today.month 的日值加總
+    # 本月:所有 today.year-today.month 的日值 (不含 today 之後的預測)
     month_prefix = f"{today.year}-{today.month:02d}-"
-    month_total = sum(v for d, v in daily.items() if d.startswith(month_prefix))
+    month_total = sum(v for d, v in daily.items()
+                     if d.startswith(month_prefix) and d <= today_str)
 
-    # 本季
+    # 本季:同月+同季但不含未來
     q = (today.month - 1) // 3 + 1
     q_months = {(q - 1) * 3 + i + 1 for i in range(3)}
     q_total = sum(
         v for d, v in daily.items()
-        if d.startswith(f"{today.year}-")
+        if d.startswith(f"{today.year}-") and d <= today_str
         and int(d.split("-")[1]) in q_months
     )
 
