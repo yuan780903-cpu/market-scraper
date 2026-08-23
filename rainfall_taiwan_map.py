@@ -1038,7 +1038,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block">
-  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#666;font-weight:400">· 資料源：Open-Meteo ECMWF-IFS 9km，每縣市 3-5 點採樣取 MAX (含山區/平原/沿海)</span></h3>
+  <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
   <div class="history-filters">
     <label>地區</label>
     <select id="histRegion">
@@ -3297,6 +3297,101 @@ def collect_rows(verbose: bool = True) -> list:
     return rows
 
 
+COUNTY_CWA_STATION = {
+    "臺北市": ("466920", "臺北"),
+    "新北市": ("466881", "板橋"),
+    "基隆市": ("466940", "基隆"),
+    "桃園市": ("467050", "新屋"),
+    "新竹市": ("467571", "新竹"),
+    "新竹縣": ("467571", "新竹"),
+    "宜蘭縣": ("467080", "宜蘭"),
+    "苗栗縣": ("467490", "臺中"),
+    "臺中市": ("467490", "臺中"),
+    "彰化縣": ("467490", "臺中"),
+    "南投縣": ("467650", "日月潭"),
+    "雲林縣": ("467480", "嘉義"),
+    "嘉義市": ("467480", "嘉義"),
+    "嘉義縣": ("467480", "嘉義"),
+    "臺南市": ("467410", "臺南"),
+    "高雄市": ("467440", "高雄"),
+    "屏東縣": ("467590", "恆春"),
+    "花蓮縣": ("466990", "花蓮"),
+    "臺東縣": ("467660", "臺東"),
+    "澎湖縣": ("467350", "澎湖"),
+    "金門縣": ("467110", "金門"),
+    "連江縣": ("467990", "馬祖"),
+}
+
+
+def fetch_cwa_codis_history(county: str, verbose: bool = True) -> dict:
+    """從 CWA CODIS 抓該縣市代表氣象站的全部歷史月資料(自 1897 起)
+    回傳 {year_str: {month_str: {mm, rd, sd, tavg, tmax, tmin}}}"""
+    import urllib.request, urllib.parse, http.cookiejar
+    if county not in COUNTY_CWA_STATION:
+        return {}
+    stn_id, stn_name = COUNTY_CWA_STATION[county]
+
+    # 每次呼叫都建 session 拿 cookie (CODIS WAF 要求)
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    try:
+        # Step 1: 首頁拿 cookie
+        opener.open(urllib.request.Request(
+            "https://codis.cwa.gov.tw/StationData",
+            headers={"User-Agent": ua}), timeout=20)
+        # Step 2: POST /api/station
+        body = urllib.parse.urlencode({
+            "stn_ID": stn_id, "stn_type": "cwb",
+            "type": "report_year", "date": f"{date.today().year}-01-01",
+        }).encode()
+        req = urllib.request.Request(
+            "https://codis.cwa.gov.tw/api/station",
+            data=body, method="POST",
+            headers={"User-Agent": ua,
+                     "Referer": "https://codis.cwa.gov.tw/StationData",
+                     "Origin": "https://codis.cwa.gov.tw",
+                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                     "X-Requested-With": "XMLHttpRequest"})
+        resp = opener.open(req, timeout=60)
+        j = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        if verbose:
+            print(f" CWA CODIS FAIL: {e}")
+        return {}
+
+    if j.get("code") != 200:
+        return {}
+
+    result = {}
+    for row in j.get("data", []):
+        for dt in row.get("dts", []):
+            ym = dt.get("DataYearMonth", "")
+            if len(ym) < 7:
+                continue
+            y_k, m_k = ym[:4], str(int(ym[5:7]))
+            p = dt.get("Precipitation") or {}
+            at = dt.get("AirTemperature") or {}
+
+            mm = p.get("Accumulation")
+            rd = p.get("PrecipitationDays") or p.get("GE1Days") or 0
+            sd = p.get("GE50Days") or 0  # ≥50mm 豪雨日
+            tavg = at.get("Mean")
+            tmax = at.get("Maximum")
+            tmin = at.get("Minimum")
+
+            if y_k not in result:
+                result[y_k] = {}
+            result[y_k][m_k] = {
+                "mm": round(float(mm), 1) if mm is not None else 0,
+                "rd": int(rd) if rd else 0,
+                "sd": int(sd) if sd else 0,
+                "tavg": tavg, "tmax": tmax, "tmin": tmin,
+                "src": "cwa",
+            }
+    return result
+
+
 COUNTY_SAMPLE_POINTS = {
     "臺北市": [(25.04, 121.51), (25.13, 121.55), (25.09, 121.42)],
     "新北市": [(25.01, 121.46), (24.98, 121.54), (25.17, 121.65), (24.87, 121.53)],
@@ -3376,56 +3471,90 @@ def collect_history_stats(verbose: bool = True, n_years: int = 10, use_cache: bo
     if result is None:
         end_year = today.year
         start_year = end_year - n_years + 1
-        start_date = f"{start_year}-01-01"
-        end_date = today.isoformat()
 
         result = {
             "years": list(range(start_year, end_year + 1)),
             "counties": [c[0] for c in COUNTIES],
             "data": {},
-            "source": "Open-Meteo ECMWF-IFS 9km · 每縣市多點採樣取 MAX",
+            "source": "中央氣象署 CODIS 觀測站官方歷史資料 (每縣市代表氣象局主站)",
+            "stations": {k: {"id": v[0], "name": v[1]} for k, v in COUNTY_CWA_STATION.items()},
             "updated": today.isoformat(),
         }
 
         for i, (name, lat, lon) in enumerate(COUNTIES, 1):
-            points = COUNTY_SAMPLE_POINTS.get(name, [(lat, lon)])
+            stn = COUNTY_CWA_STATION.get(name)
             if verbose:
-                print(f"  [歷史 {i:>2}/{len(COUNTIES)}] {name:<5} {len(points)}點採樣 {n_years}年 ...", end="", flush=True)
-            # 每點抓 daily
-            point_daily_list = []
-            for p_lat, p_lon in points:
-                d = _fetch_history_one_point(p_lat, p_lon, start_date, end_date)
-                if d:
-                    point_daily_list.append(d)
-                time.sleep(0.25)
-            if not point_daily_list:
-                result["data"][name] = {}
-                if verbose: print(f" FAIL 全無資料")
-                continue
-
-            # 每一天取「多點 MAX」— 反映該縣市內任一區的最高降雨
-            all_dates = set()
-            for d in point_daily_list: all_dates.update(d.keys())
-            merged = {}
-            for date_str in all_dates:
-                vals = [d.get(date_str, 0.0) for d in point_daily_list]
-                merged[date_str] = max(vals)
-
-            months = {}
-            for t, v in merged.items():
-                y = int(t[:4]); m = int(t[5:7])
-                if y not in months: months[y] = {}
-                if m not in months[y]: months[y][m] = {"mm": 0.0, "rd": 0, "sd": 0}
-                months[y][m]["mm"] += v
-                if v >= 1: months[y][m]["rd"] += 1
-                if v >= 80: months[y][m]["sd"] += 1
-            for y in months:
-                for m in months[y]:
-                    months[y][m]["mm"] = round(months[y][m]["mm"], 1)
-            result["data"][name] = months
-            if verbose:
-                yc = len(months); mc = sum(len(v) for v in months.values())
-                print(f" ✓ {yc}年/{mc}月 ({len(point_daily_list)}點merge)")
+                s_desc = f"{stn[0]}({stn[1]})" if stn else "無主站"
+                print(f"  [CWA {i:>2}/{len(COUNTIES)}] {name:<5} 站={s_desc} ...", end="", flush=True)
+            cwa_months = fetch_cwa_codis_history(name, verbose=False) if stn else {}
+            if cwa_months:
+                result["data"][name] = cwa_months
+                # 檢查最近 5 年是否有缺月 → 用 Open-Meteo 補
+                cur_y = today.year
+                missing_recent = []
+                for y in range(cur_y - 4, cur_y + 1):
+                    y_k = str(y)
+                    y_data = cwa_months.get(y_k, {})
+                    # 該年應有月份 (至今為止的月)
+                    max_m = today.month if y == cur_y else 12
+                    for m in range(1, max_m + 1):
+                        m_k = str(m)
+                        if m_k not in y_data or (y_data.get(m_k, {}).get("mm", 0) == 0 and y_data.get(m_k, {}).get("rd", 0) == 0):
+                            missing_recent.append((y, m))
+                if missing_recent and len(missing_recent) > 3:  # 缺 3 個月以上才 fallback
+                    if verbose: print(f" ✓ CWA {sorted(cwa_months.keys())[0]}–{sorted(cwa_months.keys())[-1]},缺{len(missing_recent)}月補Open-Meteo...", end="", flush=True)
+                    om_start = f"{cur_y - 4}-01-01"
+                    om_daily = _fetch_history_one_point(lat, lon, om_start, today.isoformat())
+                    om_months = {}
+                    for t, v in om_daily.items():
+                        y_k, m_k = t[:4], str(int(t[5:7]))
+                        if y_k not in om_months: om_months[y_k] = {}
+                        if m_k not in om_months[y_k]: om_months[y_k][m_k] = {"mm": 0.0, "rd": 0, "sd": 0, "src": "openmeteo-fallback"}
+                        om_months[y_k][m_k]["mm"] += v
+                        if v >= 1: om_months[y_k][m_k]["rd"] += 1
+                        if v >= 80: om_months[y_k][m_k]["sd"] += 1
+                    for y, m in missing_recent:
+                        y_k, m_k = str(y), str(m)
+                        if y_k in om_months and m_k in om_months[y_k]:
+                            v = om_months[y_k][m_k]
+                            v["mm"] = round(v["mm"], 1)
+                            if y_k not in result["data"][name]:
+                                result["data"][name][y_k] = {}
+                            result["data"][name][y_k][m_k] = v
+                    if verbose: print(f" ✓")
+                else:
+                    if verbose:
+                        years_c = sorted(cwa_months.keys())
+                        total_m = sum(len(v) for v in cwa_months.values())
+                        print(f" ✓ CWA {years_c[0]}–{years_c[-1]}·{total_m}月")
+            else:
+                # Fallback: Open-Meteo (無 CWA 主站或抓失敗時)
+                if verbose: print(" CWA失敗, fallback Open-Meteo ...", end="", flush=True)
+                points = COUNTY_SAMPLE_POINTS.get(name, [(lat, lon)])
+                point_daily_list = []
+                for p_lat, p_lon in points:
+                    d = _fetch_history_one_point(p_lat, p_lon,
+                        f"{start_year}-01-01", today.isoformat())
+                    if d: point_daily_list.append(d)
+                    time.sleep(0.2)
+                months = {}
+                if point_daily_list:
+                    all_dates = set()
+                    for d in point_daily_list: all_dates.update(d.keys())
+                    for t in all_dates:
+                        v = max(d.get(t, 0.0) for d in point_daily_list)
+                        y_k, m_k = t[:4], str(int(t[5:7]))
+                        if y_k not in months: months[y_k] = {}
+                        if m_k not in months[y_k]: months[y_k][m_k] = {"mm": 0.0, "rd": 0, "sd": 0, "src": "openmeteo"}
+                        months[y_k][m_k]["mm"] += v
+                        if v >= 1: months[y_k][m_k]["rd"] += 1
+                        if v >= 80: months[y_k][m_k]["sd"] += 1
+                    for y_k in months:
+                        for m_k in months[y_k]:
+                            months[y_k][m_k]["mm"] = round(months[y_k][m_k]["mm"], 1)
+                result["data"][name] = months
+                if verbose: print(f" ✓ Open-Meteo {len(months)}年")
+            time.sleep(0.5)
 
         try:
             DOCS_DIR.mkdir(parents=True, exist_ok=True)
