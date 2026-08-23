@@ -3858,6 +3858,8 @@ function renderRankAnalysis() {{
   const R = window.FERT_RANKINGS;
   if (!R || !R.suppliers || !R.suppliers.length) return;
   const supps = R.suppliers;
+  const top3 = supps.slice(0, 3);
+  const top10 = supps.slice(0, 10);
   const T = R.total_products;
   const N = R.total_suppliers;
   const dachan = supps.find(r => r.name.includes('大成') || r.name.includes('碩成'));
@@ -3959,7 +3961,6 @@ function renderRankAnalysis() {{
   html += '<div class="db-insight">最大細分 <strong>' + topCode[0] + ' ' + codeNames[topCode[0]] + '</strong>:' + topCode[1].prods + '產品/' + topCode[1].supps.size + '家,平均 ' + (topCode[1].prods/topCode[1].supps.size).toFixed(1) + ' 產品/家(競爭激烈)。</div></div></div>';
 
   // Chart 3: Top 10 廠商水平長條 + 大成標示
-  const top10 = supps.slice(0, 10);
   const maxT = top10[0].total;
   let barSvg = '<svg viewBox="0 0 340 ' + (top10.length * 26 + 30) + '" xmlns="http://www.w3.org/2000/svg">';
   top10.forEach((s, i) => {{
