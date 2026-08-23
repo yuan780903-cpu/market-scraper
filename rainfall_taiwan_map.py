@@ -867,6 +867,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .cwa-sidebar-title,.cwa-sidebar-foot{{display:none}}
   }}
 
+  /* ===== 浮動雨量色階條 (仿 CODIS 官方右側 vertical bar) ===== */
+  .legend-fab{{position:fixed;right:14px;top:120px;z-index:850;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#fff;border-radius:10px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);transition:transform .2s;user-select:none;font-size:11px}}
+  .legend-fab.collapsed{{transform:translateX(calc(100% - 30px))}}
+  .legend-fab-head{{display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:8px}}
+  .legend-fab-head .lf-title{{font-weight:900;font-size:12px;flex:1}}
+  .legend-fab-head .lf-unit{{color:#ffd54f;font-weight:700;font-size:10px}}
+  .legend-fab-head .lf-toggle{{background:rgba(255,255,255,.15);color:#fff;border:none;width:20px;height:20px;border-radius:3px;cursor:pointer;font-size:10px;transition:background .1s}}
+  .legend-fab-head .lf-toggle:hover{{background:rgba(255,255,255,.3)}}
+  .legend-fab.collapsed .lf-toggle{{transform:rotate(180deg)}}
+  .legend-fab-bar{{display:flex;flex-direction:column;gap:0;min-width:78px}}
+  .legend-fab-bar .lf-row{{display:flex;align-items:center;gap:6px;font-family:ui-monospace,Menlo,monospace;font-size:10px}}
+  .legend-fab-bar .lf-sw{{width:26px;height:14px;flex-shrink:0;border:1px solid rgba(255,255,255,.2)}}
+  .legend-fab-bar .lf-val{{color:#fff;font-weight:700;line-height:1.6}}
+  .legend-fab-bar .lf-lbl{{color:rgba(255,255,255,.6);font-size:9px;margin-left:auto}}
+  .legend-fab-foot{{margin-top:8px;font-size:9px;color:rgba(255,255,255,.55);border-top:1px solid rgba(255,255,255,.1);padding-top:6px;line-height:1.4}}
+  /* 只在 obsBlock active 時顯示 */
+  body:not(:has(#obsBlock.active)) .legend-fab{{display:none}}
+  @media (max-width:768px){{
+    .legend-fab{{right:8px;top:auto;bottom:80px;font-size:10px;padding:6px 8px}}
+    .legend-fab-bar .lf-sw{{width:20px;height:11px}}
+    .legend-fab-bar .lf-row{{font-size:9px}}
+  }}
+
   /* ===== 廠商排名 tab ===== */
   .rank-block{{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #6a1b9a}}
   .rank-block h3{{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #6a1b9a;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}}
@@ -942,13 +965,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <nav class="cwa-sidebar-nav">
     <a href="#obsBlock" data-icon="📍">雨量觀測</a>
     <a href="#fcstBlock" data-icon="🔮">未來預測</a>
-    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
-    <a href="#salesBlock" data-icon="💰">銷售分析</a>
-    <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#salesBlock" data-icon="💰">銷售分析</a>
+    <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#cropBlock" data-icon="🍎">作物基肥</a>
+    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
     <a href="#newsBlock" data-icon="📰">相關新聞</a>
   </nav>
   <div class="cwa-sidebar-foot">
@@ -1039,9 +1062,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="unified-tabs" id="unifiedTabs">
   <button data-target="obsBlock" class="active">📍 雨量觀測</button>
   <button data-target="fcstBlock">🔮 未來預測</button>
-  <button data-target="townsBlock">🌾 鄉鎮農產</button>
   <button data-target="salesBlock">💰 銷售分析</button>
   <button data-target="rankBlock">🏭 廠商排名</button>
+  <button data-target="townsBlock">🌾 鄉鎮農產</button>
 </div>
 
 <div id="obsBlock" class="unified-block active">
@@ -1069,12 +1092,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <div id="map"></div>
 
-<div class="legend">
-  <div class="legend-title">📊 顏色級距（本月 / 本季用，今日按比例縮放）</div>
-  <div style="font-size:12px;color:#52616b;margin-bottom:8px;padding:6px 8px;background:#f5f6f3;border-radius:4px">
-    ※ 地圖上縣市名稱旁的數字 = 該期間累積雨量（單位：mm）
+<!-- 顏色級距浮動色階 (仿 CODIS 官方右側 vertical bar,收合節省空間) -->
+<div class="legend-fab" id="legendFab">
+  <div class="legend-fab-head">
+    <span class="lf-title">雨量色階</span>
+    <span class="lf-unit">mm</span>
+    <button class="lf-toggle" onclick="document.getElementById('legendFab').classList.toggle('collapsed')" title="收合/展開">◀</button>
   </div>
-  {legend_rows}
+  <div class="legend-fab-bar" id="legendFabBar"></div>
+  <div class="legend-fab-foot">縣市名旁的數字=累積 mm<br>今日按 1/10 縮放</div>
 </div>
 
 <!-- 「雨量對肥料影響」摺疊為右下角浮動 icon,hover 展開節省空間 -->
@@ -3397,6 +3423,19 @@ function _rerenderSales() {{
   renderSalesChart();
   renderSalesAnalysis();
 }}
+
+// 浮動色階條 (參考 CODIS 官方 vertical bar) — 從 BANDS 動態生成
+(function initLegendFab() {{
+  const bar = document.getElementById('legendFabBar');
+  if (!bar) return;
+  // BANDS 由淺到深, 顯示時反過來 (深上淺下, 貼近 CODIS)
+  const sorted = [...BANDS].reverse();
+  bar.innerHTML = sorted.map(([lo, hi, color, lbl]) => {{
+    const val = hi < 9999 ? hi : lo + '+';
+    return '<div class="lf-row"><div class="lf-sw" style="background:' + color + '"></div>' +
+           '<span class="lf-val">' + val + '</span><span class="lf-lbl">' + lbl + '</span></div>';
+  }}).join('');
+}})();
 
 // ============ 🏭 廠商排名 (從農糧署即時抓取) ============
 (function initRankBlock() {{

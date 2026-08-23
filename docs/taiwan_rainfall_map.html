@@ -745,6 +745,29 @@
     .cwa-sidebar-title,.cwa-sidebar-foot{display:none}
   }
 
+  /* ===== 浮動雨量色階條 (仿 CODIS 官方右側 vertical bar) ===== */
+  .legend-fab{position:fixed;right:14px;top:120px;z-index:850;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#fff;border-radius:10px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);transition:transform .2s;user-select:none;font-size:11px}
+  .legend-fab.collapsed{transform:translateX(calc(100% - 30px))}
+  .legend-fab-head{display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:8px}
+  .legend-fab-head .lf-title{font-weight:900;font-size:12px;flex:1}
+  .legend-fab-head .lf-unit{color:#ffd54f;font-weight:700;font-size:10px}
+  .legend-fab-head .lf-toggle{background:rgba(255,255,255,.15);color:#fff;border:none;width:20px;height:20px;border-radius:3px;cursor:pointer;font-size:10px;transition:background .1s}
+  .legend-fab-head .lf-toggle:hover{background:rgba(255,255,255,.3)}
+  .legend-fab.collapsed .lf-toggle{transform:rotate(180deg)}
+  .legend-fab-bar{display:flex;flex-direction:column;gap:0;min-width:78px}
+  .legend-fab-bar .lf-row{display:flex;align-items:center;gap:6px;font-family:ui-monospace,Menlo,monospace;font-size:10px}
+  .legend-fab-bar .lf-sw{width:26px;height:14px;flex-shrink:0;border:1px solid rgba(255,255,255,.2)}
+  .legend-fab-bar .lf-val{color:#fff;font-weight:700;line-height:1.6}
+  .legend-fab-bar .lf-lbl{color:rgba(255,255,255,.6);font-size:9px;margin-left:auto}
+  .legend-fab-foot{margin-top:8px;font-size:9px;color:rgba(255,255,255,.55);border-top:1px solid rgba(255,255,255,.1);padding-top:6px;line-height:1.4}
+  /* 只在 obsBlock active 時顯示 */
+  body:not(:has(#obsBlock.active)) .legend-fab{display:none}
+  @media (max-width:768px){
+    .legend-fab{right:8px;top:auto;bottom:80px;font-size:10px;padding:6px 8px}
+    .legend-fab-bar .lf-sw{width:20px;height:11px}
+    .legend-fab-bar .lf-row{font-size:9px}
+  }
+
   /* ===== 廠商排名 tab ===== */
   .rank-block{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #6a1b9a}
   .rank-block h3{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #6a1b9a;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}
@@ -820,13 +843,13 @@
   <nav class="cwa-sidebar-nav">
     <a href="#obsBlock" data-icon="📍">雨量觀測</a>
     <a href="#fcstBlock" data-icon="🔮">未來預測</a>
-    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
-    <a href="#salesBlock" data-icon="💰">銷售分析</a>
-    <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#salesBlock" data-icon="💰">銷售分析</a>
+    <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#cropBlock" data-icon="🍎">作物基肥</a>
+    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
     <a href="#newsBlock" data-icon="📰">相關新聞</a>
   </nav>
   <div class="cwa-sidebar-foot">
@@ -910,16 +933,16 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 11:40</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 11:48</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
 <div class="unified-tabs" id="unifiedTabs">
   <button data-target="obsBlock" class="active">📍 雨量觀測</button>
   <button data-target="fcstBlock">🔮 未來預測</button>
-  <button data-target="townsBlock">🌾 鄉鎮農產</button>
   <button data-target="salesBlock">💰 銷售分析</button>
   <button data-target="rankBlock">🏭 廠商排名</button>
+  <button data-target="townsBlock">🌾 鄉鎮農產</button>
 </div>
 
 <div id="obsBlock" class="unified-block active">
@@ -947,18 +970,15 @@
 
 <div id="map"></div>
 
-<div class="legend">
-  <div class="legend-title">📊 顏色級距（本月 / 本季用，今日按比例縮放）</div>
-  <div style="font-size:12px;color:#52616b;margin-bottom:8px;padding:6px 8px;background:#f5f6f3;border-radius:4px">
-    ※ 地圖上縣市名稱旁的數字 = 該期間累積雨量（單位：mm）
+<!-- 顏色級距浮動色階 (仿 CODIS 官方右側 vertical bar,收合節省空間) -->
+<div class="legend-fab" id="legendFab">
+  <div class="legend-fab-head">
+    <span class="lf-title">雨量色階</span>
+    <span class="lf-unit">mm</span>
+    <button class="lf-toggle" onclick="document.getElementById('legendFab').classList.toggle('collapsed')" title="收合/展開">◀</button>
   </div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#f5f6f3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">極少</span><span style="color:#555">0–30 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#a3e0a3"></div><span style="color:#1f3a2e;font-weight:700;width:60px">少雨</span><span style="color:#555">30–80 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#5cb85c"></div><span style="color:#1f3a2e;font-weight:700;width:60px">普通</span><span style="color:#555">80–150 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#f0c040"></div><span style="color:#1f3a2e;font-weight:700;width:60px">略多</span><span style="color:#555">150–300 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#f08040"></div><span style="color:#1f3a2e;font-weight:700;width:60px">多雨</span><span style="color:#555">300–500 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#d63838"></div><span style="color:#1f3a2e;font-weight:700;width:60px">豪雨</span><span style="color:#555">500–800 mm</span></div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#8b1d8b"></div><span style="color:#1f3a2e;font-weight:700;width:60px">暴雨</span><span style="color:#555">800–∞ mm</span></div>
+  <div class="legend-fab-bar" id="legendFabBar"></div>
+  <div class="legend-fab-foot">縣市名旁的數字=累積 mm<br>今日按 1/10 縮放</div>
 </div>
 
 <!-- 「雨量對肥料影響」摺疊為右下角浮動 icon,hover 展開節省空間 -->
@@ -1489,10 +1509,10 @@
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SMVk3cGVlQllnd282VjV3YklSdlVWRGx4aDNrLUFsZTFQVEg4WGhKQVZGZUQ1VTRUYlkxWWFscllHZ3h3YlhJLTJMbGFFX1Ay0gFWQVVfeXFMTi1lMVFFT3RwV25DR1BEX1NPRkRfd01QNjA3d1Q4S3RORXRWWXluQVFSd19FdXRxcmNLWFZJT2Roc1BGQUUzNjVsVWFqQmFYOW10TFlJZnc?oc=5" target="_blank" rel="noopener">各國預報沙德爾颱風「直撲台灣」？ 南部雨勢恐延至周五</a><span class="meta">UDN · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMi6wJBVV95cUxPcnc2QlV4VUczaDFOWVVjWlJ0ZUIyd0RaWktEVlVkQUo4RHRLY0J5Z0RJRUJoTTNxU1FvM2FwMjVIMUx5T3FSRmVvdmMyaHJmWlJocFhJaExNc0Y1clExZ0hVbFpZMVVFSHRiQVBOMEFGcVpvejk0ZEFqV19vSlJpZmxoeWxUdjBrNzZXcmlnS3JiTDVsWUNuNlU3VTBuTUtTMlFLaVJSbWZORmYweDdYYzhuZGhiY1gwd01lMDBudWJqTlVFNk1kQ1RTdlJWdHFtU2syMEh0X3V4N3JidkZGekpabEZMc2pMRnRTV2ZnRHVEYnpaSTB5ZzZKbk5nQTcxZ0QtTVdYeG5NMTJkODFTSGhETXpDUVlpZHpINEROb2pyU2wxN2NkV29jUXdYUTNyMzlJS3NvOTVKb3Bad2I1UGJYMUJlcnZncXp4czBPSXV3aG5RUnBDclpJNHh1TUdRaC1kMVFwaEpoTnc?oc=5" target="_blank" rel="noopener">報天氣 - 中央氣象署. . [直播]115年8月22日20:30發布_115年0822低壓帶及西南風豪雨事件</a><span class="meta">facebook.com · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE12dFdpdlNEcDVPSGhYSWtuanUyclZ2YVJLalAxM1Q4SXh6cGpqeG40VEFZUXZGdzZhbzBrZmtTOVZKYzZYQ3BWN2dENG1SOUdqcldOYWFjZWcydFhlUXRfcG81a2M?oc=5" target="_blank" rel="noopener">高雄豪雨狂炸！新興區24小時累積衝破350毫米達大豪雨等級- 生活</a><span class="meta">自由時報 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Id09YM0JYUVc4MEJHQWdac2prRFFpX0UybWlSUkhnOFNlT3hFTjRULV92R0tlWjNuQU9jYVA3MzlFQmpFOGlvU3lBWEVrMTBydnplUTFGd0lpMnU3T3Jv?oc=5" target="_blank" rel="noopener">吳德榮：颱風沙德爾估27日襲台不排除登陸| 生活</a><span class="meta">cna.com.tw · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTFBZdzFmUjJRaEtBeE83WUlmQk0wNDdGc3lLZEVTMEJzOFVOckE0Y1dPRHNVMGFjQ3BiZndTZGw2bW83ZFBaZzB6Z0R2UkZJVWtT?oc=5" target="_blank" rel="noopener">一周天氣預報/ 沙德爾颱風估「這1天襲台」！專家曝路徑：恐以中颱之姿登陸，全台這3 天豪雨猛下到紫爆</a><span class="meta">風傳媒 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1tT3FkMnd5eEtOZ1BuMnExT3pBWDlkVkNSVU9icHk1aDV6c1NpbkQ3T2RVNko4SUc3c1RpVlRNMUoxMnoya3lOLS1rSnAxWkJEYVczaGxSMGNTLVhBRWc?oc=5" target="_blank" rel="noopener">明天還有豪雨假？4縣市「24小時雨量」上看400毫米 達停班課標準| 天氣</a><span class="meta">太報 TaiSounds · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE12dFdpdlNEcDVPSGhYSWtuanUyclZ2YVJLalAxM1Q4SXh6cGpqeG40VEFZUXZGdzZhbzBrZmtTOVZKYzZYQ3BWN2dENG1SOUdqcldOYWFjZWcydFhlUXRfcG81a2M?oc=5" target="_blank" rel="noopener">高雄豪雨狂炸！新興區24小時累積衝破350毫米達大豪雨等級- 生活</a><span class="meta">自由時報 · 08/23</span></li>
   </ul>
 </div>
 
@@ -1531,7 +1551,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 11:40</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 11:48</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -3290,6 +3310,19 @@ function _rerenderSales() {
   renderSalesChart();
   renderSalesAnalysis();
 }
+
+// 浮動色階條 (參考 CODIS 官方 vertical bar) — 從 BANDS 動態生成
+(function initLegendFab() {
+  const bar = document.getElementById('legendFabBar');
+  if (!bar) return;
+  // BANDS 由淺到深, 顯示時反過來 (深上淺下, 貼近 CODIS)
+  const sorted = [...BANDS].reverse();
+  bar.innerHTML = sorted.map(([lo, hi, color, lbl]) => {
+    const val = hi < 9999 ? hi : lo + '+';
+    return '<div class="lf-row"><div class="lf-sw" style="background:' + color + '"></div>' +
+           '<span class="lf-val">' + val + '</span><span class="lf-lbl">' + lbl + '</span></div>';
+  }).join('');
+})();
 
 // ============ 🏭 廠商排名 (從農糧署即時抓取) ============
 (function initRankBlock() {
