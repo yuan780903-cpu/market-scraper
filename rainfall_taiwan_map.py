@@ -4034,19 +4034,23 @@ function renderRankAnalysis() {{
   }})();
 
   html += '<div class="db-card"><div class="db-head">💰 補助等級結構分析</div><div class="db-body">' + donutSvg;
-  html += '<div class="db-insight">高階 2+2 元補助占 <strong style="color:#c62828">' + (tier22/total*100).toFixed(0) + '%</strong> — 顯示市場向<strong>優質標準</strong>傾斜,通過高階審核者品牌溢價空間較大。</div></div></div>';
+  html += '<div class="db-insight"><strong>2+2 元高階補助占 ' + (tier22/total*100).toFixed(0) + '%</strong> — 此補助專屬於「原料含<strong style="color:#c62828">雞糞 ≥50%</strong>」的禽畜糞衍生產品 (5-08/5-09/5-13)。碩成/大成禽畜糞系列受惠,通路推廣力道大。</div></div></div>';
 
-  // Chart 2: 品目佔比 horizontal bar
+  // Chart 2: 品目佔比 horizontal bar (品目名固定在左, bar 中間, 數字在右)
   const codeList = Object.entries(codeStats).sort((a,b) => b[1].prods - a[1].prods);
-  let cbSvg = '<svg viewBox="0 0 340 ' + (codeList.length * 24 + 40) + '" xmlns="http://www.w3.org/2000/svg">';
   const maxCode = Math.max(...codeList.map(([_,v]) => v.prods));
+  const cbW = 380, cbBarStart = 130, cbBarMax = 180;  // 品目名+代碼區 130px, bar 最大 180px, 右側 70px 給數字
+  let cbSvg = '<svg viewBox="0 0 ' + cbW + ' ' + (codeList.length * 26 + 20) + '" xmlns="http://www.w3.org/2000/svg">';
   codeList.forEach(([c, v], i) => {{
-    const w = (v.prods / maxCode) * 200;
-    const y = 10 + i * 24;
-    cbSvg += '<text x="4" y="' + (y+14) + '" font-size="10" font-weight="700" fill="#333">' + c + '</text>';
-    cbSvg += '<rect x="52" y="' + y + '" width="' + w + '" height="18" fill="url(#gradP)" rx="2"/>';
-    cbSvg += '<text x="' + (w + 58) + '" y="' + (y+14) + '" font-size="10" font-weight="700" fill="#6a1b9a">' + v.prods + ' (' + v.supps.size + ' 家)</text>';
-    cbSvg += '<text x="' + (w > 60 ? 56 : 52) + '" y="' + (y+14) + '" font-size="9" fill="' + (w > 60 ? '#fff' : '#555') + '">' + (codeNames[c] || '') + '</text>';
+    const w = (v.prods / maxCode) * cbBarMax;
+    const y = 8 + i * 26;
+    // 左側: 代碼 + 品目名 (固定寬度不重疊)
+    cbSvg += '<text x="4" y="' + (y+14) + '" font-size="10" font-weight="900" fill="#6a1b9a" font-family="ui-monospace,Menlo,monospace">' + c + '</text>';
+    cbSvg += '<text x="42" y="' + (y+14) + '" font-size="10" fill="#333">' + (codeNames[c] || '').substring(0, 8) + '</text>';
+    // Bar
+    cbSvg += '<rect x="' + cbBarStart + '" y="' + y + '" width="' + w + '" height="18" fill="url(#gradP)" rx="2"/>';
+    // 右側: 數字
+    cbSvg += '<text x="' + (cbBarStart + w + 4) + '" y="' + (y+14) + '" font-size="10" font-weight="700" fill="#6a1b9a">' + v.prods + '<tspan fill="#888" font-size="9"> / ' + v.supps.size + '家</tspan></text>';
   }});
   cbSvg += '<defs><linearGradient id="gradP" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7b1fa2"/><stop offset="100%" stop-color="#c2185b"/></linearGradient></defs>';
   cbSvg += '</svg>';
@@ -4194,7 +4198,14 @@ function renderRankAnalysis() {{
         }} catch (e) {{}}
       }}, 60);
       // 平滑捲到頂部
-      tabs.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+      // 切到目標 block 頂端 (直接看到內容, 而非 tab bar)
+      const targetEl = document.getElementById(target);
+      if (targetEl) {{
+        setTimeout(() => {{
+          const y = targetEl.getBoundingClientRect().top + window.pageYOffset - 60;
+          window.scrollTo({{top: y, behavior: 'smooth'}});
+        }}, 100);
+      }}
     }});
   }});
 }})();
