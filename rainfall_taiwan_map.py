@@ -737,6 +737,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .copyright-badge .seal{{font-size:10px;padding:2px 6px}}
   }}
 
+  /* ===== 統一 tab bar (三選一切換) ===== */
+  .unified-tabs{{display:flex;gap:0;background:linear-gradient(180deg,#1976d2 0%,#0d47a1 100%);padding:8px 8px 0;border-bottom:3px solid #d4a017;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}}
+  .unified-tabs button{{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}}
+  .unified-tabs button:hover{{background:rgba(255,255,255,.15);color:#fff}}
+  .unified-tabs button.active{{background:#fff;color:#0d47a1;box-shadow:0 -2px 6px rgba(0,0,0,.15)}}
+  .unified-block{{display:none}}
+  .unified-block.active{{display:block;animation:fadeIn .2s ease}}
+  @keyframes fadeIn{{from{{opacity:0;transform:translateY(4px)}}to{{opacity:1;transform:translateY(0)}}}}
+  @media (max-width:640px){{
+    .unified-tabs button{{font-size:12px;padding:10px 6px;letter-spacing:0}}
+  }}
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){{
     .header{{padding:16px 14px}}
@@ -827,6 +839,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <span class="refresh-time" id="refreshTime">📡 資料時間：{gen_time}</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
+<!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
+<div class="unified-tabs" id="unifiedTabs">
+  <button data-target="obsBlock" class="active">📍 雨量觀測</button>
+  <button data-target="fcstBlock">🔮 未來預測</button>
+  <button data-target="townsBlock">🌾 鄉鎮農產</button>
+</div>
+
+<div id="obsBlock" class="unified-block active">
+
 <div class="accuracy-note">
   ⚠️ Open-Meteo 為 ECMWF 全球模型（11 km 分辨率），對台灣<strong>山區、颱風局部豪雨可能低估</strong>。
   颱風/豪雨警報請以<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener"><strong>中央氣象署</strong></a>為準。
@@ -916,8 +937,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="rainy-list" id="rainyList"></div>
 </div>
 
+</div><!-- /obsBlock -->
+
 <!-- ===================== 未來 7 天雨量預測 ===================== -->
-<div class="forecast-block">
+<div class="forecast-block unified-block" id="fcstBlock">
   <h3>🔮 未來 7 天雨量預測 · 全台縣市地圖</h3>
   <div class="fcst-mode-bar">
     <button data-mode="single" class="active">📅 單日</button>
@@ -1031,7 +1054,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 鄉鎮特色農產地圖 ===================== -->
-<div class="towns-block">
+<div class="towns-block unified-block" id="townsBlock">
   <h3>🗺️ 全台鄉鎮特色農產分布 · 主力作物與用肥地圖</h3>
   <div class="towns-filters">
     <label>作物類別</label>
@@ -2219,6 +2242,37 @@ function renderTownsMap() {{
   }});
   document.getElementById('townsCount').textContent = '共 ' + cnt + ' 個特色農產鄉鎮';
 }}
+
+// 統一 tab bar: 三選一切換 (雨量觀測/未來預測/鄉鎮農產)
+(function initUnifiedTabs() {{
+  const tabs = document.getElementById('unifiedTabs');
+  if (!tabs) return;
+  const btns = tabs.querySelectorAll('button');
+  const mapObjs = {{obsBlock: 'map', fcstBlock: 'fcstMap', townsBlock: 'townsMap'}};
+  btns.forEach(b => {{
+    b.addEventListener('click', () => {{
+      const target = b.dataset.target;
+      btns.forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.unified-block').forEach(bl => {{
+        bl.classList.toggle('active', bl.id === target);
+      }});
+      // 對應地圖 invalidate (延遲讓 display:block 先生效)
+      const mapVarName = mapObjs[target];
+      const mapVar = ({{map: window.map, fcstMap: window.fcstMap, townsMap: window.townsMap}})[mapVarName];
+      if (mapVar) setTimeout(() => mapVar.invalidateSize(), 50);
+      // 對於 townsMap 用 window.townsMap 可能 undefined (是 const 全域),用 eval fallback
+      setTimeout(() => {{
+        try {{
+          if (target === 'obsBlock' && typeof map !== 'undefined') map.invalidateSize();
+          if (target === 'fcstBlock' && typeof fcstMap !== 'undefined') fcstMap.invalidateSize();
+          if (target === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize();
+        }} catch (e) {{}}
+      }}, 60);
+      // 平滑捲到頂部
+      tabs.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+    }});
+  }});
+}})();
 
 // 影響級距 fab: 手機點擊 toggle (桌面 hover 觸發)
 (function initImpactFab() {{

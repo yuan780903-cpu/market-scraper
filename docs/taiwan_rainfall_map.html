@@ -615,6 +615,18 @@
     .copyright-badge .seal{font-size:10px;padding:2px 6px}
   }
 
+  /* ===== 統一 tab bar (三選一切換) ===== */
+  .unified-tabs{display:flex;gap:0;background:linear-gradient(180deg,#1976d2 0%,#0d47a1 100%);padding:8px 8px 0;border-bottom:3px solid #d4a017;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}
+  .unified-tabs button{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}
+  .unified-tabs button:hover{background:rgba(255,255,255,.15);color:#fff}
+  .unified-tabs button.active{background:#fff;color:#0d47a1;box-shadow:0 -2px 6px rgba(0,0,0,.15)}
+  .unified-block{display:none}
+  .unified-block.active{display:block;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  @media (max-width:640px){
+    .unified-tabs button{font-size:12px;padding:10px 6px;letter-spacing:0}
+  }
+
   /* ===== 響應式 ===== */
   @media (max-width:640px){
     .header{padding:16px 14px}
@@ -702,9 +714,18 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 09:22</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 09:28</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
+<!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
+<div class="unified-tabs" id="unifiedTabs">
+  <button data-target="obsBlock" class="active">📍 雨量觀測</button>
+  <button data-target="fcstBlock">🔮 未來預測</button>
+  <button data-target="townsBlock">🌾 鄉鎮農產</button>
+</div>
+
+<div id="obsBlock" class="unified-block active">
+
 <div class="accuracy-note">
   ⚠️ Open-Meteo 為 ECMWF 全球模型（11 km 分辨率），對台灣<strong>山區、颱風局部豪雨可能低估</strong>。
   颱風/豪雨警報請以<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener"><strong>中央氣象署</strong></a>為準。
@@ -800,8 +821,10 @@
   <div class="rainy-list" id="rainyList"></div>
 </div>
 
+</div><!-- /obsBlock -->
+
 <!-- ===================== 未來 7 天雨量預測 ===================== -->
-<div class="forecast-block">
+<div class="forecast-block unified-block" id="fcstBlock">
   <h3>🔮 未來 7 天雨量預測 · 全台縣市地圖</h3>
   <div class="fcst-mode-bar">
     <button data-mode="single" class="active">📅 單日</button>
@@ -917,7 +940,7 @@
 </div>
 
 <!-- ===================== 鄉鎮特色農產地圖 ===================== -->
-<div class="towns-block">
+<div class="towns-block unified-block" id="townsBlock">
   <h3>🗺️ 全台鄉鎮特色農產分布 · 主力作物與用肥地圖</h3>
   <div class="towns-filters">
     <label>作物類別</label>
@@ -1094,8 +1117,8 @@
   <h3>📰 天氣 / 豪雨 / 颱風 相關新聞</h3>
   <ul class="news-list">
     <li><a href="https://news.google.com/rss/articles/CBMi_AJBVV95cUxNOHRBbWxxUTc5dVlMczUyeGtWRnVmR2VZRHNKdmM1YVpNdDB1Q0ZZTU9KRUljRGh4bXRFWE1jcjVLZGtTOWg2LWRiUlpmWDN4NURXSDI2RFZJUWtDenBRSHFBc25jNnVBLVNyYUszRlJZSkd1ZUgyZG1jRzZEOG5OSWRFeFFkVFFMTDliXzNQWXlxV0ZFb3FQa01SdG1OdFY3em9JdzlzaDhSTWt3SVNJNk1Kemg3dW40eHZiOUJ1dlZmb0NhcUU4UlkyaGVxeDVjd3QxamdaR3FHYnZtMzFzQ2lMWk02eFhZMGFuVVB5M3h4c2JLdXZwWDRleW4yYzk1V0ZqNHduQ3BRWXJhSXl5Z1NDTjNuN3JRLVEyY1F3X21uUjZtaEFORFNlaXVaamYta0ZPbHp4cE1aN3kxTW5tYlJpV1NLWkNkZWM3RlZqTnc3NmdfVWNJN0swTmVpTm92dEZvZ2RDdmVSNGZnaVJOenQxY0kyemlvNE9Kcw?oc=5" target="_blank" rel="noopener">全台17縣市豪、大雨特報！颱風沙德爾「增強逼近」 今3縣市停班課</a><span class="meta">Yahoo新聞 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SR2lycVlYclo3anJTWi1nN0RLOFhyU3ZiY3FTNDZBU3hhTWtldFplMGVPWDY2S0xfSlZrdTdnVnFxT2NZVEswMEV1RlliZWhv0gFWQVVfeXFMT1pScVFabVZ5N1pOc21EMzgxTU5pSEFoMjhzTmNhdlowOV9Ha2RCd25UOWVSeEFSa3Z2YkVIc0VkanlQRThjeW4wTF80RVl5aFc2eFBXR3c?oc=5" target="_blank" rel="noopener">2颱風+2熱低 粉專：西南風增強水氣增多</a><span class="meta">UDN · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Id09YM0JYUVc4MEJHQWdac2prRFFpX0UybWlSUkhnOFNlT3hFTjRULV92R0tlWjNuQU9jYVA3MzlFQmpFOGlvU3lBWEVrMTBydnplUTFGd0lpMnU3T3Jv?oc=5" target="_blank" rel="noopener">吳德榮：颱風沙德爾估27日襲台不排除登陸| 生活</a><span class="meta">cna.com.tw · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SR2lycVlYclo3anJTWi1nN0RLOFhyU3ZiY3FTNDZBU3hhTWtldFplMGVPWDY2S0xfSlZrdTdnVnFxT2NZVEswMEV1RlliZWhv0gFWQVVfeXFMT1pScVFabVZ5N1pOc21EMzgxTU5pSEFoMjhzTmNhdlowOV9Ha2RCd25UOWVSeEFSa3Z2YkVIc0VkanlQRThjeW4wTF80RVl5aFc2eFBXR3c?oc=5" target="_blank" rel="noopener">2颱風+2熱低 粉專：西南風增強水氣增多</a><span class="meta">UDN · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMi6wJBVV95cUxPcnc2QlV4VUczaDFOWVVjWlJ0ZUIyd0RaWktEVlVkQUo4RHRLY0J5Z0RJRUJoTTNxU1FvM2FwMjVIMUx5T3FSRmVvdmMyaHJmWlJocFhJaExNc0Y1clExZ0hVbFpZMVVFSHRiQVBOMEFGcVpvejk0ZEFqV19vSlJpZmxoeWxUdjBrNzZXcmlnS3JiTDVsWUNuNlU3VTBuTUtTMlFLaVJSbWZORmYweDdYYzhuZGhiY1gwd01lMDBudWJqTlVFNk1kQ1RTdlJWdHFtU2syMEh0X3V4N3JidkZGekpabEZMc2pMRnRTV2ZnRHVEYnpaSTB5ZzZKbk5nQTcxZ0QtTVdYeG5NMTJkODFTSGhETXpDUVlpZHpINEROb2pyU2wxN2NkV29jUXdYUTNyMzlJS3NvOTVKb3Bad2I1UGJYMUJlcnZncXp4czBPSXV3aG5RUnBDclpJNHh1TUdRaC1kMVFwaEpoTnc?oc=5" target="_blank" rel="noopener">報天氣 - 中央氣象署. . [直播]115年8月22日20:30發布_115年0822低壓帶及西南風豪雨事件</a><span class="meta">facebook.com · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiTkFVX3lxTE0zckpyN0ZtbHNITGlTRE93YzRtS1ZrNWhZc210Ui14ZG9xaGx0SzRabmQ3VTlQaXFIOF9YRlFOM0dRZHdnV1BudXFob0ozZw?oc=5" target="_blank" rel="noopener">颱風／沙德爾不排除登陸！各模式預測趨一致 專家示警「這2天」影響最劇</a><span class="meta">TVBS新聞網 · 08/23</span></li>
@@ -1139,7 +1162,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 09:22</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 09:28</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -2112,6 +2135,37 @@ function renderTownsMap() {
   });
   document.getElementById('townsCount').textContent = '共 ' + cnt + ' 個特色農產鄉鎮';
 }
+
+// 統一 tab bar: 三選一切換 (雨量觀測/未來預測/鄉鎮農產)
+(function initUnifiedTabs() {
+  const tabs = document.getElementById('unifiedTabs');
+  if (!tabs) return;
+  const btns = tabs.querySelectorAll('button');
+  const mapObjs = {obsBlock: 'map', fcstBlock: 'fcstMap', townsBlock: 'townsMap'};
+  btns.forEach(b => {
+    b.addEventListener('click', () => {
+      const target = b.dataset.target;
+      btns.forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.unified-block').forEach(bl => {
+        bl.classList.toggle('active', bl.id === target);
+      });
+      // 對應地圖 invalidate (延遲讓 display:block 先生效)
+      const mapVarName = mapObjs[target];
+      const mapVar = ({map: window.map, fcstMap: window.fcstMap, townsMap: window.townsMap})[mapVarName];
+      if (mapVar) setTimeout(() => mapVar.invalidateSize(), 50);
+      // 對於 townsMap 用 window.townsMap 可能 undefined (是 const 全域),用 eval fallback
+      setTimeout(() => {
+        try {
+          if (target === 'obsBlock' && typeof map !== 'undefined') map.invalidateSize();
+          if (target === 'fcstBlock' && typeof fcstMap !== 'undefined') fcstMap.invalidateSize();
+          if (target === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize();
+        } catch (e) {}
+      }, 60);
+      // 平滑捲到頂部
+      tabs.scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+  });
+})();
 
 // 影響級距 fab: 手機點擊 toggle (桌面 hover 觸發)
 (function initImpactFab() {
