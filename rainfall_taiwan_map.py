@@ -1116,11 +1116,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- 天氣吉祥物 -->
-<div class="mascot mascot-{mascot_mood}" id="mascot">
-  <div class="mascot-bubble" id="mascotBubble"></div>
-  <div class="mascot-face">{mascot_emoji}</div>
-</div>
 
 <!-- 雨量視覺化 modal -->
 <div class="rain-modal" id="rainModal" onclick="if(event.target===this)closeRainModal()">
