@@ -436,12 +436,24 @@
   .adv-matrix td.mx-7{background:#7b1fa2;color:#fff}
   .adv-matrix td .d{font-size:9px;opacity:.7;margin-top:1px;display:block}
   /* 分析評語 */
-  .adv-analysis{padding:14px 16px;background:#fff3e0;border-left:4px solid #d84315;border-radius:3px;font-size:13px;color:var(--cwa-text);line-height:1.8}
-  .adv-analysis h4{margin:0 0 10px;font-size:14px;color:#d84315;font-weight:700}
+  .adv-analysis{padding:16px 18px;background:linear-gradient(180deg,#fff3e0,#fff8e1);border-left:5px solid #d84315;border-radius:6px;font-size:13.5px;color:var(--cwa-text);line-height:1.75}
+  .adv-analysis h4{margin:14px 0 8px;font-size:14px;color:#d84315;font-weight:900;padding:5px 10px;background:#fff;border-left:3px solid #d84315;border-radius:0 4px 4px 0}
+  .adv-analysis h4:first-child{margin-top:0}
   .adv-analysis ul{margin:6px 0;padding-left:22px}
   .adv-analysis li{margin:4px 0}
-  .adv-analysis strong{color:#d84315}
-  .adv-analysis .biz{margin-top:12px;padding:10px 12px;background:#fff;border-radius:3px;border:1px solid var(--cwa-border)}
+  .adv-analysis p{margin:6px 0}
+  .adv-analysis strong{color:#c62828;font-weight:900}
+  .adv-analysis .growth{color:#2e7d32;font-weight:900}
+  .adv-analysis .drop{color:#c62828;font-weight:900}
+  .adv-analysis .biz{margin-top:14px;padding:12px 14px;background:#fff;border-radius:4px;border:1px solid var(--cwa-border);border-left:4px solid #d84315}
+  .adv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+  .adv-kpi{background:#fff;border:1px solid var(--cwa-border);border-left:4px solid #90a4ae;border-radius:4px;padding:8px 10px;text-align:center}
+  .adv-kpi.hi{border-left-color:#c62828;background:#ffebee}
+  .adv-kpi.lo{border-left-color:#2e7d32;background:#e8f5e9}
+  .adv-kpi .lbl{font-size:11px;color:var(--cwa-text-muted);font-weight:700}
+  .adv-kpi .val{font-size:22px;font-weight:900;color:#c62828;line-height:1.1;margin-top:2px;font-family:ui-monospace,Menlo,monospace}
+  .adv-kpi .val span{font-size:11px;color:#888;font-weight:600}
+  .adv-kpi .who{font-size:10px;color:#666;margin-top:2px}
 
   /* ===== 節氣 × 基肥影響區塊 ===== */
   .term-detail-block{padding:16px 20px;background:var(--cwa-card);margin-top:1px;border-left:4px solid #f9a825}
@@ -833,7 +845,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:20</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:26</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
@@ -1310,6 +1322,7 @@
     <button data-view="matrix" class="active">📋 矩陣視圖</button>
     <button data-view="flat">📊 明細表格 (可排序)</button>
     <button data-view="chart">📈 折線圖對照</button>
+    <button data-view="bar">📊 長條圖對比</button>
   </div>
   <div class="adv-table-wrap" id="advTableWrap" style="display:none"></div>
   <div class="adv-analysis" id="advAnalysis" style="display:none"></div>
@@ -1371,7 +1384,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:20</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:26</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -2177,6 +2190,88 @@ function renderAdvView() {
     if (lines.length > 20) legHtml += '<span style="color:#888">... 及其他 ' + (lines.length - 20) + ' 條</span>';
     legHtml += '</div>';
     wrap.innerHTML = svg + legHtml;
+  } else if (_advView === 'bar') {
+    // 長條圖: 分組長條, X=年份, 每組=地區×指標
+    const regions = [...new Set(_advResults.map(r => r.region))];
+    const years = [...new Set(_advResults.map(r => r.year))].sort();
+    const months = [...new Set(_advResults.map(r => r.month))].sort((a,b)=>a-b);
+    if (years.length < 1) {
+      wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#888">請至少選 1 年</div>';
+      return;
+    }
+    // 每個月獨立畫一個 chart (若選多月)
+    let html = '';
+    months.forEach(mSel => {
+      const filtered = _advResults.filter(r => r.month === mSel);
+      if (!filtered.length) return;
+      // 每指標分別畫
+      metrics.forEach(mk => {
+        const meta = METRIC_META[mk];
+        const isTemp = ['tavg','tmax','tmin'].includes(mk);
+        const rows = filtered.map(r => ({r: r.region, y: r.year, v: r[mk]})).filter(x => x.v != null);
+        if (!rows.length) return;
+        const maxV = Math.max(...rows.map(x => x.v)) * 1.15;
+        const minV = isTemp ? Math.min(...rows.map(x => x.v)) * 0.95 : 0;
+
+        const W = 900, HGT = 240 + years.length * 4, pl = 60, pr = 20, pt = 44, pb = 50;
+        const cw = W - pl - pr, ch = HGT - pt - pb;
+        const groupCount = regions.length;
+        const groupW = cw / years.length;
+        const barW = Math.max(6, (groupW - 12) / groupCount);
+
+        let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + HGT + '" preserveAspectRatio="xMidYMid meet">';
+        svg += '<text x="' + (W/2) + '" y="20" text-anchor="middle" font-size="14" font-weight="900" fill="' + meta.color + '">📊 ' + mSel + '月 · ' + meta.label + ' (' + meta.unit + ') · 逐年對比</text>';
+        // Y ticks
+        for (let i = 0; i <= 4; i++) {
+          const y = pt + ch - ch * i / 4;
+          const v = minV + (maxV - minV) * i / 4;
+          svg += '<line x1="' + pl + '" y1="' + y + '" x2="' + (W-pr) + '" y2="' + y + '" stroke="#eee"/>';
+          svg += '<text x="' + (pl-6) + '" y="' + (y+4) + '" text-anchor="end" font-size="10" fill="#666">' + (isTemp ? v.toFixed(1) : Math.round(v)) + '</text>';
+        }
+        svg += '<line x1="' + pl + '" y1="' + (pt+ch) + '" x2="' + (W-pr) + '" y2="' + (pt+ch) + '" stroke="#666"/>';
+        // 每年群組
+        years.forEach((y, yi) => {
+          const gx = pl + groupW * yi + 6;
+          svg += '<text x="' + (gx + (groupW - 12) / 2) + '" y="' + (pt+ch+16) + '" text-anchor="middle" font-size="11" fill="#333" font-weight="700">' + y + '</text>';
+          regions.forEach((r, ri) => {
+            const item = filtered.find(x => x.year === y && x.region === r);
+            if (!item || item[mk] == null) return;
+            const v = item[mk];
+            const bh = ((v - minV) / (maxV - minV || 1)) * ch;
+            const bx = gx + barW * ri;
+            const by = pt + ch - bh;
+            // 顏色: 溫度用漸層,雨量用地區色
+            let color;
+            if (isTemp) {
+              const t = Math.max(0, Math.min(1, (v - 5) / 30));
+              const rr = Math.round(80 + t * 175), bb = Math.round(220 - t * 200);
+              color = 'rgb(' + rr + ',110,' + bb + ')';
+            } else {
+              const regionColors = ['#1976d2','#c62828','#2e7d32','#f57c00','#7b1fa2','#00695c','#d84315','#0288d1','#c2185b','#5d4037','#00838f','#616161'];
+              color = regionColors[regions.indexOf(r) % regionColors.length];
+            }
+            svg += '<rect x="' + bx + '" y="' + by + '" width="' + (barW-1) + '" height="' + bh + '" fill="' + color + '" opacity="0.85"><title>' + r + ' ' + y + '/' + mSel + ' ' + meta.label + ': ' + meta.fmt(v) + ' ' + meta.unit + '</title></rect>';
+            if (bh > 20) svg += '<text x="' + (bx + (barW-1)/2) + '" y="' + (by - 3) + '" text-anchor="middle" font-size="9" fill="' + color + '" font-weight="700">' + meta.fmt(v) + '</text>';
+          });
+        });
+        svg += '</svg>';
+        // 圖例 (地區色)
+        let leg = '<div class="adv-chart-legend">';
+        if (!isTemp) {
+          const regionColors = ['#1976d2','#c62828','#2e7d32','#f57c00','#7b1fa2','#00695c','#d84315','#0288d1','#c2185b','#5d4037','#00838f','#616161'];
+          regions.forEach((r, ri) => {
+            const c = regionColors[ri % regionColors.length];
+            leg += '<span class="leg"><span class="ln" style="background:' + c + ';height:12px;border-radius:2px"></span>' + r + '</span>';
+          });
+        } else {
+          leg += '<span style="color:#666">💡 溫度長條顏色: 冷=藍 · 熱=紅 (漸層自動)</span>';
+        }
+        leg += '</div>';
+        html += '<div style="margin-bottom:16px;background:#fff;border:1px solid var(--cwa-border);border-radius:4px;padding:6px">' + svg + leg + '</div>';
+      });
+    });
+    if (!html) html = '<div style="padding:20px;text-align:center;color:#888">此組合無資料</div>';
+    wrap.innerHTML = html;
   }
 }
 
@@ -2190,13 +2285,28 @@ function renderAdvAnalysis() {
   const el = document.getElementById('advAnalysis');
   if (!_advResults.length) { el.style.display = 'none'; return; }
   const rs = _advResults;
-  const maxItem = rs.reduce((a, b) => b.mm > a.mm ? b : a);
-  const minItem = rs.reduce((a, b) => b.mm < a.mm ? b : a);
-  const avgMm = rs.reduce((s, r) => s + r.mm, 0) / rs.length;
-  const avgRain = rs.reduce((s, r) => s + r.rainDays, 0) / rs.length;
-  const totalStorm = rs.reduce((s, r) => s + r.stormDays, 0);
+  const nRs = rs.length;
 
-  // 年趨勢：同地區同月，比較年份序列
+  // === 累積雨量統計 ===
+  const mmVals = rs.map(r => r.mm).filter(v => v != null);
+  const maxMm = rs.reduce((a, b) => b.mm > a.mm ? b : a);
+  const minMm = rs.reduce((a, b) => b.mm < a.mm ? b : a);
+  const avgMm = mmVals.reduce((s,v)=>s+v,0) / (mmVals.length || 1);
+  // === 有雨天數統計 ===
+  const rdVals = rs.map(r => r.rd).filter(v => v != null);
+  const avgRd = rdVals.reduce((s,v)=>s+v,0) / (rdVals.length || 1);
+  const maxRd = rs.reduce((a, b) => (b.rd||0) > (a.rd||0) ? b : a);
+  // === 豪雨日 ===
+  const totalStorm = rs.reduce((s, r) => s + (r.sd||0), 0);
+  const stormCombos = rs.filter(r => (r.sd||0) > 0).length;
+  // === 氣溫 ===
+  const tavgs = rs.map(r => r.tavg).filter(v => v != null);
+  const hasTemp = tavgs.length > 0;
+  const avgTavg = hasTemp ? tavgs.reduce((s,v)=>s+v,0) / tavgs.length : null;
+  const maxTmax = rs.filter(r => r.tmax != null).reduce((a, b) => (a && a.tmax > b.tmax) ? a : b, null);
+  const minTmin = rs.filter(r => r.tmin != null).reduce((a, b) => (a && a.tmin < b.tmin) ? a : b, null);
+
+  // === 年趨勢: 同地區同月比較年份序列 ===
   const trendLines = [];
   const rs_by_rm = {};
   rs.forEach(r => {
@@ -2211,13 +2321,16 @@ function renderAdvAnalysis() {
     const diff = last.mm - first.mm;
     const pct = first.mm > 0 ? (diff / first.mm * 100) : 0;
     if (Math.abs(pct) < 5) return;
-    const arrow = diff > 0 ? '📈 上升' : '📉 下降';
-    trendLines.push(first.region + ' ' + first.month + '月：' + first.year + '→' + last.year +
-                    ' <strong>' + arrow + ' ' + Math.abs(pct).toFixed(1) + '%</strong> (' +
-                    first.mm.toFixed(0) + ' → ' + last.mm.toFixed(0) + ' mm)');
+    const arrow = diff > 0 ? '📈 增' : '📉 減';
+    trendLines.push({
+      text: first.region + ' ' + first.month + '月 (' + first.year + '→' + last.year + ')：' +
+            '<strong>' + arrow + ' ' + Math.abs(pct).toFixed(0) + '%</strong> (' +
+            first.mm.toFixed(0) + ' → ' + last.mm.toFixed(0) + ' mm)',
+      pct: pct,
+    });
   });
 
-  // 地區差異：同年同月，各地區比較
+  // === 地區差異 ===
   const regionDiffLines = [];
   const rs_by_ym = {};
   rs.forEach(r => {
@@ -2232,46 +2345,143 @@ function renderAdvAnalysis() {
     if (hi.region === lo.region) return;
     const ratio = lo.mm > 0 ? (hi.mm / lo.mm) : 999;
     if (ratio < 1.5) return;
-    regionDiffLines.push(hi.year + '年' + hi.month + '月：' +
-                         '<strong>' + hi.region + '</strong> (' + hi.mm.toFixed(0) + ' mm) 為 ' +
-                         '<strong>' + lo.region + '</strong> (' + lo.mm.toFixed(0) + ' mm) 的 ' +
-                         '<strong>' + ratio.toFixed(1) + ' 倍</strong>');
+    regionDiffLines.push(hi.year + '年' + hi.month + '月：<strong>' + hi.region + '</strong> ' + hi.mm.toFixed(0) + 'mm 為 <strong>' + lo.region + '</strong> ' + lo.mm.toFixed(0) + 'mm 的 <strong>' + ratio.toFixed(1) + ' 倍</strong>');
   });
 
-  // 業務判斷
-  const highRainCombos = rs.filter(r => r.mm >= 300).length;
-  const lowRainCombos = rs.filter(r => r.mm < 100).length;
-  const stormCombos = rs.filter(r => r.stormDays > 0).length;
-  let biz = '';
-  if (lowRainCombos > highRainCombos) {
-    biz = '☀ 選定範圍偏乾季為主 → 大部分月份客戶田面可作業，<strong>整體出貨環境有利</strong>，銷量預估較穩。';
-  } else if (highRainCombos > rs.length * 0.4) {
-    biz = '🌧 選定範圍多雨季組合 → 施肥出貨時機受限，<strong>建議提前備料、選乾期沖刺</strong>。';
-  } else {
-    biz = '⛅ 選定範圍乾濕均衡 → 出貨可按平常規劃，關注月份間差異調度。';
+  // === 銷售對照 (若 SALES 有對應年月) ===
+  const salesCorr = [];
+  if (window.SALES && window.SALES.monthly) {
+    rs.forEach(r => {
+      const arr = window.SALES.monthly[String(r.year)];
+      if (arr && arr[r.month - 1] != null) {
+        salesCorr.push({...r, sales: arr[r.month - 1]});
+      }
+    });
   }
-  if (stormCombos > 0) {
-    biz += '<br>⛈ 有 <strong>' + stormCombos + '</strong> 個組合出現豪雨日 (單日 ≥80mm)，該時段需嚴防出貨延誤。';
+  // 分「高雨月」vs「低雨月」的銷售平均對照
+  let salesInsight = '';
+  if (salesCorr.length >= 4) {
+    const hi = salesCorr.filter(r => r.mm >= 300);
+    const lo = salesCorr.filter(r => r.mm < 150);
+    if (hi.length && lo.length) {
+      const hiSalesAvg = hi.reduce((s,r)=>s+r.sales,0) / hi.length;
+      const loSalesAvg = lo.reduce((s,r)=>s+r.sales,0) / lo.length;
+      const ratio = loSalesAvg / hiSalesAvg;
+      if (ratio > 1.15) {
+        salesInsight = '📉 <strong>對照銷售明顯</strong>：低雨月 (&lt;150mm) 平均銷售 <strong>' + loSalesAvg.toFixed(0) + ' 噸/月</strong>，高雨月 (≥300mm) 掉到 <strong>' + hiSalesAvg.toFixed(0) + ' 噸/月</strong> (下滑 ' + ((1-1/ratio)*100).toFixed(0) + '%) → <strong>驗證雨量嚴重影響出貨</strong>';
+      } else if (ratio < 0.85) {
+        salesInsight = '🌧 反常現象：高雨月銷量反而較高，可能是<strong>颱風前搶備肥</strong>或<strong>秋季雨後補基肥</strong>行為，值得業務深入了解';
+      } else {
+        salesInsight = '⚖ 雨量與銷售關聯度普通 (差異 &lt; 15%)，銷售受其他因素 (客戶結構/促銷/新品) 影響較大';
+      }
+    }
   }
 
-  let html = '<h4>📋 自動分析評語（' + rs.length + ' 個組合）</h4>';
-  html += '<ul>';
-  html += '<li>🔴 <strong>最高</strong>：' + maxItem.region + ' ' + maxItem.year + '年' + maxItem.month + '月 · <strong>' + maxItem.mm.toFixed(1) + ' mm</strong> (' + maxItem.rainDays + '天有雨)</li>';
-  html += '<li>🟢 <strong>最低</strong>：' + minItem.region + ' ' + minItem.year + '年' + minItem.month + '月 · <strong>' + minItem.mm.toFixed(1) + ' mm</strong> (' + minItem.rainDays + '天有雨)</li>';
-  html += '<li>📊 <strong>平均</strong>：' + avgMm.toFixed(1) + ' mm / 月，平均 ' + avgRain.toFixed(1) + ' 天有雨</li>';
-  html += '<li>⛈ 全範圍共出現 <strong>' + totalStorm + '</strong> 個豪雨日 (≥80mm)</li>';
-  html += '</ul>';
-  if (trendLines.length) {
-    html += '<h4 style="margin-top:12px">📈 年度趨勢 (變化 &gt; 5%)</h4><ul>';
-    trendLines.slice(0, 8).forEach(l => html += '<li>' + l + '</li>');
-    html += '</ul>';
+  // === 業務綜合判斷 (雨量) ===
+  const highRainCombos = rs.filter(r => r.mm >= 300).length;
+  const lowRainCombos = rs.filter(r => r.mm < 150).length;
+  const goldenCombos = rs.filter(r => r.mm < 150 && (r.rd || 0) < 12).length;
+  let bizRain = '';
+  if (lowRainCombos > highRainCombos * 1.5) {
+    bizRain = '☀ <strong>整體乾季為主</strong> — 田面可作業機會多，<span class="growth">預估銷量穩定或成長</span>，適合積極衝刺月。';
+  } else if (highRainCombos > nRs * 0.4) {
+    bizRain = '🌧 <strong>多雨月佔比高</strong> — 施肥出貨窗口有限，<span class="drop">預估銷量偏弱</span>，建議：（1）雨前 3 天提前配送 （2）雨後 2 天內快速補倉 （3）主打「速溶粒肥」耐雨規格。';
+  } else {
+    bizRain = '⛅ <strong>乾濕均衡</strong> — 出貨可按平常規劃，重點掌握「雨停放晴」窗口。';
   }
+
+  // === 業務判斷 (雨日) ===
+  let bizRd = '';
+  if (avgRd < 8) {
+    bizRd = '☀ <strong>連日晴天多</strong> (平均月有雨 ' + avgRd.toFixed(1) + '天) → 田間作業窗口寬鬆，<strong>撒佈時機容易掌握</strong>。';
+  } else if (avgRd > 20) {
+    bizRd = '🌫 <strong>連日陰雨</strong> (平均月有雨 ' + avgRd.toFixed(1) + '天) → 田面難乾、機具進不去，<strong>撒佈需卡準 24-48 小時空檔</strong>，粒肥可能泡爛，建議加強<strong>粉狀 25kg 包裝</strong>方便人工穴施。';
+  } else {
+    bizRd = '⛅ <strong>雨日普通</strong> (平均 ' + avgRd.toFixed(1) + '天) → 平常作業節奏。';
+  }
+
+  // === 業務判斷 (氣溫) ===
+  let bizTemp = '';
+  if (hasTemp) {
+    if (avgTavg < 18) {
+      bizTemp = '❄ <strong>低溫時期</strong> (均溫 ' + avgTavg.toFixed(1) + '°C) → 微生物活性慢、有機肥礦化率低、<strong>基肥效期延長 2-3 週</strong>，適合冬季果樹/茶葉<strong>提早施肥</strong>養根。';
+    } else if (avgTavg > 26) {
+      bizTemp = '🔥 <strong>高溫時期</strong> (均溫 ' + avgTavg.toFixed(1) + '°C) → 微生物活躍、有機肥快速礦化、<strong>肥效發揮快也快消耗</strong>，果樹夏梢期需<strong>分次少量追施</strong>，避免一次過量造成氨氣揮發流失。';
+    } else {
+      bizTemp = '🌡 <strong>溫度適中</strong> (均溫 ' + avgTavg.toFixed(1) + '°C) → 微生物穩定發酵，肥效正常發揮，適合<strong>春秋兩季主力銷售期</strong>。';
+    }
+    if (maxTmax && maxTmax.tmax >= 36) {
+      bizTemp += '<br>🚨 極端高溫紀錄：' + maxTmax.region + ' ' + maxTmax.year + '/' + maxTmax.month + ' <strong>' + maxTmax.tmax + '°C</strong> → 該時段有機肥氨氣揮發加劇，需<strong>清晨/傍晚施用+覆土</strong>。';
+    }
+  }
+
+  // === 氣候趨勢 (年份維度 → 暖化/變濕) ===
+  let bizTrend = '';
+  const upTrends = trendLines.filter(t => t.pct > 10).length;
+  const dnTrends = trendLines.filter(t => t.pct < -10).length;
+  if (trendLines.length >= 3) {
+    if (upTrends > dnTrends * 1.5) {
+      bizTrend = '📈 <strong>近年雨量上升趨勢明顯</strong> — 全球暖化下極端降雨事件增加，長期<strong>需增備耐雨產品線</strong>並向客戶推廣<strong>提前備肥</strong>觀念。';
+    } else if (dnTrends > upTrends * 1.5) {
+      bizTrend = '📉 <strong>近年雨量下降趨勢</strong> — 乾旱化風險升高，客戶可能改用<strong>保水型有機肥+液肥追肥</strong>組合，可規劃相關產品線。';
+    } else {
+      bizTrend = '➖ 近年雨量波動大但無明顯單向趨勢，維持現有備料策略即可。';
+    }
+  }
+
+  // === HTML 組合 ===
+  let html = '<h4>📋 自動分析評語（' + nRs + ' 組合 · 雨量/雨日/氣溫/年份 四維交叉）</h4>';
+
+  html += '<div class="adv-kpi-grid">';
+  html += '  <div class="adv-kpi"><div class="lbl">💧 平均雨量</div><div class="val">' + avgMm.toFixed(0) + '<span> mm</span></div></div>';
+  html += '  <div class="adv-kpi"><div class="lbl">☔ 平均雨日</div><div class="val">' + avgRd.toFixed(1) + '<span> 天</span></div></div>';
+  if (hasTemp) html += '  <div class="adv-kpi"><div class="lbl">🌡 平均均溫</div><div class="val">' + avgTavg.toFixed(1) + '<span> °C</span></div></div>';
+  html += '  <div class="adv-kpi"><div class="lbl">⛈ 豪雨日總計</div><div class="val">' + totalStorm + '<span> 天</span></div></div>';
+  html += '  <div class="adv-kpi hi"><div class="lbl">🔴 最多雨</div><div class="val">' + maxMm.mm.toFixed(0) + '<span> mm</span></div><div class="who">' + maxMm.region + ' ' + maxMm.year + '/' + maxMm.month + '</div></div>';
+  html += '  <div class="adv-kpi lo"><div class="lbl">🟢 最少雨</div><div class="val">' + minMm.mm.toFixed(0) + '<span> mm</span></div><div class="who">' + minMm.region + ' ' + minMm.year + '/' + minMm.month + '</div></div>';
+  html += '</div>';
+
+  html += '<h4 style="margin-top:14px">💧 累積雨量 → 有機肥出貨影響</h4>';
+  html += '<p>' + bizRain + '</p>';
+  if (stormCombos > 0) {
+    html += '<p>⛈ 共 <strong>' + stormCombos + '</strong> 個月出現豪雨日 (≥50mm)，該時段<strong>禁施+農路積水</strong>，出貨延誤 3-7 天。</p>';
+  }
+
+  html += '<h4 style="margin-top:14px">☔ 下雨天數 → 田間作業窗口</h4>';
+  html += '<p>' + bizRd + '</p>';
+  html += '<p style="font-size:12px;color:#666">📌 最多雨日紀錄：' + maxRd.region + ' ' + maxRd.year + '/' + maxRd.month + ' 全月 <strong>' + maxRd.rd + '</strong> 天有雨</p>';
+
+  if (hasTemp) {
+    html += '<h4 style="margin-top:14px">🌡 氣溫 → 有機肥礦化與施用時機</h4>';
+    html += '<p>' + bizTemp + '</p>';
+  }
+
+  if (bizTrend) {
+    html += '<h4 style="margin-top:14px">📈 年份趨勢 → 長期業務策略</h4>';
+    html += '<p>' + bizTrend + '</p>';
+    if (trendLines.length) {
+      html += '<ul style="font-size:12px">';
+      trendLines.slice(0, 6).forEach(t => html += '<li>' + t.text + '</li>');
+      html += '</ul>';
+    }
+  }
+
   if (regionDiffLines.length) {
-    html += '<h4 style="margin-top:12px">📍 地區差異 (差 &gt; 1.5 倍)</h4><ul>';
-    regionDiffLines.slice(0, 6).forEach(l => html += '<li>' + l + '</li>');
+    html += '<h4 style="margin-top:14px">📍 地區差異 → 分區銷售策略</h4><ul style="font-size:12px">';
+    regionDiffLines.slice(0, 5).forEach(l => html += '<li>' + l + '</li>');
     html += '</ul>';
   }
-  html += '<div class="biz">💼 <strong>業務綜合判斷</strong>：<br>' + biz + '</div>';
+
+  if (salesInsight) {
+    html += '<div class="biz" style="background:linear-gradient(90deg,#fff3e0,#fff8e1);border-left-color:#f57c00">💰 <strong>銷售數據交叉驗證</strong> (' + salesCorr.length + ' 筆對應資料)：<br>' + salesInsight + '</div>';
+  }
+
+  html += '<div class="biz">💼 <strong>綜合業務建議</strong>：<br>';
+  html += '（1）鎖定 <strong>' + minMm.region + ' 型乾季月份</strong> 為銷售衝刺期<br>';
+  html += '（2）避開 <strong>' + maxMm.region + ' 型多雨月份</strong> 或改推速溶粒肥／小包裝<br>';
+  html += '（3）跨年比較看氣候變遷趨勢，調整長期產品線 (耐雨/保水/低溫礦化配方)<br>';
+  html += '（4）搭配「💰 銷售分析」tab 看實際銷量對照，找出「氣候相關 vs 客戶結構相關」的銷量波動</div>';
+
   el.innerHTML = html;
   el.style.display = '';
 }
