@@ -867,6 +867,47 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .cwa-sidebar-title,.cwa-sidebar-foot{{display:none}}
   }}
 
+  /* ===== 廠商排名 tab ===== */
+  .rank-block{{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #6a1b9a}}
+  .rank-block h3{{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #6a1b9a;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}}
+  .rank-src{{font-size:11px;color:#666;font-weight:600;background:#fff;padding:3px 8px;border-radius:10px;border:1px solid var(--cwa-border)}}
+  .rank-kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}}
+  .rank-kpi{{background:#fff;border:1.5px solid var(--cwa-border);border-left:4px solid #90a4ae;padding:10px 12px;border-radius:4px;text-align:center}}
+  .rank-kpi.hi{{border-left-color:#c62828;background:#ffebee}}
+  .rank-kpi.hi2{{border-left-color:#2e7d32;background:#e8f5e9}}
+  .rank-kpi.upd{{border-left-color:#6a1b9a;background:#f3e5f5}}
+  .rank-kpi .lbl{{font-size:12px;color:var(--cwa-text-muted);font-weight:700}}
+  .rank-kpi .val{{font-size:22px;font-weight:900;color:#6a1b9a;line-height:1.1;margin-top:3px;font-family:ui-monospace,Menlo,monospace}}
+  .rank-filters{{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--cwa-hover);padding:10px 12px;border-radius:4px;margin-bottom:10px;font-size:13px}}
+  .rank-filters label{{font-weight:700;color:var(--cwa-primary)}}
+  .rank-filters select{{padding:5px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-family:inherit;font-size:13px}}
+  .rank-count{{margin-left:auto;font-size:12px;color:#6a1b9a;font-weight:700}}
+  .rank-cat-summary{{margin-bottom:12px;padding:10px 12px;background:#fff;border:1px solid var(--cwa-border);border-radius:4px;font-size:12px}}
+  .rank-cat-summary .head{{font-weight:900;color:#6a1b9a;margin-bottom:6px}}
+  .rank-cat-summary table{{width:100%;border-collapse:collapse}}
+  .rank-cat-summary th{{padding:5px 8px;background:#f3e5f5;color:#6a1b9a;font-weight:700;font-size:11px;text-align:center;border:1px solid var(--cwa-border)}}
+  .rank-cat-summary td{{padding:5px 8px;text-align:center;border:1px solid var(--cwa-border);font-family:ui-monospace,Menlo,monospace}}
+  .rank-cat-summary td.name{{text-align:left;font-weight:700;color:#333;font-family:inherit}}
+  .rank-cat-summary td.tier-hi{{background:#ffebee;color:#c62828;font-weight:900}}
+  .rank-table-wrap{{overflow-x:auto;border:1px solid var(--cwa-border);border-radius:4px;background:#fff}}
+  .rank-table{{width:100%;border-collapse:collapse;font-size:12.5px;min-width:700px}}
+  .rank-table th{{background:linear-gradient(180deg,#6a1b9a,#4a148c);color:#fff;padding:9px 8px;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;position:sticky;top:0;cursor:pointer}}
+  .rank-table th.n{{text-align:right}}
+  .rank-table td{{padding:7px 8px;border-bottom:1px solid var(--cwa-border);vertical-align:middle}}
+  .rank-table td.rank{{text-align:center;font-weight:900;color:#6a1b9a;font-family:ui-monospace,Menlo,monospace}}
+  .rank-table td.rank.top3{{background:linear-gradient(135deg,#ffd54f,#ffa000);color:#333}}
+  .rank-table td.name{{font-weight:700}}
+  .rank-table td.name.dachan{{background:linear-gradient(90deg,#ffcdd2,transparent);color:#b71c1c;font-weight:900}}
+  .rank-table td.n{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
+  .rank-table td.n.big{{color:#c62828;font-size:14px}}
+  .rank-table td.cats{{font-size:11px;color:#666}}
+  .rank-table td.cats .cat{{display:inline-block;background:#f3e5f5;color:#6a1b9a;padding:1px 6px;border-radius:8px;margin:1px 2px;font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:700}}
+  .rank-table tr:nth-child(odd) td{{background:#fafafa}}
+  .rank-table tr:hover td{{background:#f3e5f5}}
+  .rank-analysis{{margin-top:14px;padding:12px 16px;background:linear-gradient(90deg,#f3e5f5,#fff8e1);border-left:4px solid #6a1b9a;border-radius:4px;font-size:13px;line-height:1.7;color:var(--cwa-text)}}
+  .rank-analysis h4{{margin:0 0 8px;font-size:14px;color:#6a1b9a;font-weight:900}}
+  .rank-analysis strong{{color:#c62828;font-weight:900}}
+
   /* ===== 統一 tab bar (三選一切換) ===== */
   .unified-tabs{{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}}
   .unified-tabs button{{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}}
@@ -903,6 +944,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <a href="#fcstBlock" data-icon="🔮">未來預測</a>
     <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
     <a href="#salesBlock" data-icon="💰">銷售分析</a>
+    <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#solarBlock" data-icon="🌱">節氣影響</a>
@@ -999,6 +1041,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <button data-target="fcstBlock">🔮 未來預測</button>
   <button data-target="townsBlock">🌾 鄉鎮農產</button>
   <button data-target="salesBlock">💰 銷售分析</button>
+  <button data-target="rankBlock">🏭 廠商排名</button>
 </div>
 
 <div id="obsBlock" class="unified-block active">
@@ -1325,6 +1368,56 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="sales-analysis" id="salesAnalysis"></div>
 </div>
 
+<!-- ===================== 農糧署有機肥廠商排名 (即時抓官網) ===================== -->
+<div id="rankBlock" class="unified-block rank-block">
+  <h3>🏭 有機質肥料廠商排名 <span class="rank-src" id="rankSrc">資料源:農糧署 · 115 年推薦名單</span></h3>
+
+  <div class="rank-kpi-grid">
+    <div class="rank-kpi"><div class="lbl">總業者數</div><div class="val" id="rkTotSupp">–</div></div>
+    <div class="rank-kpi"><div class="lbl">總產品數</div><div class="val" id="rkTotProd">–</div></div>
+    <div class="rank-kpi hi"><div class="lbl">🐔 禽畜糞產品</div><div class="val" id="rkAnimal">–</div></div>
+    <div class="rank-kpi hi2"><div class="lbl">🌾 植物渣粕產品</div><div class="val" id="rkPlant">–</div></div>
+    <div class="rank-kpi upd"><div class="lbl">最新更新</div><div class="val" id="rkUpd">–</div></div>
+  </div>
+
+  <div class="rank-filters">
+    <label>補助等級</label>
+    <select id="rankTier">
+      <option value="all">全部</option>
+      <option value="2+2元">每公斤補助 2+2 元 (高階)</option>
+      <option value="2元">每公斤補助 2 元 (一般)</option>
+    </select>
+    <label>品目篩選</label>
+    <select id="rankCode">
+      <option value="all">全部品目</option>
+    </select>
+    <label>關鍵字</label>
+    <input id="rankKw" type="text" placeholder="輸入業者名,如「碩成」「福壽」" style="padding:5px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-size:13px">
+    <span class="rank-count" id="rankCount"></span>
+  </div>
+
+  <!-- 品目統計小表 -->
+  <div class="rank-cat-summary" id="rankCatSummary"></div>
+
+  <!-- 廠商排名主表 -->
+  <div class="rank-table-wrap">
+    <table class="rank-table" id="rankTable">
+      <thead><tr>
+        <th style="width:50px">名次</th>
+        <th>業者名稱</th>
+        <th class="n">產品總數</th>
+        <th class="n">2+2 元</th>
+        <th class="n">2 元</th>
+        <th class="n">品目數</th>
+        <th>主要品目</th>
+      </tr></thead>
+      <tbody id="rankTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="rank-analysis" id="rankAnalysis"></div>
+</div>
+
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
 <div class="history-block" id="historyBlock">
   <h3>📊 歷史雨量比較 · 近 10 年同月對照 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
@@ -1562,6 +1655,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 // 歷史雨量資料 (最先定義, 避免 TDZ)
 window.HISTORY = {history_json};
 window.SALES = {sales_json};
+window.FERT_RANKINGS = {fert_rankings_json};
 const DATA = {data_json};
 const BANDS = {bands_json};
 const NAME_MAP = {name_map_json};       // GeoJSON 縣市名 → 我們資料的縣市名
@@ -3304,6 +3398,156 @@ function _rerenderSales() {{
   renderSalesAnalysis();
 }}
 
+// ============ 🏭 廠商排名 (從農糧署即時抓取) ============
+(function initRankBlock() {{
+  const R = window.FERT_RANKINGS || {{}};
+  if (!R.suppliers) return;
+
+  // KPI
+  document.getElementById('rkTotSupp').textContent = R.total_suppliers || 0;
+  document.getElementById('rkTotProd').textContent = R.total_products || 0;
+  document.getElementById('rkUpd').textContent = R.updated || '–';
+  const animal = R.suppliers.reduce((s, r) => s + (r.by_code['5-08'] || 0) + (r.by_code['5-09'] || 0), 0);
+  const plant = R.suppliers.reduce((s, r) => s + (r.by_code['5-01'] || 0), 0);
+  document.getElementById('rkAnimal').textContent = animal;
+  document.getElementById('rkPlant').textContent = plant;
+
+  // 品目下拉
+  const codeSel = document.getElementById('rankCode');
+  const allCodes = new Set();
+  R.suppliers.forEach(r => Object.keys(r.by_code).forEach(c => allCodes.add(c)));
+  const codeNames = {{'5-01':'植物渣粕','5-08':'雞糞加工','5-09':'禽畜糞堆肥','5-10':'一般堆肥','5-11':'雜項堆肥','5-12':'混合有機質','5-13':'雜項有機質','7-03':'有機介質'}};
+  [...allCodes].sort().forEach(c => {{
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c + ' ' + (codeNames[c] || '');
+    codeSel.appendChild(opt);
+  }});
+
+  // 品目統計小表
+  renderCatSummary();
+  renderRankTable();
+  renderRankAnalysis();
+
+  document.getElementById('rankTier').addEventListener('change', renderRankTable);
+  document.getElementById('rankCode').addEventListener('change', renderRankTable);
+  document.getElementById('rankKw').addEventListener('input', renderRankTable);
+}})();
+
+function renderCatSummary() {{
+  const R = window.FERT_RANKINGS;
+  if (!R || !R.categories) return;
+  // 分兩排 by tier
+  const tiers = {{'2+2元': [], '2元': []}};
+  R.categories.forEach(c => {{
+    if (tiers[c.tier]) tiers[c.tier].push(c);
+  }});
+  let html = '<div class="head">📊 各補助等級·品目統計 (共 ' + R.total_products + ' 產品 / ' + R.total_suppliers + ' 業者)</div>';
+  html += '<table><thead><tr><th>補助等級</th><th>品目代碼</th><th>品目名稱</th><th>產品數</th><th>業者數</th><th>平均產品/家</th></tr></thead><tbody>';
+  ['2+2元', '2元'].forEach(tier => {{
+    tiers[tier].forEach((c, i) => {{
+      const cls = tier === '2+2元' ? 'tier-hi' : '';
+      html += '<tr>';
+      if (i === 0) html += '<td class="' + cls + '" rowspan="' + tiers[tier].length + '"><strong>' + tier + '</strong></td>';
+      html += '<td>' + c.code + '</td><td class="name">' + c.name + '</td>';
+      html += '<td>' + c.n_prods + '</td><td>' + c.n_suppliers + '</td>';
+      html += '<td>' + (c.n_suppliers > 0 ? (c.n_prods / c.n_suppliers).toFixed(1) : '–') + '</td>';
+      html += '</tr>';
+    }});
+  }});
+  html += '</tbody></table>';
+  document.getElementById('rankCatSummary').innerHTML = html;
+}}
+
+function renderRankTable() {{
+  const R = window.FERT_RANKINGS;
+  if (!R || !R.suppliers) return;
+  const tier = document.getElementById('rankTier').value;
+  const code = document.getElementById('rankCode').value;
+  const kw = document.getElementById('rankKw').value.trim();
+
+  // 過濾
+  let filtered = R.suppliers.map(r => {{
+    // 若有 tier/code 篩選,重算 total = 該 tier/code 的產品數
+    let tierTotal = tier === 'all' ? r.total : (r.by_tier[tier] || 0);
+    let codeTotal = code === 'all' ? r.total : (r.by_code[code] || 0);
+    let showTotal = r.total;
+    if (tier !== 'all' && code !== 'all') {{
+      // 這裡簡化:用 code 為主
+      showTotal = codeTotal;
+    }} else if (tier !== 'all') {{
+      showTotal = tierTotal;
+    }} else if (code !== 'all') {{
+      showTotal = codeTotal;
+    }}
+    return {{...r, showTotal}};
+  }}).filter(r => r.showTotal > 0);
+
+  if (kw) filtered = filtered.filter(r => r.name.includes(kw));
+
+  // 重排 rank
+  filtered.sort((a, b) => b.showTotal - a.showTotal);
+  filtered.forEach((r, i) => r.dynRank = i + 1);
+
+  document.getElementById('rankCount').textContent = '共 ' + filtered.length + ' 家';
+
+  const tbody = document.getElementById('rankTbody');
+  tbody.innerHTML = '';
+  const codeNames = {{'5-01':'植物渣粕','5-08':'雞糞加工','5-09':'禽畜糞堆肥','5-10':'一般堆肥','5-11':'雜項堆肥','5-12':'混合有機質','5-13':'雜項有機質','7-03':'有機介質'}};
+  filtered.forEach(r => {{
+    const isDachan = r.name.includes('大成') || r.name.includes('碩成');
+    const rankCls = r.dynRank <= 3 ? 'rank top3' : 'rank';
+    const nameCls = isDachan ? 'name dachan' : 'name';
+    const cats = Object.entries(r.by_code).sort((a,b) => b[1] - a[1])
+      .map(([c, n]) => '<span class="cat">' + c + ':' + n + '</span>').join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="' + rankCls + '">#' + r.dynRank + '</td>' +
+      '<td class="' + nameCls + '">' + r.name + (isDachan ? ' ★' : '') + '</td>' +
+      '<td class="n big">' + r.total + '</td>' +
+      '<td class="n">' + (r.by_tier['2+2元'] || 0) + '</td>' +
+      '<td class="n">' + (r.by_tier['2元'] || 0) + '</td>' +
+      '<td class="n">' + r.n_categories + '</td>' +
+      '<td class="cats">' + cats + '</td>';
+    tbody.appendChild(tr);
+  }});
+}}
+
+function renderRankAnalysis() {{
+  const R = window.FERT_RANKINGS;
+  if (!R || !R.suppliers || !R.suppliers.length) return;
+  const supps = R.suppliers;
+  const top3 = supps.slice(0, 3);
+  const dachan = supps.find(r => r.name.includes('大成') || r.name.includes('碩成'));
+  const el = document.getElementById('rankAnalysis');
+
+  let html = '<h4>📊 業務市場定位分析</h4>';
+  html += '<ul>';
+  html += '<li>🥇 <strong>Top 3 廠商</strong>：' + top3.map(t => t.name + ' (' + t.total + '產品)').join('、') + '</li>';
+  if (dachan) {{
+    html += '<li>⭐ <strong>大成/碩成排名</strong>：全國第 <strong>' + dachan.rank + '</strong> 名 (共 ' + R.total_suppliers + ' 家) · 產品數 <strong>' + dachan.total + '</strong> · 涵蓋 ' + dachan.n_categories + ' 個品目';
+    if (dachan.by_tier['2+2元']) html += ' · 有 <strong>' + dachan.by_tier['2+2元'] + '</strong> 個高階補助 (2+2 元) 產品';
+    html += '</li>';
+    // 建議
+    if (dachan.n_categories < 3) {{
+      html += '<li>💡 <strong>擴展建議</strong>：目前只涵蓋 ' + dachan.n_categories + ' 個品目,可考慮進軍其他細分市場提高市佔</li>';
+    }}
+  }} else {{
+    html += '<li>ℹ️ 未在名單中偵測到大成/碩成品牌</li>';
+  }}
+  // 集中度
+  const top10Prods = supps.slice(0, 10).reduce((s, r) => s + r.total, 0);
+  const share10 = (top10Prods / R.total_products * 100).toFixed(1);
+  html += '<li>📈 <strong>市場集中度</strong>：Top 10 廠商佔 <strong>' + share10 + '%</strong> 產品數 (' + top10Prods + '/' + R.total_products + ') → ';
+  if (share10 > 60) html += '高度集中';
+  else if (share10 > 40) html += '中度集中';
+  else html += '分散競爭';
+  html += '</li>';
+  html += '</ul>';
+  html += '<p style="font-size:11px;color:#666;margin-top:8px">📌 資料每週自動從<a href="' + R.source_url + '" target="_blank" style="color:#6a1b9a"> 農糧署官網</a> 抓取更新。當農糧署修訂名單後 7 天內自動同步。</p>';
+  el.innerHTML = html;
+}}
+
 // CWA sidebar: smooth scroll + active state (仿 CODIS)
 (function initSidebar() {{
   const links = document.querySelectorAll('.cwa-sidebar-nav a');
@@ -4342,7 +4586,7 @@ def _mascot_mood(rows: list) -> tuple:
         ])
 
 
-def build_html(rows: list, today: date, history_stats: dict = None) -> str:
+def build_html(rows: list, today: date, history_stats: dict = None, fert_rankings: dict = None) -> str:
     from datetime import timedelta
     import base64
     quarter = (today.month - 1) // 3 + 1
@@ -4461,6 +4705,7 @@ def build_html(rows: list, today: date, history_stats: dict = None) -> str:
         dachan_logo_b64=dachan_logo_b64,
         author_avatar_b64=author_avatar_b64,
         sales_json=json.dumps(SALES_DATA, ensure_ascii=False),
+        fert_rankings_json=json.dumps(fert_rankings or {}, ensure_ascii=False),
     )
 
 
@@ -4510,6 +4755,158 @@ SALES_DATA = {
         "2026": [651, 712, 745, 867, 999, 840, 900, None, None, None, None, None],
     },
 }
+
+
+# ============ 農糧署有機質肥料品牌推薦名單 (每公斤補助 2 元 / 2+2 元) ============
+# 品目對照 5-01 植物渣粕 · 5-08 雞糞加工 · 5-09 禽畜糞堆肥 · 5-10 一般堆肥 ...
+# 抓 article_id=22431 (2元) + 22432 (2+2元) 找到 download ids, 下載 PDF, 解析統計
+
+def fetch_fertilizer_rankings(verbose: bool = True, use_cache: bool = True) -> dict:
+    """從農糧署官網抓最新有機質肥料品牌推薦名單, 統計每業者 × 品目 × 補助等級的產品數。
+    緩存到 docs/fert_rankings_cache.json (7 天內用 cache, 過期或 refresh=True 重抓)"""
+    import urllib.request, http.cookiejar, re, tempfile
+    from collections import defaultdict
+    today = date.today()
+    cache_path = DOCS_DIR / "fert_rankings_cache.json"
+
+    if use_cache and cache_path.exists():
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+            cached_date = cached.get("updated", "")
+            # 7 天內用 cache
+            if cached_date:
+                cd = date.fromisoformat(cached_date)
+                if (today - cd).days < 7:
+                    if verbose: print(f"[廠商] 使用 cache ({cached_date}, {cached.get('total_products',0)} 產品)")
+                    return cached
+        except Exception as e:
+            if verbose: print(f"[廠商] cache 讀取失敗: {e}")
+
+    try:
+        import pdfplumber
+    except ImportError:
+        if verbose: print("[廠商] pdfplumber 未安裝, 跳過抓取")
+        return {}
+
+    ua = "Mozilla/5.0"
+
+    # Step 1: 從兩篇 article 找 download ids
+    def get_download_ids(article_id):
+        url = f"https://www.afa.gov.tw/cht/index.php?code=list&flag=detail&ids=2212&article_id={article_id}"
+        try:
+            html = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": ua}), timeout=30).read().decode("utf-8", errors="ignore")
+            return re.findall(r'index\.php\?act=download&ids=(\d+)', html)
+        except Exception as e:
+            if verbose: print(f"[廠商] 抓 article {article_id} 失敗: {e}")
+            return []
+
+    tier_articles = {"2元": "22431", "2+2元": "22432"}
+
+    # 品目 code 從檔名判斷
+    code_pattern = re.compile(r'\((5-\d{2}|7-\d{2})\)')
+    code_name_map = {
+        "5-01": "植物渣粕肥料", "5-02": "副產植物質", "5-03": "魚廢渣", "5-04": "動物廢渣",
+        "5-08": "雞糞加工肥料", "5-09": "禽畜糞堆肥", "5-10": "一般堆肥",
+        "5-11": "雜項堆肥", "5-12": "混合有機質肥料", "5-13": "雜項有機質肥料",
+        "5-14": "液態雜項有機質", "5-15": "液態有機質", "7-02": "雜項有機質介質",
+        "7-03": "有機質栽培介質",
+    }
+
+    stats = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # stats[supplier][tier][code] = n_products
+    cat_totals = defaultdict(lambda: {"n_prods": 0, "suppliers": set()})  # by (tier, code)
+
+    for tier, aid in tier_articles.items():
+        ids = get_download_ids(aid)
+        if verbose: print(f"[廠商] article {aid} ({tier}) → {len(ids)} 個下載")
+        for did in ids:
+            # 抓 PDF header 拿檔名
+            try:
+                req = urllib.request.Request(f"https://www.afa.gov.tw/cht/index.php?act=download&ids={did}",
+                    headers={"User-Agent": ua, "Referer": "https://www.afa.gov.tw/"})
+                resp = urllib.request.urlopen(req, timeout=60)
+                cd = resp.headers.get("Content-Disposition", "")
+                fname_raw = re.search(r'filename="?([^";\r\n]+)', cd)
+                fname = urllib.parse.unquote(fname_raw.group(1)) if fname_raw else did
+                # 跳過違規名單
+                if "違規" in fname:
+                    if verbose: print(f"  [{did}] skip 違規名單: {fname[:40]}")
+                    continue
+                m = code_pattern.search(fname)
+                if not m:
+                    if verbose: print(f"  [{did}] skip 無 code: {fname[:40]}")
+                    continue
+                code = m.group(1)
+                data = resp.read()
+                # 寫暫存讀
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
+                    tf.write(data); tpath = tf.name
+                try:
+                    with pdfplumber.open(tpath) as pdf:
+                        all_text = "\n".join(p.extract_text() or "" for p in pdf.pages)
+                    # 解析: 找所有 <7位數字> <公司名>
+                    # pattern: 登記證字號後接業者名
+                    matches = re.findall(r'\b\d{7}\b\s+([一-龥][一-龥·\s]{2,30}?(?:股份有限公司|有限公司|合作社|農會|合作場|實業|貿易|企業|科技|農場|生物科技|工廠|工業))', all_text)
+                    # 每個 match = 一筆產品
+                    n_prods = len(matches)
+                    cat_totals[(tier, code)]["n_prods"] += n_prods
+                    for supp in matches:
+                        supp = re.sub(r'\s+', '', supp)
+                        stats[supp][tier][code] += 1
+                        cat_totals[(tier, code)]["suppliers"].add(supp)
+                    if verbose: print(f"  [{did}] {code} ({tier}): {n_prods} 產品 {fname[:35]}")
+                finally:
+                    try: os.remove(tpath)
+                    except: pass
+            except Exception as e:
+                if verbose: print(f"  [{did}] FAIL: {e}")
+
+    # 轉換為可 JSON 序列化
+    suppliers_list = []
+    for supp, tiers in stats.items():
+        row = {"name": supp, "total": 0, "by_tier": {}, "by_code": defaultdict(int), "n_categories": 0}
+        for tier, codes in tiers.items():
+            row["by_tier"][tier] = sum(codes.values())
+            row["total"] += row["by_tier"][tier]
+            for code, cnt in codes.items():
+                row["by_code"][code] += cnt
+        row["n_categories"] = len(row["by_code"])
+        row["by_code"] = dict(row["by_code"])
+        suppliers_list.append(row)
+    # 排序 by total desc
+    suppliers_list.sort(key=lambda x: -x["total"])
+    for i, r in enumerate(suppliers_list):
+        r["rank"] = i + 1
+
+    # cat_totals: 轉 unique 業者數
+    cat_summary = []
+    for (tier, code), v in cat_totals.items():
+        cat_summary.append({
+            "tier": tier, "code": code, "name": code_name_map.get(code, code),
+            "n_prods": v["n_prods"], "n_suppliers": len(v["suppliers"]),
+        })
+    cat_summary.sort(key=lambda x: (x["tier"], -x["n_prods"]))
+
+    total_prods = sum(r["total"] for r in suppliers_list)
+    result = {
+        "updated": today.isoformat(),
+        "source": "農糧署 · 115 年國產有機質肥料品牌推薦名單",
+        "source_url": "https://www.afa.gov.tw/cht/index.php?code=list&ids=2212",
+        "total_products": total_prods,
+        "total_suppliers": len(suppliers_list),
+        "suppliers": suppliers_list,
+        "categories": cat_summary,
+    }
+
+    try:
+        DOCS_DIR.mkdir(parents=True, exist_ok=True)
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False)
+        if verbose: print(f"[廠商] cache 寫入 {cache_path}")
+    except Exception as e:
+        if verbose: print(f"[廠商] cache 寫入失敗: {e}")
+
+    return result
 
 
 # 動態從 CODIS station_list 抓「全台所有 CWB 局屬有人站」分縣清單
@@ -4931,7 +5328,10 @@ def generate_and_publish(verbose: bool = True) -> str:
     if verbose:
         print(f"[Rainfall Map] 抓取歷史雨量 10 年 × 22 縣市 (Python 端預打包) ...")
     history_stats = collect_history_stats(verbose=verbose, n_years=10, current_rows=rows)
-    html = build_html(rows, today, history_stats)
+    if verbose:
+        print(f"[Rainfall Map] 抓取農糧署有機肥廠商排名 ...")
+    fert_rankings = fetch_fertilizer_rankings(verbose=verbose)
+    html = build_html(rows, today, history_stats, fert_rankings)
 
     # 寫到 docs/ (GitHub Pages 來源，固定檔名讓 URL 不變)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
