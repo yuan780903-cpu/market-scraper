@@ -5,7 +5,7 @@ name: 一鍵更新網站 (廠商排名+雨量地圖)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 20 * * 1'  # 每週一 台北 04:00 自動跑一次
+    - cron: '0 20 * * *'  # 每天 台北 04:00 自動抓農糧署最新名單
 
 jobs:
   refresh:

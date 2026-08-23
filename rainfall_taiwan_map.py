@@ -754,13 +754,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body.projector .rm-cmps li{{font-size:15px;padding:12px 14px}}
   body.projector .rm-impact{{font-size:15px}}
 
-  /* ===== 浮動版權水印 (左下角固定 · 顯眼放大版) ===== */
-  .copyright-badge{{position:fixed;left:190px;bottom:16px;z-index:999;background:linear-gradient(135deg,#c62828 0%,#8b0000 100%);color:#fff;padding:8px 18px 8px 8px;border-radius:40px;box-shadow:0 6px 20px rgba(198,40,40,.5),0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px;border:3px solid #ffd54f;user-select:none;transition:transform .15s}}
+  /* ===== 浮動版權水印 (農業配色 · 咖啡+深綠+稻穗紋) ===== */
+  .copyright-badge{{position:fixed;left:190px;bottom:16px;z-index:999;background:linear-gradient(135deg,#6d4c1f 0%,#5d4037 40%,#1b5e20 100%);color:#fff;padding:8px 18px 8px 8px;border-radius:40px;box-shadow:0 6px 20px rgba(93,64,55,.55),0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px;border:3px solid #d4a017;user-select:none;transition:transform .15s;position:fixed;overflow:hidden}}
+  /* 稻穗/作物花紋層 */
+  .copyright-badge::before{{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='%23ffd54f' opacity='0.15'><text x='4' y='18' font-size='16'>🌾</text><text x='30' y='42' font-size='14'>🌱</text><text x='4' y='56' font-size='12'>🍃</text></g></svg>");background-size:60px 60px;pointer-events:none;opacity:.7}}
   .copyright-badge:hover{{transform:translateY(-2px) scale(1.03)}}
-  .copyright-badge .cb-avatar{{width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid #ffd54f;background:#fff;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.3)}}
+  .copyright-badge > *{{position:relative;z-index:1}}
+  .copyright-badge .cb-avatar{{width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid #d4a017;background:#fff;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.4) inset}}
   .copyright-badge .cb-text{{display:flex;flex-direction:column;gap:2px;line-height:1.2}}
-  .copyright-badge .cb-line1{{font-size:12px;font-weight:700;color:#fff8b3;letter-spacing:1.5px}}
-  .copyright-badge .cb-seal{{background:linear-gradient(180deg,#ffd54f,#f0a500);color:#8b0000;font-weight:900;padding:4px 12px;border-radius:14px;font-family:"STKaiti","BiauKai","STHeiti",serif;letter-spacing:4px;font-size:18px;box-shadow:inset 0 -1px 2px rgba(0,0,0,.2)}}
+  .copyright-badge .cb-line1{{font-size:12px;font-weight:700;color:#fff8b3;letter-spacing:1.5px;text-shadow:0 1px 2px rgba(0,0,0,.4)}}
+  .copyright-badge .cb-line1::before{{content:"🌾 ";font-size:11px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}}
+  .copyright-badge .cb-seal{{background:linear-gradient(180deg,#f4d03f,#d4a017);color:#3e2723;font-weight:900;padding:4px 14px;border-radius:14px;font-family:"STKaiti","BiauKai","STHeiti",serif;letter-spacing:4px;font-size:18px;box-shadow:inset 0 -2px 3px rgba(0,0,0,.25),inset 0 1px 2px rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.3);border:1.5px solid #b8860b;text-shadow:0 1px 1px rgba(255,255,255,.3)}}
   body:has(.cwa-sidebar.collapsed) .copyright-badge{{left:68px}}
   @media (max-width:768px){{
     .copyright-badge{{left:60px;bottom:10px;padding:6px 14px 6px 6px;gap:8px;border-width:2px}}
@@ -5388,17 +5392,16 @@ def fetch_fertilizer_rankings(verbose: bool = True, use_cache: bool = True) -> d
     today = date.today()
     cache_path = DOCS_DIR / "fert_rankings_cache.json"
 
+    # 公開資料 → 每次跑都直接爬農糧署官網最新版, 只當日短暫 cache 避免同日重複
     if use_cache and cache_path.exists():
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
                 cached = json.load(f)
             cached_date = cached.get("updated", "")
-            # 7 天內用 cache
-            if cached_date:
-                cd = date.fromisoformat(cached_date)
-                if (today - cd).days < 7:
-                    if verbose: print(f"[廠商] 使用 cache ({cached_date}, {cached.get('total_products',0)} 產品)")
-                    return cached
+            # 只當日 cache (同天重跑複用,跨日就重抓)
+            if cached_date == today.isoformat():
+                if verbose: print(f"[廠商] 今日已抓過 cache ({cached_date}, {cached.get('total_products',0)} 產品)")
+                return cached
         except Exception as e:
             if verbose: print(f"[廠商] cache 讀取失敗: {e}")
 
