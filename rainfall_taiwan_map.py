@@ -1261,6 +1261,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div style="text-align:center;padding:40px 20px;color:var(--cwa-text-muted)">
       👆 選好地區與月份，按「撈取比較」<br>
       <span style="font-size:11px;color:#2e7d32;font-weight:700">✓ 資料已預先打包於本頁面，瞬間查詢，任何組合皆可比對</span>
+      <div style="margin-top:14px;padding:10px 14px;background:#fff3e0;border:1px solid #f57c00;border-radius:4px;font-size:12px;line-height:1.7;color:#333;text-align:left;max-width:640px;margin-left:auto;margin-right:auto">
+        <strong style="color:#c62828">📖 資料源智慧切換說明</strong><br>
+        • <strong>歷年 (2016–上月)</strong>：中央氣象署 CODIS 官方觀測站官方數字 (每縣多站取 MAX)<br>
+        • <strong>當年當月 (進行中)</strong>：Open-Meteo Forecast (ECMWF 11km 高解析,即時)，與上方地圖同源<br>
+        • <strong>自動切換</strong>：每日 GitHub Actions 重抓,月結束後當月數字自動改為 CWA 官方觀測
+      </div>
     </div>
   </div>
   <div class="history-table-wrap" id="histTableWrap" style="display:none">
@@ -1269,9 +1275,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <th>年份</th>
         <th>該月累積雨量</th>
         <th>有雨天數 (≥1mm)</th>
-        <th>豪雨日 (≥80mm)</th>
+        <th>豪雨日 (≥50mm)</th>
         <th>vs 均值差異</th>
         <th>vs 均值 %</th>
+        <th>資料源</th>
       </tr></thead>
       <tbody id="histTbody"></tbody>
     </table>
@@ -2346,6 +2353,7 @@ function loadHistoryData() {{
         mm: mData.mm || 0,
         rainDays: mData.rd || 0,
         stormDays: mData.sd || 0,
+        src: mData.src || 'unknown',
         missing: !!mData.missing,
       }};
     }});
@@ -2369,13 +2377,21 @@ function loadHistoryData() {{
       const arrow = diff >= 0 ? '▲' : '▼';
       const tr = document.createElement('tr');
       if (r.year === currentYear) tr.className = 'current-row';
+      const srcTag = r.src === 'cwa'
+        ? '<span style="background:#c62828;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900">CWA 官方</span>'
+        : (r.src === 'forecast'
+          ? '<span style="background:#1976d2;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900" title="Open-Meteo Forecast API (即時)">即時 F/C</span>'
+          : (r.src === 'openmeteo-fallback' || r.src === 'openmeteo'
+            ? '<span style="background:#757575;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px" title="CWA 該年無觀測 · fallback Open-Meteo">O-M 補</span>'
+            : '<span style="color:#999;font-size:10px">–</span>'));
       tr.innerHTML =
         '<td class="yr">' + r.year + '</td>' +
         '<td class="mm">' + r.mm.toFixed(1) + ' mm</td>' +
         '<td>' + r.rainDays + ' 天</td>' +
         '<td>' + r.stormDays + ' 天</td>' +
         '<td class="diff ' + upDown + '">' + arrow + Math.abs(diff).toFixed(1) + ' mm</td>' +
-        '<td class="diff ' + upDown + '">' + arrow + Math.abs(diffPct).toFixed(1) + '%</td>';
+        '<td class="diff ' + upDown + '">' + arrow + Math.abs(diffPct).toFixed(1) + '%</td>' +
+        '<td>' + srcTag + '</td>';
       tbody.appendChild(tr);
     }});
     // 均值列
@@ -2385,7 +2401,7 @@ function loadHistoryData() {{
       '<td class="yr">近 ' + nYears + ' 年均</td>' +
       '<td class="mm">' + avgMm.toFixed(1) + ' mm</td>' +
       '<td>' + avgDays.toFixed(1) + ' 天</td>' +
-      '<td>—</td><td>—</td><td>—</td>';
+      '<td>—</td><td>—</td><td>—</td><td>—</td>';
     tbody.appendChild(avgTr);
     document.getElementById('histTableWrap').style.display = '';
 
