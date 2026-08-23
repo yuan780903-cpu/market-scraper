@@ -150,7 +150,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body{{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.6;font-size:15px}}
 
   /* ===== 頂部品牌條 (大成 · 碩成) ===== */
-  .brand-bar{{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
+  .brand-bar{{background:linear-gradient(90deg,#003c8f 0%,#002171 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #ffd54f;box-shadow:0 2px 6px rgba(0,0,0,.15)}}
   .brand-left{{display:flex;align-items:center;gap:14px}}
   .brand-logos{{display:flex;align-items:center;gap:10px;background:#fff;padding:6px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),0 2px 6px rgba(0,0,0,.2)}}
   .brand-dachan-img{{height:44px;width:auto;display:block;object-fit:contain}}
@@ -791,8 +791,36 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .sales-hint{{width:100%;margin-left:0}}
   }}
 
+  /* ===== 左側浮動導覽 (仿 CODIS StationData sidebar) ===== */
+  .cwa-sidebar{{position:fixed;top:0;left:0;bottom:0;width:170px;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);color:#fff;padding:14px 0;box-shadow:2px 0 12px rgba(0,0,0,.25);z-index:950;display:flex;flex-direction:column;transition:width .2s;overflow:hidden}}
+  .cwa-sidebar.collapsed{{width:48px}}
+  .cwa-sidebar-toggle{{position:absolute;top:8px;right:6px;width:32px;height:32px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;transition:background .1s}}
+  .cwa-sidebar-toggle:hover{{background:rgba(255,255,255,.3)}}
+  .cwa-sidebar-title{{padding:10px 16px 12px;font-size:11px;color:rgba(255,255,255,.65);font-weight:700;letter-spacing:2px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px;margin-right:36px}}
+  .cwa-sidebar.collapsed .cwa-sidebar-title,.cwa-sidebar.collapsed .cwa-sidebar-nav a span,.cwa-sidebar.collapsed .cwa-sidebar-foot{{display:none}}
+  .cwa-sidebar-nav{{flex:1;overflow-y:auto;padding:0 8px}}
+  .cwa-sidebar-nav a{{display:flex;align-items:center;gap:10px;padding:9px 12px;color:rgba(255,255,255,.85);text-decoration:none;font-size:13.5px;font-weight:600;border-radius:4px;margin-bottom:2px;transition:all .12s;border-left:3px solid transparent}}
+  .cwa-sidebar-nav a::before{{content:attr(data-icon);font-size:16px;line-height:1}}
+  .cwa-sidebar-nav a:hover{{background:rgba(255,255,255,.12);color:#fff;border-left-color:#ffd54f;padding-left:16px}}
+  .cwa-sidebar-nav a.active{{background:linear-gradient(90deg,rgba(255,213,79,.2),transparent);color:#ffd54f;border-left-color:#ffd54f;font-weight:900}}
+  .cwa-sidebar-foot{{padding:10px 16px;font-size:11px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}}
+  .cwa-sidebar-foot .upd{{margin-bottom:6px}}
+  .cwa-sidebar-foot .src-link{{color:#ffd54f;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px}}
+  .cwa-sidebar-foot .src-link:hover{{text-decoration:underline}}
+  /* body 讓出左側空間 */
+  body{{padding-left:170px;transition:padding-left .2s}}
+  body:has(.cwa-sidebar.collapsed){{padding-left:48px}}
+  @media (max-width:768px){{
+    .cwa-sidebar{{width:44px}}
+    .cwa-sidebar-title,.cwa-sidebar-nav a span,.cwa-sidebar-foot,.cwa-sidebar-nav a::before{{}}
+    .cwa-sidebar-nav a{{justify-content:center;padding:10px 4px;font-size:0}}
+    .cwa-sidebar-nav a::before{{font-size:18px}}
+    body{{padding-left:44px}}
+    .cwa-sidebar-title,.cwa-sidebar-foot{{display:none}}
+  }}
+
   /* ===== 統一 tab bar (三選一切換) ===== */
-  .unified-tabs{{display:flex;gap:0;background:linear-gradient(180deg,#1976d2 0%,#0d47a1 100%);padding:8px 8px 0;border-bottom:3px solid #d4a017;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}}
+  .unified-tabs{{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}}
   .unified-tabs button{{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}}
   .unified-tabs button:hover{{background:rgba(255,255,255,.15);color:#fff}}
   .unified-tabs button.active{{background:#fff;color:#0d47a1;box-shadow:0 -2px 6px rgba(0,0,0,.15)}}
@@ -817,6 +845,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </style></head>
 <body class="{typhoon_class}">
 {typhoon_banner}
+
+<!-- 左側浮動快速導覽 (仿 CODIS 側邊選單) -->
+<aside class="cwa-sidebar" id="cwaSidebar">
+  <button class="cwa-sidebar-toggle" onclick="document.getElementById('cwaSidebar').classList.toggle('collapsed')" title="收合/展開">☰</button>
+  <div class="cwa-sidebar-title">章節導覽</div>
+  <nav class="cwa-sidebar-nav">
+    <a href="#obsBlock" data-icon="📍">雨量觀測</a>
+    <a href="#fcstBlock" data-icon="🔮">未來預測</a>
+    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
+    <a href="#salesBlock" data-icon="💰">銷售分析</a>
+    <a href="#historyBlock" data-icon="📊">歷史比較</a>
+    <a href="#advBlock" data-icon="📈">進階四維</a>
+    <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#cropBlock" data-icon="🍎">作物基肥</a>
+    <a href="#newsBlock" data-icon="📰">相關新聞</a>
+  </nav>
+  <div class="cwa-sidebar-foot">
+    <div class="upd">🕐 {today}</div>
+    <a href="https://codis.cwa.gov.tw/StationData" target="_blank" class="src-link">📡 CODIS 官網</a>
+  </div>
+</aside>
 
 <!-- 頂部品牌條：大成 · 碩成 -->
 <div class="brand-bar">
@@ -1029,7 +1078,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 節氣 × 有機質基肥出貨影響 ===================== -->
-<div class="term-detail-block">
+<div class="term-detail-block" id="solarBlock">
   <h3>{term_emoji} 本節氣 · <span class="term-hi">{term_name}</span> — 有機質肥料（基肥）出貨影響</h3>
   <div class="term-detail-lead">{term_hint}</div>
   <ul class="term-detail-list">
@@ -1042,7 +1091,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 基肥施用時機 · 作物交叉篩選 ===================== -->
-<div class="crops-block">
+<div class="crops-block" id="cropBlock">
   <h3>🌱 基肥施用時機 · 作物 × 地區 × 面積 × 機率 交叉篩選</h3>
   <div class="crops-filters">
     <div class="crops-f-row">
@@ -1195,7 +1244,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
-<div class="history-block">
+<div class="history-block" id="historyBlock">
   <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
   <div class="history-filters">
     <label>地區</label>
@@ -1288,7 +1337,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 進階歷史比較 · 多維交叉分析 ===================== -->
-<div class="adv-block">
+<div class="adv-block" id="advBlock">
   <h3>📈 進階氣候比較 · 四維交叉分析 <span style="font-size:11px;color:#c62828;font-weight:700">年 × 月 × 地區 × 指標 全部可複選</span></h3>
   <div class="adv-grid">
     <div class="adv-group">
@@ -1371,7 +1420,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 相關新聞 ===================== -->
-<div class="news-block">
+<div class="news-block" id="newsBlock">
   <h3>📰 天氣 / 豪雨 / 颱風 相關新聞</h3>
   <ul class="news-list">
     {news_html}
@@ -2825,6 +2874,41 @@ function renderSalesAnalysis() {{
 
   target.innerHTML = html.join('');
 }}
+
+// CWA sidebar: smooth scroll + active state (仿 CODIS)
+(function initSidebar() {{
+  const links = document.querySelectorAll('.cwa-sidebar-nav a');
+  links.forEach(a => {{
+    a.addEventListener('click', (e) => {{
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      // 若目標在 unified-tab 內, 先切到對應 tab
+      const parentBlock = target.closest('.unified-block');
+      if (parentBlock && !parentBlock.classList.contains('active')) {{
+        const tabBtn = document.querySelector('#unifiedTabs button[data-target="' + parentBlock.id + '"]');
+        if (tabBtn) tabBtn.click();
+        setTimeout(() => target.scrollIntoView({{behavior: 'smooth', block: 'start'}}), 200);
+      }} else {{
+        target.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+      }}
+      links.forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+    }});
+  }});
+  // 滾動時自動高亮
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  window.addEventListener('scroll', () => {{
+    const y = window.scrollY + 100;
+    let active = null;
+    sections.forEach(s => {{
+      if (s.offsetTop <= y) active = s;
+    }});
+    if (active) {{
+      links.forEach(x => x.classList.toggle('active', x.getAttribute('href') === '#' + active.id));
+    }}
+  }}, {{passive: true}});
+}})();
 
 // 統一 tab bar: 三選一切換 (雨量觀測/未來預測/鄉鎮農產)
 (function initUnifiedTabs() {{

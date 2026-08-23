@@ -28,7 +28,7 @@
   body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;background:var(--cwa-bg);color:var(--cwa-text);line-height:1.6;font-size:15px}
 
   /* ===== 頂部品牌條 (大成 · 碩成) ===== */
-  .brand-bar{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 50%,#388e3c 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #d4a017;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .brand-bar{background:linear-gradient(90deg,#003c8f 0%,#002171 100%);color:#fff;padding:10px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:3px solid #ffd54f;box-shadow:0 2px 6px rgba(0,0,0,.15)}
   .brand-left{display:flex;align-items:center;gap:14px}
   .brand-logos{display:flex;align-items:center;gap:10px;background:#fff;padding:6px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),0 2px 6px rgba(0,0,0,.2)}
   .brand-dachan-img{height:44px;width:auto;display:block;object-fit:contain}
@@ -669,8 +669,36 @@
     .sales-hint{width:100%;margin-left:0}
   }
 
+  /* ===== 左側浮動導覽 (仿 CODIS StationData sidebar) ===== */
+  .cwa-sidebar{position:fixed;top:0;left:0;bottom:0;width:170px;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);color:#fff;padding:14px 0;box-shadow:2px 0 12px rgba(0,0,0,.25);z-index:950;display:flex;flex-direction:column;transition:width .2s;overflow:hidden}
+  .cwa-sidebar.collapsed{width:48px}
+  .cwa-sidebar-toggle{position:absolute;top:8px;right:6px;width:32px;height:32px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;transition:background .1s}
+  .cwa-sidebar-toggle:hover{background:rgba(255,255,255,.3)}
+  .cwa-sidebar-title{padding:10px 16px 12px;font-size:11px;color:rgba(255,255,255,.65);font-weight:700;letter-spacing:2px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px;margin-right:36px}
+  .cwa-sidebar.collapsed .cwa-sidebar-title,.cwa-sidebar.collapsed .cwa-sidebar-nav a span,.cwa-sidebar.collapsed .cwa-sidebar-foot{display:none}
+  .cwa-sidebar-nav{flex:1;overflow-y:auto;padding:0 8px}
+  .cwa-sidebar-nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:rgba(255,255,255,.85);text-decoration:none;font-size:13.5px;font-weight:600;border-radius:4px;margin-bottom:2px;transition:all .12s;border-left:3px solid transparent}
+  .cwa-sidebar-nav a::before{content:attr(data-icon);font-size:16px;line-height:1}
+  .cwa-sidebar-nav a:hover{background:rgba(255,255,255,.12);color:#fff;border-left-color:#ffd54f;padding-left:16px}
+  .cwa-sidebar-nav a.active{background:linear-gradient(90deg,rgba(255,213,79,.2),transparent);color:#ffd54f;border-left-color:#ffd54f;font-weight:900}
+  .cwa-sidebar-foot{padding:10px 16px;font-size:11px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}
+  .cwa-sidebar-foot .upd{margin-bottom:6px}
+  .cwa-sidebar-foot .src-link{color:#ffd54f;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+  .cwa-sidebar-foot .src-link:hover{text-decoration:underline}
+  /* body 讓出左側空間 */
+  body{padding-left:170px;transition:padding-left .2s}
+  body:has(.cwa-sidebar.collapsed){padding-left:48px}
+  @media (max-width:768px){
+    .cwa-sidebar{width:44px}
+    .cwa-sidebar-title,.cwa-sidebar-nav a span,.cwa-sidebar-foot,.cwa-sidebar-nav a::before{}
+    .cwa-sidebar-nav a{justify-content:center;padding:10px 4px;font-size:0}
+    .cwa-sidebar-nav a::before{font-size:18px}
+    body{padding-left:44px}
+    .cwa-sidebar-title,.cwa-sidebar-foot{display:none}
+  }
+
   /* ===== 統一 tab bar (三選一切換) ===== */
-  .unified-tabs{display:flex;gap:0;background:linear-gradient(180deg,#1976d2 0%,#0d47a1 100%);padding:8px 8px 0;border-bottom:3px solid #d4a017;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}
+  .unified-tabs{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}
   .unified-tabs button{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}
   .unified-tabs button:hover{background:rgba(255,255,255,.15);color:#fff}
   .unified-tabs button.active{background:#fff;color:#0d47a1;box-shadow:0 -2px 6px rgba(0,0,0,.15)}
@@ -695,6 +723,27 @@
 </style></head>
 <body class="">
 
+
+<!-- 左側浮動快速導覽 (仿 CODIS 側邊選單) -->
+<aside class="cwa-sidebar" id="cwaSidebar">
+  <button class="cwa-sidebar-toggle" onclick="document.getElementById('cwaSidebar').classList.toggle('collapsed')" title="收合/展開">☰</button>
+  <div class="cwa-sidebar-title">章節導覽</div>
+  <nav class="cwa-sidebar-nav">
+    <a href="#obsBlock" data-icon="📍">雨量觀測</a>
+    <a href="#fcstBlock" data-icon="🔮">未來預測</a>
+    <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
+    <a href="#salesBlock" data-icon="💰">銷售分析</a>
+    <a href="#historyBlock" data-icon="📊">歷史比較</a>
+    <a href="#advBlock" data-icon="📈">進階四維</a>
+    <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#cropBlock" data-icon="🍎">作物基肥</a>
+    <a href="#newsBlock" data-icon="📰">相關新聞</a>
+  </nav>
+  <div class="cwa-sidebar-foot">
+    <div class="upd">🕐 2026-08-23</div>
+    <a href="https://codis.cwa.gov.tw/StationData" target="_blank" class="src-link">📡 CODIS 官網</a>
+  </div>
+</aside>
 
 <!-- 頂部品牌條：大成 · 碩成 -->
 <div class="brand-bar">
@@ -768,7 +817,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:05</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-23 10:10</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
@@ -913,7 +962,7 @@
 </div>
 
 <!-- ===================== 節氣 × 有機質基肥出貨影響 ===================== -->
-<div class="term-detail-block">
+<div class="term-detail-block" id="solarBlock">
   <h3>🌤 本節氣 · <span class="term-hi">處暑</span> — 有機質肥料（基肥）出貨影響</h3>
   <div class="term-detail-lead">暑氣漸消，秋葉菜整地基肥</div>
   <ul class="term-detail-list">
@@ -928,7 +977,7 @@
 </div>
 
 <!-- ===================== 基肥施用時機 · 作物交叉篩選 ===================== -->
-<div class="crops-block">
+<div class="crops-block" id="cropBlock">
   <h3>🌱 基肥施用時機 · 作物 × 地區 × 面積 × 機率 交叉篩選</h3>
   <div class="crops-filters">
     <div class="crops-f-row">
@@ -1081,7 +1130,7 @@
 </div>
 
 <!-- ===================== 歷史雨量比較 · 出貨影響對照 ===================== -->
-<div class="history-block">
+<div class="history-block" id="historyBlock">
   <h3>📊 歷史雨量比較 · 近 10 年同月對照 (向老闆報告用) <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源：中央氣象署 CODIS 觀測站官方資料</span></h3>
   <div class="history-filters">
     <label>地區</label>
@@ -1174,7 +1223,7 @@
 </div>
 
 <!-- ===================== 進階歷史比較 · 多維交叉分析 ===================== -->
-<div class="adv-block">
+<div class="adv-block" id="advBlock">
   <h3>📈 進階氣候比較 · 四維交叉分析 <span style="font-size:11px;color:#c62828;font-weight:700">年 × 月 × 地區 × 指標 全部可複選</span></h3>
   <div class="adv-grid">
     <div class="adv-group">
@@ -1257,15 +1306,15 @@
 </div>
 
 <!-- ===================== 相關新聞 ===================== -->
-<div class="news-block">
+<div class="news-block" id="newsBlock">
   <h3>📰 天氣 / 豪雨 / 颱風 相關新聞</h3>
   <ul class="news-list">
     <li><a href="https://news.google.com/rss/articles/CBMi_AJBVV95cUxNOHRBbWxxUTc5dVlMczUyeGtWRnVmR2VZRHNKdmM1YVpNdDB1Q0ZZTU9KRUljRGh4bXRFWE1jcjVLZGtTOWg2LWRiUlpmWDN4NURXSDI2RFZJUWtDenBRSHFBc25jNnVBLVNyYUszRlJZSkd1ZUgyZG1jRzZEOG5OSWRFeFFkVFFMTDliXzNQWXlxV0ZFb3FQa01SdG1OdFY3em9JdzlzaDhSTWt3SVNJNk1Kemg3dW40eHZiOUJ1dlZmb0NhcUU4UlkyaGVxeDVjd3QxamdaR3FHYnZtMzFzQ2lMWk02eFhZMGFuVVB5M3h4c2JLdXZwWDRleW4yYzk1V0ZqNHduQ3BRWXJhSXl5Z1NDTjNuN3JRLVEyY1F3X21uUjZtaEFORFNlaXVaamYta0ZPbHp4cE1aN3kxTW5tYlJpV1NLWkNkZWM3RlZqTnc3NmdfVWNJN0swTmVpTm92dEZvZ2RDdmVSNGZnaVJOenQxY0kyemlvNE9Kcw?oc=5" target="_blank" rel="noopener">全台17縣市豪、大雨特報！颱風沙德爾「增強逼近」 今3縣市停班課</a><span class="meta">Yahoo新聞 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Id09YM0JYUVc4MEJHQWdac2prRFFpX0UybWlSUkhnOFNlT3hFTjRULV92R0tlWjNuQU9jYVA3MzlFQmpFOGlvU3lBWEVrMTBydnplUTFGd0lpMnU3T3Jv?oc=5" target="_blank" rel="noopener">吳德榮：颱風沙德爾估27日襲台不排除登陸| 生活</a><span class="meta">cna.com.tw · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9SR2lycVlYclo3anJTWi1nN0RLOFhyU3ZiY3FTNDZBU3hhTWtldFplMGVPWDY2S0xfSlZrdTdnVnFxT2NZVEswMEV1RlliZWhv0gFWQVVfeXFMT1pScVFabVZ5N1pOc21EMzgxTU5pSEFoMjhzTmNhdlowOV9Ha2RCd25UOWVSeEFSa3Z2YkVIc0VkanlQRThjeW4wTF80RVl5aFc2eFBXR3c?oc=5" target="_blank" rel="noopener">2颱風+2熱低 粉專：西南風增強水氣增多</a><span class="meta">UDN · 08/22</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMi6wJBVV95cUxPcnc2QlV4VUczaDFOWVVjWlJ0ZUIyd0RaWktEVlVkQUo4RHRLY0J5Z0RJRUJoTTNxU1FvM2FwMjVIMUx5T3FSRmVvdmMyaHJmWlJocFhJaExNc0Y1clExZ0hVbFpZMVVFSHRiQVBOMEFGcVpvejk0ZEFqV19vSlJpZmxoeWxUdjBrNzZXcmlnS3JiTDVsWUNuNlU3VTBuTUtTMlFLaVJSbWZORmYweDdYYzhuZGhiY1gwd01lMDBudWJqTlVFNk1kQ1RTdlJWdHFtU2syMEh0X3V4N3JidkZGekpabEZMc2pMRnRTV2ZnRHVEYnpaSTB5ZzZKbk5nQTcxZ0QtTVdYeG5NMTJkODFTSGhETXpDUVlpZHpINEROb2pyU2wxN2NkV29jUXdYUTNyMzlJS3NvOTVKb3Bad2I1UGJYMUJlcnZncXp4czBPSXV3aG5RUnBDclpJNHh1TUdRaC1kMVFwaEpoTnc?oc=5" target="_blank" rel="noopener">報天氣 - 中央氣象署. . [直播]115年8月22日20:30發布_115年0822低壓帶及西南風豪雨事件</a><span class="meta">facebook.com · 08/22</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Id09YM0JYUVc4MEJHQWdac2prRFFpX0UybWlSUkhnOFNlT3hFTjRULV92R0tlWjNuQU9jYVA3MzlFQmpFOGlvU3lBWEVrMTBydnplUTFGd0lpMnU3T3Jv?oc=5" target="_blank" rel="noopener">吳德榮：颱風沙德爾估27日襲台不排除登陸| 生活</a><span class="meta">cna.com.tw · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/22</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5ZSU9XOXpTNTJuMUJ3ci04a3VfZ25DQllEVlBGQlVQVVNpdkRYOWRTMDFnSlZnNzlTY0RDWkRTWHVkOWhmYUJvMW9Bbk9NeUlTRUU0WklockxTU3hrVzNxSEpWRWE?oc=5" target="_blank" rel="noopener">各國最新路徑預測曝光！「沙德爾」颱風向南轉向幅度是關鍵- 生活</a><span class="meta">自由時報 · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE12dFdpdlNEcDVPSGhYSWtuanUyclZ2YVJLalAxM1Q4SXh6cGpqeG40VEFZUXZGdzZhbzBrZmtTOVZKYzZYQ3BWN2dENG1SOUdqcldOYWFjZWcydFhlUXRfcG81a2M?oc=5" target="_blank" rel="noopener">高雄豪雨狂炸！新興區24小時累積衝破350毫米達大豪雨等級- 生活</a><span class="meta">自由時報 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTFBZdzFmUjJRaEtBeE83WUlmQk0wNDdGc3lLZEVTMEJzOFVOckE0Y1dPRHNVMGFjQ3BiZndTZGw2bW83ZFBaZzB6Z0R2UkZJVWtT?oc=5" target="_blank" rel="noopener">一周天氣預報/ 沙德爾颱風估「這1天襲台」！專家曝路徑：恐以中颱之姿登陸，全台這3 天豪雨猛下到紫爆</a><span class="meta">風傳媒 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9nYWNnZUJKcTdaZzJYdGczODB4OGt4cGFKNHgwel82V1BENE0yQ3BGRHlqM2pneU52Skh3QjA5WjItaFA5Wl9uSNIBTEFVX3lxTE5xMU02bEFFUVhvNEJwRDJFTGY0RVU0c2c3bzlzRnREYzRzSnFQVkliSWIxSm5IVW9wQ0ozTjhadVU2aXVKbmZodkN2a1o?oc=5" target="_blank" rel="noopener">週一恐放豪雨假？4縣市明雨量「達停班停課標準」</a><span class="meta">三立新聞網SETN.com · 08/22</span></li>
   </ul>
@@ -1306,7 +1355,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:05</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-23 10:10</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -2718,6 +2767,41 @@ function renderSalesAnalysis() {
 
   target.innerHTML = html.join('');
 }
+
+// CWA sidebar: smooth scroll + active state (仿 CODIS)
+(function initSidebar() {
+  const links = document.querySelectorAll('.cwa-sidebar-nav a');
+  links.forEach(a => {
+    a.addEventListener('click', (e) => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      // 若目標在 unified-tab 內, 先切到對應 tab
+      const parentBlock = target.closest('.unified-block');
+      if (parentBlock && !parentBlock.classList.contains('active')) {
+        const tabBtn = document.querySelector('#unifiedTabs button[data-target="' + parentBlock.id + '"]');
+        if (tabBtn) tabBtn.click();
+        setTimeout(() => target.scrollIntoView({behavior: 'smooth', block: 'start'}), 200);
+      } else {
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      links.forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+  // 滾動時自動高亮
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 100;
+    let active = null;
+    sections.forEach(s => {
+      if (s.offsetTop <= y) active = s;
+    });
+    if (active) {
+      links.forEach(x => x.classList.toggle('active', x.getAttribute('href') === '#' + active.id));
+    }
+  }, {passive: true});
+})();
 
 // 統一 tab bar: 三選一切換 (雨量觀測/未來預測/鄉鎮農產)
 (function initUnifiedTabs() {
