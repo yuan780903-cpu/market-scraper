@@ -1579,12 +1579,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 
   <div class="rank-filters">
-    <label>補助等級</label>
-    <select id="rankTier">
-      <option value="all">全部</option>
-      <option value="2+2元">每公斤補助 2+2 元 (高階)</option>
-      <option value="2元">每公斤補助 2 元 (一般)</option>
-    </select>
     <label>品目篩選</label>
     <select id="rankCode">
       <option value="all">全部品目</option>
@@ -1607,8 +1601,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <th style="width:50px">名次</th>
         <th>業者名稱</th>
         <th class="n">產品總數</th>
-        <th class="n">2+2 元</th>
-        <th class="n">2 元</th>
         <th class="n">品目數</th>
         <th>主要品目</th>
       </tr></thead>
@@ -3797,8 +3789,16 @@ function _rerenderSales() {{
   }}).join('');
 }})();
 
-// 一鍵更新: 觸發 GitHub Actions daily-rainfall workflow (內含 fert_rankings 抓取)
-async function updateFertRankings() {{
+// 一鍵更新: 直接開 GitHub Actions workflow 頁面 (免 PAT · 用戶點 Run 即可)
+function updateFertRankings() {{
+  const url = 'https://github.com/yuan780903-cpu/market-scraper/actions/workflows/refresh-rankings.yml';
+  window.open(url, '_blank');
+  const btn = document.getElementById('fertUpdateBtn');
+  btn.textContent = '↗️ 到 GitHub 按 Run workflow';
+  setTimeout(() => btn.textContent = '🔄 一鍵更新', 6000);
+  return;
+}}
+async function _updateFertRankings_legacy_pat_disabled() {{
   const btn = document.getElementById('fertUpdateBtn');
   const origTxt = '🔄 一鍵更新';
   const REPO = 'yuan780903-cpu/market-scraper';
@@ -3807,7 +3807,7 @@ async function updateFertRankings() {{
 
   let pat = localStorage.getItem(PAT_KEY);
   if (!pat) {{
-    pat = prompt('請貼 GitHub Personal Access Token (PAT)\\n\\n只存本機瀏覽器,不上傳雲端。\\n\\n取得方式:\\n1. 前往 https://github.com/settings/tokens\\n2. Generate new token (classic)\\n3. 勾選「workflow」scope\\n4. Generate → 複製貼上\\n\\n(下次按更新按鈕就不用再輸入了)');
+    pat = prompt('請貼 GitHub Personal Access Token (PAT)');
     if (!pat) return;
     pat = pat.trim();
     localStorage.setItem(PAT_KEY, pat);
@@ -4130,7 +4130,7 @@ function openNcdrDailyMap() {{
   renderRankTable();
   renderRankAnalysis();
 
-  document.getElementById('rankTier').addEventListener('change', renderRankTable);
+  // rankTier 已移除
   document.getElementById('rankCode').addEventListener('change', renderRankTable);
   document.getElementById('rankKw').addEventListener('input', renderRankTable);
 }})();
@@ -4217,24 +4217,12 @@ function renderCatSummary() {{
 function renderRankTable() {{
   const R = window.FERT_RANKINGS;
   if (!R || !R.suppliers) return;
-  const tier = document.getElementById('rankTier').value;
   const code = document.getElementById('rankCode').value;
   const kw = document.getElementById('rankKw').value.trim();
 
-  // 過濾
+  // 過濾: 只依品目
   let filtered = R.suppliers.map(r => {{
-    // 若有 tier/code 篩選,重算 total = 該 tier/code 的產品數
-    let tierTotal = tier === 'all' ? r.total : (r.by_tier[tier] || 0);
-    let codeTotal = code === 'all' ? r.total : (r.by_code[code] || 0);
-    let showTotal = r.total;
-    if (tier !== 'all' && code !== 'all') {{
-      // 這裡簡化:用 code 為主
-      showTotal = codeTotal;
-    }} else if (tier !== 'all') {{
-      showTotal = tierTotal;
-    }} else if (code !== 'all') {{
-      showTotal = codeTotal;
-    }}
+    const showTotal = code === 'all' ? r.total : (r.by_code[code] || 0);
     return {{...r, showTotal}};
   }}).filter(r => r.showTotal > 0);
 
@@ -4260,8 +4248,6 @@ function renderRankTable() {{
       '<td class="' + rankCls + '">#' + r.dynRank + '</td>' +
       '<td class="' + nameCls + '">' + r.name + (isDachan ? ' ★' : '') + '</td>' +
       '<td class="n big">' + r.total + '</td>' +
-      '<td class="n">' + (r.by_tier['2+2元'] || 0) + '</td>' +
-      '<td class="n">' + (r.by_tier['2元'] || 0) + '</td>' +
       '<td class="n">' + r.n_categories + '</td>' +
       '<td class="cats">' + cats + '</td>';
     tbody.appendChild(tr);
