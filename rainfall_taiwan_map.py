@@ -1026,6 +1026,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .rank-footer a{{color:#6a1b9a;font-weight:700;text-decoration:none}}
   .rank-footer a:hover{{text-decoration:underline}}
 
+  /* ===== 摺疊區塊 (鄉鎮農產/作物基肥用) ===== */
+  .collapsible{{position:relative}}
+  .collapsible > h3{{cursor:pointer;user-select:none;padding-right:40px !important;transition:background .15s}}
+  .collapsible > h3::after{{content:"▼";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--cwa-primary);transition:transform .2s}}
+  .collapsible.collapsed > h3::after{{transform:translateY(-50%) rotate(-90deg)}}
+  .collapsible.collapsed > *:not(h3){{display:none}}
+  .collapsible > h3:hover{{background:var(--cwa-hover) !important}}
+  .collapsible.collapsed{{padding-bottom:8px !important}}
+
   /* ===== 統一 tab bar (三選一切換) ===== */
   .unified-tabs{{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}}
   .unified-tabs button{{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}}
@@ -1063,11 +1072,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#newsBlock" data-icon="📰">相關新聞</a>
     <a href="#salesBlock" data-icon="💰">銷售分析</a>
     <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#cropBlock" data-icon="🍎">作物基肥</a>
     <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
-    <a href="#newsBlock" data-icon="📰">相關新聞</a>
   </nav>
   <div class="cwa-sidebar-foot">
     <div class="upd">🕐 {today}</div>
@@ -1154,7 +1163,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <button data-target="fcstBlock">🔮 未來預測</button>
   <button data-target="salesBlock">💰 銷售分析</button>
   <button data-target="rankBlock">🏭 廠商排名</button>
-  <button data-target="townsBlock">🌾 鄉鎮農產</button>
 </div>
 
 <div id="obsBlock" class="unified-block active">
@@ -1301,7 +1309,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 基肥施用時機 · 作物交叉篩選 ===================== -->
-<div class="crops-block" id="cropBlock">
+<div class="crops-block collapsible collapsed" id="cropBlock">
   <h3>🌱 基肥施用時機 · 作物 × 地區 × 面積 × 機率 交叉篩選</h3>
   <div class="crops-filters">
     <div class="crops-f-row">
@@ -1367,8 +1375,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- ===================== 鄉鎮特色農產地圖 ===================== -->
-<div class="towns-block unified-block" id="townsBlock">
+<!-- ===================== 鄉鎮特色農產地圖 (底部摺疊) ===================== -->
+<div class="towns-block collapsible collapsed" id="townsBlock">
   <h3>🗺️ 全台鄉鎮特色農產分布 · 主力作物與用肥地圖</h3>
   <div class="towns-filters">
     <label>作物類別</label>
@@ -4132,6 +4140,49 @@ function renderRankAnalysis() {{
 
   document.getElementById('rankAnalysis').innerHTML = html;
 }}
+
+// 摺疊區塊 (鄉鎮農產/作物基肥) — 點標題 toggle
+(function initCollapsible() {{
+  document.querySelectorAll('.collapsible > h3').forEach(h => {{
+    h.addEventListener('click', () => {{
+      const blk = h.parentElement;
+      blk.classList.toggle('collapsed');
+      // 展開時觸發地圖 resize (讓 leaflet 重繪)
+      if (!blk.classList.contains('collapsed')) {{
+        setTimeout(() => {{
+          try {{ if (blk.id === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize(); }} catch(e){{}}
+        }}, 200);
+      }}
+    }});
+  }});
+}})();
+
+// 動態重排: 新聞往上提到進階四維後, 作物基肥+鄉鎮農產搬到最底
+(function reorderBlocks() {{
+  const news = document.getElementById('newsBlock');
+  const adv = document.getElementById('advBlock');
+  const crop = document.getElementById('cropBlock');
+  const towns = document.getElementById('townsBlock');
+  const analysis = document.querySelector('.analysis-block');
+  if (news && adv && adv.parentNode) {{
+    // news 移到 analysis 前 (analysis 之後接 news)
+    if (analysis) {{
+      analysis.parentNode.insertBefore(news, analysis.nextSibling);
+    }} else {{
+      adv.parentNode.insertBefore(news, adv.nextSibling);
+    }}
+  }}
+  // crop + towns 搬到 body 最底 (在 copyright badge 之前)
+  const badge = document.querySelector('.copyright-badge');
+  if (crop) {{
+    if (badge) badge.parentNode.insertBefore(crop, badge);
+    else document.body.appendChild(crop);
+  }}
+  if (towns) {{
+    if (badge) badge.parentNode.insertBefore(towns, badge);
+    else document.body.appendChild(towns);
+  }}
+}})();
 
 // CWA sidebar: smooth scroll + active state (仿 CODIS)
 (function initSidebar() {{

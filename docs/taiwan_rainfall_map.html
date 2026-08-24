@@ -903,6 +903,15 @@
   .rank-footer a{color:#6a1b9a;font-weight:700;text-decoration:none}
   .rank-footer a:hover{text-decoration:underline}
 
+  /* ===== 摺疊區塊 (鄉鎮農產/作物基肥用) ===== */
+  .collapsible{position:relative}
+  .collapsible > h3{cursor:pointer;user-select:none;padding-right:40px !important;transition:background .15s}
+  .collapsible > h3::after{content:"▼";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--cwa-primary);transition:transform .2s}
+  .collapsible.collapsed > h3::after{transform:translateY(-50%) rotate(-90deg)}
+  .collapsible.collapsed > *:not(h3){display:none}
+  .collapsible > h3:hover{background:var(--cwa-hover) !important}
+  .collapsible.collapsed{padding-bottom:8px !important}
+
   /* ===== 統一 tab bar (三選一切換) ===== */
   .unified-tabs{display:flex;gap:0;background:linear-gradient(180deg,#003c8f 0%,#002171 100%);padding:8px 8px 0;border-bottom:3px solid #ffd54f;position:sticky;top:0;z-index:900;box-shadow:0 3px 8px rgba(0,0,0,.2)}
   .unified-tabs button{flex:1;padding:12px 14px;background:rgba(255,255,255,.08);border:none;border-radius:6px 6px 0 0;color:rgba(255,255,255,.7);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;margin-right:2px}
@@ -940,11 +949,11 @@
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#solarBlock" data-icon="🌱">節氣影響</a>
+    <a href="#newsBlock" data-icon="📰">相關新聞</a>
     <a href="#salesBlock" data-icon="💰">銷售分析</a>
     <a href="#rankBlock" data-icon="🏭">廠商排名</a>
     <a href="#cropBlock" data-icon="🍎">作物基肥</a>
     <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
-    <a href="#newsBlock" data-icon="📰">相關新聞</a>
   </nav>
   <div class="cwa-sidebar-foot">
     <div class="upd">🕐 2026-08-24</div>
@@ -1022,7 +1031,7 @@
 <div class="refresh-bar">
   <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-24 07:58</span>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：2026-08-24 08:03</span>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
@@ -1031,7 +1040,6 @@
   <button data-target="fcstBlock">🔮 未來預測</button>
   <button data-target="salesBlock">💰 銷售分析</button>
   <button data-target="rankBlock">🏭 廠商排名</button>
-  <button data-target="townsBlock">🌾 鄉鎮農產</button>
 </div>
 
 <div id="obsBlock" class="unified-block active">
@@ -1180,7 +1188,7 @@
 </div>
 
 <!-- ===================== 基肥施用時機 · 作物交叉篩選 ===================== -->
-<div class="crops-block" id="cropBlock">
+<div class="crops-block collapsible collapsed" id="cropBlock">
   <h3>🌱 基肥施用時機 · 作物 × 地區 × 面積 × 機率 交叉篩選</h3>
   <div class="crops-filters">
     <div class="crops-f-row">
@@ -1246,8 +1254,8 @@
   </div>
 </div>
 
-<!-- ===================== 鄉鎮特色農產地圖 ===================== -->
-<div class="towns-block unified-block" id="townsBlock">
+<!-- ===================== 鄉鎮特色農產地圖 (底部摺疊) ===================== -->
+<div class="towns-block collapsible collapsed" id="townsBlock">
   <h3>🗺️ 全台鄉鎮特色農產分布 · 主力作物與用肥地圖</h3>
   <div class="towns-filters">
     <label>作物類別</label>
@@ -1602,9 +1610,9 @@
     <li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE9FNG9PT0RIeVNpWnlSZUdCZE9KS2ZiWl84QThqcjM2a2sydnQyaV9jZjkxVHZwOVFLSTBYcHlSNGE3clFiMUd3aEJOTDZCQkotNWJ2X2ZtNWt6cjdiNG5kb0g1MHJrVmZOVnc?oc=5" target="_blank" rel="noopener">颱風最新動態｜颱風路徑預測、對台影響、熱帶擾動是什麼？</a><span class="meta">數位時代 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTFBWZkFqQXFydm1NWndBdUV6UXB2U2dwSjF2TVVKWDlJbkZYOEdHOXozQ084LTJFdFBYZFN1WjNiWGJvNE5WYUJ4Z1JaNHZiNjd4anhULUo2dFoyQ1JDSEHSAUtBVV95cUxPRmZBVmcxaGlNeE56WWNWWHNCTERYV21VYWVIelctc21mWDFwNFJfZXJFWGJLWlJQOGd6UTVYSkIybGJuTE1HYXFlWEU?oc=5" target="_blank" rel="noopener">沙德爾颱風侵襲率最高69%　基北北桃破6成</a><span class="meta">ETtoday新聞雲 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE1taklFREExd2NTX3NWekppVWRnR1pLRTBLVjhVdU5xRFUzbVlSUTk4QWtCV1V4R0xNQ1N3NTNTdlNUdlZLdTUwWtIBTEFVX3lxTE9iWmRNZlRTRUdJWnE0Mlc5aWtOOGMxb2UxUFlLdFVCODZ2bF8zenRJRjdqWmhfeEpFc0Rybm84bnJfRmxlVkItb2xoeXA?oc=5" target="_blank" rel="noopener">週二恐放豪雨假？最新雨量預測出爐　3縣市明「達停班停課標準」</a><span class="meta">三立新聞網SETN.com · 08/23</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE8tUWxyc3F6WkFGdTV1OHpVMlNFZ3FZZ1ZyT3FpUVVtYm5ld1h1Q1dXbmdIaGdLUWFzZ0drWnRLTHdZeE1NM0hvOUY1aDZBNk8zZUdnckk2XzlSbUE?oc=5" target="_blank" rel="noopener">沙德爾颱風週五、六最近台／最快今天增強為強烈颱風不排除發布海陸警- 生活</a><span class="meta">自由時報 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTFBhY3NKR2VHLUxtWmc5T055aC0xYktyd0tqWUlvZGt2VlVNb1V5REFmNVU3WEJTdWxOX0xXX08xZm5lN2dxRndCWDZaVHJYRUxH0gFWQVVfeXFMT3IwVVNKYWt0c0YwOEltODBGcDR0X2ZIWUN4dHdtdXJwTm9JSE9NQ19JY2FpZF9Qc2IxcTBmTmpLdmdWRDd5NkZqWS12M21xM3N1ZDJMZmc?oc=5" target="_blank" rel="noopener">沙德爾最快明清晨轉強颱！這天最靠近台灣 氣象署：不排除海陸警齊發</a><span class="meta">UDN · 08/23</span></li>
-    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9FWEQzN0RpeDRfMERlc2N6QnZmWDFnb3M0ajdHaVRUOGMzY09EXzYwaU1pQjhVVzlZckZUUXNFaFhCc25XSmh0Qzh3UzBnSGtm?oc=5" target="_blank" rel="noopener">颱風最新動態》沙德爾颱風路徑變了！「往南墜下」恐登陸台灣，這2天最可能停班停課| 陳得馥 | 風生活</a><span class="meta">風傳媒 · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE8tUWxyc3F6WkFGdTV1OHpVMlNFZ3FZZ1ZyT3FpUVVtYm5ld1h1Q1dXbmdIaGdLUWFzZ0drWnRLTHdZeE1NM0hvOUY1aDZBNk8zZUdnckk2XzlSbUE?oc=5" target="_blank" rel="noopener">沙德爾颱風週五、六最近台／最快今天增強為強烈颱風不排除發布海陸警- 生活</a><span class="meta">自由時報 · 08/23</span></li>
+    <li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE5qd3RYRHlTQTVFbEZ2YXhHdXdINEliclJqU2VwVUIxRk5SczRSMUs2VkFDeHoxMklfSlp2LXVnNGc1MzJLTWdWUmhuQnZJTE5j?oc=5" target="_blank" rel="noopener">明天8/24會放豪雨假？「6縣市」停班停課達標，全台22 縣市放假名單不斷更新</a><span class="meta">風傳媒 · 08/23</span></li>
     <li><a href="https://news.google.com/rss/articles/CBMi4gJBVV95cUxPMUlOM0NySS1WVnY5OENjYll6aHlYNmlvUllqSTZ5OWVESkRMcHlfdlRDLWYyMG5xUWFsNm5CaUQySHplOG1aeDNLRHlMVno4UlU0b1JrRWJIbG5PSjJVVFViZHZnejh1VTVHY0x2Q0ZpbE0yX3JlcWw5OXJsS0ZxamRfNE15QkxjclA0UnFDSHAwbWhpalhFd0JhU1c2MlF5T0w1ZTJOS0xpX1VyWlMyTjJpcVk4NmRWU3lGWlJtR2dKOF80MmhQOGNfSGRmekpVdzdnUENtUWd6cnZfWHotSElxQUhsdktaSDRQNTlJRThnTXBXcE44Zl9oRDRkSHBQMmZPOHFkSzlTMGltMlVyTk94MGpsSGZaOXBwUHE3MkdJU2xoZnA1eV9KbFBlblc5UkdEWE1lZTQzT2Nfdm1wVy1CZFg1anVXb18yNHc2Nm82OTFRbWxobnNyanZWMGREamc?oc=5" target="_blank" rel="noopener">雨彈狂炸南台灣「15縣市逃不過」！5地區發布超大豪雨特報</a><span class="meta">Yahoo新聞 · 08/23</span></li>
   </ul>
 </div>
@@ -1644,7 +1652,7 @@
       <h5>👤 系統資訊</h5>
       <div class="row"><span class="lbl">版權所有人</span><span class="val">莊政遠　業務襄理</span></div>
       <div class="row"><span class="lbl">業務轄區</span><span class="val">南區 (嘉/南/宜/花)</span></div>
-      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-24 07:58</span></div>
+      <div class="row"><span class="lbl">產出時間</span><span class="val">2026-08-24 08:03</span></div>
       <div class="row"><span class="lbl">資料範圍</span><span class="val">過去 92 天 + 未來 7 天預測</span></div>
     </div>
   </div>
@@ -4018,6 +4026,49 @@ function renderRankAnalysis() {
 
   document.getElementById('rankAnalysis').innerHTML = html;
 }
+
+// 摺疊區塊 (鄉鎮農產/作物基肥) — 點標題 toggle
+(function initCollapsible() {
+  document.querySelectorAll('.collapsible > h3').forEach(h => {
+    h.addEventListener('click', () => {
+      const blk = h.parentElement;
+      blk.classList.toggle('collapsed');
+      // 展開時觸發地圖 resize (讓 leaflet 重繪)
+      if (!blk.classList.contains('collapsed')) {
+        setTimeout(() => {
+          try { if (blk.id === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize(); } catch(e){}
+        }, 200);
+      }
+    });
+  });
+})();
+
+// 動態重排: 新聞往上提到進階四維後, 作物基肥+鄉鎮農產搬到最底
+(function reorderBlocks() {
+  const news = document.getElementById('newsBlock');
+  const adv = document.getElementById('advBlock');
+  const crop = document.getElementById('cropBlock');
+  const towns = document.getElementById('townsBlock');
+  const analysis = document.querySelector('.analysis-block');
+  if (news && adv && adv.parentNode) {
+    // news 移到 analysis 前 (analysis 之後接 news)
+    if (analysis) {
+      analysis.parentNode.insertBefore(news, analysis.nextSibling);
+    } else {
+      adv.parentNode.insertBefore(news, adv.nextSibling);
+    }
+  }
+  // crop + towns 搬到 body 最底 (在 copyright badge 之前)
+  const badge = document.querySelector('.copyright-badge');
+  if (crop) {
+    if (badge) badge.parentNode.insertBefore(crop, badge);
+    else document.body.appendChild(crop);
+  }
+  if (towns) {
+    if (badge) badge.parentNode.insertBefore(towns, badge);
+    else document.body.appendChild(towns);
+  }
+})();
 
 // CWA sidebar: smooth scroll + active state (仿 CODIS)
 (function initSidebar() {
