@@ -3942,10 +3942,10 @@ const CODE_INFO = {{
     examples:'血粉肥、羽毛肥', uses:'有機蔬菜、觀葉植物', tier:'2 元'}},
   '5-08': {{name:'雞糞加工肥料', source:'🐔 禽畜糞系', src_color:'#c62828',
     criteria:'100% 雞糞高溫乾燥或造粒 (未經堆肥發酵)', spec:'有機質 ≥45% · N ≥1.5%',
-    examples:'雞糞粒、雞糞粉', uses:'果樹、大田作物、水稻', tier:'💰 2+2 元 (高階補助)'}},
+    examples:'雞糞粒、雞糞粉', uses:'果樹、大田作物、水稻', tier:'💰 2+2 元 (原料含雞糞 ≥50%)'}},
   '5-09': {{name:'禽畜糞堆肥', source:'🐔 禽畜糞系', src_color:'#c62828',
     criteria:'禽畜糞 (雞/豬/牛/鴨/羊) + 好氣性堆肥發酵', spec:'有機質 ≥40% · C/N ≤20 (完熟指標)',
-    examples:'豬糞堆肥、牛糞堆肥、禽糞堆肥', uses:'★大成/碩成主戰場★ 果樹基肥、蔬果', tier:'💰 2+2 元 (高階補助)'}},
+    examples:'豬糞堆肥、牛糞堆肥、禽糞堆肥', uses:'★大成/碩成主戰場★ 果樹基肥、蔬果', tier:'💰 2+2 元 (原料含雞糞 ≥50%)'}},
   '5-10': {{name:'一般堆肥', source:'🔀 混合系', src_color:'#f57c00',
     criteria:'植物+動物混合堆肥發酵', spec:'有機質 ≥30%',
     examples:'綜合堆肥、農家堆肥', uses:'廣泛使用、土壤改良', tier:'2 元'}},
@@ -3957,7 +3957,7 @@ const CODE_INFO = {{
     examples:'有機化學複合肥', uses:'速效+長效兼顧、慣行農法', tier:'2 元'}},
   '5-13': {{name:'雜項有機質肥料', source:'🧪 特殊/雜項', src_color:'#6a1b9a',
     criteria:'5-01~5-12 都不算的其他 (含微生物/生物炭/特殊酵素)', spec:'因產品而異',
-    examples:'微生物肥、生物炭肥、酵素肥', uses:'特殊功能訴求、藍海市場', tier:'💰 2+2 元 (高階補助)'}},
+    examples:'微生物肥、生物炭肥、酵素肥', uses:'特殊功能訴求、藍海市場', tier:'💰 2+2 元 (原料含雞糞 ≥50%)'}},
   '5-14': {{name:'液態雜項有機質肥料', source:'💧 液態', src_color:'#0288d1',
     criteria:'液態版 5-13', spec:'液態、含微生物',
     examples:'EM 菌液肥、發酵液肥', uses:'滴灌、葉面噴施', tier:'2 元'}},
@@ -4427,35 +4427,41 @@ function renderRankAnalysis() {{
   // === Dashboard 圖表區 (grid 3 欄) ===
   html += '<div class="rank-dashboard">';
 
-  // Chart 1: 補助結構 donut
-  const donutW = 220, cxD = 110, cyD = 90, r1 = 65, r2 = 40;
+  // Chart 1: 補助結構 donut (置中 + legend 在下方,不重疊)
   const total = tier22 + tier2;
   const ang22 = tier22/total * Math.PI * 2;
+  const pct22 = (tier22/total*100).toFixed(0);
+  const pct2 = (tier2/total*100).toFixed(0);
   const donutSvg = (() => {{
-    const arc = (start, end, rOut, rIn, color) => {{
-      const x1 = cxD + rOut*Math.sin(start), y1 = cyD - rOut*Math.cos(start);
-      const x2 = cxD + rOut*Math.sin(end), y2 = cyD - rOut*Math.cos(end);
-      const x3 = cxD + rIn*Math.sin(end), y3 = cyD - rIn*Math.cos(end);
-      const x4 = cxD + rIn*Math.sin(start), y4 = cyD - rIn*Math.cos(start);
+    const W = 300, H = 200;
+    const cx = W/2, cy = 90, rOut = 62, rIn = 38;
+    const arc = (start, end, color) => {{
+      const x1 = cx + rOut*Math.sin(start), y1 = cy - rOut*Math.cos(start);
+      const x2 = cx + rOut*Math.sin(end), y2 = cy - rOut*Math.cos(end);
+      const x3 = cx + rIn*Math.sin(end), y3 = cy - rIn*Math.cos(end);
+      const x4 = cx + rIn*Math.sin(start), y4 = cy - rIn*Math.cos(start);
       const large = (end - start) > Math.PI ? 1 : 0;
       return '<path d="M ' + x1 + ' ' + y1 + ' A ' + rOut + ' ' + rOut + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2 +
              ' L ' + x3 + ' ' + y3 + ' A ' + rIn + ' ' + rIn + ' 0 ' + large + ' 0 ' + x4 + ' ' + y4 + ' Z" fill="' + color + '"/>';
     }};
-    let s = '<svg viewBox="0 0 ' + donutW + ' 200" xmlns="http://www.w3.org/2000/svg">';
-    s += arc(0, ang22, r1, r2, '#c62828');
-    s += arc(ang22, Math.PI*2, r1, r2, '#1976d2');
-    s += '<text x="' + cxD + '" y="' + (cyD-4) + '" text-anchor="middle" font-size="20" font-weight="900" fill="#333">' + T + '</text>';
-    s += '<text x="' + cxD + '" y="' + (cyD+14) + '" text-anchor="middle" font-size="10" fill="#666">總產品</text>';
-    s += '<text x="' + cxD + '" y="185" text-anchor="middle" font-size="11" font-weight="700" fill="#333">💰 補助等級結構</text>';
-    // legend
-    s += '<rect x="12" y="' + (cyD-20) + '" width="10" height="10" fill="#c62828"/><text x="26" y="' + (cyD-11) + '" font-size="10" fill="#333">2+2元 ' + tier22 + ' (' + (tier22/total*100).toFixed(0) + '%)</text>';
-    s += '<rect x="12" y="' + (cyD+8) + '" width="10" height="10" fill="#1976d2"/><text x="26" y="' + (cyD+17) + '" font-size="10" fill="#333">2元 ' + tier2 + ' (' + (tier2/total*100).toFixed(0) + '%)</text>';
+    let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+    s += arc(0, ang22, '#f57c00');
+    s += arc(ang22, Math.PI*2, '#1976d2');
+    // 中心大數字
+    s += '<text x="' + cx + '" y="' + (cy+2) + '" text-anchor="middle" font-size="24" font-weight="900" fill="#333" font-family="ui-monospace,Menlo,monospace">' + T + '</text>';
+    s += '<text x="' + cx + '" y="' + (cy+18) + '" text-anchor="middle" font-size="10" fill="#888">總產品</text>';
+    // Legend 放正下方,一行
+    const lgY = 172;
+    s += '<rect x="30" y="' + (lgY-10) + '" width="12" height="12" fill="#f57c00" rx="2"/>';
+    s += '<text x="48" y="' + lgY + '" font-size="11" fill="#333" font-weight="700">2+2元　' + tier22 + ' (' + pct22 + '%)</text>';
+    s += '<rect x="170" y="' + (lgY-10) + '" width="12" height="12" fill="#1976d2" rx="2"/>';
+    s += '<text x="188" y="' + lgY + '" font-size="11" fill="#333" font-weight="700">2元　' + tier2 + ' (' + pct2 + '%)</text>';
     s += '</svg>';
     return s;
   }})();
 
-  html += '<div class="db-card"><div class="db-head">💰 補助等級結構分析</div><div class="db-body">' + donutSvg;
-  html += '<div class="db-insight"><strong>2+2 元高階補助占 ' + (tier22/total*100).toFixed(0) + '%</strong> — 此補助專屬於「原料含<strong style="color:#c62828">雞糞 ≥50%</strong>」的禽畜糞衍生產品 (5-08/5-09/5-13)。碩成/大成禽畜糞系列受惠,通路推廣力道大。</div></div></div>';
+  html += '<div class="db-card"><div class="db-head">💰 補助等級結構</div><div class="db-body">' + donutSvg;
+  html += '<div class="db-insight"><strong>2+2 元補助占 ' + pct22 + '%</strong><br>此補助非「高階肥」,而是<strong style="color:#c62828">農糧署為促進生雞糞去化</strong>設計:凡肥料<strong>原料含雞糞 ≥50%</strong> 即可申請 2+2 元,不看品質標準。適用品目:5-08/5-09/5-13。</div></div></div>';
 
   // Chart 2: 品目佔比 horizontal bar (品目名固定在左, bar 中間, 數字在右)
   const codeList = Object.entries(codeStats).sort((a,b) => b[1].prods - a[1].prods);
@@ -4516,7 +4522,7 @@ function renderRankAnalysis() {{
     html += '<div class="swot-title">🎯 大成/碩成 SWOT 定位分析</div>';
     html += '<div class="swot-grid">';
     html += '  <div class="swot-cell strength"><div class="h">💪 Strength 優勢</div>';
-    html += '<ul><li>已進入農糧署 <strong>2+2 元高階補助</strong>白名單 (' + (dachan.by_tier['2+2元']||0) + ' 產品)</li>';
+    html += '<ul><li>已進入農糧署 <strong>2+2 元補助</strong>白名單 (' + (dachan.by_tier['2+2元']||0) + ' 產品,原料雞糞 ≥50%)</li>';
     html += '<li>集中主戰場 <strong>' + dachanCat[0] + ' ' + (codeNames[dachanCat[0]]||'') + '</strong> (' + dachanCat[1] + ' 產品,深耕定位)</li>';
     html += '<li>母公司規模 (大成長城 1210 · TWSE)<strong>資本雄厚</strong></li></ul></div>';
 
