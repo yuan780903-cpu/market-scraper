@@ -2561,14 +2561,17 @@ function renderAdvView() {{
     html += '</tbody></table>';
     wrap.innerHTML = html;
   }} else if (_advView === 'chart') {{
-    // 折線圖: X=月份, 每個(地區+年+指標)一條線
+    // 折線圖: 智慧判定 X 軸 — 多月 → X=月份 · 單月多年 → X=年份
     const regions = [...new Set(_advResults.map(r => r.region))];
     const years = [...new Set(_advResults.map(r => r.year))].sort();
     const months = [...new Set(_advResults.map(r => r.month))].sort((a,b)=>a-b);
-    if (months.length < 2) {{
-      wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#888">折線圖需選 2 個以上月份</div>';
+    if (months.length < 2 && years.length < 2) {{
+      wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#888">折線圖需選「2 個以上月份」或「2 個以上年份」才有意義</div>';
       return;
     }}
+    // X 軸: 多月優先 (跨月趨勢),單月時改跨年
+    const xMode = months.length >= 2 ? 'month' : 'year';
+    const xVals = xMode === 'month' ? months : years;
     // 三軸: 左 rain, 右 temp, 銷售用「相對比例」畫在同一 chart (自己 scale)
     const rainMetrics = metrics.filter(m => ['mm','rd','sd'].includes(m));
     const tempMetrics = metrics.filter(m => ['tavg','tmax','tmin'].includes(m));
@@ -2584,7 +2587,11 @@ function renderAdvView() {{
     const W = 900, HGT = 400, pl = 55, pr = tempMetrics.length ? 55 : 20, pt = 40, pb = 50;
     const cw = W - pl - pr, ch = HGT - pt - pb;
     let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + HGT + '" preserveAspectRatio="xMidYMid meet">';
-    svg += '<text x="' + (W/2) + '" y="22" text-anchor="middle" font-size="13" font-weight="900" fill="#333">📈 逐月趨勢對照 · ' + regions.length + '地區×' + years.length + '年×' + metrics.length + '指標</text>';
+    const xLabel = xMode === 'month' ? '月份' : '年份';
+    const titleDim = xMode === 'month'
+      ? (regions.length + '地區×' + years.length + '年×' + metrics.length + '指標')
+      : (regions.length + '地區×' + months[0] + '月×' + metrics.length + '指標');
+    svg += '<text x="' + (W/2) + '" y="22" text-anchor="middle" font-size="13" font-weight="900" fill="#333">📈 逐' + xLabel + '趨勢對照 · ' + titleDim + '</text>';
     // 軸
     svg += '<line x1="' + pl + '" y1="' + (pt+ch) + '" x2="' + (W-pr) + '" y2="' + (pt+ch) + '" stroke="#666"/>';
     svg += '<line x1="' + pl + '" y1="' + pt + '" x2="' + pl + '" y2="' + (pt+ch) + '" stroke="#1976d2"/>';
@@ -2600,36 +2607,45 @@ function renderAdvView() {{
       }}
     }}
     // X ticks
-    months.forEach((m, i) => {{
-      const x = pl + (cw / Math.max(1, months.length-1)) * i;
-      svg += '<text x="' + x + '" y="' + (pt+ch+16) + '" text-anchor="middle" font-size="11" fill="#333" font-weight="700">' + m + '月</text>';
+    xVals.forEach((xv, i) => {{
+      const x = pl + (cw / Math.max(1, xVals.length-1)) * i;
+      const lbl = xMode === 'month' ? (xv + '月') : (xv + '');
+      svg += '<text x="' + x + '" y="' + (pt+ch+16) + '" text-anchor="middle" font-size="11" fill="#333" font-weight="700">' + lbl + '</text>';
     }});
-    // 每條線
+    // 每條線: 多月模式 → 每(地區,年,指標) 一條; 單月模式 → 每(地區,指標) 一條(X是年)
     const lines = [];
-    regions.forEach(r => years.forEach(y => metrics.forEach(mk => lines.push({{r, y, mk}}))));
+    if (xMode === 'month') {{
+      regions.forEach(r => years.forEach(y => metrics.forEach(mk => lines.push({{r, y, mk}}))));
+    }} else {{
+      // 單月多年: 每 (r, mk) 一條,y=null 代表沿年展開
+      regions.forEach(r => metrics.forEach(mk => lines.push({{r, y: null, mk}})));
+    }}
     const COLORS = ['#1976d2','#c62828','#2e7d32','#f57c00','#7b1fa2','#00695c','#d84315','#0288d1','#c2185b','#5d4037','#00838f','#616161'];
-    // sales 是全國性 (不隨地區),只畫每年一條,不重複
+    // sales 在多月模式每年一條(不隨地區), 單月模式每指標一條(不隨地區)
     const drawnSales = new Set();
     lines.forEach((L, li) => {{
       const isTemp = ['tavg','tmax','tmin'].includes(L.mk);
       const isSales = L.mk === 'sales';
       if (isSales) {{
-        const k = 'sales_' + L.y;
+        const k = 'sales_' + xMode + '_' + (L.y || 'x');
         if (drawnSales.has(k)) return;
         drawnSales.add(k);
       }}
       const color = isSales ? '#e65100' : COLORS[li % COLORS.length];
       const pts = [];
-      months.forEach((m, mi) => {{
-        const item = _advResults.find(x => x.region === L.r && x.year === L.y && x.month === m);
+      xVals.forEach((xv, i) => {{
+        // 尋找 item: xMode=month 時 xv=month,固定 L.y; xMode=year 時 xv=year, 固定 months[0]
+        const item = xMode === 'month'
+          ? _advResults.find(x => x.region === L.r && x.year === L.y && x.month === xv)
+          : _advResults.find(x => x.region === L.r && x.year === xv && x.month === months[0]);
         if (!item) return;
         const v = item[L.mk];
         if (v == null) return;
-        const x = pl + (cw / Math.max(1, months.length-1)) * mi;
+        const x = pl + (cw / Math.max(1, xVals.length-1)) * i;
         let yv, tip;
         if (isTemp) {{ yv = pt + ch - ((v - tempMin) / (tempMax - tempMin)) * ch; tip = v.toFixed(1) + '°C'; }}
         else if (isSales) {{ yv = pt + ch - (v / salesMax) * ch; tip = v.toLocaleString() + ' 噸'; }}
-        else {{ yv = pt + ch - (v / rainMax) * ch; tip = v.toFixed(0) + ' mm/天'; }}
+        else {{ yv = pt + ch - (v / rainMax) * ch; tip = v.toFixed(0) + (L.mk === 'mm' ? ' mm' : (L.mk === 'rd' || L.mk === 'sd' ? ' 天' : '')); }}
         pts.push({{x, yv, v, tip}});
       }});
       if (pts.length >= 2) {{
@@ -2637,8 +2653,9 @@ function renderAdvView() {{
         svg += '<polyline points="' + pts.map(p => p.x + ',' + p.yv).join(' ') + '" fill="none" stroke="' + color + '" stroke-width="' + (isSales ? '3' : '2') + '" ' + dash + ' opacity="' + (isSales ? '1' : '0.85') + '"/>';
       }}
       pts.forEach(p => {{
-        const r = isSales ? 5 : 3;
-        svg += '<circle cx="' + p.x + '" cy="' + p.yv + '" r="' + r + '" fill="' + color + '"' + (isSales ? ' stroke="#fff" stroke-width="1.5"' : '') + '><title>' + (isSales ? '💰 ' + L.y : L.r + ' ' + L.y) + ' ' + METRIC_META[L.mk].label + ': ' + p.tip + '</title></circle>';
+        const rSize = isSales ? 5 : 3;
+        const lblYear = L.y || 'x';
+        svg += '<circle cx="' + p.x + '" cy="' + p.yv + '" r="' + rSize + '" fill="' + color + '"' + (isSales ? ' stroke="#fff" stroke-width="1.5"' : '') + '><title>' + (isSales ? '💰' : L.r + ' ' + lblYear) + ' ' + METRIC_META[L.mk].label + ': ' + p.tip + '</title></circle>';
       }});
     }});
     // 圖例 (在圖下方,可換行)
@@ -2657,7 +2674,8 @@ function renderAdvView() {{
       const isTemp = ['tavg','tmax','tmin'].includes(L.mk);
       const isSales = L.mk === 'sales';
       const color = isSales ? '#e65100' : COLORS[li % COLORS.length];
-      const label = isSales ? ('💰 ' + L.y + ' 銷售 (全國)') : (L.r + ' · ' + L.y + ' · ' + METRIC_META[L.mk].label);
+      const yLbl = L.y != null ? L.y : (xMode === 'year' ? '跨年' : '?');
+      const label = isSales ? ('💰 ' + yLbl + ' 銷售(全國)') : (L.r + ' · ' + yLbl + ' · ' + METRIC_META[L.mk].label);
       legHtml += '<span class="leg"><span class="ln" style="background:' + color + (isSales ? ';height:5px' : '') + '"></span>' + label + '</span>';
     }});
     if (uniqLines.length > 20) legHtml += '<span style="color:#888">... 及其他 ' + (uniqLines.length - 20) + ' 條</span>';
