@@ -788,46 +788,71 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .pdf-btn-go:hover{{transform:translateY(-1px)}}
   .pdf-btn-go:disabled{{background:#999;cursor:not-allowed;transform:none}}
 
-  /* 列印/PDF 模式: 用瀏覽器 print 對話框產出 */
+  /* PDF 報告 overlay (獨立版面, 非網頁縮版) */
+  .pdf-report{{display:none}}
   @media print {{
-    /* 隱藏所有 UI 元素 */
-    .cwa-sidebar, .unified-tabs, .copyright-badge, .impact-fab, .legend-fab,
-    .pdf-export-fab, .rank-refresh-btn, .rank-actions-link,
-    .sales-edit-bar, .sales-edit-panel, .pdf-modal,
-    .brand-bar .brand-right, .refresh-bar {{ display: none !important; }}
-    body {{ padding-left: 0 !important; margin: 0 !important; background: #fff !important; }}
-    /* 只在有標記時: 隱藏未選中的區塊 */
-    body.printing-report [id][class*="Block"]:not([data-src-block]),
-    body.printing-report .unified-block:not([data-src-block]),
-    body.printing-report .history-block:not([data-src-block]),
-    body.printing-report .adv-block:not([data-src-block]),
-    body.printing-report .term-detail-block:not([data-src-block]),
-    body.printing-report .crops-block:not([data-src-block]),
-    body.printing-report .towns-block:not([data-src-block]),
-    body.printing-report .news-block:not([data-src-block]),
-    body.printing-report .analysis-block:not([data-src-block]),
-    body.printing-report .rainy-block:not([data-src-block]) {{ display: none !important; }}
-    /* 選中的區塊強制展開,每個新頁 */
-    [data-src-block] {{ display: block !important; page-break-after: always; page-break-inside: avoid; }}
-    [data-src-block] .collapsed > * {{ display: block !important; }}
-    [data-src-block] .collapsed {{ padding-bottom: 16px !important; }}
-    /* 地圖 leaflet 用邊框佔位 (canvas 列印通常沒問題但 tile 可能沒載入) */
-    /* Header logo bar 保留但變小 */
-    .brand-bar {{ padding: 8px 12px !important; background: #fff !important; color: #000 !important; border-bottom: 3px solid #c62828 !important; box-shadow: none !important; page-break-after: avoid; }}
-    .brand-bar .brand-name .co {{ color: #333 !important; }}
-    .brand-bar .brand-name .dept {{ color: #666 !important; }}
-    /* 標題大字 */
-    h1, h3 {{ page-break-after: avoid; }}
-    /* Grid/Flex: 避免橫向溢出 */
-    table {{ page-break-inside: avoid; }}
-    /* 列印用封面 */
-    body.printing-report::before {{
-      content: attr(data-print-title) " · 產出於 " attr(data-print-date);
-      display: block; text-align: center; font-size: 24px; font-weight: 900;
-      color: #c62828; padding: 40px 20px; border-bottom: 4px double #c62828;
-      margin-bottom: 20px; page-break-after: always;
-    }}
-    @page {{ size: A4 portrait; margin: 12mm 10mm; }}
+    @page {{ size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }}
+    /* 列印時: 全部隱藏, 只留 pdf-report */
+    body > *:not(#pdfReportOverlay) {{ display: none !important; }}
+    body {{ padding: 0 !important; margin: 0 !important; background: #fff !important; }}
+    .pdf-report {{ display: block !important; font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color: #222; font-size: 11pt; line-height: 1.5; }}
+    .pdf-report h1, .pdf-report h2, .pdf-report h3 {{ margin: 0; page-break-after: avoid; }}
+    .pdf-report section {{ page-break-after: always; page-break-inside: auto; }}
+    .pdf-report section:last-child {{ page-break-after: auto; }}
+
+    /* 封面 */
+    .pdf-report .pr-cover {{ height: 250mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20mm; border: 3px double #c62828; }}
+    .pr-cover-brand {{ font-size: 11pt; color: #666; letter-spacing: 6px; margin-bottom: 20mm; }}
+    .pr-cover-title {{ font-size: 34pt; font-weight: 900; color: #c62828; margin: 0 0 10mm; letter-spacing: 4px; }}
+    .pr-cover-sub {{ font-size: 14pt; color: #333; margin-bottom: 30mm; letter-spacing: 2px; }}
+    .pr-cover-date {{ font-size: 13pt; color: #666; padding: 8mm 0; border-top: 1px solid #999; border-bottom: 1px solid #999; min-width: 100mm; }}
+    .pr-cover-meta {{ margin-top: 30mm; font-size: 10pt; color: #444; text-align: left; }}
+    .pr-cover-meta div {{ margin: 3mm 0; }}
+
+    /* 目錄 */
+    .pdf-report .pr-toc h2 {{ font-size: 22pt; color: #c62828; padding-bottom: 8mm; border-bottom: 3px solid #c62828; margin-bottom: 15mm; text-align: center; letter-spacing: 4px; }}
+    .pdf-report .pr-toc ol {{ list-style: decimal; padding-left: 20mm; font-size: 14pt; line-height: 2.2; }}
+    .pdf-report .pr-toc li {{ display: flex; align-items: baseline; margin: 6mm 0; }}
+    .pdf-report .pr-toc .dots {{ flex: 1; border-bottom: 2px dotted #999; margin: 0 6mm; height: 0; align-self: baseline; margin-bottom: 3mm; }}
+
+    /* 章節通用 */
+    .pdf-report .pr-sec {{ padding-top: 5mm; }}
+    .pdf-report .pr-sec h2 {{ font-size: 20pt; color: #c62828; padding: 4mm 0 3mm; border-bottom: 2.5px solid #c62828; margin-bottom: 4mm; letter-spacing: 2px; }}
+    .pdf-report .pr-sec h3 {{ font-size: 14pt; color: #333; margin: 6mm 0 3mm; padding-left: 3mm; border-left: 4px solid #c62828; }}
+    .pdf-report .pr-meta {{ font-size: 9pt; color: #666; margin-bottom: 5mm; padding: 2mm 4mm; background: #f5f5f5; border-radius: 2mm; }}
+
+    /* 表格 */
+    .pdf-report .pr-tbl {{ width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 10pt; page-break-inside: auto; }}
+    .pdf-report .pr-tbl tr {{ page-break-inside: avoid; }}
+    .pdf-report .pr-tbl thead {{ display: table-header-group; }}
+    .pdf-report .pr-tbl th {{ background: #c62828 !important; color: #fff !important; padding: 2.5mm 3mm; text-align: left; font-weight: 700; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+    .pdf-report .pr-tbl th.n {{ text-align: right; }}
+    .pdf-report .pr-tbl th.hi-th {{ background: #8b0000 !important; }}
+    .pdf-report .pr-tbl td {{ padding: 2mm 3mm; border-bottom: 1px solid #ddd; }}
+    .pdf-report .pr-tbl td.n {{ text-align: right; font-family: ui-monospace, Menlo, monospace; }}
+    .pdf-report .pr-tbl td.hi {{ background: #ffebee !important; -webkit-print-color-adjust: exact; }}
+    .pdf-report .pr-tbl tr.hi td {{ background: #ffebee !important; -webkit-print-color-adjust: exact; }}
+    .pdf-report .pr-tbl tr.mid td {{ background: #fff8e1 !important; -webkit-print-color-adjust: exact; }}
+    .pdf-report .pr-tbl tr:nth-child(even) td {{ background: #fafafa; }}
+
+    /* KPI */
+    .pdf-report .pr-kpi {{ display: flex; gap: 3mm; margin: 4mm 0 5mm; flex-wrap: wrap; }}
+    .pdf-report .pr-kpi-item {{ flex: 1; min-width: 30mm; background: #ffebee !important; border-left: 3px solid #c62828 !important; padding: 3mm 4mm; -webkit-print-color-adjust: exact; }}
+    .pdf-report .pr-kpi-item .lbl {{ font-size: 9pt; color: #666; }}
+    .pdf-report .pr-kpi-item .val {{ font-size: 20pt; font-weight: 900; color: #c62828; font-family: ui-monospace, Menlo, monospace; margin-top: 1mm; }}
+    .pdf-report .pr-kpi-item .val span {{ font-size: 11pt; color: #999; }}
+    .pdf-report .pr-kpi-item .unit {{ font-size: 8pt; color: #999; }}
+
+    /* 洞察 */
+    .pdf-report .pr-hilite {{ background: #fff3e0 !important; border-left: 4px solid #f57c00 !important; padding: 3mm 5mm; margin: 4mm 0; font-size: 10pt; line-height: 1.7; -webkit-print-color-adjust: exact; }}
+
+    /* 結尾 */
+    .pdf-report .pr-signoff {{ padding-top: 30mm; text-align: center; }}
+    .pdf-report .pr-signoff h2 {{ font-size: 18pt; color: #c62828; margin-bottom: 10mm; }}
+    .pdf-report .pr-signoff p {{ max-width: 140mm; margin: 0 auto 20mm; font-size: 10pt; color: #444; line-height: 2; }}
+    .pdf-report .pr-sig {{ margin-top: 20mm; font-size: 11pt; line-height: 2; color: #333; border-top: 1px solid #ccc; padding-top: 15mm; max-width: 100mm; margin-left: auto; margin-right: auto; }}
+    .pdf-report .pr-sig-name {{ font-family: "STKaiti","BiauKai",serif; font-size: 24pt; letter-spacing: 8px; color: #c62828; font-weight: 900; padding: 5mm 0; }}
+    .pdf-report .pr-sig-date {{ font-size: 10pt; color: #666; }}
   }}
 
   /* ===== 浮動版權水印 (農業配色 · 咖啡+深綠+稻穗紋) ===== */
@@ -4731,42 +4756,228 @@ function pdfSelectAll(sel) {{
 }}
 
 function generatePdfReport() {{
-  const btn = document.getElementById('pdfGoBtn');
   const title = (document.getElementById('pdfTitle').value || '有機肥料市場情報').trim();
-  const includeHeader = document.getElementById('pdfIncludeHeader').checked;
-  const includeFooter = document.getElementById('pdfIncludeFooter').checked;
-  const picked = [...document.querySelectorAll('#pdfModal .pdf-opts input[data-src]:checked')]
-    .map(cb => cb.dataset.src);
-  if (!picked.length) {{ alert('請至少勾選一個區塊'); return; }}
-
-  // 用瀏覽器原生列印 → 用戶選「另存為 PDF」
-  // 標記選中的 block, 動態插入 print CSS
-  const pickedSet = new Set(picked);
-  document.body.dataset.printTitle = title;
-  document.body.dataset.printFooter = includeFooter ? '1' : '0';
-  document.body.dataset.printHeader = includeHeader ? '1' : '0';
-  document.body.classList.add('printing-report');
-  // 只標記選中的
-  document.querySelectorAll('[data-src-block]').forEach(el => el.removeAttribute('data-src-block'));
-  picked.forEach(id => {{
-    const el = document.getElementById(id);
-    if (el) el.setAttribute('data-src-block', '1');
-  }});
-
+  const picked = new Set([...document.querySelectorAll('#pdfModal .pdf-opts input[data-src]:checked')].map(cb => cb.dataset.src));
+  if (!picked.size) {{ alert('請至少勾選一個區塊'); return; }}
   closePdfModal();
-
-  // 提示用戶
+  buildReportOverlay(title, picked);
   setTimeout(() => {{
-    alert('即將開啟瀏覽器列印對話框\\n\\n📌 在對話框內:\\n1. 目的地選「另存為 PDF」\\n2. 版面選「直向」\\n3. 邊界選「無」或「最小」\\n4. 點「儲存」\\n\\n關閉對話框後網頁會自動還原');
+    alert('即將開啟列印對話框\\n\\n📌 在對話框內:\\n1. 目的地選「另存為 PDF」\\n2. 版面選「直向」· 邊界「預設」\\n3. 「更多設定」關閉「頁眉/頁尾」\\n4. 點「儲存」');
     window.print();
-  }}, 200);
+  }}, 300);
+}}
+window.addEventListener('afterprint', () => {{
+  const ov = document.getElementById('pdfReportOverlay');
+  if (ov) ov.remove();
+  document.body.classList.remove('printing-report');
+}});
+
+// 建立專屬報告 layout (覆蓋整個 body,只列印這個)
+function buildReportOverlay(title, picked) {{
+  const old = document.getElementById('pdfReportOverlay');
+  if (old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'pdfReportOverlay';
+  ov.className = 'pdf-report';
+
+  const today = new Date().toLocaleDateString('zh-TW', {{year:'numeric',month:'long',day:'numeric',weekday:'long'}});
+  const iso = new Date().toISOString().slice(0,10);
+
+  // 封面
+  ov.innerHTML = `
+    <section class="pr-cover">
+      <div class="pr-cover-brand">大成長城企業股份有限公司 · 有機肥料部</div>
+      <h1 class="pr-cover-title">${{title}}</h1>
+      <div class="pr-cover-sub">碩成有機質肥料 · 業務市場情報</div>
+      <div class="pr-cover-date">${{today}}</div>
+      <div class="pr-cover-meta">
+        <div><b>資料源</b>：中央氣象署 CODIS · 農糧署推薦名單 · Open-Meteo 全球模式</div>
+        <div><b>編製</b>：莊政遠</div>
+        <div><b>報告版本</b>：${{iso}}</div>
+      </div>
+    </section>
+  `;
+
+  // 目錄
+  const sections = [];
+  if (picked.has('obsBlock')) sections.push({{id:'r-obs', title:'一、全台雨量觀測'}});
+  if (picked.has('fcstBlock')) sections.push({{id:'r-fcst', title:'二、未來 7 天雨量預測'}});
+  if (picked.has('histMapBlock')) sections.push({{id:'r-hist', title:'三、歷史雨量對照'}});
+  if (picked.has('salesBlock')) sections.push({{id:'r-sales', title:'四、銷售分析'}});
+  if (picked.has('rankBlock')) sections.push({{id:'r-rank', title:'五、有機肥廠商排名'}});
+  if (picked.has('historyBlock')) sections.push({{id:'r-histcmp', title:'六、歷史雨量單縣比較'}});
+  if (picked.has('advBlock')) sections.push({{id:'r-adv', title:'七、進階四維交叉分析'}});
+
+  let toc = '<section class="pr-toc"><h2>目錄</h2><ol>';
+  sections.forEach((s, i) => toc += `<li>${{s.title}} <span class="dots"></span> <span>${{i+2}}</span></li>`);
+  toc += '</ol></section>';
+  ov.insertAdjacentHTML('beforeend', toc);
+
+  // 各章節內容
+  if (picked.has('obsBlock')) ov.insertAdjacentHTML('beforeend', renderReportObs());
+  if (picked.has('fcstBlock')) ov.insertAdjacentHTML('beforeend', renderReportFcst());
+  if (picked.has('histMapBlock')) ov.insertAdjacentHTML('beforeend', renderReportHist());
+  if (picked.has('salesBlock')) ov.insertAdjacentHTML('beforeend', renderReportSales());
+  if (picked.has('rankBlock')) ov.insertAdjacentHTML('beforeend', renderReportRank());
+
+  // 結尾簽章
+  ov.insertAdjacentHTML('beforeend', `
+    <section class="pr-signoff">
+      <h2>結尾</h2>
+      <p>本報告資料源均為公開資料 (氣象署、農糧署) 及本部內部銷售紀錄,產出僅供內部業務決策參考。</p>
+      <div class="pr-sig">
+        <div>編製部門</div>
+        <div><b>大成長城 · 有機肥料部</b></div>
+        <div style="margin-top:20px">編製人</div>
+        <div class="pr-sig-name">莊 政 遠</div>
+        <div class="pr-sig-date">${{iso}}</div>
+      </div>
+    </section>
+  `);
+
+  document.body.appendChild(ov);
+  document.body.classList.add('printing-report');
 }}
 
-// 列印完自動還原
-window.addEventListener('afterprint', () => {{
-  document.body.classList.remove('printing-report');
-  document.querySelectorAll('[data-src-block]').forEach(el => el.removeAttribute('data-src-block'));
-}});
+// ==== 報告各章節 render (從 window.DATA 等資料重繪成表格) ====
+function renderReportObs() {{
+  const rows = (window.DATA || []).slice().sort((a,b) => b.month - a.month);
+  let h = '<section class="pr-sec" id="r-obs"><h2>一、全台雨量觀測</h2>';
+  h += '<div class="pr-meta">統計期間: ' + new Date().toISOString().slice(0,10) + ' · 資料源: 中央氣象署 CODIS 觀測站</div>';
+  h += '<table class="pr-tbl"><thead><tr><th style="width:40px">名次</th><th>縣市</th><th class="n">今日 (mm)</th><th class="n">本月 (mm)</th><th class="n">本季 (mm)</th></tr></thead><tbody>';
+  rows.forEach((r, i) => {{
+    const cls = r.month >= 500 ? 'hi' : (r.month >= 300 ? 'mid' : '');
+    h += `<tr class="${{cls}}"><td class="n">${{i+1}}</td><td>${{r.name}}</td><td class="n">${{(r.today||0).toFixed(1)}}</td><td class="n"><b>${{(r.month||0).toFixed(1)}}</b></td><td class="n">${{(r.quarter||0).toFixed(1)}}</td></tr>`;
+  }});
+  h += '</tbody></table>';
+  const top3 = rows.slice(0,3);
+  h += '<div class="pr-hilite"><b>💡 觀察重點</b>: 本月降雨 Top 3 集中南部 — ' + top3.map(r => `<b>${{r.name}}</b> ${{r.month.toFixed(0)}}mm`).join(' · ') + '</div>';
+  h += '</section>';
+  return h;
+}}
+
+function renderReportFcst() {{
+  const rows = (window.DATA || []).map(r => {{
+    let sum = 0;
+    (r.forecast || []).forEach(f => sum += f.mm || 0);
+    return {{name: r.name, sum}};
+  }}).sort((a,b) => b.sum - a.sum);
+  let h = '<section class="pr-sec" id="r-fcst"><h2>二、未來 7 天雨量預測</h2>';
+  h += '<div class="pr-meta">資料源: Open-Meteo ECMWF (11km) · 預測期間: 今日之後 7 天</div>';
+  h += '<table class="pr-tbl"><thead><tr><th style="width:40px">名次</th><th>縣市</th><th class="n">7 天累積預測 (mm)</th><th>等級</th></tr></thead><tbody>';
+  rows.forEach((r, i) => {{
+    let lvl = '普通', cls = '';
+    if (r.sum >= 300) {{ lvl = '豪雨警戒'; cls = 'hi'; }}
+    else if (r.sum >= 150) {{ lvl = '多雨'; cls = 'mid'; }}
+    else if (r.sum >= 50) {{ lvl = '略多'; }}
+    else if (r.sum < 10) {{ lvl = '乾季'; }}
+    h += `<tr class="${{cls}}"><td class="n">${{i+1}}</td><td>${{r.name}}</td><td class="n"><b>${{r.sum.toFixed(1)}}</b></td><td>${{lvl}}</td></tr>`;
+  }});
+  h += '</tbody></table></section>';
+  return h;
+}}
+
+function renderReportHist() {{
+  const H = window.HISTORY;
+  if (!H || !H.data) return '';
+  const cy = String(new Date().getFullYear()), cm = String(new Date().getMonth() + 1);
+  let h = '<section class="pr-sec" id="r-hist"><h2>三、歷史雨量對照 (' + cy + '/' + cm + ' vs 去年同月)</h2>';
+  h += '<div class="pr-meta">資料源: 中央氣象署 CODIS · 各縣市多站取 MAX</div>';
+  h += '<table class="pr-tbl"><thead><tr><th>縣市</th><th class="n">' + cy + '/' + cm + ' (mm)</th><th class="n">' + (parseInt(cy)-1) + '/' + cm + ' (mm)</th><th class="n">差異</th><th class="n">變化%</th></tr></thead><tbody>';
+  Object.keys(H.data).forEach(c => {{
+    const a = ((H.data[c][cy]||{{}})[cm]||{{}}).mm;
+    const b = ((H.data[c][String(parseInt(cy)-1)]||{{}})[cm]||{{}}).mm;
+    if (a == null || b == null) return;
+    const diff = a - b;
+    const pct = b > 0 ? (diff/b*100).toFixed(0) : '-';
+    const cls = Math.abs(diff) > 200 ? 'hi' : (Math.abs(diff) > 100 ? 'mid' : '');
+    h += `<tr class="${{cls}}"><td>${{c}}</td><td class="n">${{a.toFixed(0)}}</td><td class="n">${{b.toFixed(0)}}</td><td class="n"><b>${{diff>0?'+':''}}${{diff.toFixed(0)}}</b></td><td class="n">${{diff>0?'+':''}}${{pct}}%</td></tr>`;
+  }});
+  h += '</tbody></table></section>';
+  return h;
+}}
+
+function renderReportSales() {{
+  const S = window.SALES;
+  if (!S || !S.monthly) return '';
+  const years = Object.keys(S.monthly).sort();
+  let h = '<section class="pr-sec" id="r-sales"><h2>四、銷售分析 (' + years[0] + '-' + years[years.length-1] + ')</h2>';
+  h += '<div class="pr-meta">資料源: 有機肥料部內部銷售紀錄 · 單位: 噸</div>';
+
+  const totals = {{}};
+  years.forEach(y => totals[y] = S.monthly[y].filter(v => v != null).reduce((s,v) => s+v, 0));
+
+  // KPI 摘要
+  h += '<div class="pr-kpi">';
+  years.forEach(y => {{
+    h += `<div class="pr-kpi-item"><div class="lbl">${{y}} 全年</div><div class="val">${{totals[y].toLocaleString()}}</div><div class="unit">噸</div></div>`;
+  }});
+  h += '</div>';
+
+  // CAGR
+  const y1 = years[0], yL = years[years.length-1];
+  const span = parseInt(yL) - parseInt(y1);
+  if (span > 0 && totals[y1] > 0) {{
+    const cagr = (Math.pow(totals[yL]/totals[y1], 1/span) - 1) * 100;
+    h += `<div class="pr-hilite"><b>📈 CAGR 年複合成長率</b>: ${{y1}} → ${{yL}} 全年銷量從 ${{totals[y1].toLocaleString()}} 噸 成長至 ${{totals[yL].toLocaleString()}} 噸,CAGR = <b>+${{cagr.toFixed(1)}}%</b> / 年</div>`;
+  }}
+
+  // 逐月表格
+  h += '<h3>逐月銷售明細</h3>';
+  h += '<table class="pr-tbl"><thead><tr><th>年份</th>';
+  for (let m = 1; m <= 12; m++) h += `<th class="n">${{m}}月</th>`;
+  h += '<th class="n hi-th">合計</th></tr></thead><tbody>';
+  years.forEach(y => {{
+    h += `<tr><td><b>${{y}}</b></td>`;
+    S.monthly[y].forEach(v => h += `<td class="n">${{v==null?'–':v.toLocaleString()}}</td>`);
+    h += `<td class="n hi"><b>${{totals[y].toLocaleString()}}</b></td></tr>`;
+  }});
+  h += '</tbody></table></section>';
+  return h;
+}}
+
+function renderReportRank() {{
+  const R = window.FERT_RANKINGS;
+  if (!R || !R.suppliers) return '';
+  const T = R.total_products, N = R.total_suppliers;
+  const cr = (n) => R.suppliers.slice(0, n).reduce((s,r) => s+r.total, 0);
+  const CR3 = (cr(3)/T*100).toFixed(1), CR10 = (cr(10)/T*100).toFixed(1);
+  const dachan = R.suppliers.find(r => r.name.includes('大成') || r.name.includes('碩成'));
+
+  let h = '<section class="pr-sec" id="r-rank"><h2>五、有機肥廠商排名</h2>';
+  h += '<div class="pr-meta">資料源: 農糧署 · 115 年國產有機質肥料品牌推薦名單 · 更新於 ' + (R.updated||'') + '</div>';
+  h += '<div class="pr-kpi">';
+  h += `<div class="pr-kpi-item"><div class="lbl">全國廠商</div><div class="val">${{N}}</div><div class="unit">家</div></div>`;
+  h += `<div class="pr-kpi-item"><div class="lbl">總產品數</div><div class="val">${{T}}</div><div class="unit">支</div></div>`;
+  h += `<div class="pr-kpi-item"><div class="lbl">CR3 集中度</div><div class="val">${{CR3}}<span>%</span></div><div class="unit">Top 3 市佔</div></div>`;
+  h += `<div class="pr-kpi-item"><div class="lbl">CR10 集中度</div><div class="val">${{CR10}}<span>%</span></div><div class="unit">Top 10 市佔</div></div>`;
+  h += '</div>';
+
+  if (dachan) {{
+    h += `<div class="pr-hilite"><b>⭐ 大成/碩成排名</b>: 全國第 <b>${{dachan.rank}}</b> 名 (共 ${{N}} 家) · 產品數 <b>${{dachan.total}}</b> 支 · 涵蓋 ${{dachan.n_categories}} 個品目</div>`;
+  }}
+
+  h += '<h3>Top 20 廠商產品數排名</h3>';
+  h += '<table class="pr-tbl"><thead><tr><th style="width:40px">名次</th><th>業者名稱</th><th class="n">產品數</th><th class="n">品目數</th><th>主要品目</th></tr></thead><tbody>';
+  R.suppliers.slice(0, 20).forEach(r => {{
+    const cats = Object.entries(r.by_code).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([c,n]) => c+':'+n).join(' · ');
+    const isD = r.name.includes('大成') || r.name.includes('碩成');
+    h += `<tr class="${{isD?'hi':(r.rank<=3?'mid':'')}}"><td class="n">${{r.rank}}</td><td>${{r.name}}${{isD?' ★':''}}</td><td class="n"><b>${{r.total}}</b></td><td class="n">${{r.n_categories}}</td><td style="font-size:10px">${{cats}}</td></tr>`;
+  }});
+  h += '</tbody></table>';
+
+  // 監控
+  if (R.recent_violations && R.recent_violations.length) {{
+    h += '<h3 style="color:#c62828">⚠️ 近 30 天新違規案件 (' + R.recent_violations.length + ' 件)</h3>';
+    h += '<table class="pr-tbl"><thead><tr><th>日期</th><th>品目</th><th>商品名</th><th>業者</th><th>違規原因</th></tr></thead><tbody>';
+    R.recent_violations.forEach(v => {{
+      h += `<tr class="hi"><td>${{v.date||''}}</td><td>${{v.cat||''}}</td><td>${{v.brand||''}}</td><td>${{v.supplier||''}}</td><td style="font-size:10px">${{v.reason||''}}</td></tr>`;
+    }});
+    h += '</tbody></table>';
+  }}
+  h += '</section>';
+  return h;
+}}
 
 async function generatePdfReport_old_html2pdf() {{
   const btn = document.getElementById('pdfGoBtn');
