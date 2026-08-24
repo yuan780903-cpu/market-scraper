@@ -515,6 +515,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   #advMetrics .metric-rain.on{{background:linear-gradient(135deg,#1976d2,#0d47a1) !important;border-color:#0d47a1 !important;box-shadow:0 2px 4px rgba(25,118,210,.35) !important;color:#fff !important}}
   .adv-chip.metric-temp{{border-color:#c62828;color:#c62828}}
   #advMetrics .metric-temp.on{{background:linear-gradient(135deg,#c62828,#8b0000) !important;border-color:#8b0000 !important;box-shadow:0 2px 4px rgba(198,40,40,.35) !important;color:#fff !important}}
+  .adv-chip.metric-sales{{border-color:#f57c00;color:#f57c00}}
+  #advMetrics .metric-sales.on{{background:linear-gradient(135deg,#f57c00,#e65100) !important;border-color:#e65100 !important;box-shadow:0 2px 4px rgba(245,124,0,.35) !important;color:#fff !important}}
   .adv-summary{{margin-left:auto;font-size:12px;color:var(--cwa-text-muted);font-weight:700}}
   .adv-actions{{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;font-size:13px}}
   .adv-actions button{{padding:8px 16px;background:#d84315;color:#fff;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}}
@@ -1688,6 +1690,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div class="quick">
           <a onclick="advQuick('metric','rain')">雨量組</a>
           <a onclick="advQuick('metric','temp')">氣溫組</a>
+          <a onclick="advQuick('metric','sales')">+銷售</a>
           <a onclick="advQuick('metric','all')">全選</a>
         </div>
       </div>
@@ -1698,6 +1701,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <label class="adv-chip metric-temp"><input type="checkbox" value="tavg">🌡️ 均溫 (°C)</label>
         <label class="adv-chip metric-temp"><input type="checkbox" value="tmax">🔥 最高溫 (°C)</label>
         <label class="adv-chip metric-temp"><input type="checkbox" value="tmin">❄️ 最低溫 (°C)</label>
+        <label class="adv-chip metric-sales"><input type="checkbox" value="sales">💰 銷售噸數 (全國)</label>
       </div>
     </div>
   </div>
@@ -2304,6 +2308,10 @@ function advQuick(type, action) {{
     }} else if (type === 'metric') {{
       if (action === 'rain') should = ['mm','rd','sd'].includes(cb.value);
       else if (action === 'temp') should = ['tavg','tmax','tmin'].includes(cb.value);
+      else if (action === 'sales') {{
+        // +銷售: 保留已選+加勾 sales
+        if (cb.value === 'sales') should = true;
+      }}
     }}
     cb.checked = should;
     lb.classList.toggle('on', should);
@@ -2346,12 +2354,17 @@ function runAdvancedCompare() {{
       const mData = (regData[String(y)] || {{}})[String(m)] || {{}};
       const rd = mData.rd != null ? mData.rd : 0;
       const sd = mData.sd != null ? mData.sd : 0;
+      // 銷售 (全國,不隨地區) — 從 window.SALES 抓
+      let sales = null;
+      const salesArr = (window.SALES && window.SALES.monthly) ? window.SALES.monthly[String(y)] : null;
+      if (salesArr && salesArr[m-1] != null) sales = salesArr[m-1];
       return {{
         region: r, year: y, month: m,
         mm: mData.mm != null ? mData.mm : 0,
         rd: rd, sd: sd,
         rainDays: rd, stormDays: sd,  // alias for backward compat
         tavg: mData.tavg, tmax: mData.tmax, tmin: mData.tmin,
+        sales: sales,
         src: mData.src || '?',
       }};
     }});
@@ -2373,9 +2386,10 @@ const METRIC_META = {{
   mm: {{label: '累積雨量', unit: 'mm', color: '#1976d2', fmt: v => (v||0).toFixed(0)}},
   rd: {{label: '有雨日', unit: '天', color: '#26a69a', fmt: v => (v||0).toFixed(0)}},
   sd: {{label: '豪雨日', unit: '天', color: '#7b1fa2', fmt: v => (v||0).toFixed(0)}},
-  tavg: {{label: '均溫', unit: '°C', color: '#f57c00', fmt: v => v != null ? v.toFixed(1) : '–'}},
-  tmax: {{label: '最高溫', unit: '°C', color: '#c62828', fmt: v => v != null ? v.toFixed(1) : '–'}},
+  tavg: {{label: '均溫', unit: '°C', color: '#c62828', fmt: v => v != null ? v.toFixed(1) : '–'}},
+  tmax: {{label: '最高溫', unit: '°C', color: '#d32f2f', fmt: v => v != null ? v.toFixed(1) : '–'}},
   tmin: {{label: '最低溫', unit: '°C', color: '#0288d1', fmt: v => v != null ? v.toFixed(1) : '–'}},
+  sales: {{label: '銷售噸數', unit: '噸', color: '#e65100', fmt: v => v != null ? v.toLocaleString() : '–'}},
 }};
 
 // 視圖切換
@@ -2503,14 +2517,17 @@ function renderAdvView() {{
       wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#888">折線圖需選 2 個以上月份</div>';
       return;
     }}
-    // 分兩個 y 軸: 左 rain (mm/rd/sd), 右 temp (tavg/tmax/tmin)
+    // 三軸: 左 rain, 右 temp, 銷售用「相對比例」畫在同一 chart (自己 scale)
     const rainMetrics = metrics.filter(m => ['mm','rd','sd'].includes(m));
     const tempMetrics = metrics.filter(m => ['tavg','tmax','tmin'].includes(m));
+    const salesMetrics = metrics.filter(m => m === 'sales');
     const rainVals = _advResults.flatMap(r => rainMetrics.map(mk => r[mk]).filter(v => v != null));
     const tempVals = _advResults.flatMap(r => tempMetrics.map(mk => r[mk]).filter(v => v != null));
+    const salesVals = _advResults.map(r => r.sales).filter(v => v != null);
     const rainMax = rainVals.length ? Math.max(...rainVals) : 100;
     const tempMax = tempVals.length ? Math.max(...tempVals) : 35;
     const tempMin = tempVals.length ? Math.min(...tempVals) : 0;
+    const salesMax = salesVals.length ? Math.max(...salesVals) : 1000;
 
     const W = 900, HGT = 400, pl = 55, pr = tempMetrics.length ? 55 : 20, pt = 40, pb = 50;
     const cw = W - pl - pr, ch = HGT - pt - pb;
@@ -2539,9 +2556,17 @@ function renderAdvView() {{
     const lines = [];
     regions.forEach(r => years.forEach(y => metrics.forEach(mk => lines.push({{r, y, mk}}))));
     const COLORS = ['#1976d2','#c62828','#2e7d32','#f57c00','#7b1fa2','#00695c','#d84315','#0288d1','#c2185b','#5d4037','#00838f','#616161'];
+    // sales 是全國性 (不隨地區),只畫每年一條,不重複
+    const drawnSales = new Set();
     lines.forEach((L, li) => {{
       const isTemp = ['tavg','tmax','tmin'].includes(L.mk);
-      const color = COLORS[li % COLORS.length];
+      const isSales = L.mk === 'sales';
+      if (isSales) {{
+        const k = 'sales_' + L.y;
+        if (drawnSales.has(k)) return;
+        drawnSales.add(k);
+      }}
+      const color = isSales ? '#e65100' : COLORS[li % COLORS.length];
       const pts = [];
       months.forEach((m, mi) => {{
         const item = _advResults.find(x => x.region === L.r && x.year === L.y && x.month === m);
@@ -2549,28 +2574,41 @@ function renderAdvView() {{
         const v = item[L.mk];
         if (v == null) return;
         const x = pl + (cw / Math.max(1, months.length-1)) * mi;
-        let yv;
-        if (isTemp) yv = pt + ch - ((v - tempMin) / (tempMax - tempMin)) * ch;
-        else yv = pt + ch - (v / rainMax) * ch;
-        pts.push({{x, yv}});
+        let yv, tip;
+        if (isTemp) {{ yv = pt + ch - ((v - tempMin) / (tempMax - tempMin)) * ch; tip = v.toFixed(1) + '°C'; }}
+        else if (isSales) {{ yv = pt + ch - (v / salesMax) * ch; tip = v.toLocaleString() + ' 噸'; }}
+        else {{ yv = pt + ch - (v / rainMax) * ch; tip = v.toFixed(0) + ' mm/天'; }}
+        pts.push({{x, yv, v, tip}});
       }});
       if (pts.length >= 2) {{
-        svg += '<polyline points="' + pts.map(p => p.x + ',' + p.yv).join(' ') + '" fill="none" stroke="' + color + '" stroke-width="2" ' + (isTemp ? 'stroke-dasharray="5,3"' : '') + ' opacity="0.85"/>';
+        const dash = isTemp ? 'stroke-dasharray="5,3"' : (isSales ? 'stroke-dasharray="2,2" stroke-width="3"' : '');
+        svg += '<polyline points="' + pts.map(p => p.x + ',' + p.yv).join(' ') + '" fill="none" stroke="' + color + '" stroke-width="' + (isSales ? '3' : '2') + '" ' + dash + ' opacity="' + (isSales ? '1' : '0.85') + '"/>';
       }}
       pts.forEach(p => {{
-        svg += '<circle cx="' + p.x + '" cy="' + p.yv + '" r="3" fill="' + color + '"><title>' + L.r + ' ' + L.y + ' ' + METRIC_META[L.mk].label + '</title></circle>';
+        const r = isSales ? 5 : 3;
+        svg += '<circle cx="' + p.x + '" cy="' + p.yv + '" r="' + r + '" fill="' + color + '"' + (isSales ? ' stroke="#fff" stroke-width="1.5"' : '') + '><title>' + (isSales ? '💰 ' + L.y : L.r + ' ' + L.y) + ' ' + METRIC_META[L.mk].label + ': ' + p.tip + '</title></circle>';
       }});
     }});
     // 圖例 (在圖下方,可換行)
     svg += '</svg>';
     let legHtml = '<div class="adv-chart-legend">';
-    lines.slice(0, 20).forEach((L, li) => {{
-      const color = COLORS[li % COLORS.length];
-      const isTemp = ['tavg','tmax','tmin'].includes(L.mk);
-      legHtml += '<span class="leg"><span class="ln" style="background:' + color + ';border-top:' + (isTemp ? '2px dashed ' + color : 'none') + '"></span>' +
-        L.r + ' · ' + L.y + ' · ' + METRIC_META[L.mk].label + '</span>';
+    const seenSales = new Set();
+    const uniqLines = lines.filter(L => {{
+      if (L.mk === 'sales') {{
+        const k = 'sales_' + L.y;
+        if (seenSales.has(k)) return false;
+        seenSales.add(k); return true;
+      }}
+      return true;
     }});
-    if (lines.length > 20) legHtml += '<span style="color:#888">... 及其他 ' + (lines.length - 20) + ' 條</span>';
+    uniqLines.slice(0, 20).forEach((L, li) => {{
+      const isTemp = ['tavg','tmax','tmin'].includes(L.mk);
+      const isSales = L.mk === 'sales';
+      const color = isSales ? '#e65100' : COLORS[li % COLORS.length];
+      const label = isSales ? ('💰 ' + L.y + ' 銷售 (全國)') : (L.r + ' · ' + L.y + ' · ' + METRIC_META[L.mk].label);
+      legHtml += '<span class="leg"><span class="ln" style="background:' + color + (isSales ? ';height:5px' : '') + '"></span>' + label + '</span>';
+    }});
+    if (uniqLines.length > 20) legHtml += '<span style="color:#888">... 及其他 ' + (uniqLines.length - 20) + ' 條</span>';
     legHtml += '</div>';
     wrap.innerHTML = svg + legHtml;
   }} else if (_advView === 'bar') {{
