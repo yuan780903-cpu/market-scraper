@@ -128,6 +128,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <title>全台累積雨量地圖 · {today}</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   /* ===== CWA 風格設計系統 ===== */
   :root{{
@@ -757,6 +758,48 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body.projector .rm-cmps li{{font-size:15px;padding:12px 14px}}
   body.projector .rm-impact{{font-size:15px}}
 
+  /* ===== 匯出 PDF fab + modal ===== */
+  .pdf-export-fab{{position:fixed;right:16px;bottom:16px;z-index:998;background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;border:none;padding:12px 20px;border-radius:32px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 6px 18px rgba(198,40,40,.45);display:flex;align-items:center;gap:8px;font-family:inherit;letter-spacing:1px;transition:all .15s;border:2px solid #ffd54f}}
+  .pdf-export-fab:hover{{transform:translateY(-3px);box-shadow:0 8px 22px rgba(198,40,40,.6)}}
+  .pdf-export-fab .pdf-fab-icon{{font-size:18px}}
+  @media (max-width:640px){{
+    .pdf-export-fab{{padding:10px 14px;font-size:12px;right:10px;bottom:10px}}
+    .pdf-export-fab .pdf-fab-txt{{display:none}}
+  }}
+  .pdf-modal{{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center;z-index:9998;padding:20px;backdrop-filter:blur(4px)}}
+  .pdf-modal.open{{display:flex}}
+  .pdf-modal-card{{background:#fff;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;border-radius:12px;padding:24px 28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.4)}}
+  .pdf-modal-close{{position:absolute;top:14px;right:14px;background:#f0f0f0;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-weight:900;font-size:14px;color:#666}}
+  .pdf-modal-close:hover{{background:#c62828;color:#fff}}
+  .pdf-modal-head{{font-size:20px;font-weight:900;color:#c62828;margin-bottom:4px}}
+  .pdf-modal-sub{{font-size:12px;color:#888;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0}}
+  .pdf-opt-title{{font-size:13px;font-weight:900;color:#333;margin-bottom:8px;display:flex;align-items:center;gap:6px}}
+  .pdf-opts{{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-bottom:10px}}
+  .pdf-opts.pdf-opts-inline{{display:flex;flex-wrap:wrap;gap:10px}}
+  .pdf-opts label{{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f5f5f5;border-radius:4px;font-size:12.5px;cursor:pointer;border:1px solid transparent;transition:all .1s}}
+  .pdf-opts label:hover{{background:#ffebee}}
+  .pdf-opts label:has(input:checked){{background:#ffebee;border-color:#c62828;font-weight:700}}
+  .pdf-opts label input{{accent-color:#c62828}}
+  .pdf-mini-btn{{background:#e0e0e0;border:none;padding:2px 8px;border-radius:10px;font-size:11px;cursor:pointer;font-weight:600;margin-left:4px}}
+  .pdf-mini-btn:hover{{background:#c62828;color:#fff}}
+  .pdf-modal-actions{{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;padding-top:14px;border-top:2px solid #f0f0f0}}
+  .pdf-btn-cancel{{background:#f0f0f0;color:#666;border:none;padding:10px 18px;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit}}
+  .pdf-btn-go{{background:linear-gradient(135deg,#c62828,#8b0000);color:#fff;border:none;padding:10px 22px;border-radius:6px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 3px 8px rgba(198,40,40,.35);letter-spacing:1px}}
+  .pdf-btn-go:hover{{transform:translateY(-1px)}}
+  .pdf-btn-go:disabled{{background:#999;cursor:not-allowed;transform:none}}
+
+  /* PDF render 模式 (產出時暫時套用) */
+  .pdf-rendering .cwa-sidebar,.pdf-rendering .brand-bar .brand-right,
+  .pdf-rendering .unified-tabs,.pdf-rendering .copyright-badge,
+  .pdf-rendering .impact-fab,.pdf-rendering .legend-fab,
+  .pdf-rendering .pdf-export-fab,.pdf-rendering .rank-refresh-btn,
+  .pdf-rendering .rank-actions-link,.pdf-rendering .sales-edit-bar,
+  .pdf-rendering .sales-edit-panel{{display:none !important}}
+  .pdf-rendering body{{padding-left:0 !important}}
+  .pdf-rendering .unified-block{{display:block !important}}
+  .pdf-rendering .collapsible.collapsed > *:not(h3){{display:block !important}}
+  .pdf-rendering .collapsible.collapsed{{padding-bottom:16px !important}}
+
   /* ===== 浮動版權水印 (農業配色 · 咖啡+深綠+稻穗紋) ===== */
   .copyright-badge{{position:fixed;left:190px;bottom:16px;z-index:999;background:linear-gradient(135deg,#6d4c1f 0%,#5d4037 40%,#1b5e20 100%);color:#fff;padding:8px 18px 8px 8px;border-radius:40px;box-shadow:0 6px 20px rgba(93,64,55,.55),0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px;border:3px solid #d4a017;user-select:none;transition:transform .15s;position:fixed;overflow:hidden}}
   /* 稻穗/作物花紋層 */
@@ -1158,6 +1201,51 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <span class="term-emoji">{term_emoji}</span>
     <span class="term-name">{term_name}</span>
     <span class="term-hint">{term_hint}</span>
+  </div>
+</div>
+
+<!-- 匯出 PDF 浮動按鈕 (右下角) -->
+<button class="pdf-export-fab" onclick="openPdfExportModal()" title="匯出精美 PDF 報告">
+  <span class="pdf-fab-icon">📄</span><span class="pdf-fab-txt">匯出 PDF</span>
+</button>
+
+<!-- PDF 匯出 Modal (勾選要包含的區塊) -->
+<div class="pdf-modal" id="pdfModal" onclick="if(event.target===this)closePdfModal()">
+  <div class="pdf-modal-card">
+    <button class="pdf-modal-close" onclick="closePdfModal()">✕</button>
+    <div class="pdf-modal-head">📄 匯出精美 PDF 報告</div>
+    <div class="pdf-modal-sub">勾選要包含的分析區塊 · 產出 A4 分頁報告</div>
+
+    <div class="pdf-modal-body">
+      <div class="pdf-opt-title">📌 報告標題</div>
+      <input type="text" id="pdfTitle" value="有機肥料市場情報週報" style="width:100%;padding:8px 12px;border:1.5px solid var(--cwa-border);border-radius:4px;font-size:14px;margin-bottom:14px;font-family:inherit">
+
+      <div class="pdf-opt-title">✅ 選擇區塊 <button onclick="pdfSelectAll(true)" class="pdf-mini-btn">全選</button> <button onclick="pdfSelectAll(false)" class="pdf-mini-btn">清除</button></div>
+      <div class="pdf-opts">
+        <label><input type="checkbox" data-src="obsBlock" checked>📍 雨量觀測 (地圖+排名)</label>
+        <label><input type="checkbox" data-src="fcstBlock" checked>🔮 未來 7 天預測</label>
+        <label><input type="checkbox" data-src="histMapBlock" checked>📜 歷史地圖對照</label>
+        <label><input type="checkbox" data-src="salesBlock" checked>💰 銷售分析 (含 SWOT)</label>
+        <label><input type="checkbox" data-src="rankBlock" checked>🏭 廠商排名 + BI 分析</label>
+        <label><input type="checkbox" data-src="historyBlock">📊 歷史雨量比較 (單選)</label>
+        <label><input type="checkbox" data-src="advBlock">📈 進階四維交叉分析</label>
+        <label><input type="checkbox" data-src="solarBlock">🌱 節氣 × 基肥</label>
+        <label><input type="checkbox" data-src="cropBlock">🍎 作物基肥資料庫</label>
+        <label><input type="checkbox" data-src="townsBlock">🌾 鄉鎮農產地圖</label>
+        <label><input type="checkbox" data-src="newsBlock">📰 相關新聞</label>
+      </div>
+
+      <div class="pdf-opt-title" style="margin-top:14px">⚙️ 版面選項</div>
+      <div class="pdf-opts pdf-opts-inline">
+        <label><input type="checkbox" id="pdfIncludeHeader" checked>加封面(標題+日期+logo)</label>
+        <label><input type="checkbox" id="pdfIncludeFooter" checked>加頁尾(頁碼+著作者)</label>
+      </div>
+    </div>
+
+    <div class="pdf-modal-actions">
+      <button class="pdf-btn-cancel" onclick="closePdfModal()">取消</button>
+      <button class="pdf-btn-go" onclick="generatePdfReport()" id="pdfGoBtn">📥 產出並下載 PDF</button>
+    </div>
   </div>
 </div>
 
@@ -4604,6 +4692,103 @@ function renderRankAnalysis() {{
     else document.body.appendChild(blk);
   }});
 }})();
+
+// ============ 📄 匯出 PDF 報告 ============
+function openPdfExportModal() {{ document.getElementById('pdfModal').classList.add('open'); }}
+function closePdfModal() {{ document.getElementById('pdfModal').classList.remove('open'); }}
+function pdfSelectAll(sel) {{
+  document.querySelectorAll('#pdfModal .pdf-opts input[data-src]').forEach(cb => cb.checked = sel);
+}}
+
+async function generatePdfReport() {{
+  const btn = document.getElementById('pdfGoBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 產出中... (30-60 秒)';
+  const title = (document.getElementById('pdfTitle').value || '有機肥料市場情報').trim();
+  const includeHeader = document.getElementById('pdfIncludeHeader').checked;
+  const includeFooter = document.getElementById('pdfIncludeFooter').checked;
+  const picked = [...document.querySelectorAll('#pdfModal .pdf-opts input[data-src]:checked')]
+    .map(cb => cb.dataset.src);
+  if (!picked.length) {{ alert('請至少勾選一個區塊'); btn.disabled=false; btn.textContent='📥 產出並下載 PDF'; return; }}
+
+  // 建立臨時容器
+  const wrapper = document.createElement('div');
+  wrapper.className = 'pdf-report-wrapper';
+  wrapper.style.cssText = 'padding:24px;font-family:"Noto Sans TC","PingFang TC",sans-serif;background:#fff;color:#333;width:794px';  // A4 寬 px
+
+  // 封面
+  if (includeHeader) {{
+    const cover = document.createElement('div');
+    cover.style.cssText = 'text-align:center;padding:60px 20px;border-bottom:4px double #c62828;margin-bottom:30px';
+    cover.innerHTML =
+      '<div style="font-size:12px;color:#666;letter-spacing:6px">大成長城企業 · 有機肥料部 · 碩成有機質肥料</div>' +
+      '<h1 style="font-size:34px;font-weight:900;color:#c62828;margin:20px 0 12px;letter-spacing:2px">' + title + '</h1>' +
+      '<div style="font-size:14px;color:#333">產出日期: ' + new Date().toLocaleDateString('zh-TW', {{year:'numeric',month:'long',day:'numeric'}}) + '</div>' +
+      '<div style="font-size:11px;color:#888;margin-top:16px">資料源: 中央氣象署 CODIS · 農糧署推薦名單 · Open-Meteo 全球模式</div>' +
+      '<div style="margin-top:24px;font-size:11px;color:#666">產出人: 莊政遠 · 內部業務決策用</div>';
+    wrapper.appendChild(cover);
+  }}
+
+  // clone 選定區塊
+  const rankBlock = document.getElementById('rankBlock');
+  // 先確保所有目標 tab 是 active 狀態才能被 clone (unified-tab hide 的內容 clone 出來是空)
+  // 用 class 'pdf-rendering' 強制展開
+  document.body.classList.add('pdf-rendering');
+
+  await new Promise(r => setTimeout(r, 300));
+
+  picked.forEach(id => {{
+    const src = document.getElementById(id);
+    if (!src) return;
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-bottom:30px;page-break-after:always;page-break-inside:avoid';
+    const clone = src.cloneNode(true);
+    clone.style.cssText = 'width:100%;padding:0;margin:0';
+    // 移除展開按鈕的 ▼
+    clone.classList.remove('collapsible', 'collapsed');
+    // 移除該區塊內的按鈕/表單控制項 (PDF 不用互動)
+    clone.querySelectorAll('button, .pdf-export-fab, .rank-refresh-btn, .rank-actions-link, .sales-edit-bar, .sales-edit-panel').forEach(el => el.remove());
+    section.appendChild(clone);
+    wrapper.appendChild(section);
+  }});
+
+  // 頁尾
+  if (includeFooter) {{
+    const foot = document.createElement('div');
+    foot.style.cssText = 'text-align:center;padding:20px;border-top:2px solid #c62828;font-size:11px;color:#666';
+    foot.innerHTML = '© 大成長城企業股份有限公司 · 有機肥料部 · 系統設計:莊政遠 · ' + new Date().toISOString().slice(0,10);
+    wrapper.appendChild(foot);
+  }}
+
+  // 掛到 DOM 才能被 html2pdf 抓
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-99999px';
+  wrapper.style.top = '0';
+  document.body.appendChild(wrapper);
+
+  const filename = title.replace(/[\\/:*?"<>|]/g, '') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+  const opt = {{
+    margin: [10, 10, 12, 10],
+    filename: filename,
+    image: {{type: 'jpeg', quality: 0.92}},
+    html2canvas: {{scale: 2, useCORS: true, logging: false, letterRendering: true}},
+    jsPDF: {{unit: 'mm', format: 'a4', orientation: 'portrait'}},
+    pagebreak: {{mode: ['avoid-all', 'css', 'legacy']}},
+  }};
+
+  try {{
+    await html2pdf().set(opt).from(wrapper).save();
+    btn.textContent = '✅ 完成!';
+    setTimeout(() => {{ btn.textContent='📥 產出並下載 PDF'; btn.disabled=false; closePdfModal(); }}, 1500);
+  }} catch (e) {{
+    console.error(e);
+    btn.textContent = '❌ 失敗: ' + e.message;
+    btn.disabled = false;
+  }} finally {{
+    document.body.removeChild(wrapper);
+    document.body.classList.remove('pdf-rendering');
+  }}
+}}
 
 // CWA sidebar: smooth scroll + active state (仿 CODIS)
 (function initSidebar() {{
