@@ -897,8 +897,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .cwa-sidebar-title,.cwa-sidebar-foot{{display:none}}
   }}
 
-  /* ===== 浮動雨量色階條 (仿 CODIS 官方右側 vertical bar) ===== */
-  .legend-fab{{position:fixed;right:14px;top:120px;z-index:850;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#fff;border-radius:10px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);transition:transform .2s;user-select:none;font-size:11px}}
+  /* ===== 浮動雨量色階條 (貼地圖右上角, 隨地圖移動) ===== */
+  #map, #fcstMap{{position:relative}}
+  .legend-fab{{position:absolute;right:10px;top:10px;z-index:850;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#fff;border-radius:8px;padding:8px 10px 10px;box-shadow:0 3px 12px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);transition:transform .2s;user-select:none;font-size:11px}}
   .legend-fab.collapsed{{transform:translateX(calc(100% - 30px))}}
   .legend-fab-head{{display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:8px}}
   .legend-fab-head .lf-title{{font-weight:900;font-size:12px;flex:1}}
@@ -912,10 +913,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .legend-fab-bar .lf-val{{color:#fff;font-weight:700;line-height:1.6}}
   .legend-fab-bar .lf-lbl{{color:rgba(255,255,255,.6);font-size:9px;margin-left:auto}}
   .legend-fab-foot{{margin-top:8px;font-size:9px;color:rgba(255,255,255,.55);border-top:1px solid rgba(255,255,255,.1);padding-top:6px;line-height:1.4}}
-  /* 只在 obsBlock active 時顯示 */
-  body:not(:has(#obsBlock.active)) .legend-fab{{display:none}}
   @media (max-width:768px){{
-    .legend-fab{{right:8px;top:auto;bottom:80px;font-size:10px;padding:6px 8px}}
+    .legend-fab{{right:8px;top:8px;font-size:10px;padding:6px 8px}}
     .legend-fab-bar .lf-sw{{width:20px;height:11px}}
     .legend-fab-bar .lf-row{{font-size:9px}}
   }}
@@ -1191,17 +1190,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <div class="period" id="period-info"></div>
 
-<div id="map"></div>
-
-<!-- 顏色級距浮動色階 (仿 CODIS 官方右側 vertical bar,收合節省空間) -->
-<div class="legend-fab" id="legendFab">
-  <div class="legend-fab-head">
-    <span class="lf-title">雨量色階</span>
-    <span class="lf-unit">mm</span>
-    <button class="lf-toggle" onclick="document.getElementById('legendFab').classList.toggle('collapsed')" title="收合/展開">◀</button>
+<div id="map">
+  <!-- 顏色級距 (貼地圖右上角,隨地圖) -->
+  <div class="legend-fab" id="legendFab">
+    <div class="legend-fab-head">
+      <span class="lf-title">雨量色階</span>
+      <span class="lf-unit">mm</span>
+      <button class="lf-toggle" onclick="document.getElementById('legendFab').classList.toggle('collapsed')" title="收合/展開">◀</button>
+    </div>
+    <div class="legend-fab-bar" id="legendFabBar"></div>
+    <div class="legend-fab-foot">縣市名旁的數字=累積 mm<br>今日按 1/10 縮放</div>
   </div>
-  <div class="legend-fab-bar" id="legendFabBar"></div>
-  <div class="legend-fab-foot">縣市名旁的數字=累積 mm<br>今日按 1/10 縮放</div>
 </div>
 
 <!-- 「雨量對肥料影響」摺疊為右下角浮動 icon,hover 展開節省空間 -->
@@ -1807,7 +1806,8 @@ function pickBand(v, mode) {{
   return {{color: BANDS[0][2], label: BANDS[0][3]}};
 }}
 
-const map = L.map('map', {{zoomControl: true, attributionControl: true}}).setView([23.7, 121.0], 7);
+const TW_BOUNDS = L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]);
+const map = L.map('map', {{zoomControl: true, attributionControl: true, minZoom: 6, maxZoom: 13, maxBounds: TW_BOUNDS, maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
 L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
   attribution: '© OpenStreetMap',
   maxZoom: 12,
@@ -2067,7 +2067,7 @@ document.querySelectorAll('.fcst-mode-bar button').forEach(b => {{
 }});
 
 // 預測 Leaflet 地圖
-const fcstMap = L.map('fcstMap', {{zoomControl: true, attributionControl: false}}).setView([23.7, 121.0], 7);
+const fcstMap = L.map('fcstMap', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 13, maxBounds: L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]), maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
 L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
   maxZoom: 16,   // 允許縮到街道級別看鄉鎮
   opacity: 0.55,
@@ -3113,7 +3113,7 @@ function _townCat(crops) {{
 }}
 
 // Leaflet 地圖
-const townsMap = L.map('townsMap', {{zoomControl: true, attributionControl: false}}).setView([23.7, 121.0], 7);
+const townsMap = L.map('townsMap', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 15, maxBounds: L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]), maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
 L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
   maxZoom: 15, opacity: 0.7,
 }}).addTo(townsMap);
