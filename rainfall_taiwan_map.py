@@ -3650,14 +3650,6 @@ function renderSalesAnalysis() {{
   h += '<li>環保法規對禽畜糞來源趨嚴 (氨氣/重金屬)</li></ul></div>';
   h += '</div></div>';
 
-  // 建議行動
-  h += '<div class="sales-actions">';
-  h += '<div class="ra-title">🎬 銷售策略建議</div><div class="ra-grid">';
-  h += '<div class="ra-item"><div class="p">P1 短期</div><div class="t">淡季 ' + weakMonths[0][0] + '/' + weakMonths[1][0] + '月推早鳥備肥優惠</div><div class="w">預期:淡季拉近 30-50% 差距</div></div>';
-  h += '<div class="ra-item"><div class="p">P2 中期</div><div class="t">推速溶粒肥/耐雨包裝主打雨季客戶</div><div class="w">預期:高雨月銷量回升 10-20%</div></div>';
-  h += '<div class="ra-item"><div class="p">P3 長期</div><div class="t">目標 2028 破 20,000 噸 · 躋身全國 Top 15</div><div class="w">預期:市佔從 1.8% → 3%+</div></div>';
-  h += '</div></div>';
-
   h += '<div class="rank-footer">📊 分析方法: CAGR 年複合成長率 · 季節指數 · Pearson 相關係數 · SWOT 定位 · YoY 同期比較</div>';
 
   target.innerHTML = h;
