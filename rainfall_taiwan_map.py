@@ -1170,8 +1170,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div id="obsBlock" class="unified-block active">
 
 <div class="accuracy-note">
-  ⚠️ Open-Meteo 為 ECMWF 全球模型（11 km 分辨率），對台灣<strong>山區、颱風局部豪雨可能低估</strong>。
-  颱風/豪雨警報請以<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener"><strong>中央氣象署</strong></a>為準。
+  ✅ <strong>過去+今日：中央氣象署 CODIS 官方觀測</strong>（每縣多站取 MAX,含颱風強降雨實測值）·
+  <strong>未來 7 天：Open-Meteo 預測</strong>（CWA 免費 API 無未來預測）·
+  警報請以 <a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener"><strong>中央氣象署</strong></a> 為準。
 </div>
 
 <div class="toggle">
@@ -5392,35 +5393,111 @@ def build_html(rows: list, today: date, history_stats: dict = None, fert_ranking
 
 
 
+def _fetch_cwa_recent_daily(county: str, verbose: bool = False) -> dict:
+    """從 CWA CODIS 抓該縣市所有 CWB 主站的過去 365 天日雨量, 取多站 MAX
+    回傳: {date_str: mm}"""
+    import urllib.request, urllib.parse, http.cookiejar
+    _ensure_stations(verbose=False)
+    stations = COUNTY_CWA_STATIONS.get(county, [])
+    if not stations:
+        return {}
+
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    ua = "Mozilla/5.0"
+    try:
+        opener.open(urllib.request.Request("https://codis.cwa.gov.tw/StationData",
+            headers={"User-Agent": ua}), timeout=15)
+    except: return {}
+
+    per_station_daily = []
+    for stn_id, stn_name in stations:
+        try:
+            body = urllib.parse.urlencode({
+                "stn_ID": stn_id, "stn_type": "cwb",
+                "type": "report_month", "date": f"{date.today().isoformat()}",
+            }).encode()
+            req = urllib.request.Request("https://codis.cwa.gov.tw/api/station",
+                data=body, method="POST",
+                headers={"User-Agent": ua,
+                         "Referer": "https://codis.cwa.gov.tw/StationData",
+                         "Origin": "https://codis.cwa.gov.tw",
+                         "Content-Type": "application/x-www-form-urlencoded",
+                         "X-Requested-With": "XMLHttpRequest"})
+            resp = opener.open(req, timeout=45)
+            j = json.loads(resp.read().decode("utf-8"))
+            if j.get("code") != 200: continue
+            d_map = {}
+            for row in j.get("data", []):
+                for dt in row.get("dts", []):
+                    ds = dt.get("DataDate", "")
+                    if len(ds) < 10: continue
+                    date_key = ds[:10]  # YYYY-MM-DD
+                    p = dt.get("Precipitation") or {}
+                    v = p.get("Accumulation")
+                    if v is not None:
+                        d_map[date_key] = float(v)
+            if d_map:
+                per_station_daily.append(d_map)
+        except Exception as e:
+            if verbose: print(f"  [CWA {stn_id}] {e}")
+        time.sleep(0.2)
+
+    if not per_station_daily:
+        return {}
+    # 每日多站取 MAX
+    all_dates = set()
+    for d in per_station_daily: all_dates.update(d.keys())
+    merged = {}
+    for dstr in all_dates:
+        vals = [d.get(dstr) for d in per_station_daily if d.get(dstr) is not None]
+        if vals: merged[dstr] = round(max(vals), 1)
+    return merged
+
+
 def collect_rows(verbose: bool = True) -> list:
-    """抓 22 縣市 90 天雨量，回傳 rows 給 HTML 用"""
+    """抓 22 縣市 90 天雨量。混合資料源:
+    - 過去+今日: CWA CODIS 官方觀測 (含颱風強降雨真實值)
+    - 未來 7 天: Open-Meteo Forecast (CWA 免費 API 無未來預測)"""
     today = date.today()
+    today_str = today.isoformat()
     rows = []
     for i, (name, lat, lon) in enumerate(COUNTIES, 1):
         if verbose:
-            print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ... ", end="", flush=True)
+            print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ", end="", flush=True)
         try:
-            daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7)
+            # 1. Open-Meteo 抓 (作 fallback + 拿未來預測)
+            om_daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7)
+            # 2. CWA 抓過去+今日實測 (取代 om 的過去部分)
+            cwa_daily = _fetch_cwa_recent_daily(name, verbose=False)
+            # 3. Merge: cwa (過去+今日) 優先, om 補未來
+            daily = {}
+            for d, v in om_daily.items():
+                daily[d] = v  # 先 om 全部
+            cwa_hit = 0
+            for d, v in cwa_daily.items():
+                if d <= today_str:  # CWA 只信「已發生」
+                    daily[d] = v  # 覆蓋 om (CWA 實測優先)
+                    cwa_hit += 1
             agg = aggregate(daily, today)
-            # 拆出未來 7 天預測（從 today+1 開始）
-            today_str = today.isoformat()
             forecast = sorted([(d, mm) for d, mm in daily.items() if d > today_str])[:7]
             rows.append({
                 "name": name, "lat": lat, "lon": lon,
-                "today": agg["today"],
-                "month": agg["month"],
-                "quarter": agg["quarter"],
-                "daily": daily,   # 完整每日雨量 → 讓 JS 端算自訂區間
+                "today": agg["today"], "month": agg["month"], "quarter": agg["quarter"],
+                "daily": daily,
                 "forecast": [{"d": d, "mm": mm} for d, mm in forecast],
+                "src": "cwa+openmeteo" if cwa_hit > 0 else "openmeteo",
+                "cwa_hit": cwa_hit,
             })
             if verbose:
-                print(f"今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
-            time.sleep(0.25)
+                src_lbl = f"CWA{cwa_hit}天" if cwa_hit > 0 else "無CWA"
+                print(f"[{src_lbl}] 今日 {agg['today']:>5.1f} | 月 {agg['month']:>6.1f} | 季 {agg['quarter']:>6.1f}")
+            time.sleep(0.3)
         except Exception as e:
             if verbose:
                 print(f"FAIL：{e}")
             rows.append({"name": name, "lat": lat, "lon": lon,
-                         "today": 0, "month": 0, "quarter": 0})
+                         "today": 0, "month": 0, "quarter": 0, "daily": {}, "forecast": []})
     return rows
 
 
