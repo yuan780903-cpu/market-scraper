@@ -926,7 +926,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .hist-map-controls label{{font-weight:700;color:var(--cwa-primary)}}
   .hist-map-controls select{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-family:inherit;font-size:13px}}
   .hist-map-info{{padding:10px 12px;background:linear-gradient(90deg,#f3e5f5,#fff);border-left:3px solid #7b1fa2;border-radius:4px;margin-bottom:10px;font-size:13px;color:#333;line-height:1.6}}
-  #histMap{{width:100%;height:520px;background:#cfe9ff;border:1px solid var(--cwa-border);border-radius:3px;position:relative}}
+  .hist-compare-grid{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}}
+  @media (max-width:900px){{ .hist-compare-grid{{grid-template-columns:1fr}} }}
+  .hist-pane{{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}}
+  .hist-pane-head{{margin-bottom:8px}}
+  .hist-pane-tag{{display:inline-block;background:linear-gradient(135deg,#7b1fa2,#4a148c);color:#fff;padding:4px 12px;border-radius:14px;font-weight:900;font-size:12px;letter-spacing:1px}}
+  .hist-pane-tag.pane-b{{background:linear-gradient(135deg,#f57c00,#e65100)}}
+  .hist-map-canvas{{width:100%;height:420px;background:#cfe9ff;border:1px solid var(--cwa-border);border-radius:3px;position:relative}}
+  .hist-diff-panel{{margin-bottom:14px;padding:10px 14px;background:linear-gradient(90deg,#e3f2fd,#f3e5f5);border-left:4px solid #6a1b9a;border-radius:4px;font-size:13px;line-height:1.6}}
+  .hist-diff-panel .dp-title{{font-weight:900;color:#6a1b9a;margin-bottom:4px}}
   .hist-map-ranking{{margin-top:14px;overflow-x:auto}}
   .hist-map-ranking h4{{margin:0 0 8px;font-size:13px;color:#7b1fa2;font-weight:900}}
   .hist-map-ranking table{{width:100%;border-collapse:collapse;font-size:12px}}
@@ -1334,34 +1342,68 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- ===================== 歷史雨量地圖 (可選年/月, CODIS 官方資料) ===================== -->
+<!-- ===================== 歷史雨量地圖 (雙地圖並排對照, CODIS 官方) ===================== -->
 <div id="histMapBlock" class="unified-block hist-map-block">
-  <h3>📜 歷史雨量地圖 · 選任意年月看全台累積 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源:中央氣象署 CODIS 觀測 (1896-)</span></h3>
-  <div class="hist-map-controls">
-    <label>年份</label>
-    <select id="hmYear"></select>
-    <label>月份</label>
-    <select id="hmMonth">
-      <option value="all">全年累積</option>
-      <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
-      <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
-      <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
-      <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
-    </select>
-    <label>指標</label>
-    <select id="hmMetric">
-      <option value="mm">💧 累積雨量 (mm)</option>
-      <option value="rd">☔ 有雨日 (天)</option>
-      <option value="sd">⛈ 豪雨日 (≥50mm)</option>
-      <option value="tavg">🌡 均溫 (°C)</option>
-    </select>
-    <button id="hmNcdrBtn" onclick="openNcdrDailyMap()" style="margin-left:auto;padding:6px 12px;background:#0d47a1;color:#fff;border:none;border-radius:14px;font-size:12px;cursor:pointer;font-weight:700">🔗 對照 NCDR 單日圖</button>
+  <h3>📜 歷史雨量地圖 · 雙視窗並排對照 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源:中央氣象署 CODIS (1896-)</span></h3>
+  <div class="hist-compare-grid">
+    <!-- 左視窗 A -->
+    <div class="hist-pane">
+      <div class="hist-pane-head"><span class="hist-pane-tag">🅰️ 視窗 A</span></div>
+      <div class="hist-map-controls">
+        <label>年份</label><select id="hmYearA"></select>
+        <label>月份</label>
+        <select id="hmMonthA">
+          <option value="all">全年累積</option>
+          <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+          <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+          <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+          <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+        </select>
+        <label>指標</label>
+        <select id="hmMetricA">
+          <option value="mm">💧 累積雨量</option>
+          <option value="rd">☔ 有雨日</option>
+          <option value="sd">⛈ 豪雨日</option>
+          <option value="tavg">🌡 均溫</option>
+        </select>
+      </div>
+      <div class="hist-map-info" id="hmInfoA"></div>
+      <div id="histMapA" class="hist-map-canvas"></div>
+    </div>
+    <!-- 右視窗 B -->
+    <div class="hist-pane">
+      <div class="hist-pane-head"><span class="hist-pane-tag pane-b">🅱️ 視窗 B</span></div>
+      <div class="hist-map-controls">
+        <label>年份</label><select id="hmYearB"></select>
+        <label>月份</label>
+        <select id="hmMonthB">
+          <option value="all">全年累積</option>
+          <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+          <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+          <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+          <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+        </select>
+        <label>指標</label>
+        <select id="hmMetricB">
+          <option value="mm">💧 累積雨量</option>
+          <option value="rd">☔ 有雨日</option>
+          <option value="sd">⛈ 豪雨日</option>
+          <option value="tavg">🌡 均溫</option>
+        </select>
+      </div>
+      <div class="hist-map-info" id="hmInfoB"></div>
+      <div id="histMapB" class="hist-map-canvas"></div>
+    </div>
   </div>
-  <div class="hist-map-info" id="hmInfo"></div>
-  <div id="histMap"></div>
+  <!-- 差異對照 -->
+  <div class="hist-diff-panel" id="hmDiffPanel"></div>
+  <!-- 排名表 (依 A 視窗) -->
   <div class="hist-map-ranking">
-    <h4 id="hmRankTitle">全台縣市排名</h4>
-    <table><thead><tr><th>名次</th><th>縣市</th><th>觀測站</th><th class="n">數值</th></tr></thead><tbody id="hmRankBody"></tbody></table>
+    <h4 id="hmRankTitle">全台縣市排名 (依視窗 A)</h4>
+    <table><thead><tr><th>名次</th><th>縣市</th><th>觀測站</th><th class="n">A 數值</th><th class="n">B 數值</th><th class="n">差異</th></tr></thead><tbody id="hmRankBody"></tbody></table>
+  </div>
+  <div style="margin-top:10px;text-align:right">
+    <button onclick="openNcdrDailyMap()" style="padding:6px 12px;background:#0d47a1;color:#fff;border:none;border-radius:14px;font-size:12px;cursor:pointer;font-weight:700">🔗 對照 NCDR 單日圖</button>
   </div>
 </div>
 
@@ -3957,45 +3999,65 @@ function showCodeInfo(code) {{
   modal.classList.add('open');
 }}
 
-// ============ 📜 歷史雨量地圖 (可選年+月) ============
-const histMap = L.map('histMap', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 12, maxBounds: L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]), maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
-L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 15, opacity: 0.5}}).addTo(histMap);
-let histMapLayer = null;
+// ============ 📜 歷史雨量地圖 (雙視窗並排對照) ============
+const HIST_MAP_BOUNDS = L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]);
+const histMapA = L.map('histMapA', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 12, maxBounds: HIST_MAP_BOUNDS, maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 15, opacity: 0.5}}).addTo(histMapA);
+const histMapB = L.map('histMapB', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 12, maxBounds: HIST_MAP_BOUNDS, maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 15, opacity: 0.5}}).addTo(histMapB);
+window._histMapLayers = {{A: null, B: null}};
+window._histLastValues = {{A: {{}}, B: {{}}}};
 
 (function initHistMap() {{
   const H = window.HISTORY || {{}};
   if (!H.data) return;
-  // 動態年份 (取 HISTORY 有的年份)
   const yearsSet = new Set();
   Object.values(H.data).forEach(cty => Object.keys(cty).forEach(y => yearsSet.add(y)));
-  const years = [...yearsSet].sort((a,b) => b.localeCompare(a));  // 新→舊
-  const ysel = document.getElementById('hmYear');
-  years.forEach(y => {{
-    const opt = document.createElement('option');
-    opt.value = y; opt.textContent = y + ' 年';
-    ysel.appendChild(opt);
+  const years = [...yearsSet].sort((a,b) => b.localeCompare(a));
+  // 填兩個下拉
+  ['A','B'].forEach(side => {{
+    const ysel = document.getElementById('hmYear' + side);
+    years.forEach(y => {{
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y + ' 年';
+      ysel.appendChild(opt);
+    }});
   }});
-  ysel.value = String(new Date().getFullYear());
-  document.getElementById('hmMonth').value = String(new Date().getMonth() + 1);
+  // 預設: A=今年當月, B=去年同月
+  const cy = String(new Date().getFullYear());
+  const cm = String(new Date().getMonth() + 1);
+  document.getElementById('hmYearA').value = cy;
+  document.getElementById('hmMonthA').value = cm;
+  document.getElementById('hmYearB').value = String(parseInt(cy) - 1);
+  document.getElementById('hmMonthB').value = cm;
 
-  ['hmYear','hmMonth','hmMetric'].forEach(id => {{
-    document.getElementById(id).addEventListener('change', renderHistMap);
+  ['A','B'].forEach(side => {{
+    ['hmYear','hmMonth','hmMetric'].forEach(prefix => {{
+      document.getElementById(prefix + side).addEventListener('change', () => {{
+        renderHistMap(side);
+        renderHistDiff();
+      }});
+    }});
   }});
-  // 等 GeoJSON 載入完再首次繪
+  // 載入 GeoJSON
   if (typeof GEOJSON_URL !== 'undefined') {{
     fetch(GEOJSON_URL).then(r => r.json()).then(gj => {{
       window._histGeoJson = gj;
-      setTimeout(() => {{ histMap.invalidateSize(); renderHistMap(); }}, 300);
+      setTimeout(() => {{
+        histMapA.invalidateSize(); histMapB.invalidateSize();
+        renderHistMap('A'); renderHistMap('B'); renderHistDiff();
+      }}, 300);
     }}).catch(() => {{}});
   }}
 }})();
 
-function renderHistMap() {{
+function renderHistMap(side) {{
   const H = window.HISTORY;
   if (!H || !window._histGeoJson) return;
-  const year = document.getElementById('hmYear').value;
-  const month = document.getElementById('hmMonth').value;
-  const metric = document.getElementById('hmMetric').value;
+  const year = document.getElementById('hmYear' + side).value;
+  const month = document.getElementById('hmMonth' + side).value;
+  const metric = document.getElementById('hmMetric' + side).value;
+  const mapObj = side === 'A' ? histMapA : histMapB;
 
   // 每縣市取值 (全年 = 12 月 sum, 均溫則 avg)
   const values = {{}};
@@ -4022,23 +4084,27 @@ function renderHistMap() {{
     rankArr.push({{county, v: v != null ? v : -1, stns}});
   }});
 
+  window._histLastValues[side] = values;
+  window._histLastMeta = window._histLastMeta || {{}};
+  window._histLastMeta[side] = {{year, month, metric}};
+
+  const metricMeta = {{mm:{{lbl:'累積雨量',unit:'mm'}}, rd:{{lbl:'有雨日',unit:'天'}}, sd:{{lbl:'豪雨日',unit:'天'}}, tavg:{{lbl:'均溫',unit:'°C'}}}};
+  const meta = metricMeta[metric];
   const allVals = Object.values(values).filter(v => v != null);
+  const infoEl = document.getElementById('hmInfo' + side);
   if (allVals.length === 0) {{
-    document.getElementById('hmInfo').innerHTML = '<strong>' + year + '年' + (month==='all'?' 全年':' '+month+'月') + '</strong>: 無資料';
+    infoEl.innerHTML = '<strong>' + year + '年' + (month==='all'?' 全年':' '+month+'月') + '</strong>: 無資料';
+    if (window._histMapLayers[side]) mapObj.removeLayer(window._histMapLayers[side]);
     return;
   }}
   const maxV = Math.max(...allVals);
   const avgV = allVals.reduce((s,v)=>s+v, 0) / allVals.length;
 
-  const metricMeta = {{mm:{{lbl:'累積雨量',unit:'mm'}}, rd:{{lbl:'有雨日',unit:'天'}}, sd:{{lbl:'豪雨日',unit:'天'}}, tavg:{{lbl:'均溫',unit:'°C'}}}};
-  const meta = metricMeta[metric];
+  infoEl.innerHTML =
+    '<strong>' + year + '年' + (month==='all'?' 全年累積' : ' ' + month + '月') + '</strong> · ' + meta.lbl +
+    ' · 平均 <strong style="color:#7b1fa2">' + (metric==='tavg' ? avgV.toFixed(1) : avgV.toFixed(0)) + ' ' + meta.unit + '</strong>' +
+    ' · 最高 <strong style="color:#c62828">' + (metric==='tavg' ? maxV.toFixed(1) : maxV.toFixed(0)) + ' ' + meta.unit + '</strong>';
 
-  document.getElementById('hmInfo').innerHTML =
-    '<strong>' + year + '年' + (month==='all'?' 全年累積' : ' ' + month + '月') + '</strong>：' + meta.lbl + ' · ' +
-    '全國平均 <strong style="color:#7b1fa2">' + (metric==='tavg' ? avgV.toFixed(1) : avgV.toFixed(0)) + ' ' + meta.unit + '</strong> · ' +
-    '最高 <strong style="color:#c62828">' + (metric==='tavg' ? maxV.toFixed(1) : maxV.toFixed(0)) + ' ' + meta.unit + '</strong>';
-
-  // 塗色: 雨量用 BANDS,氣溫用漸層
   function colorFor(v) {{
     if (metric === 'tavg' && v != null) {{
       const t = Math.max(0, Math.min(1, (v - 10) / 25));
@@ -4046,18 +4112,16 @@ function renderHistMap() {{
       return 'rgb(' + rr + ',110,' + bb + ')';
     }}
     if (metric === 'mm') {{
-      // 全年模式 scale × 12, 月則用原 BANDS
       const scale = (month === 'all') ? 12 : 1;
       for (const [lo, hi, color] of BANDS) {{
         if (v >= lo * scale && v < hi * scale) return color;
       }}
     }}
-    // rd/sd 用漸層
     return `rgba(123,31,162,${{Math.min(v/maxV,1)*0.85+0.15}})`;
   }}
 
-  if (histMapLayer) histMap.removeLayer(histMapLayer);
-  histMapLayer = L.geoJson(window._histGeoJson, {{
+  if (window._histMapLayers[side]) mapObj.removeLayer(window._histMapLayers[side]);
+  window._histMapLayers[side] = L.geoJson(window._histGeoJson, {{
     style: (feat) => {{
       const name = (feat.properties.COUNTYNAME || feat.properties.name);
       const nm = (typeof NAME_MAP !== 'undefined' && NAME_MAP[name]) || name;
@@ -4071,24 +4135,75 @@ function renderHistMap() {{
       const stns = ((H.stations || {{}})[nm] || []).map(s => s.name).join('、');
       layer.bindTooltip(nm + '<br>' + meta.lbl + ': ' + (v != null ? (metric==='tavg'?v.toFixed(1):v.toFixed(0)) + meta.unit : '無資料') + '<br>站: ' + stns, {{permanent: false, direction: 'top'}});
     }}
-  }}).addTo(histMap);
+  }}).addTo(mapObj);
+}}
 
-  // 排名表
-  rankArr.sort((a,b) => b.v - a.v);
-  const rankBody = document.getElementById('hmRankBody');
-  rankBody.innerHTML = '';
-  document.getElementById('hmRankTitle').textContent = '全台縣市 · ' + year + '年' + (month==='all'?' 全年':' '+month+'月') + ' · ' + meta.lbl + ' 排名';
-  rankArr.forEach((r, i) => {{
-    if (r.v < 0) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>#' + (i+1) + '</td><td>' + r.county + '</td><td style="font-size:10px;color:#666">' + r.stns + '</td><td class="n' + (i<3?' top':'') + '">' + (metric==='tavg' ? r.v.toFixed(1) : r.v.toFixed(0)) + ' ' + meta.unit + '</td>';
-    rankBody.appendChild(tr);
+function renderHistDiff() {{
+  const H = window.HISTORY;
+  const A = window._histLastValues.A || {{}};
+  const B = window._histLastValues.B || {{}};
+  const metaA = window._histLastMeta && window._histLastMeta.A;
+  const metaB = window._histLastMeta && window._histLastMeta.B;
+  if (!metaA || !metaB) return;
+  const metricMeta = {{mm:{{lbl:'累積雨量',unit:'mm'}}, rd:{{lbl:'有雨日',unit:'天'}}, sd:{{lbl:'豪雨日',unit:'天'}}, tavg:{{lbl:'均溫',unit:'°C'}}}};
+  const mtA = metricMeta[metaA.metric], mtB = metricMeta[metaB.metric];
+
+  // 差異概覽
+  const counties = [...new Set([...Object.keys(A), ...Object.keys(B)])];
+  let sumDiff = 0, cnt = 0;
+  let maxDiffItem = null;
+  counties.forEach(c => {{
+    const a = A[c], b = B[c];
+    if (a != null && b != null) {{
+      const d = a - b;
+      sumDiff += d; cnt++;
+      if (!maxDiffItem || Math.abs(d) > Math.abs(maxDiffItem.d)) maxDiffItem = {{c, d, a, b}};
+    }}
   }});
+  const avgDiff = cnt > 0 ? sumDiff / cnt : 0;
+  const dp = document.getElementById('hmDiffPanel');
+  let html = '<div class="dp-title">🔍 A ⇄ B 差異對照</div>';
+  html += '<strong>A</strong>: ' + metaA.year + '年' + (metaA.month==='all'?'全年':metaA.month+'月') + ' · ' + mtA.lbl + '　vs　';
+  html += '<strong>B</strong>: ' + metaB.year + '年' + (metaB.month==='all'?'全年':metaB.month+'月') + ' · ' + mtB.lbl;
+  if (cnt > 0 && metaA.metric === metaB.metric) {{
+    const cls = avgDiff > 0 ? '#c62828' : '#1976d2';
+    html += '<br>全國平均差異: <strong style="color:' + cls + '">' + (avgDiff>0?'+':'') + avgDiff.toFixed(1) + ' ' + mtA.unit + '</strong>';
+    if (maxDiffItem) {{
+      html += ' · 最大差異縣市: <strong>' + maxDiffItem.c + '</strong> A=' + maxDiffItem.a.toFixed(0) + ' vs B=' + maxDiffItem.b.toFixed(0);
+      html += ' (差 <strong style="color:' + (maxDiffItem.d>0?'#c62828':'#1976d2') + '">' + (maxDiffItem.d>0?'+':'') + maxDiffItem.d.toFixed(0) + '</strong>)';
+    }}
+  }} else if (metaA.metric !== metaB.metric) {{
+    html += '<br><span style="color:#888">兩視窗指標不同,無法直接數值比對</span>';
+  }}
+  dp.innerHTML = html;
+
+  // 排名表 (依 A)
+  const H2 = window.HISTORY;
+  const stnMap = (H2 && H2.stations) || {{}};
+  const rows = [];
+  counties.forEach(c => {{
+    const a = A[c], b = B[c];
+    if (a == null && b == null) return;
+    rows.push({{c, a, b, stns: (stnMap[c] || []).map(s => s.name).join('、')}});
+  }});
+  rows.sort((x, y) => (y.a || -1) - (x.a || -1));
+  const tbody = document.getElementById('hmRankBody');
+  tbody.innerHTML = '';
+  rows.forEach((r, i) => {{
+    const d = (r.a != null && r.b != null && metaA.metric === metaB.metric) ? (r.a - r.b) : null;
+    const dLbl = d == null ? '–' : ((d>0?'+':'') + (metaA.metric==='tavg' ? d.toFixed(1) : d.toFixed(0)));
+    const dCol = d == null ? '#888' : (d > 0 ? '#c62828' : (d < 0 ? '#1976d2' : '#666'));
+    tbody.innerHTML += '<tr><td>#' + (i+1) + '</td><td>' + r.c + '</td><td style="font-size:10px;color:#666">' + r.stns + '</td>' +
+      '<td class="n' + (i<3?' top':'') + '">' + (r.a != null ? (metaA.metric==='tavg'?r.a.toFixed(1):r.a.toFixed(0)) : '–') + '</td>' +
+      '<td class="n">' + (r.b != null ? (metaB.metric==='tavg'?r.b.toFixed(1):r.b.toFixed(0)) : '–') + '</td>' +
+      '<td class="n" style="color:' + dCol + ';font-weight:900">' + dLbl + '</td></tr>';
+  }});
+  document.getElementById('hmRankTitle').textContent = '縣市排名 (依 A · ' + metaA.year + '年' + (metaA.month==='all'?'全年':metaA.month+'月') + ')';
 }}
 
 function openNcdrDailyMap() {{
-  const y = document.getElementById('hmYear').value;
-  const m = document.getElementById('hmMonth').value;
+  const y = document.getElementById('hmYearA').value;
+  const m = document.getElementById('hmMonthA').value;
   if (m === 'all') {{
     alert('NCDR 只有單日圖,請選具體月份');
     return;
@@ -4542,7 +4657,7 @@ function renderRankAnalysis() {{
           if (target === 'obsBlock' && typeof map !== 'undefined') map.invalidateSize();
           if (target === 'fcstBlock' && typeof fcstMap !== 'undefined') fcstMap.invalidateSize();
           if (target === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize();
-          if (target === 'histMapBlock' && typeof histMap !== 'undefined') histMap.invalidateSize();
+          if (target === 'histMapBlock' && typeof histMapA !== 'undefined') {{ histMapA.invalidateSize(); histMapB.invalidateSize(); }}
         }} catch (e) {{}}
       }}, 60);
       // 平滑捲到頂部
