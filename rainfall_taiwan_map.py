@@ -996,6 +996,23 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .cim-footer{{margin-top:14px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#888;text-align:center}}
   .rank-table tr:nth-child(odd) td{{background:#fafafa}}
   .rank-table tr:hover td{{background:#f3e5f5}}
+  /* 推薦名單監控 (新違規/新上架/下架) */
+  .rank-monitor{{margin:12px 0}}
+  .mon-title{{font-size:14px;font-weight:900;color:#6b3300;padding:8px 12px;background:linear-gradient(90deg,#fff3e0,transparent);border-left:4px solid #6b3300;border-radius:0 4px 4px 0;margin-bottom:10px}}
+  .mon-title .mon-sub{{font-size:12px;color:#555;font-weight:600;margin-left:12px}}
+  .mon-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}}
+  .mon-card{{background:#fff;border:1px solid var(--cwa-border);border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+  .mon-card .mon-h{{padding:10px 14px;color:#fff;font-weight:900;font-size:13px}}
+  .mon-card.mon-viol .mon-h{{background:linear-gradient(135deg,#c92a2a,#8b0000)}}
+  .mon-card.mon-add .mon-h{{background:linear-gradient(135deg,#2d6a4f,#1b4332)}}
+  .mon-card.mon-rm .mon-h{{background:linear-gradient(135deg,#795548,#3e2723)}}
+  .mon-card ul{{list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto}}
+  .mon-card li{{padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;line-height:1.5}}
+  .mon-card li:last-child{{border-bottom:0}}
+  .mon-card .tag{{display:inline-block;background:#e0e0e0;color:#555;padding:1px 6px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:700;margin-right:4px}}
+  .mon-card .who{{font-size:10px;color:#888;margin-top:2px}}
+  .mon-card .reason{{margin-top:4px;padding:3px 6px;background:#ffebee;color:#c62828;font-size:10.5px;border-radius:3px}}
+
   .rank-analysis{{margin-top:14px;padding:0;background:transparent;font-size:13px;line-height:1.7;color:var(--cwa-text)}}
   /* Executive Summary */
   .rank-exec-summary{{background:linear-gradient(135deg,#4a148c 0%,#6a1b9a 50%,#7b1fa2 100%);color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:14px;box-shadow:0 4px 12px rgba(106,27,154,.3)}}
@@ -1579,6 +1596,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   <!-- 品目統計小表 -->
   <div class="rank-cat-summary" id="rankCatSummary"></div>
+
+  <!-- 推薦名單監控 (新上架/新違規) -->
+  <div class="rank-monitor" id="rankMonitor"></div>
 
   <!-- 廠商排名主表 -->
   <div class="rank-table-wrap">
@@ -4114,6 +4134,7 @@ function openNcdrDailyMap() {{
 
   // 品目統計小表
   renderCatSummary();
+  renderMonitor();
   renderRankTable();
   renderRankAnalysis();
 
@@ -4121,6 +4142,60 @@ function openNcdrDailyMap() {{
   document.getElementById('rankCode').addEventListener('change', renderRankTable);
   document.getElementById('rankKw').addEventListener('input', renderRankTable);
 }})();
+
+function renderMonitor() {{
+  const R = window.FERT_RANKINGS;
+  if (!R) return;
+  const added = R.recent_added || [];
+  const viols = R.recent_violations || [];
+  const removed = R.recent_removed || [];
+  const days = R.monitor_days || 30;
+  const el = document.getElementById('rankMonitor');
+  if (!el) return;
+  if (added.length === 0 && viols.length === 0 && removed.length === 0) {{
+    el.innerHTML = '';
+    return;
+  }}
+  let h = '<div class="mon-title">🔎 推薦名單監控 <span class="mon-sub">近 ' + days + ' 天:新上架 <strong>' + added.length + '</strong> · 新違規 <strong style="color:#c62828">' + viols.length + '</strong> · 下架 <strong>' + removed.length + '</strong></span></div>';
+  h += '<div class="mon-grid">';
+
+  // 新違規
+  if (viols.length) {{
+    h += '<div class="mon-card mon-viol"><div class="mon-h">⚠️ 新違規案件 (' + viols.length + ')</div><ul>';
+    viols.slice(0, 10).forEach(v => {{
+      h += '<li><span class="tag">[' + (v.cat || '?') + ']</span> <strong>' + (v.brand||'?') + '</strong>' +
+           '<div class="who">' + (v.date||'') + ' · ' + (v.supplier||'') + '</div>' +
+           (v.reason ? '<div class="reason">' + v.reason + '</div>' : '') + '</li>';
+    }});
+    if (viols.length > 10) h += '<li style="color:#888">... 及 ' + (viols.length-10) + ' 筆</li>';
+    h += '</ul></div>';
+  }}
+
+  // 新上架
+  if (added.length) {{
+    h += '<div class="mon-card mon-add"><div class="mon-h">🆕 新上架 (' + added.length + ')</div><ul>';
+    added.slice(0, 10).forEach(a => {{
+      h += '<li><span class="tag">[' + (a.cat||'?') + ']</span> <strong>' + (a.brand||'?') + '</strong>' +
+           '<div class="who">' + (a.date||'') + ' · ' + (a.supplier||'') + '</div></li>';
+    }});
+    if (added.length > 10) h += '<li style="color:#888">... 及 ' + (added.length-10) + ' 筆</li>';
+    h += '</ul></div>';
+  }}
+
+  // 下架
+  if (removed.length) {{
+    h += '<div class="mon-card mon-rm"><div class="mon-h">📤 下架 (' + removed.length + ')</div><ul>';
+    removed.slice(0, 10).forEach(r => {{
+      h += '<li><span class="tag">[' + (r.cat||'?') + ']</span> <strong>' + (r.brand||'?') + '</strong>' +
+           '<div class="who">' + (r.date||'') + ' · ' + (r.supplier||'') + '</div></li>';
+    }});
+    if (removed.length > 10) h += '<li style="color:#888">... 及 ' + (removed.length-10) + ' 筆</li>';
+    h += '</ul></div>';
+  }}
+
+  h += '</div>';
+  el.innerHTML = h;
+}}
 
 function renderCatSummary() {{
   const R = window.FERT_RANKINGS;
@@ -6307,6 +6382,36 @@ def generate_and_publish(verbose: bool = True) -> str:
     if verbose:
         print(f"[Rainfall Map] 抓取農糧署有機肥廠商排名 ...")
     fert_rankings = fetch_fertilizer_rankings(verbose=verbose)
+    # 加入 PDF 監控 (新上架/新違規 · 從 scraper_pdf 復用)
+    try:
+        from scraper_pdf import scrape_all as _scrape_pdf
+        if verbose: print(f"[Rainfall Map] 抓農糧署 PDF 監控 (新上架/新違規) ...")
+        _pdf_result = _scrape_pdf()
+        # 精簡欄位塞進 fert_rankings 讓前端 embed
+        if fert_rankings is None: fert_rankings = {}
+        fert_rankings["recent_added"] = [
+            {"cat": p.get("品目",""), "date": p.get("上架日") or p.get("上網日",""),
+             "brand": p.get("廠牌商品名稱",""), "supplier": p.get("業者名稱","")}
+            for p in _pdf_result.get("recent_added", [])[:20]
+        ]
+        fert_rankings["recent_violations"] = [
+            {"cat": p.get("原品目") or p.get("品目",""), "date": p.get("下網日",""),
+             "brand": p.get("廠牌商品名稱",""), "supplier": p.get("業者名稱",""),
+             "reason": p.get("違規原因","") or p.get("違規事由","")}
+            for p in _pdf_result.get("recent_violations", [])[:20]
+        ]
+        fert_rankings["recent_removed"] = [
+            {"cat": p.get("品目",""), "date": p.get("下架日",""),
+             "brand": p.get("廠牌商品名稱",""), "supplier": p.get("業者名稱","")}
+            for p in _pdf_result.get("recent_removed", [])[:20]
+        ]
+        fert_rankings["monitor_days"] = _pdf_result.get("change_days", 30)
+        if verbose:
+            print(f"  → 新上架 {len(fert_rankings['recent_added'])} · "
+                  f"新違規 {len(fert_rankings['recent_violations'])} · "
+                  f"下架 {len(fert_rankings['recent_removed'])}")
+    except Exception as e:
+        if verbose: print(f"[Rainfall Map] PDF 監控失敗: {e}")
     html = build_html(rows, today, history_stats, fert_rankings)
 
     # 寫到 docs/ (GitHub Pages 來源，固定檔名讓 URL 不變)
