@@ -4741,13 +4741,21 @@ async function generatePdfReport() {{
     const src = document.getElementById(id);
     if (!src) return;
     const section = document.createElement('div');
-    section.style.cssText = 'margin-bottom:30px;page-break-after:always;page-break-inside:avoid';
+    section.style.cssText = 'margin-bottom:30px;page-break-after:always;page-break-inside:avoid;display:block';
     const clone = src.cloneNode(true);
-    clone.style.cssText = 'width:100%;padding:0;margin:0';
-    // 移除展開按鈕的 ▼
-    clone.classList.remove('collapsible', 'collapsed');
+    // 強制顯示 (unified-block 預設 display:none 若非 active,加 active + inline display)
+    clone.classList.add('active');
+    clone.classList.remove('collapsed');
+    clone.style.cssText = 'width:100%;padding:16px;margin:0;display:block;background:#fff;border:none';
+    // 展開所有 collapsible 內容
+    clone.querySelectorAll('.collapsed').forEach(el => el.classList.remove('collapsed'));
+    // 地圖 clone: 用截圖模式無法保留 leaflet, 替換提示
+    clone.querySelectorAll('#map, #fcstMap, #histMapA, #histMapB, #townsMap, #histMap').forEach(el => {{
+      el.style.cssText = 'height:180px;background:#f5f5f5;border:2px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px';
+      el.textContent = '(互動地圖僅在網頁可看,PDF 略)';
+    }});
     // 移除該區塊內的按鈕/表單控制項 (PDF 不用互動)
-    clone.querySelectorAll('button, .pdf-export-fab, .rank-refresh-btn, .rank-actions-link, .sales-edit-bar, .sales-edit-panel').forEach(el => el.remove());
+    clone.querySelectorAll('.pdf-export-fab, .rank-refresh-btn, .rank-actions-link, .sales-edit-bar, .sales-edit-panel, .fab-toggle, .lf-toggle').forEach(el => el.remove());
     section.appendChild(clone);
     wrapper.appendChild(section);
   }});
@@ -4760,10 +4768,13 @@ async function generatePdfReport() {{
     wrapper.appendChild(foot);
   }}
 
-  // 掛到 DOM 才能被 html2pdf 抓
-  wrapper.style.position = 'fixed';
-  wrapper.style.left = '-99999px';
+  // 掛到 DOM 才能被 html2pdf 抓 (absolute 但仍 render layout)
+  wrapper.style.position = 'absolute';
+  wrapper.style.left = '0';
   wrapper.style.top = '0';
+  wrapper.style.zIndex = '-1';
+  wrapper.style.opacity = '0';
+  wrapper.style.pointerEvents = 'none';
   document.body.appendChild(wrapper);
 
   const filename = title.replace(/[\\/:*?"<>|]/g, '') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
