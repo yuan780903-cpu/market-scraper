@@ -919,6 +919,24 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .legend-fab-bar .lf-row{{font-size:9px}}
   }}
 
+  /* ===== 歷史地圖 tab ===== */
+  .hist-map-block{{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #7b1fa2}}
+  .hist-map-block h3{{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #7b1fa2;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}}
+  .hist-map-controls{{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--cwa-hover);padding:10px 12px;border-radius:4px;margin-bottom:10px;font-size:13px}}
+  .hist-map-controls label{{font-weight:700;color:var(--cwa-primary)}}
+  .hist-map-controls select{{padding:6px 10px;border:1px solid var(--cwa-border);border-radius:3px;font-family:inherit;font-size:13px}}
+  .hist-map-info{{padding:10px 12px;background:linear-gradient(90deg,#f3e5f5,#fff);border-left:3px solid #7b1fa2;border-radius:4px;margin-bottom:10px;font-size:13px;color:#333;line-height:1.6}}
+  #histMap{{width:100%;height:520px;background:#cfe9ff;border:1px solid var(--cwa-border);border-radius:3px;position:relative}}
+  .hist-map-ranking{{margin-top:14px;overflow-x:auto}}
+  .hist-map-ranking h4{{margin:0 0 8px;font-size:13px;color:#7b1fa2;font-weight:900}}
+  .hist-map-ranking table{{width:100%;border-collapse:collapse;font-size:12px}}
+  .hist-map-ranking th{{background:linear-gradient(180deg,#7b1fa2,#4a148c);color:#fff;padding:7px 8px;font-weight:700;font-size:11px;text-align:center}}
+  .hist-map-ranking th.n{{text-align:right}}
+  .hist-map-ranking td{{padding:6px 8px;border-bottom:1px solid var(--cwa-border);text-align:center}}
+  .hist-map-ranking td.n{{text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:700}}
+  .hist-map-ranking tr:nth-child(odd) td{{background:#fafafa}}
+  .hist-map-ranking td.top{{background:#c62828 !important;color:#fff;font-weight:900}}
+
   /* ===== 廠商排名 tab ===== */
   .rank-block{{padding:16px 20px;background:var(--cwa-card);border-left:4px solid #6a1b9a}}
   .rank-block h3{{margin:0 0 14px;font-size:15px;font-weight:700;color:var(--cwa-text);padding:6px 0 6px 12px;border-left:4px solid #6a1b9a;background:linear-gradient(90deg,#f3e5f5 0%,transparent 60%);display:flex;flex-wrap:wrap;align-items:center;gap:10px}}
@@ -1070,6 +1088,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <nav class="cwa-sidebar-nav">
     <a href="#obsBlock" data-icon="📍">雨量觀測</a>
     <a href="#fcstBlock" data-icon="🔮">未來預測</a>
+    <a href="#histMapBlock" data-icon="📜">歷史地圖</a>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
     <a href="#newsBlock" data-icon="📰">相關新聞</a>
@@ -1162,6 +1181,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="unified-tabs" id="unifiedTabs">
   <button data-target="obsBlock" class="active">📍 雨量觀測</button>
   <button data-target="fcstBlock">🔮 未來預測</button>
+  <button data-target="histMapBlock">📜 歷史地圖</button>
   <button data-target="salesBlock">💰 銷售分析</button>
   <button data-target="rankBlock">🏭 廠商排名</button>
 </div>
@@ -1294,6 +1314,37 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <th style="width:70px">等級</th>
       <th class="n">預測雨量</th>
     </tr></thead><tbody id="fcstRankingBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== 歷史雨量地圖 (可選年/月, CODIS 官方資料) ===================== -->
+<div id="histMapBlock" class="unified-block hist-map-block">
+  <h3>📜 歷史雨量地圖 · 選任意年月看全台累積 <span style="font-size:11px;color:#c62828;font-weight:700">· 資料源:中央氣象署 CODIS 觀測 (1896-)</span></h3>
+  <div class="hist-map-controls">
+    <label>年份</label>
+    <select id="hmYear"></select>
+    <label>月份</label>
+    <select id="hmMonth">
+      <option value="all">全年累積</option>
+      <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+      <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+      <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+      <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+    </select>
+    <label>指標</label>
+    <select id="hmMetric">
+      <option value="mm">💧 累積雨量 (mm)</option>
+      <option value="rd">☔ 有雨日 (天)</option>
+      <option value="sd">⛈ 豪雨日 (≥50mm)</option>
+      <option value="tavg">🌡 均溫 (°C)</option>
+    </select>
+    <button id="hmNcdrBtn" onclick="openNcdrDailyMap()" style="margin-left:auto;padding:6px 12px;background:#0d47a1;color:#fff;border:none;border-radius:14px;font-size:12px;cursor:pointer;font-weight:700">🔗 對照 NCDR 單日圖</button>
+  </div>
+  <div class="hist-map-info" id="hmInfo"></div>
+  <div id="histMap"></div>
+  <div class="hist-map-ranking">
+    <h4 id="hmRankTitle">全台縣市排名</h4>
+    <table><thead><tr><th>名次</th><th>縣市</th><th>觀測站</th><th class="n">數值</th></tr></thead><tbody id="hmRankBody"></tbody></table>
   </div>
 </div>
 
@@ -3876,6 +3927,147 @@ function showCodeInfo(code) {{
   modal.classList.add('open');
 }}
 
+// ============ 📜 歷史雨量地圖 (可選年+月) ============
+const histMap = L.map('histMap', {{zoomControl: true, attributionControl: false, minZoom: 6, maxZoom: 12, maxBounds: L.latLngBounds([[20.5, 118.0], [26.5, 123.5]]), maxBoundsViscosity: 1.0}}).setView([23.7, 121.0], 7);
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 15, opacity: 0.5}}).addTo(histMap);
+let histMapLayer = null;
+
+(function initHistMap() {{
+  const H = window.HISTORY || {{}};
+  if (!H.data) return;
+  // 動態年份 (取 HISTORY 有的年份)
+  const yearsSet = new Set();
+  Object.values(H.data).forEach(cty => Object.keys(cty).forEach(y => yearsSet.add(y)));
+  const years = [...yearsSet].sort((a,b) => b.localeCompare(a));  // 新→舊
+  const ysel = document.getElementById('hmYear');
+  years.forEach(y => {{
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + ' 年';
+    ysel.appendChild(opt);
+  }});
+  ysel.value = String(new Date().getFullYear());
+  document.getElementById('hmMonth').value = String(new Date().getMonth() + 1);
+
+  ['hmYear','hmMonth','hmMetric'].forEach(id => {{
+    document.getElementById(id).addEventListener('change', renderHistMap);
+  }});
+  // 等 GeoJSON 載入完再首次繪
+  if (typeof GEOJSON_URL !== 'undefined') {{
+    fetch(GEOJSON_URL).then(r => r.json()).then(gj => {{
+      window._histGeoJson = gj;
+      setTimeout(() => {{ histMap.invalidateSize(); renderHistMap(); }}, 300);
+    }}).catch(() => {{}});
+  }}
+}})();
+
+function renderHistMap() {{
+  const H = window.HISTORY;
+  if (!H || !window._histGeoJson) return;
+  const year = document.getElementById('hmYear').value;
+  const month = document.getElementById('hmMonth').value;
+  const metric = document.getElementById('hmMetric').value;
+
+  // 每縣市取值 (全年 = 12 月 sum, 均溫則 avg)
+  const values = {{}};
+  const rankArr = [];
+  Object.keys(H.data).forEach(county => {{
+    const yData = H.data[county][year] || {{}};
+    let v = null;
+    if (month === 'all') {{
+      const arr = [];
+      for (let m = 1; m <= 12; m++) {{
+        const md = yData[String(m)];
+        if (md && md[metric] != null) arr.push(md[metric]);
+      }}
+      if (arr.length > 0) {{
+        v = (metric === 'tavg') ? arr.reduce((s,x)=>s+x,0)/arr.length : arr.reduce((s,x)=>s+x,0);
+      }}
+    }} else {{
+      const md = yData[month];
+      if (md && md[metric] != null) v = md[metric];
+    }}
+    if (v != null) values[county] = v;
+    // 排名
+    const stns = ((H.stations || {{}})[county] || []).map(s => s.name + '(' + s.id + ')').join(',');
+    rankArr.push({{county, v: v != null ? v : -1, stns}});
+  }});
+
+  const allVals = Object.values(values).filter(v => v != null);
+  if (allVals.length === 0) {{
+    document.getElementById('hmInfo').innerHTML = '<strong>' + year + '年' + (month==='all'?' 全年':' '+month+'月') + '</strong>: 無資料';
+    return;
+  }}
+  const maxV = Math.max(...allVals);
+  const avgV = allVals.reduce((s,v)=>s+v, 0) / allVals.length;
+
+  const metricMeta = {{mm:{{lbl:'累積雨量',unit:'mm'}}, rd:{{lbl:'有雨日',unit:'天'}}, sd:{{lbl:'豪雨日',unit:'天'}}, tavg:{{lbl:'均溫',unit:'°C'}}}};
+  const meta = metricMeta[metric];
+
+  document.getElementById('hmInfo').innerHTML =
+    '<strong>' + year + '年' + (month==='all'?' 全年累積' : ' ' + month + '月') + '</strong>：' + meta.lbl + ' · ' +
+    '全國平均 <strong style="color:#7b1fa2">' + (metric==='tavg' ? avgV.toFixed(1) : avgV.toFixed(0)) + ' ' + meta.unit + '</strong> · ' +
+    '最高 <strong style="color:#c62828">' + (metric==='tavg' ? maxV.toFixed(1) : maxV.toFixed(0)) + ' ' + meta.unit + '</strong>';
+
+  // 塗色: 雨量用 BANDS,氣溫用漸層
+  function colorFor(v) {{
+    if (metric === 'tavg' && v != null) {{
+      const t = Math.max(0, Math.min(1, (v - 10) / 25));
+      const rr = Math.round(80 + t * 175), bb = Math.round(220 - t * 200);
+      return 'rgb(' + rr + ',110,' + bb + ')';
+    }}
+    if (metric === 'mm') {{
+      // 全年模式 scale × 12, 月則用原 BANDS
+      const scale = (month === 'all') ? 12 : 1;
+      for (const [lo, hi, color] of BANDS) {{
+        if (v >= lo * scale && v < hi * scale) return color;
+      }}
+    }}
+    // rd/sd 用漸層
+    return `rgba(123,31,162,${{Math.min(v/maxV,1)*0.85+0.15}})`;
+  }}
+
+  if (histMapLayer) histMap.removeLayer(histMapLayer);
+  histMapLayer = L.geoJson(window._histGeoJson, {{
+    style: (feat) => {{
+      const name = (feat.properties.COUNTYNAME || feat.properties.name);
+      const nm = (typeof NAME_MAP !== 'undefined' && NAME_MAP[name]) || name;
+      const v = values[nm];
+      return {{fillColor: v != null ? colorFor(v) : '#eee', fillOpacity: 0.75, color: '#333', weight: 1}};
+    }},
+    onEachFeature: (feat, layer) => {{
+      const name = (feat.properties.COUNTYNAME || feat.properties.name);
+      const nm = (typeof NAME_MAP !== 'undefined' && NAME_MAP[name]) || name;
+      const v = values[nm];
+      const stns = ((H.stations || {{}})[nm] || []).map(s => s.name).join('、');
+      layer.bindTooltip(nm + '<br>' + meta.lbl + ': ' + (v != null ? (metric==='tavg'?v.toFixed(1):v.toFixed(0)) + meta.unit : '無資料') + '<br>站: ' + stns, {{permanent: false, direction: 'top'}});
+    }}
+  }}).addTo(histMap);
+
+  // 排名表
+  rankArr.sort((a,b) => b.v - a.v);
+  const rankBody = document.getElementById('hmRankBody');
+  rankBody.innerHTML = '';
+  document.getElementById('hmRankTitle').textContent = '全台縣市 · ' + year + '年' + (month==='all'?' 全年':' '+month+'月') + ' · ' + meta.lbl + ' 排名';
+  rankArr.forEach((r, i) => {{
+    if (r.v < 0) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>#' + (i+1) + '</td><td>' + r.county + '</td><td style="font-size:10px;color:#666">' + r.stns + '</td><td class="n' + (i<3?' top':'') + '">' + (metric==='tavg' ? r.v.toFixed(1) : r.v.toFixed(0)) + ' ' + meta.unit + '</td>';
+    rankBody.appendChild(tr);
+  }});
+}}
+
+function openNcdrDailyMap() {{
+  const y = document.getElementById('hmYear').value;
+  const m = document.getElementById('hmMonth').value;
+  if (m === 'all') {{
+    alert('NCDR 只有單日圖,請選具體月份');
+    return;
+  }}
+  // 開對應年月最新一天的 NCDR 圖 (預設 15 號)
+  const url = 'https://watch.ncdr.nat.gov.tw/00_Wxmap/8A4_HISTORY_RAINMAP/' + y + '/s_rainmap_' + y + '-' + m.padStart(2,'0') + '-15.png';
+  window.open(url, '_blank');
+}}
+
 // ============ 🏭 廠商排名 (從農糧署即時抓取) ============
 (function initRankBlock() {{
   const R = window.FERT_RANKINGS || {{}};
@@ -4279,6 +4471,7 @@ function renderRankAnalysis() {{
           if (target === 'obsBlock' && typeof map !== 'undefined') map.invalidateSize();
           if (target === 'fcstBlock' && typeof fcstMap !== 'undefined') fcstMap.invalidateSize();
           if (target === 'townsBlock' && typeof townsMap !== 'undefined') townsMap.invalidateSize();
+          if (target === 'histMapBlock' && typeof histMap !== 'undefined') histMap.invalidateSize();
         }} catch (e) {{}}
       }}, 60);
       // 平滑捲到頂部
