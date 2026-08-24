@@ -788,17 +788,47 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .pdf-btn-go:hover{{transform:translateY(-1px)}}
   .pdf-btn-go:disabled{{background:#999;cursor:not-allowed;transform:none}}
 
-  /* PDF render 模式 (產出時暫時套用) */
-  .pdf-rendering .cwa-sidebar,.pdf-rendering .brand-bar .brand-right,
-  .pdf-rendering .unified-tabs,.pdf-rendering .copyright-badge,
-  .pdf-rendering .impact-fab,.pdf-rendering .legend-fab,
-  .pdf-rendering .pdf-export-fab,.pdf-rendering .rank-refresh-btn,
-  .pdf-rendering .rank-actions-link,.pdf-rendering .sales-edit-bar,
-  .pdf-rendering .sales-edit-panel{{display:none !important}}
-  .pdf-rendering body{{padding-left:0 !important}}
-  .pdf-rendering .unified-block{{display:block !important}}
-  .pdf-rendering .collapsible.collapsed > *:not(h3){{display:block !important}}
-  .pdf-rendering .collapsible.collapsed{{padding-bottom:16px !important}}
+  /* 列印/PDF 模式: 用瀏覽器 print 對話框產出 */
+  @media print {{
+    /* 隱藏所有 UI 元素 */
+    .cwa-sidebar, .unified-tabs, .copyright-badge, .impact-fab, .legend-fab,
+    .pdf-export-fab, .rank-refresh-btn, .rank-actions-link,
+    .sales-edit-bar, .sales-edit-panel, .pdf-modal,
+    .brand-bar .brand-right, .refresh-bar {{ display: none !important; }}
+    body {{ padding-left: 0 !important; margin: 0 !important; background: #fff !important; }}
+    /* 只在有標記時: 隱藏未選中的區塊 */
+    body.printing-report [id][class*="Block"]:not([data-src-block]),
+    body.printing-report .unified-block:not([data-src-block]),
+    body.printing-report .history-block:not([data-src-block]),
+    body.printing-report .adv-block:not([data-src-block]),
+    body.printing-report .term-detail-block:not([data-src-block]),
+    body.printing-report .crops-block:not([data-src-block]),
+    body.printing-report .towns-block:not([data-src-block]),
+    body.printing-report .news-block:not([data-src-block]),
+    body.printing-report .analysis-block:not([data-src-block]),
+    body.printing-report .rainy-block:not([data-src-block]) {{ display: none !important; }}
+    /* 選中的區塊強制展開,每個新頁 */
+    [data-src-block] {{ display: block !important; page-break-after: always; page-break-inside: avoid; }}
+    [data-src-block] .collapsed > * {{ display: block !important; }}
+    [data-src-block] .collapsed {{ padding-bottom: 16px !important; }}
+    /* 地圖 leaflet 用邊框佔位 (canvas 列印通常沒問題但 tile 可能沒載入) */
+    /* Header logo bar 保留但變小 */
+    .brand-bar {{ padding: 8px 12px !important; background: #fff !important; color: #000 !important; border-bottom: 3px solid #c62828 !important; box-shadow: none !important; page-break-after: avoid; }}
+    .brand-bar .brand-name .co {{ color: #333 !important; }}
+    .brand-bar .brand-name .dept {{ color: #666 !important; }}
+    /* 標題大字 */
+    h1, h3 {{ page-break-after: avoid; }}
+    /* Grid/Flex: 避免橫向溢出 */
+    table {{ page-break-inside: avoid; }}
+    /* 列印用封面 */
+    body.printing-report::before {{
+      content: attr(data-print-title) " · 產出於 " attr(data-print-date);
+      display: block; text-align: center; font-size: 24px; font-weight: 900;
+      color: #c62828; padding: 40px 20px; border-bottom: 4px double #c62828;
+      margin-bottom: 20px; page-break-after: always;
+    }}
+    @page {{ size: A4 portrait; margin: 12mm 10mm; }}
+  }}
 
   /* ===== 浮動版權水印 (農業配色 · 咖啡+深綠+稻穗紋) ===== */
   .copyright-badge{{position:fixed;left:190px;bottom:16px;z-index:999;background:linear-gradient(135deg,#6d4c1f 0%,#5d4037 40%,#1b5e20 100%);color:#fff;padding:8px 18px 8px 8px;border-radius:40px;box-shadow:0 6px 20px rgba(93,64,55,.55),0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;gap:12px;border:3px solid #d4a017;user-select:none;transition:transform .15s;position:fixed;overflow:hidden}}
@@ -4700,7 +4730,45 @@ function pdfSelectAll(sel) {{
   document.querySelectorAll('#pdfModal .pdf-opts input[data-src]').forEach(cb => cb.checked = sel);
 }}
 
-async function generatePdfReport() {{
+function generatePdfReport() {{
+  const btn = document.getElementById('pdfGoBtn');
+  const title = (document.getElementById('pdfTitle').value || '有機肥料市場情報').trim();
+  const includeHeader = document.getElementById('pdfIncludeHeader').checked;
+  const includeFooter = document.getElementById('pdfIncludeFooter').checked;
+  const picked = [...document.querySelectorAll('#pdfModal .pdf-opts input[data-src]:checked')]
+    .map(cb => cb.dataset.src);
+  if (!picked.length) {{ alert('請至少勾選一個區塊'); return; }}
+
+  // 用瀏覽器原生列印 → 用戶選「另存為 PDF」
+  // 標記選中的 block, 動態插入 print CSS
+  const pickedSet = new Set(picked);
+  document.body.dataset.printTitle = title;
+  document.body.dataset.printFooter = includeFooter ? '1' : '0';
+  document.body.dataset.printHeader = includeHeader ? '1' : '0';
+  document.body.classList.add('printing-report');
+  // 只標記選中的
+  document.querySelectorAll('[data-src-block]').forEach(el => el.removeAttribute('data-src-block'));
+  picked.forEach(id => {{
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('data-src-block', '1');
+  }});
+
+  closePdfModal();
+
+  // 提示用戶
+  setTimeout(() => {{
+    alert('即將開啟瀏覽器列印對話框\\n\\n📌 在對話框內:\\n1. 目的地選「另存為 PDF」\\n2. 版面選「直向」\\n3. 邊界選「無」或「最小」\\n4. 點「儲存」\\n\\n關閉對話框後網頁會自動還原');
+    window.print();
+  }}, 200);
+}}
+
+// 列印完自動還原
+window.addEventListener('afterprint', () => {{
+  document.body.classList.remove('printing-report');
+  document.querySelectorAll('[data-src-block]').forEach(el => el.removeAttribute('data-src-block'));
+}});
+
+async function generatePdfReport_old_html2pdf() {{
   const btn = document.getElementById('pdfGoBtn');
   btn.disabled = true;
   btn.textContent = '⏳ 產出中... (30-60 秒)';
