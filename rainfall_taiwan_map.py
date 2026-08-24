@@ -1072,10 +1072,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <a href="#fcstBlock" data-icon="🔮">未來預測</a>
     <a href="#historyBlock" data-icon="📊">歷史比較</a>
     <a href="#advBlock" data-icon="📈">進階四維</a>
-    <a href="#solarBlock" data-icon="🌱">節氣影響</a>
     <a href="#newsBlock" data-icon="📰">相關新聞</a>
     <a href="#salesBlock" data-icon="💰">銷售分析</a>
     <a href="#rankBlock" data-icon="🏭">廠商排名</a>
+    <a href="#solarBlock" data-icon="🌱">節氣影響</a>
     <a href="#cropBlock" data-icon="🍎">作物基肥</a>
     <a href="#townsBlock" data-icon="🌾">鄉鎮農產</a>
   </nav>
@@ -1298,7 +1298,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <!-- ===================== 節氣 × 有機質基肥出貨影響 ===================== -->
-<div class="term-detail-block" id="solarBlock">
+<div class="term-detail-block collapsible collapsed" id="solarBlock">
   <h3>{term_emoji} 本節氣 · <span class="term-hi">{term_name}</span> — 有機質肥料（基肥）出貨影響</h3>
   <div class="term-detail-lead">{term_hint}</div>
   <ul class="term-detail-list">
@@ -4211,16 +4211,14 @@ function renderRankAnalysis() {{
       adv.parentNode.insertBefore(news, adv.nextSibling);
     }}
   }}
-  // crop + towns 搬到 body 最底 (在 copyright badge 之前)
+  // solar + crop + towns 搬到 body 最底 (在 copyright badge 之前)
+  const solar = document.getElementById('solarBlock');
   const badge = document.querySelector('.copyright-badge');
-  if (crop) {{
-    if (badge) badge.parentNode.insertBefore(crop, badge);
-    else document.body.appendChild(crop);
-  }}
-  if (towns) {{
-    if (badge) badge.parentNode.insertBefore(towns, badge);
-    else document.body.appendChild(towns);
-  }}
+  [solar, crop, towns].forEach(blk => {{
+    if (!blk) return;
+    if (badge) badge.parentNode.insertBefore(blk, badge);
+    else document.body.appendChild(blk);
+  }});
 }})();
 
 // CWA sidebar: smooth scroll + active state (仿 CODIS)
