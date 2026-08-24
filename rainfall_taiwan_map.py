@@ -4404,28 +4404,6 @@ function renderCrops() {{
   }}
 }}
 
-// ============ 🐔 天氣吉祥物對話輪播 ============
-const MASCOT_LINES = {mascot_lines_json};
-(function initMascot() {{
-  const bubble = document.getElementById('mascotBubble');
-  const mascot = document.getElementById('mascot');
-  let idx = 0;
-  let showTimer = null;
-  function showLine() {{
-    bubble.textContent = MASCOT_LINES[idx % MASCOT_LINES.length];
-    bubble.classList.add('show');
-    clearTimeout(showTimer);
-    showTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
-    idx++;
-  }}
-  // 首次載入 1.5 秒後顯示
-  setTimeout(showLine, 1500);
-  // 每 8 秒輪播
-  setInterval(showLine, 8000);
-  // 點吉祥物立即換一句
-  mascot.addEventListener('click', showLine);
-}})();
-
 // ============ 排名等級 emoji 對應 ============
 function fcstEmoji(mm, isMultiDay) {{
   if (isMultiDay) {{
