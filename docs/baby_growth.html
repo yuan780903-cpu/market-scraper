@@ -875,6 +875,7 @@ try{
 }catch(e){ storageOK = false; }
 
 function loadStore(){
+  store = null;   /* 先歸零,避免殘留舊的記憶體資料 */
   try{
     if(storageOK){
       const raw = localStorage.getItem(STORE_KEY);
@@ -885,6 +886,7 @@ function loadStore(){
     store = { version:1, activeKidId:null, kids:[] };
   }
 }
+function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function persist(){
   if(!storageOK) return;   // 記憶體模式:資料仍可操作,之後靠匯出功能存檔
   try{
@@ -1118,7 +1120,7 @@ function renderAvatar(){
   }
 
   drawCostumeFront(ctx);
-  avatarData = cutoutImg ? cv.toDataURL('image/png') : null;
+  /* 注意:不在這裡做 toDataURL(很慢),儲存時才轉檔 */
 }
 
 /* 換裝 chips */
@@ -1155,12 +1157,16 @@ avCv.addEventListener('pointerdown', e=>{
   const p=avPos(e); avLastX=p.x; avLastY=p.y;
   avCv.setPointerCapture(e.pointerId);
 });
+let avRAF=false;
 avCv.addEventListener('pointermove', e=>{
   if(!avDragging) return;
   const p=avPos(e);
   avOffX+=p.x-avLastX; avOffY+=p.y-avLastY;
   avLastX=p.x; avLastY=p.y;
-  renderAvatar();
+  if(!avRAF){
+    avRAF=true;
+    requestAnimationFrame(()=>{ avRAF=false; renderAvatar(); });
+  }
 });
 avCv.addEventListener('pointerup', ()=>avDragging=false);
 avCv.addEventListener('pointercancel', ()=>avDragging=false);
@@ -1219,13 +1225,13 @@ function saveProfile(){
 
   let kid = activeKid();
   if(!kid){
-    kid = { id:'k'+Date.now(), records:[] };
+    kid = { id:uid('k'), records:[] };
     store.kids.push(kid);
     store.activeKidId = kid.id;
   }
-  /* 頭像:有新合成就更新,沒有就保留原本的 */
-  if(cutoutImg && avatarData){
-    kid.avatar = avatarData;
+  /* 頭像:有新合成就更新,沒有就保留原本的(此時才轉檔) */
+  if(cutoutImg){
+    kid.avatar = document.getElementById('avatarCanvas').toDataURL('image/png');
     kid.avatarCut = cutoutImg.src;
     kid.avatarMeta = { costume:avCostume, scale:avScale, offX:avOffX, offY:avOffY };
   }
@@ -1518,7 +1524,7 @@ function saveRecord(){
     if(r) Object.assign(r,{date, heightCm:h, weightKg:w, note});
     toast('✏️ 紀錄更新好囉！');
   }else{
-    kid.records.push({id:'r'+Date.now(), date, heightCm:h, weightKg:w, note});
+    kid.records.push({id:uid('r'), date, heightCm:h, weightKg:w, note});
     toast('🎉 新增一筆紀錄！');
   }
   kid.records.sort((a,b)=> a.date<b.date?-1:1);
@@ -1944,7 +1950,7 @@ async function makeReportPDF(){
   const RENDER_W=660;
   let cloneCuts=[], cloneH=1;
   const canvas=await html2canvas(sheet,{
-    scale:2, useCORS:true, backgroundColor:'#FFFFFF',
+    scale:1.5, useCORS:true, backgroundColor:'#FFFFFF',
     windowWidth:RENDER_W+40,
     onclone:(doc)=>{
       const cs=doc.querySelector('#printSheet .rp-sheet');
@@ -1954,12 +1960,14 @@ async function makeReportPDF(){
       cloneCuts=[...cs.children].map(el=> el.offsetTop+el.offsetHeight);
     }
   });
+  if(canvas.width<50 || canvas.height<50) throw new Error('畫面尺寸異常');
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({unit:'mm', format:'a4'});
   const pw=210, ph=297, margin=8;
   const iw=pw-margin*2;
   const pxPerMm=canvas.width/iw;
   const pagePx=Math.floor((ph-margin*2)*pxPerMm);
+  if(pagePx<10) throw new Error('畫面尺寸異常');
   /* 區塊底部座標(換算到 canvas 像素),分頁盡量切在區塊之間 */
   const ratio=canvas.height/cloneH;
   const cuts=cloneCuts.map(c=> Math.round(c*ratio));
@@ -1974,6 +1982,7 @@ async function makeReportPDF(){
       cut=canvas.height;
     }
     const h=cut-y;
+    if(h<=0 || page>60) break;   /* 保險:絕不無限迴圈 */
     const slice=document.createElement('canvas');
     slice.width=canvas.width; slice.height=h;
     slice.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
@@ -1986,6 +1995,7 @@ async function makeReportPDF(){
 async function downloadPDF(){
   if(!document.querySelector('#printSheet .rp-sheet')){ toast('請先按「產生報告預覽」喔！'); return; }
   toast('📄 PDF 製作中，請稍等…');
+  await new Promise(r=>setTimeout(r,80));   /* 先讓提示畫出來再做重活 */
   try{
     const pdf=await makeReportPDF();
     const kid=activeKid();
@@ -2049,6 +2059,14 @@ function toast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=> t.classList.remove('show'), 2400);
 }
+
+/* ---------- 全域錯誤提示(避免手機上默默卡住) ---------- */
+window.addEventListener('error', function(e){
+  try{ toast('⚠️ 發生錯誤：'+String(e.message).slice(0,40)); }catch(_){}
+});
+window.addEventListener('unhandledrejection', function(e){
+  try{ toast('⚠️ 發生錯誤：'+String(e.reason&&e.reason.message||e.reason).slice(0,40)); }catch(_){}
+});
 
 /* ---------- 啟動 ---------- */
 loadStore();
