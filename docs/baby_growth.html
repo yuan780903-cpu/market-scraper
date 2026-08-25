@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>寶寶成長樂園 🦒</title>
+<style>
+  /* ===== 蠟筆兒童動物風格 ===== */
+  :root{
+    --paper:#FFF8E1;          /* 米色圖畫紙 */
+    --ink:#4A3728;            /* 蠟筆深咖啡 */
+    --ink-soft:#8A7668;
+    --coral:#FF6B6B;          /* 亮珊瑚紅 */
+    --coral-deep:#F94144;
+    --sky:#4FC3F7;            /* 亮天空藍 */
+    --sky-deep:#189BE8;
+    --sunny:#FFC93C;          /* 亮陽光黃 */
+    --mint:#3EDC81;           /* 亮薄荷綠 */
+    --grape:#B983FF;          /* 亮葡萄紫 */
+    --pink:#FF8FAB;           /* 亮草莓粉 */
+    --card:#FFFFFF;
+    --wobble1: 255px 25px 225px 25px / 25px 225px 25px 255px;
+    --wobble2: 25px 255px 25px 225px / 225px 25px 255px 25px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Chalkboard SE','Yuanti TC','YuKyokasho Yoko','Comic Sans MS','PingFang TC','Microsoft JhengHei',sans-serif;
+    color:var(--ink);
+    background-color:var(--paper);
+    /* 圖畫紙紋理：淡淡的顆粒 + 斜紋 */
+    background-image:
+      radial-gradient(rgba(91,74,63,.045) 1px, transparent 1.2px),
+      radial-gradient(rgba(91,74,63,.03) 1px, transparent 1.2px);
+    background-size: 22px 22px, 34px 34px;
+    background-position: 0 0, 11px 11px;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+
+  /* ===== 頂部標題區 ===== */
+  header{
+    text-align:center;
+    padding:22px 16px 6px;
+    position:relative;
+    overflow:hidden;
+  }
+  .title-row{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  h1{
+    font-size:clamp(26px, 6vw, 40px);
+    margin:0;
+    letter-spacing:2px;
+    color:var(--ink);
+    text-shadow: 2px 2px 0 rgba(255,209,102,.55);
+  }
+  .subtitle{
+    margin:6px 0 0;
+    font-size:14px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+  }
+  /* 蠟筆彩虹底線 */
+  .crayon-line{
+    width:min(320px, 80%);
+    height:14px;
+    margin:10px auto 0;
+    display:block;
+  }
+
+  /* ===== 導覽列(蠟筆便利貼風) ===== */
+  nav{
+    display:flex;
+    gap:8px;
+    justify-content:flex-start;
+    padding:14px 14px 4px;
+    max-width:720px;
+    margin:0 auto;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;
+    border:3px solid var(--ink);
+    background:var(--card);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:15px;
+    padding:9px 14px;
+    border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    box-shadow:2px 3px 0 rgba(91,74,63,.25);
+    transition:transform .15s ease;
+    white-space:nowrap;
+  }
+  .tab:active{transform:scale(.95);}
+  /* 彩虹便利貼:每個分頁一個亮色 */
+  .tab:nth-child(1){background:#FFF1BF;} .tab:nth-child(1).active{background:#FFD23F;}
+  .tab:nth-child(2){background:#DFF3FF;} .tab:nth-child(2).active{background:#4FC3F7;}
+  .tab:nth-child(3){background:#FFE3EC;} .tab:nth-child(3).active{background:#FF8FAB;}
+  .tab:nth-child(4){background:#E0FFE8;} .tab:nth-child(4).active{background:#5AD97C;}
+  .tab:nth-child(5){background:#F0E4FF;} .tab:nth-child(5).active{background:#C39BFF;}
+  .tab.active{box-shadow:2px 3px 0 rgba(74,55,40,.45); transform:translateY(-2px);}
+  .tab.soon{opacity:.5; cursor:not-allowed;}
+  .tab .emoji{font-size:18px;}
+
+  /* ===== 主要內容 ===== */
+  main{max-width:720px; margin:0 auto; padding:10px 14px;}
+  .page{display:none; animation:pop-in .35s ease both;}
+  .page.show{display:block;}
+  @keyframes pop-in{
+    0%{opacity:0; transform:translateY(14px) scale(.98);}
+    100%{opacity:1; transform:translateY(0) scale(1);}
+  }
+
+  /* ===== 卡片(手繪邊框) ===== */
+  .card{
+    background:var(--card);
+    border:3px solid var(--ink);
+    border-radius:var(--wobble1);
+    padding:20px 18px;
+    margin:16px 0;
+    box-shadow:4px 5px 0 rgba(91,74,63,.18);
+    position:relative;
+  }
+  .card.alt{border-radius:var(--wobble2);}
+  .card-title{
+    display:flex; align-items:center; gap:8px;
+    font-size:19px;
+    margin:0 0 4px;
+    font-weight:bold;
+  }
+  .card-title .dot{
+    width:14px; height:14px; border-radius:50% 45% 55% 50%;
+    display:inline-block;
+  }
+  .card-note{font-size:12.5px; color:var(--ink-soft); margin:2px 0 14px;}
+
+  /* ===== 表單 ===== */
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:15px;
+    margin-bottom:6px;
+    font-weight:bold;
+  }
+  .field .hint{font-weight:normal; font-size:12px; color:var(--ink-soft);}
+  input[type=text], input[type=date], input[type=number], select{
+    width:100%;
+    font-family:inherit;
+    font-size:17px;
+    color:var(--ink);
+    background:#FFFDF7;
+    border:2.5px solid var(--ink);
+    border-radius:14px 18px 12px 20px / 18px 12px 20px 14px;
+    padding:11px 12px;
+    outline:none;
+    transition:box-shadow .15s ease, border-color .15s ease;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  input:focus, select:focus{
+    border-color:var(--sky-deep);
+    box-shadow:0 0 0 4px rgba(126,200,227,.35);
+  }
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .unit-wrap{position:relative;}
+  .unit-wrap .unit{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    font-size:14px; color:var(--ink-soft); pointer-events:none;
+  }
+  .unit-wrap input{padding-right:44px;}
+
+  /* 性別大按鈕 */
+  .gender-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .gender-btn{
+    border:3px solid var(--ink);
+    background:#FFFDF7;
+    border-radius:22px 28px 20px 30px / 28px 20px 30px 22px;
+    padding:14px 8px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .15s ease, background .15s ease;
+    font-family:inherit;
+  }
+  .gender-btn:active{transform:scale(.96);}
+  .gender-btn svg{width:74px; height:74px; display:block; margin:0 auto 4px;}
+  .gender-btn .g-label{font-size:16px; font-weight:bold; letter-spacing:2px;}
+  .gender-btn.sel-boy{background:#B9E7FF; border-color:var(--sky-deep); box-shadow:0 0 0 5px rgba(79,195,247,.5);}
+  .gender-btn.sel-girl{background:#FFD6E4; border-color:#FF5D8F; box-shadow:0 0 0 5px rgba(255,143,171,.55);}
+
+  /* ===== 按鈕 ===== */
+  .btn{
+    font-family:inherit;
+    font-size:17px;
+    font-weight:bold;
+    letter-spacing:2px;
+    color:var(--ink);
+    border:3px solid var(--ink);
+    border-radius:20px 26px 18px 28px / 26px 18px 28px 20px;
+    padding:13px 26px;
+    cursor:pointer;
+    box-shadow:3px 4px 0 rgba(91,74,63,.3);
+    transition:transform .12s ease, box-shadow .12s ease;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:active{transform:translate(2px,3px); box-shadow:1px 1px 0 rgba(91,74,63,.3);}
+  .btn-main{background:var(--sunny);}
+  .btn-ghost{background:#FFFDF7; font-size:14px; padding:9px 16px; letter-spacing:1px;}
+  .btn-danger{background:#FFD9E2; font-size:13px; padding:8px 14px; letter-spacing:1px;}
+  .btn-wrap{text-align:center; margin-top:20px;}
+
+  /* ===== 頭像合成 ===== */
+  .avatar-zone{text-align:center; margin:6px 0 10px;}
+  #avatarCanvas{
+    width:min(250px, 72vw);
+    height:auto;
+    touch-action:none;      /* 讓拖曳照片時頁面不跟著捲動 */
+    cursor:grab;
+  }
+  .costume-row, .chip-row{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  #chartBox svg{width:100%; height:auto; display:block;}
+  .chip{
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:bold;
+    color:var(--ink);
+    background:#FFFDF7;
+    border:2.5px solid var(--ink);
+    border-radius:14px 18px 12px 18px / 18px 12px 18px 14px;
+    padding:7px 12px;
+    cursor:pointer;
+    box-shadow:2px 2px 0 rgba(74,55,40,.25);
+    transition:transform .12s ease;
+  }
+  .chip:active{transform:scale(.94);}
+  .chip.on{background:var(--sunny); box-shadow:2px 2px 0 rgba(74,55,40,.45);}
+  .zoom-row{
+    display:flex; align-items:center; gap:10px;
+    max-width:300px; margin:0 auto 4px;
+  }
+  .zoom-row span{font-size:18px;}
+  input[type=range]{
+    flex:1;
+    -webkit-appearance:none;
+    appearance:none;
+    height:10px;
+    border:2.5px solid var(--ink);
+    border-radius:8px;
+    background:linear-gradient(90deg, var(--sky), var(--mint));
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:26px; height:26px;
+    border-radius:50% 45% 55% 50%;
+    background:var(--sunny);
+    border:3px solid var(--ink);
+    cursor:pointer;
+    box-shadow:1px 2px 0 rgba(74,55,40,.35);
+  }
+
+  /* ===== 量測紀錄明細 ===== */
+  .rec-item{
+    border:2.5px solid var(--ink);
+    border-radius:16px 20px 14px 22px / 20px 14px 22px 16px;
+    background:#FFFDF7;
+    padding:12px 14px;
+    margin-bottom:12px;
+    box-shadow:2px 3px 0 rgba(74,55,40,.15);
+  }
+  .rec-head{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-weight:bold; font-size:15px;
+    margin-bottom:8px;
+  }
+  .rec-head .age{font-weight:normal; font-size:13px; color:var(--ink-soft);}
+  .rec-head .spacer{flex:1;}
+  .rec-btn{
+    font-family:inherit; font-size:13px;
+    border:2px solid var(--ink); border-radius:10px 13px 9px 14px;
+    background:#FFF; padding:4px 9px; cursor:pointer;
+    box-shadow:1px 2px 0 rgba(74,55,40,.2);
+  }
+  .rec-btn:active{transform:scale(.93);}
+  .rec-line{
+    display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+    font-size:14.5px;
+    padding:5px 0;
+  }
+  .rec-line .val{font-weight:bold; font-size:16px;}
+  .pr-pill{
+    font-size:12.5px; font-weight:bold;
+    border:2px solid var(--ink);
+    border-radius:999px;
+    padding:2px 9px;
+  }
+  .pr-ok{background:#C9F5D9;}
+  .pr-mid{background:#FFE9A8;}
+  .pr-warn{background:#FFC9CE;}
+  .rec-ref{font-size:12.5px; color:var(--ink-soft);}
+  .rec-note{
+    font-size:13px; color:var(--ink-soft);
+    border-top:2px dashed rgba(74,55,40,.2);
+    margin-top:6px; padding-top:6px;
+  }
+  .rec-empty{
+    text-align:center; color:var(--ink-soft);
+    padding:26px 10px; font-size:15px;
+  }
+
+  /* ===== 綜合評估 ===== */
+  .as-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:8px 0;
+  }
+  .as-row .as-icon{font-size:24px;}
+  .as-row .as-big{font-size:22px; font-weight:bold;}
+  .as-row .as-sub{font-size:12.5px; color:var(--ink-soft);}
+  .prbar{
+    position:relative;
+    height:16px;
+    border:2.5px solid var(--ink);
+    border-radius:999px;
+    margin:20px 6px 6px;
+    background:linear-gradient(90deg,
+      #FFC9CE 0 3%, #FFE9A8 3% 15%, #C9F5D9 15% 85%, #FFE9A8 85% 97%, #FFC9CE 97% 100%);
+  }
+  .prbar-mark{
+    position:absolute; top:-19px;
+    transform:translateX(-50%);
+    font-size:14px;
+  }
+  .prbar-lbl{
+    display:flex; justify-content:space-between;
+    font-size:11px; color:var(--ink-soft);
+    margin:2px 8px 10px;
+  }
+  .as-note{
+    border:2.5px dashed var(--ink);
+    border-radius:14px 18px 12px 20px;
+    background:#FFFBEA;
+    padding:12px 14px;
+    font-size:14px;
+    line-height:1.9;
+    margin-top:8px;
+  }
+  .future-box{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+    margin-top:8px;
+  }
+  .future-cell{
+    border:2.5px solid var(--ink);
+    border-radius:16px 20px 14px 22px / 20px 14px 22px 16px;
+    padding:12px 10px;
+    text-align:center;
+  }
+  .future-cell .fc-t{font-size:13px; font-weight:bold;}
+  .future-cell .fc-v{font-size:24px; font-weight:bold; margin:4px 0 2px;}
+  .future-cell .fc-s{font-size:11.5px; color:var(--ink-soft);}
+  @media (max-width:460px){ .future-box{grid-template-columns:1fr;} }
+
+  /* ===== 折線圖盒 ===== */
+  .trend-box svg{width:100%; height:auto; display:block;}
+
+  /* ===== 報告 ===== */
+  .opt-list{display:flex; flex-direction:column; gap:8px; margin:8px 0 4px;}
+  .opt{
+    display:flex; align-items:center; gap:10px;
+    font-size:15px; font-weight:bold;
+    border:2.5px solid var(--ink);
+    border-radius:14px 18px 12px 20px / 18px 12px 20px 14px;
+    background:#FFFDF7;
+    padding:10px 12px;
+    cursor:pointer;
+  }
+  .opt input{width:20px; height:20px; accent-color:var(--coral); flex:0 0 auto;}
+  #printSheet{margin-top:14px;}
+  .rp-sheet{
+    background:#FFFDF6;
+    border:3px solid var(--ink);
+    border-radius:18px;
+    padding:22px 20px;
+  }
+  .rp-title{
+    text-align:center;
+    font-size:24px; font-weight:bold;
+    letter-spacing:3px;
+    margin:0 0 2px;
+  }
+  .rp-sub{text-align:center; font-size:12px; color:var(--ink-soft); margin:0 0 14px;}
+  .rp-block{
+    border:2.5px solid var(--ink);
+    border-radius:14px 18px 12px 20px / 18px 12px 20px 14px;
+    padding:12px 14px;
+    margin-bottom:14px;
+    background:#FFF;
+    break-inside:avoid;
+  }
+  .rp-h{
+    font-size:16px; font-weight:bold;
+    margin:0 0 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .rp-head-flex{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
+  .rp-avatar{width:96px; height:96px; flex:0 0 auto;}
+  .rp-info{flex:1; min-width:220px;}
+  .rp-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .rp-table th, .rp-table td{
+    border:1.5px solid var(--ink);
+    padding:5px 7px;
+    text-align:center;
+  }
+  .rp-table th{background:#FFF1BF;}
+  .rp-info .rp-table th{background:#DFF3FF; width:88px;}
+  .rp-analysis{font-size:14px; line-height:2;}
+  .rp-foot{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.7;}
+  .rp-svg svg{width:100%; height:auto; display:block;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printSheet, #printSheet *{visibility:visible;}
+    #printSheet{position:absolute; top:0; left:0; width:100%; margin:0;}
+    .rp-sheet{border:none; background:#FFF; padding:0;}
+    .rp-block{box-shadow:none;}
+  }
+
+  /* ===== 寶寶切換列 ===== */
+  .kid-bar{
+    display:flex; align-items:center; gap:10px;
+    margin:14px 0 0;
+    flex-wrap:wrap;
+  }
+  .kid-bar select{flex:1; min-width:150px; width:auto;}
+  .kid-bar .btn-ghost{flex:0 0 auto;}
+
+  /* ===== 儲存成功提示 ===== */
+  #toast{
+    position:fixed;
+    left:50%; bottom:28px;
+    transform:translateX(-50%) translateY(80px);
+    background:var(--mint);
+    border:3px solid var(--ink);
+    border-radius:18px 24px 16px 26px / 24px 16px 26px 18px;
+    padding:12px 22px;
+    font-size:16px; font-weight:bold;
+    box-shadow:3px 4px 0 rgba(91,74,63,.3);
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+    z-index:99;
+    display:flex; align-items:center; gap:8px;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* ===== 裝飾動物角落 ===== */
+  .corner-animal{
+    position:absolute;
+    width:64px; height:64px;
+    right:10px; top:-34px;
+  }
+  .placeholder-page{
+    text-align:center;
+    padding:50px 20px;
+  }
+  .placeholder-page svg{width:110px; height:110px;}
+  .placeholder-page p{font-size:16px; color:var(--ink-soft);}
+
+  footer{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:30px;
+    padding:0 20px;
+    line-height:1.7;
+  }
+
+  @media (max-width:460px){
+    .row2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <!-- 長頸鹿吉祥物:量身高的好朋友 -->
+    <svg width="58" height="58" viewBox="0 0 100 100" aria-hidden="true">
+      <g stroke="#4A3728" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <!-- 身體與長脖子 -->
+        <path d="M38 92 L38 60 Q38 40 44 28 L48 14" fill="#FFD23F"/>
+        <path d="M62 92 L62 62 Q60 48 52 34" fill="#FFD23F"/>
+        <path d="M38 92 Q50 96 62 92 L62 62 Q56 44 48 24 L44 28 Q38 44 38 62 Z" fill="#FFD23F"/>
+        <!-- 頭 -->
+        <ellipse cx="50" cy="14" rx="12" ry="10" fill="#FFD23F"/>
+        <!-- 角 -->
+        <path d="M44 5 L42 0" /><circle cx="42" cy="0" r="2.4" fill="#F94144"/>
+        <path d="M56 5 L58 0" /><circle cx="58" cy="0" r="2.4" fill="#F94144"/>
+        <!-- 耳朵 -->
+        <ellipse cx="36" cy="10" rx="5" ry="3.4" fill="#FFE28A" transform="rotate(-25 36 10)"/>
+        <ellipse cx="64" cy="10" rx="5" ry="3.4" fill="#FFE28A" transform="rotate(25 64 10)"/>
+        <!-- 斑點 -->
+        <circle cx="45" cy="48" r="4" fill="#F79824" stroke="none"/>
+        <circle cx="55" cy="60" r="4.6" fill="#F79824" stroke="none"/>
+        <circle cx="46" cy="74" r="4" fill="#F79824" stroke="none"/>
+        <circle cx="57" cy="84" r="3.6" fill="#F79824" stroke="none"/>
+      </g>
+      <!-- 眼睛與腮紅 -->
+      <circle cx="46" cy="13" r="1.8" fill="#4A3728"/>
+      <circle cx="54" cy="13" r="1.8" fill="#4A3728"/>
+      <ellipse cx="43" cy="18" rx="2.6" ry="1.6" fill="#FF6B6B" opacity=".6"/>
+      <ellipse cx="57" cy="18" rx="2.6" ry="1.6" fill="#FF6B6B" opacity=".6"/>
+      <path d="M48 17.5 Q50 19.5 52 17.5" stroke="#4A3728" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <h1>寶寶成長樂園</h1>
+    <!-- 小熊 -->
+    <svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true">
+      <g stroke="#4A3728" stroke-width="3" stroke-linejoin="round">
+        <circle cx="28" cy="28" r="13" fill="#D9935E"/>
+        <circle cx="72" cy="28" r="13" fill="#D9935E"/>
+        <circle cx="28" cy="30" r="6" fill="#F7CFA0" stroke="none"/>
+        <circle cx="72" cy="30" r="6" fill="#F7CFA0" stroke="none"/>
+        <circle cx="50" cy="55" r="34" fill="#D9935E"/>
+        <ellipse cx="50" cy="66" rx="14" ry="11" fill="#F7CFA0" stroke="none"/>
+      </g>
+      <circle cx="38" cy="48" r="3.4" fill="#4A3728"/>
+      <circle cx="62" cy="48" r="3.4" fill="#4A3728"/>
+      <ellipse cx="50" cy="60" rx="5" ry="3.8" fill="#4A3728"/>
+      <path d="M50 63 L50 68 M50 68 Q44 74 40 69 M50 68 Q56 74 60 69" stroke="#4A3728" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="30" cy="60" rx="4.6" ry="3" fill="#FF6B6B" opacity=".55"/>
+      <ellipse cx="70" cy="60" rx="4.6" ry="3" fill="#FF6B6B" opacity=".55"/>
+    </svg>
+  </div>
+  <p class="subtitle">台灣兒童生長曲線 · 身高體重紀錄小幫手</p>
+  <!-- 蠟筆彩虹線 -->
+  <svg class="crayon-line" viewBox="0 0 320 14" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M4 8 Q40 3 80 8 T160 7 T240 9 T316 6" fill="none" stroke="#FF6B6B" stroke-width="4.5" stroke-linecap="round" opacity=".85"/>
+    <path d="M8 11 Q60 7 120 11 T230 10 T312 11" fill="none" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+  </svg>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <!-- ======== 頁1:基本資料 ======== -->
+  <section class="page show" id="page-profile">
+
+    <!-- 頭像合成卡片 -->
+    <div class="card">
+      <h2 class="card-title"><span class="dot" style="background:var(--sunny)"></span>寶寶的可愛頭像</h2>
+      <p class="card-note">上傳照片會自動去背，再和蠟筆小動物裝合成專屬頭像 📸（照片一樣只存在本機）</p>
+      <div class="avatar-zone">
+        <canvas id="avatarCanvas" width="320" height="320"></canvas>
+      </div>
+      <div class="costume-row" id="costumeRow">
+        <button type="button" class="chip" data-cos="bear">🐻 熊熊裝</button>
+        <button type="button" class="chip" data-cos="bunny">🐰 兔兔裝</button>
+        <button type="button" class="chip" data-cos="flower">🌻 花花裝</button>
+        <button type="button" class="chip" data-cos="none">⭕ 不穿裝</button>
+      </div>
+      <div class="zoom-row">
+        <span>🔍</span>
+        <input type="range" id="zoomSlider" min="40" max="280" value="100">
+      </div>
+      <p class="card-note" style="text-align:center; margin:2px 0 6px">拖曳照片可調整位置，拉桿可放大縮小</p>
+      <div class="btn-wrap" style="margin-top:2px">
+        <button type="button" class="btn btn-main" onclick="openPhoto()">📷 上傳寶寶照片</button>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none">
+    </div>
+
+    <div class="card">
+      <svg class="corner-animal" viewBox="0 0 100 100" aria-hidden="true">
+        <!-- 小兔子探頭 -->
+        <g stroke="#4A3728" stroke-width="3" stroke-linejoin="round">
+          <ellipse cx="38" cy="26" rx="8" ry="22" fill="#FFF" transform="rotate(-10 38 26)"/>
+          <ellipse cx="62" cy="26" rx="8" ry="22" fill="#FFF" transform="rotate(10 62 26)"/>
+          <ellipse cx="38" cy="28" rx="3.6" ry="14" fill="#FFC4D6" stroke="none" transform="rotate(-10 38 28)"/>
+          <ellipse cx="62" cy="28" rx="3.6" ry="14" fill="#FFC4D6" stroke="none" transform="rotate(10 62 28)"/>
+          <circle cx="50" cy="66" r="30" fill="#FFF"/>
+        </g>
+        <circle cx="40" cy="62" r="3.2" fill="#4A3728"/>
+        <circle cx="60" cy="62" r="3.2" fill="#4A3728"/>
+        <path d="M46 72 Q50 76 54 72" stroke="#4A3728" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="33" cy="70" rx="4.6" ry="3" fill="#FF6B6B" opacity=".55"/>
+        <ellipse cx="67" cy="70" rx="4.6" ry="3" fill="#FF6B6B" opacity=".55"/>
+      </svg>
+
+      <h2 class="card-title"><span class="dot" style="background:var(--coral)"></span>寶寶的基本資料</h2>
+      <p class="card-note">資料只儲存在這台裝置上，不會上傳到任何地方 🔒</p>
+
+      <div class="row2">
+        <div class="field">
+          <label for="kidName">寶寶姓名</label>
+          <input type="text" id="kidName" placeholder="例如：王小明" maxlength="20">
+        </div>
+        <div class="field">
+          <label for="kidNick">小名 <span class="hint">(選填)</span></label>
+          <input type="text" id="kidNick" placeholder="例如：小豆豆" maxlength="20">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>性別</label>
+        <div class="gender-row">
+          <button type="button" class="gender-btn" id="btnBoy" onclick="pickGender('boy')">
+            <!-- 小象男孩 -->
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <g stroke="#4A3728" stroke-width="3" stroke-linejoin="round">
+                <ellipse cx="24" cy="42" rx="16" ry="19" fill="#7FD3F7"/>
+                <ellipse cx="76" cy="42" rx="16" ry="19" fill="#7FD3F7"/>
+                <ellipse cx="24" cy="44" rx="9" ry="12" fill="#C9EEFF" stroke="none"/>
+                <ellipse cx="76" cy="44" rx="9" ry="12" fill="#C9EEFF" stroke="none"/>
+                <circle cx="50" cy="48" r="28" fill="#7FD3F7"/>
+                <path d="M50 60 Q47 76 52 88 Q54 92 58 90" fill="none" stroke-linecap="round"/>
+              </g>
+              <circle cx="41" cy="44" r="3.4" fill="#4A3728"/>
+              <circle cx="59" cy="44" r="3.4" fill="#4A3728"/>
+              <path d="M43 56 Q50 61 57 56" stroke="#4A3728" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              <ellipse cx="35" cy="52" rx="4.4" ry="2.8" fill="#FF6B6B" opacity=".5"/>
+              <ellipse cx="65" cy="52" rx="4.4" ry="2.8" fill="#FF6B6B" opacity=".5"/>
+              <path d="M38 24 Q50 14 62 24" stroke="#189BE8" stroke-width="6" fill="none" stroke-linecap="round"/>
+            </svg>
+            <div class="g-label">男寶寶</div>
+          </button>
+          <button type="button" class="gender-btn" id="btnGirl" onclick="pickGender('girl')">
+            <!-- 小貓女孩 -->
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <g stroke="#4A3728" stroke-width="3" stroke-linejoin="round">
+                <path d="M26 34 L20 12 L42 24 Z" fill="#FFB3C6"/>
+                <path d="M74 34 L80 12 L58 24 Z" fill="#FFB3C6"/>
+                <path d="M28 32 L25 18 L38 26 Z" fill="#FFD9E2" stroke="none"/>
+                <path d="M72 32 L75 18 L62 26 Z" fill="#FFD9E2" stroke="none"/>
+                <circle cx="50" cy="52" r="28" fill="#FFB3C6"/>
+              </g>
+              <circle cx="40" cy="48" r="3.4" fill="#4A3728"/>
+              <circle cx="60" cy="48" r="3.4" fill="#4A3728"/>
+              <path d="M46 58 Q50 62 54 58" stroke="#4A3728" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              <path d="M28 54 L14 51 M28 60 L15 62 M72 54 L86 51 M72 60 L85 62" stroke="#4A3728" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="34" cy="56" rx="4.4" ry="2.8" fill="#FF6B6B" opacity=".6"/>
+              <ellipse cx="66" cy="56" rx="4.4" ry="2.8" fill="#FF6B6B" opacity=".6"/>
+              <circle cx="70" cy="28" r="5" fill="#F94144" stroke="#4A3728" stroke-width="2"/>
+              <circle cx="78" cy="33" r="5" fill="#F94144" stroke="#4A3728" stroke-width="2"/>
+            </svg>
+            <div class="g-label">女寶寶</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="kidBirth">出生年月日 <span class="hint">(西元)</span></label>
+        <input type="date" id="kidBirth">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="birthWeight">出生體重</label>
+          <div class="unit-wrap">
+            <input type="number" id="birthWeight" inputmode="decimal" step="0.01" min="0.3" max="7" placeholder="3.10">
+            <span class="unit">公斤</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="birthLength">出生身長 <span class="hint">(選填)</span></label>
+          <div class="unit-wrap">
+            <input type="number" id="birthLength" inputmode="decimal" step="0.1" min="20" max="70" placeholder="50">
+            <span class="unit">公分</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="gestWeeks">出生時懷孕週數 <span class="hint">(選填，足月約 38–40 週)</span></label>
+        <div class="unit-wrap">
+          <input type="number" id="gestWeeks" inputmode="numeric" step="1" min="22" max="44" placeholder="40">
+          <span class="unit">週</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card alt">
+      <h2 class="card-title"><span class="dot" style="background:var(--sky)"></span>爸爸媽媽的資料</h2>
+      <p class="card-note">用來計算寶寶的遺傳目標身高（未來身高預估）</p>
+      <div class="row2">
+        <div class="field">
+          <label for="dadHeight">爸爸身高</label>
+          <div class="unit-wrap">
+            <input type="number" id="dadHeight" inputmode="decimal" step="0.1" min="130" max="220" placeholder="172">
+            <span class="unit">公分</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="dadWeight">爸爸體重 <span class="hint">(選填)</span></label>
+          <div class="unit-wrap">
+            <input type="number" id="dadWeight" inputmode="decimal" step="0.1" min="30" max="200" placeholder="70">
+            <span class="unit">公斤</span>
+          </div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="momHeight">媽媽身高</label>
+          <div class="unit-wrap">
+            <input type="number" id="momHeight" inputmode="decimal" step="0.1" min="130" max="200" placeholder="160">
+            <span class="unit">公分</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="momWeight">媽媽體重 <span class="hint">(選填)</span></label>
+          <div class="unit-wrap">
+            <input type="number" id="momWeight" inputmode="decimal" step="0.1" min="30" max="200" placeholder="55">
+            <span class="unit">公斤</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-wrap">
+        <button class="btn btn-main" onclick="saveProfile()">🖍️ 儲存資料</button>
+      </div>
+    </div>
+
+    <!-- 寶寶切換(家裡不只一個寶寶也OK) -->
+    <div class="card" id="kidSwitchCard" style="display:none">
+      <h2 class="card-title"><span class="dot" style="background:var(--grape)"></span>切換寶寶</h2>
+      <div class="kid-bar">
+        <select id="kidSelect" onchange="switchKid(this.value)"></select>
+        <button class="btn btn-ghost" onclick="newKid()">➕ 新增寶寶</button>
+        <button class="btn btn-danger" onclick="deleteKid()">🗑️ 刪除</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 之後步驟的占位頁 ======== -->
+  <section class="page" id="page-chart">
+    <div class="card">
+      <h2 class="card-title"><span class="dot" style="background:var(--sky)"></span>生長曲線圖 <span id="chartKidTag" style="font-size:14px;color:var(--ink-soft)"></span></h2>
+      <p class="card-note">五條參考線是 3、15、50、85、97 百分位（和兒童健康手冊同一種看法）</p>
+      <div class="chip-row" id="metricRow">
+        <button type="button" class="chip on" data-m="h">📏 身高</button>
+        <button type="button" class="chip" data-m="w">⚖️ 體重</button>
+      </div>
+      <div class="chip-row" id="rangeRow">
+        <button type="button" class="chip" data-r="24">0–2歲</button>
+        <button type="button" class="chip" data-r="60">0–5歲</button>
+        <button type="button" class="chip" data-r="168">0–14歲</button>
+      </div>
+      <div id="chartBox"></div>
+      <p class="card-note" style="margin-top:10px">⭐ 是寶寶的量測點。參考資料：0–5歲 WHO 兒童生長標準（國健署兒童生長曲線同標準）、5–14歲美國 CDC 生長參考值。</p>
+    </div>
+  </section>
+  <section class="page" id="page-records">
+    <div class="card">
+      <h2 class="card-title"><span class="dot" style="background:var(--pink)"></span><span id="recFormTitle">新增量測紀錄</span></h2>
+      <p class="card-note">身高、體重至少填一項就可以囉</p>
+      <div class="field">
+        <label for="recDate">量測日期</label>
+        <input type="date" id="recDate">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="recHeight">身高</label>
+          <div class="unit-wrap">
+            <input type="number" id="recHeight" inputmode="decimal" step="0.1" min="30" max="200" placeholder="80.5">
+            <span class="unit">公分</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="recWeight">體重</label>
+          <div class="unit-wrap">
+            <input type="number" id="recWeight" inputmode="decimal" step="0.01" min="1" max="120" placeholder="10.8">
+            <span class="unit">公斤</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="recNote">備註 <span class="hint">(選填，例如:健兒門診、在家量)</span></label>
+        <input type="text" id="recNote" maxlength="40" placeholder="健兒門診">
+      </div>
+      <div class="btn-wrap" style="margin-top:6px">
+        <button type="button" class="btn btn-main" id="recSaveBtn" onclick="saveRecord()">📏 新增紀錄</button>
+        <button type="button" class="btn btn-ghost" id="recCancelBtn" onclick="cancelEditRecord()" style="display:none">取消修改</button>
+      </div>
+    </div>
+
+    <div class="card alt">
+      <h2 class="card-title"><span class="dot" style="background:var(--mint)"></span>歷史明細 <span id="recCount" style="font-size:14px;color:var(--ink-soft)"></span></h2>
+      <p class="card-note">每筆都對照官方參考值（PR = 百分位，代表贏過幾 % 的同齡同性別小朋友）</p>
+      <div id="recList"></div>
+    </div>
+  </section>
+  <section class="page" id="page-assess">
+    <div id="assessBox"></div>
+  </section>
+  <section class="page" id="page-report">
+    <div class="card">
+      <h2 class="card-title"><span class="dot" style="background:var(--grape)"></span>產生成長報告</h2>
+      <p class="card-note">勾選想放進報告的內容 → 產生預覽 → 列印或存成 PDF，就能直接給醫師看囉</p>
+      <div class="opt-list">
+        <label class="opt"><input type="checkbox" id="optCurveH" checked> 📈 生長曲線圖（身高）</label>
+        <label class="opt"><input type="checkbox" id="optCurveW" checked> 📈 生長曲線圖（體重）</label>
+        <label class="opt"><input type="checkbox" id="optTrend" checked> 📊 百分位 PR 走勢圖</label>
+        <label class="opt"><input type="checkbox" id="optRecords" checked> 📋 量測紀錄明細（含 PR 對照）</label>
+        <label class="opt"><input type="checkbox" id="optAnalysis" checked> 🖍️ 綜合分析</label>
+      </div>
+      <div class="btn-wrap">
+        <button type="button" class="btn btn-main" onclick="buildReport()">📄 產生報告預覽</button>
+        <button type="button" class="btn btn-ghost" id="printBtn" onclick="window.print()" style="display:none">🖨️ 列印 / 存成 PDF</button>
+      </div>
+      <p class="card-note" style="text-align:center; margin-top:10px">
+        📱 手機：按「列印」後，在列印畫面選「儲存為 PDF」或直接分享。<br>
+        💻 電腦：列印目的地選「另存為 PDF」。
+      </p>
+    </div>
+    <div id="printSheet"></div>
+  </section>
+</main>
+
+<div id="toast">🎉 儲存好囉！</div>
+
+<footer>
+  本工具僅供成長紀錄參考，實際發展評估請諮詢小兒科醫師。<br>
+  資料僅儲存於本裝置瀏覽器，不會上傳雲端。
+</footer>
+
+<script>
+/* =====================================================
+   資料結構(為後續步驟預留):
+   store = {
+     version: 1,
+     activeKidId: "k1",
+     kids: [{
+       id, name, gender('boy'|'girl'), birthDate('YYYY-MM-DD'),
+       birthWeight, birthLength, gestWeeks,
+       dadHeight, dadWeight, momHeight, momWeight,
+       records: [ {date, heightCm, weightKg, note} ]   // 步驟3使用
+     }]
+   }
+===================================================== */
+const STORE_KEY = 'baby_growth_v1';
+let store = null;
+let currentGender = null;
+
+/* ---------- 儲存層(環境不支援 localStorage 時改用記憶體模式) ---------- */
+let storageOK = true;
+try{
+  localStorage.setItem('__test__','1');
+  localStorage.removeItem('__test__');
+}catch(e){ storageOK = false; }
+
+function loadStore(){
+  try{
+    if(storageOK){
+      const raw = localStorage.getItem(STORE_KEY);
+      if(raw){ store = JSON.parse(raw); }
+    }
+  }catch(e){ store = null; }
+  if(!store || !Array.isArray(store.kids)){
+    store = { version:1, activeKidId:null, kids:[] };
+  }
+}
+function persist(){
+  if(!storageOK) return;   // 記憶體模式:資料仍可操作,之後靠匯出功能存檔
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  }catch(e){
+    toast('⚠️ 儲存空間不足，頭像照片可能太大');
+  }
+}
+function activeKid(){
+  return store.kids.find(k => k.id === store.activeKidId) || null;
+}
+
+/* ---------- 導覽列 ---------- */
+const TABS = [
+  {id:'profile', emoji:'🐣', label:'基本資料', ready:true},
+  {id:'chart',   emoji:'📈', label:'生長曲線', ready:true},
+  {id:'records', emoji:'📏', label:'紀錄',     ready:true},
+  {id:'assess',  emoji:'⭐', label:'評估',     ready:true},
+  {id:'report',  emoji:'📋', label:'報告',     ready:true},
+];
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  TABS.forEach(t=>{
+    const b = document.createElement('button');
+    b.className = 'tab' + (t.ready ? '' : ' soon');
+    b.innerHTML = `<span class="emoji">${t.emoji}</span>${t.label}` + (t.ready ? '' : ' 🚧');
+    b.dataset.tab = t.id;
+    b.onclick = ()=> t.ready ? showPage(t.id) : null;
+    nav.appendChild(b);
+  });
+  markActive('profile');
+}
+function markActive(id){
+  document.querySelectorAll('.tab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab === id);
+  });
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  document.getElementById('page-'+id).classList.add('show');
+  markActive(id);
+  if(id==='chart') renderChart();
+  if(id==='records'){
+    if(!document.getElementById('recDate').value) document.getElementById('recDate').value=todayStr();
+    renderRecords();
+  }
+  if(id==='assess') renderAssess();
+}
+
+/* ---------- 性別選擇 ---------- */
+function pickGender(g){
+  currentGender = g;
+  document.getElementById('btnBoy').classList.toggle('sel-boy', g==='boy');
+  document.getElementById('btnGirl').classList.toggle('sel-girl', g==='girl');
+}
+
+/* ---------- 頭像合成模組 ---------- */
+const AV_SIZE=320, AV_CX=160, AV_CY=176, AV_R=108;
+let cutoutImg=null;        // 去背後的照片(可編輯)
+let savedAvatarImg=null;   // 之前存好的合成圖(僅顯示)
+let avatarData=null;       // 最新合成結果 dataURL
+let avCostume='bear';
+let avScale=1, avOffX=0, avOffY=0;
+
+function fileToImage(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror=rej;
+    img.src=url;
+  });
+}
+function dataURLToImage(d){
+  return new Promise((res,rej)=>{
+    const i=new Image();
+    i.onload=()=>res(i); i.onerror=rej; i.src=d;
+  });
+}
+function downscale(img,max){
+  const r=Math.min(1, max/Math.max(img.width,img.height));
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c;
+}
+
+/* MediaPipe 人像自動去背(需網路載入一次模型;失敗自動退回圓形裁切) */
+let mpScriptPromise=null;
+function loadSegLib(){
+  if(window.SelfieSegmentation) return Promise.resolve();
+  if(mpScriptPromise) return mpScriptPromise;
+  mpScriptPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js';
+    s.onload=()=>res();
+    s.onerror=()=>{ mpScriptPromise=null; rej(new Error('lib-load')); };
+    document.head.appendChild(s);
+    setTimeout(()=>rej(new Error('lib-timeout')), 12000);
+  });
+  return mpScriptPromise;
+}
+async function removeBackground(srcCanvas){
+  await loadSegLib();
+  const seg=new SelfieSegmentation({locateFile:f=>'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/'+f});
+  seg.setOptions({modelSelection:1});
+  const result=await new Promise((res,rej)=>{
+    const to=setTimeout(()=>rej(new Error('seg-timeout')), 15000);
+    seg.onResults(r=>{ clearTimeout(to); res(r); });
+    seg.send({image:srcCanvas}).catch(e=>{ clearTimeout(to); rej(e); });
+  });
+  const c=document.createElement('canvas');
+  c.width=srcCanvas.width; c.height=srcCanvas.height;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(result.segmentationMask,0,0,c.width,c.height);
+  ctx.globalCompositeOperation='source-in';
+  ctx.drawImage(srcCanvas,0,0,c.width,c.height);
+  try{ seg.close(); }catch(e){}
+  return c;
+}
+
+function openPhoto(){ document.getElementById('photoInput').click(); }
+document.getElementById('photoInput').addEventListener('change', async e=>{
+  const file=e.target.files[0]; e.target.value='';
+  if(!file) return;
+  toast('🖼️ 照片處理中，請稍等…');
+  try{
+    const img=await fileToImage(file);
+    const small=downscale(img,600);
+    let cut;
+    try{
+      cut=await removeBackground(small);
+      toast('✂️ 自動去背完成！可拖曳、縮放調整');
+    }catch(err){
+      cut=small;
+      toast('⚠️ 目前無法連網去背，先用原圖合成');
+    }
+    cutoutImg=await dataURLToImage(cut.toDataURL('image/png'));
+    savedAvatarImg=null;
+    avScale=1; avOffX=0; avOffY=0;
+    document.getElementById('zoomSlider').value=100;
+    renderAvatar();
+  }catch(err){
+    toast('😢 照片讀取失敗，請換一張試試');
+  }
+});
+
+/* 畫圖小工具 */
+function circle(ctx,x,y,r,fill,stroke=true){
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fill; ctx.fill();
+  if(stroke) ctx.stroke();
+}
+function ellipseShape(ctx,x,y,rx,ry,rot,fill,stroke=true){
+  ctx.beginPath(); ctx.ellipse(x,y,rx,ry,rot,0,Math.PI*2);
+  ctx.fillStyle=fill; ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
+/* 動物裝:照片後面(耳朵/花瓣) */
+function drawCostumeBack(ctx){
+  ctx.lineWidth=6; ctx.strokeStyle='#4A3728'; ctx.lineJoin='round';
+  if(avCostume==='bear'){
+    for(const s of [-1,1]){
+      circle(ctx, AV_CX+s*74, AV_CY-84, 33, '#D9935E');
+      circle(ctx, AV_CX+s*74, AV_CY-82, 16, '#F7CFA0', false);
+    }
+  }else if(avCostume==='bunny'){
+    for(const s of [-1,1]){
+      ellipseShape(ctx, AV_CX+s*46, AV_CY-128, 23, 58, s*0.22, '#FFFFFF');
+      ellipseShape(ctx, AV_CX+s*46, AV_CY-122, 10, 38, s*0.22, '#FFC4D6', false);
+    }
+  }else if(avCostume==='flower'){
+    for(let i=0;i<12;i++){
+      const a=i*Math.PI/6;
+      ellipseShape(ctx, AV_CX+Math.cos(a)*(AV_R+22), AV_CY+Math.sin(a)*(AV_R+22), 16, 28, a+Math.PI/2, '#FFD23F');
+    }
+  }
+}
+/* 動物裝:照片前面(蝴蝶結) */
+function drawCostumeFront(ctx){
+  if(avCostume==='none') return;
+  ctx.lineWidth=5.5; ctx.strokeStyle='#4A3728'; ctx.lineJoin='round';
+  const y=AV_CY+AV_R-4;
+  const col = avCostume==='bear' ? '#F94144' : avCostume==='bunny' ? '#FF8FAB' : '#5AD97C';
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.moveTo(AV_CX-7,y); ctx.lineTo(AV_CX-34,y-15); ctx.lineTo(AV_CX-34,y+15); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(AV_CX+7,y); ctx.lineTo(AV_CX+34,y-15); ctx.lineTo(AV_CX+34,y+15); ctx.closePath(); ctx.fill(); ctx.stroke();
+  circle(ctx, AV_CX, y, 9, col);
+}
+
+function renderAvatar(){
+  const cv=document.getElementById('avatarCanvas');
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,AV_SIZE,AV_SIZE);
+
+  /* 只有存檔合成圖時直接顯示 */
+  if(!cutoutImg && savedAvatarImg){
+    ctx.drawImage(savedAvatarImg,0,0,AV_SIZE,AV_SIZE);
+    return;
+  }
+
+  drawCostumeBack(ctx);
+
+  /* 圓形相框 */
+  const grad=ctx.createRadialGradient(AV_CX,AV_CY-30,10,AV_CX,AV_CY,AV_R);
+  grad.addColorStop(0,'#FFFDF2'); grad.addColorStop(1,'#FFEFB8');
+  ctx.lineWidth=7; ctx.strokeStyle='#4A3728';
+  circle(ctx,AV_CX,AV_CY,AV_R,grad);
+
+  if(cutoutImg){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(AV_CX,AV_CY,AV_R-4,0,Math.PI*2); ctx.clip();
+    const base=Math.max((AV_R*2)/cutoutImg.width,(AV_R*2)/cutoutImg.height);
+    const s=base*avScale;
+    const w=cutoutImg.width*s, h=cutoutImg.height*s;
+    ctx.drawImage(cutoutImg, AV_CX-w/2+avOffX, AV_CY-h/2+avOffY, w, h);
+    ctx.restore();
+    ctx.lineWidth=7;
+    ctx.beginPath(); ctx.arc(AV_CX,AV_CY,AV_R,0,Math.PI*2); ctx.stroke();
+  }else{
+    ctx.save();
+    ctx.setLineDash([10,8]); ctx.lineWidth=3; ctx.strokeStyle='#8A7668';
+    ctx.beginPath(); ctx.arc(AV_CX,AV_CY,AV_R-16,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+    ctx.font='42px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#4A3728';
+    ctx.fillText('📷', AV_CX, AV_CY);
+    ctx.font='bold 16px sans-serif'; ctx.fillStyle='#8A7668';
+    ctx.fillText('上傳寶寶照片', AV_CX, AV_CY+36);
+  }
+
+  drawCostumeFront(ctx);
+  avatarData = cutoutImg ? cv.toDataURL('image/png') : null;
+}
+
+/* 換裝 chips */
+function markCostume(){
+  document.querySelectorAll('#costumeRow .chip').forEach(b=>{
+    b.classList.toggle('on', b.dataset.cos===avCostume);
+  });
+}
+document.querySelectorAll('#costumeRow .chip').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    avCostume=b.dataset.cos;
+    markCostume();
+    if(!cutoutImg && savedAvatarImg){ toast('要換裝請重新上傳一次照片喔 📷'); }
+    renderAvatar();
+  });
+});
+
+/* 縮放 */
+document.getElementById('zoomSlider').addEventListener('input', e=>{
+  avScale=e.target.value/100;
+  if(cutoutImg) renderAvatar();
+});
+
+/* 拖曳(手機手指/電腦滑鼠都可) */
+const avCv=document.getElementById('avatarCanvas');
+let avDragging=false, avLastX=0, avLastY=0;
+function avPos(e){
+  const r=avCv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*(AV_SIZE/r.width), y:(e.clientY-r.top)*(AV_SIZE/r.height) };
+}
+avCv.addEventListener('pointerdown', e=>{
+  if(!cutoutImg) return;
+  avDragging=true;
+  const p=avPos(e); avLastX=p.x; avLastY=p.y;
+  avCv.setPointerCapture(e.pointerId);
+});
+avCv.addEventListener('pointermove', e=>{
+  if(!avDragging) return;
+  const p=avPos(e);
+  avOffX+=p.x-avLastX; avOffY+=p.y-avLastY;
+  avLastX=p.x; avLastY=p.y;
+  renderAvatar();
+});
+avCv.addEventListener('pointerup', ()=>avDragging=false);
+avCv.addEventListener('pointercancel', ()=>avDragging=false);
+
+/* ---------- 表單 <-> 資料 ---------- */
+function numOrNull(id){
+  const v = document.getElementById(id).value.trim();
+  if(v === '') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+function fillForm(kid){
+  document.getElementById('kidName').value    = kid ? (kid.name||'') : '';
+  document.getElementById('kidNick').value    = kid ? (kid.nickname||'') : '';
+  /* 頭像載入 */
+  cutoutImg=null; savedAvatarImg=null; avatarData=null;
+  avCostume = (kid && kid.avatarMeta && kid.avatarMeta.costume) || 'bear';
+  avScale=1; avOffX=0; avOffY=0;
+  document.getElementById('zoomSlider').value=100;
+  markCostume();
+  if(kid && kid.avatarCut){
+    const meta = kid.avatarMeta || {};
+    dataURLToImage(kid.avatarCut).then(img=>{
+      cutoutImg=img;
+      avScale = meta.scale!=null ? meta.scale : 1;
+      avOffX = meta.offX||0; avOffY = meta.offY||0;
+      document.getElementById('zoomSlider').value = Math.round(avScale*100);
+      renderAvatar();
+    }).catch(()=>renderAvatar());
+  }else if(kid && kid.avatar){
+    dataURLToImage(kid.avatar).then(img=>{
+      savedAvatarImg=img; renderAvatar();
+    }).catch(()=>renderAvatar());
+  }
+  renderAvatar();
+  document.getElementById('kidBirth').value   = kid ? (kid.birthDate||'') : '';
+  document.getElementById('birthWeight').value= kid && kid.birthWeight!=null ? kid.birthWeight : '';
+  document.getElementById('birthLength').value= kid && kid.birthLength!=null ? kid.birthLength : '';
+  document.getElementById('gestWeeks').value  = kid && kid.gestWeeks!=null ? kid.gestWeeks : '';
+  document.getElementById('dadHeight').value  = kid && kid.dadHeight!=null ? kid.dadHeight : '';
+  document.getElementById('dadWeight').value  = kid && kid.dadWeight!=null ? kid.dadWeight : '';
+  document.getElementById('momHeight').value  = kid && kid.momHeight!=null ? kid.momHeight : '';
+  document.getElementById('momWeight').value  = kid && kid.momWeight!=null ? kid.momWeight : '';
+  currentGender = kid ? kid.gender : null;
+  document.getElementById('btnBoy').classList.toggle('sel-boy', currentGender==='boy');
+  document.getElementById('btnGirl').classList.toggle('sel-girl', currentGender==='girl');
+}
+function saveProfile(){
+  const name = document.getElementById('kidName').value.trim();
+  const nickname = document.getElementById('kidNick').value.trim();
+  const birth = document.getElementById('kidBirth').value;
+  if(!name){ alert('請輸入寶寶的姓名喔！'); return; }
+  if(!currentGender){ alert('請選擇寶寶的性別喔！'); return; }
+  if(!birth){ alert('請輸入寶寶的出生年月日喔！'); return; }
+  if(new Date(birth) > new Date()){ alert('出生日期不能是未來喔！'); return; }
+
+  let kid = activeKid();
+  if(!kid){
+    kid = { id:'k'+Date.now(), records:[] };
+    store.kids.push(kid);
+    store.activeKidId = kid.id;
+  }
+  /* 頭像:有新合成就更新,沒有就保留原本的 */
+  if(cutoutImg && avatarData){
+    kid.avatar = avatarData;
+    kid.avatarCut = cutoutImg.src;
+    kid.avatarMeta = { costume:avCostume, scale:avScale, offX:avOffX, offY:avOffY };
+  }
+  Object.assign(kid, {
+    name, nickname, gender:currentGender, birthDate:birth,
+    birthWeight: numOrNull('birthWeight'),
+    birthLength: numOrNull('birthLength'),
+    gestWeeks:   numOrNull('gestWeeks'),
+    dadHeight:   numOrNull('dadHeight'),
+    dadWeight:   numOrNull('dadWeight'),
+    momHeight:   numOrNull('momHeight'),
+    momWeight:   numOrNull('momWeight'),
+  });
+  if(!Array.isArray(kid.records)) kid.records = [];
+  persist();
+  renderKidSwitch();
+  toast(`🎉 ${name} 的資料儲存好囉！`);
+}
+
+/* ---------- 多寶寶切換 ---------- */
+function renderKidSwitch(){
+  const card = document.getElementById('kidSwitchCard');
+  const sel  = document.getElementById('kidSelect');
+  if(store.kids.length === 0){ card.style.display='none'; return; }
+  card.style.display = 'block';
+  sel.innerHTML = '';
+  store.kids.forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k.id;
+    o.textContent = (k.gender==='girl'?'🎀 ':'🧢 ') + (k.nickname || k.name);
+    if(k.id === store.activeKidId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+function switchKid(id){
+  store.activeKidId = id;
+  persist();
+  fillForm(activeKid());
+  cancelEditRecord();
+  renderRecords();
+  toast('已切換到 ' + (activeKid().nickname||activeKid().name) + ' 🐾');
+}
+function newKid(){
+  store.activeKidId = null;
+  fillForm(null);
+  document.getElementById('kidSelect').selectedIndex = -1;
+  toast('請填新寶寶的資料，填完按儲存 ✏️');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteKid(){
+  const kid = activeKid();
+  if(!kid) return;
+  if(!confirm(`確定要刪除「${kid.name}」的所有資料嗎？\n（包含之後的身高體重紀錄，刪除後無法復原）`)) return;
+  store.kids = store.kids.filter(k => k.id !== kid.id);
+  store.activeKidId = store.kids.length ? store.kids[0].id : null;
+  persist();
+  fillForm(activeKid());
+  renderKidSwitch();
+  toast('已刪除 🗑️');
+}
+
+/* =====================================================
+   生長曲線圖
+   LMS 參考資料:0–5歲 WHO 兒童生長標準(逐月),
+   5–14歲美國 CDC 2000(逐月),60–72月線性平滑銜接。
+   h=身高(cm) w=體重(kg), B=男 G=女, 每列=[月齡,L,M,S]
+===================================================== */
+const LMS={"hB":[[0,1.0,49.8842,0.03795],[1,1.0,54.7244,0.03557],[2,1.0,58.4249,0.03424],[3,1.0,61.4292,0.03328],[4,1.0,63.886,0.03257],[5,1.0,65.9026,0.03204],[6,1.0,67.6236,0.03165],[7,1.0,69.1645,0.03139],[8,1.0,70.5994,0.03124],[9,1.0,71.9687,0.03117],[10,1.0,73.2812,0.03118],[11,1.0,74.5388,0.03125],[12,1.0,75.7488,0.03137],[13,1.0,76.9186,0.03154],[14,1.0,78.0497,0.03174],[15,1.0,79.1458,0.03197],[16,1.0,80.2113,0.03222],[17,1.0,81.2487,0.0325],[18,1.0,82.2587,0.03279],[19,1.0,83.2418,0.0331],[20,1.0,84.1996,0.03342],[21,1.0,85.1348,0.03376],[22,1.0,86.0477,0.0341],[23,1.0,86.941,0.03445],[24,1.0,87.1161,0.03507],[27,1.0,89.6197,0.0361],[30,1.0,91.9327,0.03704],[33,1.0,94.0711,0.03787],[36,1.0,96.0835,0.03858],[39,1.0,98.0073,0.03919],[42,1.0,99.8515,0.03971],[45,1.0,101.6186,0.04016],[48,1.0,103.3273,0.04059],[51,1.0,105.0041,0.041],[54,1.0,106.6668,0.04139],[57,1.0,108.3198,0.04177],[60,1.0,109.9638,0.04214],[66,1.1277,111.1967,0.04266],[72,1.13744,115.6609,0.04367],[78,0.95485,118.8668,0.04407],[84,0.75324,122.0305,0.0444],[90,0.57591,125.1259,0.04474],[96,0.45527,128.1237,0.04513],[102,0.40478,130.9983,0.04562],[108,0.41569,133.7345,0.04622],[114,0.46103,136.3343,0.0469],[120,0.50556,138.8234,0.04761],[126,0.51859,141.2582,0.0483],[132,0.48794,143.7304,0.04894],[138,0.43458,146.3665,0.04949],[144,0.42092,149.3088,0.04995],[150,0.53195,152.6624,0.05027],[156,0.81624,156.4099,0.05033],[162,1.23277,160.3493,0.04993],[168,1.67043,164.1418,0.04895]],"hG":[[0,1.0,49.1477,0.0379],[1,1.0,53.6872,0.0364],[2,1.0,57.0673,0.03568],[3,1.0,59.8029,0.0352],[4,1.0,62.0899,0.03486],[5,1.0,64.0301,0.03463],[6,1.0,65.7311,0.03448],[7,1.0,67.2873,0.03441],[8,1.0,68.7498,0.0344],[9,1.0,70.1435,0.03444],[10,1.0,71.4818,0.03452],[11,1.0,72.771,0.03464],[12,1.0,74.015,0.03479],[13,1.0,75.2176,0.03496],[14,1.0,76.3817,0.03514],[15,1.0,77.5099,0.03534],[16,1.0,78.6055,0.03555],[17,1.0,79.671,0.03576],[18,1.0,80.7079,0.03598],[19,1.0,81.7182,0.0362],[20,1.0,82.7036,0.03643],[21,1.0,83.6654,0.03666],[22,1.0,84.604,0.03688],[23,1.0,85.5202,0.03711],[24,1.0,85.7153,0.03764],[27,1.0,88.283,0.0383],[30,1.0,90.6797,0.03893],[33,1.0,92.9239,0.03952],[36,1.0,95.0515,0.04006],[39,1.0,97.0885,0.04057],[42,1.0,99.0448,0.04105],[45,1.0,100.9238,0.0415],[48,1.0,102.7312,0.04193],[51,1.0,104.4786,0.04233],[54,1.0,106.1748,0.04272],[57,1.0,107.8227,0.0431],[60,1.0,109.4233,0.04347],[66,0.4204,110.4554,0.04406],[72,-0.21907,115.0055,0.04496],[78,-0.23477,118.4496,0.04523],[84,-0.21021,121.7617,0.04546],[90,-0.15436,124.8956,0.04569],[96,-0.07928,127.8263,0.04597],[102,0.00274,130.5574,0.04634],[108,0.08415,133.1304,0.04688],[114,0.16981,135.6342,0.04767],[120,0.28475,138.2112,0.0487],[126,0.46918,141.0397,0.04981],[132,0.74429,144.2609,0.05052],[138,1.06247,147.8424,0.05021],[144,1.30304,151.4866,0.0486],[150,1.35816,154.7555,0.0462],[156,1.24297,157.3437,0.04386],[162,1.07697,159.2075,0.04211],[168,0.95657,160.4777,0.04102]],"wB":[[0,0.3487,3.3464,0.14602],[1,0.2297,4.4709,0.13395],[2,0.197,5.5675,0.12385],[3,0.1738,6.3762,0.11727],[4,0.1553,7.0023,0.11316],[5,0.1395,7.5105,0.1108],[6,0.1257,7.934,0.10958],[7,0.1134,8.297,0.10902],[8,0.1021,8.6151,0.10882],[9,0.0917,8.9014,0.10881],[10,0.082,9.1649,0.10891],[11,0.073,9.4122,0.10906],[12,0.0644,9.6479,0.10925],[13,0.0563,9.8749,0.10949],[14,0.0487,10.0953,0.10976],[15,0.0413,10.3108,0.11007],[16,0.0343,10.5228,0.11041],[17,0.0275,10.7319,0.11079],[18,0.0211,10.9385,0.11119],[19,0.0148,11.143,0.11164],[20,0.0087,11.3462,0.11211],[21,0.0029,11.5486,0.11261],[22,-0.0028,11.7504,0.11314],[23,-0.0083,11.9514,0.11369],[24,-0.0137,12.1515,0.11426],[27,-0.0289,12.7401,0.11604],[30,-0.0431,13.3,0.11781],[33,-0.0564,13.8309,0.11953],[36,-0.0689,14.3429,0.12116],[39,-0.0808,14.8466,0.12271],[42,-0.092,15.3486,0.12425],[45,-0.1028,15.8497,0.12586],[48,-0.1131,16.3489,0.12759],[51,-0.123,16.8471,0.12943],[54,-0.1325,17.3452,0.13133],[57,-0.1417,17.8422,0.13325],[60,-0.1506,18.3366,0.13517],[66,-0.59282,18.979,0.13492],[72,-1.08747,20.7777,0.13914],[78,-1.15813,21.9564,0.14331],[84,-1.2365,23.1674,0.14734],[90,-1.30627,24.4265,0.15147],[96,-1.35181,25.7526,0.15597],[102,-1.36346,27.1649,0.16103],[108,-1.33941,28.6813,0.16666],[114,-1.28437,30.3177,0.17273],[120,-1.20669,32.088,0.17893],[126,-1.11554,34.0036,0.18485],[132,-1.01928,36.0726,0.19003],[138,-0.92467,38.2978,0.19405],[144,-0.83696,40.6744,0.19659],[150,-0.76027,43.1883,0.19746],[156,-0.69817,45.8134,0.19666],[162,-0.65414,48.5111,0.19434],[168,-0.63188,51.231,0.19081]],"wG":[[0,0.3809,3.2322,0.14171],[1,0.1714,4.1873,0.13724],[2,0.0962,5.1282,0.13],[3,0.0402,5.8458,0.12619],[4,-0.005,6.4237,0.12402],[5,-0.043,6.8985,0.12274],[6,-0.0756,7.297,0.12204],[7,-0.1039,7.6422,0.12178],[8,-0.1288,7.9487,0.12181],[9,-0.1507,8.2254,0.12199],[10,-0.17,8.48,0.12223],[11,-0.1872,8.7192,0.12247],[12,-0.2024,8.9481,0.12268],[13,-0.2158,9.1699,0.12283],[14,-0.2278,9.387,0.12294],[15,-0.2384,9.6008,0.12299],[16,-0.2478,9.8124,0.12303],[17,-0.2562,10.0226,0.12306],[18,-0.2637,10.2315,0.12309],[19,-0.2703,10.4393,0.12315],[20,-0.2762,10.6464,0.12323],[21,-0.2815,10.8534,0.12335],[22,-0.2862,11.0608,0.1235],[23,-0.2903,11.2688,0.12369],[24,-0.2941,11.4775,0.1239],[27,-0.3032,12.1015,0.12472],[30,-0.3101,12.7055,0.12587],[33,-0.3155,13.2837,0.12737],[36,-0.3201,13.8503,0.12919],[39,-0.3243,14.414,0.13135],[42,-0.3283,14.9727,0.13376],[45,-0.3322,15.524,0.1363],[48,-0.3361,16.0697,0.13884],[51,-0.34,16.6133,0.14132],[54,-0.344,17.1551,0.14371],[57,-0.3479,17.6916,0.146],[60,-0.3518,18.2193,0.14821],[66,-0.8354,18.6888,0.14676],[72,-1.32676,20.3364,0.14959],[78,-1.30849,21.5675,0.15433],[84,-1.26555,22.868,0.15969],[90,-1.20288,24.2579,0.16569],[96,-1.12768,25.757,0.17215],[102,-1.04785,27.382,0.17877],[108,-0.97069,29.1429,0.1852],[114,-0.9022,31.0403,0.19104],[120,-0.84687,33.0639,0.19595],[126,-0.80787,35.1918,0.19965],[132,-0.78737,37.3909,0.20197],[138,-0.7869,39.6191,0.20285],[144,-0.8076,41.828,0.2023],[150,-0.85031,43.9661,0.20042],[156,-0.91551,45.9837,0.19736],[162,-1.00305,47.8366,0.19333],[168,-1.11161,49.4908,0.18856]]};
+
+const Z_P = {3:-1.88079, 15:-1.03643, 50:0, 85:1.03643, 97:1.88079};
+function lmsVal(L,M,S,z){ return L===0 ? M*Math.exp(S*z) : M*Math.pow(1+L*S*z, 1/L); }
+function lmsAt(key, month){                 /* 線性內插取 L,M,S */
+  const rows=LMS[key] || LMS2[key];
+  if(month<=rows[0][0]) return rows[0].slice(1);
+  for(let i=1;i<rows.length;i++){
+    if(month<=rows[i][0]){
+      const a=rows[i-1], b=rows[i];
+      const t=(month-a[0])/(b[0]-a[0]);
+      return [a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t, a[3]+(b[3]-a[3])*t];
+    }
+  }
+  return rows[rows.length-1].slice(1);
+}
+function curveVal(key, month, p){
+  const [L,M,S]=lmsAt(key,month);
+  return lmsVal(L,M,S,Z_P[p]);
+}
+function ageMonthsAt(kid, dateStr){
+  return (new Date(dateStr) - new Date(kid.birthDate)) / (1000*60*60*24*30.4375);
+}
+function ageLabel(months){
+  const y=Math.floor(months/12), m=Math.round(months%12);
+  if(months<24) return Math.round(months)+'個月';
+  return m===0 ? y+'歲' : y+'歲'+m+'個月';
+}
+
+/* 寶寶的量測點(出生值+紀錄;紀錄功能下一步加入) */
+function kidPoints(kid, metric){
+  const pts=[];
+  if(metric==='w' && kid.birthWeight!=null) pts.push({m:0, v:kid.birthWeight, d:kid.birthDate});
+  if(metric==='h' && kid.birthLength!=null) pts.push({m:0, v:kid.birthLength, d:kid.birthDate});
+  (kid.records||[]).forEach(r=>{
+    const v = metric==='h' ? r.heightCm : r.weightKg;
+    if(v!=null) pts.push({m:ageMonthsAt(kid,r.date), v, d:r.date});
+  });
+  pts.sort((a,b)=>a.m-b.m);
+  return pts;
+}
+
+let chartMetric='h', chartRangeSel=null;   /* null=自動 */
+
+document.querySelectorAll('#metricRow .chip').forEach(b=>{
+  b.addEventListener('click',()=>{ chartMetric=b.dataset.m; renderChart(); });
+});
+document.querySelectorAll('#rangeRow .chip').forEach(b=>{
+  b.addEventListener('click',()=>{ chartRangeSel=parseInt(b.dataset.r); renderChart(); });
+});
+
+function starPath(cx,cy,r){
+  let p='';
+  for(let i=0;i<10;i++){
+    const a=-Math.PI/2 + i*Math.PI/5;
+    const rr=i%2===0?r:r*0.45;
+    p+=(i===0?'M':'L')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1);
+  }
+  return p+'Z';
+}
+
+function renderChart(){
+  const box=document.getElementById('chartBox');
+  const kid=activeKid();
+  const tag=document.getElementById('chartKidTag');
+  if(!kid){
+    tag.textContent='';
+    box.innerHTML='<p style="text-align:center;color:var(--ink-soft);padding:34px 10px">請先到「🐣 基本資料」建立寶寶資料喔！</p>';
+    return;
+  }
+  const nowAge=ageMonthsAt(kid, todayStr());
+  tag.textContent='｜'+(kid.nickname||kid.name)+'・'+ageLabel(nowAge);
+
+  /* 範圍:手動選擇或依年齡自動 */
+  const xmax = chartRangeSel || autoRangeOf(nowAge);
+  document.querySelectorAll('#rangeRow .chip').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.r)===xmax));
+  document.querySelectorAll('#metricRow .chip').forEach(b=>b.classList.toggle('on', b.dataset.m===chartMetric));
+
+  const r=buildChartSVG(kid, chartMetric, xmax);
+  box.innerHTML=r.svg + (r.ptCount===0
+    ? '<p style="text-align:center;font-size:13px;color:var(--ink-soft);margin:6px 0 0">還沒有量測點，之後在「📏 紀錄」新增身高體重就會出現 ⭐</p>'
+    : '');
+}
+function autoRangeOf(nowAge){ return nowAge<=24?24 : nowAge<=60?60 : 168; }
+
+function buildChartSVG(kid, metric, xmax){
+  const nowAge=ageMonthsAt(kid, todayStr());
+  const key=(metric==='h'?'h':'w') + (kid.gender==='girl'?'G':'B');
+  const pts=kidPoints(kid, metric);
+
+  /* y 範圍 */
+  let ymin=Infinity, ymax=-Infinity;
+  const N=56;
+  for(let i=0;i<=N;i++){
+    const m=xmax*i/N;
+    ymin=Math.min(ymin, curveVal(key,m,3));
+    ymax=Math.max(ymax, curveVal(key,m,97));
+  }
+  pts.forEach(p=>{ if(p.m<=xmax){ ymin=Math.min(ymin,p.v); ymax=Math.max(ymax,p.v);} });
+  const ystep = metric==='h' ? (xmax===24?5:10) : (xmax===24?1:xmax===60?2:5);
+  ymin=Math.floor((ymin-ystep*0.4)/ystep)*ystep;
+  ymax=Math.ceil((ymax+ystep*0.4)/ystep)*ystep;
+
+  /* 座標轉換 */
+  const W=680,H=470, mL=56,mR=44,mT=24,mB=46;
+  const X=m=> mL + (W-mL-mR)*m/xmax;
+  const Y=v=> H-mB - (H-mB-mT)*(v-ymin)/(ymax-ymin);
+
+  const girl=kid.gender==='girl';
+  const cMain = girl?'#FF5D8F':'#189BE8';
+  const cSoft = girl?'rgba(255,143,171,':'rgba(79,195,247,';
+  let s='';
+
+  /* 百分位帶 */
+  function bandPath(pTop,pBot){
+    let d='M';
+    for(let i=0;i<=N;i++){ const m=xmax*i/N; d+=X(m).toFixed(1)+' '+Y(curveVal(key,m,pTop)).toFixed(1)+' '+(i<N?'L':''); }
+    for(let i=N;i>=0;i--){ const m=xmax*i/N; d+='L'+X(m).toFixed(1)+' '+Y(curveVal(key,m,pBot)).toFixed(1)+' '; }
+    return d+'Z';
+  }
+  s+='<path d="'+bandPath(97,3)+'" fill="'+cSoft+'.14)"/>';
+  s+='<path d="'+bandPath(85,15)+'" fill="'+cSoft+'.16)"/>';
+
+  /* 格線與刻度 */
+  const xstep = xmax===24?3 : xmax===60?6 : 12;
+  for(let m=0;m<=xmax;m+=xstep){
+    const major = xmax===24 ? m%6===0 : xmax===60 ? m%12===0 : m%24===0;
+    s+='<line x1="'+X(m)+'" y1="'+mT+'" x2="'+X(m)+'" y2="'+(H-mB)+'" stroke="rgba(74,55,40,'+(major?'.14':'.06')+')" stroke-width="'+(major?2:1)+'"/>';
+    if(major){
+      const lbl = xmax===24 ? (m===0?'出生':m+'月') : (m===0?'出生':(m/12)+'歲');
+      s+='<text x="'+X(m)+'" y="'+(H-mB+24)+'" text-anchor="middle" font-size="15" fill="#4A3728">'+lbl+'</text>';
+    }
+  }
+  for(let v=ymin;v<=ymax+0.001;v+=ystep){
+    s+='<line x1="'+mL+'" y1="'+Y(v)+'" x2="'+(W-mR)+'" y2="'+Y(v)+'" stroke="rgba(74,55,40,.10)" stroke-width="1.5"/>';
+    s+='<text x="'+(mL-8)+'" y="'+(Y(v)+5)+'" text-anchor="end" font-size="14" fill="#4A3728">'+(ystep<1? v.toFixed(1): Math.round(v))+'</text>';
+  }
+  s+='<text x="'+(mL-8)+'" y="'+(mT-6)+'" text-anchor="end" font-size="13" fill="#8A7668">'+(metric==='h'?'公分':'公斤')+'</text>';
+
+  /* 手繪感座標軸 */
+  s+='<path d="M'+mL+' '+mT+' L'+mL+' '+(H-mB)+' L'+(W-mR)+' '+(H-mB)+'" fill="none" stroke="#4A3728" stroke-width="3.5" stroke-linecap="round"/>';
+
+  /* 百分位曲線 */
+  [3,15,50,85,97].forEach(p=>{
+    let d='M';
+    for(let i=0;i<=N;i++){ const m=xmax*i/N; d+=X(m).toFixed(1)+' '+Y(curveVal(key,m,p)).toFixed(1)+' '+(i<N?'L':''); }
+    const main=p===50;
+    s+='<path d="'+d+'" fill="none" stroke="'+(main?cMain:cSoft+'.75)')+'" stroke-width="'+(main?4:2.4)+'" stroke-linecap="round"'+(main?'':' stroke-dasharray="none"')+'/>';
+    const vy=Y(curveVal(key,xmax,p));
+    s+='<text x="'+(W-mR+4)+'" y="'+(vy+5)+'" font-size="13" font-weight="bold" fill="'+cMain+'">'+p+'</text>';
+  });
+
+  /* 今天的年齡記號 */
+  if(nowAge<=xmax){
+    s+='<line x1="'+X(nowAge)+'" y1="'+mT+'" x2="'+X(nowAge)+'" y2="'+(H-mB)+'" stroke="#F79824" stroke-width="2.5" stroke-dasharray="7 6"/>';
+    s+='<text x="'+X(nowAge)+'" y="'+(mT-4)+'" text-anchor="middle" font-size="16">🎂</text>';
+  }
+
+  /* 寶寶量測點 */
+  const inPts=pts.filter(p=>p.m<=xmax);
+  if(inPts.length>1){
+    let d='M'+inPts.map(p=>X(p.m).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' L');
+    s+='<path d="'+d+'" fill="none" stroke="#4A3728" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  inPts.forEach(p=>{
+    s+='<path d="'+starPath(X(p.m),Y(p.v),9)+'" fill="#FFD23F" stroke="#4A3728" stroke-width="2"/>';
+  });
+
+  return {svg:'<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="生長曲線圖">'+s+'</svg>', ptCount:inPts.length};
+}
+
+/* =====================================================
+   量測紀錄 + PR值(百分位)
+===================================================== */
+/* 標準常態分佈 CDF (Abramowitz-Stegun 近似,誤差<1e-7) */
+function normCdf(z){
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989423*Math.exp(-z*z/2);
+  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0 ? 1-p : p;
+}
+/* 由量測值反推 z 與 PR */
+function prOf(kid, metric, month, value){
+  const key=(metric==='h'?'h':'w') + (kid.gender==='girl'?'G':'B');
+  const [L,M,S]=lmsAt(key, month);
+  const z = L===0 ? Math.log(value/M)/S : (Math.pow(value/M, L)-1)/(L*S);
+  const pr = normCdf(z)*100;
+  const median = lmsVal(L,M,S,0);
+  return {z, pr, median};
+}
+function prPill(pr){
+  if(pr<3)  return {cls:'pr-warn', txt:'PR '+prTxt(pr)+'・低於第3百分位'};
+  if(pr<15) return {cls:'pr-mid',  txt:'PR '+prTxt(pr)+'・正常範圍偏小'};
+  if(pr<=85)return {cls:'pr-ok',   txt:'PR '+prTxt(pr)+'・標準範圍'};
+  if(pr<=97)return {cls:'pr-mid',  txt:'PR '+prTxt(pr)+'・正常範圍偏大'};
+  return {cls:'pr-warn', txt:'PR '+prTxt(pr)+'・高於第97百分位'};
+}
+function prTxt(pr){
+  if(pr<1) return '<1';
+  if(pr>99) return '>99';
+  return String(Math.round(pr));
+}
+
+let editingRecId=null;
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function saveRecord(){
+  const kid=activeKid();
+  if(!kid){ alert('請先到「基本資料」建立寶寶資料喔！'); showPage('profile'); return; }
+  const date=document.getElementById('recDate').value;
+  const h=numOrNull('recHeight');
+  const w=numOrNull('recWeight');
+  const note=document.getElementById('recNote').value.trim();
+  if(!date){ alert('請選量測日期喔！'); return; }
+  if(date<kid.birthDate){ alert('量測日期不能比出生日早喔！'); return; }
+  if(date>todayStr()){ alert('量測日期不能是未來喔!'); return; }
+  if(h==null && w==null){ alert('身高、體重至少要填一項喔！'); return; }
+
+  if(!Array.isArray(kid.records)) kid.records=[];
+  if(editingRecId){
+    const r=kid.records.find(r=>r.id===editingRecId);
+    if(r) Object.assign(r,{date, heightCm:h, weightKg:w, note});
+    toast('✏️ 紀錄更新好囉！');
+  }else{
+    kid.records.push({id:'r'+Date.now(), date, heightCm:h, weightKg:w, note});
+    toast('🎉 新增一筆紀錄！');
+  }
+  kid.records.sort((a,b)=> a.date<b.date?-1:1);
+  persist();
+  cancelEditRecord();
+  renderRecords();
+}
+function editRecord(id){
+  const kid=activeKid(); if(!kid) return;
+  const r=kid.records.find(r=>r.id===id); if(!r) return;
+  editingRecId=id;
+  document.getElementById('recDate').value=r.date;
+  document.getElementById('recHeight').value=r.heightCm!=null?r.heightCm:'';
+  document.getElementById('recWeight').value=r.weightKg!=null?r.weightKg:'';
+  document.getElementById('recNote').value=r.note||'';
+  document.getElementById('recFormTitle').textContent='修改紀錄（'+r.date+'）';
+  document.getElementById('recSaveBtn').innerHTML='✏️ 更新紀錄';
+  document.getElementById('recCancelBtn').style.display='inline-flex';
+  document.getElementById('recDate').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelEditRecord(){
+  editingRecId=null;
+  document.getElementById('recDate').value=todayStr();
+  document.getElementById('recHeight').value='';
+  document.getElementById('recWeight').value='';
+  document.getElementById('recNote').value='';
+  document.getElementById('recFormTitle').textContent='新增量測紀錄';
+  document.getElementById('recSaveBtn').innerHTML='📏 新增紀錄';
+  document.getElementById('recCancelBtn').style.display='none';
+}
+function deleteRecord(id){
+  const kid=activeKid(); if(!kid) return;
+  const r=kid.records.find(r=>r.id===id); if(!r) return;
+  if(!confirm('確定刪除 '+r.date+' 這筆紀錄嗎？')) return;
+  kid.records=kid.records.filter(x=>x.id!==id);
+  persist();
+  if(editingRecId===id) cancelEditRecord();
+  renderRecords();
+  toast('已刪除 🗑️');
+}
+
+function recLineHTML(kid, month, metric, value){
+  const icon = metric==='h' ? '📏' : '⚖️';
+  const unit = metric==='h' ? '公分' : '公斤';
+  const {pr, median} = prOf(kid, metric, month, value);
+  const pill = prPill(pr);
+  const diff = value - median;
+  return '<div class="rec-line">'
+    + '<span>'+icon+'</span><span class="val">'+value+' '+unit+'</span>'
+    + '<span class="pr-pill '+pill.cls+'">'+pill.txt+'</span>'
+    + '<span class="rec-ref">官方中位數 '+median.toFixed(1)+unit
+    + '（'+(Math.abs(diff)<0.05?'相同':(diff>0?'+':'−')+Math.abs(diff).toFixed(1))+'）</span>'
+    + '</div>';
+}
+
+function renderRecords(){
+  const kid=activeKid();
+  const list=document.getElementById('recList');
+  const count=document.getElementById('recCount');
+  if(!kid){
+    count.textContent='';
+    list.innerHTML='<p class="rec-empty">請先到「🐣 基本資料」建立寶寶資料喔！</p>';
+    return;
+  }
+  const recs=(kid.records||[]).slice().reverse();   /* 新的在上面 */
+  count.textContent='｜共 '+recs.length+' 筆';
+  if(recs.length===0){
+    list.innerHTML='<p class="rec-empty">還沒有紀錄，快幫'+(kid.nickname||kid.name)+'量一次吧！🐻</p>';
+    return;
+  }
+  list.innerHTML = recs.map(r=>{
+    const month=ageMonthsAt(kid, r.date);
+    let s='<div class="rec-item">';
+    s+='<div class="rec-head">📅 '+r.date
+      +' <span class="age">('+ageLabel(month)+')</span><span class="spacer"></span>'
+      +'<button class="rec-btn" onclick="editRecord(\''+r.id+'\')">✏️ 修改</button>'
+      +'<button class="rec-btn" onclick="deleteRecord(\''+r.id+'\')">🗑️</button></div>';
+    if(r.heightCm!=null) s+=recLineHTML(kid, month, 'h', r.heightCm);
+    if(r.weightKg!=null) s+=recLineHTML(kid, month, 'w', r.weightKg);
+    if(r.note) s+='<div class="rec-note">📝 '+r.note.replace(/</g,'&lt;')+'</div>';
+    return s+'</div>';
+  }).join('');
+}
+
+/* =====================================================
+   綜合評估
+   BMI LMS:0–5歲 WHO,5–14歲 CDC(60–72月平滑銜接)
+   ADULT_H:CDC 20歲身高 LMS(目前軌道外推用)
+===================================================== */
+const LMS2={"bB":[[0,-0.3053,13.4069,0.0956],[1,0.2708,14.9441,0.09027],[2,0.1118,16.3195,0.08677],[3,0.0068,16.8987,0.08495],[4,-0.0727,17.1579,0.08378],[5,-0.137,17.2919,0.08296],[6,-0.1913,17.3422,0.08234],[7,-0.2385,17.3288,0.08183],[8,-0.2802,17.2647,0.0814],[9,-0.3176,17.1662,0.08102],[10,-0.3516,17.0488,0.08068],[11,-0.3828,16.9239,0.08037],[12,-0.4115,16.7981,0.08009],[13,-0.4382,16.6743,0.07982],[14,-0.463,16.5548,0.07958],[15,-0.4863,16.4409,0.07935],[16,-0.5082,16.3335,0.07913],[17,-0.5289,16.2329,0.07892],[18,-0.5484,16.1392,0.07873],[19,-0.5669,16.0528,0.07854],[20,-0.5846,15.9743,0.07836],[21,-0.6014,15.9039,0.07818],[22,-0.6174,15.8412,0.07802],[23,-0.6328,15.7852,0.07786],[24,-0.6473,15.7356,0.07771],[27,-0.5166,15.9036,0.07808],[30,-0.4274,15.7953,0.07841],[33,-0.3572,15.6934,0.07882],[36,-0.3101,15.5988,0.07931],[39,-0.2884,15.514,0.0799],[42,-0.2919,15.442,0.08061],[45,-0.3174,15.3827,0.08144],[48,-0.3622,15.3326,0.08238],[51,-0.4245,15.2891,0.08343],[54,-0.5019,15.2514,0.08457],[57,-0.5905,15.2188,0.08577],[60,-0.6892,15.1916,0.087],[66,-1.8355,15.2856,0.08311],[72,-3.21171,15.3835,0.08305],[78,-3.31477,15.429,0.0874],[84,-3.32319,15.5129,0.09213],[90,-3.27045,15.6317,0.09708],[96,-3.18306,15.7823,0.10209],[102,-3.07938,15.9617,0.10701],[108,-2.97115,16.1671,0.11172],[114,-2.86531,16.3961,0.11611],[120,-2.76565,16.6461,0.12011],[126,-2.6739,16.9151,0.12366],[132,-2.59056,17.2009,0.12673],[138,-2.51532,17.5014,0.12931],[144,-2.44743,17.8146,0.13139],[150,-2.38586,18.1387,0.13299],[156,-2.32946,18.4718,0.13414],[162,-2.27702,18.812,0.13488],[168,-2.22736,19.1576,0.13525]],"bG":[[0,-0.0631,13.3363,0.09272],[1,0.3448,14.5679,0.09556],[2,0.1749,15.7679,0.09371],[3,0.0643,16.3574,0.09254],[4,-0.0191,16.6703,0.09166],[5,-0.0864,16.8386,0.09096],[6,-0.1429,16.9083,0.09036],[7,-0.1916,16.902,0.08984],[8,-0.2344,16.8404,0.08939],[9,-0.2725,16.7406,0.08898],[10,-0.3068,16.6184,0.08861],[11,-0.3381,16.4875,0.08828],[12,-0.3667,16.3568,0.08797],[13,-0.3932,16.2311,0.08768],[14,-0.4177,16.1128,0.08741],[15,-0.4407,16.0028,0.08716],[16,-0.4623,15.9017,0.08693],[17,-0.4825,15.8096,0.08671],[18,-0.5017,15.7263,0.0865],[19,-0.5199,15.6517,0.0863],[20,-0.5372,15.5855,0.08612],[21,-0.5537,15.5278,0.08594],[22,-0.5695,15.4787,0.08577],[23,-0.5846,15.438,0.0856],[24,-0.5989,15.4052,0.08545],[27,-0.5684,15.6037,0.08446],[30,-0.5684,15.5276,0.08444],[33,-0.5684,15.4572,0.08467],[36,-0.5684,15.3968,0.08535],[39,-0.5684,15.3493,0.08654],[42,-0.5684,15.3116,0.08813],[45,-0.5684,15.2814,0.08991],[48,-0.5684,15.2602,0.09168],[51,-0.5684,15.2503,0.09345],[54,-0.5684,15.2519,0.09515],[57,-0.5684,15.2612,0.09665],[60,-0.5684,15.2747,0.09789],[66,-1.94696,15.2176,0.09329],[72,-3.22561,15.2169,0.0938],[78,-3.08429,15.3161,0.09943],[84,-2.92619,15.4536,0.10533],[90,-2.76731,15.6252,0.11129],[96,-2.61719,15.827,0.11716],[102,-2.48095,16.0552,0.12277],[108,-2.36092,16.3061,0.12801],[114,-2.25778,16.5763,0.1328],[120,-2.1713,16.8623,0.13706],[126,-2.10075,17.161,0.14075],[132,-2.04524,17.4691,0.14387],[138,-2.0038,17.7836,0.1464],[144,-1.97552,18.1015,0.14836],[150,-1.95952,18.42,0.14978],[156,-1.95498,18.7364,0.15071],[162,-1.9611,19.0481,0.15118],[168,-1.97707,19.3526,0.15126]]};const ADULT_H={"aB":[1.16728,176.84923,0.04037],"aG":[1.10805,163.33825,0.03964]};
+
+function zscoreOf(key, month, value){
+  const [L,M,S]=lmsAt(key, month);
+  const z = L===0 ? Math.log(value/M)/S : (Math.pow(value/M,L)-1)/(L*S);
+  return {z, pr:normCdf(z)*100, median:lmsVal(L,M,S,0)};
+}
+function prBarHTML(pr){
+  const p=Math.max(1,Math.min(99,pr));
+  return '<div class="prbar"><span class="prbar-mark" style="left:'+p.toFixed(1)+'%">🔻</span></div>'
+    +'<div class="prbar-lbl"><span>PR3</span><span>PR15</span><span>PR50</span><span>PR85</span><span>PR97</span></div>';
+}
+function bmiCat(pr){
+  if(pr<5)  return {emoji:'🟡', txt:'體重偏輕', cls:'pr-mid'};
+  if(pr<85) return {emoji:'🟢', txt:'健康體位', cls:'pr-ok'};
+  if(pr<95) return {emoji:'🟡', txt:'過重', cls:'pr-mid'};
+  return {emoji:'🔴', txt:'肥胖', cls:'pr-warn'};
+}
+function trendOf(kid, metric){
+  const pts=kidPoints(kid, metric);
+  if(pts.length<2) return null;
+  const a=pts[0], b=pts[pts.length-1];
+  const days=(new Date(b.d)-new Date(a.d))/86400000;
+  if(days<60) return null;
+  const key=(metric==='h'?'h':'w')+(kid.gender==='girl'?'G':'B');
+  const dz=zscoreOf(key,b.m,b.v).z - zscoreOf(key,a.m,a.v).z;
+  const dir=dz>0?'往上':'往下';
+  if(Math.abs(dz)<0.67) return {emoji:'🟢', level:'穩定', txt:'穩定沿著自己的生長軌道前進，非常棒！'};
+  if(Math.abs(dz)<1.34) return {emoji:'🟡', level:'輕微'+dir, txt:'有輕微'+dir+'偏移（約跨過一個百分位區帶），可以持續觀察。'};
+  return {emoji:'🔴', level:'明顯'+dir, txt:'明顯'+dir+'偏移（跨過兩個以上百分位區帶），建議帶健康手冊與小兒科醫師討論。'};
+}
+/* 未來身高:遺傳目標 + 目前軌道外推 */
+function futureHeight(kid){
+  const out={};
+  if(kid.dadHeight!=null && kid.momHeight!=null){
+    const t = kid.gender==='girl' ? (kid.dadHeight+kid.momHeight-13)/2 : (kid.dadHeight+kid.momHeight+13)/2;
+    out.target={mid:t, lo:t-7.5, hi:t+7.5};
+  }
+  const recs=(kid.records||[]).slice().reverse();
+  const lastH=recs.find(r=>r.heightCm!=null);
+  if(lastH){
+    const key='h'+(kid.gender==='girl'?'G':'B');
+    const z=zscoreOf(key, ageMonthsAt(kid,lastH.date), lastH.heightCm).z;
+    const a=ADULT_H[kid.gender==='girl'?'aG':'aB'];
+    out.traj=lmsVal(a[0],a[1],a[2], Math.max(-3,Math.min(3,z)));
+    out.trajZ=z;
+  }
+  return out;
+}
+
+/* PR 走勢折線圖(身高/體重百分位隨年齡變化) */
+function prTrendSVG(kid){
+  const gkey=kid.gender==='girl'?'G':'B';
+  const mk=(metric)=> kidPoints(kid,metric).map(p=>({m:p.m, pr:zscoreOf((metric==='h'?'h':'w')+gkey, p.m, p.v).pr}));
+  const sh=mk('h'), sw=mk('w');
+  if(sh.length+sw.length===0) return null;
+  const maxM=Math.max(1, ...sh.map(p=>p.m), ...sw.map(p=>p.m));
+  const xmax=maxM*1.08+1;
+  const W=680,H=340, mL=52,mR=20,mT=34,mB=44;
+  const X=m=> mL+(W-mL-mR)*m/xmax;
+  const Y=pr=> H-mB-(H-mB-mT)*pr/100;
+  let s='';
+  /* 區帶背景 */
+  const zones=[[0,3,'#FFC9CE'],[3,15,'#FFE9A8'],[15,85,'#C9F5D9'],[85,97,'#FFE9A8'],[97,100,'#FFC9CE']];
+  zones.forEach(z=>{
+    s+='<rect x="'+mL+'" y="'+Y(z[1])+'" width="'+(W-mL-mR)+'" height="'+(Y(z[0])-Y(z[1]))+'" fill="'+z[2]+'" opacity=".45"/>';
+  });
+  [3,15,50,85,97].forEach(v=>{
+    s+='<line x1="'+mL+'" y1="'+Y(v)+'" x2="'+(W-mR)+'" y2="'+Y(v)+'" stroke="rgba(74,55,40,.18)" stroke-width="1.5" stroke-dasharray="4 5"/>';
+    s+='<text x="'+(mL-8)+'" y="'+(Y(v)+5)+'" text-anchor="end" font-size="13" fill="#4A3728">'+v+'</text>';
+  });
+  /* x刻度 */
+  const xstep = xmax<=25?6 : xmax<=61?12 : 24;
+  for(let m=0;m<=xmax;m+=xstep){
+    s+='<line x1="'+X(m)+'" y1="'+mT+'" x2="'+X(m)+'" y2="'+(H-mB)+'" stroke="rgba(74,55,40,.08)" stroke-width="1"/>';
+    s+='<text x="'+X(m)+'" y="'+(H-mB+24)+'" text-anchor="middle" font-size="14" fill="#4A3728">'+(m===0?'出生': m<24? m+'月' : (m/12)+'歲')+'</text>';
+  }
+  s+='<path d="M'+mL+' '+mT+' L'+mL+' '+(H-mB)+' L'+(W-mR)+' '+(H-mB)+'" fill="none" stroke="#4A3728" stroke-width="3.5" stroke-linecap="round"/>';
+  s+='<text x="'+(mL-8)+'" y="'+(mT-10)+'" text-anchor="end" font-size="13" fill="#8A7668">PR</text>';
+  /* 折線 */
+  function line(pts,color,label,lx){
+    if(pts.length===0) return;
+    if(pts.length>1){
+      s+='<path d="M'+pts.map(p=>X(p.m).toFixed(1)+' '+Y(p.pr).toFixed(1)).join(' L')+'" fill="none" stroke="'+color+'" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+    pts.forEach(p=>{ s+='<circle cx="'+X(p.m).toFixed(1)+'" cy="'+Y(p.pr).toFixed(1)+'" r="6" fill="'+color+'" stroke="#4A3728" stroke-width="2"/>'; });
+    s+='<text x="'+lx+'" y="'+(mT-8)+'" font-size="14" font-weight="bold" fill="'+color+'">●'+label+'</text>';
+  }
+  line(sh,'#189BE8','身高PR', mL+10);
+  line(sw,'#F79824','體重PR', mL+100);
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="PR走勢圖">'+s+'</svg>';
+}
+
+function renderAssess(){
+  const box=document.getElementById('assessBox');
+  const kid=activeKid();
+  if(!kid){
+    box.innerHTML='<div class="card"><p class="rec-empty">請先到「🐣 基本資料」建立寶寶資料喔！</p></div>';
+    return;
+  }
+  const gkey=kid.gender==='girl'?'G':'B';
+  const recs=(kid.records||[]).slice().reverse();
+  const lastH=recs.find(r=>r.heightCm!=null);
+  const lastW=recs.find(r=>r.weightKg!=null);
+  const lastB=recs.find(r=>r.heightCm!=null && r.weightKg!=null);
+  let s='';
+  const summary=[];
+
+  /* --- 卡1:目前成長狀態 --- */
+  s+='<div class="card"><h2 class="card-title"><span class="dot" style="background:var(--sunny)"></span>'
+    +(kid.nickname||kid.name)+' 目前的成長狀態</h2>';
+  if(!lastH && !lastW){
+    s+='<p class="rec-empty">還沒有量測紀錄，先到「📏 紀錄」新增一筆吧！</p></div>';
+    box.innerHTML=s; return;
+  }
+  if(lastH){
+    const m=ageMonthsAt(kid,lastH.date);
+    const r=zscoreOf('h'+gkey, m, lastH.heightCm);
+    const pill=prPill(r.pr);
+    s+='<div class="as-row"><span class="as-icon">📏</span><span class="as-big">'+lastH.heightCm+' 公分</span>'
+      +'<span class="pr-pill '+pill.cls+'">'+pill.txt+'</span>'
+      +'<span class="as-sub">'+lastH.date+'（'+ageLabel(m)+'）</span></div>'
+      +prBarHTML(r.pr);
+    summary.push('身高 '+lastH.heightCm+' 公分（PR '+prTxt(r.pr)+'），'+pill.txt.split('・')[1]+'。');
+  }
+  if(lastW){
+    const m=ageMonthsAt(kid,lastW.date);
+    const r=zscoreOf('w'+gkey, m, lastW.weightKg);
+    const pill=prPill(r.pr);
+    s+='<div class="as-row"><span class="as-icon">⚖️</span><span class="as-big">'+lastW.weightKg+' 公斤</span>'
+      +'<span class="pr-pill '+pill.cls+'">'+pill.txt+'</span>'
+      +'<span class="as-sub">'+lastW.date+'（'+ageLabel(m)+'）</span></div>'
+      +prBarHTML(r.pr);
+    summary.push('體重 '+lastW.weightKg+' 公斤（PR '+prTxt(r.pr)+'）。');
+  }
+  if(lastB){
+    const m=ageMonthsAt(kid,lastB.date);
+    const bmi=lastB.weightKg/Math.pow(lastB.heightCm/100,2);
+    const r=zscoreOf('b'+gkey, m, bmi);
+    const cat=bmiCat(r.pr);
+    s+='<div class="as-row"><span class="as-icon">🧸</span><span class="as-big">BMI '+bmi.toFixed(1)+'</span>'
+      +'<span class="pr-pill '+cat.cls+'">'+cat.emoji+' '+cat.txt+'・PR '+prTxt(r.pr)+'</span>'
+      +'<span class="as-sub">身高體重均衡度</span></div>';
+    summary.push('BMI '+bmi.toFixed(1)+'，屬於「'+cat.txt+'」。');
+  }
+  s+='</div>';
+
+  /* --- 卡2:生長趨勢 --- */
+  const tH=trendOf(kid,'h'), tW=trendOf(kid,'w');
+  s+='<div class="card alt"><h2 class="card-title"><span class="dot" style="background:var(--sky)"></span>生長趨勢</h2>';
+  if(!tH && !tW){
+    s+='<p class="card-note">至少要有相隔 2 個月以上的兩筆紀錄，才能分析趨勢喔！</p>';
+  }else{
+    if(tH){ s+='<div class="as-row"><span class="as-icon">'+tH.emoji+'</span><b>身高：'+tH.level+'</b></div><p class="card-note" style="margin-top:0">'+tH.txt+'</p>'; summary.push('身高趨勢：'+tH.level+'。'); }
+    if(tW){ s+='<div class="as-row"><span class="as-icon">'+tW.emoji+'</span><b>體重：'+tW.level+'</b></div><p class="card-note" style="margin-top:0">'+tW.txt+'</p>'; summary.push('體重趨勢：'+tW.level+'。'); }
+  }
+  s+='</div>';
+
+  /* --- 卡2.5:PR 走勢折線圖 --- */
+  const trendSvg=prTrendSVG(kid);
+  if(trendSvg){
+    s+='<div class="card"><h2 class="card-title"><span class="dot" style="background:var(--pink)"></span>百分位（PR）走勢圖</h2>'
+      +'<p class="card-note">看寶寶的身高、體重 PR 有沒有穩定待在同一個顏色區帶裡（綠色 = 標準範圍）</p>'
+      +'<div class="trend-box">'+trendSvg+'</div></div>';
+  }
+
+  /* --- 卡3:未來身高預估 --- */
+  const fu=futureHeight(kid);
+  s+='<div class="card"><h2 class="card-title"><span class="dot" style="background:var(--grape)"></span>未來成年身高預估</h2>';
+  if(!fu.target && !fu.traj){
+    s+='<p class="card-note">填好爸媽身高或新增身高紀錄後，就能預估囉！</p>';
+  }else{
+    s+='<div class="future-box">';
+    if(fu.target){
+      s+='<div class="future-cell" style="background:#F0E4FF">'
+        +'<div class="fc-t">🧬 遺傳目標身高</div>'
+        +'<div class="fc-v">'+fu.target.mid.toFixed(0)+' 公分</div>'
+        +'<div class="fc-s">大約範圍 '+fu.target.lo.toFixed(0)+'–'+fu.target.hi.toFixed(0)+' 公分<br>（由爸媽身高計算）</div></div>';
+      summary.push('遺傳目標身高約 '+fu.target.mid.toFixed(0)+' 公分（'+fu.target.lo.toFixed(0)+'–'+fu.target.hi.toFixed(0)+'）。');
+    }
+    if(fu.traj){
+      s+='<div class="future-cell" style="background:#DFF3FF">'
+        +'<div class="fc-t">🚀 目前軌道外推</div>'
+        +'<div class="fc-v">'+fu.traj.toFixed(0)+' 公分</div>'
+        +'<div class="fc-s">若持續沿目前 PR 位置成長<br>到成年的預估值</div></div>';
+      summary.push('依目前生長軌道外推，成年身高約 '+fu.traj.toFixed(0)+' 公分。');
+    }
+    s+='</div>';
+    s+='<p class="card-note" style="margin-top:10px">兩種算法都是統計估計，實際身高還會受睡眠、運動、營養和青春期發育影響喔！</p>';
+  }
+  s+='</div>';
+
+  /* --- 卡4:綜合小結 --- */
+  s+='<div class="card alt"><h2 class="card-title"><span class="dot" style="background:var(--mint)"></span>綜合小結</h2>'
+    +'<div class="as-note">'+summary.map(t=>'🖍️ '+t).join('<br>')+'</div>'
+    +'<p class="card-note" style="margin-top:10px">此評估僅供家長參考，正式的生長發育評估請以小兒科醫師為準。</p></div>';
+
+  box.innerHTML=s;
+}
+
+/* =====================================================
+   成長報告(預覽 + 列印/存PDF)
+===================================================== */
+function rangeName(x){ return x===24?'0–2歲' : x===60?'0–5歲' : '0–14歲'; }
+
+function reportAnalysisLines(kid){
+  const gkey=kid.gender==='girl'?'G':'B';
+  const recs=(kid.records||[]).slice().reverse();
+  const lastH=recs.find(r=>r.heightCm!=null);
+  const lastW=recs.find(r=>r.weightKg!=null);
+  const lastB=recs.find(r=>r.heightCm!=null && r.weightKg!=null);
+  const lines=[];
+  if(lastH){
+    const r=zscoreOf('h'+gkey, ageMonthsAt(kid,lastH.date), lastH.heightCm);
+    lines.push('最新身高 '+lastH.heightCm+' 公分（'+lastH.date+'），PR '+prTxt(r.pr)+'，'+prPill(r.pr).txt.split('・')[1]+'，官方中位數 '+r.median.toFixed(1)+' 公分。');
+  }
+  if(lastW){
+    const r=zscoreOf('w'+gkey, ageMonthsAt(kid,lastW.date), lastW.weightKg);
+    lines.push('最新體重 '+lastW.weightKg+' 公斤（'+lastW.date+'），PR '+prTxt(r.pr)+'，'+prPill(r.pr).txt.split('・')[1]+'，官方中位數 '+r.median.toFixed(1)+' 公斤。');
+  }
+  if(lastB){
+    const bmi=lastB.weightKg/Math.pow(lastB.heightCm/100,2);
+    const r=zscoreOf('b'+gkey, ageMonthsAt(kid,lastB.date), bmi);
+    lines.push('BMI '+bmi.toFixed(1)+'（PR '+prTxt(r.pr)+'），體位判定：'+bmiCat(r.pr).txt+'。');
+  }
+  const tH=trendOf(kid,'h'), tW=trendOf(kid,'w');
+  if(tH) lines.push('身高趨勢：'+tH.level+'——'+tH.txt);
+  if(tW) lines.push('體重趨勢：'+tW.level+'——'+tW.txt);
+  const fu=futureHeight(kid);
+  if(fu.target) lines.push('遺傳目標身高（依父母身高）約 '+fu.target.mid.toFixed(0)+' 公分（範圍 '+fu.target.lo.toFixed(0)+'–'+fu.target.hi.toFixed(0)+' 公分）。');
+  if(fu.traj)   lines.push('依目前生長軌道外推，預估成年身高約 '+fu.traj.toFixed(0)+' 公分。');
+  return lines;
+}
+
+function buildReport(){
+  const kid=activeKid();
+  if(!kid){ alert('請先到「基本資料」建立寶寶資料喔！'); showPage('profile'); return; }
+  const gkey=kid.gender==='girl'?'G':'B';
+  const nowAge=ageMonthsAt(kid, todayStr());
+  const xmax=autoRangeOf(nowAge);
+  let s='<div class="rp-sheet">';
+  s+='<h1 class="rp-title">🌈 寶寶成長報告</h1>';
+  s+='<p class="rp-sub">產生日期：'+todayStr()+'｜資料由家長自行量測記錄</p>';
+
+  /* 基本資料 */
+  s+='<div class="rp-block"><div class="rp-h">🐣 寶寶基本資料</div><div class="rp-head-flex">';
+  if(kid.avatar) s+='<img class="rp-avatar" src="'+kid.avatar+'" alt="寶寶頭像">';
+  s+='<div class="rp-info"><table class="rp-table">';
+  [['姓名', (kid.name||'')+(kid.nickname?'（'+kid.nickname+'）':'')],
+   ['性別', kid.gender==='girl'?'女':'男'],
+   ['出生日期', kid.birthDate+'（現在 '+ageLabel(nowAge)+'）'],
+   ['出生體重', kid.birthWeight!=null?kid.birthWeight+' 公斤':'—'],
+   ['出生身長', kid.birthLength!=null?kid.birthLength+' 公分':'—'],
+   ['出生週數', kid.gestWeeks!=null?kid.gestWeeks+' 週':'—'],
+   ['父母身高', (kid.dadHeight!=null?'父 '+kid.dadHeight:'')+(kid.momHeight!=null?'　母 '+kid.momHeight:'')+' 公分']
+  ].forEach(r=>{ s+='<tr><th>'+r[0]+'</th><td style="text-align:left">'+r[1]+'</td></tr>'; });
+  s+='</table></div></div></div>';
+
+  /* 曲線圖 */
+  if(document.getElementById('optCurveH').checked){
+    s+='<div class="rp-block"><div class="rp-h">📈 身高生長曲線（'+rangeName(xmax)+'）</div><div class="rp-svg">'+buildChartSVG(kid,'h',xmax).svg+'</div></div>';
+  }
+  if(document.getElementById('optCurveW').checked){
+    s+='<div class="rp-block"><div class="rp-h">📈 體重生長曲線（'+rangeName(xmax)+'）</div><div class="rp-svg">'+buildChartSVG(kid,'w',xmax).svg+'</div></div>';
+  }
+  if(document.getElementById('optTrend').checked){
+    const t=prTrendSVG(kid);
+    if(t) s+='<div class="rp-block"><div class="rp-h">📊 百分位（PR）走勢圖</div><div class="rp-svg">'+t+'</div></div>';
+  }
+
+  /* 量測明細 */
+  if(document.getElementById('optRecords').checked){
+    const recs=(kid.records||[]);
+    s+='<div class="rp-block"><div class="rp-h">📋 量測紀錄明細（共 '+recs.length+' 筆）</div>';
+    if(recs.length===0){ s+='<p style="font-size:13px;color:#8A7668">尚無紀錄</p>'; }
+    else{
+      s+='<table class="rp-table"><tr><th>日期</th><th>年齡</th><th>身高(cm)</th><th>身高PR</th><th>體重(kg)</th><th>體重PR</th><th>備註</th></tr>';
+      recs.forEach(r=>{
+        const m=ageMonthsAt(kid,r.date);
+        const hPr=r.heightCm!=null?prTxt(zscoreOf('h'+gkey,m,r.heightCm).pr):'—';
+        const wPr=r.weightKg!=null?prTxt(zscoreOf('w'+gkey,m,r.weightKg).pr):'—';
+        s+='<tr><td>'+r.date+'</td><td>'+ageLabel(m)+'</td>'
+          +'<td>'+(r.heightCm!=null?r.heightCm:'—')+'</td><td>'+hPr+'</td>'
+          +'<td>'+(r.weightKg!=null?r.weightKg:'—')+'</td><td>'+wPr+'</td>'
+          +'<td>'+(r.note?String(r.note).replace(/</g,'&lt;'):'')+'</td></tr>';
+      });
+      s+='</table>';
+    }
+    s+='</div>';
+  }
+
+  /* 綜合分析 */
+  if(document.getElementById('optAnalysis').checked){
+    const lines=reportAnalysisLines(kid);
+    s+='<div class="rp-block"><div class="rp-h">🖍️ 綜合分析</div><div class="rp-analysis">'
+      +(lines.length? lines.map(t=>'• '+t).join('<br>') : '資料不足，請先新增量測紀錄。')
+      +'</div></div>';
+  }
+
+  s+='<p class="rp-foot">參考標準：0–5歲 WHO 兒童生長標準（國健署兒童生長曲線同標準）、5–14歲美國 CDC 生長參考值。<br>'
+    +'本報告由家長量測記錄產生，僅供醫師問診參考，非醫療診斷文件。</p>';
+  s+='</div>';
+
+  document.getElementById('printSheet').innerHTML=s;
+  document.getElementById('printBtn').style.display='inline-flex';
+  document.getElementById('printSheet').scrollIntoView({behavior:'smooth'});
+  toast('📄 報告產生好囉！按「列印」就能存成 PDF');
+}
+
+/* ---------- 小提示 ---------- */
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2400);
+}
+
+/* ---------- 啟動 ---------- */
+loadStore();
+renderNav();
+renderKidSwitch();
+fillForm(activeKid());
+if(!storageOK){
+  setTimeout(()=> toast('⚠️ 此瀏覽環境無法自動保存，請之後用「匯出存檔」功能'), 600);
+}
+</script>
+</body>
+</html>
