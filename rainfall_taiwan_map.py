@@ -4841,7 +4841,7 @@ function buildReportOverlay(title, picked) {{
 
 // ==== 報告各章節 render (從 window.DATA 等資料重繪成表格) ====
 function renderReportObs() {{
-  const rows = (window.DATA || []).slice().sort((a,b) => b.month - a.month);
+  const rows = (typeof DATA !== 'undefined' ? DATA : []).slice().sort((a,b) => b.month - a.month);
   let h = '<section class="pr-sec" id="r-obs"><h2>一、全台雨量觀測</h2>';
   h += '<div class="pr-meta">統計期間: ' + new Date().toISOString().slice(0,10) + ' · 資料源: 中央氣象署 CODIS 觀測站</div>';
   h += '<table class="pr-tbl"><thead><tr><th style="width:40px">名次</th><th>縣市</th><th class="n">今日 (mm)</th><th class="n">本月 (mm)</th><th class="n">本季 (mm)</th></tr></thead><tbody>';
@@ -4857,7 +4857,7 @@ function renderReportObs() {{
 }}
 
 function renderReportFcst() {{
-  const rows = (window.DATA || []).map(r => {{
+  const rows = (typeof DATA !== 'undefined' ? DATA : []).map(r => {{
     let sum = 0;
     (r.forecast || []).forEach(f => sum += f.mm || 0);
     return {{name: r.name, sum}};
@@ -5511,6 +5511,16 @@ if (localStorage.getItem('rain_projector') === '1') {{
 
 // ============ 🔄 一鍵更新：JS 端直接呼叫 Open-Meteo 22 縣市 ============
 async function refreshData() {{
+  // 前端直接 fetch Open-Meteo 會覆蓋 CWA 官方觀測 (精度較差),改為觸發後端 workflow
+  const url = 'https://github.com/yuan780903-cpu/market-scraper/actions/workflows/refresh-rankings.yml';
+  window.open(url, '_blank');
+  const btn = document.getElementById('refreshBtn');
+  const orig = btn.textContent;
+  btn.textContent = '↗️ 到 GitHub 按 Run workflow (免登入)';
+  setTimeout(() => btn.textContent = orig, 8000);
+  return;
+}}
+async function refreshData_legacy_openmeteo() {{
   const btn = document.getElementById('refreshBtn');
   const timeSpan = document.getElementById('refreshTime');
   btn.disabled = true;
