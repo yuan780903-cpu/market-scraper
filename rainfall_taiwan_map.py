@@ -6312,10 +6312,24 @@ def collect_rows(verbose: bool = True) -> list:
         if verbose:
             print(f"  [{i:>2}/{len(COUNTIES)}] {name:<5} ({lat:.2f}, {lon:.2f}) ", end="", flush=True)
         try:
-            # 1. Open-Meteo 抓 (作 fallback + 拿未來預測)
-            om_daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7)
-            # 2. CWA 抓過去+今日實測 (取代 om 的過去部分)
-            cwa_daily = _fetch_cwa_recent_daily(name, verbose=False)
+            # 1. Open-Meteo 抓 (作 fallback + 拿未來預測); 失敗回空 dict
+            om_daily = {}
+            try:
+                om_daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7) or {}
+            except Exception as e_om:
+                if verbose: print(f"[om fail:{e_om}]", end="", flush=True)
+                # 重試 1 次
+                try:
+                    time.sleep(0.5)
+                    om_daily = fetch_rainfall(lat, lon, past_days=92, forecast_days=7) or {}
+                except Exception:
+                    om_daily = {}
+            # 2. CWA 抓過去+今日實測 (取代 om 的過去部分); 失敗回空 dict
+            cwa_daily = {}
+            try:
+                cwa_daily = _fetch_cwa_recent_daily(name, verbose=False) or {}
+            except Exception as e_cwa:
+                if verbose: print(f"[cwa fail:{e_cwa}]", end="", flush=True)
             # 3. Merge: cwa (過去+今日) 優先, om 補未來
             daily = {}
             for d, v in om_daily.items():
@@ -6325,6 +6339,9 @@ def collect_rows(verbose: bool = True) -> list:
                 if d <= today_str:  # CWA 只信「已發生」
                     daily[d] = v  # 覆蓋 om (CWA 實測優先)
                     cwa_hit += 1
+            # 若 daily 完全空 (om+cwa 都失敗) 才算真的失敗
+            if not daily:
+                raise RuntimeError(f"{name} 兩個資料源都抓失敗")
             agg = aggregate(daily, today)
             forecast = sorted([(d, mm) for d, mm in daily.items() if d > today_str])[:7]
             rows.append({
