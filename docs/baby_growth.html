@@ -291,8 +291,12 @@
   .rec-line{
     display:flex; align-items:center; gap:7px; flex-wrap:wrap;
     font-size:14.5px;
-    padding:5px 0;
+    padding:6px 8px;
+    border-radius:10px 14px 9px 13px;
+    margin-bottom:5px;
   }
+  .rec-line.line-h{background:#EAF6FF;}   /* 身高=天空藍 */
+  .rec-line.line-w{background:#FFF4E0;}   /* 體重=橘黃 */
   .rec-line .val{font-weight:bold; font-size:16px;}
   .pr-pill{
     font-size:12.5px; font-weight:bold;
@@ -418,6 +422,11 @@
   }
   .rp-table th{background:#FFF1BF;}
   .rp-info .rp-table th{background:#DFF3FF; width:88px;}
+  /* 身高欄=天空藍、體重欄=橘黃,一眼分清楚 */
+  .rp-table th.c-h{background:#B9E7FF;}
+  .rp-table td.c-h{background:#EAF6FF;}
+  .rp-table th.c-w{background:#FFDFA8;}
+  .rp-table td.c-w{background:#FFF4E0;}
   .rp-analysis{font-size:14px; line-height:2;}
   .rp-foot{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.7;}
   .rp-svg svg{width:100%; height:auto; display:block;}
@@ -1557,7 +1566,7 @@ function recLineHTML(kid, month, metric, value){
   const {pr, median} = prOf(kid, metric, month, value);
   const pill = prPill(pr);
   const diff = value - median;
-  return '<div class="rec-line">'
+  return '<div class="rec-line '+(metric==='h'?'line-h':'line-w')+'">'
     + '<span>'+icon+'</span><span class="val">'+value+' '+unit+'</span>'
     + '<span class="pr-pill '+pill.cls+'">'+pill.txt+'</span>'
     + '<span class="rec-ref">官方中位數 '+median.toFixed(1)+unit
@@ -1875,14 +1884,14 @@ function buildReport(){
     s+='<div class="rp-block"><div class="rp-h">📋 量測紀錄明細（共 '+recs.length+' 筆）</div>';
     if(recs.length===0){ s+='<p style="font-size:13px;color:#8A7668">尚無紀錄</p>'; }
     else{
-      s+='<table class="rp-table"><tr><th>日期</th><th>年齡</th><th>身高(cm)</th><th>身高PR</th><th>體重(kg)</th><th>體重PR</th><th>備註</th></tr>';
+      s+='<table class="rp-table"><tr><th>日期</th><th>年齡</th><th class="c-h">📏 身高(cm)</th><th class="c-h">身高PR</th><th class="c-w">⚖️ 體重(kg)</th><th class="c-w">體重PR</th><th>備註</th></tr>';
       recs.forEach(r=>{
         const m=ageMonthsAt(kid,r.date);
         const hPr=r.heightCm!=null?prTxt(zscoreOf('h'+gkey,m,r.heightCm).pr):'—';
         const wPr=r.weightKg!=null?prTxt(zscoreOf('w'+gkey,m,r.weightKg).pr):'—';
         s+='<tr><td>'+r.date+'</td><td>'+ageLabel(m)+'</td>'
-          +'<td>'+(r.heightCm!=null?r.heightCm:'—')+'</td><td>'+hPr+'</td>'
-          +'<td>'+(r.weightKg!=null?r.weightKg:'—')+'</td><td>'+wPr+'</td>'
+          +'<td class="c-h">'+(r.heightCm!=null?r.heightCm:'—')+'</td><td class="c-h">'+hPr+'</td>'
+          +'<td class="c-w">'+(r.weightKg!=null?r.weightKg:'—')+'</td><td class="c-w">'+wPr+'</td>'
           +'<td>'+(r.note?String(r.note).replace(/</g,'&lt;'):'')+'</td></tr>';
       });
       s+='</table>';
