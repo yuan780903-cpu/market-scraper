@@ -1340,9 +1340,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <div class="refresh-bar">
-  <button id="refreshBtn" onclick="refreshData()">🔄 立即更新雨量資料</button>
+  <span class="refresh-time" id="refreshTime">📡 資料時間：{gen_time} · 每日 04:00 台北自動更新 (中央氣象署 CODIS 官方觀測)</span>
   <button id="projBtn" onclick="toggleProjector()" style="background:#7b1fa2">📽 投影模式</button>
-  <span class="refresh-time" id="refreshTime">📡 資料時間：{gen_time}</span>
+  <a class="cwa-link" href="https://github.com/yuan780903-cpu/market-scraper/actions/workflows/refresh-rankings.yml" target="_blank" rel="noopener" style="border-color:#2e7d32;color:#2e7d32">🔄 手動觸發更新</a>
   <a class="cwa-link" href="https://www.cwa.gov.tw/V8/C/W/OBS_County.html" target="_blank" rel="noopener">📊 對照中央氣象署即時觀測</a>
 </div>
 <!-- 統一大 tab bar (三選一切換：雨量觀測/未來預測/鄉鎮農產) -->
