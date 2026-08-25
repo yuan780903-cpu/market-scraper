@@ -731,6 +731,18 @@
         <button class="btn btn-danger" onclick="deleteKid()">🗑️ 刪除</button>
       </div>
     </div>
+
+    <!-- 存檔與備份 -->
+    <div class="card alt">
+      <h2 class="card-title"><span class="dot" style="background:var(--coral)"></span>存檔與備份</h2>
+      <p class="card-note">瀏覽器紀錄有可能被清掉！建議定期把資料（含所有紀錄和頭像）下載成存檔保存；換手機或重灌後，匯入存檔就能完整還原。</p>
+      <div class="btn-wrap" style="margin-top:4px">
+        <button type="button" class="btn btn-main" onclick="exportData()">⬇️ 匯出存檔到裝置</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('importInput').click()">📂 匯入存檔</button>
+      </div>
+      <p class="card-note" style="text-align:center; margin-top:8px">存檔是一個 .json 檔，手機會存到「檔案」App／下載資料夾</p>
+      <input type="file" id="importInput" accept=".json,application/json" style="display:none">
+    </div>
   </section>
 
   <!-- ======== 之後步驟的占位頁 ======== -->
@@ -807,11 +819,14 @@
       </div>
       <div class="btn-wrap">
         <button type="button" class="btn btn-main" onclick="buildReport()">📄 產生報告預覽</button>
-        <button type="button" class="btn btn-ghost" id="printBtn" onclick="window.print()" style="display:none">🖨️ 列印 / 存成 PDF</button>
+      </div>
+      <div class="btn-wrap" id="reportActions" style="display:none; margin-top:10px">
+        <button type="button" class="btn btn-main" id="pdfBtn" onclick="downloadPDF()">⬇️ 下載 PDF 檔</button>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨️ 系統列印</button>
       </div>
       <p class="card-note" style="text-align:center; margin-top:10px">
-        📱 手機：按「列印」後，在列印畫面選「儲存為 PDF」或直接分享。<br>
-        💻 電腦：列印目的地選「另存為 PDF」。
+        📱 手機：PDF 會存到「檔案」App（或跳出分享畫面）。<br>
+        若從主畫面圖示開啟無法下載，請改用 Safari 開這個網址操作。
       </p>
     </div>
     <div id="printSheet"></div>
@@ -1888,10 +1903,133 @@ function buildReport(){
   s+='</div>';
 
   document.getElementById('printSheet').innerHTML=s;
-  document.getElementById('printBtn').style.display='inline-flex';
+  document.getElementById('reportActions').style.display='block';
   document.getElementById('printSheet').scrollIntoView({behavior:'smooth'});
-  toast('📄 報告產生好囉！按「列印」就能存成 PDF');
+  toast('📄 報告產生好囉！可以下載 PDF 了');
 }
+
+/* ---- 下載 PDF(html2canvas 轉圖 + jsPDF 組頁,中文不亂碼) ---- */
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('載入失敗:'+src));
+    document.head.appendChild(s);
+    setTimeout(()=>rej(new Error('載入逾時')), 20000);
+  });
+}
+let pdfLibsPromise=null;
+function loadPdfLibs(){
+  if(window.html2canvas && window.jspdf) return Promise.resolve();
+  if(pdfLibsPromise) return pdfLibsPromise;
+  pdfLibsPromise=Promise.all([
+    loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'),
+    loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
+  ]).catch(e=>{ pdfLibsPromise=null; throw e; });
+  return pdfLibsPromise;
+}
+async function makeReportPDF(){
+  const sheet=document.querySelector('#printSheet .rp-sheet');
+  if(!sheet) return null;
+  await loadPdfLibs();
+  /* 用固定 660px 寬渲染,手機上也是漂亮的直式 A4 版面 */
+  const RENDER_W=660;
+  let cloneCuts=[], cloneH=1;
+  const canvas=await html2canvas(sheet,{
+    scale:2, useCORS:true, backgroundColor:'#FFFFFF',
+    windowWidth:RENDER_W+40,
+    onclone:(doc)=>{
+      const cs=doc.querySelector('#printSheet .rp-sheet');
+      cs.style.width=RENDER_W+'px';
+      void cs.offsetHeight;   /* 強制重新排版後量測 */
+      cloneH=Math.max(1, cs.scrollHeight);
+      cloneCuts=[...cs.children].map(el=> el.offsetTop+el.offsetHeight);
+    }
+  });
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({unit:'mm', format:'a4'});
+  const pw=210, ph=297, margin=8;
+  const iw=pw-margin*2;
+  const pxPerMm=canvas.width/iw;
+  const pagePx=Math.floor((ph-margin*2)*pxPerMm);
+  /* 區塊底部座標(換算到 canvas 像素),分頁盡量切在區塊之間 */
+  const ratio=canvas.height/cloneH;
+  const cuts=cloneCuts.map(c=> Math.round(c*ratio));
+  let y=0, page=0;
+  while(y<canvas.height-4){
+    const limit=y+pagePx;
+    let cut=limit;
+    if(limit<canvas.height){
+      const cands=cuts.filter(c=> c>y+pagePx*0.35 && c<=limit);
+      if(cands.length) cut=cands[cands.length-1];
+    }else{
+      cut=canvas.height;
+    }
+    const h=cut-y;
+    const slice=document.createElement('canvas');
+    slice.width=canvas.width; slice.height=h;
+    slice.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+    if(page>0) pdf.addPage();
+    pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,iw,h/pxPerMm);
+    y=cut; page++;
+  }
+  return pdf;
+}
+async function downloadPDF(){
+  if(!document.querySelector('#printSheet .rp-sheet')){ toast('請先按「產生報告預覽」喔！'); return; }
+  toast('📄 PDF 製作中，請稍等…');
+  try{
+    const pdf=await makeReportPDF();
+    const kid=activeKid();
+    pdf.save('寶寶成長報告_'+((kid&&(kid.nickname||kid.name))||'')+'_'+todayStr().replace(/-/g,'')+'.pdf');
+    toast('✅ PDF 已下載！到「檔案」App 就能找到');
+  }catch(e){
+    toast('😢 PDF 製作失敗（'+(e.message||'請檢查網路')+'），可改用系統列印');
+  }
+}
+
+/* =====================================================
+   存檔備份:匯出/匯入 JSON(含紀錄與頭像)
+===================================================== */
+function exportData(){
+  if(store.kids.length===0){ alert('還沒有任何寶寶資料可以匯出喔！'); return; }
+  const payload=Object.assign({}, store, {app:'baby_growth', exportedAt:todayStr()});
+  const blob=new Blob([JSON.stringify(payload)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='寶寶成長紀錄存檔_'+todayStr().replace(/-/g,'')+'.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  toast('💾 存檔已下載！記得收好這個檔案');
+}
+document.getElementById('importInput').addEventListener('change', function(e){
+  const file=e.target.files[0]; e.target.value='';
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(){
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data || !Array.isArray(data.kids) || data.kids.length===0) throw new Error('bad');
+      const names=data.kids.map(k=>k.nickname||k.name||'?').join('、');
+      if(!confirm('存檔裡有 '+data.kids.length+' 位寶寶：'+names+'\n\n匯入後同一位寶寶的資料會以存檔內容為準，確定匯入嗎？')) return;
+      data.kids.forEach(ik=>{
+        const i=store.kids.findIndex(k=>k.id===ik.id);
+        if(i>=0) store.kids[i]=ik; else store.kids.push(ik);
+      });
+      store.activeKidId = data.activeKidId && store.kids.some(k=>k.id===data.activeKidId)
+        ? data.activeKidId : store.kids[0].id;
+      persist();
+      renderKidSwitch();
+      fillForm(activeKid());
+      cancelEditRecord();
+      renderRecords();
+      toast('📂 匯入成功！歡迎回來 🎉');
+    }catch(err){
+      alert('這個檔案看起來不是「寶寶成長樂園」的存檔喔！');
+    }
+  };
+  reader.readAsText(file);
+});
 
 /* ---------- 小提示 ---------- */
 let toastTimer = null;
