@@ -431,6 +431,27 @@
   .rp-foot{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.7;}
   .rp-svg svg{width:100%; height:auto; display:block;}
 
+  /* ===== 內建瀏覽器防護罩 ===== */
+  #iabGuard{
+    display:none;
+    position:fixed; inset:0;
+    z-index:9999;
+    background:var(--paper);
+    padding:30px 20px;
+    overflow:auto;
+  }
+  #iabGuard.show{display:flex; align-items:center; justify-content:center;}
+  .iab-card{
+    max-width:420px;
+    text-align:center;
+    background:#FFF;
+    border:3px solid var(--ink);
+    border-radius:var(--wobble1);
+    padding:26px 20px;
+    box-shadow:4px 5px 0 rgba(74,55,40,.2);
+  }
+  .iab-p{font-size:14.5px; line-height:1.9; margin:8px 0;}
+
   @media print{
     body *{visibility:hidden;}
     #printSheet, #printSheet *{visibility:visible;}
@@ -843,6 +864,19 @@
 </main>
 
 <div id="toast">🎉 儲存好囉！</div>
+
+<!-- LINE / FB / IG 內建瀏覽器防護罩:擋住輸入,引導改用正常瀏覽器 -->
+<div id="iabGuard">
+  <div class="iab-card">
+    <div style="font-size:56px">🦒</div>
+    <h2 style="margin:8px 0 4px; letter-spacing:2px">請改用瀏覽器開啟</h2>
+    <p class="iab-p">你現在是在 <b><span id="iabName">LINE</span> 裡面的小視窗</b>開啟這個網頁。<br>
+    在這裡輸入的寶寶資料<b>隨時可能被清空</b>，也無法下載 PDF 和存檔！</p>
+    <a id="iabOpenBtn" class="btn btn-main" style="text-decoration:none; margin:10px 0">🚀 用瀏覽器開啟</a>
+    <p class="iab-p" id="iabManual">若沒有自動開啟：點右下角「<b>⋯</b>」→ 選「<b>用預設瀏覽器開啟</b>」</p>
+    <p class="iab-p" style="font-size:12px; color:var(--ink-soft)">開啟後建議「加入主畫面」，以後點圖示就能直接用</p>
+  </div>
+</div>
 
 <footer>
   本工具僅供成長紀錄參考，實際發展評估請諮詢小兒科醫師。<br>
@@ -2059,6 +2093,31 @@ function toast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=> t.classList.remove('show'), 2400);
 }
+
+/* ---------- 內建瀏覽器偵測(LINE/FB/IG 裡不給輸入,避免資料被清) ---------- */
+function detectInAppBrowser(ua){
+  if(/(^|[\s;])Line\/\d/i.test(ua)) return 'LINE';
+  if(/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) return 'Facebook';
+  if(/Instagram/i.test(ua)) return 'Instagram';
+  return null;
+}
+(function(){
+  const app=detectInAppBrowser(navigator.userAgent);
+  if(!app) return;
+  const u=new URL(location.href);
+  const extURL=(function(){ const v=new URL(location.href); v.searchParams.set('openExternalBrowser','1'); return v.toString(); })();
+  /* 防護罩:擋住所有輸入 */
+  document.getElementById('iabName').textContent=app;
+  document.getElementById('iabOpenBtn').href=extURL;
+  document.getElementById('iabGuard').classList.add('show');
+  if(app!=='LINE'){
+    document.getElementById('iabManual').innerHTML='請點右上角「<b>⋯</b>」→ 選「<b>在瀏覽器中開啟</b>」';
+    document.getElementById('iabOpenBtn').style.display='none';
+  }else if(!u.searchParams.has('openExternalBrowser')){
+    /* LINE 官方跳板:帶參數重新導向,LINE 會自動改用外部瀏覽器開啟 */
+    setTimeout(()=>{ location.replace(extURL); }, 250);
+  }
+})();
 
 /* ---------- 全域錯誤提示(避免手機上默默卡住) ---------- */
 window.addEventListener('error', function(e){
