@@ -88,7 +88,7 @@
   <!-- ============ 控制面板 ============ -->
   <div class="controls">
     <div class="panel">
-      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-尺寸</span></h1>
+      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-修裁切</span></h1>
       <div class="hint" id="pdfHint">填寫資料只存本機瀏覽器。「下載 PDF」存本機；按「☁️ 產生PDF並存雲端」才會把報價單 PDF 上傳到公司雲端硬碟（開立報價單／民國年／公司名）。</div>
       <div class="toolbar">
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#333;margin:0;white-space:nowrap">尺寸
@@ -422,8 +422,9 @@ function isInApp(){
   return /\bLine\//i.test(ua) || /FBAN|FBAV|Instagram|micromessenger/i.test(ua);
 }
 /* ===== 共用產生器：報價單 sheet → jsPDF =====
-   關鍵：以 sheet「自然寬(≈794px)」擷取，交給 html2pdf 縮放進所選頁面尺寸，
-   絕不要把寬度強壓成 718px（會位移裁切左半，舊雷）。中文用影像呈現不缺字。
+   ★ 關鍵修正（寬螢幕裁切根因）：畫面是左右兩欄格線，html2canvas 直接擷取會被
+   格線擠掉左半。解法＝把報價單「複製」到一個脫離格線、固定全寬(794px)的隱藏容器
+   再擷取；且 html2canvas 不指定 width/windowWidth（讓它自動量測 clone），否則會位移。
    尺寸由 #pageSize 下拉決定；「自動貼合」= 用內容實際像素當頁尺寸單頁剛好。 */
 function pdfSizeOpt(){
   const v=(document.getElementById("pageSize")||{}).value||"a4p";
@@ -434,44 +435,40 @@ function pdfSizeOpt(){
 async function buildQuotePdf(){
   const sheet=document.getElementById("sheet");
   const SC=2;                                    // 2倍解析度，字夠清楚
-  const prev={ w:sheet.style.width, z:sheet.style.zoom, t:sheet.style.transform,
-               to:sheet.style.transformOrigin, mh:sheet.style.minHeight,
-               b:sheet.style.border, bs:sheet.style.boxShadow };
-  // 擷取前：拿掉畫面縮放/邊框/陰影，量 1:1 真實尺寸（手機 scaleSheet 會加 transform）
-  sheet.style.width="794px"; sheet.style.zoom=""; sheet.style.transform="none";
-  sheet.style.transformOrigin="top left"; sheet.style.minHeight="auto";
-  sheet.style.border="none"; sheet.style.boxShadow="none";
-  const restore=()=>{ sheet.style.width=prev.w; sheet.style.zoom=prev.z; sheet.style.transform=prev.t;
-    sheet.style.transformOrigin=prev.to; sheet.style.minHeight=prev.mh; sheet.style.border=prev.b;
-    sheet.style.boxShadow=prev.bs; try{ scaleSheet(); }catch(e){} };
+  // 複製到乾淨全寬容器（脫離兩欄格線）；z-index:-1 藏在頁面後方不閃爍
+  const clone=sheet.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.style.cssText="width:794px;margin:0;transform:none;zoom:normal;border:none;"+
+                      "box-shadow:none;background:#fff;min-height:auto;position:static;";
+  const holder=document.createElement("div");
+  holder.style.cssText="position:fixed;left:0;top:0;width:794px;background:#fff;z-index:-1;";
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
   try{
-    const W=sheet.scrollWidth;                   // 自然寬，勿壓 718
     const size=pdfSizeOpt();
+    // 注意：不要傳 width/windowWidth/scrollX，讓 html2canvas 自動量測 clone
+    const h2c={ scale:SC, useCORS:true, backgroundColor:"#ffffff" };
     let pdf;
     if(size){                                    // 指定紙張：內容縮放進該尺寸、置頂留白
       pdf=await html2pdf().set({
         margin:[10,10,10,10],
         image:{type:"jpeg", quality:0.98},
-        html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
-                      windowWidth:W, width:W, scrollX:0, scrollY:0 },
+        html2canvas:h2c,
         jsPDF:{ unit:"mm", format:size[0], orientation:size[1] },
         pagebreak:{ mode:["css","legacy"] }
-      }).from(sheet).toPdf().get("pdf");
+      }).from(clone).toPdf().get("pdf");
     }else{                                        // 自動貼合：頁面=內容實際像素、單頁剛好
       const worker=html2pdf().set({
-        image:{type:"jpeg", quality:0.98},
-        html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
-                      windowWidth:W, width:W, scrollX:0, scrollY:0 }
-      }).from(sheet);
+        image:{type:"jpeg", quality:0.98}, html2canvas:h2c
+      }).from(clone);
       const canvas=await worker.toCanvas().get("canvas");
       const pw=canvas.width/SC, ph=canvas.height/SC;
       pdf=await worker.set({ margin:0,
         jsPDF:{ unit:"px", format:[pw, ph+1], orientation: pw>ph?"landscape":"portrait" },
         pagebreak:{ mode:["css","legacy"] } }).toPdf().get("pdf");
     }
-    restore();
     return pdf;
-  }catch(e){ restore(); throw e; }
+  } finally { holder.remove(); }
 }
 
 function savePDF(){
