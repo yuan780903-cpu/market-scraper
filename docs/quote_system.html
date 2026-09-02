@@ -90,7 +90,7 @@
   <!-- ============ 控制面板 ============ -->
   <div class="controls">
     <div class="panel">
-      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-原生列印</span></h1>
+      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-A4修正</span></h1>
       <div class="hint" id="pdfHint">填寫資料只存本機瀏覽器。按「下載 PDF」會開啟<b>列印視窗</b>→目的地選「<b>另存為 PDF</b>」→儲存（版面 100% 正確）。按「☁️ 產生PDF並存雲端」則上傳到公司雲端硬碟（開立報價單／民國年／公司名）。</div>
       <div class="toolbar">
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#333;margin:0;white-space:nowrap">尺寸
@@ -475,18 +475,18 @@ async function buildQuotePdf(){
   } finally { holder.remove(); }
 }
 
-// 依尺寸下拉動態設定列印紙張（原生列印用）。sheet 固定 794px(=A4寬)，
-// 小於 A4 的紙用 zoom 等比縮小；@page margin:0，用 sheet 自帶內距當頁邊。
+// 依尺寸下拉動態設定列印紙張（原生列印用）。sheet 設計寬 794px=210mm，
+// 用 zoom 等比縮到「紙張可用寬」內(留安全邊距，避免 Safari 強制邊界導致超出)。
 function applyPrintSize(){
   const v=(document.getElementById("pageSize")||{}).value||"a4p";
   const pg={ a4p:["A4 portrait",210], a4l:["A4 landscape",297], a5p:["A5 portrait",148],
              b5p:["B5 portrait",176], letterp:["letter portrait",216] };
   const conf=pg[v]||pg.a4p;
-  const scale=Math.min(1, conf[1]/210);       // 794px=210mm；比 A4 窄的紙才縮小
+  // 內容寬 = 紙寬-20mm(每邊留 2mm 緩衝於 8mm 頁邊之外)；794px=210mm → zoom
+  const zoom=Math.min(1, (conf[1]-20)/210);
   let st=document.getElementById("printSize");
   if(!st){ st=document.createElement("style"); st.id="printSize"; document.head.appendChild(st); }
-  st.textContent="@page{ size:"+conf[0]+"; margin:0; } "+
-                 (scale<1 ? "@media print{ .sheet{ zoom:"+scale+"; } }" : "");
+  st.textContent="@page{ size:"+conf[0]+"; margin:8mm; } @media print{ .sheet{ zoom:"+zoom.toFixed(4)+"; } }";
 }
 function savePDF(){
   const inApp=isInApp();
