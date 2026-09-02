@@ -411,68 +411,56 @@ function isInApp(){
   const ua=navigator.userAgent||"";
   return /\bLine\//i.test(ua) || /FBAN|FBAV|Instagram|micromessenger/i.test(ua);
 }
-function savePDF(){
+/* ===== 共用產生器：報價單 sheet → jsPDF =====
+   用 html2canvas 抓「實際像素」再把 PDF 頁面設成同尺寸(px)，
+   1:1 不縮放、不位移、單頁不裁切。中文用影像呈現不缺字。 */
+async function buildQuotePdf(){
   const sheet=document.getElementById("sheet");
+  const SC=2;                                    // 2倍解析度，字夠清楚
+  const prev={ w:sheet.style.width, z:sheet.style.zoom, t:sheet.style.transform,
+               to:sheet.style.transformOrigin, mh:sheet.style.minHeight,
+               b:sheet.style.border, bs:sheet.style.boxShadow };
+  // 擷取前：拿掉畫面縮放/邊框/陰影，量 1:1 真實尺寸（手機 scaleSheet 會加 transform）
+  sheet.style.width="794px"; sheet.style.zoom=""; sheet.style.transform="none";
+  sheet.style.transformOrigin="top left"; sheet.style.minHeight="auto";
+  sheet.style.border="none"; sheet.style.boxShadow="none";
+  const restore=()=>{ sheet.style.width=prev.w; sheet.style.zoom=prev.z; sheet.style.transform=prev.t;
+    sheet.style.transformOrigin=prev.to; sheet.style.minHeight=prev.mh; sheet.style.border=prev.b;
+    sheet.style.boxShadow=prev.bs; try{ scaleSheet(); }catch(e){} };
+  try{
+    const W=sheet.scrollWidth;
+    const worker=html2pdf().set({
+      image:{type:"jpeg", quality:0.98},
+      html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
+                    windowWidth:W, width:W, scrollX:0, scrollY:0 }
+    }).from(sheet);
+    const canvas=await worker.toCanvas().get("canvas");   // 先拿真 canvas
+    const pw=canvas.width/SC, ph=canvas.height/SC;         // 還原成 CSS px
+    const pdf=await worker.set({
+      margin:0,
+      jsPDF:{ unit:"px", format:[pw, ph+1], orientation: pw>ph?"landscape":"portrait" },
+      pagebreak:{ mode:["css","legacy"] }
+    }).toPdf().get("pdf");                                 // 重用同 worker 的 canvas
+    restore();
+    return pdf;
+  }catch(e){ restore(); throw e; }
+}
+
+function savePDF(){
   if(typeof html2pdf==="undefined"){ window.print(); return; }
   const inApp=isInApp();
   let win=null;
   if(inApp){ win=window.open("","_blank"); }
   const cust=val("c_company")||val("c_name")||"客戶";
   const fname=cust+"報價單.pdf";
-
-  // === 降寬度法：徹底避免 px/pt 換算誤差 ===
-  // 1. PDF 用 A4 mm，邊距 10mm → 工作區寬 190mm
-  // 2. sheet 暫時鎖成 718px (= 190mm @96dpi)，跟工作區 1:1 對應
-  // 3. html2canvas 抓 718px 寬 → html2pdf 把它放進 190mm → 完美對齊不切
-  // 4. 完成後還原 sheet 寬度（恢復畫面顯示）
-  const PRINT_W_PX = 718;  // 190mm @ 96dpi
-  const prevW = sheet.style.width;
-  const prevZ = sheet.style.zoom;
-  const prevT = sheet.style.transform;
-  const prevMH = sheet.style.minHeight;
-  const prevBorder = sheet.style.border;
-  const prevBoxShadow = sheet.style.boxShadow;
-  sheet.style.width = PRINT_W_PX + "px";
-  sheet.style.zoom = "";
-  sheet.style.transform = "none";
-  sheet.style.minHeight = "auto";
-  sheet.style.border = "none";         // PDF 不要邊框
-  sheet.style.boxShadow = "none";
-  const restore = ()=>{
-    sheet.style.width = prevW;
-    sheet.style.zoom = prevZ;
-    sheet.style.transform = prevT;
-    sheet.style.minHeight = prevMH;
-    sheet.style.border = prevBorder;
-    sheet.style.boxShadow = prevBoxShadow;
-    scaleSheet();
-  };
-
-  html2pdf().set({
-    margin: 10,                                   // 10mm 邊距，內容置中
-    filename: fname,
-    image: {type:"jpeg", quality:0.96},
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      windowWidth: PRINT_W_PX,
-      width: PRINT_W_PX,
-      scrollX: 0,
-      scrollY: 0,
-    },
-    jsPDF: {unit:"mm", format:"a4", orientation:"portrait"},
-    pagebreak: {mode:["css","legacy"], avoid:"tr"}
-  }).from(sheet).toPdf().get("pdf").then(function(pdf){
-    restore();
+  buildQuotePdf().then(function(pdf){
     if(inApp){
-      const url = pdf.output("bloburl");
-      if(win){ win.location.href = url; } else { location.href = url; }
+      const url=pdf.output("bloburl");
+      if(win){ win.location.href=url; } else { location.href=url; }
     }else{
       pdf.save(fname);
     }
   }).catch(function(){
-    restore();
     if(win){ try{win.close();}catch(e){} }
     window.print();
   });
@@ -482,7 +470,6 @@ function savePDF(){
 const QUOTE_UPLOAD_URL = "https://line-order-bot-5k63.onrender.com/orders/quote/upload";
 const QUOTE_UPLOAD_KEY = "shuocheng-quote-2026";
 function savePDFtoCloud(){
-  const sheet=document.getElementById("sheet");
   if(typeof html2pdf==="undefined"){ alert("PDF 元件未載入，請檢查網路後重試。"); return; }
   if(!items.length){ alert("尚未新增報價項目，無法產生報價單。"); return; }
   const company=val("c_company")||val("c_name")||"未填公司名";
@@ -491,24 +478,12 @@ function savePDFtoCloud(){
   const btn=document.getElementById("cloudBtn");
   const oldTxt=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="⏳ 產生並上傳中…"; }
-
-  const PRINT_W_PX=718;
-  const prev={w:sheet.style.width,z:sheet.style.zoom,t:sheet.style.transform,
-              mh:sheet.style.minHeight,b:sheet.style.border,bs:sheet.style.boxShadow};
-  sheet.style.width=PRINT_W_PX+"px"; sheet.style.zoom=""; sheet.style.transform="none";
-  sheet.style.minHeight="auto"; sheet.style.border="none"; sheet.style.boxShadow="none";
-  const restore=()=>{ sheet.style.width=prev.w; sheet.style.zoom=prev.z; sheet.style.transform=prev.t;
-    sheet.style.minHeight=prev.mh; sheet.style.border=prev.b; sheet.style.boxShadow=prev.bs; scaleSheet(); };
   const done=()=>{ if(btn){ btn.disabled=false; btn.textContent=oldTxt; } };
 
-  html2pdf().set({
-    margin:10, filename:fname, image:{type:"jpeg",quality:0.96},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:PRINT_W_PX,width:PRINT_W_PX,scrollX:0,scrollY:0},
-    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}, pagebreak:{mode:["css","legacy"],avoid:"tr"}
-  }).from(sheet).toPdf().get("pdf").then(function(pdf){
-    restore();
+  buildQuotePdf().then(function(pdf){
     const bytes=new Uint8Array(pdf.output("arraybuffer"));
-    let bin=""; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    let bin=""; const CH=8192;                    // 分段避免大檔 btoa 堆疊溢位
+    for(let i=0;i<bytes.length;i+=CH){ bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+CH)); }
     const b64=btoa(bin);
     return fetch(QUOTE_UPLOAD_URL,{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({key:QUOTE_UPLOAD_KEY,company:company,rocDate:roc,filename:fname,pdf:b64})});
@@ -517,7 +492,7 @@ function savePDFtoCloud(){
     if(j&&j.ok){ alert("✅ 已存到雲端\n路徑："+(j.path||"")+(j.link?("\n\n連結：\n"+j.link):"")); }
     else{ alert("雲端存檔失敗：\n"+((j&&j.msg)||"請稍後再試")); }
   }).catch(function(){
-    restore(); done();
+    done();
     alert("雲端存檔失敗（連線問題）。\n可先按「下載 PDF」存本機，稍後再上傳。");
   });
 }
