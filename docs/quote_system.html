@@ -89,9 +89,10 @@
   <div class="controls">
     <div class="panel">
       <h1>碩成牌有機質肥料 · 報價單系統</h1>
-      <div class="hint" id="pdfHint">資料只存在本機瀏覽器（不上雲）。填完按「下載 PDF」即可存檔。</div>
+      <div class="hint" id="pdfHint">填寫資料只存本機瀏覽器。「下載 PDF」存本機；按「☁️ 產生PDF並存雲端」才會把報價單 PDF 上傳到公司雲端硬碟（開立報價單／民國年／公司名）。</div>
       <div class="toolbar">
         <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
+        <button class="btn btn-primary" id="cloudBtn" onclick="savePDFtoCloud()" style="background:#0277bd">☁️ 產生PDF並存雲端</button>
         <button class="btn btn-ghost" id="stampBtn" onclick="toggleStamp()">✓ 蓋發票章</button>
         <button class="btn btn-ghost" onclick="saveDraft()">儲存草稿</button>
         <button class="btn btn-ghost" onclick="loadDraft()">讀取草稿</button>
@@ -131,8 +132,11 @@
         </thead>
         <tbody id="itemBody"></tbody>
       </table>
+      <datalist id="prodList"></datalist>
+      <datalist id="formList"><option>粒狀</option><option>粉狀</option></datalist>
+      <datalist id="specList"><option>20</option><option>25</option><option>40</option><option>500</option><option>1000</option></datalist>
       <button class="btn btn-ghost additem" onclick="addItem()">＋ 新增一列</button>
-      <div class="hint">粒狀固定 20kg；粉狀可選 20/25/500/1000。選產品自動帶入登記全名。</div>
+      <div class="hint">三欄皆可從清單挑選或直接打字自訂。粉狀常見 20/25/500/1000。選登記品名自動帶入全名。</div>
     </div>
 
     <div class="panel" style="margin-top:14px;">
@@ -204,16 +208,11 @@ function renderItemRows(){
   tb.innerHTML="";
   items.forEach((it,i)=>{
     const tr=document.createElement("tr");
-    const prodOpts=PRODUCTS.map(p=>`<option ${p.short===it.product?"selected":""}>${p.short}</option>`).join("");
-    const specOpts=(it.form==="粒狀"?["20"]:POWDER_SPECS)
-        .map(s=>`<option ${s===it.spec?"selected":""}>${s}</option>`).join("");
+    // 三欄都用 input+datalist：可從清單挑，也可自行打字（不受限）
     tr.innerHTML=`
-      <td><select onchange="upd(${i},'product',this.value)">${prodOpts}</select></td>
-      <td><select onchange="updForm(${i},this.value)">
-            <option ${it.form==="粒狀"?"selected":""}>粒狀</option>
-            <option ${it.form==="粉狀"?"selected":""}>粉狀</option>
-          </select></td>
-      <td><select onchange="upd(${i},'spec',this.value)" ${it.form==="粒狀"?"disabled":""}>${specOpts}</select></td>
+      <td><input list="prodList" value="${esc(it.product||"")}" oninput="upd(${i},'product',this.value)" style="width:120px" placeholder="選或輸入"></td>
+      <td><input list="formList" value="${esc(it.form||"")}" onchange="updForm(${i},this.value)" oninput="upd(${i},'form',this.value)" style="width:66px" placeholder="型態"></td>
+      <td><input list="specList" value="${esc(it.spec||"")}" oninput="upd(${i},'spec',this.value)" style="width:72px" placeholder="kg"></td>
       <td><input value="${it.price1||""}" oninput="upd(${i},'price1',this.value)" style="width:54px"></td>
       <td><input value="${it.price2||""}" oninput="upd(${i},'price2',this.value)" style="width:54px"></td>
       <td><button class="btn btn-danger" style="padding:3px 7px" onclick="delItem(${i})">×</button></td>`;
@@ -479,6 +478,50 @@ function savePDF(){
   });
 }
 
+/* ----- 產生 PDF 並上傳雲端（開立報價單／民國年／公司名）----- */
+const QUOTE_UPLOAD_URL = "https://line-order-bot-5k63.onrender.com/orders/quote/upload";
+const QUOTE_UPLOAD_KEY = "shuocheng-quote-2026";
+function savePDFtoCloud(){
+  const sheet=document.getElementById("sheet");
+  if(typeof html2pdf==="undefined"){ alert("PDF 元件未載入，請檢查網路後重試。"); return; }
+  if(!items.length){ alert("尚未新增報價項目，無法產生報價單。"); return; }
+  const company=val("c_company")||val("c_name")||"未填公司名";
+  const roc=val("qdate")||todayROC();
+  const fname=company+"報價單_"+roc+".pdf";
+  const btn=document.getElementById("cloudBtn");
+  const oldTxt=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="⏳ 產生並上傳中…"; }
+
+  const PRINT_W_PX=718;
+  const prev={w:sheet.style.width,z:sheet.style.zoom,t:sheet.style.transform,
+              mh:sheet.style.minHeight,b:sheet.style.border,bs:sheet.style.boxShadow};
+  sheet.style.width=PRINT_W_PX+"px"; sheet.style.zoom=""; sheet.style.transform="none";
+  sheet.style.minHeight="auto"; sheet.style.border="none"; sheet.style.boxShadow="none";
+  const restore=()=>{ sheet.style.width=prev.w; sheet.style.zoom=prev.z; sheet.style.transform=prev.t;
+    sheet.style.minHeight=prev.mh; sheet.style.border=prev.b; sheet.style.boxShadow=prev.bs; scaleSheet(); };
+  const done=()=>{ if(btn){ btn.disabled=false; btn.textContent=oldTxt; } };
+
+  html2pdf().set({
+    margin:10, filename:fname, image:{type:"jpeg",quality:0.96},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:PRINT_W_PX,width:PRINT_W_PX,scrollX:0,scrollY:0},
+    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}, pagebreak:{mode:["css","legacy"],avoid:"tr"}
+  }).from(sheet).toPdf().get("pdf").then(function(pdf){
+    restore();
+    const bytes=new Uint8Array(pdf.output("arraybuffer"));
+    let bin=""; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    const b64=btoa(bin);
+    return fetch(QUOTE_UPLOAD_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({key:QUOTE_UPLOAD_KEY,company:company,rocDate:roc,filename:fname,pdf:b64})});
+  }).then(r=>r.json()).then(j=>{
+    done();
+    if(j&&j.ok){ alert("✅ 已存到雲端\n路徑："+(j.path||"")+(j.link?("\n\n連結：\n"+j.link):"")); }
+    else{ alert("雲端存檔失敗：\n"+((j&&j.msg)||"請稍後再試")); }
+  }).catch(function(){
+    restore(); done();
+    alert("雲端存檔失敗（連線問題）。\n可先按「下載 PDF」存本機，稍後再上傳。");
+  });
+}
+
 /* ----- 草稿（整張單）----- */
 function saveDraft(){
   const d={
@@ -507,6 +550,8 @@ function clearCustomer(){
 function init(){
   document.getElementById("qdate").value=todayROC();
   document.getElementById("notes").value=DEFAULT_NOTES;
+  document.getElementById("prodList").innerHTML =
+    PRODUCTS.map(p=>`<option value="${esc(p.short)}">${esc(p.full)}</option>`).join("");
   addItem();          // 預設一列：碩成2號 粉狀 25kg
   if(isInApp()){
     document.getElementById("pdfHint").innerHTML=
