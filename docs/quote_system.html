@@ -88,9 +88,19 @@
   <!-- ============ 控制面板 ============ -->
   <div class="controls">
     <div class="panel">
-      <h1>碩成牌有機質肥料 · 報價單系統</h1>
+      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-尺寸</span></h1>
       <div class="hint" id="pdfHint">填寫資料只存本機瀏覽器。「下載 PDF」存本機；按「☁️ 產生PDF並存雲端」才會把報價單 PDF 上傳到公司雲端硬碟（開立報價單／民國年／公司名）。</div>
       <div class="toolbar">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#333;margin:0;white-space:nowrap">尺寸
+          <select id="pageSize" style="width:auto;padding:6px 8px">
+            <option value="a4p">A4 直式</option>
+            <option value="a4l">A4 橫式</option>
+            <option value="a5p">A5 直式</option>
+            <option value="b5p">B5 直式</option>
+            <option value="letterp">Letter 直式</option>
+            <option value="auto">自動貼合（單頁）</option>
+          </select>
+        </label>
         <button class="btn btn-primary" onclick="savePDF()">下載 PDF</button>
         <button class="btn btn-primary" id="cloudBtn" onclick="savePDFtoCloud()" style="background:#0277bd">☁️ 產生PDF並存雲端</button>
         <button class="btn btn-ghost" id="stampBtn" onclick="toggleStamp()">✓ 蓋發票章</button>
@@ -411,10 +421,16 @@ function isInApp(){
   const ua=navigator.userAgent||"";
   return /\bLine\//i.test(ua) || /FBAN|FBAV|Instagram|micromessenger/i.test(ua);
 }
-/* ===== 共用產生器：報價單 sheet → jsPDF（標準 A4 直式）=====
-   關鍵：以 sheet「自然寬(≈794px)」擷取，交給 html2pdf 縮放進 A4，
-   絕不要把寬度強壓成 718px（會位移裁切左半，舊雷）。內容置頂、下方留白，
-   標準 A4 直式文件；中文用影像呈現不缺字。 */
+/* ===== 共用產生器：報價單 sheet → jsPDF =====
+   關鍵：以 sheet「自然寬(≈794px)」擷取，交給 html2pdf 縮放進所選頁面尺寸，
+   絕不要把寬度強壓成 718px（會位移裁切左半，舊雷）。中文用影像呈現不缺字。
+   尺寸由 #pageSize 下拉決定；「自動貼合」= 用內容實際像素當頁尺寸單頁剛好。 */
+function pdfSizeOpt(){
+  const v=(document.getElementById("pageSize")||{}).value||"a4p";
+  const map={ a4p:["a4","portrait"], a4l:["a4","landscape"], a5p:["a5","portrait"],
+              b5p:["b5","portrait"], letterp:["letter","portrait"] };
+  return map[v]||null;                            // null = 自動貼合
+}
 async function buildQuotePdf(){
   const sheet=document.getElementById("sheet");
   const SC=2;                                    // 2倍解析度，字夠清楚
@@ -430,14 +446,29 @@ async function buildQuotePdf(){
     sheet.style.boxShadow=prev.bs; try{ scaleSheet(); }catch(e){} };
   try{
     const W=sheet.scrollWidth;                   // 自然寬，勿壓 718
-    const pdf=await html2pdf().set({
-      margin:[10,10,10,10],                      // A4 四邊 10mm
-      image:{type:"jpeg", quality:0.98},
-      html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
-                    windowWidth:W, width:W, scrollX:0, scrollY:0 },
-      jsPDF:{ unit:"mm", format:"a4", orientation:"portrait" },
-      pagebreak:{ mode:["css","legacy"] }
-    }).from(sheet).toPdf().get("pdf");
+    const size=pdfSizeOpt();
+    let pdf;
+    if(size){                                    // 指定紙張：內容縮放進該尺寸、置頂留白
+      pdf=await html2pdf().set({
+        margin:[10,10,10,10],
+        image:{type:"jpeg", quality:0.98},
+        html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
+                      windowWidth:W, width:W, scrollX:0, scrollY:0 },
+        jsPDF:{ unit:"mm", format:size[0], orientation:size[1] },
+        pagebreak:{ mode:["css","legacy"] }
+      }).from(sheet).toPdf().get("pdf");
+    }else{                                        // 自動貼合：頁面=內容實際像素、單頁剛好
+      const worker=html2pdf().set({
+        image:{type:"jpeg", quality:0.98},
+        html2canvas:{ scale:SC, useCORS:true, backgroundColor:"#ffffff",
+                      windowWidth:W, width:W, scrollX:0, scrollY:0 }
+      }).from(sheet);
+      const canvas=await worker.toCanvas().get("canvas");
+      const pw=canvas.width/SC, ph=canvas.height/SC;
+      pdf=await worker.set({ margin:0,
+        jsPDF:{ unit:"px", format:[pw, ph+1], orientation: pw>ph?"landscape":"portrait" },
+        pagebreak:{ mode:["css","legacy"] } }).toPdf().get("pdf");
+    }
     restore();
     return pdf;
   }catch(e){ restore(); throw e; }
