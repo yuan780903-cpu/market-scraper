@@ -88,7 +88,7 @@
   <!-- ============ 控制面板 ============ -->
   <div class="controls">
     <div class="panel">
-      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-修裁切</span></h1>
+      <h1>碩成牌有機質肥料 · 報價單系統 <span style="font-size:11px;color:#4caf50;font-weight:400">v0902-手機同步</span></h1>
       <div class="hint" id="pdfHint">填寫資料只存本機瀏覽器。「下載 PDF」存本機；按「☁️ 產生PDF並存雲端」才會把報價單 PDF 上傳到公司雲端硬碟（開立報價單／民國年／公司名）。</div>
       <div class="toolbar">
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#333;margin:0;white-space:nowrap">尺寸
@@ -446,8 +446,10 @@ async function buildQuotePdf(){
   document.body.appendChild(holder);
   try{
     const size=pdfSizeOpt();
-    // 注意：不要傳 width/windowWidth/scrollX，讓 html2canvas 自動量測 clone
-    const h2c={ scale:SC, useCORS:true, backgroundColor:"#ffffff" };
+    // ★ 跨裝置一致關鍵：明確 windowWidth+width=794，否則手機/窄視窗會用當前視窗寬
+    //   (如手機 375px) 去渲染 794px 複本 → 被壓縮裁掉右側。固定 794 → 各裝置都一致。
+    const h2c={ scale:SC, useCORS:true, backgroundColor:"#ffffff",
+                windowWidth:794, width:794, scrollX:0, scrollY:0 };
     let pdf;
     if(size){                                    // 指定紙張：內容縮放進該尺寸、置頂留白
       pdf=await html2pdf().set({
