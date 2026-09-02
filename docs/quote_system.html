@@ -68,8 +68,10 @@
     .app{ display:block; padding:0; max-width:none; }
     .controls{ display:none !important; }
     .preview-wrap{ overflow:visible; height:auto !important; }
-    .sheet{ box-shadow:none; border:none; margin:0; width:auto; min-height:auto; padding:0; transform:none !important; }
-    @page{ size:A4; margin:14mm; }
+    /* 保持設計寬 794px(=210mm@96dpi=A4寬)＋原本內距當頁邊 → 1:1 印出不縮放不裁切、文字橫排 */
+    .sheet{ box-shadow:none !important; border:none !important; margin:0 auto !important;
+            width:794px !important; min-height:auto !important; transform:none !important; }
+    /* @page 尺寸與縮放(小於A4的紙)由 applyPrintSize 動態設定 */
   }
 
   /* ===== 手機版（窄螢幕）===== */
@@ -473,15 +475,18 @@ async function buildQuotePdf(){
   } finally { holder.remove(); }
 }
 
-// 依尺寸下拉動態設定列印紙張（原生列印用）
+// 依尺寸下拉動態設定列印紙張（原生列印用）。sheet 固定 794px(=A4寬)，
+// 小於 A4 的紙用 zoom 等比縮小；@page margin:0，用 sheet 自帶內距當頁邊。
 function applyPrintSize(){
-  const size=pdfSizeOpt();      // [fmt,orient] 或 null(自動貼合→列印用 A4)
-  const css = size
-    ? "@page{ size:"+size[0]+" "+size[1]+"; margin:12mm; }"
-    : "@page{ size:A4 portrait; margin:12mm; }";
+  const v=(document.getElementById("pageSize")||{}).value||"a4p";
+  const pg={ a4p:["A4 portrait",210], a4l:["A4 landscape",297], a5p:["A5 portrait",148],
+             b5p:["B5 portrait",176], letterp:["letter portrait",216] };
+  const conf=pg[v]||pg.a4p;
+  const scale=Math.min(1, conf[1]/210);       // 794px=210mm；比 A4 窄的紙才縮小
   let st=document.getElementById("printSize");
   if(!st){ st=document.createElement("style"); st.id="printSize"; document.head.appendChild(st); }
-  st.textContent=css;
+  st.textContent="@page{ size:"+conf[0]+"; margin:0; } "+
+                 (scale<1 ? "@media print{ .sheet{ zoom:"+scale+"; } }" : "");
 }
 function savePDF(){
   const inApp=isInApp();
