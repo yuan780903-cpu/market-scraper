@@ -78,8 +78,9 @@
   .form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;padding:6px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
   .form[hidden]{display:none}
   .form label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px;font-weight:500}
-  .form input{width:100%;border:1px solid var(--line2);border-radius:var(--radius-s);padding:9px 10px;font-size:15px;background:#fff;transition:border-color .15s,box-shadow .15s}
-  .form input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,95,58,.15)}
+  .form input,.form select{width:100%;border:1px solid var(--line2);border-radius:var(--radius-s);padding:9px 10px;font-size:15px;background:#fff;transition:border-color .15s,box-shadow .15s;color:var(--fg)}
+  .form select{appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2366736b' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:32px}
+  .form input:focus,.form select:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,95,58,.15)}
   .form .full{grid-column:1/-1}
   .form .ro{background:var(--surface2);font-weight:700;color:var(--brand-ink)}
   .item{padding:12px;border:1px solid var(--line);border-radius:var(--radius);margin-top:10px;background:var(--surface);box-shadow:0 1px 2px rgba(20,40,28,.04)}
@@ -181,12 +182,16 @@
       </div>
       <div id="body">
         <div class="form" id="form">
-          <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
-          <div><label>申報日期</label><input id="f_date" type="date"></div>
+          <div class="full"><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
+          <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
+          <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
           <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
-          <div><label>肥料品目</label><input id="f_product" list="dl_product" placeholder="例:有機肥料2號(粉)"><datalist id="dl_product"></datalist></div>
-          <div><label>肥料重量(每塊田預設,噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
-          <div><label>總噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
+          <div><label>產品名稱</label><input id="f_pname" list="dl_pname" placeholder="例:有機肥料2號"><datalist id="dl_pname"></datalist></div>
+          <div class="full"><label>肥料品目(官方品目編號)</label><select id="f_product"><option value="">— 請選擇品目 —</option></select></div>
+          <div class="full" id="customWrap" hidden><label>自填品目</label><input id="f_productCustom" placeholder="例:9-01 其他肥料"></div>
+          <div><label>肥料單包重量(kg)</label><input id="f_bag" type="number" inputmode="decimal" step="0.1" placeholder="例:20"></div>
+          <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
+          <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
           <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
         </div>
         <div id="list"></div>
@@ -310,18 +315,27 @@ function popupHTML(p, sel){
     <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button></div>`;
 }
 
+// ================= 肥料品目(肥料種類品目及規格 109.4.24 附件一) =================
+const FERT_CODES=[["1-01","尿素肥料"],["1-02","裹覆尿素肥料"],["1-03","甲醛縮合尿素肥料"],["1-04","丁烯醛縮合尿素肥料"],["1-05","異丁醛縮合尿素肥料"],["1-06","硫酸胍基尿素肥料"],["1-07","硫酸銨肥料"],["1-08","腐植酸銨肥料"],["1-09","乙二醯二胺肥料"],["1-10","氯化銨肥料"],["1-11","硝酸銨肥料"],["1-12","硝酸銨鈣肥料"],["1-13","液態尿素硝酸銨肥料"],["1-14","硝酸鈣肥料"],["1-15","硝酸鈉肥料"],["1-16","氰氮化鈣肥料"],["1-17","固態副產氮質肥料"],["1-18","液態副產氮質肥料"],["1-19","固態混合氮質肥料"],["1-20","液態混合氮質肥料"],["2-01","過磷酸鈣肥料"],["2-02","重過磷酸鈣肥料"],["2-03","燒製磷肥料"],["2-04","熔製磷肥料"],["2-05","腐植酸磷肥料"],["2-06","加工磷質肥料"],["2-07","副產磷質肥料"],["2-08","混合磷質肥料"],["2-09","磷礦粉肥料"],["3-01","氯化鉀肥料"],["3-02","硫酸鉀肥料"],["3-03","碳酸氫鉀肥料"],["3-04","粗製鉀鹽肥料"],["3-05","硫酸鉀鎂肥料"],["3-06","腐植酸鉀肥料"],["3-07","矽酸鉀肥料"],["3-08","加工滷汁鉀肥料"],["3-09","副產鉀質肥料"],["3-10","混合鉀質肥料"],["4-01","硫酸鎂肥料"],["4-02","氫氧化鎂肥料"],["4-03","氧化鎂肥料"],["4-04","腐植酸鎂肥料"],["4-05","木質磺酸鎂肥料"],["4-06","加工鎂質肥料"],["4-07","副產鎂質肥料"],["4-08","混合鎂質肥料"],["4-09","鉗合態鎂肥料"],["4-10","生石灰肥料"],["4-11","消石灰肥料"],["4-12","碳酸鈣肥料"],["4-13","貝殼粉肥料"],["4-14","副產石灰肥料"],["4-15","混合石灰肥料"],["4-16","鈣液肥"],["4-17","硫酸鈣肥料"],["4-18","白雲石灰肥料"],["4-19","白雲石粉肥料"],["4-20","矽質石灰石肥料"],["4-21","矽酸爐渣肥料"],["4-22","硼酸肥料"],["4-23","硼酸鹽肥料"],["4-24","熔製硼質肥料"],["4-25","加工硼質肥料"],["4-26","硫酸錳肥料"],["4-27","礦渣錳質肥料"],["4-28","鉗合態錳肥料"],["4-29","加工錳質肥料"],["4-30","混合錳質肥料"],["4-31","氧化鋅肥料"],["4-32","硫酸鋅肥料"],["4-33","鉗合態鋅肥料"],["4-34","硫酸亞鐵肥料"],["4-35","鉗合態鐵肥料"],["4-36","鉬酸鈉肥料"],["4-37","鉗合態銅肥料"],["4-38","熔製微量要素肥料"],["4-39","複合次微量要素肥料"],["4-40","液態複合次微量要素肥料"],["4-41","雜項次量微量要素肥料"],["4-42","液態雜項次量微量要素肥料"],["5-01","植物渣粕肥料"],["5-02","副產植物質肥料"],["5-03","魚廢渣肥料"],["5-04","動物廢渣肥料"],["5-05","副產動物質肥料"],["5-06","乾燥菌體肥料"],["5-07","氮質海鳥糞肥料"],["5-08","雞糞加工肥料"],["5-09","禽畜糞堆肥"],["5-10","一般堆肥"],["5-11","雜項堆肥"],["5-12","混合有機質肥料"],["5-13","雜項有機質肥料"],["5-14","液態雜項有機質肥料"],["5-15","液態有機質肥料"],["6-01","複合肥料"],["6-02","裹覆複合肥料"],["6-03","家庭園藝用複合肥料"],["6-04","化成複合肥料"],["6-05","雜項複合肥料"],["6-06","液態複合肥料"],["6-07","液態雜項複合肥料"],["7-01","植物生長輔助劑-腐植酸"],["7-02","雜項有機質栽培介質"],["7-03","有機質栽培介質"],["8-01","豆科根瘤菌肥料"],["8-02","游離固氮菌肥料"],["8-03","溶磷菌肥料"],["8-04","溶鉀菌肥料"],["8-05","複合微生物肥料"],["8-06","叢枝菌根菌肥料"]];
+const FERT_CATS={"1": "氮肥類", "2": "磷肥類", "3": "鉀肥類", "4": "次微量要素肥料類", "5": "有機質肥料類", "6": "複合肥料類", "7": "植物生長輔助劑類", "8": "微生物肥料類"};
+(function(){ const sel=document.getElementById('f_product'); let g=null, last='';
+  FERT_CODES.forEach(([c,n])=>{ const k=c[0]; if(k!==last){ g=document.createElement('optgroup'); g.label=k+'. '+(FERT_CATS[k]||'其他'); sel.appendChild(g); last=k; } const o=document.createElement('option'); o.value=c+' '+n; o.textContent=c+' '+n; g.appendChild(o); });
+  const o=document.createElement('option'); o.value='__custom'; o.textContent='其他 / 自填'; sel.appendChild(o); })();
+
 // ================= 專案資料(存本機) =================
 const KEY='fertmap_projects_v1';
 let DB = load();
 function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch{}
   if(!(d&&d.projects&&d.projects.length)){ const p=newProject('專案 1'); d={curId:p.id, projects:[p]}; }
   migrate(d); return d; }
-function migrate(d){ // 舊版公斤 → 噸(只做一次)
-  if(d.unit==='t') return;
-  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
-    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(f.area===undefined) f.area=null; }); });
+function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit 旗標判斷)
+  const conv = d.unit!=='t';
+  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
+    if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(f.area===undefined) f.area=null; });
+    if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
-function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', product:'', weight:'', date:new Date().toISOString().slice(0,10), note:'', fields:{}, docs:[], updated:Date.now()}; }
+function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
 function persist(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save(){ cur().updated=Date.now(); persist(); render(); autoSync(); }
@@ -331,16 +345,19 @@ const fmtT = v => (Math.round(v*1000)/1000).toString();
 
 function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
-function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); refreshTotals(); refreshMarker(f); autoSync(); } }
+function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); render(); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
-  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'; document.getElementById('projTitle').textContent=(p.customer||p.name);
-  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸</span>`; }
+  const bags = +p.bag>0 ? Math.round(tons(p)*1000/+p.bag) : null;
+  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').textContent=(p.customer||p.name);
+  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
 // ---- 表單綁定 ----
-const F={customer:'f_customer',date:'f_date',brand:'f_brand',product:'f_product',weight:'f_weight',note:'f_note'};
-Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; save(); }));
+const F={customer:'f_customer',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
+const productLabel = p => p.product==='__custom' ? (p.productCustom||'') : (p.product||'');
+function syncCustom(){ document.getElementById('customWrap').hidden = document.getElementById('f_product').value!=='__custom'; }
+Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; if(k==='product') syncCustom(); save(); }));
 document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persist(); render(); const fs=Object.values(cur().fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
 document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
@@ -360,17 +377,17 @@ function render(){
   const p=cur();
   const sel=document.getElementById('projSel');
   sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.customer||x.name)}(${Object.keys(x.fields).length}田)</option>`).join('');
-  Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||'');
+  Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||''); syncCustom();
   refreshTotals();
   const uniq=k=>[...new Set(DB.projects.map(x=>x[k]).filter(Boolean))];
   document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
-  document.getElementById('dl_product').innerHTML=uniq('product').map(v=>`<option value="${esc(v)}">`).join('');
+  document.getElementById('dl_pname').innerHTML=uniq('pname').map(v=>`<option value="${esc(v)}">`).join('');
   Object.keys(layers).forEach(k=>{ if(!p.fields[k]){ layers[k].remove(); delete layers[k]; } });
   Object.values(p.fields).forEach(f=>{ if(!layers[f.key]) addLayer(f); });
   const arr=Object.values(p.fields);
   document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
-        <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸</span>
+        <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
         <button class="del" onclick="unselect('${f.key}')">移除</button></div>
       <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
         <label>📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
@@ -466,7 +483,7 @@ document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.strin
 document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
 document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); autoSync(); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
-  if(d.unit!=='t') migrate({projects:list});
+  migrate({projects:list, unit:d.unit});
   DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
   list.forEach(np=>{ if((DB.deleted[np.id]||0) > (np.updated||0)) return;
     const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>(DB.projects[i].updated||0)) DB.projects[i]=np; });
