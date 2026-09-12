@@ -2,114 +2,174 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>撒肥定位</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1f5f3a">
+<title>撒肥定位 · 田地定位與肥料撒播管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  :root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--brand:#2e7d32;--brand2:#1b5e20;--sel:#f57c00;--blue:#1565c0}
+  :root{
+    --bg:#eef2ec;--surface:#ffffff;--surface2:#f6f8f5;--fg:#1c2620;--muted:#66736b;--line:#dfe6df;--line2:#cfd9d0;
+    --brand:#1f5f3a;--brand-2:#174a2d;--brand-soft:#e3efe6;--brand-ink:#0f3a22;
+    --accent:#e0891c;--accent-soft:#fdf1e0;--blue:#1d5fb8;--blue-soft:#e6eefb;--danger:#c62828;--danger-soft:#fdeaea;
+    --radius:12px;--radius-s:8px;--shadow:0 1px 2px rgba(20,40,28,.06),0 4px 14px rgba(20,40,28,.08);--shadow-s:0 1px 3px rgba(0,0,0,.18);
+    --font:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+  }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow-x:hidden;width:100%;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--fg)}
+  html,body{margin:0;height:100%;overflow:hidden;width:100%;font-family:var(--font);background:var(--bg);color:var(--fg);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  button,input,select{font-family:inherit}
   #app{display:flex;flex-direction:column;height:100%;width:100%;overflow:hidden}
-  .stats{display:flex;gap:10px;flex-wrap:wrap;padding:0 10px 6px;font-size:13px;color:var(--brand2);font-weight:600}
-  .stats span{background:#e8f5e9;border-radius:6px;padding:3px 8px}
-  .seg{display:flex;background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.35);overflow:hidden}
-  .seg button{border:0;background:#fff;padding:7px 9px;font-size:13px;color:#333;border-right:1px solid #ddd}
+
+  /* ===== 頂欄 ===== */
+  header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:linear-gradient(180deg,#22673f,#1a5232);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:5;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+  .brand h1{font-size:17px;font-weight:700;margin:0;letter-spacing:.5px;white-space:nowrap}
+  .brand small{display:block;font-size:11px;opacity:.78;font-weight:400;letter-spacing:.4px}
+  .projbox{display:flex;align-items:center;gap:6px;flex:1;min-width:200px}
+  .projbox label{font-size:12px;opacity:.85;white-space:nowrap}
+  header select{flex:1;min-width:0;border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-s);padding:8px 10px;font-size:14px;background:rgba(255,255,255,.96);color:var(--fg);font-weight:500}
+  .hbtn{border:1px solid rgba(255,255,255,.28);border-radius:var(--radius-s);padding:8px 12px;background:rgba(255,255,255,.12);color:#fff;font-size:14px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background .15s}
+  .hbtn:hover{background:rgba(255,255,255,.22)}
+  .hbtn.pri{background:#fff;color:var(--brand-2);border-color:#fff}
+  #searchForm{display:flex;gap:6px;flex:1 1 260px;min-width:0}
+  #searchForm input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-s);padding:8px 12px;font-size:14px;background:rgba(255,255,255,.96);color:var(--fg)}
+  #searchForm button{border:0;border-radius:var(--radius-s);padding:8px 14px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+
+  /* ===== 主區:地圖 + 面板 ===== */
+  #main{flex:1;min-height:0;display:flex;flex-direction:column}
+  #mapWrap{flex:1;min-height:180px;position:relative;background:#cfd9cf}
+  #map{position:absolute;inset:0}
+  #status{position:absolute;left:12px;bottom:36px;z-index:800;background:rgba(28,38,32,.86);color:#fff;border-radius:999px;padding:5px 12px;font-size:12px;max-width:min(70vw,420px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(4px)}
+  .leaflet-bar{border:0!important;box-shadow:var(--shadow-s)!important;border-radius:10px!important;overflow:hidden}
+  .leaflet-bar a,.btn-locate{background:#fff!important;color:#2a3a30!important;border-bottom:1px solid var(--line)!important}
+  .leaflet-control-zoom a{width:40px!important;height:40px!important;line-height:40px!important;font-size:20px!important;font-weight:400!important}
+  .btn-locate{width:40px!important;height:40px!important;line-height:40px!important;font-size:20px;text-align:center;cursor:pointer;border-bottom:0!important}
+  .btn-locate.on{color:var(--brand)!important;font-weight:700}
+  .leaflet-control-layers{border:0!important;box-shadow:var(--shadow-s)!important;border-radius:10px!important;font-size:13px}
+  .leaflet-control-layers-toggle{width:40px!important;height:40px!important}
+  .leaflet-control-scale-line{border-color:#2a3a30!important;color:#2a3a30;background:rgba(255,255,255,.75)!important;font-family:var(--font)}
+  .leaflet-control-attribution{font-family:var(--font);font-size:10px!important;background:rgba(255,255,255,.75)!important;border-radius:6px 0 0 0}
+  .seg{display:flex;background:#fff;border-radius:10px;box-shadow:var(--shadow-s);overflow:hidden;margin:10px 0 0 10px!important}
+  .seg button{border:0;background:#fff;padding:8px 12px;font-size:13px;font-weight:500;color:#2a3a30;border-right:1px solid var(--line);cursor:pointer}
   .seg button:last-child{border-right:0}
   .seg button.on{background:var(--brand);color:#fff}
-  header{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--brand);color:#fff}
-  header h1{font-size:16px;margin:0;white-space:nowrap}
-  header select{flex:1;min-width:0;border:0;border-radius:6px;padding:8px 6px;font-size:15px;background:#fff;color:#000}
-  header button{border:0;border-radius:6px;padding:8px 10px;background:var(--brand2);color:#fff;font-size:15px}
-  #searchForm{display:flex;gap:6px;padding:6px 8px;background:#e8f5e9}
-  #searchForm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:15px}
-  #searchForm button{border:0;border-radius:6px;padding:7px 12px;background:var(--brand);color:#fff;font-size:15px}
-  #mapWrap{flex:1;min-height:120px;position:relative}
-  #map{position:absolute;inset:0}
-  #status{position:absolute;left:10px;bottom:34px;z-index:800;background:rgba(255,255,255,.92);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--muted);max-width:70vw}
-  .btn-locate{width:44px!important;height:44px!important;line-height:44px!important;font-size:22px;text-align:center;background:#fff;cursor:pointer}
-  .btn-locate.on{color:var(--brand)}
-  .leaflet-control-layers{font-size:14px}
-  .leaflet-control-zoom a{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px}
-  /* 專案面板 */
-  #panel{border-top:2px solid var(--brand);background:#fff;max-height:42vh;display:flex;flex-direction:column;transition:max-height .2s}
-  #panel.big{max-height:80vh}
-  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:14px}
-  #panel .bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .bar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:13px;white-space:nowrap}
-  #body{overflow-y:auto;overflow-x:hidden;padding:0 10px 8px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
-  .form{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;padding:4px 0 8px}
-  .form label{font-size:12px;color:var(--muted);display:block}
-  .form input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:15px}
+  .leaflet-popup-content-wrapper{border-radius:12px;box-shadow:var(--shadow);font-family:var(--font)}
+  .leaflet-popup-content{margin:12px 14px}
+  .pop{font-size:14px;line-height:1.5;min-width:210px}
+  .pop b{font-size:15px;color:var(--brand-ink)}
+  .pop small{color:var(--muted)}
+  .pop .btn{display:block;margin-top:7px;width:100%;border:0;border-radius:var(--radius-s);padding:9px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  .pop .btn.del{background:var(--danger)}.pop .btn.nav{background:var(--blue)}
+
+  /* ===== 專案面板 ===== */
+  #panel{background:var(--surface);display:flex;flex-direction:column;max-height:44vh;border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08);transition:max-height .2s;border-radius:16px 16px 0 0}
+  #panel.big{max-height:82vh}
+  #panel::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line2);margin:8px auto 0}
+  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 14px 4px}
+  #panel .bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;font-weight:700;color:var(--brand-ink)}
+  .bar button{border:1px solid var(--line2);background:var(--surface);border-radius:var(--radius-s);padding:6px 10px;font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap;cursor:pointer}
+  .bar button:hover{background:var(--surface2)}
+  .bar button#delProj{color:var(--danger);border-color:#f0c9c9}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:4px 14px 10px}
+  .stats span{background:var(--brand-soft);border:1px solid #cfe3d5;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600;color:var(--brand-ink);text-align:center;line-height:1.3}
+  #body{overflow-y:auto;overflow-x:hidden;padding:0 14px 14px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  .form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;padding:6px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
   .form[hidden]{display:none}
+  .form label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px;font-weight:500}
+  .form input{width:100%;border:1px solid var(--line2);border-radius:var(--radius-s);padding:9px 10px;font-size:15px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  .form input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,95,58,.15)}
   .form .full{grid-column:1/-1}
-  .form .ro{background:#f5f5f5;font-weight:600;color:var(--brand2)}
-  .item{padding:8px 0;border-top:1px solid var(--line);font-size:14px}
-  .item .row{display:flex;align-items:center;gap:6px}
+  .form .ro{background:var(--surface2);font-weight:700;color:var(--brand-ink)}
+  .item{padding:12px;border:1px solid var(--line);border-radius:var(--radius);margin-top:10px;background:var(--surface);box-shadow:0 1px 2px rgba(20,40,28,.04)}
+  .item .row{display:flex;align-items:center;gap:8px}
   .item .t{flex:1;min-width:0;cursor:pointer}
-  .item .t b{font-size:15px;word-break:break-all}
-  .item .t small{display:block;color:var(--muted);font-size:12px}
-  .item input.ton{width:74px;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:15px;text-align:right}
+  .item .t b{font-size:15px;color:var(--brand-ink);word-break:break-all;line-height:1.35}
+  .item .t small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .item input.ton{width:76px;border:1px solid var(--line2);border-radius:var(--radius-s);padding:8px;font-size:15px;text-align:right;font-weight:600}
+  .item input.ton:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,95,58,.15)}
   .item .unit{font-size:12px;color:var(--muted)}
-  .item .del{border:0;background:#fbe9e7;color:#c62828;border-radius:6px;padding:6px 9px;font-size:13px}
-  .item .acts{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap}
-  .item .acts button,.item .acts label{border:0;border-radius:6px;padding:6px 10px;font-size:13px;color:#fff;background:var(--blue)}
+  .item .del{border:0;background:var(--danger-soft);color:var(--danger);border-radius:var(--radius-s);padding:8px 10px;font-size:13px;font-weight:500;cursor:pointer}
+  .item .acts{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+  .item .acts button,.item .acts label{border:0;border-radius:var(--radius-s);padding:8px 12px;font-size:13px;font-weight:600;color:#fff;background:var(--blue);cursor:pointer}
   .item .acts label{background:var(--brand)}
   .item .acts label input{display:none}
-  .thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#eee}
-  .thumbs .up{width:72px;height:72px;border-radius:6px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center}
-  .empty{padding:10px 0;color:var(--muted);font-size:13px}
-  .pop{font-size:14px;line-height:1.5;min-width:190px}
-  .pop b{font-size:16px}
-  .pop .btn{display:block;margin-top:6px;width:100%;border:0;border-radius:6px;padding:8px;background:var(--sel);color:#fff;font-size:15px}
-  .pop .btn.del{background:#c62828}.pop .btn.nav{background:var(--blue)}
-  #dlg,#viewer{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:flex-end}
-  #dlg .box{background:#fff;width:100%;border-radius:14px 14px 0 0;padding:14px 14px 24px;max-height:85vh;overflow:auto}
-  #dlg h3{margin:0 0 8px;font-size:16px}
-  #dlg p{font-size:13px;color:var(--muted);margin:6px 0}
-  #dlg input{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px;font-size:14px}
-  #dlg .row{display:flex;gap:6px;margin-top:10px}
-  #dlg .row button{flex:1;border:0;border-radius:6px;padding:10px;font-size:15px;background:var(--brand);color:#fff}
-  #dlg .row button.sec{background:#eee;color:#333}
-  #viewer{background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .thumbs img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#eee;cursor:zoom-in}
+  .empty{padding:18px 12px;color:var(--muted);font-size:13px;text-align:center;border:1px dashed var(--line2);border-radius:var(--radius);margin-top:10px;line-height:1.6}
+
+  /* ===== 對話框 ===== */
+  #dlg,#viewer{position:fixed;inset:0;background:rgba(15,25,18,.5);z-index:2000;display:none;align-items:flex-end;justify-content:center}
+  #dlg .box{background:var(--surface);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
+  #dlg h3{margin:0 0 8px;font-size:17px;color:var(--brand-ink)}
+  #dlg p{font-size:13px;color:var(--muted);margin:6px 0;line-height:1.6}
+  #dlg input{width:100%;border:1px solid var(--line2);border-radius:var(--radius-s);padding:10px;font-size:15px}
+  #dlg input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,95,58,.15)}
+  #dlg .row{display:flex;gap:8px;margin-top:10px}
+  #dlg .row button{flex:1;border:0;border-radius:var(--radius-s);padding:11px;font-size:14px;font-weight:600;background:var(--brand);color:#fff;cursor:pointer}
+  #dlg .row button.sec{background:var(--surface2);color:var(--fg);border:1px solid var(--line2)}
+  #viewer{background:rgba(0,0,0,.94);align-items:center;flex-direction:column}
   #viewer img{max-width:100%;max-height:80vh;object-fit:contain}
-  #viewer .vb{display:flex;gap:10px;margin-top:10px}
-  #viewer .vb button{border:0;border-radius:6px;padding:10px 16px;font-size:15px;background:#fff}
-  #viewer .vb button.del{background:#c62828;color:#fff}
-  #viewer .cap{color:#fff;font-size:13px;margin-top:6px}
+  #viewer .vb{display:flex;gap:10px;margin-top:12px}
+  #viewer .vb button{border:0;border-radius:var(--radius-s);padding:10px 18px;font-size:14px;font-weight:600;background:#fff;cursor:pointer}
+  #viewer .vb button.del{background:var(--danger);color:#fff}
+  #viewer .cap{color:#fff;font-size:13px;margin-top:8px}
+
+  /* ===== 電腦版:地圖左、面板右 ===== */
+  @media (min-width: 900px){
+    header{padding:10px 20px;flex-wrap:nowrap}
+    .brand h1{font-size:18px}
+    #main{flex-direction:row}
+    #mapWrap{min-height:0}
+    #panel{width:440px;max-height:none;height:100%;border-top:0;border-left:1px solid var(--line);border-radius:0;box-shadow:-4px 0 16px rgba(0,0,0,.06)}
+    #panel.big{max-height:none;width:560px}
+    #panel::before{display:none}
+    #panel .bar{padding:14px 18px 6px}
+    .stats{padding:4px 18px 12px}
+    #body{padding:0 18px 18px}
+    #dlg{align-items:center}
+    #dlg .box{border-radius:16px;padding:22px}
+    #status{bottom:12px;left:50%;transform:translateX(-50%)}
+  }
+  @media (max-width: 480px){
+    .stats span{font-size:12px;padding:7px 6px}
+    .brand small{display:none}
+  }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>🌾 撒肥定位</h1>
-    <select id="projSel"></select>
-    <button id="newProj" title="新增專案">＋</button>
-    <button id="menuBtn" title="雲端 / 匯出匯入">☁</button>
+    <div class="brand"><div class="logo">🌾</div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
+    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri" id="newProj" title="新增專案">＋ 新增</button></div>
+    <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
+    <button class="hbtn" id="menuBtn" title="雲端同步 / 匯出匯入">☁ 雲端</button>
   </header>
-  <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-  <div id="mapWrap"><div id="map"></div><div id="status">載入中…</div></div>
-  <div id="panel">
-    <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="delProj">刪除</button></div>
-    <div class="stats" id="stats"></div>
-    <div id="body">
-      <div class="form" id="form">
-        <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
-        <div><label>申報日期</label><input id="f_date" type="date"></div>
-        <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
-        <div><label>肥料品目</label><input id="f_product" list="dl_product" placeholder="例:有機肥料2號(粉)"><datalist id="dl_product"></datalist></div>
-        <div><label>肥料重量(每塊田預設,噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
-        <div><label>總噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
-        <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+  <div id="main">
+    <div id="mapWrap"><div id="map"></div><div id="status">載入中…</div></div>
+    <div id="panel">
+      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="delProj">刪除</button></div>
+      <div class="stats" id="stats"></div>
+      <div id="body">
+        <div class="form" id="form">
+          <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
+          <div><label>申報日期</label><input id="f_date" type="date"></div>
+          <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
+          <div><label>肥料品目</label><input id="f_product" list="dl_product" placeholder="例:有機肥料2號(粉)"><datalist id="dl_product"></datalist></div>
+          <div><label>肥料重量(每塊田預設,噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
+          <div><label>總噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
+          <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+        </div>
+        <div id="list"></div>
       </div>
-      <div id="list"></div>
     </div>
   </div>
 </div>
 
 <div id="dlg"><div class="box">
   <h3>☁ 雲端同步 / 匯出匯入</h3>
-  <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機輸入同一組同步碼就能讀到同樣的專案與照片。</p>
+  <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機或電腦輸入同一組同步碼就能讀到同樣的專案與照片。</p>
   <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
   <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
   <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
@@ -246,7 +306,7 @@ function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); refreshTotals(); refreshMarker(f); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
   document.getElementById('f_total').value = fmtT(tons(p))+' 噸'; document.getElementById('projTitle').textContent=(p.customer||p.name);
-  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃 · ${(area/FEN).toFixed(1)} 分${unknown?`(${unknown} 塊待查)`:''}</span><span>⚖️ ${fmtT(tons(p))} 噸</span>`; }
+  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
@@ -260,6 +320,7 @@ function setFormOpen(open){ document.getElementById('form').hidden=!open; docume
 document.getElementById('toggleForm').onclick=()=>setFormOpen(document.getElementById('form').hidden);
 setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
 document.getElementById('bigBtn').onclick=e=>{ const big=document.getElementById('panel').classList.toggle('big'); e.target.textContent=big?'清單 ⤡':'清單 ⤢'; setTimeout(()=>map.invalidateSize(),250); };
+window.addEventListener('resize', ()=>map.invalidateSize());
 
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
