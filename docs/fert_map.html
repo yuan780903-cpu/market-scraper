@@ -37,6 +37,16 @@
   #searchForm input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-s);padding:8px 12px;font-size:14px;background:rgba(255,255,255,.96);color:var(--fg)}
   #searchForm button{border:0;border-radius:var(--radius-s);padding:8px 14px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
 
+  /* ===== 搜尋候選 ===== */
+  #sres{position:absolute;top:8px;left:10px;right:10px;z-index:1200;background:#fff;border-radius:12px;box-shadow:var(--shadow);max-height:52vh;overflow:auto;display:none}
+  #sres .sr{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+  #sres .sr:hover{background:var(--surface2)}
+  #sres .sr .ic{font-size:18px;flex:none}
+  #sres .sr .n{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--brand-ink)}
+  #sres .sr .n small{display:block;font-weight:400;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sres .src{padding:6px 12px;font-size:11px;color:var(--muted);background:var(--surface2)}
+  @media (min-width:900px){ #sres{left:50%;right:auto;transform:translateX(-50%);width:480px} }
+
   /* ===== 主區:地圖 + 面板 ===== */
   #main{flex:1;min-height:0;display:flex;flex-direction:column}
   #mapWrap{flex:1;min-height:180px;position:relative;background:#cfd9cf}
@@ -199,7 +209,7 @@
     <button class="hbtn" id="menuBtn" title="雲端同步 / 匯出匯入">☁ 雲端</button>
   </header>
   <div id="main">
-    <div id="mapWrap"><div id="map"></div><div id="here"></div><div id="status">載入中…</div></div>
+    <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
       <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj">刪除</button></div>
       <div class="stats" id="stats"></div>
@@ -239,7 +249,9 @@
   <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
   <div class="row"><button class="sec" id="expFile">📁 匯出檔案(JSON)</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
-  <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
+  <p style="margin-top:14px"><b>Google 地圖搜尋(選填)</b>:填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌(每月 5,000 次內免費)。申請步驟見 README。沒填則用免費的 OpenStreetMap 資料。</p>
+  <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
+  <div class="row"><button id="saveGkey">儲存金鑰</button><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
 <div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()">🖨 列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
@@ -320,15 +332,36 @@ async function queryParcelLite(lat,lng){ const xml=await (await fetch(`${PROXY}/
   return `${g('ctyName')}${g('townName')} ${g('sectName')} ${fmtNo(q.landno)} 地號`; }
 function refreshHereMarkers(){ Object.values(cur().fields).forEach(f=>{ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }); }
 
-// ================= 地址搜尋 =================
+// ================= 地址 / 地標搜尋(Google Places 優先,免費來源備援) =================
 let searchPin=null;
+const gkey=()=> (localStorage.getItem('fertmap_gkey')||'').trim();
+async function searchGoogle(q){ const c=map.getCenter();
+  const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':gkey(),'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location'},
+    body:JSON.stringify({textQuery:q, languageCode:'zh-TW', regionCode:'TW', pageSize:8, locationBias:{circle:{center:{latitude:c.lat,longitude:c.lng},radius:50000}}})});
+  const j=await r.json(); if(!r.ok) throw new Error((j.error&&j.error.message)||('Google 回應 '+r.status));
+  return (j.places||[]).map(x=>({name:x.displayName&&x.displayName.text||q, addr:x.formattedAddress||'', lat:x.location.latitude, lng:x.location.longitude, src:'Google'})); }
+async function searchFree(q){ const c=map.getCenter(); const out=[];
+  const [n,ph]=await Promise.allSettled([
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=tw&accept-language=zh-TW&q=${encodeURIComponent(q)}`).then(r=>r.json()),
+    fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lat=${c.lat}&lon=${c.lng}`).then(r=>r.json()) ]);
+  if(n.status==='fulfilled') n.value.forEach(x=>out.push({name:(x.display_name||'').split(',')[0], addr:x.display_name||'', lat:+x.lat, lng:+x.lon, src:'OSM'}));
+  if(ph.status==='fulfilled') (ph.value.features||[]).forEach(f=>{ const pr=f.properties||{}; if((pr.country||'')!=='Taiwan'&&(pr.countrycode||'')!=='TW') return; const [lng,lat]=f.geometry.coordinates; if(out.some(o=>Math.abs(o.lat-lat)<0.0005&&Math.abs(o.lng-lng)<0.0005)) return; out.push({name:pr.name||pr.street||q, addr:[pr.state,pr.county,pr.city,pr.district,pr.street,pr.housenumber].filter(Boolean).join(''), lat, lng, src:'OSM'}); });
+  return out; }
+function showResults(list, note){ const el=document.getElementById('sres'); if(!list.length){ el.style.display='none'; return; }
+  el.innerHTML = list.map((r,i)=>`<div class="sr" onclick="pickResult(${i})"><span class="ic">📍</span><div class="n">${esc(r.name)}<small>${esc(r.addr)}</small></div></div>`).join('') + `<div class="src">${esc(note)} · 點選即定位;點地圖可關閉</div>`;
+  el.style.display='block'; window._sres=list; }
+function pickResult(i){ const r=window._sres[i]; if(!r) return; document.getElementById('sres').style.display='none';
+  if(searchPin) searchPin.remove(); searchPin=L.marker([r.lat,r.lng]).addTo(map).bindPopup(`<b>${esc(r.name)}</b><br><small>${esc(r.addr)}</small>`).openPopup();
+  map.setView([r.lat,r.lng],17); setStatus('已定位:'+r.name+',點田即可查地號'); }
+map.on('click', ()=>{ document.getElementById('sres').style.display='none'; });
 document.getElementById('searchForm').addEventListener('submit', async e=>{
-  e.preventDefault(); const q=document.getElementById('q').value.trim(); if(!q) return; setStatus('搜尋中…');
-  try{ const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=tw&accept-language=zh-TW&q=${encodeURIComponent(q)}`);
-    const j=await r.json(); if(!j.length){ setStatus('找不到:'+q); return; }
-    const ll=[+j[0].lat,+j[0].lon]; if(searchPin) searchPin.remove();
-    searchPin=L.marker(ll).addTo(map).bindPopup(j[0].display_name).openPopup(); map.setView(ll,17); setStatus('已定位,點田即可查地號');
-  }catch(err){ setStatus('搜尋失敗,請檢查網路'); }
+  e.preventDefault(); const q=document.getElementById('q').value.trim(); if(!q) return; setStatus('搜尋中…'); document.getElementById('q').blur();
+  try{ let list=[], note='';
+    if(gkey()){ try{ list=await searchGoogle(q); note='Google 地圖搜尋結果'; }catch(err){ setStatus('Google 搜尋失敗('+err.message+'),改用免費來源'); } }
+    if(!list.length){ list=await searchFree(q); note=gkey()?'Google 無結果,改用免費地圖資料':'免費地圖資料(OpenStreetMap);要更準請在 ☁ 設定 Google 金鑰'; }
+    if(!list.length){ setStatus('找不到:'+q+'。試試加上縣市,或用 ☁ 設定 Google 金鑰'); return; }
+    window._sres=list; if(list.length===1) pickResult(0); else { showResults(list, note); setStatus(`找到 ${list.length} 筆,請點選`); }
+  }catch(err){ setStatus('搜尋失敗:'+err.message); }
 });
 
 // ================= 點地圖 → 查地號 =================
@@ -523,7 +556,8 @@ document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementByI
 // ================= 雲端同步 / 匯出匯入 =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
 const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
-document.getElementById('menuBtn').onclick=()=>{ document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
+document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim()); msg(gkey()?'已儲存 Google 金鑰,搜尋改用 Google':'已清除 Google 金鑰'); };
+document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gkey').value=gkey(); document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
 document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
 document.getElementById('saveSync').onclick=async()=>{ const c=document.getElementById('syncCode').value.trim(); if(c.length<6){ msg('同步碼至少 6 個字'); return; }
   localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
