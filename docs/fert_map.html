@@ -8,8 +8,14 @@
 <style>
   :root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--brand:#2e7d32;--brand2:#1b5e20;--sel:#f57c00;--blue:#1565c0}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--fg)}
-  #app{display:flex;flex-direction:column;height:100%}
+  html,body{margin:0;height:100%;overflow-x:hidden;width:100%;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--fg)}
+  #app{display:flex;flex-direction:column;height:100%;width:100%;overflow:hidden}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;padding:0 10px 6px;font-size:13px;color:var(--brand2);font-weight:600}
+  .stats span{background:#e8f5e9;border-radius:6px;padding:3px 8px}
+  .seg{display:flex;background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.35);overflow:hidden}
+  .seg button{border:0;background:#fff;padding:7px 9px;font-size:13px;color:#333;border-right:1px solid #ddd}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--brand);color:#fff}
   header{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--brand);color:#fff}
   header h1{font-size:16px;margin:0;white-space:nowrap}
   header select{flex:1;min-width:0;border:0;border-radius:6px;padding:8px 6px;font-size:15px;background:#fff;color:#000}
@@ -30,7 +36,7 @@
   #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:14px}
   #panel .bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:13px;white-space:nowrap}
-  #body{overflow:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
+  #body{overflow-y:auto;overflow-x:hidden;padding:0 10px 8px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .form{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;padding:4px 0 8px}
   .form label{font-size:12px;color:var(--muted);display:block}
   .form input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:15px}
@@ -40,7 +46,7 @@
   .item{padding:8px 0;border-top:1px solid var(--line);font-size:14px}
   .item .row{display:flex;align-items:center;gap:6px}
   .item .t{flex:1;min-width:0;cursor:pointer}
-  .item .t b{font-size:15px}
+  .item .t b{font-size:15px;word-break:break-all}
   .item .t small{display:block;color:var(--muted);font-size:12px}
   .item input.ton{width:74px;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:15px;text-align:right}
   .item .unit{font-size:12px;color:var(--muted)}
@@ -85,6 +91,7 @@
   <div id="mapWrap"><div id="map"></div><div id="status">載入中…</div></div>
   <div id="panel">
     <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="delProj">刪除</button></div>
+    <div class="stats" id="stats"></div>
     <div id="body">
       <div class="form" id="form">
         <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
@@ -122,16 +129,23 @@ const via = u => `${PROXY}/?url=${encodeURIComponent(u)}`;
 
 // ================= 圖層 =================
 const NLSC = (layer, opt={}) => L.tileLayer(`https://wmts.nlsc.gov.tw/wmts/${layer}/default/GoogleMapsCompatible/{z}/{y}/{x}`,
-  Object.assign({maxZoom:21, maxNativeZoom:19, attribution:'© 內政部國土測繪中心'}, opt));
+  Object.assign({maxZoom:21, maxNativeZoom:19, attribution:'© 國土測繪中心'}, opt));
 const gSat  = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
 const gRoad = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
 const photo = NLSC('PHOTO2'), emap = NLSC('EMAP');
 const cadastre = L.tileLayer(`${PROXY}/landmaps.nlsc.gov.tw/S_Maps/wmts/DMAPS/default/EPSG:3857/{z}/{y}/{x}`,
-  {minZoom:15, maxZoom:21, maxNativeZoom:20, opacity:.9, attribution:'地籍圖 © 國土測繪中心(僅供參考)'});
+  {minZoom:15, maxZoom:21, maxNativeZoom:20, opacity:.9, attribution:'地籍圖僅供參考'});
 const section = NLSC('LANDSECT',{minZoom:13, opacity:.9});
-const map = L.map('map',{zoomControl:false, layers:[gSat, cadastre]}).setView([23.165,120.235], 17);
+const map = L.map('map',{zoomControl:false, attributionControl:false, layers:[gSat, cadastre]}).setView([23.165,120.235], 17);
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({imperial:false, position:'bottomleft'}).addTo(map);
+L.control.attribution({prefix:false, position:'bottomright'}).addTo(map);
+const BASES={'Google 衛星':gSat,'國土正射':photo,'電子地圖':emap};
+const Seg=L.Control.extend({ onAdd(){ const d=L.DomUtil.create('div','seg'); L.DomEvent.disableClickPropagation(d);
+  Object.entries(BASES).forEach(([n,l])=>{ const b=L.DomUtil.create('button','',d); b.textContent=n; b.dataset.n=n; b.onclick=()=>{ Object.values(BASES).forEach(x=>map.removeLayer(x)); map.removeLayer(gRoad); l.addTo(map); l.bringToBack(); segSync(); }; }); return d; } });
+new Seg({position:'topleft'}).addTo(map);
+function segSync(){ document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on', map.hasLayer(BASES[b.dataset.n]))); }
+map.on('baselayerchange', segSync); setTimeout(segSync,0);
 L.control.layers({'Google 衛星':gSat,'Google 街道':gRoad,'正射影像(國土測繪)':photo,'電子地圖(國土測繪)':emap},
   {'地籍圖(地號界線)':cadastre,'段籍圖':section},{position:'topright',collapsed:true}).addTo(map);
 
@@ -179,12 +193,16 @@ async function queryParcel(lat, lng){
   if(!p.landno) throw new Error(p.msg||'查無地號');
   const parcel = { key:`${p.office}${p.sect}${p.landno}`, office:p.office, sect:p.sect, landno:p.landno, no:fmtNo(p.landno),
     officeName:b64(p.officeStr), sectName:b64(p.sectStr), cty:g('ctyName'), town:g('townName'),
-    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[] };
+    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[], area:null };
+  parcel.area = await fetchArea(parcel);
   const iq = `https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=2&office=${p.office}&sect=${p.sect}&landno=${p.landno}&imgflag=1&alpah=0.5f&callback=cb`;
   for(let i=0;i<5;i++){ const rows=(await jsonp(iq))[0]||[]; const im=rows.find(x=>x.image);
     if(im){ parcel.image='data:image/png;base64,'+im.image; parcel.bbox=[[+im.ly,+im.lx],[+im.ry,+im.rx]]; break; } await sleep(700); }
   return parcel;
 }
+async function fetchArea(f){ try{ const r=await (await fetch(via('https://api.nlsc.gov.tw/S09_Ralid/getLandInfo'),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`city=${f.office[0]}&sect=${f.sect}&landno=${f.landno}`})).json(); const a=r&&r.ralid&&+r.ralid.AA10; return a>0?a:null; }catch{ return null; } }
+const FEN=969.917; // 1 分 = 969.917 m²(1 甲 = 10 分)
+const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} 公頃(${(m2/FEN).toFixed(1)} 分)`;
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
   if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田查地號(目前 '+map.getZoom()+')'); return; }
@@ -199,7 +217,7 @@ function drawParcel(p,color){ return p.image ? L.imageOverlay(p.image,p.bbox,{op
 const fullName = p => `${p.cty}${p.town} ${p.sectName} ${p.no} 地號`;
 const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.center[0]},${p.center[1]}&travelmode=driving`;
 function popupHTML(p, sel){
-  return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所</small>
+  return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
     ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}
     <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button></div>`;
 }
@@ -213,7 +231,7 @@ function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'
 function migrate(d){ // 舊版公斤 → 噸(只做一次)
   if(d.unit==='t') return;
   d.projects.forEach(p=>{ if(p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
-    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; }); });
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(f.area===undefined) f.area=null; }); });
   d.unit='t'; }
 function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', product:'', weight:'', date:new Date().toISOString().slice(0,10), note:'', fields:{}, updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
@@ -226,7 +244,9 @@ const fmtT = v => (Math.round(v*1000)/1000).toString();
 function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); refreshTotals(); refreshMarker(f); autoSync(); } }
-function refreshTotals(){ const p=cur(); document.getElementById('f_total').value = fmtT(tons(p))+' 噸'; document.getElementById('projTitle').textContent=(p.customer||p.name)+' · '+fmtT(tons(p))+' 噸'; }
+function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
+  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'; document.getElementById('projTitle').textContent=(p.customer||p.name);
+  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃 · ${(area/FEN).toFixed(1)} 分${unknown?`(${unknown} 塊待查)`:''}</span><span>⚖️ ${fmtT(tons(p))} 噸</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
@@ -242,7 +262,7 @@ setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
 document.getElementById('bigBtn').onclick=e=>{ const big=document.getElementById('panel').classList.toggle('big'); e.target.textContent=big?'清單 ⤡':'清單 ⤢'; setTimeout(()=>map.invalidateSize(),250); };
 
 // ---- 畫面 ----
-const layers={};
+const layers={}, areaTried=new Set();
 const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const g=L.layerGroup([drawParcel(f,'#f57c00'), L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
@@ -260,7 +280,7 @@ function render(){
   Object.values(p.fields).forEach(f=>{ if(!layers[f.key]) addLayer(f); });
   const arr=Object.values(p.fields);
   document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
-      <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${esc(f.officeName)}地政事務所 · 點此在地圖顯示</small></div>
+      <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸</span>
         <button class="del" onclick="unselect('${f.key}')">移除</button></div>
       <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
@@ -270,6 +290,7 @@ function render(){
     </div>`).join('')
     : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>');
   arr.forEach(f=>(f.photos||[]).forEach(ph=>showThumb(f.key, ph.id)));
+  arr.filter(f=>!f.area&&!areaTried.has(f.key)).forEach(async f=>{ areaTried.add(f.key); const a=await fetchArea(f); if(a){ f.area=a; persist(); if(cur().fields[f.key]===f) render(); } });
 }
 
 // ================= 照片(本機 IndexedDB + 雲端) =================
