@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>撒肥定位</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--brand:#2e7d32;--brand2:#1b5e20;--sel:#f57c00}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--fg)}
+  #app{display:flex;flex-direction:column;height:100%}
+  header{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--brand);color:#fff}
+  header h1{font-size:16px;margin:0;white-space:nowrap}
+  header select{flex:1;min-width:0;border:0;border-radius:6px;padding:8px 6px;font-size:15px;background:#fff;color:#000}
+  header button{border:0;border-radius:6px;padding:8px 10px;background:var(--brand2);color:#fff;font-size:15px}
+  #searchForm{display:flex;gap:6px;padding:6px 8px;background:#e8f5e9}
+  #searchForm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:15px}
+  #searchForm button{border:0;border-radius:6px;padding:7px 12px;background:var(--brand);color:#fff;font-size:15px}
+  #map{flex:1;min-height:0}
+  #status{position:absolute;left:10px;bottom:34px;z-index:800;background:rgba(255,255,255,.92);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--muted);max-width:70vw}
+  .btn-locate{width:44px!important;height:44px!important;line-height:44px!important;font-size:22px;text-align:center;background:#fff;cursor:pointer}
+  .btn-locate.on{color:var(--brand)}
+  .leaflet-control-layers{font-size:14px}
+  .leaflet-control-zoom a{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px}
+  /* 專案面板 */
+  #panel{border-top:2px solid var(--brand);background:#fff;max-height:46vh;display:flex;flex-direction:column}
+  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:14px;flex-wrap:wrap}
+  #panel .bar b{flex:1;white-space:nowrap}
+  .bar button,.tools button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:13px}
+  #body{overflow:auto;padding:0 10px 8px}
+  .form{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;padding:4px 0 8px}
+  .form label{font-size:12px;color:var(--muted);display:block}
+  .form input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:15px}
+  .form .full{grid-column:1/-1}
+  .form .ro{background:#f5f5f5;font-weight:600;color:var(--brand2)}
+  .item{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+  .item .t{flex:1;min-width:0}
+  .item .t small{display:block;color:var(--muted);font-size:12px}
+  .item input{width:78px;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:15px;text-align:right}
+  .item .del{border:0;background:#fbe9e7;color:#c62828;border-radius:6px;padding:6px 9px;font-size:13px}
+  .empty{padding:10px 0;color:var(--muted);font-size:13px}
+  .tools{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+  .pop{font-size:14px;line-height:1.5;min-width:180px}
+  .pop b{font-size:16px}
+  .pop .btn{display:block;margin-top:6px;width:100%;border:0;border-radius:6px;padding:8px;background:var(--sel);color:#fff;font-size:15px}
+  .pop .btn.del{background:#c62828}
+  #dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:flex-end}
+  #dlg .box{background:#fff;width:100%;border-radius:14px 14px 0 0;padding:14px 14px 24px;max-height:85vh;overflow:auto}
+  #dlg h3{margin:0 0 8px;font-size:16px}
+  #dlg p{font-size:13px;color:var(--muted);margin:6px 0}
+  #dlg input{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px;font-size:14px}
+  #dlg .row{display:flex;gap:6px;margin-top:10px}
+  #dlg .row button{flex:1;border:0;border-radius:6px;padding:10px;font-size:15px;background:var(--brand);color:#fff}
+  #dlg .row button.sec{background:#eee;color:#333}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🌾 撒肥定位</h1>
+    <select id="projSel"></select>
+    <button id="newProj" title="新增專案">＋</button>
+    <button id="menuBtn" title="雲端 / 匯出匯入">☁</button>
+  </header>
+  <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
+  <div id="map"></div>
+  <div id="panel">
+    <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="delProj">刪除專案</button></div>
+    <div id="body">
+      <div class="form" id="form">
+        <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
+        <div><label>申報日期</label><input id="f_date" type="date"></div>
+        <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
+        <div><label>肥料品目</label><input id="f_product" list="dl_product" placeholder="例:有機肥料2號(粉)"><datalist id="dl_product"></datalist></div>
+        <div><label>肥料重量(每塊田預設 kg)</label><input id="f_weight" type="number" inputmode="decimal" placeholder="例:500"></div>
+        <div><label>總噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
+        <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+      </div>
+      <div id="list"></div>
+    </div>
+  </div>
+</div>
+<div id="status">載入中…</div>
+
+<div id="dlg"><div class="box">
+  <h3>☁ 雲端 / 匯出匯入</h3>
+  <div class="row"><button id="cloudUp">☁ 上傳雲端</button><button id="cloudDown">☁ 讀取雲端</button></div>
+  <div class="row"><button class="sec" id="expFile">📁 匯出檔案(JSON)</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
+  <input type="file" id="impInput" accept=".json,application/json" style="display:none">
+  <p>雲端網址(Google Apps Script 的 /exec,設定一次即可;做法見同資料夾 README)</p>
+  <input id="gasUrl" placeholder="https://script.google.com/macros/s/xxxx/exec">
+  <div class="row"><button id="saveGas">儲存設定</button><button class="sec" id="closeDlg">關閉</button></div>
+  <p id="dlgMsg"></p>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ================= 代理(國土測繪圖磚與地籍查詢需經此代理補 Referer) =================
+const PROXY='https://nlsc-proxy.yuan780903.workers.dev';
+const via = u => `${PROXY}/?url=${encodeURIComponent(u)}`;
+
+// ================= 圖層 =================
+const NLSC = (layer, opt={}) => L.tileLayer(`https://wmts.nlsc.gov.tw/wmts/${layer}/default/GoogleMapsCompatible/{z}/{y}/{x}`,
+  Object.assign({maxZoom:21, maxNativeZoom:19, attribution:'© 內政部國土測繪中心'}, opt));
+const gSat  = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
+const gRoad = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
+const photo = NLSC('PHOTO2'), emap = NLSC('EMAP');
+const cadastre = L.tileLayer(`${PROXY}/landmaps.nlsc.gov.tw/S_Maps/wmts/DMAPS/default/EPSG:3857/{z}/{y}/{x}`,
+  {minZoom:15, maxZoom:21, maxNativeZoom:20, opacity:.9, attribution:'地籍圖 © 國土測繪中心(僅供參考)'});
+const section = NLSC('LANDSECT',{minZoom:13, opacity:.9});
+
+const map = L.map('map',{zoomControl:false, layers:[gSat, cadastre]}).setView([23.165,120.235], 17);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.control.scale({imperial:false, position:'bottomleft'}).addTo(map);
+L.control.layers({'Google 衛星':gSat,'Google 街道':gRoad,'正射影像(國土測繪)':photo,'電子地圖(國土測繪)':emap},
+  {'地籍圖(地號界線)':cadastre,'段籍圖':section},{position:'topright',collapsed:true}).addTo(map);
+
+// ================= 我的位置 =================
+let me=null, meCircle=null, watchId=null;
+const Locate = L.Control.extend({ onAdd(){ const b=L.DomUtil.create('div','leaflet-bar btn-locate'); b.textContent='◎'; b.title='我的位置';
+  L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e); toggleLocate(b);}); return b; } });
+new Locate({position:'bottomright'}).addTo(map);
+function toggleLocate(btn){
+  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; btn.classList.remove('on'); setStatus('已停止定位'); return; }
+  if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; }
+  btn.classList.add('on'); setStatus('定位中…'); let first=true;
+  watchId=navigator.geolocation.watchPosition(p=>{
+    const ll=[p.coords.latitude,p.coords.longitude], acc=p.coords.accuracy;
+    if(!me){ me=L.circleMarker(ll,{radius:8,color:'#fff',weight:2,fillColor:'#1976d2',fillOpacity:1}).addTo(map);
+             meCircle=L.circle(ll,{radius:acc,color:'#1976d2',weight:1,fillOpacity:.12}).addTo(map); }
+    else { me.setLatLng(ll); meCircle.setLatLng(ll).setRadius(acc); }
+    if(first){ map.setView(ll, Math.max(map.getZoom(),17)); first=false; }
+    setStatus(`我的位置 ${ll[0].toFixed(5)}, ${ll[1].toFixed(5)}(誤差 ±${Math.round(acc)} m)`);
+  }, err=>{ setStatus('定位失敗:'+err.message); btn.classList.remove('on'); watchId=null; },
+  {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+}
+
+// ================= 地址搜尋 =================
+let searchPin=null;
+document.getElementById('searchForm').addEventListener('submit', async e=>{
+  e.preventDefault(); const q=document.getElementById('q').value.trim(); if(!q) return; setStatus('搜尋中…');
+  try{ const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=tw&accept-language=zh-TW&q=${encodeURIComponent(q)}`);
+    const j=await r.json(); if(!j.length){ setStatus('找不到:'+q); return; }
+    const ll=[+j[0].lat,+j[0].lon]; if(searchPin) searchPin.remove();
+    searchPin=L.marker(ll).addTo(map).bindPopup(j[0].display_name).openPopup(); map.setView(ll,17); setStatus('已定位,點田即可查地號');
+  }catch(err){ setStatus('搜尋失敗,請檢查網路'); }
+});
+
+// ================= 點地圖 → 查地號 =================
+const jsonp = async u => { const t=await (await fetch(via(u))).text(); const m=t.match(/^\s*\w*\((.*)\)\s*;?\s*$/s); return JSON.parse(m?m[1]:t); };
+const b64 = s => { try{ return decodeURIComponent(escape(atob(s))); }catch{ return s; } };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const fmtNo = n => { const s=String(n).padStart(8,'0'); const a=+s.slice(0,4), b=+s.slice(4); return b? `${a}-${b}` : String(a); };
+async function queryParcel(lat, lng){
+  const xml = await (await fetch(`${PROXY}/api.nlsc.gov.tw/other/TownVillagePointQuery/${lng}/${lat}/4326`)).text();
+  const g = tag => (xml.match(new RegExp(`<${tag}>([^<]*)<`))||[])[1]||'';
+  const cty=g('ctyCode'); if(!cty) throw new Error('此位置不在臺灣地籍範圍');
+  const r = (await jsonp(`https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=1&city=${cty}&x=${lng}&y=${lat}&alpah=0.5f&callback=cb`))[0]||[]; const p=r[0]||{};
+  if(!p.landno) throw new Error(p.msg||'查無地號');
+  const parcel = { key:`${p.office}${p.sect}${p.landno}`, office:p.office, sect:p.sect, landno:p.landno, no:fmtNo(p.landno),
+    officeName:b64(p.officeStr), sectName:b64(p.sectStr), cty:g('ctyName'), town:g('townName'),
+    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, kg:null };
+  const iq = `https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=2&office=${p.office}&sect=${p.sect}&landno=${p.landno}&imgflag=1&alpah=0.5f&callback=cb`;
+  for(let i=0;i<5;i++){ const rows=(await jsonp(iq))[0]||[]; const im=rows.find(x=>x.image);
+    if(im){ parcel.image='data:image/png;base64,'+im.image; parcel.bbox=[[+im.ly,+im.lx],[+im.ry,+im.rx]]; break; } await sleep(700); }
+  return parcel;
+}
+let previewLayer=null, lastParcel=null;
+map.on('click', async e=>{
+  if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田查地號(目前 '+map.getZoom()+')'); return; }
+  setStatus('查詢地號中…'); if(previewLayer){ previewLayer.remove(); previewLayer=null; }
+  try{ const p = await queryParcel(e.latlng.lat, e.latlng.lng); lastParcel=p;
+    previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
+    L.popup({maxWidth:260}).setLatLng(p.center).setContent(popupHTML(p, !!cur().fields[p.key])).openOn(map);
+    setStatus(`${p.cty}${p.town} ${p.sectName} ${p.no} 地號`);
+  }catch(err){ setStatus('查地號失敗:'+err.message); }
+});
+function drawParcel(p,color){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img'}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25}); }
+function popupHTML(p, sel){
+  return `<div class="pop"><b>${p.no} 地號</b><br>${p.cty}${p.town}<br>${p.sectName}(${p.officeName}地政)
+    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}</div>`;
+}
+
+// ================= 專案資料(存本機) =================
+const KEY='fertmap_projects_v1';
+let DB = load();
+function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&d.projects&&d.projects.length) return d; }catch{}
+  const p=newProject('專案 1'); return {curId:p.id, projects:[p]}; }
+function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', product:'', weight:'', date:new Date().toISOString().slice(0,10), note:'', fields:{}, updated:Date.now()}; }
+function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
+function save(){ cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); render(); }
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tons = p => Object.values(p.fields).reduce((s,f)=>s+(+f.kg||0),0)/1000;
+
+function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.kg = p.weight? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+lastParcel.no+' 地號'); }
+function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
+function setKg(key,v){ const f=cur().fields[key]; if(f){ f.kg = v===''?null:+v; cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); document.getElementById('f_total').value = tons(cur()).toFixed(3)+' 噸'; } }
+function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
+
+// ---- 表單綁定 ----
+const F={customer:'f_customer',date:'f_date',brand:'f_brand',product:'f_product',weight:'f_weight',note:'f_note'};
+Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; save(); }));
+document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; save(); const p=cur(); const fs=Object.values(p.fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
+document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); };
+document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
+document.getElementById('toggleForm').onclick=e=>{ const f=document.getElementById('form'); f.hidden=!f.hidden; e.target.textContent=f.hidden?'資料 ▸':'資料 ▾'; };
+
+// ---- 畫面 ----
+const layers={};
+function render(){
+  const p=cur();
+  const sel=document.getElementById('projSel');
+  sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.customer||x.name)}(${Object.keys(x.fields).length}田)</option>`).join('');
+  document.getElementById('projTitle').textContent=(p.customer||p.name)+' · '+tons(p).toFixed(2)+' 噸';
+  Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||'');
+  document.getElementById('f_total').value=tons(p).toFixed(3)+' 噸';
+  const all=DB.projects; const uniq=k=>[...new Set(all.map(x=>x[k]).filter(Boolean))];
+  document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
+  document.getElementById('dl_product').innerHTML=uniq('product').map(v=>`<option value="${esc(v)}">`).join('');
+  // 地圖上只畫目前專案的田
+  Object.keys(layers).forEach(k=>{ if(!p.fields[k]){ layers[k].remove(); delete layers[k]; } });
+  Object.values(p.fields).forEach(f=>{ if(!layers[f.key]){
+    const g=L.layerGroup([drawParcel(f,'#f57c00'), L.marker(f.center,{icon:L.divIcon({className:'',html:`<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.kg?` · ${f.kg}kg`:''}</div>`,iconAnchor:[0,10]})})]);
+    g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); });
+    layers[f.key]=g.addTo(map); } });
+  const arr=Object.values(p.fields);
+  document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item"><div class="t" onclick="flyTo('${f.key}')">${f.no} 地號<small>${esc(f.cty+f.town+' '+f.sectName)}</small></div><input type="number" inputmode="decimal" placeholder="kg" value="${f.kg??''}" onchange="setKg('${f.key}',this.value)"><button class="del" onclick="unselect('${f.key}')">移除</button></div>`).join('')
+    : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填公斤數,總噸數自動加總</div>');
+}
+
+// ================= 雲端 / 匯出匯入 =================
+const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
+document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gasUrl').value=localStorage.getItem('fertmap_gas')||''; msg(''); dlg.style.display='flex'; };
+document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
+document.getElementById('saveGas').onclick=()=>{ localStorage.setItem('fertmap_gas',document.getElementById('gasUrl').value.trim()); msg('已儲存雲端網址'); };
+const gas=()=>{ const u=(localStorage.getItem('fertmap_gas')||'').trim(); if(!u){ msg('請先填雲端網址(GAS /exec)並儲存'); return null; } return u; };
+document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出,請選「儲存到檔案 / 雲端硬碟」'); };
+document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
+document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
+function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
+  list.forEach(np=>{ const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>=(DB.projects[i].updated||0)) DB.projects[i]=np; });
+  if(!cur()) DB.curId=DB.projects[0].id; localStorage.setItem(KEY, JSON.stringify(DB)); render(); }
+document.getElementById('cloudUp').onclick=async()=>{ const u=gas(); if(!u) return; msg('上傳中…');
+  try{ await fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',data:DB})}); msg('已送出上傳(約 3 秒後可用「讀取雲端」確認)'); }catch(err){ msg('上傳失敗:'+err.message); } };
+document.getElementById('cloudDown').onclick=()=>{ const u=gas(); if(!u) return; msg('讀取中…');
+  const cb='cb'+Date.now(); window[cb]=d=>{ delete window[cb]; try{ if(!d||!d.data) throw new Error(d&&d.error||'雲端沒有資料'); mergeIn(d.data); msg('已讀取雲端('+(d.time||'')+'),與本機合併完成'); }catch(err){ msg('讀取失敗:'+err.message); } };
+  const s=document.createElement('script'); s.src=u+(u.includes('?')?'&':'?')+'action=read&callback='+cb; s.onerror=()=>msg('讀取失敗:網址不對或尚未部署'); document.body.appendChild(s); };
+
+function setStatus(t){ document.getElementById('status').textContent=t; }
+render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案');
+</script>
+</body>
+</html>
