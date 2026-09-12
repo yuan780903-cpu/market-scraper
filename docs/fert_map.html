@@ -84,13 +84,14 @@
 <div id="status">載入中…</div>
 
 <div id="dlg"><div class="box">
-  <h3>☁ 雲端 / 匯出匯入</h3>
-  <div class="row"><button id="cloudUp">☁ 上傳雲端</button><button id="cloudDown">☁ 讀取雲端</button></div>
+  <h3>☁ 雲端同步 / 匯出匯入</h3>
+  <p>設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機輸入同一組同步碼就能讀到同樣的專案。</p>
+  <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
+  <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
+  <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
   <div class="row"><button class="sec" id="expFile">📁 匯出檔案(JSON)</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
-  <p>雲端網址(Google Apps Script 的 /exec,設定一次即可;做法見同資料夾 README)</p>
-  <input id="gasUrl" placeholder="https://script.google.com/macros/s/xxxx/exec">
-  <div class="row"><button id="saveGas">儲存設定</button><button class="sec" id="closeDlg">關閉</button></div>
+  <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
 
@@ -189,13 +190,13 @@ function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(
   const p=newProject('專案 1'); return {curId:p.id, projects:[p]}; }
 function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', product:'', weight:'', date:new Date().toISOString().slice(0,10), note:'', fields:{}, updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
-function save(){ cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); render(); }
+function save(){ cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); render(); autoSync(); }
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tons = p => Object.values(p.fields).reduce((s,f)=>s+(+f.kg||0),0)/1000;
 
 function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.kg = p.weight? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+lastParcel.no+' 地號'); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
-function setKg(key,v){ const f=cur().fields[key]; if(f){ f.kg = v===''?null:+v; cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); document.getElementById('f_total').value = tons(cur()).toFixed(3)+' 噸'; } }
+function setKg(key,v){ const f=cur().fields[key]; if(f){ f.kg = v===''?null:+v; cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); document.getElementById('f_total').value = tons(cur()).toFixed(3)+' 噸'; document.getElementById('projTitle').textContent=(cur().customer||cur().name)+' · '+tons(cur()).toFixed(2)+' 噸'; autoSync(); } }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 
 // ---- 表單綁定 ----
@@ -203,7 +204,7 @@ const F={customer:'f_customer',date:'f_date',brand:'f_brand',product:'f_product'
 Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; save(); }));
 document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; save(); const p=cur(); const fs=Object.values(p.fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
 document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); };
-document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
+document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
 document.getElementById('toggleForm').onclick=e=>{ const f=document.getElementById('form'); f.hidden=!f.hidden; e.target.textContent=f.hidden?'資料 ▸':'資料 ▾'; };
 
 // ---- 畫面 ----
@@ -229,26 +230,40 @@ function render(){
     : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填公斤數,總噸數自動加總</div>');
 }
 
-// ================= 雲端 / 匯出匯入 =================
+// ================= 雲端同步 / 匯出匯入 =================
+const SYNC='https://fert-sync.yuan780903.workers.dev';
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
-document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gasUrl').value=localStorage.getItem('fertmap_gas')||''; msg(''); dlg.style.display='flex'; };
+const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
+document.getElementById('menuBtn').onclick=()=>{ document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
 document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
-document.getElementById('saveGas').onclick=()=>{ localStorage.setItem('fertmap_gas',document.getElementById('gasUrl').value.trim()); msg('已儲存雲端網址'); };
-const gas=()=>{ const u=(localStorage.getItem('fertmap_gas')||'').trim(); if(!u){ msg('請先填雲端網址(GAS /exec)並儲存'); return null; } return u; };
+document.getElementById('saveSync').onclick=async()=>{ const c=document.getElementById('syncCode').value.trim(); if(c.length<6){ msg('同步碼至少 6 個字'); return; }
+  localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
+async function cloudSave(){ const c=code(); if(!c) return false; try{
+    const r=await (await fetch(SYNC+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:c,data:DB})})).json();
+    if(!r.ok) throw new Error(r.error); setStatus('☁ 已同步 '+r.time); msg('已上傳雲端('+r.time+',共 '+r.projects+' 個專案)'); return true;
+  }catch(err){ setStatus('☁ 上傳失敗:'+err.message); msg('上傳失敗:'+err.message); return false; } }
+async function cloudLoad(){ const c=code(); if(!c) return false; try{
+    const r=await (await fetch(SYNC+'/load?code='+encodeURIComponent(c))).json();
+    if(!r.ok) throw new Error(r.error); mergeIn(r.data); setStatus('☁ 已讀取雲端 '+r.time); msg('已讀取雲端('+r.time+'),與本機合併完成'); return true;
+  }catch(err){ setStatus('☁ 讀取:'+err.message); msg('讀取:'+err.message); return false; } }
+document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
+document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
+let syncTimer=null; function autoSync(){ if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
 document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出,請選「儲存到檔案 / 雲端硬碟」'); };
 document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
-document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
+document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); autoSync(); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
-  list.forEach(np=>{ const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>=(DB.projects[i].updated||0)) DB.projects[i]=np; });
+  DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
+  list.forEach(np=>{ if((DB.deleted[np.id]||0) > (np.updated||0)) return; // 已在別台刪除
+    const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>(DB.projects[i].updated||0)) DB.projects[i]=np; });
+  DB.projects = DB.projects.filter(p=>!((DB.deleted[p.id]||0) > (p.updated||0)));
+  const blank=p=>!p.customer&&!p.brand&&!p.product&&!p.note&&!Object.keys(p.fields||{}).length; // 沒動過的空白專案讓位給雲端資料
+  if(DB.projects.some(p=>!blank(p))) DB.projects=DB.projects.filter(p=>!blank(p));
+  if(!DB.projects.length) DB.projects.push(newProject('專案 1'));
   if(!cur()) DB.curId=DB.projects[0].id; localStorage.setItem(KEY, JSON.stringify(DB)); render(); }
-document.getElementById('cloudUp').onclick=async()=>{ const u=gas(); if(!u) return; msg('上傳中…');
-  try{ await fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',data:DB})}); msg('已送出上傳(約 3 秒後可用「讀取雲端」確認)'); }catch(err){ msg('上傳失敗:'+err.message); } };
-document.getElementById('cloudDown').onclick=()=>{ const u=gas(); if(!u) return; msg('讀取中…');
-  const cb='cb'+Date.now(); window[cb]=d=>{ delete window[cb]; try{ if(!d||!d.data) throw new Error(d&&d.error||'雲端沒有資料'); mergeIn(d.data); msg('已讀取雲端('+(d.time||'')+'),與本機合併完成'); }catch(err){ msg('讀取失敗:'+err.message); } };
-  const s=document.createElement('script'); s.src=u+(u.includes('?')?'&':'?')+'action=read&callback='+cb; s.onerror=()=>msg('讀取失敗:網址不對或尚未部署'); document.body.appendChild(s); };
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
-render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案');
+render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案'); if(code()) cloudLoad();
 </script>
 </body>
 </html>
