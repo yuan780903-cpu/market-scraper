@@ -120,6 +120,37 @@
   #viewer .vb a{border:0;border-radius:var(--radius-s);padding:10px 18px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;text-decoration:none}
   @media (min-width:900px){ .docs{margin:0 18px 8px} }
 
+  /* ===== 現場提示 ===== */
+  #here{position:absolute;top:58px;left:10px;right:10px;z-index:900;display:none;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;box-shadow:var(--shadow);backdrop-filter:blur(4px);line-height:1.4}
+  #here.ok{background:rgba(31,95,58,.93);color:#fff;display:block}
+  #here.warn{background:rgba(224,137,28,.95);color:#fff;display:block}
+  #here.bad{background:rgba(198,40,40,.95);color:#fff;display:block}
+  #here small{display:block;font-weight:400;opacity:.9;font-size:12px}
+  @keyframes pulse{0%{opacity:.9}50%{opacity:.35}100%{opacity:.9}}
+  .parcel-here{animation:pulse 1.4s infinite}
+  @media (min-width:900px){ #here{left:50%;right:auto;transform:translateX(-50%);min-width:360px;top:60px} }
+
+  /* ===== 報表 ===== */
+  #report{position:fixed;inset:0;background:#fff;z-index:2500;display:none;overflow:auto}
+  #report .rtool{position:sticky;top:0;background:var(--brand);color:#fff;padding:10px 16px;display:flex;gap:8px;align-items:center;z-index:1}
+  #report .rtool b{flex:1}
+  #report .rtool button{border:0;border-radius:var(--radius-s);padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:var(--brand-2)}
+  .rp{max-width:820px;margin:0 auto;padding:24px 20px 60px;color:#111;font-size:14px}
+  .rp h2{margin:0 0 4px;font-size:22px;letter-spacing:1px}
+  .rp .sub{color:#555;font-size:12px;margin-bottom:16px}
+  .rp .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rp table{width:100%;border-collapse:collapse;margin:10px 0 18px;min-width:520px}
+  .rp table.kv{min-width:0}
+  @media (max-width:600px){ .rp{padding:16px 12px 60px;font-size:13px} .rp th,.rp td{padding:5px 6px} }
+  .rp th,.rp td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}
+  .rp th{background:#eef2ec;font-weight:700;white-space:nowrap}
+  .rp td.num,.rp th.num{text-align:right;white-space:nowrap}
+  .rp .kv th{width:26%}
+  .rp .sig{display:flex;gap:30px;margin-top:40px}
+  .rp .sig div{flex:1;border-top:1px solid #333;padding-top:6px;font-size:13px}
+  .rp .foot{margin-top:20px;font-size:11px;color:#666}
+  @media print{ body>*{display:none!important} #report{display:block!important;position:static;overflow:visible} #report .rtool{display:none} .rp{max-width:none;padding:0} }
+
   /* ===== 對話框 ===== */
   #dlg,#viewer{position:fixed;inset:0;background:rgba(15,25,18,.5);z-index:2000;display:none;align-items:flex-end;justify-content:center}
   #dlg .box{background:var(--surface);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
@@ -168,9 +199,9 @@
     <button class="hbtn" id="menuBtn" title="雲端同步 / 匯出匯入">☁ 雲端</button>
   </header>
   <div id="main">
-    <div id="mapWrap"><div id="map"></div><div id="status">載入中…</div></div>
+    <div id="mapWrap"><div id="map"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
-      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="delProj">刪除</button></div>
+      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj">刪除</button></div>
       <div class="stats" id="stats"></div>
       <div class="docs" id="docs">
         <div class="dbar" id="docBar"><span>📄</span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
@@ -211,6 +242,7 @@
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
+<div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()">🖨 列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
 <div id="viewer"><img id="vImg" alt=""><iframe id="vPdf" hidden></iframe><div class="cap" id="vCap"></div><div class="vb"><button id="vClose">關閉</button><a id="vOpen" target="_blank" rel="noopener" hidden>↗ 新分頁開啟 / 下載</a><button class="del" id="vDel">刪除</button></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -248,7 +280,7 @@ const Locate = L.Control.extend({ onAdd(){ const b=L.DomUtil.create('div','leafl
   L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e); toggleLocate(b);}); return b; } });
 new Locate({position:'bottomright'}).addTo(map);
 function toggleLocate(btn){
-  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; btn.classList.remove('on'); setStatus('已停止定位'); return; }
+  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; btn.classList.remove('on'); setStatus('已停止定位'); hereShow(null); return; }
   if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; }
   btn.classList.add('on'); setStatus('定位中…'); let first=true;
   watchId=navigator.geolocation.watchPosition(p=>{
@@ -258,9 +290,35 @@ function toggleLocate(btn){
     else { me.setLatLng(ll); meCircle.setLatLng(ll).setRadius(acc); }
     if(first){ map.setView(ll, Math.max(map.getZoom(),17)); first=false; }
     setStatus(`我的位置 ${ll[0].toFixed(5)}, ${ll[1].toFixed(5)}(誤差 ±${Math.round(acc)} m)`);
+    whereAmI(ll[0], ll[1], acc);
   }, err=>{ setStatus('定位失敗:'+err.message); btn.classList.remove('on'); watchId=null; },
   {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
 }
+
+// ================= 現場提示:我現在站在哪塊田 =================
+const maskCache={};
+function parcelMask(f){ return new Promise(res=>{ if(!f.image){ res(null); return; } if(maskCache[f.key]){ res(maskCache[f.key]); return; }
+  const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height; const g=c.getContext('2d'); g.drawImage(img,0,0);
+    try{ const d=g.getImageData(0,0,c.width,c.height).data; maskCache[f.key]={w:c.width,h:c.height,a:d}; res(maskCache[f.key]); }catch{ res(null); } }; img.onerror=()=>res(null); img.src=f.image; }); }
+async function insideParcel(f, lat, lng){ const [[s,w],[n,e]]=f.bbox; if(lat<s||lat>n||lng<w||lng>e) return false; const m=await parcelMask(f); if(!m) return true; // 沒有圖形就以外框判斷
+  const x=Math.min(m.w-1, Math.floor((lng-w)/(e-w)*m.w)), y=Math.min(m.h-1, Math.floor((n-lat)/(n-s)*m.h)); return m.a[(y*m.w+x)*4+3] > 40; }
+let hereKey=null, hereLast={t:0,lat:0,lng:0}, hereBusy=false;
+function hereShow(html, cls){ const el=document.getElementById('here'); el.className=cls||''; el.innerHTML=html||''; el.style.display=html?'block':'none'; }
+async function whereAmI(lat,lng,acc){ if(hereBusy) return; hereBusy=true; try{
+  const p=cur(); let found=null; for(const f of Object.values(p.fields)){ if(await insideParcel(f,lat,lng)){ found=f; break; } }
+  if(found){ if(hereKey!==found.key){ hereKey=found.key; refreshHereMarkers(); }
+    hereShow(`✅ 你在本專案的田裡:${esc(found.no)} 地號<small>${esc(found.cty+found.town+' '+found.sectName)} · 預定 ${found.t?fmtT(found.t)+' 噸':'未填噸數'} · GPS 誤差 ±${Math.round(acc)} m</small>`,'ok'); return; }
+  if(hereKey){ hereKey=null; refreshHereMarkers(); }
+  // 不在本專案任何田內:每 15 秒或移動 15 m 以上才向國土查一次目前地號
+  const dist=Math.hypot((lat-hereLast.lat)*111000,(lng-hereLast.lng)*111000*Math.cos(lat*Math.PI/180));
+  if(Date.now()-hereLast.t>15000 || dist>15){ hereLast={t:Date.now(),lat,lng};
+    try{ const q=await queryParcelLite(lat,lng); hereShow(`⚠️ 不在本專案的田裡!目前位置:${esc(q)}<small>請勿在此撒播 · GPS 誤差 ±${Math.round(acc)} m</small>`,'bad'); }
+    catch{ hereShow(`⚠️ 不在本專案的田裡<small>GPS 誤差 ±${Math.round(acc)} m</small>`,'warn'); } }
+  }finally{ hereBusy=false; } }
+async function queryParcelLite(lat,lng){ const xml=await (await fetch(`${PROXY}/api.nlsc.gov.tw/other/TownVillagePointQuery/${lng}/${lat}/4326`)).text(); const g=t=>(xml.match(new RegExp(`<${t}>([^<]*)<`))||[])[1]||'';
+  const cty=g('ctyCode'); if(!cty) throw new Error('x'); const r=(await jsonp(`https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=1&city=${cty}&x=${lng}&y=${lat}&alpah=0.5f&callback=cb`))[0]||[]; const q=r[0]||{}; if(!q.landno) throw new Error('x');
+  return `${g('ctyName')}${g('townName')} ${g('sectName')} ${fmtNo(q.landno)} 地號`; }
+function refreshHereMarkers(){ Object.values(cur().fields).forEach(f=>{ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }); }
 
 // ================= 地址搜尋 =================
 let searchPin=null;
@@ -306,7 +364,7 @@ map.on('click', async e=>{
     setStatus(fullName(p));
   }catch(err){ setStatus('查地號失敗:'+err.message); }
 });
-function drawParcel(p,color){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img'}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25}); }
+function drawParcel(p,color,extra=''){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img '+extra}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25,className:extra}); }
 const fullName = p => `${p.cty}${p.town} ${p.sectName} ${p.no} 地號`;
 const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.center[0]},${p.center[1]}&travelmode=driving`;
 function popupHTML(p, sel){
@@ -371,7 +429,8 @@ window.addEventListener('resize', ()=>map.invalidateSize());
 const layers={}, areaTried=new Set();
 const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
-function addLayer(f){ const g=L.layerGroup([drawParcel(f,'#f57c00'), L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
+function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
+  const g=L.layerGroup([shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
   g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); layers[f.key]=g.addTo(map); }
 function render(){
   const p=cur();
@@ -492,6 +551,26 @@ function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!l
   if(DB.projects.some(p=>!blank(p))) DB.projects=DB.projects.filter(p=>!blank(p));
   if(!DB.projects.length) DB.projects.push(newProject('專案 1'));
   if(!cur()) DB.curId=DB.projects[0].id; persist(); render(); }
+
+// ================= 申報報表 =================
+function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const T=tons(p); const bag=+p.bag>0?+p.bag:null;
+  const bags=v=>bag&&v?Math.round(v*1000/bag):'';
+  const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
+  const kv=[['客戶名稱',p.customer||p.name||''],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',p.pname||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
+    ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],['備註',p.note||'—']];
+  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td></tr>`).join('');
+  const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
+  document.getElementById('rp').innerHTML=`<h2>肥料撒播施作申報表</h2><div class="sub">產生時間:${new Date().toLocaleString('zh-TW',{hour12:false})} · 資料來源:撒肥定位系統(地籍資料引用內政部國土測繪中心,僅供參考)</div>
+    <table class="kv">${kv.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
+    <h3 style="margin:14px 0 6px;font-size:16px">施作土地明細</h3>
+    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="9">尚未加入田地</td></tr>'}</tbody>
+    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th></tr></tfoot></table></div>
+    ${docs?`<h3 style="margin:14px 0 6px;font-size:16px">附件(申報文件)</h3><ul style="margin:0 0 10px 18px">${docs}</ul>`:''}
+    <div class="sig"><div>撒播業者簽章</div><div>客戶(農民)簽章</div><div>日期</div></div>
+    <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
+  document.getElementById('report').style.display='block'; }
+document.getElementById('reportBtn').onclick=buildReport;
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
 render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案'); if(code()) cloudLoad();
