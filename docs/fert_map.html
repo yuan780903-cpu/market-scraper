@@ -6,7 +6,7 @@
 <title>撒肥定位</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  :root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--brand:#2e7d32;--brand2:#1b5e20;--sel:#f57c00}
+  :root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--brand:#2e7d32;--brand2:#1b5e20;--sel:#f57c00;--blue:#1565c0}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--fg)}
   #app{display:flex;flex-direction:column;height:100%}
@@ -17,35 +17,47 @@
   #searchForm{display:flex;gap:6px;padding:6px 8px;background:#e8f5e9}
   #searchForm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:15px}
   #searchForm button{border:0;border-radius:6px;padding:7px 12px;background:var(--brand);color:#fff;font-size:15px}
-  #map{flex:1;min-height:0}
+  #mapWrap{flex:1;min-height:120px;position:relative}
+  #map{position:absolute;inset:0}
   #status{position:absolute;left:10px;bottom:34px;z-index:800;background:rgba(255,255,255,.92);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--muted);max-width:70vw}
   .btn-locate{width:44px!important;height:44px!important;line-height:44px!important;font-size:22px;text-align:center;background:#fff;cursor:pointer}
   .btn-locate.on{color:var(--brand)}
   .leaflet-control-layers{font-size:14px}
   .leaflet-control-zoom a{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px}
   /* 專案面板 */
-  #panel{border-top:2px solid var(--brand);background:#fff;max-height:46vh;display:flex;flex-direction:column}
-  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:14px;flex-wrap:wrap}
-  #panel .bar b{flex:1;white-space:nowrap}
-  .bar button,.tools button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:13px}
-  #body{overflow:auto;padding:0 10px 8px}
+  #panel{border-top:2px solid var(--brand);background:#fff;max-height:42vh;display:flex;flex-direction:column;transition:max-height .2s}
+  #panel.big{max-height:80vh}
+  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:14px}
+  #panel .bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:13px;white-space:nowrap}
+  #body{overflow:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
   .form{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;padding:4px 0 8px}
   .form label{font-size:12px;color:var(--muted);display:block}
   .form input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:15px}
+  .form[hidden]{display:none}
   .form .full{grid-column:1/-1}
   .form .ro{background:#f5f5f5;font-weight:600;color:var(--brand2)}
-  .item{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
-  .item .t{flex:1;min-width:0}
+  .item{padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+  .item .row{display:flex;align-items:center;gap:6px}
+  .item .t{flex:1;min-width:0;cursor:pointer}
+  .item .t b{font-size:15px}
   .item .t small{display:block;color:var(--muted);font-size:12px}
-  .item input{width:78px;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:15px;text-align:right}
+  .item input.ton{width:74px;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:15px;text-align:right}
+  .item .unit{font-size:12px;color:var(--muted)}
   .item .del{border:0;background:#fbe9e7;color:#c62828;border-radius:6px;padding:6px 9px;font-size:13px}
+  .item .acts{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap}
+  .item .acts button,.item .acts label{border:0;border-radius:6px;padding:6px 10px;font-size:13px;color:#fff;background:var(--blue)}
+  .item .acts label{background:var(--brand)}
+  .item .acts label input{display:none}
+  .thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#eee}
+  .thumbs .up{width:72px;height:72px;border-radius:6px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center}
   .empty{padding:10px 0;color:var(--muted);font-size:13px}
-  .tools{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
-  .pop{font-size:14px;line-height:1.5;min-width:180px}
+  .pop{font-size:14px;line-height:1.5;min-width:190px}
   .pop b{font-size:16px}
   .pop .btn{display:block;margin-top:6px;width:100%;border:0;border-radius:6px;padding:8px;background:var(--sel);color:#fff;font-size:15px}
-  .pop .btn.del{background:#c62828}
-  #dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:flex-end}
+  .pop .btn.del{background:#c62828}.pop .btn.nav{background:var(--blue)}
+  #dlg,#viewer{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:flex-end}
   #dlg .box{background:#fff;width:100%;border-radius:14px 14px 0 0;padding:14px 14px 24px;max-height:85vh;overflow:auto}
   #dlg h3{margin:0 0 8px;font-size:16px}
   #dlg p{font-size:13px;color:var(--muted);margin:6px 0}
@@ -53,6 +65,12 @@
   #dlg .row{display:flex;gap:6px;margin-top:10px}
   #dlg .row button{flex:1;border:0;border-radius:6px;padding:10px;font-size:15px;background:var(--brand);color:#fff}
   #dlg .row button.sec{background:#eee;color:#333}
+  #viewer{background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column}
+  #viewer img{max-width:100%;max-height:80vh;object-fit:contain}
+  #viewer .vb{display:flex;gap:10px;margin-top:10px}
+  #viewer .vb button{border:0;border-radius:6px;padding:10px 16px;font-size:15px;background:#fff}
+  #viewer .vb button.del{background:#c62828;color:#fff}
+  #viewer .cap{color:#fff;font-size:13px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -64,16 +82,16 @@
     <button id="menuBtn" title="雲端 / 匯出匯入">☁</button>
   </header>
   <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-  <div id="map"></div>
+  <div id="mapWrap"><div id="map"></div><div id="status">載入中…</div></div>
   <div id="panel">
-    <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="delProj">刪除專案</button></div>
+    <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="delProj">刪除</button></div>
     <div id="body">
       <div class="form" id="form">
         <div><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
         <div><label>申報日期</label><input id="f_date" type="date"></div>
         <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
         <div><label>肥料品目</label><input id="f_product" list="dl_product" placeholder="例:有機肥料2號(粉)"><datalist id="dl_product"></datalist></div>
-        <div><label>肥料重量(每塊田預設 kg)</label><input id="f_weight" type="number" inputmode="decimal" placeholder="例:500"></div>
+        <div><label>肥料重量(每塊田預設,噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
         <div><label>總噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
         <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
       </div>
@@ -81,11 +99,10 @@
     </div>
   </div>
 </div>
-<div id="status">載入中…</div>
 
 <div id="dlg"><div class="box">
   <h3>☁ 雲端同步 / 匯出匯入</h3>
-  <p>設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機輸入同一組同步碼就能讀到同樣的專案。</p>
+  <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機輸入同一組同步碼就能讀到同樣的專案與照片。</p>
   <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
   <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
   <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
@@ -94,11 +111,13 @@
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
+<div id="viewer"><img id="vImg" alt=""><div class="cap" id="vCap"></div><div class="vb"><button id="vClose">關閉</button><button class="del" id="vDel">刪除照片</button></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// ================= 代理(國土測繪圖磚與地籍查詢需經此代理補 Referer) =================
+// ================= 代理 / 雲端 =================
 const PROXY='https://nlsc-proxy.yuan780903.workers.dev';
+const SYNC='https://fert-sync.yuan780903.workers.dev';
 const via = u => `${PROXY}/?url=${encodeURIComponent(u)}`;
 
 // ================= 圖層 =================
@@ -110,7 +129,6 @@ const photo = NLSC('PHOTO2'), emap = NLSC('EMAP');
 const cadastre = L.tileLayer(`${PROXY}/landmaps.nlsc.gov.tw/S_Maps/wmts/DMAPS/default/EPSG:3857/{z}/{y}/{x}`,
   {minZoom:15, maxZoom:21, maxNativeZoom:20, opacity:.9, attribution:'地籍圖 © 國土測繪中心(僅供參考)'});
 const section = NLSC('LANDSECT',{minZoom:13, opacity:.9});
-
 const map = L.map('map',{zoomControl:false, layers:[gSat, cadastre]}).setView([23.165,120.235], 17);
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({imperial:false, position:'bottomleft'}).addTo(map);
@@ -161,7 +179,7 @@ async function queryParcel(lat, lng){
   if(!p.landno) throw new Error(p.msg||'查無地號');
   const parcel = { key:`${p.office}${p.sect}${p.landno}`, office:p.office, sect:p.sect, landno:p.landno, no:fmtNo(p.landno),
     officeName:b64(p.officeStr), sectName:b64(p.sectStr), cty:g('ctyName'), town:g('townName'),
-    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, kg:null };
+    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[] };
   const iq = `https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=2&office=${p.office}&sect=${p.sect}&landno=${p.landno}&imgflag=1&alpah=0.5f&callback=cb`;
   for(let i=0;i<5;i++){ const rows=(await jsonp(iq))[0]||[]; const im=rows.find(x=>x.image);
     if(im){ parcel.image='data:image/png;base64,'+im.image; parcel.bbox=[[+im.ly,+im.lx],[+im.ry,+im.rx]]; break; } await sleep(700); }
@@ -174,64 +192,118 @@ map.on('click', async e=>{
   try{ const p = await queryParcel(e.latlng.lat, e.latlng.lng); lastParcel=p;
     previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
     L.popup({maxWidth:260}).setLatLng(p.center).setContent(popupHTML(p, !!cur().fields[p.key])).openOn(map);
-    setStatus(`${p.cty}${p.town} ${p.sectName} ${p.no} 地號`);
+    setStatus(fullName(p));
   }catch(err){ setStatus('查地號失敗:'+err.message); }
 });
 function drawParcel(p,color){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img'}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25}); }
+const fullName = p => `${p.cty}${p.town} ${p.sectName} ${p.no} 地號`;
+const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.center[0]},${p.center[1]}&travelmode=driving`;
 function popupHTML(p, sel){
-  return `<div class="pop"><b>${p.no} 地號</b><br>${p.cty}${p.town}<br>${p.sectName}(${p.officeName}地政)
-    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}</div>`;
+  return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所</small>
+    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}
+    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button></div>`;
 }
 
 // ================= 專案資料(存本機) =================
 const KEY='fertmap_projects_v1';
 let DB = load();
-function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&d.projects&&d.projects.length) return d; }catch{}
-  const p=newProject('專案 1'); return {curId:p.id, projects:[p]}; }
+function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch{}
+  if(!(d&&d.projects&&d.projects.length)){ const p=newProject('專案 1'); d={curId:p.id, projects:[p]}; }
+  migrate(d); return d; }
+function migrate(d){ // 舊版公斤 → 噸(只做一次)
+  if(d.unit==='t') return;
+  d.projects.forEach(p=>{ if(p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; }); });
+  d.unit='t'; }
 function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', product:'', weight:'', date:new Date().toISOString().slice(0,10), note:'', fields:{}, updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
-function save(){ cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); render(); autoSync(); }
+function persist(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
+function save(){ cur().updated=Date.now(); persist(); render(); autoSync(); }
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const tons = p => Object.values(p.fields).reduce((s,f)=>s+(+f.kg||0),0)/1000;
+const tons = p => Object.values(p.fields).reduce((s,f)=>s+(+f.t||0),0);
+const fmtT = v => (Math.round(v*1000)/1000).toString();
 
-function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.kg = p.weight? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+lastParcel.no+' 地號'); }
+function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
-function setKg(key,v){ const f=cur().fields[key]; if(f){ f.kg = v===''?null:+v; cur().updated=Date.now(); localStorage.setItem(KEY, JSON.stringify(DB)); document.getElementById('f_total').value = tons(cur()).toFixed(3)+' 噸'; document.getElementById('projTitle').textContent=(cur().customer||cur().name)+' · '+tons(cur()).toFixed(2)+' 噸'; autoSync(); } }
+function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); refreshTotals(); refreshMarker(f); autoSync(); } }
+function refreshTotals(){ const p=cur(); document.getElementById('f_total').value = fmtT(tons(p))+' 噸'; document.getElementById('projTitle').textContent=(p.customer||p.name)+' · '+fmtT(tons(p))+' 噸'; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
+function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
 // ---- 表單綁定 ----
 const F={customer:'f_customer',date:'f_date',brand:'f_brand',product:'f_product',weight:'f_weight',note:'f_note'};
 Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; save(); }));
-document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; save(); const p=cur(); const fs=Object.values(p.fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
-document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); };
+document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persist(); render(); const fs=Object.values(cur().fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
+document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
-document.getElementById('toggleForm').onclick=e=>{ const f=document.getElementById('form'); f.hidden=!f.hidden; e.target.textContent=f.hidden?'資料 ▸':'資料 ▾'; };
+function setFormOpen(open){ document.getElementById('form').hidden=!open; document.getElementById('toggleForm').textContent=open?'資料 ▾':'資料 ▸'; localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
+document.getElementById('toggleForm').onclick=()=>setFormOpen(document.getElementById('form').hidden);
+setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
+document.getElementById('bigBtn').onclick=e=>{ const big=document.getElementById('panel').classList.toggle('big'); e.target.textContent=big?'清單 ⤡':'清單 ⤢'; setTimeout(()=>map.invalidateSize(),250); };
 
 // ---- 畫面 ----
 const layers={};
+const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
+function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
+function addLayer(f){ const g=L.layerGroup([drawParcel(f,'#f57c00'), L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
+  g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); layers[f.key]=g.addTo(map); }
 function render(){
   const p=cur();
   const sel=document.getElementById('projSel');
   sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.customer||x.name)}(${Object.keys(x.fields).length}田)</option>`).join('');
-  document.getElementById('projTitle').textContent=(p.customer||p.name)+' · '+tons(p).toFixed(2)+' 噸';
   Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||'');
-  document.getElementById('f_total').value=tons(p).toFixed(3)+' 噸';
-  const all=DB.projects; const uniq=k=>[...new Set(all.map(x=>x[k]).filter(Boolean))];
+  refreshTotals();
+  const uniq=k=>[...new Set(DB.projects.map(x=>x[k]).filter(Boolean))];
   document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('dl_product').innerHTML=uniq('product').map(v=>`<option value="${esc(v)}">`).join('');
-  // 地圖上只畫目前專案的田
   Object.keys(layers).forEach(k=>{ if(!p.fields[k]){ layers[k].remove(); delete layers[k]; } });
-  Object.values(p.fields).forEach(f=>{ if(!layers[f.key]){
-    const g=L.layerGroup([drawParcel(f,'#f57c00'), L.marker(f.center,{icon:L.divIcon({className:'',html:`<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.kg?` · ${f.kg}kg`:''}</div>`,iconAnchor:[0,10]})})]);
-    g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); });
-    layers[f.key]=g.addTo(map); } });
+  Object.values(p.fields).forEach(f=>{ if(!layers[f.key]) addLayer(f); });
   const arr=Object.values(p.fields);
-  document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item"><div class="t" onclick="flyTo('${f.key}')">${f.no} 地號<small>${esc(f.cty+f.town+' '+f.sectName)}</small></div><input type="number" inputmode="decimal" placeholder="kg" value="${f.kg??''}" onchange="setKg('${f.key}',this.value)"><button class="del" onclick="unselect('${f.key}')">移除</button></div>`).join('')
-    : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填公斤數,總噸數自動加總</div>');
+  document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
+      <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${esc(f.officeName)}地政事務所 · 點此在地圖顯示</small></div>
+        <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸</span>
+        <button class="del" onclick="unselect('${f.key}')">移除</button></div>
+      <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
+        <label>📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
+        <span class="unit">${(f.photos||[]).length} 張照片</span></div>
+      <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
+    </div>`).join('')
+    : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>');
+  arr.forEach(f=>(f.photos||[]).forEach(ph=>showThumb(f.key, ph.id)));
 }
 
+// ================= 照片(本機 IndexedDB + 雲端) =================
+const idb = { db:null,
+  open(){ return this.db ? Promise.resolve(this.db) : new Promise((res,rej)=>{ const r=indexedDB.open('fertmap',1); r.onupgradeneeded=()=>r.result.createObjectStore('photos'); r.onsuccess=()=>res(this.db=r.result); r.onerror=()=>rej(r.error); }); },
+  async get(id){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos').objectStore('photos').get(id); r.onsuccess=()=>res(r.result||null); r.onerror=()=>rej(r.error); }); },
+  async put(id,v){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos','readwrite').objectStore('photos').put(v,id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); },
+  async del(id){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos','readwrite').objectStore('photos').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); } };
+const memPhoto={};
+async function getPhoto(id){ if(memPhoto[id]) return memPhoto[id]; let v=await idb.get(id).catch(()=>null);
+  if(!v && code()){ try{ const r=await fetch(`${SYNC}/photo?code=${encodeURIComponent(code())}&id=${id}`); if(r.ok){ v=await r.text(); await idb.put(id,v).catch(()=>{}); } }catch{} }
+  if(v) memPhoto[id]=v; return v; }
+async function showThumb(key,id){ const img=document.querySelector(`#th_${key} img[data-id="${id}"]`); if(!img) return; const v=await getPhoto(id); if(v) img.src=v; else img.alt='☁?'; }
+function shrink(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
+  img.onload=()=>{ const max=1280, s=Math.min(1, max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',.72)); };
+  img.onerror=()=>rej(new Error('讀取照片失敗')); img.src=u; }); }
+async function addPhotos(key, input){ const f=cur().fields[key]; if(!f) return; f.photos=f.photos||[];
+  for(const file of input.files){ try{ setStatus('照片處理中…'); const data=await shrink(file);
+      const id='ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
+      f.photos.push({id, time:new Date().toLocaleString('zh-TW',{hour12:false})});
+      if(code()){ const r=await (await fetch(`${SYNC}/photo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('照片上傳雲端失敗:'+r.error); }
+    }catch(err){ setStatus('照片失敗:'+err.message); } }
+  input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); setStatus('已加入照片'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
+let viewing=null;
+async function openPhoto(key,id){ const f=cur().fields[key]; const ph=(f.photos||[]).find(x=>x.id===id); const v=await getPhoto(id); if(!v){ setStatus('照片還沒下載到,請確認同步碼'); return; }
+  viewing={key,id}; document.getElementById('vImg').src=v; document.getElementById('vCap').textContent=fullName(f)+' · '+(ph&&ph.time||''); document.getElementById('viewer').style.display='flex'; }
+document.getElementById('vClose').onclick=()=>document.getElementById('viewer').style.display='none';
+document.getElementById('vDel').onclick=async()=>{ if(!viewing||!confirm('刪除這張照片?')) return; const f=cur().fields[viewing.key]; f.photos=(f.photos||[]).filter(x=>x.id!==viewing.id);
+  idb.del(viewing.id).catch(()=>{}); delete memPhoto[viewing.id];
+  if(code()) fetch(`${SYNC}/photo-del`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id:viewing.id})}).catch(()=>{});
+  document.getElementById('viewer').style.display='none'; save(); };
+
 // ================= 雲端同步 / 匯出匯入 =================
-const SYNC='https://fert-sync.yuan780903.workers.dev';
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
 const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
 document.getElementById('menuBtn').onclick=()=>{ document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
@@ -249,18 +321,19 @@ async function cloudLoad(){ const c=code(); if(!c) return false; try{
 document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
 document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
 let syncTimer=null; function autoSync(){ if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
-document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出,請選「儲存到檔案 / 雲端硬碟」'); };
+document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出(不含照片檔,照片在雲端),請選「儲存到檔案 / 雲端硬碟」'); };
 document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
 document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); autoSync(); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
+  if(d.unit!=='t') migrate({projects:list});
   DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
-  list.forEach(np=>{ if((DB.deleted[np.id]||0) > (np.updated||0)) return; // 已在別台刪除
+  list.forEach(np=>{ if((DB.deleted[np.id]||0) > (np.updated||0)) return;
     const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>(DB.projects[i].updated||0)) DB.projects[i]=np; });
   DB.projects = DB.projects.filter(p=>!((DB.deleted[p.id]||0) > (p.updated||0)));
-  const blank=p=>!p.customer&&!p.brand&&!p.product&&!p.note&&!Object.keys(p.fields||{}).length; // 沒動過的空白專案讓位給雲端資料
+  const blank=p=>!p.customer&&!p.brand&&!p.product&&!p.note&&!Object.keys(p.fields||{}).length;
   if(DB.projects.some(p=>!blank(p))) DB.projects=DB.projects.filter(p=>!blank(p));
   if(!DB.projects.length) DB.projects.push(newProject('專案 1'));
-  if(!cur()) DB.curId=DB.projects[0].id; localStorage.setItem(KEY, JSON.stringify(DB)); render(); }
+  if(!cur()) DB.curId=DB.projects[0].id; persist(); render(); }
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
 render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案'); if(code()) cloudLoad();
