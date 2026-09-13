@@ -168,6 +168,12 @@
   .pinmk{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700}
   .pinmk.mark{background:#d32f2f}
   .pinmk.drop{background:#1565c0}
+  .item .acts button.nt{background:#6a4c93}
+  .notes{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+  .note{display:flex;gap:6px;align-items:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px}
+  .note span{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word}
+  .note small{color:var(--muted);font-size:11px;white-space:nowrap}
+  .note button{border:0;background:transparent;color:var(--danger);font-size:14px;cursor:pointer;padding:0 2px}
   .pinline{font-size:12px;color:var(--muted);margin-top:6px}
   .pinline b.m{color:#d32f2f}.pinline b.d{color:#1565c0}
 
@@ -429,7 +435,7 @@ async function queryParcel(lat, lng){
   if(!p.landno) throw new Error(p.msg||'查無地號');
   const parcel = { key:`${p.office}${p.sect}${p.landno}`, office:p.office, sect:p.sect, landno:p.landno, no:fmtNo(p.landno),
     officeName:b64(p.officeStr), sectName:b64(p.sectStr), cty:g('ctyName'), town:g('townName'),
-    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[], pins:[], area:null };
+    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[], pins:[], notes:[], area:null };
   parcel.area = await fetchArea(parcel);
   const iq = `https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=2&office=${p.office}&sect=${p.sect}&landno=${p.landno}&imgflag=1&alpah=0.5f&callback=cb`;
   for(let i=0;i<5;i++){ const rows=(await jsonp(iq))[0]||[]; const im=rows.find(x=>x.image);
@@ -450,12 +456,24 @@ function startPin(key,type){ if(isField()) return; const L=PIN[type];
 function addPin(key,type,lat,lng,acc){ const f=cur().fields[key]; if(!f) return; f.pins=f.pins||[];
   f.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type, lat, lng, acc:acc||null, time:new Date().toLocaleString('zh-TW',{hour12:false})});
   save(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已標記${PIN[type].n}`); }
+function addNote(key){ if(isField()) return; const f=cur().fields[key]; if(!f) return;
+  const t=prompt(`「${fullName(f)}」新增備註(例:從東側小路進入、田中有電線桿、上午 10 點前要撒完):`); if(t===null) return;
+  const v=t.trim(); if(!v) return; f.notes=f.notes||[];
+  f.notes.push({id:'nt'+Date.now().toString(36), text:v, time:new Date().toLocaleString('zh-TW',{hour12:false}).slice(0,16)});
+  save(); setStatus('已加入備註'); }
+function editNote(key,id){ if(isField()) return; const f=cur().fields[key]; const n=(f.notes||[]).find(x=>x.id===id); if(!n) return;
+  const t=prompt('修改備註(清空則刪除):', n.text); if(t===null) return;
+  const v=t.trim(); if(!v) f.notes=f.notes.filter(x=>x.id!==id); else { n.text=v; n.time=new Date().toLocaleString('zh-TW',{hour12:false}).slice(0,16); }
+  save(); }
+function delNote(key,id){ const f=cur().fields[key]; if(!f) return; if(!confirm('刪除這則備註?')) return; f.notes=(f.notes||[]).filter(x=>x.id!==id); save(); }
 function delPin(key,id){ const f=cur().fields[key]; if(!f) return; f.pins=(f.pins||[]).filter(x=>x.id!==id); save(); map.closePopup(); }
 function pinPopup(f,pin){ const L=PIN[pin.type];
   return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
     <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">🧭 導航到這個點</button>
     <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">👁 看街景</button>
     ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">✖ 刪除這個標記</button>`}</div>`; }
+function inBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox; const m=0.00003; // 邊界give 約3公尺
+  return lat>=s0-m && lat<=n0+m && lng>=w0-m && lng<=e0+m; }
 function distToBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox;
   const dLat=Math.max(s0-lat, 0, lat-n0)*111000, dLng=Math.max(w0-lng, 0, lng-e0)*111000*Math.cos(lat*Math.PI/180);
   return Math.hypot(dLat, dLng); }
@@ -476,7 +494,7 @@ map.on('click', async e=>{
       const rich=(old.photos||[]).length||(old.pins||[]).length||old.t!=null;
       if(rich && !confirm(`取消選取「${fullName(p)}」?\n這塊田已有噸數/照片/標記,取消會一併刪除。`)){ setStatus('已保留 '+fullName(p)); return; }
       unselect(p.key); setStatus('已取消選取 '+fullName(p)); return; }
-    const inside = await insideParcel(p, lat, lng);
+    const inside = inBox(p.bbox, lat, lng); // 以整塊地籍框範圍為準
     const near = nearestSelected(lat, lng);
     if(!inside){ // 國土回的是最接近的地號,可能不是點到的那塊 → 先給你看清楚再決定
       previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
@@ -505,6 +523,7 @@ function street(key){ const f=cur().fields[key]; if(f) window.open(svUrl(f.cente
 function popupHTML(p, sel){
   return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
     ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}
+    ${(p.notes||[]).length?`<div style="margin-top:6px;font-size:13px;background:#f6f8f5;border-radius:6px;padding:6px">${p.notes.map(n=>'📝 '+esc(n.text)).join('<br>')}</div>`:''}
     <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button>
     <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">👁 看 Google 街景</button></div>`;
 }
@@ -526,7 +545,7 @@ function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit �
   const conv = d.unit!=='t';
   d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
-    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(f.area===undefined) f.area=null; });
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
 function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
@@ -572,7 +591,7 @@ window.addEventListener('resize', ()=>map.invalidateSize());
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
 const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
-const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${hereKey===f.key}`;
+const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${(f.notes||[]).length}|${hereKey===f.key}`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
   const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
@@ -600,7 +619,9 @@ function render(){
         <label class="admin-only">📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
         <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">🔴 噴漆記號</button>
         <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">🔵 肥料擺放</button>
+        <button class="nt admin-only" onclick="addNote('${f.key}')">📝 加備註</button>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
+      ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">📝 ${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">✖</button></div>`).join('')}</div>`:''}
       ${(f.pins||[]).length?`<div class="pinline">現場標記:${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`<b class="${t==='mark'?'m':'d'}">${PIN[t].n} ${n} 點</b>`:''; }).filter(Boolean).join(' · ')} (點地圖上的圓點可導航或刪除)</div>`:''}
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
@@ -823,14 +844,14 @@ function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const a
   const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
   const kv=[['客戶名稱',p.customer||p.name||''],['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',p.pname||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
     ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],['備註',p.note||'—']];
-  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td></tr>`).join('');
+  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td><td>${(f.notes||[]).map(n=>esc(n.text)).join('<br>')}</td></tr>`).join('');
   const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
   document.getElementById('rp').innerHTML=`<h2>肥料撒播施作申報表</h2><div class="sub">產生時間:${new Date().toLocaleString('zh-TW',{hour12:false})} · 資料來源:撒肥定位系統(地籍資料引用內政部國土測繪中心,僅供參考)</div>
     <table class="kv">${kv.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
     <h3 style="margin:14px 0 6px;font-size:16px">施作土地明細</h3>
-    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th><th>現場標記</th></tr></thead>
-    <tbody>${rows||'<tr><td colspan="10">尚未加入田地</td></tr>'}</tbody>
-    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th><th></th></tr></tfoot></table></div>
+    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th><th>現場標記</th><th>備註</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="11">尚未加入田地</td></tr>'}</tbody>
+    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th><th></th><th></th></tr></tfoot></table></div>
     ${docs?`<h3 style="margin:14px 0 6px;font-size:16px">附件(申報文件)</h3><ul style="margin:0 0 10px 18px">${docs}</ul>`:''}
     <div class="sig"><div>撒播業者簽章</div><div>客戶(農民)簽章</div><div>日期</div></div>
     <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
