@@ -123,14 +123,19 @@
   .seg button:last-child{border-right:0}
   .seg button:hover{background:var(--surface-2)}
   .seg button.on{background:var(--g-700);color:#fff}
-  .leaflet-popup-content-wrapper{border-radius:var(--r-md);box-shadow:var(--sh-3);font-family:var(--font);border:1px solid var(--line);padding:2px}
+  .leaflet-popup-content-wrapper{border-radius:12px;box-shadow:var(--sh-3);font-family:var(--font);border:1px solid var(--line);padding:1px}
+  .leaflet-popup-close-button{width:26px!important;height:26px!important;font-size:20px!important;padding:2px 0 0 0!important;color:var(--muted)!important}
   .leaflet-popup-tip{box-shadow:var(--sh-2)}
-  .leaflet-popup-content{margin:13px 15px;line-height:1.5}
-  .pop{font-size:13.5px;min-width:215px}
-  .pop b{font-size:15px;color:var(--brand-ink);letter-spacing:.01em;display:inline-block;margin-bottom:2px}
-  .pop small{color:var(--muted);font-size:12px}
-  .pop .btn{display:flex;align-items:center;justify-content:center;margin-top:8px;width:100%;border:0;border-radius:var(--r-sm);
-    padding:10px;background:var(--amber);color:#fff;font-size:13.5px;font-weight:600;letter-spacing:.02em;box-shadow:var(--sh-1)}
+  .leaflet-popup-content{margin:11px 12px;line-height:1.45}
+  .pop{font-size:13px;min-width:180px;max-width:250px}
+  .pop b{font-size:14.5px;color:var(--brand-ink);letter-spacing:.01em;display:block;margin-bottom:2px;line-height:1.35}
+  .pop small{color:var(--muted);font-size:11.5px;line-height:1.5;display:block}
+  .pop .btn{display:flex;align-items:center;justify-content:center;margin-top:7px;width:100%;border:0;border-radius:9px;
+    padding:9px 8px;background:var(--amber);color:#fff;font-size:13px;font-weight:600;letter-spacing:.01em;box-shadow:var(--sh-1)}
+  .pop .btnrow{display:flex;gap:6px;margin-top:7px}
+  .pop .btnrow .btn{margin-top:0;flex:1;padding:9px 6px;font-size:12.5px}
+  .pop .btn .ic{width:15px;height:15px;margin-right:.3em}
+  .pop .note{margin-top:5px;font-size:12px;background:var(--surface-2);border-radius:7px;padding:5px 7px;line-height:1.5}
   .pop .btn:active{transform:translateY(1px)}
   .pop .btn.del{background:var(--red)}
   .pinmk{width:26px;height:26px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);
@@ -776,6 +781,7 @@ async function queryParcel(lat, lng){
 async function fetchArea(f){ try{ const r=await (await fetch(via('https://api.nlsc.gov.tw/S09_Ralid/getLandInfo'),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`city=${f.office[0]}&sect=${f.sect}&landno=${f.landno}`})).json(); const a=r&&r.ralid&&+r.ralid.AA10; return a>0?a:null; }catch{ return null; } }
 const FEN=969.917; // 1 分 = 969.917 m²(1 甲 = 10 分)
 const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} 公頃(${(m2/FEN).toFixed(1)} 分)`;
+const POPT={maxWidth:250, minWidth:180, autoPanPaddingTopLeft:[12,74], autoPanPaddingBottomRight:[12,26], keepInView:true};
 const PIN={mark:{n:'噴漆記號',c:'mark',t:'噴'}, drop:{n:'肥料擺放',c:'drop',t:'肥'}};
 let placing=null;
 function startPin(key,type,id){ if(isField()) return; const L=PIN[type];
@@ -789,9 +795,9 @@ function movePinTo(key,id,lat,lng,acc){ const f=cur().fields[key]; const pin=(f.
   pin.lat=lat; pin.lng=lng; pin.acc=acc||null; pin.time=new Date().toLocaleString('zh-TW',{hour12:false});
   save(); sfx.pin(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已移動${PIN[pin.type].n}`); }
 function flyPin(key,id){ const f=cur().fields[key]; const pin=(f.pins||[]).find(x=>x.id===id); if(!pin) return;
-  map.setView([pin.lat,pin.lng], 19); L.popup({maxWidth:260}).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); sfx.tap(); }
+  map.setView([pin.lat,pin.lng], 19); L.popup(POPT).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); sfx.tap(); }
 function focusField(key){ const f=cur().fields[key]; if(!f) return; map.fitBounds(f.bbox,{maxZoom:18, padding:[30,30]});
-  L.popup({maxWidth:280}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map);
+  L.popup(POPT).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map);
   if(window.innerWidth<900 && panelH()>panelMax()*0.6) panelSetH(Math.round(window.innerHeight*0.42),true); }
 function addPin(key,type,lat,lng,acc){ const f=cur().fields[key]; if(!f) return; f.pins=f.pins||[];
   f.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type, lat, lng, acc:acc||null, time:new Date().toLocaleString('zh-TW',{hour12:false})});
@@ -810,9 +816,9 @@ function delPin(key,id){ const f=cur().fields[key]; if(!f) return; const pin=(f.
   if(pin && !confirm(`刪除這個${PIN[pin.type].n}?`)) return;
   f.pins=(f.pins||[]).filter(x=>x.id!==id); sfx.remove(); save(); map.closePopup(); }
 function pinPopup(f,pin){ const L=PIN[pin.type];
-  return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
-    <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">${ic('nav')}導航到這個點</button>
-    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">${ic('eye')}看街景</button>
+  return `<div class="pop"><b>${L.n}</b><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
+    <div class="btnrow"><button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">${ic('nav')}導航</button>
+    <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">${ic('eye')}街景</button></div>
     ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">${ic('x')}刪除這個標記</button>`}</div>`; }
 function inBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox; const m=0.00003; // 邊界give 約3公尺
   return lat>=s0-m && lat<=n0+m && lng>=w0-m && lng<=e0+m; }
@@ -842,19 +848,19 @@ map.on('click', async e=>{
     if(!inside){ // 國土回的是最接近的地號,可能不是點到的那塊 → 先給你看清楚再決定
       previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
       map.fitBounds(p.bbox,{maxZoom:18, padding:[40,40]});
-      L.popup({maxWidth:280}).setLatLng(p.center).setContent(
-        `<div class="pop"><b>${ic('warn')}請確認地號</b><br><small>你點的位置不在這筆土地範圍內,系統回傳最接近的:</small><br><b>${esc(fullName(p))}</b>
+      L.popup(POPT).setLatLng(p.center).setContent(
+        `<div class="pop"><b>${esc(fullName(p))}</b><small>${ic('warn')}點擊處不在這筆土地範圍內,這是最接近的一筆</small>
          <button class="btn" onclick="selectCurrent()">${ic('check')}確定是這塊,加入</button>
-         <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看街景確認位置</button>
-         <button class="btn del" onclick="map.closePopup()">${ic('x')}不是,重新點選</button></div>`).openOn(map);
+         <div class="btnrow"><button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}街景</button>
+         <button class="btn del" onclick="map.closePopup()">${ic('x')}重選</button></div></div>`).openOn(map);
       setStatus('點擊處不在回傳的地籍範圍內,請確認地號'); return; }
     if(near && near.d > NEAR_M){
       previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
-      L.popup({maxWidth:280}).setLatLng(p.center).setContent(
-        `<div class="pop"><b>${esc(fullName(p))}</b><br><small>這塊田距離已選的田約 ${Math.round(near.d)} 公尺,不相鄰。確定要加入同一個專案嗎?</small>
+      L.popup(POPT).setLatLng(p.center).setContent(
+        `<div class="pop"><b>${esc(fullName(p))}</b><small>距離已選的田約 ${Math.round(near.d)} 公尺,不相鄰</small>
          <button class="btn" onclick="selectCurrent()">${ic('check')}確定加入</button>
-         <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看街景確認位置</button>
-         <button class="btn del" onclick="map.closePopup()">${ic('x')}取消</button></div>`).openOn(map);
+         <div class="btnrow"><button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}街景</button>
+         <button class="btn del" onclick="map.closePopup()">${ic('x')}取消</button></div></div>`).openOn(map);
       setStatus(`距離已選田 ${Math.round(near.d)} 公尺,請確認`); return; }
     selectCurrent();
   }catch(err){ setStatus('查地號失敗:'+err.message); }
@@ -867,10 +873,10 @@ const mapUrl = (lat,lng) => `https://www.google.com/maps/search/?api=1&query=${l
 function street(key){ const f=cur().fields[key]; if(f) window.open(svUrl(f.center[0],f.center[1]),'_blank'); }
 function popupHTML(p, sel){
   return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
-    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">${ic('x')}從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">${ic('check')}加入「${esc(projLabel(cur()))}」</button>`}
-    ${(p.notes||[]).length?`<div style="margin-top:6px;font-size:13px;background:#f6f8f5;border-radius:6px;padding:6px">${p.notes.map(n=>ic('note')+esc(n.text)).join('<br>')}</div>`:''}
-    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">${ic('nav')}Google 導航到這塊田</button>
-    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看 Google 街景</button></div>`;
+    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">${ic('x')}從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">${ic('check')}加入此專案</button>`}
+    ${(p.notes||[]).length?`<div class="note">${p.notes.map(n=>ic('note')+esc(n.text)).join('<br>')}</div>`:''}
+    <div class="btnrow"><button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">${ic('nav')}導航</button>
+    <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}街景</button></div></div>`;
 }
 
 
@@ -1097,9 +1103,9 @@ const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
   const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
-    .on('click',ev=>{ L.DomEvent.stop(ev); L.popup({maxWidth:260}).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); }));
+    .on('click',ev=>{ L.DomEvent.stop(ev); L.popup(POPT).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); }));
   const g=L.layerGroup([...pins, shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
-  g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); g._sig=layerSig(f); layers[f.key]=g.addTo(map); }
+  g.on('click',()=>{ lastParcel=f; L.popup(POPT).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); g._sig=layerSig(f); layers[f.key]=g.addTo(map); }
 function render(){
   const p=cur(); applyRole();
   const sel=document.getElementById('projSel');
