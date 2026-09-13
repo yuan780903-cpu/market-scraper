@@ -150,7 +150,12 @@
   #here.ok{background:rgba(26,79,48,.94);color:#fff;display:block}
   #here.warn{background:rgba(185,118,27,.95);color:#fff;display:block}
   #here.bad{background:rgba(168,41,31,.95);color:#fff;display:block}
+  #here{padding-right:44px}
   #here small{display:block;font-weight:400;opacity:.88;font-size:11.5px;margin-top:2px}
+  #here .x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:50%;
+    background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+  #here .x:active{background:rgba(255,255,255,.32)}
+  #here .x .ic{margin:0;width:16px;height:16px;stroke-width:2.4}
 
   /* ============ 專案面板 ============ */
   #panel{background:var(--surface);display:flex;flex-direction:column;max-height:44vh;
@@ -664,7 +669,7 @@ const Locate = L.Control.extend({ onAdd(){ const b=L.DomUtil.create('div','leafl
   L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e); toggleLocate(b);}); return b; } });
 new Locate({position:'bottomright'}).addTo(map);
 function toggleLocate(btn){
-  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; btn.classList.remove('on'); setStatus('已停止定位'); hereShow(null); return; }
+  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; btn.classList.remove('on'); setStatus('已停止定位'); hereMuted=null; hereShow(null); return; }
   if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; }
   btn.classList.add('on'); setStatus('定位中…'); let first=true;
   watchId=navigator.geolocation.watchPosition(p=>{
@@ -686,18 +691,24 @@ function parcelMask(f){ return new Promise(res=>{ if(!f.image){ res(null); retur
     try{ const d=g.getImageData(0,0,c.width,c.height).data; maskCache[f.key]={w:c.width,h:c.height,a:d}; res(maskCache[f.key]); }catch{ res(null); } }; img.onerror=()=>res(null); img.src=f.image; }); }
 async function insideParcel(f, lat, lng){ const [[s,w],[n,e]]=f.bbox; if(lat<s||lat>n||lng<w||lng>e) return false; const m=await parcelMask(f); if(!m) return true; // 沒有圖形就以外框判斷
   const x=Math.min(m.w-1, Math.floor((lng-w)/(e-w)*m.w)), y=Math.min(m.h-1, Math.floor((n-lat)/(n-s)*m.h)); return m.a[(y*m.w+x)*4+3] > 40; }
-let hereKey=null, hereLast={t:0,lat:0,lng:0}, hereBusy=false;
-function hereShow(html, cls){ const el=document.getElementById('here'); el.className=cls||''; el.innerHTML=html||''; el.style.display=html?'block':'none'; }
+let hereKey=null, hereLast={t:0,lat:0,lng:0}, hereBusy=false, hereSig=null, hereMuted=null;
+function hereClose(){ hereMuted=hereSig; document.getElementById('here').style.display='none'; sfx.tap(); }
+function hereShow(html, cls, sig){ const el=document.getElementById('here');
+  if(!html){ el.style.display='none'; return; }
+  hereSig = sig || cls || 'x';
+  if(hereMuted === hereSig){ el.style.display='none'; return; }
+  el.className=cls||''; el.innerHTML = html + `<button class="x" onclick="hereClose()" title="關閉提示">${ic('x')}</button>`;
+  el.style.display='block'; }
 async function whereAmI(lat,lng,acc){ if(hereBusy) return; hereBusy=true; try{
   const p=cur(); let found=null; for(const f of Object.values(p.fields)){ if(await insideParcel(f,lat,lng)){ found=f; break; } }
   if(found){ if(hereKey!==found.key){ hereKey=found.key; refreshHereMarkers(); sfx.ok(); }
-    hereShow(`${ic('check')}你在本專案的田裡:${esc(found.no)} 地號<small>${esc(found.cty+found.town+' '+found.sectName)} · 預定 ${found.t?fmtT(found.t)+' 噸':'未填噸數'} · GPS 誤差 ±${Math.round(acc)} m</small>`,'ok'); return; }
+    hereShow(`${ic('check')}你在本專案的田裡:${esc(found.no)} 地號<small>${esc(found.cty+found.town+' '+found.sectName)} · 預定 ${found.t?fmtT(found.t)+' 噸':'未填噸數'} · GPS 誤差 ±${Math.round(acc)} m</small>`,'ok','ok:'+found.key); return; }
   if(hereKey){ hereKey=null; refreshHereMarkers(); sfx.warn(); }
   // 不在本專案任何田內:每 15 秒或移動 15 m 以上才向國土查一次目前地號
   const dist=Math.hypot((lat-hereLast.lat)*111000,(lng-hereLast.lng)*111000*Math.cos(lat*Math.PI/180));
   if(Date.now()-hereLast.t>15000 || dist>15){ hereLast={t:Date.now(),lat,lng};
-    try{ const q=await queryParcelLite(lat,lng); hereShow(`${ic('warn')}不在本專案的田裡!目前位置:${esc(q)}<small>請勿在此撒播 · GPS 誤差 ±${Math.round(acc)} m</small>`,'bad'); }
-    catch{ hereShow(`${ic('warn')}不在本專案的田裡<small>GPS 誤差 ±${Math.round(acc)} m</small>`,'warn'); } }
+    try{ const q=await queryParcelLite(lat,lng); hereShow(`${ic('warn')}不在本專案的田裡!目前位置:${esc(q)}<small>請勿在此撒播 · GPS 誤差 ±${Math.round(acc)} m</small>`,'bad','bad:'+q); }
+    catch{ hereShow(`${ic('warn')}不在本專案的田裡<small>GPS 誤差 ±${Math.round(acc)} m</small>`,'warn','warn'); } }
   }finally{ hereBusy=false; } }
 async function queryParcelLite(lat,lng){ const xml=await (await fetch(`${PROXY}/api.nlsc.gov.tw/other/TownVillagePointQuery/${lng}/${lat}/4326`)).text(); const g=t=>(xml.match(new RegExp(`<${t}>([^<]*)<`))||[])[1]||'';
   const cty=g('ctyCode'); if(!cty) throw new Error('x'); const r=(await jsonp(`https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=1&city=${cty}&x=${lng}&y=${lat}&alpah=0.5f&callback=cb`))[0]||[]; const q=r[0]||{}; if(!q.landno) throw new Error('x');
