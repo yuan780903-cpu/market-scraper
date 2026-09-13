@@ -162,6 +162,7 @@
   @media print{ body>*{display:none!important} #report{display:block!important;position:static;overflow:visible} #report .rtool{display:none} .rp{max-width:none;padding:0} }
 
   /* ===== 現場標記 ===== */
+  .item .acts button.sv{background:#5d4037}
   .item .acts button.pin1{background:#d32f2f}
   .item .acts button.pin2{background:#1565c0}
   .pinmk{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700}
@@ -453,6 +454,7 @@ function delPin(key,id){ const f=cur().fields[key]; if(!f) return; f.pins=(f.pin
 function pinPopup(f,pin){ const L=PIN[pin.type];
   return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
     <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">🧭 導航到這個點</button>
+    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">👁 看街景</button>
     ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">✖ 刪除這個標記</button>`}</div>`; }
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
@@ -469,10 +471,14 @@ map.on('click', async e=>{
 function drawParcel(p,color,extra=''){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img '+extra}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25,className:extra}); }
 const fullName = p => `${p.cty}${p.town} ${p.sectName} ${p.no} 地號`;
 const navUrl = p => `https://www.google.com/maps/dir/?api=1&destination=${p.center[0]},${p.center[1]}&travelmode=driving`;
+const svUrl = (lat,lng) => `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+const mapUrl = (lat,lng) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+function street(key){ const f=cur().fields[key]; if(f) window.open(svUrl(f.center[0],f.center[1]),'_blank'); }
 function popupHTML(p, sel){
   return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
     ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}
-    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button></div>`;
+    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button>
+    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">👁 看 Google 街景</button></div>`;
 }
 
 // ================= 肥料品目(肥料種類品目及規格 109.4.24 附件一) =================
@@ -562,6 +568,7 @@ function render(){
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
         <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
       <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
+        <button class="sv" onclick="street('${f.key}')">👁 街景</button>
         <label class="admin-only">📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
         <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">🔴 噴漆記號</button>
         <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">🔵 肥料擺放</button>
