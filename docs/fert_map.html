@@ -366,6 +366,9 @@
   #gate h1{margin:0;font-size:24px;letter-spacing:.14em;font-weight:700}
   #gate .sub{font-size:11.5px;letter-spacing:.22em;color:rgba(255,255,255,.6);margin:4px 0 26px}
   #gate .cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
+  #gate input{width:100%;border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:16px;font-size:19px;
+    text-align:center;letter-spacing:.16em;font-weight:700;background:rgba(255,255,255,.96);color:var(--g-900)}
+  #gate input::placeholder{font-size:15px;letter-spacing:.06em;font-weight:400;color:#8b978f}
   #gate .card{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid rgba(255,255,255,.22);
     background:rgba(255,255,255,.09);border-radius:14px;padding:16px 17px;color:#fff;transition:background .15s,transform .1s}
   #gate .card:active{transform:scale(.985)}
@@ -375,6 +378,10 @@
   #gate .card small{display:block;font-size:11.5px;opacity:.72;font-weight:400;margin-top:2px;line-height:1.5}
   #gate .note{font-size:11.5px;color:rgba(255,255,255,.55);margin-top:22px;max-width:360px}
   #gate .err{color:#ffcf9e;font-size:13px;margin-top:14px;min-height:18px}
+  .admin-sel{border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;
+    background:rgba(255,255,255,.96);color:var(--ink);font-weight:600;max-width:150px}
+  .hbtn.dirty{background:var(--amber);border-color:var(--amber);color:#fff;font-weight:700;animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.62}}
   .modechip{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.28);border-radius:999px;
     padding:7px 11px;font-size:12px;font-weight:600;background:rgba(255,255,255,.1);color:#fff;white-space:nowrap}
   .modechip.field{background:rgba(224,137,28,.85);border-color:rgba(255,255,255,.35)}
@@ -398,6 +405,7 @@
 
   /* ============ 角色模式 ============ */
   body.field-mode .admin-only{display:none!important}
+  body:not(.admin-mode) .boss-only{display:none!important}
   body:not(.field-mode) .field-only{display:none!important}
 
   /* ============ 響應式 ============ */
@@ -440,7 +448,7 @@
     <div class="brand"><div class="logo"><svg class='ic' viewBox='0 0 24 24' style='width:20px;height:20px;margin:0'><path d='M12 22V9M12 9c0-3 2-5 4-6 0 3-1.5 5-4 6zM12 9C12 6 10 4 8 3c0 3 1.5 5 4 6zM12 15c0-2.6 1.8-4.4 3.6-5.2C15.6 12.4 14.2 14.3 12 15zM12 15c0-2.6-1.8-4.4-3.6-5.2C8.4 12.4 9.8 14.3 12 15z' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg></div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
     <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>新增</button><span class="badge field-only" hidden><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>現場模式</span></div>
     <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-    <button class="hbtn modechip" id="modeBtn" title="切換使用身分"></button><button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
+    <select id="opSel" class="admin-sel" title="檢視業者" hidden></select><button class="hbtn" id="saveBtn" title="儲存到雲端"></button><button class="hbtn modechip" id="modeBtn" title="目前身分,點擊登出"></button><button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
   </header>
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
@@ -489,50 +497,45 @@
 </div>
 
 <div id="dlg"><div class="box">
-  <h3>資料同步 / 匯入匯出</h3>
-  <div class="field-only">
-    <p>目前是<b>現場模式</b>:可看田區位置、地號、面積、噸數、現場照片、備註與導航。業主與農會承辦的個人資料已加密保護。</p>
-    <div class="row"><button id="impFile2"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/></svg>匯入現場檔案</button><button id="unlockBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 0 1 5.7-1.4'/></svg>輸入密碼解鎖</button></div>
+  <h3>雲端資料與設定</h3>
+
+  <h4>① 雲端資料</h4>
+  <p id="cloudInfo">所有專案、照片與申報文件都存在公司的 Google 雲端硬碟,不留在這支手機。離開前若有未儲存的變更,右上角按鈕會閃橘色提醒。</p>
+  <div class="row"><button id="cloudUp">立即存到雲端</button><button class="sec" id="cloudDown">重新讀取雲端</button></div>
+
+  <h4>② 官方申報單</h4>
+  <p>管理員上傳後,所有撒播業者都看得到、可開啟核對。</p>
+  <div id="offList"></div>
+  <div class="row boss-only"><label class="hbtn" style="flex:1;justify-content:center;background:var(--g-700);border:0;padding:12px;border-radius:var(--r-sm)">上傳官方申報單<input type="file" id="offInput" accept="image/*,application/pdf" multiple hidden></label></div>
+
+  <h4 class="boss-only">③ 帳號管理</h4>
+  <div class="boss-only">
+    <p>發代碼給撒播業者;代碼等同密碼,請勿外流。停用後該代碼即無法登入。</p>
+    <div id="userList"></div>
+    <div class="row"><input id="newName" placeholder="新業者姓名 / 公司"><button id="addUser" style="flex:0 0 92px">新增</button></div>
   </div>
-  <div class="admin-only">
-    <h4>① 手機與電腦即時同步(同步碼)</h4>
-    <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組同步碼(至少 6 個字),換手機只要輸入同一組,專案與照片就會自動回來。</p>
-    <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
-    <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
-    <div class="row"><button id="cloudUp"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>立即上傳</button><button id="cloudDown"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4v13'/><path d='M7 12l5 5 5-5'/><path d='M4 20h16'/></svg>讀取雲端</button></div>
 
-    <h4>② 給現場施工人員的檔案</h4>
-    <p>產生一個含<b>照片</b>的檔案。業主姓名電話、農會承辦電話、備註與申報文件清單會用密碼加密;現場人員看得到田區、照片、業務聯絡方式與農會名稱。</p>
-    <div class="row"><button id="expField"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>匯出現場版(含照片)</button></div>
+  <h4>④ 離線備份</h4>
+  <p>雲端已是主要儲存位置;需要留一份離線檔時可匯出。</p>
+  <div class="row"><button class="sec" id="expFile">匯出備份檔(JSON)</button></div>
 
-    <h4>③ 備份與還原</h4>
-    <div class="row"><button class="sec" id="expFile"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>匯出完整備份</button><button class="sec" id="impFile"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/></svg>匯入檔案</button></div>
+  <h4>⑤ Google 地圖搜尋</h4>
+  <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
+  <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
+  <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:88px;display:inline-block;padding:6px" value="4500"> 次</span></div>
+  <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
 
-    <h4>④ Google 雲端硬碟備份</h4>
-    <p>把專案、照片、申報文件備份到你自己的雲端硬碟。設定方式見 README 與 GAS 程式檔。</p>
-    <input id="driveUrl" placeholder="Apps Script 的 /exec 網址" autocomplete="off">
-    <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>立即備份全部</button></div>
-    <div class="row"><button class="sec" id="driveRead"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4v13'/><path d='M7 12l5 5 5-5'/><path d='M4 20h16'/></svg>從雲端硬碟還原</button></div>
-    <p id="driveMsg" style="margin:4px 0 0"></p>
+  <h4>⑥ 安裝為手機 App</h4>
+  <p id="pwaHint">把網站加到手機主畫面,像一般 App 一樣有圖示、全螢幕開啟。</p>
+  <div class="row"><button id="pwaBtn">安裝到主畫面</button></div>
 
-    <h4>⑤ Google 地圖搜尋</h4>
-    <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
-    <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
-    <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
-    <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
-    <h4>⑥ 管理員密碼與鎖定</h4>
-    <p>設定後,鎖定或匯出現場版都用這組密碼;現場人員要看客戶資料也需要它。密碼只以雜湊值存在本機,忘記無法救回。</p>
-    <input id="admPw" type="password" placeholder="設定 / 變更管理員密碼(至少 4 字)" autocomplete="new-password">
-    <h4>⑦ 安裝為手機 App</h4>
-    <p id="pwaHint">把這個網站加到手機主畫面,就會像一般 App 一樣有圖示、全螢幕開啟,沒有網路也打得開(地圖圖磚需要網路)。不需要上架、不需要下載安裝檔。</p>
-    <div class="row"><button id="pwaBtn">安裝到主畫面</button></div>
+  <h4>⑦ 操作音效</h4>
+  <p>點擊、加入田區、標記、拍照等動作會有提示音與輕震,現場戴手套也知道有沒有成功。</p>
+  <div class="row"><button class="sec" id="sndBtn"></button></div>
 
-    <h4>⑧ 操作音效</h4>
-    <p>按鈕點擊、加入田區、標記、拍照、鎖定等動作會有輕微提示音與震動,現場戴手套或看不到畫面時也知道有沒有成功。</p>
-    <div class="row"><button class="sec" id="sndBtn"></button></div>
-    <div class="row"><button id="savePw">儲存密碼</button><button class="sec" id="toField"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>鎖定(切到現場模式)</button></div>
-  </div>
-  <input type="file" id="impInput" accept=".json,application/json" style="display:none">
+  <h4>⑧ 帳號</h4>
+  <div class="row"><button class="sec" id="apiBtn">設定雲端網址</button><button class="sec" id="logoutBtn">登出</button></div>
+
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
@@ -541,11 +544,12 @@
   <h1>撒肥定位</h1>
   <div class="sub">田地定位 · 肥料撒播管理</div>
   <div class="cards">
-    <button class="card pri" id="gateAdmin"><span class="ico"></span><span><b>管理員登入</b><small>建立與編輯專案、雲端同步、申報報表(需密碼)</small></span></button>
-    <button class="card" id="gateField"><span class="ico"></span><span><b>施工人員</b><small>檢視田區位置、照片、標記與導航(唯讀,不需密碼)</small></span></button>
+    <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+    <button class="card pri" id="gateLogin" style="justify-content:center"><span class="ico"></span><b>登入</b></button>
   </div>
   <div class="err" id="gateErr"></div>
-  <div class="note">管理員密碼儲存在這台裝置,忘記可清除瀏覽器資料後重設。施工人員請向負責人索取現場檔案。</div>
+  <div class="note">代碼由管理員發給。管理員可看全部業者資料與帳號管理;撒播業者只看得到自己的專案與官方申報單。<br>
+    <a href="#" id="gateCfg" style="color:rgba(255,255,255,.75)">設定雲端網址</a></div>
 </div>
 <div id="inapp">
   <div class="logo"></div>
@@ -1070,8 +1074,10 @@ const idb = { db:null,
   async put(id,v){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos','readwrite').objectStore('photos').put(v,id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); },
   async del(id){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos','readwrite').objectStore('photos').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); } };
 const memPhoto={};
-async function getPhoto(id){ if(memPhoto[id]) return memPhoto[id]; let v=await idb.get(id).catch(()=>null);
-  if(!v && code()){ try{ const r=await fetch(`${SYNC}/photo?code=${encodeURIComponent(code())}&id=${id}`); if(r.ok){ v=await r.text(); await idb.put(id,v).catch(()=>{}); } }catch{} }
+let driveIds = (()=>{ try{ return JSON.parse(localStorage.getItem('fertmap_driveids')||'{}'); }catch{ return {}; } })();
+async function getPhoto(id){ if(memPhoto[id]) return memPhoto[id];
+  let v=await idb.get(id).catch(()=>null);
+  if(!v && driveIds[id] && SES){ try{ const r=await apiGet('file',{id:driveIds[id]}); v=r.data; await idb.put(id,v).catch(()=>{}); }catch{} }
   if(v) memPhoto[id]=v; return v; }
 async function showThumb(key,id){ const img=document.querySelector(`#th_${key} img[data-id="${id}"]`); if(!img) return; const v=await getPhoto(id); if(v) img.src=v; else img.alt='未下載'; }
 function shrink(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
@@ -1082,10 +1088,10 @@ async function addPhotos(key, input){ const f=cur().fields[key]; if(!f) return; 
   for(const file of input.files){ try{ setStatus('照片處理中…'); const data=await shrink(file);
       const id='ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       f.photos.push({id, time:new Date().toLocaleString('zh-TW',{hour12:false})});
-      if(code()){ const r=await (await fetch(`${SYNC}/photo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('照片上傳雲端失敗:'+r.error); }
-      if(drive()) driveSendFile(id, `${cur().customer||cur().name}_${f.sectName}${f.no}_${id}`, 'photo');
+      try{ const up=await apiPost('upload',{kind:'photo', name:`${f.sectName}${f.no}_${id}`, data}); driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds)); }catch(err){ setStatus('照片上傳雲端失敗:'+err.message); }
+      
     }catch(err){ setStatus('照片失敗:'+err.message); } }
-  input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); sfx.photo(); setStatus('已加入照片'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
+  input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); sfx.photo(); setStatus('已加入照片,已上傳雲端硬碟'); }
 let viewing=null;
 function showViewer({src, type, cap, onDel}){ const isPdf=(type||'').includes('pdf'); const img=document.getElementById('vImg'), fr=document.getElementById('vPdf'), a=document.getElementById('vOpen');
   img.hidden=isPdf; fr.hidden=!isPdf; if(isPdf){ fr.src=src; } else { img.src=src; }
@@ -1094,14 +1100,12 @@ function showViewer({src, type, cap, onDel}){ const isPdf=(type||'').includes('p
 function dataToBlob(d){ const [h,b]=d.split(','); const mime=(h.match(/data:([^;]+)/)||[])[1]||'application/octet-stream'; const bin=atob(b); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return new Blob([u8],{type:mime}); }
 async function openPhoto(key,id){ const f=cur().fields[key]; const ph=(f.photos||[]).find(x=>x.id===id); const v=await getPhoto(id); if(!v){ setStatus('照片還沒下載到,請確認同步碼'); return; }
   showViewer({src:v, type:'image', cap:fullName(f)+' · '+(ph&&ph.time||''), onDel:async()=>{ f.photos=(f.photos||[]).filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
-    if(code()) fetch(`${SYNC}/photo-del`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id})}).catch(()=>{}); save(); }}); }
+    if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{}); save(); }}); }
 document.getElementById('vClose').onclick=()=>{ document.getElementById('viewer').style.display='none'; document.getElementById('vPdf').src='about:blank'; };
 document.getElementById('vDel').onclick=async()=>{ if(!viewing||!confirm('確定刪除?')) return; const fn=viewing.onDel; document.getElementById('viewer').style.display='none'; document.getElementById('vPdf').src='about:blank'; await fn(); };
 
 // ================= 申報文件(專案層級,存 IndexedDB + 雲端) =================
-async function getDoc(id){ if(memPhoto[id]) return memPhoto[id]; let v=await idb.get(id).catch(()=>null);
-  if(!v && code()){ try{ const r=await fetch(`${SYNC}/file?code=${encodeURIComponent(code())}&id=${id}`); if(r.ok){ v=await r.text(); await idb.put(id,v).catch(()=>{}); } }catch{} }
-  if(v) memPhoto[id]=v; return v; }
+async function getDoc(id){ return getPhoto(id); }
 const readAsDataURL = file => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(new Error('讀檔失敗')); r.readAsDataURL(file); });
 async function addDocs(input){ const p=cur(); p.docs=p.docs||[];
   for(const file of input.files){ try{ setStatus('文件處理中…'); let data, type;
@@ -1109,17 +1113,16 @@ async function addDocs(input){ const p=cur(); p.docs=p.docs||[];
       else { data=await shrinkDoc(file); type='image'; }
       const id='doc'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       p.docs.push({id, name:file.name||('申報單'+(p.docs.length+1)), type, size:data.length, time:new Date().toLocaleString('zh-TW',{hour12:false})});
-      if(code()){ const r=await (await fetch(`${SYNC}/file`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('文件上傳雲端失敗:'+r.error); }
-      if(drive()) driveSendFile(id, `${p.customer||p.name}_${file.name||id}`, 'doc');
+      try{ const up=await apiPost('upload',{kind:'doc', name:file.name||id, data}); driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds)); }catch(err){ setStatus('文件上傳雲端失敗:'+err.message); }
     }catch(err){ setStatus('文件失敗:'+err.message); } }
-  input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setDocsOpen(true); setStatus('已加入申報文件'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
+  input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setDocsOpen(true); setStatus('已加入申報文件,已上傳雲端硬碟'); }
 function shrinkDoc(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
   img.onload=()=>{ const max=2000, sc=Math.min(1, max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
     c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',.82)); };
   img.onerror=()=>rej(new Error('讀取圖片失敗')); img.src=u; }); }
 async function openDoc(id){ const p=cur(); const d=(p.docs||[]).find(x=>x.id===id); if(!d) return; setStatus('文件載入中…'); const v=await getDoc(id); if(!v){ setStatus('文件還沒下載到,請確認同步碼與網路'); return; }
   setStatus(''); showViewer({src:v, type:d.type, cap:(p.customer||p.name)+' · '+d.name, onDel:async()=>{ p.docs=p.docs.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
-    if(code()) fetch(`${SYNC}/file-del`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id})}).catch(()=>{}); save(); }}); }
+    if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{}); save(); }}); }
 function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElementById('docCnt').textContent=docs.length;
   document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?ic('doc'):ic('image')}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
     : '<div class="hint">尚未上傳。建議把核准的申報單、肥料登記證等拍照或存 PDF 放這裡。</div>'; }
@@ -1128,13 +1131,19 @@ document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementByI
 
 // ================= 角色模式與加密 =================
 const role=()=> localStorage.getItem('fertmap_role')||'admin';
-const isField=()=> role()==='field';
+const isField=()=> role()==='field';           // 唯讀現場人員
+const isAdmin=()=> role()==='admin';
+const canEdit=()=> role()==='admin' || role()==='field2';
 const roleChosen = ()=> localStorage.getItem('fertmap_role_set')==='1';
 function setRole(r){ localStorage.setItem('fertmap_role', r); localStorage.setItem('fertmap_role_set','1'); applyRole();
   setStatus(isField()?'現場模式:點田區標記可看照片與導航':'管理員模式'); }
-function applyRole(){ document.body.classList.toggle('field-mode', isField());
+function applyRole(){ document.body.classList.toggle('field-mode', !canEdit());
+  document.body.classList.toggle('admin-mode', isAdmin());
   const mb=document.getElementById('modeBtn');
-  if(mb){ mb.classList.toggle('field', isField()); mb.innerHTML = isField()? ic('lock')+'<span class="lbl">現場</span>' : ic('unlock')+'<span class="lbl">管理員</span>'; }
+  if(mb){ const nm = SES ? SES.name : '未登入';
+    mb.classList.toggle('field', !isAdmin());
+    mb.innerHTML = (isAdmin()?ic('unlock'):ic('user'))+`<span class="lbl">${esc(nm)}</span>`; }
+  syncSaveBtn();
   document.querySelectorAll('#form input, #form select').forEach(el=>{ el.disabled=isField(); });
   document.querySelectorAll('.item input.ton').forEach(el=>{ el.disabled=isField(); }); }
 const b64u8 = u8 => { let r=''; for(let i=0;i<u8.length;i+=8192) r+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(r); };
@@ -1155,217 +1164,172 @@ const pwRec = ()=> { try{ return JSON.parse(localStorage.getItem('fertmap_pw')||
 async function pwCheck(pw){ const r=pwRec(); if(!r) return false; const t=await pwHash(pw, r.s); return t.h===r.h; }
 async function pwSet(pw){ localStorage.setItem('fertmap_pw', JSON.stringify(await pwHash(pw))); }
 
-async function buildFieldExport(pw){
-  const out={unit:'t', field:true, exported:new Date().toISOString(), projects:[]};
-  for(const p of DB.projects){
-    const np={...p, owner:'', ownerTel:'', assocPic:'', assocTel:'', note:'', docs:[], fields:{},
-      enc: await encJSON({owner:p.owner, ownerTel:p.ownerTel, assocPic:p.assocPic, assocTel:p.assocTel, note:p.note, docs:(p.docs||[]).map(d=>({name:d.name, time:d.time}))}, pw)};
-    for(const [k,f] of Object.entries(p.fields||{})){
-      const nf={...f, photos:[]};
-      for(const ph of (f.photos||[])){ const data=await getPhoto(ph.id); nf.photos.push({...ph, data:data||null}); }
-      np.fields[k]=nf; }
-    out.projects.push(np); }
-  return out; }
-async function exportFieldFile(){
-  let pw;
-  if(pwRec()){ pw=prompt('輸入管理員密碼(現場版將用它加密客戶資料):'); if(!pw) return;
-    if(!await pwCheck(pw)){ msg('管理員密碼錯誤'); return; } }
-  else { pw=prompt('尚未設定管理員密碼,請設定一組(至少 4 字),之後鎖定與解鎖都用它:'); if(!pw) return;
-    if(pw.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(pw); }
-  msg('產生現場版檔案中(含照片,請稍候)…');
-  try{ const out=await buildFieldExport(pw);
-    const blob=new Blob([JSON.stringify(out)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥現場版_${new Date().toISOString().slice(0,10)}.json`; a.click();
-    msg(`已匯出現場版(${out.projects.length} 個專案,約 ${(blob.size/1048576).toFixed(1)} MB),用 LINE 或郵件傳給施工人員`);
-  }catch(err){ msg('匯出失敗:'+err.message); } }
 async function absorbPhotos(list){ for(const p of list||[]) for(const f of Object.values(p.fields||{})) for(const ph of (f.photos||[])) if(ph.data){
   try{ await idb.put(ph.id, ph.data); }catch{} memPhoto[ph.id]=ph.data; delete ph.data; } }
-async function unlockAll(){
-  const pw=prompt('請輸入管理員密碼:'); if(!pw) return;
-  const locked=DB.projects.filter(p=>p.enc);
-  if(!locked.length){
-    if(pwRec() && !await pwCheck(pw)){ sfx.err(); msg('密碼錯誤'); return; }
-    setRole('admin'); render(); msg('已進入管理員模式'); return; }
-  try{ for(const p of locked){ const d=await decJSON(p.enc, pw); if(d.customer) p.customer=d.customer; if(d.name) p.name=d.name; p.owner=d.owner||''; p.ownerTel=d.ownerTel||''; p.assocPic=d.assocPic||''; p.assocTel=d.assocTel||''; p.note=d.note||'';
-      p.docs=(d.docs||[]).map(x=>({id:'', name:x.name, time:x.time, type:'note'})); delete p.enc; }
-    if(!pwRec()) await pwSet(pw);
-    persist(); setRole('admin'); render(); sfx.unlock(); msg('已解鎖,業主資料已顯示'); }
-  catch(err){ sfx.err(); msg('密碼錯誤,無法解鎖'); } }
+// ================= 雲端主控 API(帳號 / 權限 / 資料) =================
+const PROXY_GAS = 'https://fert-sync.yuan780903.workers.dev/gas';
+const apiUrl = ()=> (localStorage.getItem('fertmap_api')||'').trim();
+let SES = null;                      // {code,name,role}
+let DIRTY = false, saving = false;
+let VIEW_OWNER = null, ACCOUNTS = [], ALLDATA = {};
 
-// ================= 雲端同步 / 匯出匯入 =================
-const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
-// ---------- Google 雲端硬碟備份 ----------
-const drive=()=> (localStorage.getItem('fertmap_drive')||'').trim();
-const dmsg=t=>document.getElementById('driveMsg').textContent=t;
-const drvDone=()=>{ try{ return new Set(JSON.parse(localStorage.getItem('fertmap_drvdone')||'[]')); }catch{ return new Set(); } };
-const drvMark=id=>{ const s=drvDone(); s.add(id); localStorage.setItem('fertmap_drvdone', JSON.stringify([...s])); };
-function driveGet(params){ return new Promise((res,rej)=>{ const u=drive(); if(!u) return rej(new Error('尚未設定 Drive 網址'));
-  const cb='dcb'+Date.now().toString(36)+Math.floor(Math.random()*999); const sc=document.createElement('script');
-  const done=v=>{ delete window[cb]; sc.remove(); v instanceof Error ? rej(v) : res(v); };
-  window[cb]=d=>done(d); sc.onerror=()=>done(new Error('連線失敗,請確認網址與部署權限為「任何人」'));
-  sc.src=u+(u.includes('?')?'&':'?')+params+'&callback='+cb; document.body.appendChild(sc);
-  setTimeout(()=>{ if(window[cb]) done(new Error('逾時,請確認 Apps Script 已部署')); },25000); }); }
-function drivePost(obj){ return fetch(drive(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)}); }
-async function driveBackupData(){ if(!drive()) return false; try{ await drivePost({action:'backup',data:DB}); return true; }catch{ return false; } }
-async function driveSendFile(id, name, kind){ if(!drive()) return false; const data=await (kind==='doc'?getDoc(id):getPhoto(id)); if(!data) return false;
-  try{ await drivePost({action:'file', id, name, kind, data}); drvMark(id); return true; }catch{ return false; } }
-async function driveBackupAll(){ if(!drive()){ dmsg('請先貼上 /exec 網址並儲存'); return; }
-  dmsg('備份中…'); await driveBackupData(); const done=drvDone(); let n=0, total=0;
-  for(const p of DB.projects){ for(const f of Object.values(p.fields||{})) for(const ph of (f.photos||[])){ total++; if(done.has(ph.id)) continue;
-      dmsg(`上傳照片 ${++n}…`); await driveSendFile(ph.id, `${p.owner||p.customer||p.name}_${f.sectName}${f.no}_${ph.id}`, 'photo'); }
-    for(const d of (p.docs||[])){ total++; if(done.has(d.id)) continue; dmsg(`上傳申報文件 ${++n}…`); await driveSendFile(d.id, `${p.owner||p.customer||p.name}_${d.name}`, 'doc'); } }
-  try{ const st=await driveGet('action=status'); dmsg(st.ok?`備份完成:${st.account} 的雲端硬碟「撒肥定位」資料夾(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'備份可能失敗:'+st.error); }
-  catch(e){ dmsg('已送出備份,但無法確認結果:'+e.message); } }
-let drvTimer=null; function driveAuto(){ if(!drive()) return; clearTimeout(drvTimer); drvTimer=setTimeout(driveBackupData, 8000); }
-document.getElementById('saveDrive').onclick=async()=>{ const u=document.getElementById('driveUrl').value.trim();
-  if(u && !/^https:\/\/script\.google(usercontent)?\.com\/.*\/exec/.test(u)){ dmsg('網址看起來不對,應該是 https://script.google.com/macros/s/.../exec'); return; }
-  localStorage.setItem('fertmap_drive',u); if(!u){ dmsg('已清除 Drive 設定'); return; }
-  dmsg('測試連線中…'); try{ const st=await driveGet('action=status'); dmsg(st.ok?`已連上 ${st.account} 的雲端硬碟(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'連線失敗:'+st.error); }
-  catch(e){ localStorage.removeItem('fertmap_drive'); dmsg(e.message+'(設定未儲存,請確認網址正確且部署存取權為「任何人」)'); } };
-document.getElementById('driveNow').onclick=driveBackupAll;
-document.getElementById('driveRead').onclick=async()=>{ if(!drive()){ dmsg('請先設定 /exec 網址'); return; } dmsg('讀取中…');
-  try{ const r=await driveGet('action=read'); if(!r.ok) throw new Error(r.error); mergeIn(r.data); dmsg('已從雲端硬碟還原並與本機合併('+r.time+')'); }catch(e){ dmsg('還原失敗:'+e.message); } };
-const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
-document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim());
-  const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
-  document.getElementById('gUsed').textContent=gUsage().n;
-  msg(gkey()?`已儲存。本月上限 ${gCap()} 次,目前用了 ${gUsage().n} 次`:'已清除 Google 金鑰,搜尋改用免費地圖資料'); };
-document.getElementById('menuBtn').onclick=()=>{ document.getElementById('driveUrl').value=drive(); dmsg(''); document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n; document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
-document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
-document.getElementById('saveSync').onclick=async()=>{ const c=document.getElementById('syncCode').value.trim(); if(c.length<6){ msg('同步碼至少 6 個字'); return; }
-  localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
-async function cloudSave(){ const c=code(); if(!c) return false; try{
-    const r=await (await fetch(SYNC+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:c,data:DB})})).json();
-    if(!r.ok) throw new Error(r.error); sfx.tap(); setStatus('已同步 '+r.time); msg('已上傳雲端('+r.time+',共 '+r.projects+' 個專案)'); return true;
-  }catch(err){ setStatus('上傳失敗:'+err.message); msg('上傳失敗:'+err.message); return false; } }
-async function cloudLoad(){ const c=code(); if(!c) return false; try{
-    const r=await (await fetch(SYNC+'/load?code='+encodeURIComponent(c))).json();
-    if(!r.ok) throw new Error(r.error); mergeIn(r.data); setStatus('已讀取雲端 '+r.time); msg('已讀取雲端('+r.time+'),與本機合併完成'); return true;
-  }catch(err){ setStatus('讀取:'+err.message); msg('讀取:'+err.message); return false; } }
-document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
-document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
-let syncTimer=null; function autoSync(){ if(isField()) return; driveAuto(); if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
-document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出(不含照片檔,照片在雲端),請選「儲存到檔案 / 雲端硬碟」'); };
-document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
-document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
-  try{ msg('讀取檔案中…'); const d=JSON.parse(await f.text()); await absorbPhotos(d.projects);
-    const nPh=(d.projects||[]).reduce((s2,p2)=>s2+Object.values(p2.fields||{}).reduce((a,x)=>a+((x.photos||[]).length),0),0);
-    mergeIn(d);
-    if(d.field && DB.projects.some(p2=>p2.enc)) setRole('field');
-    render(); msg(`已匯入 ${f.name}(${(d.projects||[]).length} 個專案、${nPh} 張照片)`); if(!isField()) autoSync();
-  }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
-document.getElementById('impFile2').onclick=()=>document.getElementById('impInput').click();
-document.getElementById('unlockBtn').onclick=unlockAll;
-document.getElementById('expField').onclick=exportFieldFile;
-function refreshSnd(){ const b=document.getElementById('sndBtn');
-  b.innerHTML = (soundOn()?ic('sound'):ic('mute')) + (soundOn()?'音效:開(點此關閉)':'音效:關(點此開啟)'); }
-document.getElementById('sndBtn').onclick=()=>{ localStorage.setItem('fertmap_sound', soundOn()?'0':'1'); refreshSnd(); if(soundOn()) sfx.ok(); };
-refreshSnd();
-document.getElementById('savePw').onclick=async()=>{ const el=document.getElementById('admPw'); const v=el.value.trim();
-  if(v.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(v); el.value=''; msg('已設定管理員密碼,之後鎖定與解鎖都用它'); };
-document.getElementById('toField').onclick=()=>{ if(!pwRec()){ msg('請先設定管理員密碼,否則鎖定後無法解鎖'); return; }
-  if(!confirm('鎖定並切到現場模式?此裝置會隱藏業主資料、備註、申報文件與所有設定,要解鎖需輸入管理員密碼。')) return;
-  setRole('field'); render(); sfx.lock(); msg('已鎖定,切換到現場模式'); };
-function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
-  migrate({projects:list, unit:d.unit});
-  DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
-  list.forEach(np=>{ if((DB.deleted[np.id]||0) > (np.updated||0)) return;
-    const i=DB.projects.findIndex(x=>x.id===np.id); if(i<0) DB.projects.push(np); else if((np.updated||0)>(DB.projects[i].updated||0)) DB.projects[i]=np; });
-  DB.projects = DB.projects.filter(p=>!((DB.deleted[p.id]||0) > (p.updated||0)));
-  const blank=p=>!p.customer&&!p.brand&&!p.product&&!p.note&&!Object.keys(p.fields||{}).length;
-  if(DB.projects.some(p=>!blank(p))) DB.projects=DB.projects.filter(p=>!blank(p));
-  if(!DB.projects.length) DB.projects.push(newProject('專案 1'));
-  if(!cur()) DB.curId=DB.projects[0].id; persist(); render(); }
+function api(action, params, body){
+  const u = apiUrl(); if(!u) return Promise.reject(new Error('尚未設定雲端網址'));
+  const qs = new URLSearchParams(Object.assign({action}, params||{}));
+  qs.set('u', u);
+  const opt = body ? {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+                      body: JSON.stringify(Object.assign({action, code:(SES&&SES.code)||''}, body))} : {};
+  return fetch(`${PROXY_GAS}?${qs.toString()}`, opt).then(async r=>{
+    const t = await r.text();
+    let j; try{ j = JSON.parse(t); }catch{ throw new Error('雲端回應異常(請確認 Apps Script 已部署為「任何人」可存取)'); }
+    if(!j.ok) throw new Error(j.error||'雲端錯誤');
+    return j; });
+}
+const apiGet  = (action, extra)=> api(action, Object.assign({code:(SES&&SES.code)||''}, extra||{}), null);
+const apiPost = (action, body)=> api(action, {}, Object.assign({}, body||{}));
 
-// ================= 申報報表 =================
-function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const T=tons(p); const bag=+p.bag>0?+p.bag:null;
-  const bags=v=>bag&&v?Math.round(v*1000/bag):'';
-  const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
-  const kv=[['業務名稱',p.customer||p.name||''],['業務聯絡方式',p.customerTel||'—'],['業主名稱',p.owner||'—'],['業主聯絡方式',p.ownerTel||'—'],['隸屬農會',p.assoc||'—'],['農會承辦 / 聯絡方式',[p.assocPic,p.assocTel].filter(Boolean).join(' · ')||'—'],['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',pnameLabel(p)||'—'],['性狀',p.form||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
-    ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],['備註',p.note||'—']];
-  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td><td>${(f.notes||[]).map(n=>esc(n.text)).join('<br>')}</td></tr>`).join('');
-  const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
-  document.getElementById('rp').innerHTML=`<h2>肥料撒播施作申報表</h2><div class="sub">產生時間:${new Date().toLocaleString('zh-TW',{hour12:false})} · 資料來源:撒肥定位系統(地籍資料引用內政部國土測繪中心,僅供參考)</div>
-    <table class="kv">${kv.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
-    <h3 style="margin:14px 0 6px;font-size:16px">施作土地明細</h3>
-    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th><th>現場標記</th><th>備註</th></tr></thead>
-    <tbody>${rows||'<tr><td colspan="11">尚未加入田地</td></tr>'}</tbody>
-    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th><th></th><th></th></tr></tfoot></table></div>
-    ${docs?`<h3 style="margin:14px 0 6px;font-size:16px">附件(申報文件)</h3><ul style="margin:0 0 10px 18px">${docs}</ul>`:''}
-    <div class="sig"><div>撒播業者簽章</div><div>客戶(農民)簽章</div><div>日期</div></div>
-    <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
-  document.getElementById('report').style.display='block'; }
-document.getElementById('reportBtn').onclick=buildReport;
+function markDirty(){ DIRTY = true; syncSaveBtn(); }
+function syncSaveBtn(){ const b=document.getElementById('saveBtn'); if(!b) return;
+  b.classList.toggle('dirty', DIRTY);
+  b.innerHTML = saving ? ic('cloud')+'儲存中' : (DIRTY ? ic('upload')+'尚未儲存' : ic('check')+'已儲存'); }
+async function cloudSaveNow(silent){
+  if(!SES || !apiUrl()){ if(!silent) setStatus('尚未登入雲端'); return false; }
+  if(saving) return false; saving = true; syncSaveBtn();
+  try{ const owner = (isAdmin() && VIEW_OWNER && VIEW_OWNER!==SES.code) ? VIEW_OWNER : undefined;
+    const r = await apiPost('save', {data: DB, owner});
+    DIRTY = false; setStatus('已存到雲端硬碟 '+r.time); if(!silent) sfx.ok(); return true;
+  }catch(err){ setStatus('儲存失敗:'+err.message); if(!silent) sfx.err(); return false; }
+  finally{ saving = false; syncSaveBtn(); } }
+let autoTimer=null;
+function autoSync(){ markDirty(); if(!canEdit()) return; clearTimeout(autoTimer); autoTimer=setTimeout(()=>cloudSaveNow(true), 4000); }
+window.addEventListener('beforeunload', e=>{ if(DIRTY){ e.preventDefault(); e.returnValue=''; return ''; } });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && DIRTY) cloudSaveNow(true); });
 
-// ================= PWA:安裝與離線 =================
-const standalone = ()=> window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; refreshPwa(); });
-window.addEventListener('appinstalled', ()=>{ deferredPrompt=null; refreshPwa(); sfx.ok(); });
-function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
-function refreshPwa(){ const b=document.getElementById('pwaBtn'), h=document.getElementById('pwaHint'); if(!b) return;
-  if(standalone()){ b.textContent='已安裝(目前就是 App 模式)'; b.disabled=true; b.style.opacity=.6;
-    h.textContent='這台裝置已經以 App 模式開啟。資料存在本機,可用同步碼與其他裝置共用。'; return; }
-  b.disabled=false; b.style.opacity=1;
-  if(deferredPrompt){ b.textContent='安裝到主畫面'; h.textContent='按下後由系統詢問是否安裝,完成後桌面會出現「撒肥定位」圖示。'; }
-  else if(isIOS()){ b.textContent='iPhone 安裝步驟'; h.textContent='iPhone 請用 Safari 開啟本網址,點下方分享鍵,選「加入主畫面」,再按「新增」即可。'; }
-  else { b.textContent='安裝說明'; h.textContent='在瀏覽器選單找「安裝應用程式」或「加到主畫面」即可。'; } }
-document.getElementById('pwaBtn').onclick=async()=>{
-  if(deferredPrompt){ deferredPrompt.prompt(); const r=await deferredPrompt.userChoice; deferredPrompt=null; refreshPwa();
-    msg(r.outcome==='accepted'?'安裝中,稍候主畫面會出現圖示':'已取消安裝'); return; }
-  msg(isIOS()? 'Safari → 下方分享鍵 → 加入主畫面 → 新增' : '請在瀏覽器選單選「安裝應用程式 / 加到主畫面」'); };
-refreshPwa();
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('fertmap-sw.js').then(reg=>{
-    reg.addEventListener('updatefound', ()=>{ const w=reg.installing; if(!w) return;
-      w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) setStatus('已下載新版,重新整理即可更新'); }); });
-  }).catch(()=>{}); }); }
-
-// ================= 身分入口 =================
-function gateShow(msg){ const g=document.getElementById('gate');
+// ---------- 登入 ----------
+function gateShow(msgTxt){ const g=document.getElementById('gate');
   g.querySelector('.mark').innerHTML=ic('markpin');
-  document.getElementById('gateAdmin').querySelector('.ico').innerHTML=ic('unlock');
-  document.getElementById('gateField').querySelector('.ico').innerHTML=ic('lock');
-  document.getElementById('gateErr').textContent=msg||'';
-  g.style.display='flex'; }
+  g.querySelector('#gateLogin .ico').innerHTML=ic('unlock');
+  document.getElementById('gateErr').textContent=msgTxt||'';
+  document.getElementById('gateCode').value='';
+  g.style.display='flex'; setTimeout(()=>{ try{ document.getElementById('gateCode').focus(); }catch{} },200); }
 function gateHide(){ document.getElementById('gate').style.display='none'; }
-async function loginAdmin(){
-  if(pwRec()){ const pw=prompt('請輸入管理員密碼:'); if(pw===null) return false;
-    if(!await pwCheck(pw)){ sfx.err(); gateShow('密碼錯誤,請再試一次'); return false; }
-    // 順便解開這台裝置上加密的專案
-    for(const p of DB.projects.filter(x=>x.enc)){ try{ const d=await decJSON(p.enc,pw);
-      p.customer=d.customer||p.customer; p.owner=d.owner||''; p.ownerTel=d.ownerTel||''; p.assocPic=d.assocPic||''; p.assocTel=d.assocTel||'';
-      p.note=d.note||''; delete p.enc; }catch{} }
-    persist();
+async function doLogin(codeIn){
+  const code = (codeIn || document.getElementById('gateCode').value || '').trim().toUpperCase();
+  if(!code){ gateShow('請輸入登入代碼'); return false; }
+  if(!apiUrl()){ askApi(); return false; }
+  document.getElementById('gateErr').textContent='登入中…';
+  const prev = SES; SES = {code};
+  try{
+    const me = await apiGet('login');
+    SES = {code, name:me.name, role:me.role};
+    localStorage.setItem('fertmap_ses', JSON.stringify(SES));
+    setRole(me.role==='管理員' ? 'admin' : 'field2');
+    await loadFromCloud();
+    gateHide(); sfx.unlock(); setStatus(`${me.name}(${me.role})已登入`);
+    return true;
+  }catch(err){ SES = prev; gateShow('登入失敗:'+err.message); sfx.err(); return false; } }
+function logout(){ if(DIRTY && !confirm('有尚未儲存的變更,確定要登出?')) return;
+  SES=null; localStorage.removeItem('fertmap_ses'); localStorage.removeItem('fertmap_role_set');
+  DIRTY=false; DB=load(); persist(); render(); gateShow('已登出'); }
+function askApi(){ const v=prompt('請貼上雲端主控的 Apps Script /exec 網址:', apiUrl()); if(v===null) return;
+  localStorage.setItem('fertmap_api', v.trim()); gateShow(v.trim()?'已設定雲端網址,請輸入登入代碼':'已清除雲端網址'); }
+
+// ---------- 讀取雲端 ----------
+async function loadFromCloud(){
+  const r = await apiGet('load');
+  const sel=document.getElementById('opSel');
+  if(r.role === '管理員'){
+    ACCOUNTS = r.accounts||[]; ALLDATA = r.all||{};
+    sel.hidden=false;
+    sel.innerHTML = ACCOUNTS.filter(a=>a.enabled).map(a=>`<option value="${esc(a.code)}">${esc(a.name)}${a.role==='管理員'?'(我)':''}</option>`).join('');
+    VIEW_OWNER = (VIEW_OWNER && ALLDATA[VIEW_OWNER]) ? VIEW_OWNER
+      : ((ACCOUNTS.find(a=>a.role==='撒播業者'&&a.enabled)||ACCOUNTS[0]||{}).code);
+    sel.value = VIEW_OWNER;
+    adoptData(ALLDATA[VIEW_OWNER] || {projects:[]});
   } else {
-    const pw=prompt('這台裝置尚未設定管理員密碼。\n請設定一組(至少 4 個字),之後登入、鎖定與現場版解鎖都用它:');
-    if(pw===null) return false;
-    if(pw.length<4){ gateShow('密碼至少 4 個字'); return false; }
-    const again=prompt('請再輸入一次確認:'); if(again!==pw){ gateShow('兩次輸入不一致'); return false; }
-    await pwSet(pw);
-    const c=prompt('若你在別台裝置已有資料,請輸入同步碼把專案帶過來(沒有可留空):','');
-    if(c && c.trim().length>=6){ localStorage.setItem('fertmap_sync', c.trim()); }
+    sel.hidden=true; VIEW_OWNER = SES.code; adoptData(r.data || {projects:[]});
   }
-  setRole('admin'); gateHide(); render(); sfx.unlock();
-  setStatus('管理員模式'); if(code()) cloudLoad(); return true; }
-function loginField(){ setRole('field'); gateHide(); render(); sfx.lock();
-  setStatus('現場模式:請按「資料」匯入負責人給你的檔案'); }
-document.getElementById('gateAdmin').onclick=loginAdmin;
-document.getElementById('gateField').onclick=loginField;
-document.getElementById('modeBtn').onclick=async()=>{
-  if(isField()){ await loginAdmin(); return; }
-  const wipe=confirm('切換為施工人員模式?\n\n【確定】只切換身分,本機資料保留(自己暫時用)\n【取消】先不切換\n\n若要把這支手機交給別人,切換後請再用「資料 → 匯出現場版」給對方,並在下一個提示選擇清除本機資料。');
-  if(!wipe) return;
-  const clear=confirm('要同時清除這台裝置上的管理員資料嗎?\n\n【確定】清除(交給別人用,較安全)\n【取消】保留資料,只隱藏畫面');
-  if(clear){ localStorage.removeItem(KEY); localStorage.removeItem('fertmap_sync'); localStorage.removeItem('fertmap_drive');
-    try{ indexedDB.deleteDatabase('fertmap'); }catch{}
-    DB=load(); persist(); }
-  setRole('field'); render(); sfx.lock(); setStatus('已切換為現場模式'); };
+  DIRTY=false; syncSaveBtn(); }
+function adoptData(d){
+  d = (d && Array.isArray(d.projects)) ? d : {projects:[], unit:'t'};
+  if(!d.projects.length) d.projects=[newProject('專案 1')];
+  migrate(d);
+  DB = {curId:(d.curId && d.projects.some(x=>x.id===d.curId))?d.curId:d.projects[0].id,
+        projects:d.projects, unit:'t', deleted:d.deleted||{}};
+  Object.keys(layers).forEach(k=>{ layers[k].remove(); delete layers[k]; });
+  persist(); render(); }
+
+document.getElementById('opSel').onchange = async e=>{
+  if(DIRTY && !confirm('目前變更尚未儲存,切換業者會放棄變更。要繼續嗎?')){ e.target.value=VIEW_OWNER; return; }
+  VIEW_OWNER = e.target.value; adoptData(ALLDATA[VIEW_OWNER]||{projects:[]}); DIRTY=false; syncSaveBtn();
+  setStatus('檢視:'+((ACCOUNTS.find(a=>a.code===VIEW_OWNER)||{}).name||VIEW_OWNER)); };
+document.getElementById('gateLogin').onclick = ()=>doLogin();
+document.getElementById('gateCode').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('gateCfg').onclick = e=>{ e.preventDefault(); askApi(); };
+document.getElementById('saveBtn').onclick = ()=>cloudSaveNow(false);
+document.getElementById('modeBtn').onclick = ()=>logout();
+
+// ================= 對話框動作(雲端 / 官方申報單 / 帳號) =================
+const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
+document.getElementById('menuBtn').onclick=()=>{ dlg.style.display='flex'; msg(''); refreshSnd();
+  document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n;
+  refreshPwa(); loadOfficials(); if(isAdmin()) renderUsers(); };
+document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
+document.getElementById('apiBtn').onclick=()=>{ askApi(); };
+document.getElementById('logoutBtn').onclick=()=>{ dlg.style.display='none'; logout(); };
+document.getElementById('cloudUp').onclick=()=>cloudSaveNow(false);
+document.getElementById('cloudDown').onclick=async()=>{ if(DIRTY && !confirm('尚未儲存的變更會被雲端資料覆蓋,確定?')) return;
+  msg('讀取中…'); try{ await loadFromCloud(); msg('已重新讀取雲端資料'); sfx.ok(); }catch(e){ msg('讀取失敗:'+e.message); sfx.err(); } };
+
+// ---- 官方申報單 ----
+let OFFICIALS=[];
+async function loadOfficials(){ const box=document.getElementById('offList'); if(!SES){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="hint" style="color:var(--muted);font-size:12px">讀取中…</div>';
+  try{ const r=await apiGet('officials'); OFFICIALS=r.files||[];
+    box.innerHTML = OFFICIALS.length ? OFFICIALS.map(f=>`<div class="doc"><span class="ico">${f.type&&f.type.includes('pdf')?ic('doc'):ic('image')}</span>
+      <div class="n" onclick="openOfficial('${f.id}')">${esc(f.name)}<small>${esc(f.time||'')}</small></div>
+      <button onclick="openOfficial('${f.id}')">開啟</button>
+      <button class="del boss-only" onclick="delOfficial('${f.id}')">${ic('trash')}</button></div>`).join('')
+      : '<div class="hint" style="color:var(--muted);font-size:12px">目前沒有官方申報單。</div>';
+  }catch(e){ box.innerHTML='<div class="hint" style="color:var(--muted);font-size:12px">讀取失敗:'+esc(e.message)+'</div>'; } }
+async function openOfficial(id){ msg('開啟中…');
+  try{ const r=await apiGet('file',{id}); msg('');
+    showViewer({src:r.data, type:/pdf/.test(r.data.slice(0,30))?'pdf':'image', cap:r.name, onDel:null});
+  }catch(e){ msg('開啟失敗:'+e.message); } }
+async function delOfficial(id){ if(!confirm('刪除這份官方申報單?')) return;
+  try{ await apiPost('delfile',{id}); loadOfficials(); msg('已刪除'); }catch(e){ msg('刪除失敗:'+e.message); } }
+document.getElementById('offInput').onchange=async e=>{
+  for(const file of e.target.files){ try{ msg('上傳 '+file.name+'…');
+      const data = file.type==='application/pdf' ? await readAsDataURL(file) : await shrinkDoc(file);
+      await apiPost('upload',{kind:'official', name:file.name, data});
+    }catch(err){ msg('上傳失敗:'+err.message); } }
+  e.target.value=''; loadOfficials(); msg('官方申報單已更新'); sfx.ok(); };
+
+// ---- 帳號管理 ----
+async function renderUsers(){ const box=document.getElementById('userList'); if(!isAdmin()) return;
+  try{ const r=await apiGet('users'); ACCOUNTS=r.accounts||[];
+    box.innerHTML = ACCOUNTS.map(a=>`<div class="doc"><span class="ico">${a.role==='管理員'?ic('unlock'):ic('user')}</span>
+      <div class="n">${esc(a.name)}<small>代碼 ${esc(a.code)} · ${esc(a.role)} · ${a.enabled?'啟用中':'已停用'}</small></div>
+      <button onclick="copyCode('${esc(a.code)}')">複製代碼</button>
+      <button class="del" onclick="toggleUser('${esc(a.code)}',${a.enabled?'false':'true'})">${a.enabled?'停用':'啟用'}</button></div>`).join('');
+  }catch(e){ box.innerHTML='<div class="hint" style="color:var(--muted);font-size:12px">'+esc(e.message)+'</div>'; } }
+async function copyCode(c){ try{ await navigator.clipboard.writeText(c); msg('已複製代碼 '+c+',請私下傳給該業者'); }catch{ msg('代碼:'+c); } }
+async function toggleUser(code, enable){ try{ await apiPost('setuser',{target:code, enabled:enable}); renderUsers(); msg('已更新'); }catch(e){ msg('失敗:'+e.message); } }
+document.getElementById('addUser').onclick=async()=>{ const n=document.getElementById('newName').value.trim();
+  if(!n){ msg('請填姓名'); return; } msg('建立中…');
+  try{ const r=await apiPost('adduser',{name:n}); document.getElementById('newName').value='';
+    await renderUsers(); await loadFromCloud(); msg(`已建立「${r.name}」,登入代碼:${r.code}(請私下給他)`); sfx.ok();
+  }catch(e){ msg('建立失敗:'+e.message); sfx.err(); } };
+
+// ---- 匯出(留備份用) ----
+document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥備份_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出備份檔'); };
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
 applyRole(); render();
-if(!roleChosen()){ gateShow(); }
-else { setStatus(isField()?'現場模式:點田區標記可看照片與導航':'放大到 16 以上,點田地即可查地號並加入專案'); if(!isField() && code()) cloudLoad(); }
+(async ()=>{ let ses=null; try{ ses=JSON.parse(localStorage.getItem('fertmap_ses')||'null'); }catch{}
+  if(ses && ses.code && apiUrl()){ const ok=await doLogin(ses.code); if(ok) return; }
+  gateShow(apiUrl()? '' : '首次使用請先按下方「設定雲端網址」'); })();
 </script>
 </body>
 </html>
