@@ -255,6 +255,21 @@
   .note span{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word;cursor:text}
   .note small{color:var(--faint);font-size:10.5px;white-space:nowrap;padding-top:2px}
   .note button{border:0;background:transparent;color:var(--red);padding:0 2px;display:inline-flex;align-items:center}
+  .pins{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .prow{display:flex;gap:8px;align-items:center;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:var(--r-sm);padding:7px 9px;font-size:12.5px}
+  .prow.mark{border-left:3px solid var(--red)} .prow.drop{border-left:3px solid var(--blue)}
+  .prow .pdot{width:20px;height:20px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .prow.mark .pdot{background:var(--red)} .prow.drop .pdot{background:var(--blue)}
+  .prow .pt{flex:1;min-width:0;cursor:pointer;font-weight:600;color:var(--ink-2)}
+  .prow .pt small{display:block;font-weight:400;color:var(--faint);font-size:10.5px;margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow button{border:1px solid var(--line-2);background:#fff;border-radius:var(--r-xs);padding:5px 8px;
+    font-size:11.5px;font-weight:600;color:var(--ink-2);display:inline-flex;align-items:center}
+  .prow button.del{border-color:#eccecb;background:var(--red-100);color:var(--red)}
+  .item .acts button.loc{border-color:#cfe0d4;background:var(--g-50);color:var(--g-700)}
+  .item .acts button.loc .ic{color:var(--g-700)}
   .pinline{font-size:11.5px;color:var(--muted);margin-top:8px;letter-spacing:.01em}
   .pinline b.m{color:var(--red)}.pinline b.d{color:var(--blue)}
   .empty{padding:22px 16px;color:var(--muted);font-size:13px;text-align:center;border:1px dashed var(--line-2);
@@ -621,12 +636,21 @@ const FEN=969.917; // 1 分 = 969.917 m²(1 甲 = 10 分)
 const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} 公頃(${(m2/FEN).toFixed(1)} 分)`;
 const PIN={mark:{n:'噴漆記號',c:'mark',t:'噴'}, drop:{n:'肥料擺放',c:'drop',t:'肥'}};
 let placing=null;
-function startPin(key,type){ if(isField()) return; const L=PIN[type];
-  const useGps=confirm(`${L.n}位置:\n確定 = 用我目前的 GPS 位置\n取消 = 我要在地圖上點選`);
+function startPin(key,type,id){ if(isField()) return; const L=PIN[type];
+  const useGps=confirm(`${L.n}${id?'(移動位置)':''}:\n確定 = 用我目前的 GPS 位置\n取消 = 我要在地圖上點選`);
+  const done=(lat,lng,acc)=> id ? movePinTo(key,id,lat,lng,acc) : addPin(key,type,lat,lng,acc);
   if(useGps){ if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; } setStatus('定位中…');
-    navigator.geolocation.getCurrentPosition(pos=>addPin(key,type,pos.coords.latitude,pos.coords.longitude,Math.round(pos.coords.accuracy)),
+    navigator.geolocation.getCurrentPosition(pos=>done(pos.coords.latitude,pos.coords.longitude,Math.round(pos.coords.accuracy)),
       err=>setStatus('定位失敗:'+err.message), {enableHighAccuracy:true, timeout:15000}); }
-  else { placing={key,type}; setStatus(`請在地圖上點選「${L.n}」的位置`); } }
+  else { placing={key,type,id}; setStatus(`請在地圖上點選「${L.n}」的${id?'新':''}位置`); } }
+function movePinTo(key,id,lat,lng,acc){ const f=cur().fields[key]; const pin=(f.pins||[]).find(x=>x.id===id); if(!pin) return;
+  pin.lat=lat; pin.lng=lng; pin.acc=acc||null; pin.time=new Date().toLocaleString('zh-TW',{hour12:false});
+  save(); sfx.pin(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已移動${PIN[pin.type].n}`); }
+function flyPin(key,id){ const f=cur().fields[key]; const pin=(f.pins||[]).find(x=>x.id===id); if(!pin) return;
+  map.setView([pin.lat,pin.lng], 19); L.popup({maxWidth:260}).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); sfx.tap(); }
+function focusField(key){ const f=cur().fields[key]; if(!f) return; map.fitBounds(f.bbox,{maxZoom:18, padding:[30,30]});
+  L.popup({maxWidth:280}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map);
+  if(window.innerWidth<900 && panelH()>panelMax()*0.6) panelSetH(Math.round(window.innerHeight*0.42),true); }
 function addPin(key,type,lat,lng,acc){ const f=cur().fields[key]; if(!f) return; f.pins=f.pins||[];
   f.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type, lat, lng, acc:acc||null, time:new Date().toLocaleString('zh-TW',{hour12:false})});
   save(); sfx.pin(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已標記${PIN[type].n}`); }
@@ -640,7 +664,9 @@ function editNote(key,id){ if(isField()) return; const f=cur().fields[key]; cons
   const v=t.trim(); if(!v) f.notes=f.notes.filter(x=>x.id!==id); else { n.text=v; n.time=new Date().toLocaleString('zh-TW',{hour12:false}).slice(0,16); }
   save(); }
 function delNote(key,id){ const f=cur().fields[key]; if(!f) return; if(!confirm('刪除這則備註?')) return; f.notes=(f.notes||[]).filter(x=>x.id!==id); save(); }
-function delPin(key,id){ const f=cur().fields[key]; if(!f) return; f.pins=(f.pins||[]).filter(x=>x.id!==id); save(); map.closePopup(); }
+function delPin(key,id){ const f=cur().fields[key]; if(!f) return; const pin=(f.pins||[]).find(x=>x.id===id);
+  if(pin && !confirm(`刪除這個${PIN[pin.type].n}?`)) return;
+  f.pins=(f.pins||[]).filter(x=>x.id!==id); sfx.remove(); save(); map.closePopup(); }
 function pinPopup(f,pin){ const L=PIN[pin.type];
   return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
     <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">${ic('nav')}導航到這個點</button>
@@ -656,7 +682,8 @@ function nearestSelected(lat,lng){ const fs=Object.values(cur().fields); if(!fs.
 const NEAR_M=250; // 超過這個距離視為不相鄰,加入前先確認
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
-  if(placing){ const {key,type}=placing; placing=null; addPin(key,type,e.latlng.lat,e.latlng.lng); return; }
+  if(placing){ const {key,type,id}=placing; placing=null;
+    id ? movePinTo(key,id,e.latlng.lat,e.latlng.lng) : addPin(key,type,e.latlng.lat,e.latlng.lng); return; }
   if(isField()) return;
   if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田(目前 '+map.getZoom()+')'); return; }
   const {lat,lng}=e.latlng;
@@ -910,7 +937,8 @@ function render(){
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
         <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
-      <div class="acts"><button onclick="nav('${f.key}')">${ic('nav')}Google 導航</button>
+      <div class="acts"><button class="loc" onclick="focusField('${f.key}')">${ic('markpin')}地圖定位</button>
+        <button onclick="nav('${f.key}')">${ic('nav')}Google 導航</button>
         <button class="sv" onclick="street('${f.key}')">${ic('eye')}街景</button>
         <label class="admin-only">${ic('camera')}拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
         <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">${ic('markpin')}噴漆記號</button>
@@ -918,7 +946,12 @@ function render(){
         <button class="nt admin-only" onclick="addNote('${f.key}')">${ic('note')}加備註</button>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
       ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">${ic('note')}${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">${ic('x')}</button></div>`).join('')}</div>`:''}
-      ${(f.pins||[]).length?`<div class="pinline">現場標記:${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`<b class="${t==='mark'?'m':'d'}">${PIN[t].n} ${n} 點</b>`:''; }).filter(Boolean).join(' · ')} (點地圖上的圓點可導航或刪除)</div>`:''}
+      ${(f.pins||[]).length?`<div class="pins">${f.pins.map(pin=>`<div class="prow ${PIN[pin.type].c}">
+        <span class="pdot">${PIN[pin.type].t}</span>
+        <div class="pt" onclick="flyPin('${f.key}','${pin.id}')">${PIN[pin.type].n}<small>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''} · ${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}</small></div>
+        <button onclick="flyPin('${f.key}','${pin.id}')">${ic('markpin')}定位</button>
+        <button class="admin-only" onclick="startPin('${f.key}','${pin.type}','${pin.id}')">${ic('edit')}移動</button>
+        <button class="del admin-only" onclick="delPin('${f.key}','${pin.id}')">${ic('trash')}</button></div>`).join('')}</div>`:''}
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
     : (isField() ? '<div class="empty">請按上方「資料」→「匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
