@@ -359,24 +359,40 @@
 
   /* ============ 身分入口 ============ */
   #gate{position:fixed;inset:0;z-index:4500;display:none;flex-direction:column;align-items:center;justify-content:center;
-    background:linear-gradient(165deg,var(--g-700) 0%,var(--g-900) 100%);color:#fff;padding:32px 24px;text-align:center;line-height:1.7}
-  #gate .mark{width:76px;height:76px;border-radius:22px;background:rgba(255,255,255,.13);display:flex;align-items:center;
+    background:#0c2417;color:#fff;padding:28px 20px;text-align:center;line-height:1.7;overflow:hidden}
+  #gate::before{content:"";position:absolute;inset:0;
+    background-image:image-set(url("fertmap-icons/bg-login.jpg") 1x);
+    background:url("fertmap-icons/bg-login.jpg") center 38%/cover no-repeat;
+    transform:scale(1.04);animation:bgIn 1.2s var(--ease) both}
+  #gate::after{content:"";position:absolute;inset:0;background:
+    radial-gradient(120% 80% at 50% 30%, rgba(8,28,17,.30) 0%, rgba(8,28,17,.72) 60%, rgba(8,28,17,.92) 100%),
+    linear-gradient(180deg, rgba(8,28,17,.62) 0%, rgba(8,28,17,.38) 30%, rgba(8,28,17,.88) 100%)}
+  @keyframes bgIn{from{opacity:0;transform:scale(1.10)}to{opacity:1;transform:scale(1.04)}}
+  #gate > *{position:relative;z-index:1}
+  #gate .panel{position:relative;z-index:1;width:100%;max-width:372px;padding:26px 20px 22px;
+    background:rgba(9,30,19,.52);border:1px solid rgba(255,255,255,.16);border-radius:24px;
+    backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
+    box-shadow:0 26px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
+    display:flex;flex-direction:column;align-items:center;animation:sheet .4s var(--ease) both}
+  @media (max-width:400px){ #gate .panel{padding:22px 16px 18px} }
+  #gate .mark{width:70px;height:70px;border-radius:20px;background:rgba(255,255,255,.16);display:flex;align-items:center;
     justify-content:center;margin-bottom:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 8px 24px rgba(0,0,0,.25)}
   #gate .mark .ic{width:42px;height:42px;margin:0;stroke-width:1.4}
-  #gate h1{margin:0;font-size:24px;letter-spacing:.14em;font-weight:700}
-  #gate .sub{font-size:11.5px;letter-spacing:.22em;color:rgba(255,255,255,.6);margin:4px 0 26px}
+  #gate h1{margin:0;font-size:25px;letter-spacing:.15em;font-weight:700;text-shadow:0 2px 12px rgba(0,0,0,.45)}
+  #gate .sub{font-size:11px;letter-spacing:.24em;color:rgba(255,255,255,.72);margin:5px 0 22px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
   #gate .cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
-  #gate input{width:100%;border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:16px;font-size:19px;
-    text-align:center;letter-spacing:.16em;font-weight:700;background:rgba(255,255,255,.96);color:var(--g-900)}
+  #gate input{width:100%;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:15px;font-size:18px;
+    text-align:center;letter-spacing:.14em;font-weight:700;background:rgba(255,255,255,.97);color:var(--g-900);box-shadow:0 6px 18px rgba(0,0,0,.25)}
   #gate input::placeholder{font-size:15px;letter-spacing:.06em;font-weight:400;color:#8b978f}
-  #gate .card{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid rgba(255,255,255,.22);
-    background:rgba(255,255,255,.09);border-radius:14px;padding:16px 17px;color:#fff;transition:background .15s,transform .1s}
+  #gate .card{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid rgba(255,255,255,.26);
+    background:rgba(255,255,255,.12);border-radius:14px;padding:16px 17px;color:#fff;transition:background .15s,transform .1s}
   #gate .card:active{transform:scale(.985)}
   #gate .card.pri{background:#fff;color:var(--g-900);border-color:#fff}
   #gate .card .ic{width:26px;height:26px;margin:0;flex:none}
   #gate .card b{display:block;font-size:16px;letter-spacing:.03em}
   #gate .card small{display:block;font-size:11.5px;opacity:.72;font-weight:400;margin-top:2px;line-height:1.5}
-  #gate .gnote{font-size:11.5px;color:rgba(255,255,255,.6);margin-top:20px;max-width:360px;line-height:1.8;background:none;border:0;padding:0}
+  #gate .gnote{font-size:11px;color:rgba(255,255,255,.72);margin-top:16px;max-width:340px;line-height:1.75;background:none;border:0;padding:0;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  #gate .cap{position:absolute;left:0;right:0;bottom:14px;z-index:1;font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,.42)}
   #gate #apiBox[hidden]{display:none}
   #gate #apiBox{margin-top:2px}
   #gate .err{color:#ffcf9e;font-size:13px;margin-top:14px;min-height:18px}
@@ -543,6 +559,7 @@
   <p id="dlgMsg"></p>
 </div></div>
 <div id="gate">
+  <div class="panel">
   <div class="mark"></div>
   <h1>撒肥定位</h1>
   <div class="sub">田地定位 · 肥料撒播管理</div>
@@ -557,6 +574,8 @@
   </div>
   <div class="err" id="gateErr"></div>
   <div class="gnote">代碼由管理員發給。管理員可看全部業者資料與帳號管理;撒播業者只看得到自己的專案與官方申報單。</div>
+  </div>
+  <div class="cap">碩成肥料 · 撒播管理系統</div>
 </div>
 <div id="inapp">
   <div class="logo"></div>
@@ -1184,11 +1203,19 @@ function api(action, params, body){
   const u = apiUrl(); if(!u) return Promise.reject(new Error('尚未設定雲端網址'));
   const qs = new URLSearchParams(Object.assign({action}, params||{}));
   qs.set('u', u);
+  const ctl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = setTimeout(()=>{ try{ ctl && ctl.abort(); }catch{} }, 30000);
   const opt = body ? {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
                       body: JSON.stringify(Object.assign({action, code:(SES&&SES.code)||''}, body))} : {};
-  return fetch(`${PROXY_GAS}?${qs.toString()}`, opt).then(async r=>{
+  if(ctl) opt.signal = ctl.signal;
+  return fetch(`${PROXY_GAS}?${qs.toString()}`, opt).catch(err=>{
+      throw new Error(err && err.name==='AbortError' ? '雲端沒有回應(逾時 30 秒)。請確認 Apps Script 已「部署為網頁應用程式」且存取權是「任何人」' : '連不上雲端,請檢查網路');
+    }).then(async r=>{ clearTimeout(timer);
     const t = await r.text();
-    let j; try{ j = JSON.parse(t); }catch{ throw new Error('雲端回應異常(請確認 Apps Script 已部署為「任何人」可存取)'); }
+    let j; try{ j = JSON.parse(t); }catch{
+      throw new Error(/accounts\.google\.com|使用者驗證|Sign in/i.test(t)
+        ? '雲端要求登入 Google,代表部署的「誰可以存取」不是「任何人」,請改設定後重新部署新版本'
+        : '雲端回應異常,請確認網址結尾是 /exec 且已部署新版本'); }
     if(!j.ok) throw new Error(j.error||'雲端錯誤');
     return j; });
 }
@@ -1223,7 +1250,8 @@ async function doLogin(codeIn){
   const code = (codeIn || document.getElementById('gateCode').value || '').trim();
   if(!code){ gateShow('請輸入登入代碼'); return false; }
   if(!apiUrl()){ askApi(); return false; }
-  document.getElementById('gateErr').textContent='登入中…';
+  const errEl=document.getElementById('gateErr'); errEl.textContent='登入中…';
+  const slow=setTimeout(()=>{ if(errEl.textContent.startsWith('登入中')) errEl.textContent='登入中…(雲端第一次啟動較慢,請稍候)'; }, 6000);
   const prev = SES; SES = {code};
   try{
     const me = await apiGet('login');
@@ -1233,7 +1261,8 @@ async function doLogin(codeIn){
     await loadFromCloud();
     gateHide(); sfx.unlock(); setStatus(`${me.name}(${me.role})已登入`);
     return true;
-  }catch(err){ SES = prev; gateShow('登入失敗:'+err.message); sfx.err(); return false; } }
+  }catch(err){ clearTimeout(slow); SES = prev; gateShow('登入失敗:'+err.message); sfx.err(); return false; }
+  finally{ clearTimeout(slow); } }
 function logout(){ if(DIRTY && !confirm('有尚未儲存的變更,確定要登出?')) return;
   SES=null; localStorage.removeItem('fertmap_ses'); localStorage.removeItem('fertmap_role_set');
   DIRTY=false; DB=load(); persist(); render(); gateShow('已登出'); }
@@ -1289,6 +1318,36 @@ document.getElementById('modeBtn').onclick = ()=>logout();
 
 // ================= 對話框動作(雲端 / 官方申報單 / 帳號) =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
+// ================= PWA:安裝與離線 =================
+const standalone = ()=> window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; refreshPwa(); });
+window.addEventListener('appinstalled', ()=>{ deferredPrompt=null; refreshPwa(); sfx.ok(); });
+function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+function refreshPwa(){ const b=document.getElementById('pwaBtn'), h=document.getElementById('pwaHint'); if(!b) return;
+  if(standalone()){ b.textContent='已安裝(目前就是 App 模式)'; b.disabled=true; b.style.opacity=.6;
+    h.textContent='這台裝置已經以 App 模式開啟。'; return; }
+  b.disabled=false; b.style.opacity=1;
+  if(deferredPrompt){ b.textContent='安裝到主畫面'; h.textContent='按下後由系統詢問是否安裝,完成後桌面會出現「撒肥定位」圖示。'; }
+  else if(isIOS()){ b.textContent='iPhone 安裝步驟'; h.textContent='iPhone 請用 Safari 開啟本網址,點下方分享鍵,選「加入主畫面」,再按「新增」。'; }
+  else { b.textContent='安裝說明'; h.textContent='在瀏覽器選單找「安裝應用程式」或「加到主畫面」即可。'; } }
+document.getElementById('pwaBtn').onclick=async()=>{
+  if(deferredPrompt){ deferredPrompt.prompt(); const r=await deferredPrompt.userChoice; deferredPrompt=null; refreshPwa();
+    msg(r.outcome==='accepted'?'安裝中,稍候主畫面會出現圖示':'已取消安裝'); return; }
+  msg(isIOS()? 'Safari → 下方分享鍵 → 加入主畫面 → 新增' : '請在瀏覽器選單選「安裝應用程式 / 加到主畫面」'); };
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('fertmap-sw.js').then(reg=>{
+    reg.addEventListener('updatefound', ()=>{ const w=reg.installing; if(!w) return;
+      w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) setStatus('已下載新版,重新整理即可更新'); }); });
+  }).catch(()=>{}); }); }
+
+function refreshSnd(){ const b=document.getElementById('sndBtn'); if(!b) return;
+  b.innerHTML = (soundOn()?ic('sound'):ic('mute')) + (soundOn()?'音效:開(點此關閉)':'音效:關(點此開啟)'); }
+document.getElementById('sndBtn').onclick=()=>{ localStorage.setItem('fertmap_sound', soundOn()?'0':'1'); refreshSnd(); if(soundOn()) sfx.ok(); };
+document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim());
+  const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
+  document.getElementById('gUsed').textContent=gUsage().n;
+  msg(gkey()?`已儲存。本月上限 ${gCap()} 次,目前用了 ${gUsage().n} 次`:'已清除 Google 金鑰,搜尋改用免費地圖資料'); };
 document.getElementById('menuBtn').onclick=()=>{ dlg.style.display='flex'; msg(''); refreshSnd();
   document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n;
   refreshPwa(); loadOfficials(); if(isAdmin()) renderUsers(); };
