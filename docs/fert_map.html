@@ -456,16 +456,44 @@ function pinPopup(f,pin){ const L=PIN[pin.type];
     <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">🧭 導航到這個點</button>
     <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">👁 看街景</button>
     ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">✖ 刪除這個標記</button>`}</div>`; }
+function distToBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox;
+  const dLat=Math.max(s0-lat, 0, lat-n0)*111000, dLng=Math.max(w0-lng, 0, lng-e0)*111000*Math.cos(lat*Math.PI/180);
+  return Math.hypot(dLat, dLng); }
+function nearestSelected(lat,lng){ const fs=Object.values(cur().fields); if(!fs.length) return null;
+  let best=null; for(const f of fs){ const d=distToBox(f.bbox,lat,lng); if(!best||d<best.d) best={f,d}; } return best; }
+const NEAR_M=250; // 超過這個距離視為不相鄰,加入前先確認
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
   if(placing){ const {key,type}=placing; placing=null; addPin(key,type,e.latlng.lat,e.latlng.lng); return; }
   if(isField()) return;
-  if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田查地號(目前 '+map.getZoom()+')'); return; }
+  if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田(目前 '+map.getZoom()+')'); return; }
+  const {lat,lng}=e.latlng;
   setStatus('查詢地號中…'); if(previewLayer){ previewLayer.remove(); previewLayer=null; }
-  try{ const p = await queryParcel(e.latlng.lat, e.latlng.lng); lastParcel=p;
-    previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
-    L.popup({maxWidth:260}).setLatLng(p.center).setContent(popupHTML(p, !!cur().fields[p.key])).openOn(map);
-    setStatus(fullName(p));
+  try{
+    const p = await queryParcel(lat, lng); lastParcel=p;
+    // 已在專案內 → 再點一次即取消
+    if(cur().fields[p.key]){ const old=cur().fields[p.key];
+      const rich=(old.photos||[]).length||(old.pins||[]).length||old.t!=null;
+      if(rich && !confirm(`取消選取「${fullName(p)}」?\n這塊田已有噸數/照片/標記,取消會一併刪除。`)){ setStatus('已保留 '+fullName(p)); return; }
+      unselect(p.key); setStatus('已取消選取 '+fullName(p)); return; }
+    const inside = await insideParcel(p, lat, lng);
+    const near = nearestSelected(lat, lng);
+    if(!inside){ // 國土回的是最接近的地號,可能不是點到的那塊 → 先給你看清楚再決定
+      previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
+      map.fitBounds(p.bbox,{maxZoom:18, padding:[40,40]});
+      L.popup({maxWidth:280}).setLatLng(p.center).setContent(
+        `<div class="pop"><b>⚠️ 請確認地號</b><br><small>你點的位置不在這筆土地範圍內,系統回傳最接近的:</small><br><b>${esc(fullName(p))}</b>
+         <button class="btn" onclick="selectCurrent()">✔ 確定是這塊,加入</button>
+         <button class="btn del" onclick="map.closePopup()">✖ 不是,重新點選</button></div>`).openOn(map);
+      setStatus('點擊處不在回傳的地籍範圍內,請確認地號'); return; }
+    if(near && near.d > NEAR_M){
+      previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
+      L.popup({maxWidth:280}).setLatLng(p.center).setContent(
+        `<div class="pop"><b>${esc(fullName(p))}</b><br><small>這塊田距離已選的田約 ${Math.round(near.d)} 公尺,不相鄰。確定要加入同一個專案嗎?</small>
+         <button class="btn" onclick="selectCurrent()">✔ 確定加入</button>
+         <button class="btn del" onclick="map.closePopup()">✖ 取消</button></div>`).openOn(map);
+      setStatus(`距離已選田 ${Math.round(near.d)} 公尺,請確認`); return; }
+    selectCurrent();
   }catch(err){ setStatus('查地號失敗:'+err.message); }
 });
 function drawParcel(p,color,extra=''){ return p.image ? L.imageOverlay(p.image,p.bbox,{opacity:.75,interactive:false,className:'parcel-img '+extra}) : L.rectangle(p.bbox,{color,weight:3,fillOpacity:.25,className:extra}); }
@@ -511,7 +539,7 @@ function projLabel(p){ if(p.title) return p.title;
   const t=tons(p); return [p.region||'', p.customer||p.name||'', t? fmtT(t)+'噸':''].filter(Boolean).join(' ') || '未命名專案'; }
 const fmtT = v => (Math.round(v*1000)/1000).toString();
 
-function selectCurrent(){ if(!lastParcel) return; const p=cur(); if(!p.region) p.region=(lastParcel.cty||'')+(lastParcel.town||''); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
+function selectCurrent(){ if(!lastParcel) return; const p=cur(); if(!p.region) p.region=(lastParcel.cty||'')+(lastParcel.town||''); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('✔ 已加入 '+fullName(lastParcel)+'(再點一次可取消)'); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); render(); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
