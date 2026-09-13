@@ -357,6 +357,23 @@
     .rp table{min-width:0}
   }
 
+  /* ============ 內建瀏覽器阻擋 ============ */
+  #inapp{position:fixed;inset:0;z-index:5000;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,var(--g-700),var(--g-900));color:#fff;padding:28px 24px;text-align:center;
+    font-family:var(--font);line-height:1.85}
+  #inapp .logo{width:64px;height:64px;border-radius:18px;background:rgba(255,255,255,.14);display:flex;align-items:center;
+    justify-content:center;margin-bottom:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+  #inapp .logo .ic{width:36px;height:36px;margin:0;stroke-width:1.5}
+  #inapp h2{margin:0 0 6px;font-size:20px;letter-spacing:.06em}
+  #inapp p{margin:6px 0;font-size:14px;color:rgba(255,255,255,.82);max-width:420px}
+  #inapp ul{text-align:left;font-size:13px;color:rgba(255,255,255,.78);max-width:420px;margin:10px 0 6px;padding-left:20px}
+  #inapp li{margin:4px 0}
+  #inapp .acts{display:flex;flex-direction:column;gap:10px;margin-top:20px;width:100%;max-width:340px}
+  #inapp button{border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:700;background:var(--amber);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;letter-spacing:.02em}
+  #inapp button.sec{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);font-weight:600;font-size:14px}
+  #inapp .url{margin-top:14px;font-size:11.5px;color:rgba(255,255,255,.6);word-break:break-all;max-width:420px}
+
   /* ============ 角色模式 ============ */
   body.field-mode .admin-only{display:none!important}
   body:not(.field-mode) .field-only{display:none!important}
@@ -495,6 +512,21 @@
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
+<div id="inapp">
+  <div class="logo"></div>
+  <h2>請用瀏覽器開啟</h2>
+  <p>你目前是從 LINE 或其他 App 的內建瀏覽器開啟,這個環境會造成問題。</p>
+  <ul>
+    <li>存的專案、照片隨時可能被清掉</li>
+    <li>相機、GPS 定位常常失效</li>
+    <li>無法安裝到主畫面</li>
+  </ul>
+  <div class="acts">
+    <button id="openExt">用瀏覽器開啟</button>
+    <button class="sec" id="copyUrl">複製網址,自行貼到瀏覽器</button>
+  </div>
+  <div class="url" id="inappUrl"></div>
+</div>
 <div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
 <div id="viewer"><img id="vImg" alt=""><iframe id="vPdf" hidden></iframe><div class="cap" id="vCap"></div><div class="vb"><button id="vClose">關閉</button><a id="vOpen" target="_blank" rel="noopener" hidden><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M14 4h6v6'/><path d='M20 4l-9 9'/><path d='M18 14v6H4V6h6'/></svg>新分頁開啟 / 下載</a><button class="del" id="vDel">刪除</button></div></div>
 
@@ -731,6 +763,42 @@ function popupHTML(p, sel){
     <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看 Google 街景</button></div>`;
 }
 
+
+// ================= 內建瀏覽器阻擋(LINE / FB / IG 等) =================
+(function(){
+  const ua = navigator.userAgent || '';
+  const isOurApp = !!window.Capacitor || /FertmapApp/i.test(ua)
+    || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isLine = /\bLine\//i.test(ua);
+  const inApp = isLine || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|KAKAOTALK|Snapchat|TikTok|Twitter/i.test(ua);
+  if (!inApp || isOurApp) return;
+
+  const clean = location.origin + location.pathname;
+  // LINE 支援這個參數:帶著它導頁會直接跳出到系統瀏覽器
+  if (isLine && !/openExternalBrowser/.test(location.search) && !sessionStorage.getItem('fm_ext')) {
+    try { sessionStorage.setItem('fm_ext','1'); } catch {}
+    location.replace(clean + '?openExternalBrowser=1');
+    return;
+  }
+  const show = ()=>{
+    const el = document.getElementById('inapp'); if (!el) return;
+    el.querySelector('.logo').innerHTML = (typeof ic==='function') ? ic('markpin') : '';
+    document.getElementById('inappUrl').textContent = clean;
+    el.style.display = 'flex';
+    document.getElementById('openExt').onclick = ()=>{
+      const isAndroid = /Android/i.test(ua);
+      if (isLine) { location.href = clean + '?openExternalBrowser=1'; return; }
+      if (isAndroid) { location.href = 'intent://' + clean.replace(/^https?:\/\//,'') + '#Intent;scheme=https;action=android.intent.action.VIEW;end'; return; }
+      location.href = clean.replace(/^https:/, 'x-safari-https:');   // iOS 內建瀏覽器跳 Safari
+    };
+    document.getElementById('copyUrl').onclick = async ()=>{
+      const btn = document.getElementById('copyUrl');
+      try { await navigator.clipboard.writeText(clean); btn.textContent = '已複製,請貼到 Safari 或 Chrome'; }
+      catch { btn.textContent = '請長按上方網址複製'; }
+    };
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
+})();
 
 // ================= 互動音效回饋(WebAudio 合成,無外部檔案) =================
 const soundOn = ()=> localStorage.getItem('fertmap_sound')!=='0';
