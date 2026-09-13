@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#1f5f3a">
+<meta name="theme-color" content="#1a4f30">
+<link rel="manifest" href="fertmap-manifest.webmanifest">
+<link rel="apple-touch-icon" href="fertmap-icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="fertmap-icons/favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="撒肥定位">
 <title>撒肥定位 · 田地定位與肥料撒播管理</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -46,7 +53,7 @@
   .brand .logo .ic{width:20px;height:20px;margin:0;stroke-width:1.5}
 
   /* ============ 頂欄 ============ */
-  header{display:flex;align-items:center;gap:10px;padding:9px 14px;
+  header{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 9px calc(14px + env(safe-area-inset-left,0px));
     background:linear-gradient(180deg,var(--g-700) 0%,var(--g-800) 100%);
     color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 2px 10px rgba(13,43,26,.22);
     z-index:5;flex-wrap:wrap;position:relative}
@@ -188,7 +195,7 @@
   .ownerbar .ic{opacity:.7}
 
   /* ============ 表單 ============ */
-  #body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 15px 20px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  #body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 15px calc(20px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .form{display:grid;grid-template-columns:1fr 1fr;gap:11px 12px;padding:8px 0 15px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .form[hidden]{display:none}
   .form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:.06em}
@@ -456,7 +463,11 @@
     <h4>⑥ 管理員密碼與鎖定</h4>
     <p>設定後,鎖定或匯出現場版都用這組密碼;現場人員要看客戶資料也需要它。密碼只以雜湊值存在本機,忘記無法救回。</p>
     <input id="admPw" type="password" placeholder="設定 / 變更管理員密碼(至少 4 字)" autocomplete="new-password">
-    <h4>⑦ 操作音效</h4>
+    <h4>⑦ 安裝為手機 App</h4>
+    <p id="pwaHint">把這個網站加到手機主畫面,就會像一般 App 一樣有圖示、全螢幕開啟,沒有網路也打得開(地圖圖磚需要網路)。不需要上架、不需要下載安裝檔。</p>
+    <div class="row"><button id="pwaBtn">安裝到主畫面</button></div>
+
+    <h4>⑧ 操作音效</h4>
     <p>按鈕點擊、加入田區、標記、拍照、鎖定等動作會有輕微提示音與震動,現場戴手套或看不到畫面時也知道有沒有成功。</p>
     <div class="row"><button class="sec" id="sndBtn"></button></div>
     <div class="row"><button id="savePw">儲存密碼</button><button class="sec" id="toField"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>鎖定(切到現場模式)</button></div>
@@ -1138,6 +1149,30 @@ function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const a
     <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
   document.getElementById('report').style.display='block'; }
 document.getElementById('reportBtn').onclick=buildReport;
+
+// ================= PWA:安裝與離線 =================
+const standalone = ()=> window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; refreshPwa(); });
+window.addEventListener('appinstalled', ()=>{ deferredPrompt=null; refreshPwa(); sfx.ok(); });
+function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+function refreshPwa(){ const b=document.getElementById('pwaBtn'), h=document.getElementById('pwaHint'); if(!b) return;
+  if(standalone()){ b.textContent='已安裝(目前就是 App 模式)'; b.disabled=true; b.style.opacity=.6;
+    h.textContent='這台裝置已經以 App 模式開啟。資料存在本機,可用同步碼與其他裝置共用。'; return; }
+  b.disabled=false; b.style.opacity=1;
+  if(deferredPrompt){ b.textContent='安裝到主畫面'; h.textContent='按下後由系統詢問是否安裝,完成後桌面會出現「撒肥定位」圖示。'; }
+  else if(isIOS()){ b.textContent='iPhone 安裝步驟'; h.textContent='iPhone 請用 Safari 開啟本網址,點下方分享鍵,選「加入主畫面」,再按「新增」即可。'; }
+  else { b.textContent='安裝說明'; h.textContent='在瀏覽器選單找「安裝應用程式」或「加到主畫面」即可。'; } }
+document.getElementById('pwaBtn').onclick=async()=>{
+  if(deferredPrompt){ deferredPrompt.prompt(); const r=await deferredPrompt.userChoice; deferredPrompt=null; refreshPwa();
+    msg(r.outcome==='accepted'?'安裝中,稍候主畫面會出現圖示':'已取消安裝'); return; }
+  msg(isIOS()? 'Safari → 下方分享鍵 → 加入主畫面 → 新增' : '請在瀏覽器選單選「安裝應用程式 / 加到主畫面」'); };
+refreshPwa();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('fertmap-sw.js').then(reg=>{
+    reg.addEventListener('updatefound', ()=>{ const w=reg.installing; if(!w) return;
+      w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) setStatus('已下載新版,重新整理即可更新'); }); });
+  }).catch(()=>{}); }); }
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
 applyRole(); render(); setStatus(isField()?'現場模式:點田區標記可看照片與導航':'放大到 16 以上,點田地即可查地號並加入專案'); if(!isField() && code()) cloudLoad();
