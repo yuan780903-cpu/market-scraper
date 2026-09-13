@@ -165,6 +165,12 @@
   .rp .foot{margin-top:20px;font-size:11px;color:#666}
   @media print{ body>*{display:none!important} #report{display:block!important;position:static;overflow:visible} #report .rtool{display:none} .rp{max-width:none;padding:0} }
 
+  /* ===== 圖示 ===== */
+  .ic{width:1.05em;height:1.05em;vertical-align:-0.17em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-right:.35em}
+  .ic:last-child{margin-right:0}
+  .ic.lg{width:1.25em;height:1.25em}
+  .brand .logo .ic{width:20px;height:20px;margin:0;stroke-width:1.6}
+
   /* ===== 現場標記 ===== */
   .item .acts button.sv{background:#5d4037}
   .item .acts button.pin1{background:#d32f2f}
@@ -230,22 +236,22 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="logo">🌾</div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
-    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案">＋ 新增</button><span class="badge field-only">🔒 現場模式</span></div>
+    <div class="brand"><div class="logo"><svg class='ic' viewBox='0 0 24 24' style='width:20px;height:20px;margin:0'><path d='M12 22V9M12 9c0-3 2-5 4-6 0 3-1.5 5-4 6zM12 9C12 6 10 4 8 3c0 3 1.5 5 4 6zM12 15c0-2.6 1.8-4.4 3.6-5.2C15.6 12.4 14.2 14.3 12 15zM12 15c0-2.6-1.8-4.4-3.6-5.2C8.4 12.4 9.8 14.3 12 15z' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg></div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
+    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>新增</button><span class="badge field-only"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>現場模式</span></div>
     <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-    <button class="hbtn" id="menuBtn" title="雲端 / 匯入">☁ 資料</button>
+    <button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
   </header>
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
-      <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱">✏️</button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj" class="admin-only">刪除</button></div>
+      <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20h4L20 8l-4-4L4 16z'/></svg></button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>報表</button><button id="delProj" class="admin-only">刪除</button></div>
       <div class="stats" id="stats"></div>
       <div class="ownerbar" id="ownerbar"></div>
       <div class="docs admin-only" id="docs">
-        <div class="dbar" id="docBar"><span>📄</span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
+        <div class="dbar" id="docBar"><span><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/><path d='M9 13h6M9 17h4'/></svg></span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
         <div class="dbody" id="docBody" hidden>
           <div id="docList"></div>
-          <label class="up">📎 上傳申報單(拍照或 PDF)<input type="file" accept="image/*,application/pdf" multiple onchange="addDocs(this)"></label>
+          <label class="up"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 12l7-7a3.5 3.5 0 0 1 5 5l-9 9a5 5 0 0 1-7-7l8-8'/></svg>上傳申報單(拍照或 PDF)<input type="file" accept="image/*,application/pdf" multiple onchange="addDocs(this)"></label>
           <div class="hint">被抽查時打開這裡即可出示;文件會隨同步碼上雲端,另一台裝置也看得到。</div>
         </div>
       </div>
@@ -279,30 +285,30 @@
 </div>
 
 <div id="dlg"><div class="box">
-  <h3>☁ 資料同步 / 匯入匯出</h3>
+  <h3>資料同步 / 匯入匯出</h3>
   <div class="field-only">
     <p>目前是<b>現場模式</b>:可看田區位置、地號、面積、噸數、現場照片、備註與導航。業主與農會承辦的個人資料已加密保護。</p>
-    <div class="row"><button id="impFile2">📁 匯入現場檔案</button><button id="unlockBtn">🔓 輸入密碼解鎖</button></div>
+    <div class="row"><button id="impFile2"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/></svg>匯入現場檔案</button><button id="unlockBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 0 1 5.7-1.4'/></svg>輸入密碼解鎖</button></div>
   </div>
   <div class="admin-only">
     <h4>① 手機與電腦即時同步(同步碼)</h4>
     <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組同步碼(至少 6 個字),換手機只要輸入同一組,專案與照片就會自動回來。</p>
     <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
     <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
-    <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
+    <div class="row"><button id="cloudUp"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>立即上傳</button><button id="cloudDown"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4v13'/><path d='M7 12l5 5 5-5'/><path d='M4 20h16'/></svg>讀取雲端</button></div>
 
     <h4>② 給現場施工人員的檔案</h4>
     <p>產生一個含<b>照片</b>的檔案。業主姓名電話、農會承辦電話、備註與申報文件清單會用密碼加密;現場人員看得到田區、照片、業務聯絡方式與農會名稱。</p>
-    <div class="row"><button id="expField">📤 匯出現場版(含照片)</button></div>
+    <div class="row"><button id="expField"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>匯出現場版(含照片)</button></div>
 
     <h4>③ 備份與還原</h4>
-    <div class="row"><button class="sec" id="expFile">📁 匯出完整備份</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
+    <div class="row"><button class="sec" id="expFile"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>匯出完整備份</button><button class="sec" id="impFile"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/></svg>匯入檔案</button></div>
 
     <h4>④ Google 雲端硬碟備份</h4>
     <p>把專案、照片、申報文件備份到你自己的雲端硬碟。設定方式見 README 與 GAS 程式檔。</p>
     <input id="driveUrl" placeholder="Apps Script 的 /exec 網址" autocomplete="off">
-    <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow">📤 立即備份全部</button></div>
-    <div class="row"><button class="sec" id="driveRead">📥 從雲端硬碟還原</button></div>
+    <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 17V4'/><path d='M7 9l5-5 5 5'/><path d='M4 20h16'/></svg>立即備份全部</button></div>
+    <div class="row"><button class="sec" id="driveRead"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4v13'/><path d='M7 12l5 5 5-5'/><path d='M4 20h16'/></svg>從雲端硬碟還原</button></div>
     <p id="driveMsg" style="margin:4px 0 0"></p>
 
     <h4>⑤ Google 地圖搜尋</h4>
@@ -313,14 +319,17 @@
     <h4>⑥ 管理員密碼與鎖定</h4>
     <p>設定後,鎖定或匯出現場版都用這組密碼;現場人員要看客戶資料也需要它。密碼只以雜湊值存在本機,忘記無法救回。</p>
     <input id="admPw" type="password" placeholder="設定 / 變更管理員密碼(至少 4 字)" autocomplete="new-password">
-    <div class="row"><button id="savePw">儲存密碼</button><button class="sec" id="toField">🔒 鎖定(切到現場模式)</button></div>
+    <h4>⑦ 操作音效</h4>
+    <p>按鈕點擊、加入田區、標記、拍照、鎖定等動作會有輕微提示音與震動,現場戴手套或看不到畫面時也知道有沒有成功。</p>
+    <div class="row"><button class="sec" id="sndBtn"></button></div>
+    <div class="row"><button id="savePw">儲存密碼</button><button class="sec" id="toField"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>鎖定(切到現場模式)</button></div>
   </div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
-<div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()">🖨 列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
-<div id="viewer"><img id="vImg" alt=""><iframe id="vPdf" hidden></iframe><div class="cap" id="vCap"></div><div class="vb"><button id="vClose">關閉</button><a id="vOpen" target="_blank" rel="noopener" hidden>↗ 新分頁開啟 / 下載</a><button class="del" id="vDel">刪除</button></div></div>
+<div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
+<div id="viewer"><img id="vImg" alt=""><iframe id="vPdf" hidden></iframe><div class="cap" id="vCap"></div><div class="vb"><button id="vClose">關閉</button><a id="vOpen" target="_blank" rel="noopener" hidden><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M14 4h6v6'/><path d='M20 4l-9 9'/><path d='M18 14v6H4V6h6'/></svg>新分頁開啟 / 下載</a><button class="del" id="vDel">刪除</button></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -383,14 +392,14 @@ let hereKey=null, hereLast={t:0,lat:0,lng:0}, hereBusy=false;
 function hereShow(html, cls){ const el=document.getElementById('here'); el.className=cls||''; el.innerHTML=html||''; el.style.display=html?'block':'none'; }
 async function whereAmI(lat,lng,acc){ if(hereBusy) return; hereBusy=true; try{
   const p=cur(); let found=null; for(const f of Object.values(p.fields)){ if(await insideParcel(f,lat,lng)){ found=f; break; } }
-  if(found){ if(hereKey!==found.key){ hereKey=found.key; refreshHereMarkers(); }
-    hereShow(`✅ 你在本專案的田裡:${esc(found.no)} 地號<small>${esc(found.cty+found.town+' '+found.sectName)} · 預定 ${found.t?fmtT(found.t)+' 噸':'未填噸數'} · GPS 誤差 ±${Math.round(acc)} m</small>`,'ok'); return; }
-  if(hereKey){ hereKey=null; refreshHereMarkers(); }
+  if(found){ if(hereKey!==found.key){ hereKey=found.key; refreshHereMarkers(); sfx.ok(); }
+    hereShow(`${ic('check')}你在本專案的田裡:${esc(found.no)} 地號<small>${esc(found.cty+found.town+' '+found.sectName)} · 預定 ${found.t?fmtT(found.t)+' 噸':'未填噸數'} · GPS 誤差 ±${Math.round(acc)} m</small>`,'ok'); return; }
+  if(hereKey){ hereKey=null; refreshHereMarkers(); sfx.warn(); }
   // 不在本專案任何田內:每 15 秒或移動 15 m 以上才向國土查一次目前地號
   const dist=Math.hypot((lat-hereLast.lat)*111000,(lng-hereLast.lng)*111000*Math.cos(lat*Math.PI/180));
   if(Date.now()-hereLast.t>15000 || dist>15){ hereLast={t:Date.now(),lat,lng};
-    try{ const q=await queryParcelLite(lat,lng); hereShow(`⚠️ 不在本專案的田裡!目前位置:${esc(q)}<small>請勿在此撒播 · GPS 誤差 ±${Math.round(acc)} m</small>`,'bad'); }
-    catch{ hereShow(`⚠️ 不在本專案的田裡<small>GPS 誤差 ±${Math.round(acc)} m</small>`,'warn'); } }
+    try{ const q=await queryParcelLite(lat,lng); hereShow(`${ic('warn')}不在本專案的田裡!目前位置:${esc(q)}<small>請勿在此撒播 · GPS 誤差 ±${Math.round(acc)} m</small>`,'bad'); }
+    catch{ hereShow(`${ic('warn')}不在本專案的田裡<small>GPS 誤差 ±${Math.round(acc)} m</small>`,'warn'); } }
   }finally{ hereBusy=false; } }
 async function queryParcelLite(lat,lng){ const xml=await (await fetch(`${PROXY}/api.nlsc.gov.tw/other/TownVillagePointQuery/${lng}/${lat}/4326`)).text(); const g=t=>(xml.match(new RegExp(`<${t}>([^<]*)<`))||[])[1]||'';
   const cty=g('ctyCode'); if(!cty) throw new Error('x'); const r=(await jsonp(`https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=1&city=${cty}&x=${lng}&y=${lat}&alpah=0.5f&callback=cb`))[0]||[]; const q=r[0]||{}; if(!q.landno) throw new Error('x');
@@ -418,7 +427,7 @@ async function searchFree(q){ const c=map.getCenter(); const out=[];
   if(ph.status==='fulfilled') (ph.value.features||[]).forEach(f=>{ const pr=f.properties||{}; if((pr.country||'')!=='Taiwan'&&(pr.countrycode||'')!=='TW') return; const [lng,lat]=f.geometry.coordinates; if(out.some(o=>Math.abs(o.lat-lat)<0.0005&&Math.abs(o.lng-lng)<0.0005)) return; out.push({name:pr.name||pr.street||q, addr:[pr.state,pr.county,pr.city,pr.district,pr.street,pr.housenumber].filter(Boolean).join(''), lat, lng, src:'OSM'}); });
   return out; }
 function showResults(list, note){ const el=document.getElementById('sres'); if(!list.length){ el.style.display='none'; return; }
-  el.innerHTML = list.map((r,i)=>`<div class="sr" onclick="pickResult(${i})"><span class="ic">📍</span><div class="n">${esc(r.name)}<small>${esc(r.addr)}</small></div></div>`).join('') + `<div class="src">${esc(note)} · 點選即定位;點地圖可關閉</div>`;
+  el.innerHTML = list.map((r,i)=>`<div class="sr" onclick="pickResult(${i})">${ic('markpin')}<div class="n">${esc(r.name)}<small>${esc(r.addr)}</small></div></div>`).join('') + `<div class="src">${esc(note)} · 點選即定位;點地圖可關閉</div>`;
   el.style.display='block'; window._sres=list; }
 function pickResult(i){ const r=window._sres[i]; if(!r) return; document.getElementById('sres').style.display='none';
   if(searchPin) searchPin.remove(); searchPin=L.marker([r.lat,r.lng]).addTo(map).bindPopup(`<b>${esc(r.name)}</b><br><small>${esc(r.addr)}</small>`).openPopup();
@@ -429,8 +438,8 @@ document.getElementById('searchForm').addEventListener('submit', async e=>{
   try{ let list=[], note='';
     if(gAllowed()){ try{ gBump(); list=await searchGoogle(q); note=`Google 地圖搜尋結果(本月第 ${gUsage().n} 次 / 上限 ${gCap()})`; }catch(err){ setStatus('Google 搜尋失敗('+err.message+'),改用免費來源'); } }
     else if(gkey()) setStatus(`本月 Google 搜尋已達自訂上限 ${gCap()} 次,改用免費地圖資料`);
-    if(!list.length){ list=await searchFree(q); note=gkey()?'Google 無結果或已達上限,改用免費地圖資料':'免費地圖資料(OpenStreetMap);要更準請在 ☁ 設定 Google 金鑰'; }
-    if(!list.length){ setStatus('找不到:'+q+'。試試加上縣市,或用 ☁ 設定 Google 金鑰'); return; }
+    if(!list.length){ list=await searchFree(q); note=gkey()?'Google 無結果或已達上限,改用免費地圖資料':'免費地圖資料(OpenStreetMap);要更準請在「資料」設定 Google 金鑰'; }
+    if(!list.length){ setStatus('找不到:'+q+'。試試加上縣市,或在「資料」設定 Google 金鑰'); return; }
     window._sres=list; if(list.length===1) pickResult(0); else { showResults(list, note); setStatus(`找到 ${list.length} 筆,請點選`); }
   }catch(err){ setStatus('搜尋失敗:'+err.message); }
 });
@@ -468,12 +477,12 @@ function startPin(key,type){ if(isField()) return; const L=PIN[type];
   else { placing={key,type}; setStatus(`請在地圖上點選「${L.n}」的位置`); } }
 function addPin(key,type,lat,lng,acc){ const f=cur().fields[key]; if(!f) return; f.pins=f.pins||[];
   f.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type, lat, lng, acc:acc||null, time:new Date().toLocaleString('zh-TW',{hour12:false})});
-  save(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已標記${PIN[type].n}`); }
+  save(); sfx.pin(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已標記${PIN[type].n}`); }
 function addNote(key){ if(isField()) return; const f=cur().fields[key]; if(!f) return;
   const t=prompt(`「${fullName(f)}」新增備註(例:從東側小路進入、田中有電線桿、上午 10 點前要撒完):`); if(t===null) return;
   const v=t.trim(); if(!v) return; f.notes=f.notes||[];
   f.notes.push({id:'nt'+Date.now().toString(36), text:v, time:new Date().toLocaleString('zh-TW',{hour12:false}).slice(0,16)});
-  save(); setStatus('已加入備註'); }
+  save(); sfx.ok(); setStatus('已加入備註'); }
 function editNote(key,id){ if(isField()) return; const f=cur().fields[key]; const n=(f.notes||[]).find(x=>x.id===id); if(!n) return;
   const t=prompt('修改備註(清空則刪除):', n.text); if(t===null) return;
   const v=t.trim(); if(!v) f.notes=f.notes.filter(x=>x.id!==id); else { n.text=v; n.time=new Date().toLocaleString('zh-TW',{hour12:false}).slice(0,16); }
@@ -482,9 +491,9 @@ function delNote(key,id){ const f=cur().fields[key]; if(!f) return; if(!confirm(
 function delPin(key,id){ const f=cur().fields[key]; if(!f) return; f.pins=(f.pins||[]).filter(x=>x.id!==id); save(); map.closePopup(); }
 function pinPopup(f,pin){ const L=PIN[pin.type];
   return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
-    <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">🧭 導航到這個點</button>
-    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">👁 看街景</button>
-    ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">✖ 刪除這個標記</button>`}</div>`; }
+    <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">${ic('nav')}導航到這個點</button>
+    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">${ic('eye')}看街景</button>
+    ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">${ic('x')}刪除這個標記</button>`}</div>`; }
 function inBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox; const m=0.00003; // 邊界give 約3公尺
   return lat>=s0-m && lat<=n0+m && lng>=w0-m && lng<=e0+m; }
 function distToBox(bbox, lat, lng){ const [[s0,w0],[n0,e0]]=bbox;
@@ -513,16 +522,16 @@ map.on('click', async e=>{
       previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
       map.fitBounds(p.bbox,{maxZoom:18, padding:[40,40]});
       L.popup({maxWidth:280}).setLatLng(p.center).setContent(
-        `<div class="pop"><b>⚠️ 請確認地號</b><br><small>你點的位置不在這筆土地範圍內,系統回傳最接近的:</small><br><b>${esc(fullName(p))}</b>
-         <button class="btn" onclick="selectCurrent()">✔ 確定是這塊,加入</button>
-         <button class="btn del" onclick="map.closePopup()">✖ 不是,重新點選</button></div>`).openOn(map);
+        `<div class="pop"><b>${ic('warn')}請確認地號</b><br><small>你點的位置不在這筆土地範圍內,系統回傳最接近的:</small><br><b>${esc(fullName(p))}</b>
+         <button class="btn" onclick="selectCurrent()">${ic('check')}確定是這塊,加入</button>
+         <button class="btn del" onclick="map.closePopup()">${ic('x')}不是,重新點選</button></div>`).openOn(map);
       setStatus('點擊處不在回傳的地籍範圍內,請確認地號'); return; }
     if(near && near.d > NEAR_M){
       previewLayer = drawParcel(p,'#ffeb3b').addTo(map);
       L.popup({maxWidth:280}).setLatLng(p.center).setContent(
         `<div class="pop"><b>${esc(fullName(p))}</b><br><small>這塊田距離已選的田約 ${Math.round(near.d)} 公尺,不相鄰。確定要加入同一個專案嗎?</small>
-         <button class="btn" onclick="selectCurrent()">✔ 確定加入</button>
-         <button class="btn del" onclick="map.closePopup()">✖ 取消</button></div>`).openOn(map);
+         <button class="btn" onclick="selectCurrent()">${ic('check')}確定加入</button>
+         <button class="btn del" onclick="map.closePopup()">${ic('x')}取消</button></div>`).openOn(map);
       setStatus(`距離已選田 ${Math.round(near.d)} 公尺,請確認`); return; }
     selectCurrent();
   }catch(err){ setStatus('查地號失敗:'+err.message); }
@@ -535,11 +544,78 @@ const mapUrl = (lat,lng) => `https://www.google.com/maps/search/?api=1&query=${l
 function street(key){ const f=cur().fields[key]; if(f) window.open(svUrl(f.center[0],f.center[1]),'_blank'); }
 function popupHTML(p, sel){
   return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
-    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">✖ 從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">✔ 加入「${esc(cur().customer||cur().name)}」</button>`}
-    ${(p.notes||[]).length?`<div style="margin-top:6px;font-size:13px;background:#f6f8f5;border-radius:6px;padding:6px">${p.notes.map(n=>'📝 '+esc(n.text)).join('<br>')}</div>`:''}
-    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">🧭 Google 導航到這塊田</button>
-    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">👁 看 Google 街景</button></div>`;
+    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">${ic('x')}從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">${ic('check')}加入「${esc(projLabel(cur()))}」</button>`}
+    ${(p.notes||[]).length?`<div style="margin-top:6px;font-size:13px;background:#f6f8f5;border-radius:6px;padding:6px">${p.notes.map(n=>ic('note')+esc(n.text)).join('<br>')}</div>`:''}
+    <button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">${ic('nav')}Google 導航到這塊田</button>
+    <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看 Google 街景</button></div>`;
 }
+
+
+// ================= 互動音效回饋(WebAudio 合成,無外部檔案) =================
+const soundOn = ()=> localStorage.getItem('fertmap_sound')!=='0';
+let _actx=null;
+function actx(){ try{ if(!_actx) _actx=new (window.AudioContext||window.webkitAudioContext)();
+  if(_actx.state==='suspended') _actx.resume(); return _actx; }catch{ return null; } }
+function beep(notes, opt={}){ if(!soundOn()) return; const a=actx(); if(!a) return;
+  const {type='sine', dur=0.09, gap=0.075, gain=0.05} = opt; const t0=a.currentTime+0.005;
+  notes.forEach((f,i)=>{ const t=t0+i*gap; const o=a.createOscillator(), g=a.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(gain,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.02); }); }
+function buzz(ms){ if(soundOn() && navigator.vibrate) try{ navigator.vibrate(ms); }catch{} }
+const sfx={
+  tap:  ()=>{ beep([1320],{dur:.045,gain:.025}); },
+  add:  ()=>{ beep([784,1046],{dur:.1,gap:.08,gain:.055}); buzz(18); },
+  remove:()=>{ beep([600,380],{type:'triangle',dur:.11,gap:.08,gain:.05}); buzz(24); },
+  ok:   ()=>{ beep([659,880,1175],{dur:.09,gap:.07,gain:.05}); buzz([12,40,12]); },
+  pin:  ()=>{ beep([988,1319],{type:'triangle',dur:.07,gap:.06,gain:.045}); buzz(15); },
+  photo:()=>{ beep([1600,900],{type:'square',dur:.04,gap:.05,gain:.03}); buzz(20); },
+  warn: ()=>{ beep([440,440],{type:'square',dur:.12,gap:.16,gain:.035}); buzz([30,60,30]); },
+  err:  ()=>{ beep([300,200],{type:'sawtooth',dur:.16,gap:.13,gain:.035}); buzz([50,60,50]); },
+  lock: ()=>{ beep([700,350],{type:'triangle',dur:.1,gap:.08,gain:.05}); },
+  unlock:()=>{ beep([350,700,1050],{type:'triangle',dur:.09,gap:.07,gain:.05}); },
+};
+document.addEventListener('click', e=>{ const b=e.target.closest('button,.hbtn,.sr,.seg button,.leaflet-control-zoom a,.btn-locate');
+  if(b && !b.dataset.nosfx) sfx.tap(); }, true);
+
+// ================= 圖示(內嵌 SVG,取代 emoji) =================
+const ICON_PATHS={
+  cloud:'M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z',
+  nav:'M3 11l18-8-8 18-2-8z',
+  eye:'M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z|M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  camera:'M3 8h3l2-2.5h8L18 8h3v11H3z|M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+  note:'M5 3h9l5 5v13H5z|M14 3v5h5|M8 12h8M8 16h6',
+  markpin:'M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z|M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  drop:'M3 8l9-4 9 4v8l-9 4-9-4z|M3 8l9 4 9-4M12 12v8',
+  print:'M7 8V3h10v5|M7 18H4v-7h16v7h-3|M7 14h10v7H7z',
+  lock:'M6 11h12v10H6z|M9 11V7a3 3 0 1 1 6 0v4',
+  unlock:'M6 11h12v10H6z|M9 11V7a3 3 0 0 1 5.7-1.4',
+  upload:'M12 17V4|M7 9l5-5 5 5|M4 20h16',
+  download:'M12 4v13|M7 12l5 5 5-5|M4 20h16',
+  file:'M6 3h8l4 4v14H6z|M14 3v4h4',
+  trash:'M4 7h16|M9 7V4h6v3|M7 7l1 14h8l1-14',
+  plus:'M12 5v14M5 12h14',
+  edit:'M4 20h4L20 8l-4-4L4 16z',
+  check:'M4 12.5l5 5 11-11',
+  x:'M6 6l12 12M18 6L6 18',
+  warn:'M12 3l10 18H2z|M12 9v5M12 17.5v.5',
+  phone:'M6 3h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z',
+  user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z|M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7',
+  briefcase:'M3 8h18v12H3z|M8 8V5h8v3|M3 13h18',
+  building:'M4 21V4h10v17|M14 9h6v12|M7 8h4M7 12h4M7 16h4',
+  wheat:'M12 22V9|M12 9c0-3 2-5 4-6 0 3-1.5 5-4 6z|M12 9C12 6 10 4 8 3c0 3 1.5 5 4 6z|M12 15c0-2.6 1.8-4.4 3.6-5.2C15.6 12.4 14.2 14.3 12 15z|M12 15c0-2.6-1.8-4.4-3.6-5.2C8.4 12.4 9.8 14.3 12 15z',
+  ruler:'M3 15L15 3l6 6L9 21z|M8 8l2 2M11 5l2 2M5 11l2 2',
+  scale:'M12 3v18|M5 21h14|M4 8h16|M4 8l-2 6a3.5 3.5 0 0 0 7 0zM20 8l-2 6a3.5 3.5 0 0 0 7 0z',
+  doc:'M6 3h8l4 4v14H6z|M14 3v4h4|M9 13h6M9 17h4',
+  image:'M3 5h18v14H3z|M3 16l5-5 4 4 3-3 6 6',
+  clip:'M8 12l7-7a3.5 3.5 0 0 1 5 5l-9 9a5 5 0 0 1-7-7l8-8',
+  sound:'M5 9h4l5-4v14l-5-4H5z|M17 9a4 4 0 0 1 0 6',
+  mute:'M5 9h4l5-4v14l-5-4H5z|M17 9l4 6M21 9l-4 6',
+  arrow:'M4 12h14|M13 6l6 6-6 6',
+  ext:'M14 4h6v6|M20 4l-9 9|M18 14v6H4V6h6'
+};
+function ic(name, cls){ const d=ICON_PATHS[name]; if(!d) return '';
+  return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${d.split('|').map(x=>`<path d="${x}"/>`).join('')}</svg>`; }
 
 // ================= 地區 / 碩成產品 / 性狀 =================
 const TOWNS={"臺北市":["松山區","大安區","中正區","萬華區","大同區","中山區","文山區","南港區","內湖區","士林區","北投區","信義區"],"臺中市":["中區","東區","南區","西區","北區","西屯區","南屯區","北屯區","豐原區","東勢區","大甲區","清水區","沙鹿區","梧棲區","后里區","神岡區","潭子區","大雅區","新社區","石岡區","外埔區","大安區","烏日區","大肚區","龍井區","霧峰區","太平區","大里區","和平區"],"基隆市":["中正區","七堵區","暖暖區","仁愛區","中山區","安樂區","信義區"],"臺南市":["東區","南區","北區","安南區","安平區","中西區","新營區","鹽水區","柳營區","白河區","後壁區","東山區","麻豆區","下營區","六甲區","官田區","大內區","佳里區","西港區","七股區","將軍區","北門區","學甲區","新化區","善化區","新市區","安定區","山上區","左鎮區","仁德區","歸仁區","關廟區","龍崎區","玉井區","楠西區","南化區","永康區"],"高雄市":["鹽埕區","鼓山區","左營區","楠梓區","三民區","新興區","前金區","苓雅區","前鎮區","旗津區","小港區","鳳山區","林園區","大寮區","大樹區","大社區","仁武區","鳥松區","岡山區","橋頭區","燕巢區","田寮區","阿蓮區","路竹區","湖內區","茄萣區","永安區","彌陀區","梓官區","旗山區","美濃區","六龜區","甲仙區","杉林區","內門區","茂林區","桃源區","那瑪夏區"],"新北市":["新莊區","林口區","五股區","蘆洲區","三重區","泰山區","新店區","石碇區","深坑區","坪林區","烏來區","板橋區","三峽區","鶯歌區","樹林區","中和區","土城區","瑞芳區","平溪區","雙溪區","貢寮區","金山區","萬里區","淡水區","汐止區","三芝區","石門區","八里區","永和區"],"宜蘭縣":["宜蘭市","頭城鎮","礁溪鄉","壯圍鄉","員山鄉","羅東鎮","五結鄉","冬山鄉","蘇澳鎮","三星鄉","大同鄉","南澳鄉"],"桃園市":["桃園區","大溪區","中壢區","楊梅區","蘆竹區","大園區","龜山區","八德區","龍潭區","平鎮區","新屋區","觀音區","復興區"],"嘉義市":["嘉義市"],"新竹縣":["竹東鎮","關西鎮","新埔鎮","竹北市","湖口鄉","橫山鄉","新豐鄉","芎林鄉","寶山鄉","北埔鄉","峨眉鄉","尖石鄉","五峰鄉"],"苗栗縣":["苗栗市","苑裡鎮","通霄鎮","公館鄉","銅鑼鄉","三義鄉","西湖鄉","頭屋鄉","竹南鎮","頭份市","造橋鄉","後龍鎮","三灣鄉","南庄鄉","大湖鄉","卓蘭鎮","獅潭鄉","泰安鄉"],"南投縣":["南投市","埔里鎮","草屯鎮","竹山鎮","集集鎮","名間鄉","鹿谷鄉","中寮鄉","魚池鄉","國姓鄉","水里鄉","信義鄉","仁愛鄉"],"彰化縣":["彰化市","鹿港鎮","和美鎮","北斗鎮","員林市","溪湖鎮","田中鎮","二林鎮","線西鄉","伸港鄉","福興鄉","秀水鄉","花壇鄉","芬園鄉","大村鄉","埔鹽鄉","埔心鄉","永靖鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","芳苑鄉","大城鄉","竹塘鄉","溪州鄉"],"新竹市":["新竹市"],"雲林縣":["斗六市","斗南鎮","虎尾鎮","西螺鎮","土庫鎮","北港鎮","古坑鄉","大埤鄉","莿桐鄉","林內鄉","二崙鄉","崙背鄉","麥寮鄉","東勢鄉","褒忠鄉","臺西鄉","元長鄉","四湖鄉","口湖鄉","水林鄉"],"嘉義縣":["朴子市","布袋鎮","大林鎮","民雄鄉","溪口鄉","新港鄉","六腳鄉","東石鄉","義竹鄉","鹿草鄉","太保市","水上鄉","中埔鄉","竹崎鄉","梅山鄉","番路鄉","大埔鄉","阿里山鄉"],"屏東縣":["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧臺鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],"花蓮縣":["花蓮市","光復鄉","玉里鎮","新城鄉","吉安鄉","壽豐鄉","鳳林鎮","豐濱鄉","瑞穗鄉","富里鄉","秀林鄉","萬榮鄉","卓溪鄉"],"臺東縣":["臺東市","成功鎮","關山鎮","卑南鄉","大武鄉","太麻里鄉","東河鄉","長濱鄉","鹿野鄉","池上鄉","綠島鄉","延平鄉","海端鄉","達仁鄉","金峰鄉","蘭嶼鄉"],"金門縣":["金湖鎮","金沙鎮","金城鎮","金寧鄉","烈嶼鄉","烏坵鄉"],"澎湖縣":["馬公市","湖西鄉","白沙鄉","西嶼鄉","望安鄉","七美鄉"],"連江縣":["南竿鄉","北竿鄉","莒光鄉","東引鄉"]};
@@ -581,26 +657,26 @@ function projLabel(p){ if(p.title) return p.title;
   const t=tons(p); return [p.region||'', p.owner||p.customer||p.name||'', t? fmtT(t)+'噸':''].filter(Boolean).join(' ') || '未命名專案'; }
 const fmtT = v => (Math.round(v*1000)/1000).toString();
 
-function selectCurrent(){ if(!lastParcel) return; const p=cur(); if(!p.region) p.region=(lastParcel.cty||'')+(lastParcel.town||''); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('✔ 已加入 '+fullName(lastParcel)+'(再點一次可取消)'); }
-function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
+function selectCurrent(){ if(!lastParcel) return; const p=cur(); if(!p.region) p.region=(lastParcel.cty||'')+(lastParcel.town||''); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} sfx.add(); setStatus('已加入 '+fullName(lastParcel)+'(再點一次可取消)'); }
+function unselect(key){ delete cur().fields[key]; sfx.remove(); save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); render(); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
   const bags = +p.bag>0 ? Math.round(tons(p)*1000/+p.bag) : null;
-  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').innerHTML=esc(projLabel(p))+(p.enc?'<span class="lockchip">🔒 業主資料已加密</span>':'');
+  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').innerHTML=esc(projLabel(p))+(p.enc?'<span class="lockchip">業主資料已加密</span>':'');
   const ob=document.getElementById('ownerbar');
   const tel=(p.ownerTel||'').trim(), telHref=tel.replace(/[^0-9+]/g,'');
   const aTel=(p.assocTel||'').trim(), aHref=aTel.replace(/[^0-9+]/g,'');
   const cTel=(p.customerTel||'').trim(), cHref=cTel.replace(/[^0-9+]/g,'');
   const parts=[];
-  if(p.customer) parts.push(`<span class="o" style="background:#e7f4ea;border-color:#cfe3d5;color:var(--brand-ink)">🧑‍💼 業務 ${esc(p.customer)}</span>`);
-  if(cTel) parts.push(`<a href="tel:${esc(cHref)}">📞 ${esc(cTel)}</a>`);
-  if(p.owner) parts.push(`<span class="o">👤 業主 ${esc(p.owner)}</span>`);
-  if(tel) parts.push(`<a href="tel:${esc(telHref)}">📞 ${esc(tel)}</a>`);
-  if(p.assoc) parts.push(`<span class="o" style="background:#fdf1e0;border-color:#e6d9bf;color:#8a6314">🏢 ${esc(p.assoc)}</span>`);
+  if(p.customer) parts.push(`<span class="o" style="background:#e7f4ea;border-color:#cfe3d5;color:var(--brand-ink)">${ic('briefcase')}業務 ${esc(p.customer)}</span>`);
+  if(cTel) parts.push(`<a href="tel:${esc(cHref)}">${ic('phone')}${esc(cTel)}</a>`);
+  if(p.owner) parts.push(`<span class="o">${ic('user')}業主 ${esc(p.owner)}</span>`);
+  if(tel) parts.push(`<a href="tel:${esc(telHref)}">${ic('phone')}${esc(tel)}</a>`);
+  if(p.assoc) parts.push(`<span class="o" style="background:#fdf1e0;border-color:#e6d9bf;color:#8a6314">${ic('building')}${esc(p.assoc)}</span>`);
   if(p.assocPic) parts.push(`<span class="o" style="background:#fdf1e0;border-color:#e6d9bf;color:#8a6314">承辦 ${esc(p.assocPic)}</span>`);
-  if(aTel) parts.push(`<a href="tel:${esc(aHref)}">📞 ${esc(aTel)}</a>`);
+  if(aTel) parts.push(`<a href="tel:${esc(aHref)}">${ic('phone')}${esc(aTel)}</a>`);
   ob.innerHTML = parts.length ? parts.join('') : '<span style="color:var(--muted);font-size:12px">尚未填業務、業主與農會資訊(展開下方「資料」填寫)</span>';
-  document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
+  document.getElementById('stats').innerHTML = `<span>${ic('wheat')}${fs.length} 塊田</span><span>${ic('ruler')}${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>${ic('scale')}${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
@@ -631,7 +707,7 @@ window.addEventListener('resize', ()=>map.invalidateSize());
 
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
-const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
+const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${(f.photos||[]).length?` · ${(f.photos||[]).length}照`:''}</div>`;
 const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${(f.notes||[]).length}|${hereKey===f.key}`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
@@ -655,18 +731,18 @@ function render(){
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
         <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
-      <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
-        <button class="sv" onclick="street('${f.key}')">👁 街景</button>
-        <label class="admin-only">📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
-        <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">🔴 噴漆記號</button>
-        <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">🔵 肥料擺放</button>
-        <button class="nt admin-only" onclick="addNote('${f.key}')">📝 加備註</button>
+      <div class="acts"><button onclick="nav('${f.key}')">${ic('nav')}Google 導航</button>
+        <button class="sv" onclick="street('${f.key}')">${ic('eye')}街景</button>
+        <label class="admin-only">${ic('camera')}拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
+        <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">${ic('markpin')}噴漆記號</button>
+        <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">${ic('drop')}肥料擺放</button>
+        <button class="nt admin-only" onclick="addNote('${f.key}')">${ic('note')}加備註</button>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
-      ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">📝 ${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">✖</button></div>`).join('')}</div>`:''}
+      ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">${ic('note')}${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">${ic('x')}</button></div>`).join('')}</div>`:''}
       ${(f.pins||[]).length?`<div class="pinline">現場標記:${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`<b class="${t==='mark'?'m':'d'}">${PIN[t].n} ${n} 點</b>`:''; }).filter(Boolean).join(' · ')} (點地圖上的圓點可導航或刪除)</div>`:''}
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
-    : (isField() ? '<div class="empty">請按上方「☁ 資料」→「📁 匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
+    : (isField() ? '<div class="empty">請按上方「資料」→「匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
   renderDocs(); applyRole();
   arr.forEach(f=>(f.photos||[]).forEach(ph=>showThumb(f.key, ph.id)));
   arr.filter(f=>!f.area&&!areaTried.has(f.key)).forEach(async f=>{ areaTried.add(f.key); const a=await fetchArea(f); if(a){ f.area=a; persist(); if(cur().fields[f.key]===f) render(); } });
@@ -682,7 +758,7 @@ const memPhoto={};
 async function getPhoto(id){ if(memPhoto[id]) return memPhoto[id]; let v=await idb.get(id).catch(()=>null);
   if(!v && code()){ try{ const r=await fetch(`${SYNC}/photo?code=${encodeURIComponent(code())}&id=${id}`); if(r.ok){ v=await r.text(); await idb.put(id,v).catch(()=>{}); } }catch{} }
   if(v) memPhoto[id]=v; return v; }
-async function showThumb(key,id){ const img=document.querySelector(`#th_${key} img[data-id="${id}"]`); if(!img) return; const v=await getPhoto(id); if(v) img.src=v; else img.alt='☁?'; }
+async function showThumb(key,id){ const img=document.querySelector(`#th_${key} img[data-id="${id}"]`); if(!img) return; const v=await getPhoto(id); if(v) img.src=v; else img.alt='未下載'; }
 function shrink(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
   img.onload=()=>{ const max=1280, s=Math.min(1, max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
     c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',.72)); };
@@ -694,7 +770,7 @@ async function addPhotos(key, input){ const f=cur().fields[key]; if(!f) return; 
       if(code()){ const r=await (await fetch(`${SYNC}/photo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('照片上傳雲端失敗:'+r.error); }
       if(drive()) driveSendFile(id, `${cur().customer||cur().name}_${f.sectName}${f.no}_${id}`, 'photo');
     }catch(err){ setStatus('照片失敗:'+err.message); } }
-  input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); setStatus('已加入照片'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
+  input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); sfx.photo(); setStatus('已加入照片'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
 let viewing=null;
 function showViewer({src, type, cap, onDel}){ const isPdf=(type||'').includes('pdf'); const img=document.getElementById('vImg'), fr=document.getElementById('vPdf'), a=document.getElementById('vOpen');
   img.hidden=isPdf; fr.hidden=!isPdf; if(isPdf){ fr.src=src; } else { img.src=src; }
@@ -730,7 +806,7 @@ async function openDoc(id){ const p=cur(); const d=(p.docs||[]).find(x=>x.id===i
   setStatus(''); showViewer({src:v, type:d.type, cap:(p.customer||p.name)+' · '+d.name, onDel:async()=>{ p.docs=p.docs.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
     if(code()) fetch(`${SYNC}/file-del`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id})}).catch(()=>{}); save(); }}); }
 function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElementById('docCnt').textContent=docs.length;
-  document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?'📕':'🖼️'}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
+  document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?ic('doc'):ic('image')}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
     : '<div class="hint">尚未上傳。建議把核准的申報單、肥料登記證等拍照或存 PDF 放這裡。</div>'; }
 function setDocsOpen(open){ document.getElementById('docBody').hidden=!open; document.getElementById('docArrow').textContent=open?'▾':'▸'; }
 document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementById('docBody').hidden);
@@ -775,7 +851,7 @@ async function buildFieldExport(pw){
 async function exportFieldFile(){
   let pw;
   if(pwRec()){ pw=prompt('輸入管理員密碼(現場版將用它加密客戶資料):'); if(!pw) return;
-    if(!await pwCheck(pw)){ msg('❌ 管理員密碼錯誤'); return; } }
+    if(!await pwCheck(pw)){ msg('管理員密碼錯誤'); return; } }
   else { pw=prompt('尚未設定管理員密碼,請設定一組(至少 4 字),之後鎖定與解鎖都用它:'); if(!pw) return;
     if(pw.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(pw); }
   msg('產生現場版檔案中(含照片,請稍候)…');
@@ -790,13 +866,13 @@ async function unlockAll(){
   const pw=prompt('請輸入管理員密碼:'); if(!pw) return;
   const locked=DB.projects.filter(p=>p.enc);
   if(!locked.length){
-    if(pwRec() && !await pwCheck(pw)){ msg('❌ 密碼錯誤'); return; }
-    setRole('admin'); render(); msg('✅ 已進入管理員模式'); return; }
+    if(pwRec() && !await pwCheck(pw)){ sfx.err(); msg('密碼錯誤'); return; }
+    setRole('admin'); render(); msg('已進入管理員模式'); return; }
   try{ for(const p of locked){ const d=await decJSON(p.enc, pw); if(d.customer) p.customer=d.customer; if(d.name) p.name=d.name; p.owner=d.owner||''; p.ownerTel=d.ownerTel||''; p.assocPic=d.assocPic||''; p.assocTel=d.assocTel||''; p.note=d.note||'';
       p.docs=(d.docs||[]).map(x=>({id:'', name:x.name, time:x.time, type:'note'})); delete p.enc; }
     if(!pwRec()) await pwSet(pw);
-    persist(); setRole('admin'); render(); msg('✅ 已解鎖,業主資料已顯示'); }
-  catch(err){ msg('❌ 密碼錯誤,無法解鎖'); } }
+    persist(); setRole('admin'); render(); sfx.unlock(); msg('已解鎖,業主資料已顯示'); }
+  catch(err){ sfx.err(); msg('密碼錯誤,無法解鎖'); } }
 
 // ================= 雲端同步 / 匯出匯入 =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
@@ -820,17 +896,17 @@ async function driveBackupAll(){ if(!drive()){ dmsg('請先貼上 /exec 網址�
   for(const p of DB.projects){ for(const f of Object.values(p.fields||{})) for(const ph of (f.photos||[])){ total++; if(done.has(ph.id)) continue;
       dmsg(`上傳照片 ${++n}…`); await driveSendFile(ph.id, `${p.owner||p.customer||p.name}_${f.sectName}${f.no}_${ph.id}`, 'photo'); }
     for(const d of (p.docs||[])){ total++; if(done.has(d.id)) continue; dmsg(`上傳申報文件 ${++n}…`); await driveSendFile(d.id, `${p.owner||p.customer||p.name}_${d.name}`, 'doc'); } }
-  try{ const st=await driveGet('action=status'); dmsg(st.ok?`✅ 備份完成:${st.account} 的雲端硬碟「撒肥定位」資料夾(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'備份可能失敗:'+st.error); }
+  try{ const st=await driveGet('action=status'); dmsg(st.ok?`備份完成:${st.account} 的雲端硬碟「撒肥定位」資料夾(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'備份可能失敗:'+st.error); }
   catch(e){ dmsg('已送出備份,但無法確認結果:'+e.message); } }
 let drvTimer=null; function driveAuto(){ if(!drive()) return; clearTimeout(drvTimer); drvTimer=setTimeout(driveBackupData, 8000); }
 document.getElementById('saveDrive').onclick=async()=>{ const u=document.getElementById('driveUrl').value.trim();
   if(u && !/^https:\/\/script\.google(usercontent)?\.com\/.*\/exec/.test(u)){ dmsg('網址看起來不對,應該是 https://script.google.com/macros/s/.../exec'); return; }
   localStorage.setItem('fertmap_drive',u); if(!u){ dmsg('已清除 Drive 設定'); return; }
-  dmsg('測試連線中…'); try{ const st=await driveGet('action=status'); dmsg(st.ok?`✅ 已連上 ${st.account} 的雲端硬碟(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'連線失敗:'+st.error); }
+  dmsg('測試連線中…'); try{ const st=await driveGet('action=status'); dmsg(st.ok?`已連上 ${st.account} 的雲端硬碟(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'連線失敗:'+st.error); }
   catch(e){ localStorage.removeItem('fertmap_drive'); dmsg(e.message+'(設定未儲存,請確認網址正確且部署存取權為「任何人」)'); } };
 document.getElementById('driveNow').onclick=driveBackupAll;
 document.getElementById('driveRead').onclick=async()=>{ if(!drive()){ dmsg('請先設定 /exec 網址'); return; } dmsg('讀取中…');
-  try{ const r=await driveGet('action=read'); if(!r.ok) throw new Error(r.error); mergeIn(r.data); dmsg('✅ 已從雲端硬碟還原並與本機合併('+r.time+')'); }catch(e){ dmsg('還原失敗:'+e.message); } };
+  try{ const r=await driveGet('action=read'); if(!r.ok) throw new Error(r.error); mergeIn(r.data); dmsg('已從雲端硬碟還原並與本機合併('+r.time+')'); }catch(e){ dmsg('還原失敗:'+e.message); } };
 const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
 document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim());
   const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
@@ -842,12 +918,12 @@ document.getElementById('saveSync').onclick=async()=>{ const c=document.getEleme
   localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
 async function cloudSave(){ const c=code(); if(!c) return false; try{
     const r=await (await fetch(SYNC+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:c,data:DB})})).json();
-    if(!r.ok) throw new Error(r.error); setStatus('☁ 已同步 '+r.time); msg('已上傳雲端('+r.time+',共 '+r.projects+' 個專案)'); return true;
-  }catch(err){ setStatus('☁ 上傳失敗:'+err.message); msg('上傳失敗:'+err.message); return false; } }
+    if(!r.ok) throw new Error(r.error); sfx.tap(); setStatus('已同步 '+r.time); msg('已上傳雲端('+r.time+',共 '+r.projects+' 個專案)'); return true;
+  }catch(err){ setStatus('上傳失敗:'+err.message); msg('上傳失敗:'+err.message); return false; } }
 async function cloudLoad(){ const c=code(); if(!c) return false; try{
     const r=await (await fetch(SYNC+'/load?code='+encodeURIComponent(c))).json();
-    if(!r.ok) throw new Error(r.error); mergeIn(r.data); setStatus('☁ 已讀取雲端 '+r.time); msg('已讀取雲端('+r.time+'),與本機合併完成'); return true;
-  }catch(err){ setStatus('☁ 讀取:'+err.message); msg('讀取:'+err.message); return false; } }
+    if(!r.ok) throw new Error(r.error); mergeIn(r.data); setStatus('已讀取雲端 '+r.time); msg('已讀取雲端('+r.time+'),與本機合併完成'); return true;
+  }catch(err){ setStatus('讀取:'+err.message); msg('讀取:'+err.message); return false; } }
 document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
 document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
 let syncTimer=null; function autoSync(){ if(isField()) return; driveAuto(); if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
@@ -863,11 +939,15 @@ document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0
 document.getElementById('impFile2').onclick=()=>document.getElementById('impInput').click();
 document.getElementById('unlockBtn').onclick=unlockAll;
 document.getElementById('expField').onclick=exportFieldFile;
+function refreshSnd(){ const b=document.getElementById('sndBtn');
+  b.innerHTML = (soundOn()?ic('sound'):ic('mute')) + (soundOn()?'音效:開(點此關閉)':'音效:關(點此開啟)'); }
+document.getElementById('sndBtn').onclick=()=>{ localStorage.setItem('fertmap_sound', soundOn()?'0':'1'); refreshSnd(); if(soundOn()) sfx.ok(); };
+refreshSnd();
 document.getElementById('savePw').onclick=async()=>{ const el=document.getElementById('admPw'); const v=el.value.trim();
-  if(v.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(v); el.value=''; msg('✅ 已設定管理員密碼,之後鎖定與解鎖都用它'); };
+  if(v.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(v); el.value=''; msg('已設定管理員密碼,之後鎖定與解鎖都用它'); };
 document.getElementById('toField').onclick=()=>{ if(!pwRec()){ msg('請先設定管理員密碼,否則鎖定後無法解鎖'); return; }
   if(!confirm('鎖定並切到現場模式?此裝置會隱藏業主資料、備註、申報文件與所有設定,要解鎖需輸入管理員密碼。')) return;
-  setRole('field'); render(); msg('已鎖定,切換到現場模式'); };
+  setRole('field'); render(); sfx.lock(); msg('已鎖定,切換到現場模式'); };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
   migrate({projects:list, unit:d.unit});
   DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
