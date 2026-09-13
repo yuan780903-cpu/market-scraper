@@ -161,6 +161,15 @@
   .rp .foot{margin-top:20px;font-size:11px;color:#666}
   @media print{ body>*{display:none!important} #report{display:block!important;position:static;overflow:visible} #report .rtool{display:none} .rp{max-width:none;padding:0} }
 
+  /* ===== 現場標記 ===== */
+  .item .acts button.pin1{background:#d32f2f}
+  .item .acts button.pin2{background:#1565c0}
+  .pinmk{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700}
+  .pinmk.mark{background:#d32f2f}
+  .pinmk.drop{background:#1565c0}
+  .pinline{font-size:12px;color:var(--muted);margin-top:6px}
+  .pinline b.m{color:#d32f2f}.pinline b.d{color:#1565c0}
+
   /* ===== 角色模式 ===== */
   body.field-mode .admin-only{display:none!important}
   body:not(.field-mode) .field-only{display:none!important}
@@ -218,7 +227,7 @@
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
-      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj" class="admin-only">刪除</button></div>
+      <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱">✏️</button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj" class="admin-only">刪除</button></div>
       <div class="stats" id="stats"></div>
       <div class="docs admin-only" id="docs">
         <div class="dbar" id="docBar"><span>📄</span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
@@ -230,7 +239,8 @@
       </div>
       <div id="body">
         <div class="form" id="form">
-          <div class="full admin-only"><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
+          <div><label>地區</label><input id="f_region" placeholder="例:臺南市麻豆區(加入田後自動帶入)"></div>
+          <div class="admin-only"><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
           <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
           <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
           <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
@@ -280,7 +290,10 @@
     <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
     <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
     <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
-    <div class="row"><button class="sec" id="toField">🔒 切換到現場模式</button></div>
+    <h4>⑥ 管理員密碼與鎖定</h4>
+    <p>設定後,鎖定或匯出現場版都用這組密碼;現場人員要看客戶資料也需要它。密碼只以雜湊值存在本機,忘記無法救回。</p>
+    <input id="admPw" type="password" placeholder="設定 / 變更管理員密碼(至少 4 字)" autocomplete="new-password">
+    <div class="row"><button id="savePw">儲存密碼</button><button class="sec" id="toField">🔒 鎖定(切到現場模式)</button></div>
   </div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
@@ -415,7 +428,7 @@ async function queryParcel(lat, lng){
   if(!p.landno) throw new Error(p.msg||'查無地號');
   const parcel = { key:`${p.office}${p.sect}${p.landno}`, office:p.office, sect:p.sect, landno:p.landno, no:fmtNo(p.landno),
     officeName:b64(p.officeStr), sectName:b64(p.sectStr), cty:g('ctyName'), town:g('townName'),
-    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[], area:null };
+    bbox:[[+p.ly,+p.lx],[+p.ry,+p.rx]], center:[+p.cy,+p.cx], image:null, t:null, photos:[], pins:[], area:null };
   parcel.area = await fetchArea(parcel);
   const iq = `https://landmaps.nlsc.gov.tw/S_Maps/qryTileMapIndex?type=2&flag=2&office=${p.office}&sect=${p.sect}&landno=${p.landno}&imgflag=1&alpah=0.5f&callback=cb`;
   for(let i=0;i<5;i++){ const rows=(await jsonp(iq))[0]||[]; const im=rows.find(x=>x.image);
@@ -425,8 +438,25 @@ async function queryParcel(lat, lng){
 async function fetchArea(f){ try{ const r=await (await fetch(via('https://api.nlsc.gov.tw/S09_Ralid/getLandInfo'),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`city=${f.office[0]}&sect=${f.sect}&landno=${f.landno}`})).json(); const a=r&&r.ralid&&+r.ralid.AA10; return a>0?a:null; }catch{ return null; } }
 const FEN=969.917; // 1 分 = 969.917 m²(1 甲 = 10 分)
 const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} 公頃(${(m2/FEN).toFixed(1)} 分)`;
+const PIN={mark:{n:'噴漆記號',c:'mark',t:'噴'}, drop:{n:'肥料擺放',c:'drop',t:'肥'}};
+let placing=null;
+function startPin(key,type){ if(isField()) return; const L=PIN[type];
+  const useGps=confirm(`${L.n}位置:\n確定 = 用我目前的 GPS 位置\n取消 = 我要在地圖上點選`);
+  if(useGps){ if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; } setStatus('定位中…');
+    navigator.geolocation.getCurrentPosition(pos=>addPin(key,type,pos.coords.latitude,pos.coords.longitude,Math.round(pos.coords.accuracy)),
+      err=>setStatus('定位失敗:'+err.message), {enableHighAccuracy:true, timeout:15000}); }
+  else { placing={key,type}; setStatus(`請在地圖上點選「${L.n}」的位置`); } }
+function addPin(key,type,lat,lng,acc){ const f=cur().fields[key]; if(!f) return; f.pins=f.pins||[];
+  f.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type, lat, lng, acc:acc||null, time:new Date().toLocaleString('zh-TW',{hour12:false})});
+  save(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已標記${PIN[type].n}`); }
+function delPin(key,id){ const f=cur().fields[key]; if(!f) return; f.pins=(f.pins||[]).filter(x=>x.id!==id); save(); map.closePopup(); }
+function pinPopup(f,pin){ const L=PIN[pin.type];
+  return `<div class="pop"><b>${L.n}</b><br><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
+    <button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">🧭 導航到這個點</button>
+    ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">✖ 刪除這個標記</button>`}</div>`; }
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
+  if(placing){ const {key,type}=placing; placing=null; addPin(key,type,e.latlng.lat,e.latlng.lng); return; }
   if(isField()) return;
   if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田查地號(目前 '+map.getZoom()+')'); return; }
   setStatus('查詢地號中…'); if(previewLayer){ previewLayer.remove(); previewLayer=null; }
@@ -460,39 +490,47 @@ function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'
   migrate(d); return d; }
 function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit 旗標判斷)
   const conv = d.unit!=='t';
-  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
+  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
-    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(f.area===undefined) f.area=null; });
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
-function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
+function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
 function persist(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save(){ cur().updated=Date.now(); persist(); render(); autoSync(); }
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tons = p => Object.values(p.fields).reduce((s,f)=>s+(+f.t||0),0);
+function projLabel(p){ if(p.title) return p.title;
+  const t=tons(p); return [p.region||'', p.customer||p.name||'', t? fmtT(t)+'噸':''].filter(Boolean).join(' ') || '未命名專案'; }
 const fmtT = v => (Math.round(v*1000)/1000).toString();
 
-function selectCurrent(){ if(!lastParcel) return; const p=cur(); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
+function selectCurrent(){ if(!lastParcel) return; const p=cur(); if(!p.region) p.region=(lastParcel.cty||'')+(lastParcel.town||''); lastParcel.t = p.weight!==''&&!isNaN(+p.weight)? +p.weight : null; p.fields[lastParcel.key]=lastParcel; save(); map.closePopup(); if(previewLayer){previewLayer.remove();previewLayer=null;} setStatus('已加入 '+fullName(lastParcel)); }
 function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); render(); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
   const bags = +p.bag>0 ? Math.round(tons(p)*1000/+p.bag) : null;
-  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').innerHTML=esc(p.customer||p.name)+(p.enc?'<span class="lockchip">🔒 客戶資料已加密</span>':'');
+  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').innerHTML=esc(projLabel(p))+(p.enc?'<span class="lockchip">🔒 客戶資料已加密</span>':'');
   document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
 // ---- 表單綁定 ----
-const F={customer:'f_customer',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
+const F={customer:'f_customer',region:'f_region',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
 const productLabel = p => p.product==='__custom' ? (p.productCustom||'') : (p.product||'');
 function syncCustom(){ document.getElementById('customWrap').hidden = document.getElementById('f_product').value!=='__custom'; }
 Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; if(k==='product') syncCustom(); save(); }));
 document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persist(); render(); const fs=Object.values(cur().fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
-document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶名稱 / 專案名稱?'); if(n===null) return; const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
+document.getElementById('newProj').onclick=()=>{ const n=prompt('客戶姓名?'); if(n===null) return;
+  const r=prompt('地區(可留空,加入第一塊田時自動帶入):','')||'';
+  const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; p.region=r.trim();
+  DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${p.customer||p.name}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
 function setFormOpen(open){ document.getElementById('form').hidden=!open; document.getElementById('toggleForm').textContent=open?'資料 ▾':'資料 ▸'; localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
 document.getElementById('toggleForm').onclick=()=>setFormOpen(document.getElementById('form').hidden);
+document.getElementById('renameBtn').onclick=()=>{ const p=cur();
+  const v=prompt('自訂專案名稱(留空=自動用「地區 客戶 總噸數」):', p.title||projLabel(p)); if(v===null) return;
+  p.title=v.trim(); save(); };
 setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
 document.getElementById('bigBtn').onclick=e=>{ const big=document.getElementById('panel').classList.toggle('big'); e.target.textContent=big?'清單 ⤡':'清單 ⤢'; setTimeout(()=>map.invalidateSize(),250); };
 window.addEventListener('resize', ()=>map.invalidateSize());
@@ -500,21 +538,24 @@ window.addEventListener('resize', ()=>map.invalidateSize());
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
 const markerHTML = f => `<div style="background:#f57c00;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">✔ ${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${f.photos&&f.photos.length?' 📷':''}</div>`;
+const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${hereKey===f.key}`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
-  const g=L.layerGroup([shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
-  g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); layers[f.key]=g.addTo(map); }
+  const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
+    .on('click',ev=>{ L.DomEvent.stop(ev); L.popup({maxWidth:260}).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); }));
+  const g=L.layerGroup([...pins, shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
+  g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); g._sig=layerSig(f); layers[f.key]=g.addTo(map); }
 function render(){
   const p=cur(); applyRole();
   const sel=document.getElementById('projSel');
-  sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.customer||x.name)}(${Object.keys(x.fields).length}田)</option>`).join('');
+  sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(projLabel(x))}(${Object.keys(x.fields).length}田)</option>`).join('');
   Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||''); syncCustom();
   refreshTotals();
   const uniq=k=>[...new Set(DB.projects.map(x=>x[k]).filter(Boolean))];
   document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('dl_pname').innerHTML=uniq('pname').map(v=>`<option value="${esc(v)}">`).join('');
   Object.keys(layers).forEach(k=>{ if(!p.fields[k]){ layers[k].remove(); delete layers[k]; } });
-  Object.values(p.fields).forEach(f=>{ if(!layers[f.key]) addLayer(f); });
+  Object.values(p.fields).forEach(f=>{ const g=layers[f.key]; if(g && g._sig!==layerSig(f)){ g.remove(); delete layers[f.key]; } if(!layers[f.key]) addLayer(f); });
   const arr=Object.values(p.fields);
   document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
@@ -522,7 +563,10 @@ function render(){
         <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
       <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
         <label class="admin-only">📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
+        <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">🔴 噴漆記號</button>
+        <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">🔵 肥料擺放</button>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
+      ${(f.pins||[]).length?`<div class="pinline">現場標記:${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`<b class="${t==='mark'?'m':'d'}">${PIN[t].n} ${n} 點</b>`:''; }).filter(Boolean).join(' · ')} (點地圖上的圓點可導航或刪除)</div>`:''}
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
     : (isField() ? '<div class="empty">請按上方「☁ 資料」→「📁 匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
@@ -611,6 +655,15 @@ async function encJSON(obj, pw){ const salt=crypto.getRandomValues(new Uint8Arra
   return {v:1, s:b64u8(salt), i:b64u8(iv), c:b64u8(ct)}; }
 async function decJSON(e, pw){ const key=await deriveKey(pw, u8b64(e.s));
   const pt=await crypto.subtle.decrypt({name:'AES-GCM', iv:u8b64(e.i)}, key, u8b64(e.c)); return JSON.parse(new TextDecoder().decode(pt)); }
+async function pwHash(pw, saltB64){
+  const salt = saltB64 ? u8b64(saltB64) : crypto.getRandomValues(new Uint8Array(16));
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:120000, hash:'SHA-256'}, km, 256));
+  return { s: b64u8(salt), h: b64u8(bits) }; }
+const pwRec = ()=> { try{ return JSON.parse(localStorage.getItem('fertmap_pw')||'null'); }catch{ return null; } };
+async function pwCheck(pw){ const r=pwRec(); if(!r) return false; const t=await pwHash(pw, r.s); return t.h===r.h; }
+async function pwSet(pw){ localStorage.setItem('fertmap_pw', JSON.stringify(await pwHash(pw))); }
+
 async function buildFieldExport(pw){
   const out={unit:'t', field:true, exported:new Date().toISOString(), projects:[]};
   for(const p of DB.projects){
@@ -623,8 +676,11 @@ async function buildFieldExport(pw){
     out.projects.push(np); }
   return out; }
 async function exportFieldFile(){
-  const pw=prompt('設定解鎖密碼(現場人員要看客戶資料時才需輸入,請自己記住):'); if(!pw) return;
-  if(pw.length<4){ msg('密碼至少 4 個字'); return; }
+  let pw;
+  if(pwRec()){ pw=prompt('輸入管理員密碼(現場版將用它加密客戶資料):'); if(!pw) return;
+    if(!await pwCheck(pw)){ msg('❌ 管理員密碼錯誤'); return; } }
+  else { pw=prompt('尚未設定管理員密碼,請設定一組(至少 4 字),之後鎖定與解鎖都用它:'); if(!pw) return;
+    if(pw.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(pw); }
   msg('產生現場版檔案中(含照片,請稍候)…');
   try{ const out=await buildFieldExport(pw);
     const blob=new Blob([JSON.stringify(out)],{type:'application/json'});
@@ -636,9 +692,12 @@ async function absorbPhotos(list){ for(const p of list||[]) for(const f of Objec
 async function unlockAll(){
   const pw=prompt('請輸入管理員密碼:'); if(!pw) return;
   const locked=DB.projects.filter(p=>p.enc);
-  if(!locked.length){ setRole('admin'); render(); msg('這份資料沒有加密內容,已切回管理員模式'); return; }
+  if(!locked.length){
+    if(pwRec() && !await pwCheck(pw)){ msg('❌ 密碼錯誤'); return; }
+    setRole('admin'); render(); msg('✅ 已進入管理員模式'); return; }
   try{ for(const p of locked){ const d=await decJSON(p.enc, pw); p.customer=d.customer||''; p.name=d.name||d.customer||p.name; p.note=d.note||'';
       p.docs=(d.docs||[]).map(x=>({id:'', name:x.name, time:x.time, type:'note'})); delete p.enc; }
+    if(!pwRec()) await pwSet(pw);
     persist(); setRole('admin'); render(); msg('✅ 已解鎖,客戶資料已顯示'); }
   catch(err){ msg('❌ 密碼錯誤,無法解鎖'); } }
 
@@ -707,7 +766,11 @@ document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0
 document.getElementById('impFile2').onclick=()=>document.getElementById('impInput').click();
 document.getElementById('unlockBtn').onclick=unlockAll;
 document.getElementById('expField').onclick=exportFieldFile;
-document.getElementById('toField').onclick=()=>{ if(!confirm('切換到現場模式?此裝置會隱藏客戶名稱、備註、申報文件與所有設定。')) return; setRole('field'); render(); msg('已切換到現場模式'); };
+document.getElementById('savePw').onclick=async()=>{ const el=document.getElementById('admPw'); const v=el.value.trim();
+  if(v.length<4){ msg('密碼至少 4 個字'); return; } await pwSet(v); el.value=''; msg('✅ 已設定管理員密碼,之後鎖定與解鎖都用它'); };
+document.getElementById('toField').onclick=()=>{ if(!pwRec()){ msg('請先設定管理員密碼,否則鎖定後無法解鎖'); return; }
+  if(!confirm('鎖定並切到現場模式?此裝置會隱藏客戶名稱、備註、申報文件與所有設定,要解鎖需輸入管理員密碼。')) return;
+  setRole('field'); render(); msg('已鎖定,切換到現場模式'); };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
   migrate({projects:list, unit:d.unit});
   DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
@@ -723,16 +786,16 @@ function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!l
 function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const T=tons(p); const bag=+p.bag>0?+p.bag:null;
   const bags=v=>bag&&v?Math.round(v*1000/bag):'';
   const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
-  const kv=[['客戶名稱',p.customer||p.name||''],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',p.pname||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
+  const kv=[['客戶名稱',p.customer||p.name||''],['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',p.pname||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
     ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],['備註',p.note||'—']];
-  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td></tr>`).join('');
+  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td></tr>`).join('');
   const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
   document.getElementById('rp').innerHTML=`<h2>肥料撒播施作申報表</h2><div class="sub">產生時間:${new Date().toLocaleString('zh-TW',{hour12:false})} · 資料來源:撒肥定位系統(地籍資料引用內政部國土測繪中心,僅供參考)</div>
     <table class="kv">${kv.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
     <h3 style="margin:14px 0 6px;font-size:16px">施作土地明細</h3>
-    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th></tr></thead>
-    <tbody>${rows||'<tr><td colspan="9">尚未加入田地</td></tr>'}</tbody>
-    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th></tr></tfoot></table></div>
+    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th><th>現場標記</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="10">尚未加入田地</td></tr>'}</tbody>
+    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th><th></th></tr></tfoot></table></div>
     ${docs?`<h3 style="margin:14px 0 6px;font-size:16px">附件(申報文件)</h3><ul style="margin:0 0 10px 18px">${docs}</ul>`:''}
     <div class="sig"><div>撒播業者簽章</div><div>客戶(農民)簽章</div><div>日期</div></div>
     <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
