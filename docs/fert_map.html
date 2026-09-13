@@ -376,7 +376,9 @@
   #gate .card .ic{width:26px;height:26px;margin:0;flex:none}
   #gate .card b{display:block;font-size:16px;letter-spacing:.03em}
   #gate .card small{display:block;font-size:11.5px;opacity:.72;font-weight:400;margin-top:2px;line-height:1.5}
-  #gate .note{font-size:11.5px;color:rgba(255,255,255,.55);margin-top:22px;max-width:360px}
+  #gate .gnote{font-size:11.5px;color:rgba(255,255,255,.6);margin-top:20px;max-width:360px;line-height:1.8;background:none;border:0;padding:0}
+  #gate #apiBox[hidden]{display:none}
+  #gate #apiBox{margin-top:2px}
   #gate .err{color:#ffcf9e;font-size:13px;margin-top:14px;min-height:18px}
   .admin-sel{border:1px solid rgba(255,255,255,.25);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;
     background:rgba(255,255,255,.96);color:var(--ink);font-weight:600;max-width:150px}
@@ -546,10 +548,14 @@
   <div class="cards">
     <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
     <button class="card pri" id="gateLogin" style="justify-content:center"><span class="ico"></span><b>登入</b></button>
+    <button class="card" id="gateCfg" style="justify-content:center;padding:13px"><b style="font-size:14px;font-weight:600">設定雲端網址</b></button>
+    <div id="apiBox" hidden>
+      <input id="apiInput" placeholder="貼上 Apps Script 的 /exec 網址" style="font-size:13px;letter-spacing:0;text-align:left;padding:13px;font-weight:400">
+      <button class="card pri" id="apiSave" style="justify-content:center;margin-top:10px;padding:13px"><b style="font-size:15px">儲存網址</b></button>
+    </div>
   </div>
   <div class="err" id="gateErr"></div>
-  <div class="note">代碼由管理員發給。管理員可看全部業者資料與帳號管理;撒播業者只看得到自己的專案與官方申報單。<br>
-    <a href="#" id="gateCfg" style="color:rgba(255,255,255,.75)">設定雲端網址</a></div>
+  <div class="gnote">代碼由管理員發給。管理員可看全部業者資料與帳號管理;撒播業者只看得到自己的專案與官方申報單。</div>
 </div>
 <div id="inapp">
   <div class="logo"></div>
@@ -1210,7 +1216,6 @@ function gateShow(msgTxt){ const g=document.getElementById('gate');
   g.querySelector('.mark').innerHTML=ic('markpin');
   g.querySelector('#gateLogin .ico').innerHTML=ic('unlock');
   document.getElementById('gateErr').textContent=msgTxt||'';
-  document.getElementById('gateCode').value='';
   g.style.display='flex'; setTimeout(()=>{ try{ document.getElementById('gateCode').focus(); }catch{} },200); }
 function gateHide(){ document.getElementById('gate').style.display='none'; }
 async function doLogin(codeIn){
@@ -1231,8 +1236,20 @@ async function doLogin(codeIn){
 function logout(){ if(DIRTY && !confirm('有尚未儲存的變更,確定要登出?')) return;
   SES=null; localStorage.removeItem('fertmap_ses'); localStorage.removeItem('fertmap_role_set');
   DIRTY=false; DB=load(); persist(); render(); gateShow('已登出'); }
-function askApi(){ const v=prompt('請貼上雲端主控的 Apps Script /exec 網址:', apiUrl()); if(v===null) return;
-  localStorage.setItem('fertmap_api', v.trim()); gateShow(v.trim()?'已設定雲端網址,請輸入登入代碼':'已清除雲端網址'); }
+function askApi(){ const g=document.getElementById('gate'); g.style.display='flex';
+  const box=document.getElementById('apiBox'); box.hidden=false;
+  const inp=document.getElementById('apiInput'); inp.value=apiUrl();
+  document.getElementById('gateErr').textContent='貼上網址後按「儲存網址」';
+  setTimeout(()=>inp.focus(),150); }
+document.getElementById('apiSave').onclick=()=>{
+  const v=(document.getElementById('apiInput').value||'').trim();
+  if(v && !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(v)){
+    document.getElementById('gateErr').textContent='網址格式不對,應為 https://script.google.com/macros/s/.../exec'; return; }
+  localStorage.setItem('fertmap_api', v);
+  document.getElementById('apiBox').hidden=true;
+  document.getElementById('gateErr').textContent = v ? '已設定雲端網址,請輸入登入代碼' : '已清除雲端網址';
+  if(v) setTimeout(()=>{ try{ document.getElementById('gateCode').focus(); }catch{} },100); };
+document.getElementById('apiInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('apiSave').click(); });
 
 // ---------- 讀取雲端 ----------
 async function loadFromCloud(){
@@ -1265,7 +1282,7 @@ document.getElementById('opSel').onchange = async e=>{
   setStatus('檢視:'+((ACCOUNTS.find(a=>a.code===VIEW_OWNER)||{}).name||VIEW_OWNER)); };
 document.getElementById('gateLogin').onclick = ()=>doLogin();
 document.getElementById('gateCode').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-document.getElementById('gateCfg').onclick = e=>{ e.preventDefault(); askApi(); };
+document.getElementById('gateCfg').onclick = e=>{ e.preventDefault(); const b=document.getElementById('apiBox'); b.hidden ? askApi() : (b.hidden=true); };
 document.getElementById('saveBtn').onclick = ()=>cloudSaveNow(false);
 document.getElementById('modeBtn').onclick = ()=>logout();
 
