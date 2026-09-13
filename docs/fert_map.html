@@ -276,6 +276,13 @@
     border-radius:var(--r-md);margin-top:11px;line-height:1.7;background:var(--surface-2)}
 
   /* ============ 申報文件 ============ */
+  .docs.rep{border-color:#cfe0d4;background:linear-gradient(180deg,#f7fbf8,#eef5f0)}
+  .docs.rep .dbar b{color:var(--g-700)}
+  .docs.rep .cnt{background:var(--g-600)}
+  .docs.rep label.up{background:var(--g-700)}
+  .docs.rep .doc{border-color:#dbe8e0}
+  .docs.rep .doc button{background:var(--g-700)}
+  .docs.rep .hint{color:#5d7566}
   .docs{margin:0 0 9px;border:1px solid #ecdfc6;background:linear-gradient(180deg,#fdfaf3,#fbf6ea);
     border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-1)}
   .docs .dbar{display:flex;align-items:center;gap:9px;padding:10px 13px;cursor:pointer;user-select:none}
@@ -483,6 +490,14 @@
         <div id="overview">
       <div class="stats" id="stats"></div>
       <div class="ownerbar" id="ownerbar"></div>
+      <div class="docs rep" id="reports">
+        <div class="dbar" id="repBar"><span></span><b>大噸袋出貨回報</b><span class="cnt" id="repCnt">0</span><span id="repArrow">▸</span></div>
+        <div class="dbody" id="repBody" hidden>
+          <div id="repList"></div>
+          <label class="up">拍照回報(太空包卸貨)<input type="file" id="repInput" accept="image/*" capture="environment" multiple onchange="addReports(this)"></label>
+          <div class="hint">用於 500 / 1000 公斤太空包到場卸貨的存證。照片直接存到公司雲端硬碟,管理員即時看得到。</div>
+        </div>
+      </div>
       <div class="docs admin-only" id="docs">
         <div class="dbar" id="docBar"><span><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h8l4 4v14H6z'/><path d='M14 3v4h4'/><path d='M9 13h6M9 17h4'/></svg></span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
         <div class="dbody" id="docBody" hidden>
@@ -976,12 +991,12 @@ function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'
   migrate(d); return d; }
 function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit 旗標判斷)
   const conv = d.unit!=='t';
-  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
+  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(!p.reports) p.reports=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
     Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
-function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', customerTel:'', form:'', pnameOther:'', owner:'', ownerTel:'', assoc:'', assocPic:'', assocTel:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
+function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', customerTel:'', form:'', pnameOther:'', owner:'', ownerTel:'', assoc:'', assocPic:'', assocTel:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], reports:[], updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
 function persist(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save(){ cur().updated=Date.now(); persist(); render(); autoSync(); }
@@ -1108,7 +1123,7 @@ function render(){
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
     : (isField() ? '<div class="empty">請按上方「資料」→「匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
-  renderDocs(); applyRole();
+  renderDocs(); renderReports(); applyRole();
   arr.forEach(f=>(f.photos||[]).forEach(ph=>showThumb(f.key, ph.id)));
   arr.filter(f=>!f.area&&!areaTried.has(f.key)).forEach(async f=>{ areaTried.add(f.key); const a=await fetchArea(f); if(a){ f.area=a; persist(); if(cur().fields[f.key]===f) render(); } });
 }
@@ -1169,6 +1184,37 @@ function shrinkDoc(file){ return new Promise((res,rej)=>{ const img=new Image();
 async function openDoc(id){ const p=cur(); const d=(p.docs||[]).find(x=>x.id===id); if(!d) return; setStatus('文件載入中…'); const v=await getDoc(id); if(!v){ setStatus('文件還沒下載到,請確認同步碼與網路'); return; }
   setStatus(''); showViewer({src:v, type:d.type, cap:(p.customer||p.name)+' · '+d.name, onDel:async()=>{ p.docs=p.docs.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
     if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{}); save(); }}); }
+function setRepOpen(open){ document.getElementById('repBody').hidden=!open; document.getElementById('repArrow').textContent=open?'▾':'▸'; }
+document.getElementById('repBar').onclick=()=>setRepOpen(document.getElementById('repBody').hidden);
+async function addReports(input){ const p=cur(); p.reports=p.reports||[];
+  const big = String(p.bag)==='500' || String(p.bag)==='1000';
+  if(!big && input.files.length && !confirm('這個專案的單包重量不是 500 或 1000 公斤(太空包)。\n仍要用大噸袋回報嗎?')){ input.value=''; return; }
+  for(const file of input.files){
+    try{ setStatus('照片處理中…'); const data=await shrinkDoc(file);
+      const id='rp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      const stamp=new Date().toLocaleString('zh-TW',{hour12:false});
+      await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
+      const nm=`回報_${(p.owner||p.customer||p.name||'專案')}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
+      const up=await apiPost('upload',{kind:'photo', name:nm, data});
+      driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds));
+      p.reports.push({id, time:stamp, bag:p.bag||'', name:nm});
+    }catch(err){ setStatus('回報失敗:'+err.message); sfx.err(); }
+  }
+  input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setRepOpen(true);
+  sfx.photo(); setStatus('已回報並上傳雲端'); }
+async function openReport(id){ const p=cur(); const r=(p.reports||[]).find(x=>x.id===id); if(!r) return;
+  setStatus('照片載入中…'); const v=await getPhoto(id); if(!v){ setStatus('照片還沒下載到'); return; } setStatus('');
+  showViewer({src:v, type:'image', cap:`大噸袋回報 · ${r.time}`, onDel: canEdit()? async ()=>{
+    p.reports=p.reports.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
+    if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{});
+    save(); } : null }); }
+function renderReports(){ const p=cur(); const list=p.reports||[];
+  document.getElementById('repCnt').textContent=list.length;
+  const icoSpan=document.getElementById('reports').querySelector('.dbar>span:first-child');
+  if(icoSpan) icoSpan.innerHTML=ic('camera');
+  document.getElementById('repList').innerHTML = list.length
+    ? list.map(r=>`<div class="doc"><span class="ico">${ic('image')}</span><div class="n" onclick="openReport('${r.id}')">大噸袋回報<small>${esc(r.time)}${r.bag?` · ${esc(String(r.bag))} kg 太空包`:''}</small></div><button onclick="openReport('${r.id}')">檢視</button></div>`).join('')
+    : '<div class="hint">尚未回報。太空包到場卸貨時拍一張存證。</div>'; }
 function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElementById('docCnt').textContent=docs.length;
   document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?ic('doc'):ic('image')}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
     : '<div class="hint">尚未上傳。建議把核准的申報單、肥料登記證等拍照或存 PDF 放這裡。</div>'; }
@@ -1475,6 +1521,32 @@ document.getElementById('addUser').onclick=async()=>{ const n=document.getElemen
 // ---- 匯出(留備份用) ----
 document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥備份_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出備份檔'); };
+
+// ================= 申報報表 =================
+function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s2,f)=>s2+(+f.area||0),0); const T=tons(p);
+  const bag=+p.bag>0?+p.bag:null; const bags=v=>bag&&v?Math.round(v*1000/bag):'';
+  const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
+  const kv=[['業務名稱',p.customer||p.name||''],['業務聯絡方式',p.customerTel||'—'],['業主名稱',p.owner||'—'],['業主聯絡方式',p.ownerTel||'—'],
+    ['隸屬農會',p.assoc||'—'],['農會承辦 / 聯絡方式',[p.assocPic,p.assocTel].filter(Boolean).join(' · ')||'—'],
+    ['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',pnameLabel(p)||'—'],['性狀',p.form||'—'],
+    ['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
+    ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],
+    ['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],
+    ['大噸袋回報照片',(p.reports||[]).length? (p.reports.length+' 張'):'—'],
+    ['備註',p.note||'—']];
+  const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td><td>${(f.notes||[]).map(n=>esc(n.text)).join('<br>')}</td></tr>`).join('');
+  const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
+  document.getElementById('rp').innerHTML=`<h2>肥料撒播施作申報表</h2><div class="sub">產生時間:${new Date().toLocaleString('zh-TW',{hour12:false})} · 資料來源:撒肥定位系統(地籍資料引用內政部國土測繪中心,僅供參考)</div>
+    <table class="kv">${kv.map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
+    <h3>施作土地明細</h3>
+    <div class="tw"><table><thead><tr><th class="num">#</th><th>縣市鄉鎮</th><th>地段</th><th>地號</th><th class="num">登記面積(m²)</th><th class="num">分</th><th class="num">施作噸數</th><th class="num">包數</th><th>現場照片</th><th>現場標記</th><th>備註</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="11">尚未加入田地</td></tr>'}</tbody>
+    <tfoot><tr><th colspan="4">合計</th><th class="num">${area.toLocaleString()}</th><th class="num">${(area/FEN).toFixed(2)}</th><th class="num">${fmtT(T)}</th><th class="num">${bags(T)}</th><th></th><th></th><th></th></tr></tfoot></table></div>
+    ${docs?`<h3>附件(申報文件)</h3><ul style="margin:0 0 10px 18px">${docs}</ul>`:''}
+    <div class="sig"><div>撒播業者簽章</div><div>業主簽章</div><div>日期</div></div>
+    <div class="foot">面積為地籍登記面積,實際施作範圍以現場為準;地籍圖僅供位置示意,界址以地政事務所鑑界為準。</div>`;
+  document.getElementById('report').style.display='block'; }
+document.getElementById('reportBtn').onclick=buildReport;
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
 applyRole(); render();
