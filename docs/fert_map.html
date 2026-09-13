@@ -574,13 +574,16 @@
     <h4>新增撒播業者</h4>
     <div class="row"><input id="newName" placeholder="姓名 / 公司,例:碩成撒播一組"></div>
     <div class="row"><input id="newCode" placeholder="登入代碼(可用中文,留空自動產生)"><button id="addUser" style="flex:0 0 92px">新增</button></div>
-    <p>新增後請按該列的「複製」把代碼私下傳給對方。</p>
+    <h4>發給業者的設定連結</h4>
+    <p>業者只要點一次這條連結,雲端設定就自動完成,之後只需輸入自己的代碼登入,不用碰任何設定。</p>
+    <div class="row"><button id="copyLink">複製設定連結</button></div>
+    <p id="linkHint" style="word-break:break-all"></p>
   </div>
 
   <div class="grp" data-grp="set" hidden>
     <h4>我的帳號</h4>
     <p id="meInfo"></p>
-    <div class="row"><button class="sec" id="apiBtn">變更雲端網址</button><button class="sec" id="logoutBtn">登出</button></div>
+    <div class="row"><button class="sec boss-only" id="apiBtn">變更雲端網址</button><button class="sec" id="logoutBtn">登出</button></div>
 
     <h4>Google 地圖搜尋</h4>
     <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
@@ -1280,6 +1283,20 @@ async function absorbPhotos(list){ for(const p of list||[]) for(const f of Objec
 // ================= 雲端主控 API(帳號 / 權限 / 資料) =================
 const PROXY_GAS = 'https://fert-sync.yuan780903.workers.dev/gas';
 const apiUrl = ()=> (localStorage.getItem('fertmap_api')||'').trim();
+(function absorbApiLink(){          // 管理員給的設定連結:?api=... 或 #api=...
+  try{
+    const q = new URLSearchParams(location.search);
+    const h = new URLSearchParams((location.hash||'').replace(/^#/,''));
+    const v = (q.get('api') || h.get('api') || '').trim();
+    if(v && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(v)){
+      localStorage.setItem('fertmap_api', v);
+      const c = (q.get('code') || h.get('code') || '').trim();
+      if(c) sessionStorage.setItem('fertmap_autocode', c);
+      q.delete('api'); q.delete('code');
+      history.replaceState(null,'', location.pathname + (q.toString()? '?'+q.toString() : ''));
+    }
+  }catch{}
+})();
 let SES = null;                      // {code,name,role}
 let DIRTY = false, saving = false;
 let VIEW_OWNER = null, ACCOUNTS = [], ALLDATA = {};
@@ -1529,6 +1546,12 @@ async function editCode(oldCode, name){
   }catch(e){ msg('更改失敗:'+e.message); sfx.err(); } }
 async function copyCode(c){ try{ await navigator.clipboard.writeText(c); msg('已複製代碼 '+c+',請私下傳給該業者'); }catch{ msg('代碼:'+c); } }
 async function toggleUser(code, enable){ try{ await apiPost('setuser',{target:code, enabled:enable}); renderUsers(); msg('已更新'); }catch(e){ msg('失敗:'+e.message); } }
+document.getElementById('copyLink').onclick=async()=>{
+  const u=apiUrl(); if(!u){ msg('尚未設定雲端網址'); return; }
+  const link = location.origin + location.pathname + '?api=' + encodeURIComponent(u);
+  try{ await navigator.clipboard.writeText(link); msg('已複製設定連結,用 LINE 傳給業者即可(代碼請另外傳)'); sfx.ok(); }
+  catch{ msg('請長按下方連結複製'); }
+  document.getElementById('linkHint').textContent = link; };
 document.getElementById('addUser').onclick=async()=>{ const n=document.getElementById('newName').value.trim();
   if(!n){ msg('請填姓名'); return; } msg('建立中…');
   const nc=document.getElementById('newCode').value.trim();
@@ -1569,8 +1592,10 @@ document.getElementById('reportBtn').onclick=buildReport;
 function setStatus(t){ document.getElementById('status').textContent=t; }
 applyRole(); render();
 (async ()=>{ let ses=null; try{ ses=JSON.parse(localStorage.getItem('fertmap_ses')||'null'); }catch{}
+  const auto = sessionStorage.getItem('fertmap_autocode');
+  if(auto && apiUrl()){ sessionStorage.removeItem('fertmap_autocode'); const ok=await doLogin(auto); if(ok) return; }
   if(ses && ses.code && apiUrl()){ const ok=await doLogin(ses.code); if(ok) return; }
-  gateShow(apiUrl()? '' : '首次使用請先按下方「設定雲端網址」'); })();
+  gateShow(apiUrl()? '' : '請向管理員索取「設定連結」點一次即可;管理員本人請按下方設定雲端網址'); })();
 </script>
 </body>
 </html>
