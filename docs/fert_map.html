@@ -249,6 +249,11 @@
   <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
   <div class="row"><button class="sec" id="expFile">📁 匯出檔案(JSON)</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
+  <p style="margin-top:14px"><b>Google 雲端硬碟備份(選填)</b>:把所有專案、照片、申報文件備份到你自己的雲端硬碟(建議用 dayuanc535 帳號部署)。設定方式見同資料夾的 README 與 GAS 程式檔。</p>
+  <input id="driveUrl" placeholder="Apps Script 的 /exec 網址" autocomplete="off">
+  <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow">📤 立即備份全部</button></div>
+  <div class="row"><button class="sec" id="driveRead">📥 從雲端硬碟還原</button></div>
+  <p id="driveMsg" style="margin:4px 0 0"></p>
   <p style="margin-top:14px"><b>Google 地圖搜尋(選填)</b>:填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌(每月 5,000 次內免費)。申請步驟見 README。沒填則用免費的 OpenStreetMap 資料。</p>
   <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
   <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
@@ -520,6 +525,7 @@ async function addPhotos(key, input){ const f=cur().fields[key]; if(!f) return; 
       const id='ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       f.photos.push({id, time:new Date().toLocaleString('zh-TW',{hour12:false})});
       if(code()){ const r=await (await fetch(`${SYNC}/photo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('照片上傳雲端失敗:'+r.error); }
+      if(drive()) driveSendFile(id, `${cur().customer||cur().name}_${f.sectName}${f.no}_${id}`, 'photo');
     }catch(err){ setStatus('照片失敗:'+err.message); } }
   input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); setStatus('已加入照片'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
 let viewing=null;
@@ -546,6 +552,7 @@ async function addDocs(input){ const p=cur(); p.docs=p.docs||[];
       const id='doc'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       p.docs.push({id, name:file.name||('申報單'+(p.docs.length+1)), type, size:data.length, time:new Date().toLocaleString('zh-TW',{hour12:false})});
       if(code()){ const r=await (await fetch(`${SYNC}/file`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code(),id,data})})).json(); if(!r.ok) setStatus('文件上傳雲端失敗:'+r.error); }
+      if(drive()) driveSendFile(id, `${p.customer||p.name}_${file.name||id}`, 'doc');
     }catch(err){ setStatus('文件失敗:'+err.message); } }
   input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setDocsOpen(true); setStatus('已加入申報文件'+(code()?',並上傳雲端':'(未設同步碼,只存本機)')); }
 function shrinkDoc(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
@@ -563,12 +570,43 @@ document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementByI
 
 // ================= 雲端同步 / 匯出匯入 =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
+// ---------- Google 雲端硬碟備份 ----------
+const drive=()=> (localStorage.getItem('fertmap_drive')||'').trim();
+const dmsg=t=>document.getElementById('driveMsg').textContent=t;
+const drvDone=()=>{ try{ return new Set(JSON.parse(localStorage.getItem('fertmap_drvdone')||'[]')); }catch{ return new Set(); } };
+const drvMark=id=>{ const s=drvDone(); s.add(id); localStorage.setItem('fertmap_drvdone', JSON.stringify([...s])); };
+function driveGet(params){ return new Promise((res,rej)=>{ const u=drive(); if(!u) return rej(new Error('尚未設定 Drive 網址'));
+  const cb='dcb'+Date.now().toString(36)+Math.floor(Math.random()*999); const sc=document.createElement('script');
+  const done=v=>{ delete window[cb]; sc.remove(); v instanceof Error ? rej(v) : res(v); };
+  window[cb]=d=>done(d); sc.onerror=()=>done(new Error('連線失敗,請確認網址與部署權限為「任何人」'));
+  sc.src=u+(u.includes('?')?'&':'?')+params+'&callback='+cb; document.body.appendChild(sc);
+  setTimeout(()=>{ if(window[cb]) done(new Error('逾時,請確認 Apps Script 已部署')); },25000); }); }
+function drivePost(obj){ return fetch(drive(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)}); }
+async function driveBackupData(){ if(!drive()) return false; try{ await drivePost({action:'backup',data:DB}); return true; }catch{ return false; } }
+async function driveSendFile(id, name, kind){ if(!drive()) return false; const data=await (kind==='doc'?getDoc(id):getPhoto(id)); if(!data) return false;
+  try{ await drivePost({action:'file', id, name, kind, data}); drvMark(id); return true; }catch{ return false; } }
+async function driveBackupAll(){ if(!drive()){ dmsg('請先貼上 /exec 網址並儲存'); return; }
+  dmsg('備份中…'); await driveBackupData(); const done=drvDone(); let n=0, total=0;
+  for(const p of DB.projects){ for(const f of Object.values(p.fields||{})) for(const ph of (f.photos||[])){ total++; if(done.has(ph.id)) continue;
+      dmsg(`上傳照片 ${++n}…`); await driveSendFile(ph.id, `${p.customer||p.name}_${f.sectName}${f.no}_${ph.id}`, 'photo'); }
+    for(const d of (p.docs||[])){ total++; if(done.has(d.id)) continue; dmsg(`上傳申報文件 ${++n}…`); await driveSendFile(d.id, `${p.customer||p.name}_${d.name}`, 'doc'); } }
+  try{ const st=await driveGet('action=status'); dmsg(st.ok?`✅ 備份完成:${st.account} 的雲端硬碟「撒肥定位」資料夾(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'備份可能失敗:'+st.error); }
+  catch(e){ dmsg('已送出備份,但無法確認結果:'+e.message); } }
+let drvTimer=null; function driveAuto(){ if(!drive()) return; clearTimeout(drvTimer); drvTimer=setTimeout(driveBackupData, 8000); }
+document.getElementById('saveDrive').onclick=async()=>{ const u=document.getElementById('driveUrl').value.trim();
+  if(u && !/^https:\/\/script\.google(usercontent)?\.com\/.*\/exec/.test(u)){ dmsg('網址看起來不對,應該是 https://script.google.com/macros/s/.../exec'); return; }
+  localStorage.setItem('fertmap_drive',u); if(!u){ dmsg('已清除 Drive 設定'); return; }
+  dmsg('測試連線中…'); try{ const st=await driveGet('action=status'); dmsg(st.ok?`✅ 已連上 ${st.account} 的雲端硬碟(照片 ${st.photos} 張、文件 ${st.docs} 份)`:'連線失敗:'+st.error); }
+  catch(e){ localStorage.removeItem('fertmap_drive'); dmsg(e.message+'(設定未儲存,請確認網址正確且部署存取權為「任何人」)'); } };
+document.getElementById('driveNow').onclick=driveBackupAll;
+document.getElementById('driveRead').onclick=async()=>{ if(!drive()){ dmsg('請先設定 /exec 網址'); return; } dmsg('讀取中…');
+  try{ const r=await driveGet('action=read'); if(!r.ok) throw new Error(r.error); mergeIn(r.data); dmsg('✅ 已從雲端硬碟還原並與本機合併('+r.time+')'); }catch(e){ dmsg('還原失敗:'+e.message); } };
 const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
 document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim());
   const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
   document.getElementById('gUsed').textContent=gUsage().n;
   msg(gkey()?`已儲存。本月上限 ${gCap()} 次,目前用了 ${gUsage().n} 次`:'已清除 Google 金鑰,搜尋改用免費地圖資料'); };
-document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n; document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
+document.getElementById('menuBtn').onclick=()=>{ document.getElementById('driveUrl').value=drive(); dmsg(''); document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n; document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
 document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
 document.getElementById('saveSync').onclick=async()=>{ const c=document.getElementById('syncCode').value.trim(); if(c.length<6){ msg('同步碼至少 6 個字'); return; }
   localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
@@ -582,7 +620,7 @@ async function cloudLoad(){ const c=code(); if(!c) return false; try{
   }catch(err){ setStatus('☁ 讀取:'+err.message); msg('讀取:'+err.message); return false; } }
 document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
 document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
-let syncTimer=null; function autoSync(){ if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
+let syncTimer=null; function autoSync(){ driveAuto(); if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
 document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出(不含照片檔,照片在雲端),請選「儲存到檔案 / 雲端硬碟」'); };
 document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
 document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); autoSync(); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
