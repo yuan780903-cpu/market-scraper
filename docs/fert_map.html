@@ -251,7 +251,7 @@
       </div>
       <div id="body">
         <div class="form" id="form">
-          <div><label>地區</label><input id="f_region" placeholder="例:臺南市麻豆區(加入田後自動帶入)"></div>
+          <div><label>地區</label><select id="f_region"><option value="">— 加入田後自動帶入,或手選 —</option></select></div>
           <div><label>業務名稱</label><input id="f_customer" placeholder="例:莊政遠"></div>
           <div><label>業務聯絡方式</label><input id="f_customerTel" type="tel" inputmode="tel" placeholder="例:0933-000-000"></div>
           <div class="admin-only"><label>業主名稱</label><input id="f_owner" placeholder="例:陳阿伯(地主)"></div>
@@ -261,11 +261,13 @@
           <div class="admin-only"><label>承辦聯絡方式</label><input id="f_assocTel" type="tel" inputmode="tel" placeholder="例:06-572-2101"></div>
           <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
           <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
-          <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
-          <div><label>產品名稱</label><input id="f_pname" list="dl_pname" placeholder="例:有機肥料2號"><datalist id="dl_pname"></datalist></div>
+          <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成" value=""><datalist id="dl_brand"><option value="碩成"></datalist></div>
+          <div><label>產品名稱</label><select id="f_pname"><option value="">— 請選擇 —</option></select></div>
+          <div class="full" id="pnameOtherWrap" hidden><label>自填產品名稱</label><input id="f_pnameOther" placeholder="例:他牌有機肥"></div>
+          <div><label>性狀</label><select id="f_form"><option value="">— 請選擇 —</option><option>粒狀</option><option>粉狀</option></select></div>
           <div class="full"><label>肥料品目(官方品目編號)</label><select id="f_product"><option value="">— 請選擇品目 —</option></select></div>
           <div class="full" id="customWrap" hidden><label>自填品目</label><input id="f_productCustom" placeholder="例:9-01 其他肥料"></div>
-          <div><label>肥料單包重量(kg)</label><input id="f_bag" type="number" inputmode="decimal" step="0.1" placeholder="例:20"></div>
+          <div><label>肥料單包重量</label><select id="f_bag"><option value="">— 請選擇 —</option><option value="20">20 公斤(粒狀)</option><option value="25">25 公斤</option><option value="500">500 公斤(太空包)</option><option value="1000">1000 公斤(太空包)</option></select></div>
           <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
           <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
           <div class="full admin-only"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
@@ -539,6 +541,16 @@ function popupHTML(p, sel){
     <button class="btn" style="background:#5d4037" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">👁 看 Google 街景</button></div>`;
 }
 
+// ================= 地區 / 碩成產品 / 性狀 =================
+const TOWNS={"臺北市":["松山區","大安區","中正區","萬華區","大同區","中山區","文山區","南港區","內湖區","士林區","北投區","信義區"],"臺中市":["中區","東區","南區","西區","北區","西屯區","南屯區","北屯區","豐原區","東勢區","大甲區","清水區","沙鹿區","梧棲區","后里區","神岡區","潭子區","大雅區","新社區","石岡區","外埔區","大安區","烏日區","大肚區","龍井區","霧峰區","太平區","大里區","和平區"],"基隆市":["中正區","七堵區","暖暖區","仁愛區","中山區","安樂區","信義區"],"臺南市":["東區","南區","北區","安南區","安平區","中西區","新營區","鹽水區","柳營區","白河區","後壁區","東山區","麻豆區","下營區","六甲區","官田區","大內區","佳里區","西港區","七股區","將軍區","北門區","學甲區","新化區","善化區","新市區","安定區","山上區","左鎮區","仁德區","歸仁區","關廟區","龍崎區","玉井區","楠西區","南化區","永康區"],"高雄市":["鹽埕區","鼓山區","左營區","楠梓區","三民區","新興區","前金區","苓雅區","前鎮區","旗津區","小港區","鳳山區","林園區","大寮區","大樹區","大社區","仁武區","鳥松區","岡山區","橋頭區","燕巢區","田寮區","阿蓮區","路竹區","湖內區","茄萣區","永安區","彌陀區","梓官區","旗山區","美濃區","六龜區","甲仙區","杉林區","內門區","茂林區","桃源區","那瑪夏區"],"新北市":["新莊區","林口區","五股區","蘆洲區","三重區","泰山區","新店區","石碇區","深坑區","坪林區","烏來區","板橋區","三峽區","鶯歌區","樹林區","中和區","土城區","瑞芳區","平溪區","雙溪區","貢寮區","金山區","萬里區","淡水區","汐止區","三芝區","石門區","八里區","永和區"],"宜蘭縣":["宜蘭市","頭城鎮","礁溪鄉","壯圍鄉","員山鄉","羅東鎮","五結鄉","冬山鄉","蘇澳鎮","三星鄉","大同鄉","南澳鄉"],"桃園市":["桃園區","大溪區","中壢區","楊梅區","蘆竹區","大園區","龜山區","八德區","龍潭區","平鎮區","新屋區","觀音區","復興區"],"嘉義市":["嘉義市"],"新竹縣":["竹東鎮","關西鎮","新埔鎮","竹北市","湖口鄉","橫山鄉","新豐鄉","芎林鄉","寶山鄉","北埔鄉","峨眉鄉","尖石鄉","五峰鄉"],"苗栗縣":["苗栗市","苑裡鎮","通霄鎮","公館鄉","銅鑼鄉","三義鄉","西湖鄉","頭屋鄉","竹南鎮","頭份市","造橋鄉","後龍鎮","三灣鄉","南庄鄉","大湖鄉","卓蘭鎮","獅潭鄉","泰安鄉"],"南投縣":["南投市","埔里鎮","草屯鎮","竹山鎮","集集鎮","名間鄉","鹿谷鄉","中寮鄉","魚池鄉","國姓鄉","水里鄉","信義鄉","仁愛鄉"],"彰化縣":["彰化市","鹿港鎮","和美鎮","北斗鎮","員林市","溪湖鎮","田中鎮","二林鎮","線西鄉","伸港鄉","福興鄉","秀水鄉","花壇鄉","芬園鄉","大村鄉","埔鹽鄉","埔心鄉","永靖鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","芳苑鄉","大城鄉","竹塘鄉","溪州鄉"],"新竹市":["新竹市"],"雲林縣":["斗六市","斗南鎮","虎尾鎮","西螺鎮","土庫鎮","北港鎮","古坑鄉","大埤鄉","莿桐鄉","林內鄉","二崙鄉","崙背鄉","麥寮鄉","東勢鄉","褒忠鄉","臺西鄉","元長鄉","四湖鄉","口湖鄉","水林鄉"],"嘉義縣":["朴子市","布袋鎮","大林鎮","民雄鄉","溪口鄉","新港鄉","六腳鄉","東石鄉","義竹鄉","鹿草鄉","太保市","水上鄉","中埔鄉","竹崎鄉","梅山鄉","番路鄉","大埔鄉","阿里山鄉"],"屏東縣":["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧臺鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],"花蓮縣":["花蓮市","光復鄉","玉里鎮","新城鄉","吉安鄉","壽豐鄉","鳳林鎮","豐濱鄉","瑞穗鄉","富里鄉","秀林鄉","萬榮鄉","卓溪鄉"],"臺東縣":["臺東市","成功鎮","關山鎮","卑南鄉","大武鄉","太麻里鄉","東河鄉","長濱鄉","鹿野鄉","池上鄉","綠島鄉","延平鄉","海端鄉","達仁鄉","金峰鄉","蘭嶼鄉"],"金門縣":["金湖鎮","金沙鎮","金城鎮","金寧鄉","烈嶼鄉","烏坵鄉"],"澎湖縣":["馬公市","湖西鄉","白沙鄉","西嶼鄉","望安鄉","七美鄉"],"連江縣":["南竿鄉","北竿鄉","莒光鄉","東引鄉"]};
+const SC_PRODUCTS=['碩成508','碩成1號+','碩成2號','碩成2號+','碩成生技1號','碩成果美肥','碩成基肥1號','碩成基肥2號','碩成基肥2號+'];
+(function(){ const sel=document.getElementById('f_region');
+  Object.entries(TOWNS).forEach(([cty,ts])=>{ const g=document.createElement('optgroup'); g.label=cty;
+    ts.forEach(t=>{ const o=document.createElement('option'); o.value=cty+t; o.textContent=cty+t; g.appendChild(o); }); sel.appendChild(g); });
+  const ps=document.getElementById('f_pname');
+  SC_PRODUCTS.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; ps.appendChild(o); });
+  const oth=document.createElement('option'); oth.value='__other'; oth.textContent='其他 / 自填'; ps.appendChild(oth); })();
+
 // ================= 肥料品目(肥料種類品目及規格 109.4.24 附件一) =================
 const FERT_CODES=[["1-01","尿素肥料"],["1-02","裹覆尿素肥料"],["1-03","甲醛縮合尿素肥料"],["1-04","丁烯醛縮合尿素肥料"],["1-05","異丁醛縮合尿素肥料"],["1-06","硫酸胍基尿素肥料"],["1-07","硫酸銨肥料"],["1-08","腐植酸銨肥料"],["1-09","乙二醯二胺肥料"],["1-10","氯化銨肥料"],["1-11","硝酸銨肥料"],["1-12","硝酸銨鈣肥料"],["1-13","液態尿素硝酸銨肥料"],["1-14","硝酸鈣肥料"],["1-15","硝酸鈉肥料"],["1-16","氰氮化鈣肥料"],["1-17","固態副產氮質肥料"],["1-18","液態副產氮質肥料"],["1-19","固態混合氮質肥料"],["1-20","液態混合氮質肥料"],["2-01","過磷酸鈣肥料"],["2-02","重過磷酸鈣肥料"],["2-03","燒製磷肥料"],["2-04","熔製磷肥料"],["2-05","腐植酸磷肥料"],["2-06","加工磷質肥料"],["2-07","副產磷質肥料"],["2-08","混合磷質肥料"],["2-09","磷礦粉肥料"],["3-01","氯化鉀肥料"],["3-02","硫酸鉀肥料"],["3-03","碳酸氫鉀肥料"],["3-04","粗製鉀鹽肥料"],["3-05","硫酸鉀鎂肥料"],["3-06","腐植酸鉀肥料"],["3-07","矽酸鉀肥料"],["3-08","加工滷汁鉀肥料"],["3-09","副產鉀質肥料"],["3-10","混合鉀質肥料"],["4-01","硫酸鎂肥料"],["4-02","氫氧化鎂肥料"],["4-03","氧化鎂肥料"],["4-04","腐植酸鎂肥料"],["4-05","木質磺酸鎂肥料"],["4-06","加工鎂質肥料"],["4-07","副產鎂質肥料"],["4-08","混合鎂質肥料"],["4-09","鉗合態鎂肥料"],["4-10","生石灰肥料"],["4-11","消石灰肥料"],["4-12","碳酸鈣肥料"],["4-13","貝殼粉肥料"],["4-14","副產石灰肥料"],["4-15","混合石灰肥料"],["4-16","鈣液肥"],["4-17","硫酸鈣肥料"],["4-18","白雲石灰肥料"],["4-19","白雲石粉肥料"],["4-20","矽質石灰石肥料"],["4-21","矽酸爐渣肥料"],["4-22","硼酸肥料"],["4-23","硼酸鹽肥料"],["4-24","熔製硼質肥料"],["4-25","加工硼質肥料"],["4-26","硫酸錳肥料"],["4-27","礦渣錳質肥料"],["4-28","鉗合態錳肥料"],["4-29","加工錳質肥料"],["4-30","混合錳質肥料"],["4-31","氧化鋅肥料"],["4-32","硫酸鋅肥料"],["4-33","鉗合態鋅肥料"],["4-34","硫酸亞鐵肥料"],["4-35","鉗合態鐵肥料"],["4-36","鉬酸鈉肥料"],["4-37","鉗合態銅肥料"],["4-38","熔製微量要素肥料"],["4-39","複合次微量要素肥料"],["4-40","液態複合次微量要素肥料"],["4-41","雜項次量微量要素肥料"],["4-42","液態雜項次量微量要素肥料"],["5-01","植物渣粕肥料"],["5-02","副產植物質肥料"],["5-03","魚廢渣肥料"],["5-04","動物廢渣肥料"],["5-05","副產動物質肥料"],["5-06","乾燥菌體肥料"],["5-07","氮質海鳥糞肥料"],["5-08","雞糞加工肥料"],["5-09","禽畜糞堆肥"],["5-10","一般堆肥"],["5-11","雜項堆肥"],["5-12","混合有機質肥料"],["5-13","雜項有機質肥料"],["5-14","液態雜項有機質肥料"],["5-15","液態有機質肥料"],["6-01","複合肥料"],["6-02","裹覆複合肥料"],["6-03","家庭園藝用複合肥料"],["6-04","化成複合肥料"],["6-05","雜項複合肥料"],["6-06","液態複合肥料"],["6-07","液態雜項複合肥料"],["7-01","植物生長輔助劑-腐植酸"],["7-02","雜項有機質栽培介質"],["7-03","有機質栽培介質"],["8-01","豆科根瘤菌肥料"],["8-02","游離固氮菌肥料"],["8-03","溶磷菌肥料"],["8-04","溶鉀菌肥料"],["8-05","複合微生物肥料"],["8-06","叢枝菌根菌肥料"]];
 const FERT_CATS={"1": "氮肥類", "2": "磷肥類", "3": "鉀肥類", "4": "次微量要素肥料類", "5": "有機質肥料類", "6": "複合肥料類", "7": "植物生長輔助劑類", "8": "微生物肥料類"};
@@ -554,12 +566,12 @@ function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'
   migrate(d); return d; }
 function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit 旗標判斷)
   const conv = d.unit!=='t';
-  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
+  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
     Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
-function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', customerTel:'', owner:'', ownerTel:'', assoc:'', assocPic:'', assocTel:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
+function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', customerTel:'', form:'', pnameOther:'', owner:'', ownerTel:'', assoc:'', assocPic:'', assocTel:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', fields:{}, docs:[], updated:Date.now()}; }
 function cur(){ return DB.projects.find(p=>p.id===DB.curId) || DB.projects[0]; }
 function persist(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save(){ cur().updated=Date.now(); persist(); render(); autoSync(); }
@@ -593,10 +605,15 @@ function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZ
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
 // ---- 表單綁定 ----
-const F={customer:'f_customer',customerTel:'f_customerTel',owner:'f_owner',ownerTel:'f_ownerTel',assoc:'f_assoc',assocPic:'f_assocPic',assocTel:'f_assocTel',region:'f_region',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
+const F={customer:'f_customer',customerTel:'f_customerTel',form:'f_form',pnameOther:'f_pnameOther',owner:'f_owner',ownerTel:'f_ownerTel',assoc:'f_assoc',assocPic:'f_assocPic',assocTel:'f_assocTel',region:'f_region',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
 const productLabel = p => p.product==='__custom' ? (p.productCustom||'') : (p.product||'');
-function syncCustom(){ document.getElementById('customWrap').hidden = document.getElementById('f_product').value!=='__custom'; }
-Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name; if(k==='product') syncCustom(); save(); }));
+function syncCustom(){ document.getElementById('customWrap').hidden = document.getElementById('f_product').value!=='__custom';
+  document.getElementById('pnameOtherWrap').hidden = document.getElementById('f_pname').value!=='__other'; }
+const pnameLabel = p => p.pname==='__other' ? (p.pnameOther||'') : (p.pname||'');
+Object.entries(F).forEach(([k,id])=>document.getElementById(id).addEventListener('change',e=>{ cur()[k]=e.target.value; if(k==='customer') cur().name=e.target.value||cur().name;
+  if(k==='product'||k==='pname') syncCustom();
+  if(k==='form' && e.target.value==='粒狀'){ cur().bag='20'; document.getElementById('f_bag').value='20'; }
+  save(); }));
 document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persist(); render(); const fs=Object.values(cur().fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.3)); };
 document.getElementById('newProj').onclick=()=>{ const n=prompt('業務名稱(承辦這案的業務)?'); if(n===null) return;
   const r=prompt('地區(可留空,加入第一塊田時自動帶入):','')||'';
@@ -630,7 +647,6 @@ function render(){
   refreshTotals();
   const uniq=k=>[...new Set(DB.projects.map(x=>x[k]).filter(Boolean))];
   document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
-  document.getElementById('dl_pname').innerHTML=uniq('pname').map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('dl_assoc').innerHTML=uniq('assoc').map(v=>`<option value="${esc(v)}">`).join('');
   Object.keys(layers).forEach(k=>{ if(!p.fields[k]){ layers[k].remove(); delete layers[k]; } });
   Object.values(p.fields).forEach(f=>{ const g=layers[f.key]; if(g && g._sig!==layerSig(f)){ g.remove(); delete layers[f.key]; } if(!layers[f.key]) addLayer(f); });
@@ -867,7 +883,7 @@ function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!l
 function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const T=tons(p); const bag=+p.bag>0?+p.bag:null;
   const bags=v=>bag&&v?Math.round(v*1000/bag):'';
   const period=(p.dateFrom||'')+(p.dateTo?' ～ '+p.dateTo:'');
-  const kv=[['業務名稱',p.customer||p.name||''],['業務聯絡方式',p.customerTel||'—'],['業主名稱',p.owner||'—'],['業主聯絡方式',p.ownerTel||'—'],['隸屬農會',p.assoc||'—'],['農會承辦 / 聯絡方式',[p.assocPic,p.assocTel].filter(Boolean).join(' · ')||'—'],['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',p.pname||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
+  const kv=[['業務名稱',p.customer||p.name||''],['業務聯絡方式',p.customerTel||'—'],['業主名稱',p.owner||'—'],['業主聯絡方式',p.ownerTel||'—'],['隸屬農會',p.assoc||'—'],['農會承辦 / 聯絡方式',[p.assocPic,p.assocTel].filter(Boolean).join(' · ')||'—'],['地區',p.region||'—'],['申報期間',period||'—'],['肥料品牌',p.brand||'—'],['產品名稱',pnameLabel(p)||'—'],['性狀',p.form||'—'],['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
     ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],['備註',p.note||'—']];
   const rows=fs.map((f,i)=>`<tr><td class="num">${i+1}</td><td>${esc(f.cty+f.town)}</td><td>${esc(f.sectName)}</td><td>${esc(f.no)}</td><td class="num">${f.area?f.area.toLocaleString():'—'}</td><td class="num">${f.area?(f.area/FEN).toFixed(2):'—'}</td><td class="num">${f.t!=null?fmtT(f.t):'—'}</td><td class="num">${bags(f.t)}</td><td>${(f.photos||[]).length?`${f.photos.length} 張`:''}</td><td>${['mark','drop'].map(t=>{const n=(f.pins||[]).filter(x=>x.type===t).length; return n?`${PIN[t].n}${n}`:'';}).filter(Boolean).join('、')}</td><td>${(f.notes||[]).map(n=>esc(n.text)).join('<br>')}</td></tr>`).join('');
   const docs=(p.docs||[]).map(d=>`<li>${esc(d.name)}(${d.time||''})</li>`).join('');
