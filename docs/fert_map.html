@@ -567,6 +567,7 @@
     <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button class="card pri" id="gateLogin" style="justify-content:center"><span class="ico"></span><b>登入</b></button>
     <button class="card" id="gateCfg" style="justify-content:center;padding:13px"><b style="font-size:14px;font-weight:600">設定雲端網址</b></button>
+    <button class="card" id="gateTest" style="justify-content:center;padding:11px"><b style="font-size:13px;font-weight:600">測試雲端連線</b></button>
     <div id="apiBox" hidden>
       <input id="apiInput" placeholder="貼上 Apps Script 的 /exec 網址" style="font-size:13px;letter-spacing:0;text-align:left;padding:13px;font-weight:400">
       <button class="card pri" id="apiSave" style="justify-content:center;margin-top:10px;padding:13px"><b style="font-size:15px">儲存網址</b></button>
@@ -1310,6 +1311,29 @@ document.getElementById('opSel').onchange = async e=>{
   if(DIRTY && !confirm('目前變更尚未儲存,切換業者會放棄變更。要繼續嗎?')){ e.target.value=VIEW_OWNER; return; }
   VIEW_OWNER = e.target.value; adoptData(ALLDATA[VIEW_OWNER]||{projects:[]}); DIRTY=false; syncSaveBtn();
   setStatus('檢視:'+((ACCOUNTS.find(a=>a.code===VIEW_OWNER)||{}).name||VIEW_OWNER)); };
+document.getElementById('gateTest').onclick = async ()=>{
+  const u = apiUrl(); const err = document.getElementById('gateErr');
+  if(!u){ err.textContent='尚未設定雲端網址'; return; }
+  err.textContent='測試中…(最多 30 秒)';
+  const t0 = Date.now();
+  try{
+    const ctl = new AbortController(); const tm = setTimeout(()=>ctl.abort(), 30000);
+    const r = await fetch(`${PROXY_GAS}?action=ping&u=${encodeURIComponent(u)}`, {signal: ctl.signal});
+    clearTimeout(tm);
+    const txt = (await r.text()).trim();
+    const sec = ((Date.now()-t0)/1000).toFixed(1);
+    let j=null; try{ j = JSON.parse(txt); }catch{}
+    if(j && j.ok && j.account){ err.innerHTML = `連線正常(${sec} 秒)<br>雲端帳號:${esc(j.account)}<br>請輸入代碼登入`; sfx.ok(); return; }
+    if(j && j.error === 'bad gas url'){ err.textContent = '網址不符格式,請確認結尾是 /exec'; return; }
+    if(/accounts\.google\.com|ServiceLogin|Sign in|使用者驗證/i.test(txt)){
+      err.innerHTML = '雲端要求 Google 登入<br>→ 部署時「誰可以存取」要選「<b>任何人</b>」,改好後要「新版本」重新部署'; return; }
+    if(/找不到|not found|404/i.test(txt)){ err.textContent = '找不到這個部署,請重新複製 /exec 網址'; return; }
+    err.innerHTML = `雲端回了非預期內容(${sec} 秒):<br><span style="font-size:10px;word-break:break-all">${esc(txt.slice(0,140))}</span>`;
+  }catch(e){
+    err.innerHTML = (e && e.name==='AbortError')
+      ? '雲端 30 秒沒回應<br>→ 多半是尚未部署,或部署後沒有按「新版本」'
+      : '連不上:'+esc(String(e.message||e)); }
+};
 document.getElementById('gateLogin').onclick = ()=>doLogin();
 document.getElementById('gateCode').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 document.getElementById('gateCfg').onclick = e=>{ e.preventDefault(); const b=document.getElementById('apiBox'); b.hidden ? askApi() : (b.hidden=true); };
