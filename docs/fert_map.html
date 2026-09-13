@@ -514,7 +514,8 @@
   <div class="boss-only">
     <p>發代碼給撒播業者;代碼等同密碼,請勿外流。停用後該代碼即無法登入。</p>
     <div id="userList"></div>
-    <div class="row"><input id="newName" placeholder="新業者姓名 / 公司"><button id="addUser" style="flex:0 0 92px">新增</button></div>
+    <div class="row"><input id="newName" placeholder="新業者姓名 / 公司"></div>
+    <div class="row"><input id="newCode" placeholder="自訂登入代碼(可用中文,留空自動產生)"><button id="addUser" style="flex:0 0 92px">新增</button></div>
   </div>
 
   <h4>④ 離線備份</h4>
@@ -546,7 +547,7 @@
   <h1>撒肥定位</h1>
   <div class="sub">田地定位 · 肥料撒播管理</div>
   <div class="cards">
-    <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+    <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button class="card pri" id="gateLogin" style="justify-content:center"><span class="ico"></span><b>登入</b></button>
     <button class="card" id="gateCfg" style="justify-content:center;padding:13px"><b style="font-size:14px;font-weight:600">設定雲端網址</b></button>
     <div id="apiBox" hidden>
@@ -1219,7 +1220,7 @@ function gateShow(msgTxt){ const g=document.getElementById('gate');
   g.style.display='flex'; setTimeout(()=>{ try{ document.getElementById('gateCode').focus(); }catch{} },200); }
 function gateHide(){ document.getElementById('gate').style.display='none'; }
 async function doLogin(codeIn){
-  const code = (codeIn || document.getElementById('gateCode').value || '').trim().toUpperCase();
+  const code = (codeIn || document.getElementById('gateCode').value || '').trim();
   if(!code){ gateShow('請輸入登入代碼'); return false; }
   if(!apiUrl()){ askApi(); return false; }
   document.getElementById('gateErr').textContent='登入中…';
@@ -1327,14 +1328,26 @@ async function renderUsers(){ const box=document.getElementById('userList'); if(
   try{ const r=await apiGet('users'); ACCOUNTS=r.accounts||[];
     box.innerHTML = ACCOUNTS.map(a=>`<div class="doc"><span class="ico">${a.role==='管理員'?ic('unlock'):ic('user')}</span>
       <div class="n">${esc(a.name)}<small>代碼 ${esc(a.code)} · ${esc(a.role)} · ${a.enabled?'啟用中':'已停用'}</small></div>
-      <button onclick="copyCode('${esc(a.code)}')">複製代碼</button>
+      <button onclick="copyCode('${esc(a.code)}')">複製</button>
+      <button onclick="editCode('${esc(a.code)}','${esc(a.name)}')">改代碼</button>
       <button class="del" onclick="toggleUser('${esc(a.code)}',${a.enabled?'false':'true'})">${a.enabled?'停用':'啟用'}</button></div>`).join('');
   }catch(e){ box.innerHTML='<div class="hint" style="color:var(--muted);font-size:12px">'+esc(e.message)+'</div>'; } }
+async function editCode(oldCode, name){
+  const nc = prompt(`更改「${name}」的登入代碼\n可以用中文,例如:碩成撒播一組\n(至少 3 個字,不可與他人重複)`, oldCode);
+  if(nc===null) return; const v=nc.trim(); if(!v || v===oldCode) return;
+  msg('更改中…');
+  try{ const r=await apiPost('setcode',{target:oldCode, newcode:v});
+    if(r.self){ SES.code=r.code; localStorage.setItem('fertmap_ses', JSON.stringify(SES)); }
+    if(VIEW_OWNER===oldCode) VIEW_OWNER=r.code;
+    await renderUsers(); await loadFromCloud();
+    msg(`已改為「${r.code}」${r.self?'(這是你自己的代碼,下次用新代碼登入)':',請通知該業者'}`); sfx.ok();
+  }catch(e){ msg('更改失敗:'+e.message); sfx.err(); } }
 async function copyCode(c){ try{ await navigator.clipboard.writeText(c); msg('已複製代碼 '+c+',請私下傳給該業者'); }catch{ msg('代碼:'+c); } }
 async function toggleUser(code, enable){ try{ await apiPost('setuser',{target:code, enabled:enable}); renderUsers(); msg('已更新'); }catch(e){ msg('失敗:'+e.message); } }
 document.getElementById('addUser').onclick=async()=>{ const n=document.getElementById('newName').value.trim();
   if(!n){ msg('請填姓名'); return; } msg('建立中…');
-  try{ const r=await apiPost('adduser',{name:n}); document.getElementById('newName').value='';
+  const nc=document.getElementById('newCode').value.trim();
+  try{ const r=await apiPost('adduser',{name:n, newcode:nc}); document.getElementById('newName').value=''; document.getElementById('newCode').value='';
     await renderUsers(); await loadFromCloud(); msg(`已建立「${r.name}」,登入代碼:${r.code}(請私下給他)`); sfx.ok();
   }catch(e){ msg('建立失敗:'+e.message); sfx.err(); } };
 
