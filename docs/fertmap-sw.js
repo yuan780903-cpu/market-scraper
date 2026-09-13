@@ -1,5 +1,5 @@
 /* 撒肥定位 Service Worker — 離線可用 */
-const V = 'fertmap-v13';
+const V = 'fertmap-v14';
 const SHELL = [
   './fert_map.html',
   './fertmap-manifest.webmanifest',

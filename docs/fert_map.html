@@ -304,6 +304,11 @@
     padding:20px 20px 30px;max-height:88vh;overflow:auto;box-shadow:var(--sh-3);animation:sheet .26s var(--ease)}
   @keyframes sheet{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
   #dlg h3{margin:0 0 10px;font-size:18px;color:var(--brand-ink);letter-spacing:.02em}
+  #dlg .tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:4px}
+  #dlg .tab{flex:1;border:0;background:transparent;border-radius:9px;padding:9px 6px;font-size:13.5px;font-weight:600;color:var(--muted)}
+  #dlg .tab.on{background:var(--g-700);color:#fff;box-shadow:var(--sh-1)}
+  #dlg .grp[hidden]{display:none}
+  #dlg .grp > h4:first-child{border-top:0;padding-top:6px;margin-top:8px}
   #dlg h4{margin:20px 0 7px;font-size:12px;color:var(--g-700);border-top:1px solid var(--line);padding-top:15px;
     letter-spacing:.1em;font-weight:700;text-transform:none}
   #dlg p{font-size:12.5px;color:var(--muted);margin:6px 0;line-height:1.7}
@@ -363,12 +368,12 @@
   #gate::before{content:"";position:absolute;inset:0;
     background:url("fertmap-icons/bg-login.jpg") center 78%/cover no-repeat;
     transform:scale(1.03);animation:bgIn 1.2s var(--ease) both}
-  @media (max-width:760px){ #gate::before{ background-image:url("fertmap-icons/bg-login-p.jpg"); background-position:center 56%; } }
+  @media (max-width:760px){ #gate::before{ background-image:url("fertmap-icons/bg-login-p.jpg"); background-position:center top; } }
   #gate::after{content:"";position:absolute;inset:0;background:
-    linear-gradient(180deg, rgba(8,28,17,.84) 0%, rgba(8,28,17,.66) 42%, rgba(8,28,17,.18) 66%, rgba(8,28,17,.55) 100%)}
+    linear-gradient(180deg, rgba(8,28,17,.80) 0%, rgba(8,28,17,.58) 38%, rgba(8,28,17,.06) 62%, rgba(8,28,17,.12) 82%, rgba(8,28,17,.45) 100%)}
   @keyframes bgIn{from{opacity:0;transform:scale(1.10)}to{opacity:1;transform:scale(1.04)}}
   #gate > *{position:relative;z-index:1}
-  #gate .panel{position:relative;z-index:1;width:100%;max-width:360px;padding:20px 18px 18px;
+  #gate .panel{position:relative;z-index:1;width:100%;max-width:340px;padding:16px 16px 14px;
     background:rgba(9,30,19,.52);border:1px solid rgba(255,255,255,.16);border-radius:24px;
     backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
     box-shadow:0 26px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
@@ -379,17 +384,19 @@
   #gate .mark .ic{width:34px;height:34px;margin:0;stroke-width:1.4}
   #gate h1{margin:0;font-size:23px;letter-spacing:.15em;font-weight:700;text-shadow:0 2px 12px rgba(0,0,0,.45)}
   #gate .sub{font-size:10.5px;letter-spacing:.24em;color:rgba(255,255,255,.72);margin:4px 0 16px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
-  #gate .cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
-  #gate input{width:100%;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:15px;font-size:18px;
+  #gate .cards{display:flex;flex-direction:column;gap:9px;width:100%;max-width:360px}
+  #gate input{width:100%;border:1px solid rgba(255,255,255,.35);border-radius:13px;padding:13px;font-size:17px;
     text-align:center;letter-spacing:.14em;font-weight:700;background:rgba(255,255,255,.97);color:var(--g-900);box-shadow:0 6px 18px rgba(0,0,0,.25)}
   #gate input::placeholder{font-size:15px;letter-spacing:.06em;font-weight:400;color:#8b978f}
-  #gate .card{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid rgba(255,255,255,.26);
-    background:rgba(255,255,255,.12);border-radius:14px;padding:16px 17px;color:#fff;transition:background .15s,transform .1s}
+  #gate .card{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid rgba(255,255,255,.26);
+    background:rgba(255,255,255,.12);border-radius:13px;padding:12px 14px;color:#fff;transition:background .15s,transform .1s}
   #gate .card:active{transform:scale(.985)}
+  #gate .card[hidden]{display:none!important}
   #gate .card.pri{background:#fff;color:var(--g-900);border-color:#fff}
   #gate .card .ic{width:26px;height:26px;margin:0;flex:none}
   #gate .card b{display:block;font-size:16px;letter-spacing:.03em}
   #gate .card small{display:block;font-size:11.5px;opacity:.72;font-weight:400;margin-top:2px;line-height:1.5}
+  #gate .gnote[hidden]{display:none}
   #gate .gnote{font-size:10.5px;color:rgba(255,255,255,.78);margin-top:12px;max-width:330px;line-height:1.7;background:none;border:0;padding:0;text-shadow:0 1px 6px rgba(0,0,0,.6)}
   #gate .cap{position:absolute;left:0;right:0;bottom:12px;z-index:1;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.6);text-shadow:0 1px 6px rgba(0,0,0,.7)}
   #gate #apiBox[hidden]{display:none}
@@ -465,7 +472,7 @@
     <div class="brand"><div class="logo"><svg class='ic' viewBox='0 0 24 24' style='width:20px;height:20px;margin:0'><path d='M12 22V9M12 9c0-3 2-5 4-6 0 3-1.5 5-4 6zM12 9C12 6 10 4 8 3c0 3 1.5 5 4 6zM12 15c0-2.6 1.8-4.4 3.6-5.2C15.6 12.4 14.2 14.3 12 15zM12 15c0-2.6-1.8-4.4-3.6-5.2C8.4 12.4 9.8 14.3 12 15z' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg></div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
     <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>新增</button><span class="badge field-only" hidden><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>現場模式</span></div>
     <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-    <select id="opSel" class="admin-sel" title="檢視業者" hidden></select><button class="hbtn" id="saveBtn" title="儲存到雲端"></button><button class="hbtn modechip" id="modeBtn" title="目前身分,點擊登出"></button><button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
+    <select id="opSel" class="admin-sel" title="檢視業者" hidden></select><button class="hbtn" id="saveBtn" title="儲存到雲端"></button><button class="hbtn modechip" id="modeBtn" title="目前身分,點擊登出"></button><button class="hbtn" id="cfgBtn" title="帳號與設定"></button><button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
   </header>
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
@@ -514,45 +521,56 @@
 </div>
 
 <div id="dlg"><div class="box">
-  <h3>雲端資料與設定</h3>
-
-  <h4>① 雲端資料</h4>
-  <p id="cloudInfo">所有專案、照片與申報文件都存在公司的 Google 雲端硬碟,不留在這支手機。離開前若有未儲存的變更,右上角按鈕會閃橘色提醒。</p>
-  <div class="row"><button id="cloudUp">立即存到雲端</button><button class="sec" id="cloudDown">重新讀取雲端</button></div>
-
-  <h4>② 官方申報單</h4>
-  <p>管理員上傳後,所有撒播業者都看得到、可開啟核對。</p>
-  <div id="offList"></div>
-  <div class="row boss-only"><label class="hbtn" style="flex:1;justify-content:center;background:var(--g-700);border:0;padding:12px;border-radius:var(--r-sm)">上傳官方申報單<input type="file" id="offInput" accept="image/*,application/pdf" multiple hidden></label></div>
-
-  <h4 class="boss-only">③ 帳號管理</h4>
-  <div class="boss-only">
-    <p>發代碼給撒播業者;代碼等同密碼,請勿外流。停用後該代碼即無法登入。</p>
-    <div id="userList"></div>
-    <div class="row"><input id="newName" placeholder="新業者姓名 / 公司"></div>
-    <div class="row"><input id="newCode" placeholder="自訂登入代碼(可用中文,留空自動產生)"><button id="addUser" style="flex:0 0 92px">新增</button></div>
+  <div class="tabs">
+    <button class="tab on" data-tab="data">資料</button>
+    <button class="tab boss-only" data-tab="acct">帳號</button>
+    <button class="tab" data-tab="set">設定</button>
   </div>
 
-  <h4>④ 離線備份</h4>
-  <p>雲端已是主要儲存位置;需要留一份離線檔時可匯出。</p>
-  <div class="row"><button class="sec" id="expFile">匯出備份檔(JSON)</button></div>
+  <div class="grp" data-grp="data">
+    <h4>雲端資料</h4>
+    <p id="cloudInfo">所有專案、照片與申報文件都存在公司的 Google 雲端硬碟,不留在這支手機。離開前若有未儲存的變更,右上角按鈕會閃橘色提醒。</p>
+    <div class="row"><button id="cloudUp">立即存到雲端</button><button class="sec" id="cloudDown">重新讀取雲端</button></div>
 
-  <h4>⑤ Google 地圖搜尋</h4>
-  <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
-  <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
-  <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:88px;display:inline-block;padding:6px" value="4500"> 次</span></div>
-  <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
+    <h4>官方申報單</h4>
+    <p>管理員上傳後,所有撒播業者都看得到、可開啟核對。</p>
+    <div id="offList"></div>
+    <div class="row boss-only"><label class="hbtn" style="flex:1;justify-content:center;background:var(--g-700);border:0;padding:12px;border-radius:var(--r-sm)">上傳官方申報單<input type="file" id="offInput" accept="image/*,application/pdf" multiple hidden></label></div>
 
-  <h4>⑥ 安裝為手機 App</h4>
-  <p id="pwaHint">把網站加到手機主畫面,像一般 App 一樣有圖示、全螢幕開啟。</p>
-  <div class="row"><button id="pwaBtn">安裝到主畫面</button></div>
+    <h4>離線備份</h4>
+    <p>雲端已是主要儲存位置;需要留一份離線檔時可匯出。</p>
+    <div class="row"><button class="sec" id="expFile">匯出備份檔(JSON)</button></div>
+  </div>
 
-  <h4>⑦ 操作音效</h4>
-  <p>點擊、加入田區、標記、拍照等動作會有提示音與輕震,現場戴手套也知道有沒有成功。</p>
-  <div class="row"><button class="sec" id="sndBtn"></button></div>
+  <div class="grp boss-only" data-grp="acct" hidden>
+    <h4>撒播業者帳號</h4>
+    <p>代碼等同密碼,請私下發給本人。可改代碼(支援中文)、停用或重新啟用。</p>
+    <div id="userList"></div>
+    <h4>新增撒播業者</h4>
+    <div class="row"><input id="newName" placeholder="姓名 / 公司,例:碩成撒播一組"></div>
+    <div class="row"><input id="newCode" placeholder="登入代碼(可用中文,留空自動產生)"><button id="addUser" style="flex:0 0 92px">新增</button></div>
+    <p>新增後請按該列的「複製」把代碼私下傳給對方。</p>
+  </div>
 
-  <h4>⑧ 帳號</h4>
-  <div class="row"><button class="sec" id="apiBtn">設定雲端網址</button><button class="sec" id="logoutBtn">登出</button></div>
+  <div class="grp" data-grp="set" hidden>
+    <h4>我的帳號</h4>
+    <p id="meInfo"></p>
+    <div class="row"><button class="sec" id="apiBtn">變更雲端網址</button><button class="sec" id="logoutBtn">登出</button></div>
+
+    <h4>Google 地圖搜尋</h4>
+    <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
+    <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
+    <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:88px;display:inline-block;padding:6px" value="4500"> 次</span></div>
+    <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
+
+    <h4>安裝為手機 App</h4>
+    <p id="pwaHint">把網站加到手機主畫面,像一般 App 一樣有圖示、全螢幕開啟。</p>
+    <div class="row"><button id="pwaBtn">安裝到主畫面</button></div>
+
+    <h4>操作音效</h4>
+    <p>點擊、加入田區、標記、拍照等動作會有提示音與輕震,現場戴手套也知道有沒有成功。</p>
+    <div class="row"><button class="sec" id="sndBtn"></button></div>
+  </div>
 
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
@@ -565,15 +583,16 @@
   <div class="cards">
     <input id="gateCode" placeholder="請輸入登入代碼" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button class="card pri" id="gateLogin" style="justify-content:center"><span class="ico"></span><b>登入</b></button>
-    <button class="card" id="gateCfg" style="justify-content:center;padding:13px"><b style="font-size:14px;font-weight:600">設定雲端網址</b></button>
-    <button class="card" id="gateTest" style="justify-content:center;padding:11px"><b style="font-size:13px;font-weight:600">測試雲端連線</b></button>
+    <button class="card" id="gateCfg" style="justify-content:center;padding:11px"><b style="font-size:13.5px;font-weight:600">設定雲端網址</b></button>
+    <button class="card" id="gateTest" style="justify-content:center;padding:10px"><b style="font-size:13px;font-weight:600">測試雲端連線</b></button>
     <div id="apiBox" hidden>
       <input id="apiInput" placeholder="貼上 Apps Script 的 /exec 網址" style="font-size:13px;letter-spacing:0;text-align:left;padding:13px;font-weight:400">
       <button class="card pri" id="apiSave" style="justify-content:center;margin-top:10px;padding:13px"><b style="font-size:15px">儲存網址</b></button>
     </div>
   </div>
   <div class="err" id="gateErr"></div>
-  <div class="gnote">代碼由管理員發給。管理員可看全部業者資料與帳號管理;撒播業者只看得到自己的專案與官方申報單。</div>
+  <div class="gnote" id="gnote">代碼由管理員發給。管理員可看全部業者資料;撒播業者只看得到自己的專案與官方申報單。</div>
+  <a href="#" id="gateMore" style="display:none;margin-top:10px;font-size:11px;color:rgba(255,255,255,.72)">雲端設定 / 連線測試</a>
   </div>
   <div class="cap">碩成肥料 · 撒播管理系統</div>
 </div>
@@ -926,7 +945,8 @@ const ICON_PATHS={
   sound:'M5 9h4l5-4v14l-5-4H5z|M17 9a4 4 0 0 1 0 6',
   mute:'M5 9h4l5-4v14l-5-4H5z|M17 9l4 6M21 9l-4 6',
   arrow:'M4 12h14|M13 6l6 6-6 6',
-  ext:'M14 4h6v6|M20 4l-9 9|M18 14v6H4V6h6'
+  ext:'M14 4h6v6|M20 4l-9 9|M18 14v6H4V6h6',
+  gear:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z|M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z'
 };
 function ic(name, cls){ const d=ICON_PATHS[name]; if(!d) return '';
   return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${d.split('|').map(x=>`<path d="${x}"/>`).join('')}</svg>`; }
@@ -1166,6 +1186,7 @@ function setRole(r){ localStorage.setItem('fertmap_role', r); localStorage.setIt
 function applyRole(){ document.body.classList.toggle('field-mode', !canEdit());
   document.body.classList.toggle('admin-mode', isAdmin());
   const mb=document.getElementById('modeBtn');
+  const cb=document.getElementById('cfgBtn'); if(cb) cb.innerHTML = ic('gear')+'<span class="lbl">設定</span>';
   if(mb){ const nm = SES ? SES.name : '未登入';
     mb.classList.toggle('field', !isAdmin());
     mb.innerHTML = (isAdmin()?ic('unlock'):ic('user'))+`<span class="lbl">${esc(nm)}</span>`; }
@@ -1240,7 +1261,16 @@ window.addEventListener('beforeunload', e=>{ if(DIRTY){ e.preventDefault(); e.re
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && DIRTY) cloudSaveNow(true); });
 
 // ---------- 登入 ----------
-function gateShow(msgTxt){ const g=document.getElementById('gate');
+function gateSlim(){ const configured = !!apiUrl();
+  const cfg=document.getElementById('gateCfg'), test=document.getElementById('gateTest'),
+        note=document.getElementById('gnote'), more=document.getElementById('gateMore');
+  if(!cfg) return;
+  cfg.hidden = configured; test.hidden = configured; note.hidden = configured;
+  more.style.display = configured ? 'inline-block' : 'none'; }
+document.addEventListener('click', e=>{ const m=e.target.closest('#gateMore'); if(!m) return; e.preventDefault();
+  ['gateCfg','gateTest','gnote'].forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden=false; });
+  m.style.display='none'; });
+function gateShow(msgTxt){ const g=document.getElementById('gate'); gateSlim();
   g.querySelector('.mark').innerHTML=ic('markpin');
   g.querySelector('#gateLogin .ico').innerHTML=ic('unlock');
   document.getElementById('gateErr').textContent=msgTxt||'';
@@ -1371,10 +1401,19 @@ document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_
   const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
   document.getElementById('gUsed').textContent=gUsage().n;
   msg(gkey()?`已儲存。本月上限 ${gCap()} 次,目前用了 ${gUsage().n} 次`:'已清除 Google 金鑰,搜尋改用免費地圖資料'); };
-document.getElementById('menuBtn').onclick=()=>{ dlg.style.display='flex'; msg(''); refreshSnd();
-  document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n;
-  refreshPwa(); loadOfficials(); if(isAdmin()) renderUsers(); };
+document.getElementById('menuBtn').onclick=()=>openDlg('data');
 document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
+function openDlg(tab){ dlg.style.display='flex'; msg(''); showTab(tab||'data');
+  refreshSnd(); refreshPwa();
+  document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n;
+  const mi=document.getElementById('meInfo');
+  if(mi) mi.innerHTML = SES ? `目前登入:<b>${esc(SES.name)}</b>(${esc(SES.role)})<br>登入代碼:${esc(SES.code)}${isAdmin()?'<br>要改自己的代碼請到「帳號」分頁,在自己那一列按「改代碼」。':''}` : '尚未登入';
+  loadOfficials(); if(isAdmin()) renderUsers(); }
+function showTab(t){ document.querySelectorAll('#dlg .tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+  document.querySelectorAll('#dlg .grp').forEach(g=>{ g.hidden = g.dataset.grp!==t; });
+  dlg.querySelector('.box').scrollTop=0; }
+document.querySelectorAll('#dlg .tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.getElementById('cfgBtn').onclick=()=>openDlg(isAdmin()?'acct':'set');
 document.getElementById('apiBtn').onclick=()=>{ askApi(); };
 document.getElementById('logoutBtn').onclick=()=>{ dlg.style.display='none'; logout(); };
 document.getElementById('cloudUp').onclick=()=>cloudSaveNow(false);
