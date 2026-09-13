@@ -161,6 +161,13 @@
   .rp .foot{margin-top:20px;font-size:11px;color:#666}
   @media print{ body>*{display:none!important} #report{display:block!important;position:static;overflow:visible} #report .rtool{display:none} .rp{max-width:none;padding:0} }
 
+  /* ===== 角色模式 ===== */
+  body.field-mode .admin-only{display:none!important}
+  body:not(.field-mode) .field-only{display:none!important}
+  .badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 10px;font-size:12px;white-space:nowrap}
+  .lockchip{display:inline-block;background:#fdf1e0;border:1px solid #e6d9bf;color:#8a6314;border-radius:6px;padding:1px 7px;font-size:12px;margin-left:6px}
+  #dlg h4{margin:16px 0 6px;font-size:14px;color:var(--brand-ink);border-top:1px solid var(--line);padding-top:12px}
+
   /* ===== 對話框 ===== */
   #dlg,#viewer{position:fixed;inset:0;background:rgba(15,25,18,.5);z-index:2000;display:none;align-items:flex-end;justify-content:center}
   #dlg .box{background:var(--surface);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
@@ -204,16 +211,16 @@
 <div id="app">
   <header>
     <div class="brand"><div class="logo">🌾</div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
-    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri" id="newProj" title="新增專案">＋ 新增</button></div>
+    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案">＋ 新增</button><span class="badge field-only">🔒 現場模式</span></div>
     <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-    <button class="hbtn" id="menuBtn" title="雲端同步 / 匯出匯入">☁ 雲端</button>
+    <button class="hbtn" id="menuBtn" title="雲端 / 匯入">☁ 資料</button>
   </header>
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
-      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj">刪除</button></div>
+      <div class="bar"><b id="projTitle">專案</b><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn">🖨 報表</button><button id="delProj" class="admin-only">刪除</button></div>
       <div class="stats" id="stats"></div>
-      <div class="docs" id="docs">
+      <div class="docs admin-only" id="docs">
         <div class="dbar" id="docBar"><span>📄</span><b>主管機關申報文件</b><span class="cnt" id="docCnt">0</span><span id="docArrow">▸</span></div>
         <div class="dbody" id="docBody" hidden>
           <div id="docList"></div>
@@ -223,7 +230,7 @@
       </div>
       <div id="body">
         <div class="form" id="form">
-          <div class="full"><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
+          <div class="full admin-only"><label>客戶名稱</label><input id="f_customer" placeholder="例:王大明"></div>
           <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
           <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
           <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成"><datalist id="dl_brand"></datalist></div>
@@ -233,7 +240,7 @@
           <div><label>肥料單包重量(kg)</label><input id="f_bag" type="number" inputmode="decimal" step="0.1" placeholder="例:20"></div>
           <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
           <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
-          <div class="full"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+          <div class="full admin-only"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
         </div>
         <div id="list"></div>
       </div>
@@ -242,23 +249,41 @@
 </div>
 
 <div id="dlg"><div class="box">
-  <h3>☁ 雲端同步 / 匯出匯入</h3>
-  <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組<b>同步碼</b>(至少 6 個字,像密碼),之後每次修改會自動上傳;另一支手機或電腦輸入同一組同步碼就能讀到同樣的專案與照片。</p>
-  <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
-  <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
-  <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
-  <div class="row"><button class="sec" id="expFile">📁 匯出檔案(JSON)</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
+  <h3>☁ 資料同步 / 匯入匯出</h3>
+  <div class="field-only">
+    <p>目前是<b>現場模式</b>:可看田區位置、地號、面積、噸數、現場照片與導航。客戶名稱等資料已加密保護。</p>
+    <div class="row"><button id="impFile2">📁 匯入現場檔案</button><button id="unlockBtn">🔓 輸入密碼解鎖</button></div>
+  </div>
+  <div class="admin-only">
+    <h4>① 手機與電腦即時同步(同步碼)</h4>
+    <p>資料與照片存在你自己的 Cloudflare 帳號。設定一組同步碼(至少 6 個字),換手機只要輸入同一組,專案與照片就會自動回來。</p>
+    <input id="syncCode" placeholder="同步碼(例:shuocheng-2026)" autocomplete="off">
+    <div class="row"><button id="saveSync">儲存同步碼並讀取雲端</button></div>
+    <div class="row"><button id="cloudUp">☁ 立即上傳</button><button id="cloudDown">☁ 讀取雲端</button></div>
+
+    <h4>② 給現場施工人員的檔案</h4>
+    <p>產生一個含<b>照片</b>的檔案,客戶名稱、備註、申報文件清單會用密碼加密;現場人員看得到田區與照片,看不到客戶資料。</p>
+    <div class="row"><button id="expField">📤 匯出現場版(含照片)</button></div>
+
+    <h4>③ 備份與還原</h4>
+    <div class="row"><button class="sec" id="expFile">📁 匯出完整備份</button><button class="sec" id="impFile">📁 匯入檔案</button></div>
+
+    <h4>④ Google 雲端硬碟備份</h4>
+    <p>把專案、照片、申報文件備份到你自己的雲端硬碟。設定方式見 README 與 GAS 程式檔。</p>
+    <input id="driveUrl" placeholder="Apps Script 的 /exec 網址" autocomplete="off">
+    <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow">📤 立即備份全部</button></div>
+    <div class="row"><button class="sec" id="driveRead">📥 從雲端硬碟還原</button></div>
+    <p id="driveMsg" style="margin:4px 0 0"></p>
+
+    <h4>⑤ Google 地圖搜尋</h4>
+    <p>填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌。沒填則用免費的 OpenStreetMap 資料。</p>
+    <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
+    <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
+    <div class="row"><button id="saveGkey">儲存金鑰與上限</button></div>
+    <div class="row"><button class="sec" id="toField">🔒 切換到現場模式</button></div>
+  </div>
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
-  <p style="margin-top:14px"><b>Google 雲端硬碟備份(選填)</b>:把所有專案、照片、申報文件備份到你自己的雲端硬碟(建議用 dayuanc535 帳號部署)。設定方式見同資料夾的 README 與 GAS 程式檔。</p>
-  <input id="driveUrl" placeholder="Apps Script 的 /exec 網址" autocomplete="off">
-  <div class="row"><button id="saveDrive">儲存並測試連線</button><button class="sec" id="driveNow">📤 立即備份全部</button></div>
-  <div class="row"><button class="sec" id="driveRead">📥 從雲端硬碟還原</button></div>
-  <p id="driveMsg" style="margin:4px 0 0"></p>
-  <p style="margin-top:14px"><b>Google 地圖搜尋(選填)</b>:填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌(每月 5,000 次內免費)。申請步驟見 README。沒填則用免費的 OpenStreetMap 資料。</p>
-  <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
-  <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
-  <p style="margin:4px 0 0">達到上限後會自動改用免費地圖資料,絕不會超出 Google 每月 5,000 次免費額度。每月 1 日自動歸零。</p>
-  <div class="row"><button id="saveGkey">儲存金鑰與上限</button><button class="sec" id="closeDlg">關閉</button></div>
+  <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
 <div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()">🖨 列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
@@ -402,6 +427,7 @@ const FEN=969.917; // 1 分 = 969.917 m²(1 甲 = 10 分)
 const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} 公頃(${(m2/FEN).toFixed(1)} 分)`;
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
+  if(isField()) return;
   if(map.getZoom()<16){ setStatus('請放大到 16 以上再點田查地號(目前 '+map.getZoom()+')'); return; }
   setStatus('查詢地號中…'); if(previewLayer){ previewLayer.remove(); previewLayer=null; }
   try{ const p = await queryParcel(e.latlng.lat, e.latlng.lng); lastParcel=p;
@@ -452,7 +478,7 @@ function unselect(key){ delete cur().fields[key]; save(); map.closePopup(); }
 function setT(key,v){ const f=cur().fields[key]; if(f){ f.t = v===''?null:+v; cur().updated=Date.now(); persist(); render(); autoSync(); } }
 function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const area=fs.reduce((s,f)=>s+(+f.area||0),0); const unknown=fs.filter(f=>!f.area).length;
   const bags = +p.bag>0 ? Math.round(tons(p)*1000/+p.bag) : null;
-  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').textContent=(p.customer||p.name);
+  document.getElementById('f_total').value = fmtT(tons(p))+' 噸'+(bags!=null?` ≈ ${bags} 包(每包 ${p.bag} kg)`:''); document.getElementById('projTitle').innerHTML=esc(p.customer||p.name)+(p.enc?'<span class="lockchip">🔒 客戶資料已加密</span>':'');
   document.getElementById('stats').innerHTML = `<span>🌾 ${fs.length} 塊田</span><span>📐 ${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>⚖️ ${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
@@ -479,7 +505,7 @@ function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here
   const g=L.layerGroup([shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
   g.on('click',()=>{ lastParcel=f; L.popup({maxWidth:260}).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); layers[f.key]=g.addTo(map); }
 function render(){
-  const p=cur();
+  const p=cur(); applyRole();
   const sel=document.getElementById('projSel');
   sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.customer||x.name)}(${Object.keys(x.fields).length}田)</option>`).join('');
   Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||''); syncCustom();
@@ -493,14 +519,14 @@ function render(){
   document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
-        <button class="del" onclick="unselect('${f.key}')">移除</button></div>
+        <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
       <div class="acts"><button onclick="nav('${f.key}')">🧭 Google 導航</button>
-        <label>📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
+        <label class="admin-only">📷 拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
-    : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>');
-  renderDocs();
+    : (isField() ? '<div class="empty">請按上方「☁ 資料」→「📁 匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
+  renderDocs(); applyRole();
   arr.forEach(f=>(f.photos||[]).forEach(ph=>showThumb(f.key, ph.id)));
   arr.filter(f=>!f.area&&!areaTried.has(f.key)).forEach(async f=>{ areaTried.add(f.key); const a=await fetchArea(f); if(a){ f.area=a; persist(); if(cur().fields[f.key]===f) render(); } });
 }
@@ -568,6 +594,54 @@ function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElement
 function setDocsOpen(open){ document.getElementById('docBody').hidden=!open; document.getElementById('docArrow').textContent=open?'▾':'▸'; }
 document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementById('docBody').hidden);
 
+// ================= 角色模式與加密 =================
+const role=()=> localStorage.getItem('fertmap_role')||'admin';
+const isField=()=> role()==='field';
+function setRole(r){ localStorage.setItem('fertmap_role', r); applyRole();
+  setStatus(isField()?'現場模式:點田區標記可看照片與導航':'管理員模式'); }
+function applyRole(){ document.body.classList.toggle('field-mode', isField());
+  document.querySelectorAll('#form input, #form select').forEach(el=>{ el.disabled=isField(); });
+  document.querySelectorAll('.item input.ton').forEach(el=>{ el.disabled=isField(); }); }
+const b64u8 = u8 => { let r=''; for(let i=0;i<u8.length;i+=8192) r+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(r); };
+const u8b64 = str => Uint8Array.from(atob(str), c=>c.charCodeAt(0));
+async function deriveKey(pw, salt){ const km=await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:120000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+async function encJSON(obj, pw){ const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await deriveKey(pw, salt); const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(JSON.stringify(obj))));
+  return {v:1, s:b64u8(salt), i:b64u8(iv), c:b64u8(ct)}; }
+async function decJSON(e, pw){ const key=await deriveKey(pw, u8b64(e.s));
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM', iv:u8b64(e.i)}, key, u8b64(e.c)); return JSON.parse(new TextDecoder().decode(pt)); }
+async function buildFieldExport(pw){
+  const out={unit:'t', field:true, exported:new Date().toISOString(), projects:[]};
+  for(const p of DB.projects){
+    const np={...p, name:'🔒 保密客戶', customer:'🔒 保密客戶', note:'', docs:[], fields:{},
+      enc: await encJSON({customer:p.customer, name:p.name, note:p.note, docs:(p.docs||[]).map(d=>({name:d.name, time:d.time}))}, pw)};
+    for(const [k,f] of Object.entries(p.fields||{})){
+      const nf={...f, photos:[]};
+      for(const ph of (f.photos||[])){ const data=await getPhoto(ph.id); nf.photos.push({...ph, data:data||null}); }
+      np.fields[k]=nf; }
+    out.projects.push(np); }
+  return out; }
+async function exportFieldFile(){
+  const pw=prompt('設定解鎖密碼(現場人員要看客戶資料時才需輸入,請自己記住):'); if(!pw) return;
+  if(pw.length<4){ msg('密碼至少 4 個字'); return; }
+  msg('產生現場版檔案中(含照片,請稍候)…');
+  try{ const out=await buildFieldExport(pw);
+    const blob=new Blob([JSON.stringify(out)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥現場版_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    msg(`已匯出現場版(${out.projects.length} 個專案,約 ${(blob.size/1048576).toFixed(1)} MB),用 LINE 或郵件傳給施工人員`);
+  }catch(err){ msg('匯出失敗:'+err.message); } }
+async function absorbPhotos(list){ for(const p of list||[]) for(const f of Object.values(p.fields||{})) for(const ph of (f.photos||[])) if(ph.data){
+  try{ await idb.put(ph.id, ph.data); }catch{} memPhoto[ph.id]=ph.data; delete ph.data; } }
+async function unlockAll(){
+  const pw=prompt('請輸入管理員密碼:'); if(!pw) return;
+  const locked=DB.projects.filter(p=>p.enc);
+  if(!locked.length){ setRole('admin'); render(); msg('這份資料沒有加密內容,已切回管理員模式'); return; }
+  try{ for(const p of locked){ const d=await decJSON(p.enc, pw); p.customer=d.customer||''; p.name=d.name||d.customer||p.name; p.note=d.note||'';
+      p.docs=(d.docs||[]).map(x=>({id:'', name:x.name, time:x.time, type:'note'})); delete p.enc; }
+    persist(); setRole('admin'); render(); msg('✅ 已解鎖,客戶資料已顯示'); }
+  catch(err){ msg('❌ 密碼錯誤,無法解鎖'); } }
+
 // ================= 雲端同步 / 匯出匯入 =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
 // ---------- Google 雲端硬碟備份 ----------
@@ -620,10 +694,20 @@ async function cloudLoad(){ const c=code(); if(!c) return false; try{
   }catch(err){ setStatus('☁ 讀取:'+err.message); msg('讀取:'+err.message); return false; } }
 document.getElementById('cloudUp').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('上傳中…'); cloudSave(); };
 document.getElementById('cloudDown').onclick=()=>{ if(!code()) return msg('請先設定同步碼'); msg('讀取中…'); cloudLoad(); };
-let syncTimer=null; function autoSync(){ driveAuto(); if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
+let syncTimer=null; function autoSync(){ if(isField()) return; driveAuto(); if(!code()) return; clearTimeout(syncTimer); syncTimer=setTimeout(cloudSave, 1500); }
 document.getElementById('expFile').onclick=()=>{ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`撒肥專案_${new Date().toISOString().slice(0,10)}.json`; a.click(); msg('已匯出(不含照片檔,照片在雲端),請選「儲存到檔案 / 雲端硬碟」'); };
 document.getElementById('impFile').onclick=()=>document.getElementById('impInput').click();
-document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ mergeIn(JSON.parse(await f.text())); msg('已匯入 '+f.name); autoSync(); }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
+document.getElementById('impInput').onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
+  try{ msg('讀取檔案中…'); const d=JSON.parse(await f.text()); await absorbPhotos(d.projects);
+    const nPh=(d.projects||[]).reduce((s2,p2)=>s2+Object.values(p2.fields||{}).reduce((a,x)=>a+((x.photos||[]).length),0),0);
+    mergeIn(d);
+    if(d.field && DB.projects.some(p2=>p2.enc)) setRole('field');
+    render(); msg(`已匯入 ${f.name}(${(d.projects||[]).length} 個專案、${nPh} 張照片)`); if(!isField()) autoSync();
+  }catch(err){ msg('匯入失敗:'+err.message); } e.target.value=''; };
+document.getElementById('impFile2').onclick=()=>document.getElementById('impInput').click();
+document.getElementById('unlockBtn').onclick=unlockAll;
+document.getElementById('expField').onclick=exportFieldFile;
+document.getElementById('toField').onclick=()=>{ if(!confirm('切換到現場模式?此裝置會隱藏客戶名稱、備註、申報文件與所有設定。')) return; setRole('field'); render(); msg('已切換到現場模式'); };
 function mergeIn(d){ const list = d.projects || (Array.isArray(d)?d:null); if(!list) throw new Error('格式不符');
   migrate({projects:list, unit:d.unit});
   DB.deleted = Object.assign({}, DB.deleted||{}, d.deleted||{});
@@ -656,7 +740,7 @@ function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const a
 document.getElementById('reportBtn').onclick=buildReport;
 
 function setStatus(t){ document.getElementById('status').textContent=t; }
-render(); setStatus('放大到 16 以上,點田地即可查地號並加入專案'); if(code()) cloudLoad();
+applyRole(); render(); setStatus(isField()?'現場模式:點田區標記可看照片與導航':'放大到 16 以上,點田地即可查地號並加入專案'); if(!isField() && code()) cloudLoad();
 </script>
 </body>
 </html>
