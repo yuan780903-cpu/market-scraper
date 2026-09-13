@@ -251,7 +251,9 @@
   <input type="file" id="impInput" accept=".json,application/json" style="display:none">
   <p style="margin-top:14px"><b>Google 地圖搜尋(選填)</b>:填入 Google Maps Platform 的 API 金鑰,搜尋就會和 Google 地圖一樣找得到農會、店家、門牌(每月 5,000 次內免費)。申請步驟見 README。沒填則用免費的 OpenStreetMap 資料。</p>
   <input id="gkey" placeholder="Google API 金鑰(AIza 開頭)" autocomplete="off">
-  <div class="row"><button id="saveGkey">儲存金鑰</button><button class="sec" id="closeDlg">關閉</button></div>
+  <div class="row"><span style="flex:1;font-size:13px;color:var(--muted);align-self:center">本月 Google 搜尋用量:<b id="gUsed">0</b> / <input id="gCap" type="number" min="0" step="100" style="width:90px;display:inline-block;padding:6px" value="4500"> 次</span></div>
+  <p style="margin:4px 0 0">達到上限後會自動改用免費地圖資料,絕不會超出 Google 每月 5,000 次免費額度。每月 1 日自動歸零。</p>
+  <div class="row"><button id="saveGkey">儲存金鑰與上限</button><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
 <div id="report"><div class="rtool"><b>申報報表</b><button onclick="window.print()">🖨 列印 / 存 PDF</button><button onclick="document.getElementById('report').style.display='none'">關閉</button></div><div class="rp" id="rp"></div></div>
@@ -335,6 +337,11 @@ function refreshHereMarkers(){ Object.values(cur().fields).forEach(f=>{ if(layer
 // ================= 地址 / 地標搜尋(Google Places 優先,免費來源備援) =================
 let searchPin=null;
 const gkey=()=> (localStorage.getItem('fertmap_gkey')||'').trim();
+const gCap=()=> { const v=+(localStorage.getItem('fertmap_gcap')||4500); return v>0?v:4500; };
+function gUsage(){ const m=new Date().toISOString().slice(0,7); let u={}; try{ u=JSON.parse(localStorage.getItem('fertmap_gusage')||'{}'); }catch{}
+  if(u.month!==m) u={month:m, n:0}; return u; }
+function gBump(){ const u=gUsage(); u.n++; localStorage.setItem('fertmap_gusage', JSON.stringify(u)); return u.n; }
+const gAllowed=()=> !!gkey() && gUsage().n < gCap();
 async function searchGoogle(q){ const c=map.getCenter();
   const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':gkey(),'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location'},
     body:JSON.stringify({textQuery:q, languageCode:'zh-TW', regionCode:'TW', pageSize:8, locationBias:{circle:{center:{latitude:c.lat,longitude:c.lng},radius:50000}}})});
@@ -357,8 +364,9 @@ map.on('click', ()=>{ document.getElementById('sres').style.display='none'; });
 document.getElementById('searchForm').addEventListener('submit', async e=>{
   e.preventDefault(); const q=document.getElementById('q').value.trim(); if(!q) return; setStatus('搜尋中…'); document.getElementById('q').blur();
   try{ let list=[], note='';
-    if(gkey()){ try{ list=await searchGoogle(q); note='Google 地圖搜尋結果'; }catch(err){ setStatus('Google 搜尋失敗('+err.message+'),改用免費來源'); } }
-    if(!list.length){ list=await searchFree(q); note=gkey()?'Google 無結果,改用免費地圖資料':'免費地圖資料(OpenStreetMap);要更準請在 ☁ 設定 Google 金鑰'; }
+    if(gAllowed()){ try{ gBump(); list=await searchGoogle(q); note=`Google 地圖搜尋結果(本月第 ${gUsage().n} 次 / 上限 ${gCap()})`; }catch(err){ setStatus('Google 搜尋失敗('+err.message+'),改用免費來源'); } }
+    else if(gkey()) setStatus(`本月 Google 搜尋已達自訂上限 ${gCap()} 次,改用免費地圖資料`);
+    if(!list.length){ list=await searchFree(q); note=gkey()?'Google 無結果或已達上限,改用免費地圖資料':'免費地圖資料(OpenStreetMap);要更準請在 ☁ 設定 Google 金鑰'; }
     if(!list.length){ setStatus('找不到:'+q+'。試試加上縣市,或用 ☁ 設定 Google 金鑰'); return; }
     window._sres=list; if(list.length===1) pickResult(0); else { showResults(list, note); setStatus(`找到 ${list.length} 筆,請點選`); }
   }catch(err){ setStatus('搜尋失敗:'+err.message); }
@@ -556,8 +564,11 @@ document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementByI
 // ================= 雲端同步 / 匯出匯入 =================
 const dlg=document.getElementById('dlg'), msg=t=>document.getElementById('dlgMsg').textContent=t;
 const code=()=> (localStorage.getItem('fertmap_sync')||'').trim();
-document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim()); msg(gkey()?'已儲存 Google 金鑰,搜尋改用 Google':'已清除 Google 金鑰'); };
-document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gkey').value=gkey(); document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
+document.getElementById('saveGkey').onclick=()=>{ localStorage.setItem('fertmap_gkey',document.getElementById('gkey').value.trim());
+  const c=+document.getElementById('gCap').value; if(c>0) localStorage.setItem('fertmap_gcap',String(c));
+  document.getElementById('gUsed').textContent=gUsage().n;
+  msg(gkey()?`已儲存。本月上限 ${gCap()} 次,目前用了 ${gUsage().n} 次`:'已清除 Google 金鑰,搜尋改用免費地圖資料'); };
+document.getElementById('menuBtn').onclick=()=>{ document.getElementById('gkey').value=gkey(); document.getElementById('gCap').value=gCap(); document.getElementById('gUsed').textContent=gUsage().n; document.getElementById('syncCode').value=code(); msg(code()?'目前同步碼已設定,修改會自動上傳':'尚未設定同步碼'); dlg.style.display='flex'; };
 document.getElementById('closeDlg').onclick=()=>dlg.style.display='none';
 document.getElementById('saveSync').onclick=async()=>{ const c=document.getElementById('syncCode').value.trim(); if(c.length<6){ msg('同步碼至少 6 個字'); return; }
   localStorage.setItem('fertmap_sync',c); msg('已儲存同步碼,讀取雲端中…'); const r=await cloudLoad(); if(!r) await cloudSave(); };
