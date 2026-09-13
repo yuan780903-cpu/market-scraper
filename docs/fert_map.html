@@ -91,7 +91,7 @@
 
   /* ============ 地圖 ============ */
   #main{flex:1;min-height:0;display:flex;flex-direction:column}
-  #mapWrap{flex:1;min-height:170px;position:relative;background:#cdd8cd}
+  #mapWrap{flex:1;min-height:150px;position:relative;background:#cdd8cd}
   #map{position:absolute;inset:0}
   #status{position:absolute;left:12px;bottom:34px;z-index:800;background:rgba(13,43,26,.86);color:#fff;
     border-radius:999px;padding:6px 13px;font-size:12px;max-width:min(72vw,440px);white-space:nowrap;
@@ -150,8 +150,12 @@
     border-top:1px solid var(--line);box-shadow:var(--sh-up);transition:max-height .24s var(--ease);
     border-radius:var(--r-xl) var(--r-xl) 0 0;position:relative;z-index:2}
   #panel.big{max-height:82vh}
-  #panel::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--line-2);margin:9px auto 2px}
-  #panel .bar{display:flex;align-items:center;gap:6px;padding:6px 15px 6px;flex:none;flex-wrap:wrap}
+  .grab{display:flex;align-items:center;justify-content:center;height:22px;flex:none;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+  .grab span{width:44px;height:5px;border-radius:3px;background:var(--line-2);transition:background .15s,width .15s}
+  .grab:active{cursor:grabbing}
+  .grab:active span{background:var(--g-500);width:56px}
+  #panel .bar{display:flex;align-items:center;gap:6px;padding:4px 15px 8px;flex:none;flex-wrap:wrap;
+    background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 4px 10px -8px rgba(13,43,26,.25)}
   #panel .bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     font-size:17px;font-weight:700;color:var(--brand-ink);letter-spacing:.01em}
   .bar button{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-sm);padding:6px 10px;
@@ -166,7 +170,7 @@
     padding:5px 11px;font-size:11.5px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;letter-spacing:.03em}
 
   /* 統計卡 */
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:5px 15px 10px;flex:none}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:12px 0 10px}
   .stats span{position:relative;background:linear-gradient(180deg,#fff,var(--g-50));border:1px solid var(--line);
     border-radius:var(--r-md);padding:11px 8px 10px;font-size:14px;font-weight:700;color:var(--brand-ink);
     text-align:center;line-height:1.25;box-shadow:var(--sh-1);font-variant-numeric:tabular-nums;overflow:hidden}
@@ -175,7 +179,7 @@
   .stats .ic{color:var(--g-600);opacity:.75}
 
   /* 業主 / 農會列 */
-  .ownerbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:0 15px 11px;font-size:12.5px;flex:none}
+  .ownerbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:0 0 11px;font-size:12.5px}
   .ownerbar .o,.ownerbar a{display:inline-flex;align-items:center;border-radius:999px;padding:6px 11px;font-weight:600;
     border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);text-decoration:none;box-shadow:var(--sh-1);
     transition:background .12s,transform .1s}
@@ -184,7 +188,7 @@
   .ownerbar .ic{opacity:.7}
 
   /* ============ 表單 ============ */
-  #body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 15px 16px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  #body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 15px 20px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .form{display:grid;grid-template-columns:1fr 1fr;gap:11px 12px;padding:8px 0 15px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .form[hidden]{display:none}
   .form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:.06em}
@@ -248,7 +252,7 @@
     border-radius:var(--r-md);margin-top:11px;line-height:1.7;background:var(--surface-2)}
 
   /* ============ 申報文件 ============ */
-  .docs{flex:none;margin:0 15px 9px;border:1px solid #ecdfc6;background:linear-gradient(180deg,#fdfaf3,#fbf6ea);
+  .docs{margin:0 0 9px;border:1px solid #ecdfc6;background:linear-gradient(180deg,#fdfaf3,#fbf6ea);
     border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-1)}
   .docs .dbar{display:flex;align-items:center;gap:9px;padding:10px 13px;cursor:pointer;user-select:none}
   .docs .dbar b{flex:1;font-size:13.5px;color:#6f5214;font-weight:700;letter-spacing:.02em}
@@ -344,10 +348,9 @@
     #panel.big{max-height:none;width:580px}
     #panel::before{display:none}
     #panel .bar{padding:16px 20px 8px}
-    .stats{padding:5px 20px 12px}
-    .ownerbar{padding:0 20px 13px}
-    .docs{margin:0 20px 10px}
-    #body{padding:0 20px 20px}
+    .grab{display:none}
+    #body{padding:0 20px 22px}
+    .stats{padding:14px 0 10px}
     #dlg{align-items:center}
     #dlg .box{border-radius:var(--r-lg);padding:24px}
     #status{bottom:14px;left:50%;transform:translateX(-50%)}
@@ -377,7 +380,9 @@
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
+      <div class="grab" id="grab"><span></span></div>
       <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20h4L20 8l-4-4L4 16z'/></svg></button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>報表</button><button id="delProj" class="admin-only">刪除</button></div>
+      <div id="body">
       <div class="stats" id="stats"></div>
       <div class="ownerbar" id="ownerbar"></div>
       <div class="docs admin-only" id="docs">
@@ -388,7 +393,6 @@
           <div class="hint">被抽查時打開這裡即可出示;文件會隨同步碼上雲端,另一台裝置也看得到。</div>
         </div>
       </div>
-      <div id="body">
         <div class="form" id="form">
           <div><label>地區</label><select id="f_region"><option value="">— 加入田後自動帶入,或手選 —</option></select></div>
           <div><label>業務名稱</label><input id="f_customer" placeholder="例:莊政遠"></div>
@@ -835,8 +839,31 @@ document.getElementById('renameBtn').onclick=()=>{ const p=cur();
   const v=prompt('自訂專案名稱(留空=自動用「地區 客戶 總噸數」):', p.title||projLabel(p)); if(v===null) return;
   p.title=v.trim(); save(); };
 setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
-document.getElementById('bigBtn').onclick=e=>{ const big=document.getElementById('panel').classList.toggle('big'); e.target.textContent=big?'清單 ⤡':'清單 ⤢'; setTimeout(()=>map.invalidateSize(),250); };
-window.addEventListener('resize', ()=>map.invalidateSize());
+// ---- 面板高度:可拖曳、可點擊切換 ----
+const panelEl=document.getElementById('panel');
+const panelMax=()=> window.innerHeight-130, panelMin=()=>150;
+function panelSetH(h,anim){ if(window.innerWidth>=900) return;
+  const v=Math.max(panelMin(), Math.min(panelMax(), h));
+  panelEl.style.transition = anim ? 'height .22s var(--ease), max-height .22s var(--ease)' : 'none';
+  panelEl.style.flex='none'; panelEl.style.maxHeight=v+'px'; panelEl.style.height=v+'px'; }
+function panelH(){ return panelEl.getBoundingClientRect().height; }
+function panelToggle(){ if(window.innerWidth>=900){ const big=panelEl.classList.toggle('big'); syncBigBtn(big); setTimeout(()=>map.invalidateSize(),240); return; }
+  const full=panelMax(), small=Math.round(window.innerHeight*0.42);
+  panelSetH(panelH() > full*0.72 ? small : full, true); syncBigBtn(panelH() <= full*0.72);
+  setTimeout(()=>{ map.invalidateSize(); syncBigBtn(panelH() > full*0.72); }, 260); }
+function syncBigBtn(big){ const b=document.getElementById('bigBtn'); if(b) b.innerHTML = big? '清單 ⤡' : '清單 ⤢'; }
+document.getElementById('bigBtn').onclick=panelToggle;
+(function(){ const grab=document.getElementById('grab'); let y0=0,h0=0,drag=false,moved=false;
+  const pt=e=> e.touches? e.touches[0] : e;
+  const down=e=>{ if(window.innerWidth>=900) return; drag=true; moved=false; y0=pt(e).clientY; h0=panelH(); panelEl.style.transition='none'; };
+  const move=e=>{ if(!drag) return; const dy=y0-pt(e).clientY; if(Math.abs(dy)>5) moved=true; panelSetH(h0+dy,false); if(e.cancelable) e.preventDefault(); };
+  const up=()=>{ if(!drag) return; drag=false; panelEl.style.transition=''; map.invalidateSize();
+    if(!moved) panelToggle(); else syncBigBtn(panelH() > panelMax()*0.72); };
+  grab.addEventListener('touchstart',down,{passive:true}); grab.addEventListener('mousedown',down);
+  window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('mousemove',move);
+  window.addEventListener('touchend',up); window.addEventListener('mouseup',up);
+})();
+window.addEventListener('resize', ()=>{ if(window.innerWidth>=900){ panelEl.style.height=''; panelEl.style.maxHeight=''; panelEl.style.flex=''; } map.invalidateSize(); });
 
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
