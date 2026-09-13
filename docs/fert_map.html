@@ -357,6 +357,28 @@
     .rp table{min-width:0}
   }
 
+  /* ============ 身分入口 ============ */
+  #gate{position:fixed;inset:0;z-index:4500;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(165deg,var(--g-700) 0%,var(--g-900) 100%);color:#fff;padding:32px 24px;text-align:center;line-height:1.7}
+  #gate .mark{width:76px;height:76px;border-radius:22px;background:rgba(255,255,255,.13);display:flex;align-items:center;
+    justify-content:center;margin-bottom:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 8px 24px rgba(0,0,0,.25)}
+  #gate .mark .ic{width:42px;height:42px;margin:0;stroke-width:1.4}
+  #gate h1{margin:0;font-size:24px;letter-spacing:.14em;font-weight:700}
+  #gate .sub{font-size:11.5px;letter-spacing:.22em;color:rgba(255,255,255,.6);margin:4px 0 26px}
+  #gate .cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
+  #gate .card{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.09);border-radius:14px;padding:16px 17px;color:#fff;transition:background .15s,transform .1s}
+  #gate .card:active{transform:scale(.985)}
+  #gate .card.pri{background:#fff;color:var(--g-900);border-color:#fff}
+  #gate .card .ic{width:26px;height:26px;margin:0;flex:none}
+  #gate .card b{display:block;font-size:16px;letter-spacing:.03em}
+  #gate .card small{display:block;font-size:11.5px;opacity:.72;font-weight:400;margin-top:2px;line-height:1.5}
+  #gate .note{font-size:11.5px;color:rgba(255,255,255,.55);margin-top:22px;max-width:360px}
+  #gate .err{color:#ffcf9e;font-size:13px;margin-top:14px;min-height:18px}
+  .modechip{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.28);border-radius:999px;
+    padding:7px 11px;font-size:12px;font-weight:600;background:rgba(255,255,255,.1);color:#fff;white-space:nowrap}
+  .modechip.field{background:rgba(224,137,28,.85);border-color:rgba(255,255,255,.35)}
+
   /* ============ 內建瀏覽器阻擋 ============ */
   #inapp{position:fixed;inset:0;z-index:5000;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:linear-gradient(180deg,var(--g-700),var(--g-900));color:#fff;padding:28px 24px;text-align:center;
@@ -403,6 +425,8 @@
     #panel .bar b{flex:1 1 100%;margin-bottom:1px}
   }
   @media (max-width:480px){
+    .modechip{padding:8px 9px}
+    .modechip .lbl{display:none}
     .stats span{font-size:13px;padding:9px 5px}
     .brand small{display:none}
     .brand h1{font-size:16px}
@@ -414,9 +438,9 @@
 <div id="app">
   <header>
     <div class="brand"><div class="logo"><svg class='ic' viewBox='0 0 24 24' style='width:20px;height:20px;margin:0'><path d='M12 22V9M12 9c0-3 2-5 4-6 0 3-1.5 5-4 6zM12 9C12 6 10 4 8 3c0 3 1.5 5 4 6zM12 15c0-2.6 1.8-4.4 3.6-5.2C15.6 12.4 14.2 14.3 12 15zM12 15c0-2.6-1.8-4.4-3.6-5.2C8.4 12.4 9.8 14.3 12 15z' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg></div><div><h1>撒肥定位</h1><small>田地定位 · 肥料撒播管理</small></div></div>
-    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>新增</button><span class="badge field-only"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>現場模式</span></div>
+    <div class="projbox"><label>專案</label><select id="projSel"></select><button class="hbtn pri admin-only" id="newProj" title="新增專案"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>新增</button><span class="badge field-only" hidden><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 11h12v10H6z'/><path d='M9 11V7a3 3 0 1 1 6 0v4'/></svg>現場模式</span></div>
     <form id="searchForm"><input id="q" placeholder="搜尋地址 / 地名(例:台南市麻豆區)" autocomplete="off"><button type="submit">搜尋</button></form>
-    <button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
+    <button class="hbtn modechip" id="modeBtn" title="切換使用身分"></button><button class="hbtn" id="menuBtn" title="雲端 / 匯入"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 18a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 17.7 9.2 4.4 4.4 0 0 1 17.5 18z'/></svg>資料</button>
   </header>
   <div id="main">
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
@@ -512,6 +536,17 @@
   <div class="row"><button class="sec" id="closeDlg">關閉</button></div>
   <p id="dlgMsg"></p>
 </div></div>
+<div id="gate">
+  <div class="mark"></div>
+  <h1>撒肥定位</h1>
+  <div class="sub">田地定位 · 肥料撒播管理</div>
+  <div class="cards">
+    <button class="card pri" id="gateAdmin"><span class="ico"></span><span><b>管理員登入</b><small>建立與編輯專案、雲端同步、申報報表(需密碼)</small></span></button>
+    <button class="card" id="gateField"><span class="ico"></span><span><b>施工人員</b><small>檢視田區位置、照片、標記與導航(唯讀,不需密碼)</small></span></button>
+  </div>
+  <div class="err" id="gateErr"></div>
+  <div class="note">管理員密碼儲存在這台裝置,忘記可清除瀏覽器資料後重設。施工人員請向負責人索取現場檔案。</div>
+</div>
 <div id="inapp">
   <div class="logo"></div>
   <h2>請用瀏覽器開啟</h2>
@@ -1094,9 +1129,12 @@ document.getElementById('docBar').onclick=()=>setDocsOpen(document.getElementByI
 // ================= 角色模式與加密 =================
 const role=()=> localStorage.getItem('fertmap_role')||'admin';
 const isField=()=> role()==='field';
-function setRole(r){ localStorage.setItem('fertmap_role', r); applyRole();
+const roleChosen = ()=> localStorage.getItem('fertmap_role_set')==='1';
+function setRole(r){ localStorage.setItem('fertmap_role', r); localStorage.setItem('fertmap_role_set','1'); applyRole();
   setStatus(isField()?'現場模式:點田區標記可看照片與導航':'管理員模式'); }
 function applyRole(){ document.body.classList.toggle('field-mode', isField());
+  const mb=document.getElementById('modeBtn');
+  if(mb){ mb.classList.toggle('field', isField()); mb.innerHTML = isField()? ic('lock')+'<span class="lbl">現場</span>' : ic('unlock')+'<span class="lbl">管理員</span>'; }
   document.querySelectorAll('#form input, #form select').forEach(el=>{ el.disabled=isField(); });
   document.querySelectorAll('.item input.ton').forEach(el=>{ el.disabled=isField(); }); }
 const b64u8 = u8 => { let r=''; for(let i=0;i<u8.length;i+=8192) r+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(r); };
@@ -1283,8 +1321,51 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
       w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) setStatus('已下載新版,重新整理即可更新'); }); });
   }).catch(()=>{}); }); }
 
+// ================= 身分入口 =================
+function gateShow(msg){ const g=document.getElementById('gate');
+  g.querySelector('.mark').innerHTML=ic('markpin');
+  document.getElementById('gateAdmin').querySelector('.ico').innerHTML=ic('unlock');
+  document.getElementById('gateField').querySelector('.ico').innerHTML=ic('lock');
+  document.getElementById('gateErr').textContent=msg||'';
+  g.style.display='flex'; }
+function gateHide(){ document.getElementById('gate').style.display='none'; }
+async function loginAdmin(){
+  if(pwRec()){ const pw=prompt('請輸入管理員密碼:'); if(pw===null) return false;
+    if(!await pwCheck(pw)){ sfx.err(); gateShow('密碼錯誤,請再試一次'); return false; }
+    // 順便解開這台裝置上加密的專案
+    for(const p of DB.projects.filter(x=>x.enc)){ try{ const d=await decJSON(p.enc,pw);
+      p.customer=d.customer||p.customer; p.owner=d.owner||''; p.ownerTel=d.ownerTel||''; p.assocPic=d.assocPic||''; p.assocTel=d.assocTel||'';
+      p.note=d.note||''; delete p.enc; }catch{} }
+    persist();
+  } else {
+    const pw=prompt('這台裝置尚未設定管理員密碼。\n請設定一組(至少 4 個字),之後登入、鎖定與現場版解鎖都用它:');
+    if(pw===null) return false;
+    if(pw.length<4){ gateShow('密碼至少 4 個字'); return false; }
+    const again=prompt('請再輸入一次確認:'); if(again!==pw){ gateShow('兩次輸入不一致'); return false; }
+    await pwSet(pw);
+    const c=prompt('若你在別台裝置已有資料,請輸入同步碼把專案帶過來(沒有可留空):','');
+    if(c && c.trim().length>=6){ localStorage.setItem('fertmap_sync', c.trim()); }
+  }
+  setRole('admin'); gateHide(); render(); sfx.unlock();
+  setStatus('管理員模式'); if(code()) cloudLoad(); return true; }
+function loginField(){ setRole('field'); gateHide(); render(); sfx.lock();
+  setStatus('現場模式:請按「資料」匯入負責人給你的檔案'); }
+document.getElementById('gateAdmin').onclick=loginAdmin;
+document.getElementById('gateField').onclick=loginField;
+document.getElementById('modeBtn').onclick=async()=>{
+  if(isField()){ await loginAdmin(); return; }
+  const wipe=confirm('切換為施工人員模式?\n\n【確定】只切換身分,本機資料保留(自己暫時用)\n【取消】先不切換\n\n若要把這支手機交給別人,切換後請再用「資料 → 匯出現場版」給對方,並在下一個提示選擇清除本機資料。');
+  if(!wipe) return;
+  const clear=confirm('要同時清除這台裝置上的管理員資料嗎?\n\n【確定】清除(交給別人用,較安全)\n【取消】保留資料,只隱藏畫面');
+  if(clear){ localStorage.removeItem(KEY); localStorage.removeItem('fertmap_sync'); localStorage.removeItem('fertmap_drive');
+    try{ indexedDB.deleteDatabase('fertmap'); }catch{}
+    DB=load(); persist(); }
+  setRole('field'); render(); sfx.lock(); setStatus('已切換為現場模式'); };
+
 function setStatus(t){ document.getElementById('status').textContent=t; }
-applyRole(); render(); setStatus(isField()?'現場模式:點田區標記可看照片與導航':'放大到 16 以上,點田地即可查地號並加入專案'); if(!isField() && code()) cloudLoad();
+applyRole(); render();
+if(!roleChosen()){ gateShow(); }
+else { setStatus(isField()?'現場模式:點田區標記可看照片與導航':'放大到 16 以上,點田地即可查地號並加入專案'); if(!isField() && code()) cloudLoad(); }
 </script>
 </body>
 </html>
