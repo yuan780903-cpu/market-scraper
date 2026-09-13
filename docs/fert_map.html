@@ -198,6 +198,8 @@
   #body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 15px calc(20px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .form{display:grid;grid-template-columns:1fr 1fr;gap:11px 12px;padding:8px 0 15px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .form[hidden]{display:none}
+  #overview[hidden]{display:none}
+  #overview{padding-top:2px}
   .form label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:.06em}
   .form input,.form select{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:15px;
     background:#fff;transition:border-color .15s,box-shadow .15s;color:var(--ink)}
@@ -390,6 +392,7 @@
       <div class="grab" id="grab"><span></span></div>
       <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20h4L20 8l-4-4L4 16z'/></svg></button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>報表</button><button id="delProj" class="admin-only">刪除</button></div>
       <div id="body">
+        <div id="overview">
       <div class="stats" id="stats"></div>
       <div class="ownerbar" id="ownerbar"></div>
       <div class="docs admin-only" id="docs">
@@ -421,6 +424,7 @@
           <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
           <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
           <div class="full admin-only"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+        </div>
         </div>
         <div id="list"></div>
       </div>
@@ -672,6 +676,7 @@ map.on('click', async e=>{
       L.popup({maxWidth:280}).setLatLng(p.center).setContent(
         `<div class="pop"><b>${ic('warn')}請確認地號</b><br><small>你點的位置不在這筆土地範圍內,系統回傳最接近的:</small><br><b>${esc(fullName(p))}</b>
          <button class="btn" onclick="selectCurrent()">${ic('check')}確定是這塊,加入</button>
+         <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看街景確認位置</button>
          <button class="btn del" onclick="map.closePopup()">${ic('x')}不是,重新點選</button></div>`).openOn(map);
       setStatus('點擊處不在回傳的地籍範圍內,請確認地號'); return; }
     if(near && near.d > NEAR_M){
@@ -679,6 +684,7 @@ map.on('click', async e=>{
       L.popup({maxWidth:280}).setLatLng(p.center).setContent(
         `<div class="pop"><b>${esc(fullName(p))}</b><br><small>這塊田距離已選的田約 ${Math.round(near.d)} 公尺,不相鄰。確定要加入同一個專案嗎?</small>
          <button class="btn" onclick="selectCurrent()">${ic('check')}確定加入</button>
+         <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}看街景確認位置</button>
          <button class="btn del" onclick="map.closePopup()">${ic('x')}取消</button></div>`).openOn(map);
       setStatus(`距離已選田 ${Math.round(near.d)} 公尺,請確認`); return; }
     selectCurrent();
@@ -844,8 +850,10 @@ document.getElementById('newProj').onclick=()=>{ const n=prompt('業務名稱(�
   const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; p.region=r.trim();
   DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${projLabel(p)}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
-function setFormOpen(open){ document.getElementById('form').hidden=!open; document.getElementById('toggleForm').textContent=open?'資料 ▾':'資料 ▸'; localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
-document.getElementById('toggleForm').onclick=()=>setFormOpen(document.getElementById('form').hidden);
+function setFormOpen(open){ document.getElementById('overview').hidden=!open; document.getElementById('form').hidden=false;
+  const b=document.getElementById('toggleForm'); b.textContent = open ? '資料 ▾' : '只看田區 ▸';
+  localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
+document.getElementById('toggleForm').onclick=()=>{ setFormOpen(document.getElementById('overview').hidden); if(!document.getElementById('overview').hidden) document.getElementById('body').scrollTop=0; };
 document.getElementById('renameBtn').onclick=()=>{ const p=cur();
   const v=prompt('自訂專案名稱(留空=自動用「地區 客戶 總噸數」):', p.title||projLabel(p)); if(v===null) return;
   p.title=v.trim(); save(); };
