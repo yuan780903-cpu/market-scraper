@@ -309,6 +309,15 @@
   .row2 .up{margin-top:0;flex:1;justify-content:center}
   .docs.rep label.up.pick{background:#fff;color:var(--g-700);box-shadow:inset 0 0 0 1px #b9d3c1}
   .row2.chkrow{justify-content:flex-end;margin-top:6px}
+  .numbox{margin-top:8px}
+  .numbox[hidden]{display:none}
+  .numbox label{display:block;font-size:11px;color:#5d7566;letter-spacing:.03em;margin-bottom:3px}
+  .numbox input{width:100%;box-sizing:border-box;border:1px solid #cfe0d4;background:#fff;border-radius:var(--r-sm);
+    padding:9px 10px;font-size:15px;font-family:inherit;color:var(--ink);letter-spacing:.02em}
+  .numbox input:focus{outline:none;border-color:var(--g-600);box-shadow:0 0 0 3px rgba(47,109,75,.12)}
+  .numbox.need input{border-color:var(--red);box-shadow:0 0 0 3px rgba(190,40,40,.14)}
+  .numprev{font-size:11.5px;color:#5d7566;margin-top:4px;line-height:1.5}
+  .numprev b{color:var(--g-700)} .numprev .bad{color:var(--red);font-weight:600}
   .chk{border:1px solid #cfe0d4;background:#fff;color:var(--g-700);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;font-weight:600}
   .chkout{margin-top:8px;font-size:12px;background:#fff;border:1px solid #dbe8e0;border-radius:var(--r-sm);padding:8px 10px;line-height:1.7}
   .chkout b{color:var(--g-700)} .chkout .miss{color:var(--red)} .chkout .ok{color:var(--g-600)}
@@ -528,6 +537,11 @@
           </div>
           <div class="stagebar" id="stageBar"></div>
           <div class="hint" id="stageHint"></div>
+          <div class="numbox" id="numBox">
+            <label for="repNums">噸袋編號</label>
+            <input id="repNums" inputmode="text" autocomplete="off" placeholder="例:1~10 1 44~50">
+            <div class="numprev" id="numPrev">可用 ~ 或 - 表示區間,空白或逗號分隔多筆</div>
+          </div>
           <div class="row2">
             <label class="up" id="repUp">拍照回報<input type="file" id="repInput" accept="image/*" capture="environment" onchange="addReports(this)"></label>
             <label class="up pick" id="repPick">上傳照片<input type="file" id="repPickInput" accept="image/*" multiple onchange="addReports(this)"></label>
@@ -1245,12 +1259,29 @@ const needNum = st => STAGE_NUM.includes(st);
 function bagCalc(p){ const b=+p.bag; const T=tons(p); return (b>0 && T>0) ? Math.round(T*1000/b) : 0; }
 function bagCount(p){ const m=parseInt(p&&p.repCount,10); return (m>0) ? m : bagCalc(p); }
 function repName(p){ return ((p&&p.repName)||'').trim() || (p&&(p.owner||p.customer||p.name)) || '專案'; }
+function normNums(txt){ return String(txt||'')
+    .replace(/[０-９]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/[～〜~－—–到至]/g,'-').replace(/[，、;；]/g,',')
+    .replace(/\s*-\s*/g,'-'); }
 function parseNums(txt){ const out=new Set();
-  String(txt||'').split(/[,、\s]+/).filter(Boolean).forEach(seg=>{
-    const m=seg.match(/^(\d+)\s*[-~到]\s*(\d+)$/);
-    if(m){ const a=+m[1], b=+m[2]; for(let i=Math.min(a,b); i<=Math.max(a,b); i++) out.add(i); }
+  normNums(txt).split(/[,\s]+/).filter(Boolean).forEach(seg=>{
+    const m=seg.match(/^(\d+)-(\d+)$/);
+    if(m){ const a=+m[1], b=+m[2]; if(Math.abs(a-b)>5000) return; for(let i=Math.min(a,b); i<=Math.max(a,b); i++) out.add(i); }
     else if(/^\d+$/.test(seg)) out.add(+seg); });
-  return [...out].sort((a,b)=>a-b); }
+  return [...out].filter(x=>x>0).sort((a,b)=>a-b); }
+function fmtRanges(nums){ const out=[]; let i=0;
+  while(i<nums.length){ let j=i; while(j+1<nums.length && nums[j+1]===nums[j]+1) j++;
+    out.push(j>i? `${nums[i]}-${nums[j]}` : `${nums[i]}`); i=j+1; }
+  return out.join('、'); }
+const numDraft={};
+function renderNumBox(){ const p=cur(); const box=document.getElementById('numBox'); if(!box) return;
+  const on=needNum(repStage); box.hidden=!on; if(!on) return;
+  const el=document.getElementById('repNums'); if(document.activeElement!==el) el.value=numDraft[repStage]||'';
+  const nums=parseNums(el.value), n=bagCount(p), prev=document.getElementById('numPrev');
+  if(!el.value.trim()){ prev.innerHTML='可用 ~ 或 - 表示區間,空白或逗號分隔多筆'; return; }
+  if(!nums.length){ prev.innerHTML='<span class="bad">讀不到編號,請輸入數字</span>'; return; }
+  const over=n? nums.filter(x=>x>n) : [];
+  prev.innerHTML=`共 <b>${nums.length}</b> 包:${esc(fmtRanges(nums))}`+(over.length? ` <span class="bad">超出應回報 ${n} 包:${esc(fmtRanges(over))}</span>`:''); }
 function renderStages(){ const p=cur(); const bar=document.getElementById('stageBar'); if(!bar) return;
   const cnt = st => (p.reports||[]).filter(r=>(r.stage||STAGES[0])===st).length;
   bar.innerHTML = STAGES.map(st=>`<button class="${st===repStage?'on':''}" onclick="pickStage('${st}')">${st}<span class="n">${cnt(st)}</span></button>`).join('');
@@ -1261,10 +1292,11 @@ function renderStages(){ const p=cur(); const bar=document.getElementById('stage
   const diff = (parseInt(p.repCount,10)>0 && n!==auto);
   const extra = diff ? `<div class="cust">已自訂應回報 ${n} 包${auto?`(申報噸數換算為 ${auto} 包)`:''}</div>` : '';
   document.getElementById('stageHint').innerHTML = (needNum(repStage)
-    ? `此階段需輸入噸袋編號${n?`(本次共 ${n} 包,可輸入 3 或 1-5)`:'(可輸入 3 或 1-5)'}`
+    ? `此階段需填噸袋編號${n?`,本次共 ${n} 包`:''}`
     : '此階段不分編號,整批拍即可') + extra;
   document.getElementById('repUp').childNodes[0].nodeValue = `拍照 · ${repStage}`;
-  document.getElementById('repPick').childNodes[0].nodeValue = `上傳照片 · ${repStage}`; }
+  document.getElementById('repPick').childNodes[0].nodeValue = `上傳照片 · ${repStage}`;
+  renderNumBox(); }
 function pickStage(st){ repStage=st; renderStages(); sfx.tap(); }
 function runCheck(){ const p=cur(); const n=bagCount(p); const box=document.getElementById('chkOut');
   if(!n){ box.innerHTML='<div class="chkout">請在上方「應回報包數」直接填數量,或在「資料」填肥料單包重量與各田噸數。</div>'; return; }
@@ -1281,6 +1313,12 @@ function runCheck(){ const p=cur(); const n=bagCount(p); const box=document.getE
 function setRepOpen(open){ document.getElementById('repBody').hidden=!open; document.getElementById('repArrow').textContent=open?'▾':'▸'; }
 document.getElementById('repBar').onclick=()=>setRepOpen(document.getElementById('repBody').hidden);
 document.getElementById('chkBtn').onclick=runCheck;
+document.getElementById('repNums').addEventListener('input', e=>{ numDraft[repStage]=e.target.value; document.getElementById('numBox').classList.remove('need'); renderNumBox(); });
+['repUp','repPick'].forEach(id=>document.getElementById(id).addEventListener('click', e=>{
+  if(!needNum(repStage) || e.target.tagName==='INPUT') return;
+  if(parseNums(document.getElementById('repNums').value).length) return;
+  e.preventDefault(); const box=document.getElementById('numBox'), el=document.getElementById('repNums');
+  box.classList.add('need'); el.focus(); document.getElementById('numPrev').innerHTML='<span class="bad">請先填噸袋編號,再拍照或上傳</span>'; sfx.err(); }));
 document.getElementById('repName').addEventListener('change', e=>{ const p=cur(); if(!p) return; p.repName=e.target.value.trim(); p.updated=Date.now(); persist(); render(); autoSync(); setRepOpen(true); sfx.tap(); });
 document.getElementById('repCount').addEventListener('change', e=>{ const p=cur(); if(!p) return; const v=parseInt(e.target.value,10); p.repCount=(v>0? v : ''); e.target.value=p.repCount||''; p.updated=Date.now(); persist(); render(); autoSync(); setRepOpen(true); sfx.tap(); });
 async function addReports(input){ const p=cur(); p.reports=p.reports||[];
@@ -1288,10 +1326,10 @@ async function addReports(input){ const p=cur(); p.reports=p.reports||[];
   let nums=[], numTxt='';
   if(needNum(repStage)){
     const n=bagCount(p);
-    numTxt = prompt(`「${repStage}」${repName(p)} 請輸入噸袋編號${n?`(共 ${n} 包)`:''}\n單一:3   區間:1-5   多筆:1,3,7`, '');
-    if(numTxt===null){ input.value=''; return; }
+    numTxt = (document.getElementById('repNums').value||'').trim();
     nums = parseNums(numTxt);
-    if(!nums.length){ setStatus('沒有讀到編號,請輸入數字'); input.value=''; sfx.err(); return; }
+    if(nums.length) numTxt = fmtRanges(nums);
+    if(!nums.length){ setStatus('請先填噸袋編號'); document.getElementById('numBox').classList.add('need'); input.value=''; sfx.err(); return; }
   }
   for(const file of input.files){
     try{ setStatus('照片處理中…'); const data=await shrinkDoc(file);
@@ -1299,14 +1337,15 @@ async function addReports(input){ const p=cur(); p.reports=p.reports||[];
       const stamp=new Date().toLocaleString('zh-TW',{hour12:false});
       await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       const seq=(p.reports.length+1).toString().padStart(3,'0');
-      const nm=`回報${seq}_${repName(p)}_${repStage}${nums.length?'_'+nums.join('.'):''}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
+      const nm=`回報${seq}_${repName(p)}_${repStage}${nums.length?'_'+fmtRanges(nums).replace(/、/g,'.'):''}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
       const up=await apiPost('upload',{kind:'photo', name:nm, data});
       driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds));
       p.reports.push({id, time:stamp, bag:p.bag||'', name:nm, stage:repStage, nums, numTxt, seq});
     }catch(err){ setStatus('回報失敗:'+err.message); sfx.err(); }
   }
+  if(needNum(repStage)){ numDraft[repStage]=''; document.getElementById('repNums').value=''; }
   input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setRepOpen(true);
-  sfx.photo(); setStatus('已回報並上傳雲端'); }
+  sfx.photo(); setStatus(`已回報並上傳雲端${nums.length?` · 編號 ${numTxt}`:''}`); }
 async function openReport(id){ const p=cur(); const r=(p.reports||[]).find(x=>x.id===id); if(!r) return;
   setStatus('照片載入中…'); const v=await getPhoto(id); if(!v){ setStatus('照片還沒下載到'); return; } setStatus('');
   showViewer({src:v, type:'image', cap:`${r.stage||'回報'}${r.numTxt?' · 編號 '+r.numTxt:''} · ${r.time}`, onDel: canEdit()? async ()=>{
@@ -1319,7 +1358,7 @@ function renderReports(){ const p=cur(); const list=p.reports||[];
   if(icoSpan) icoSpan.innerHTML=ic('camera');
   document.getElementById('repList').innerHTML = list.length
     ? list.slice().reverse().map(r=>`<div class="doc"><span class="ico">${ic('image')}</span><div class="n" onclick="openReport('${r.id}')">${esc(r.stage||'回報')}${r.numTxt?` · 編號 ${esc(r.numTxt)}`:''}<small>${r.seq?`#${esc(r.seq)} · `:''}${esc(r.time)}${r.bag?` · ${esc(String(r.bag))}kg`:''}</small></div><button onclick="openReport('${r.id}')">檢視</button></div>`).join('')
-    : '<div class="hint">尚未回報。選好階段後按「拍照回報」。</div>';
+    : '<div class="hint">尚未回報。選好階段、填編號後按「拍照」或「上傳照片」。</div>';
   renderStages(); }
 function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElementById('docCnt').textContent=docs.length;
   document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?ic('doc'):ic('image')}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
