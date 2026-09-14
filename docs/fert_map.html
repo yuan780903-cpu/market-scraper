@@ -834,12 +834,10 @@ const POPT={maxWidth:250, minWidth:180, autoPanPaddingTopLeft:[12,74], autoPanPa
 const PIN={mark:{n:'噴漆記號',c:'mark',t:'噴'}, drop:{n:'肥料擺放',c:'drop',t:'肥'}};
 let placing=null;
 function startPin(key,type,id){ if(isField()) return; const L=PIN[type];
-  const useGps=confirm(`${L.n}${id?'(移動位置)':''}:\n確定 = 用我目前的 GPS 位置\n取消 = 我要在地圖上點選`);
-  const done=(lat,lng,acc)=> id ? movePinTo(key,id,lat,lng,acc) : addPin(key,type,lat,lng,acc);
-  if(useGps){ if(!navigator.geolocation){ setStatus('此裝置不支援定位'); return; } setStatus('定位中…');
-    navigator.geolocation.getCurrentPosition(pos=>done(pos.coords.latitude,pos.coords.longitude,Math.round(pos.coords.accuracy)),
-      err=>setStatus('定位失敗:'+err.message), {enableHighAccuracy:true, timeout:15000}); }
-  else { placing={key,type,id}; setStatus(`請在地圖上點選「${L.n}」的${id?'新':''}位置`); } }
+  placing={key,type,id}; sfx.tap();
+  const f=cur().fields[key]; if(f && !id && f.bbox) map.fitBounds(f.bbox,{maxZoom:19, padding:[40,40]});
+  if(window.innerWidth<900 && typeof panelH==='function' && panelH()>panelMax()*0.6) panelSetH(Math.round(window.innerHeight*0.42),true);
+  setStatus(`請在地圖上點選「${L.n}」的${id?'新':''}位置`); }
 function movePinTo(key,id,lat,lng,acc){ const f=cur().fields[key]; const pin=(f.pins||[]).find(x=>x.id===id); if(!pin) return;
   pin.lat=lat; pin.lng=lng; pin.acc=acc||null; pin.time=new Date().toLocaleString('zh-TW',{hour12:false});
   save(); sfx.pin(); map.setView([lat,lng], Math.max(map.getZoom(),18)); setStatus(`已移動${PIN[pin.type].n}`); }
@@ -1057,7 +1055,9 @@ function load(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'
   migrate(d); return d; }
 function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit 旗標判斷)
   const conv = d.unit!=='t';
-  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(!p.reports) p.reports=[]; if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther','repName','repCount'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
+  let loc={}; try{ loc=JSON.parse(localStorage.getItem('fertmap_driveids')||'{}'); }catch{}
+  const fill=x=>{ if(x && !x.did && loc[x.id]) x.did=loc[x.id]; };
+  d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(!p.reports) p.reports=[]; p.docs.forEach(fill); p.reports.forEach(fill); Object.values(p.fields||{}).forEach(f=>(f.photos||[]).forEach(fill)); if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther','repName','repCount'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
     Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
@@ -1203,9 +1203,17 @@ const idb = { db:null,
   async del(id){ const d=await this.open(); return new Promise((res,rej)=>{ const r=d.transaction('photos','readwrite').objectStore('photos').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); } };
 const memPhoto={};
 let driveIds = (()=>{ try{ return JSON.parse(localStorage.getItem('fertmap_driveids')||'{}'); }catch{ return {}; } })();
-async function getPhoto(id){ if(memPhoto[id]) return memPhoto[id];
+function didOf(id){ if(driveIds[id]) return driveIds[id];
+  for(const p of ((typeof DB!=='undefined'&&DB&&DB.projects)||[])){
+    const hit=(p.docs||[]).concat(p.reports||[], ...Object.values(p.fields||{}).map(f=>f.photos||[])).find(x=>x&&x.id===id&&x.did);
+    if(hit){ driveIds[id]=hit.did; return hit.did; } }
+  return null; }
+function keepDid(id,did,rec){ if(!did) return; driveIds[id]=did; if(rec) rec.did=did;
+  try{ localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds)); }catch{} }
+const upOwner=()=> (isAdmin() && VIEW_OWNER) ? VIEW_OWNER : undefined;
+async function getPhoto(id){ const did=didOf(id); if(memPhoto[id]) return memPhoto[id];
   let v=await idb.get(id).catch(()=>null);
-  if(!v && driveIds[id] && SES){ try{ const r=await apiGet('file',{id:driveIds[id]}); v=r.data; await idb.put(id,v).catch(()=>{}); }catch{} }
+  if(!v && did && SES){ try{ const r=await apiGet('file',{id:did}); v=r.data; await idb.put(id,v).catch(()=>{}); }catch{} }
   if(v) memPhoto[id]=v; return v; }
 async function showThumb(key,id){ const img=document.querySelector(`#th_${key} img[data-id="${id}"]`); if(!img) return; const v=await getPhoto(id); if(v) img.src=v; else img.alt='未下載'; }
 function shrink(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
@@ -1215,8 +1223,8 @@ function shrink(file){ return new Promise((res,rej)=>{ const img=new Image(); co
 async function addPhotos(key, input){ const f=cur().fields[key]; if(!f) return; f.photos=f.photos||[];
   for(const file of input.files){ try{ setStatus('照片處理中…'); const data=await shrink(file);
       const id='ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
-      f.photos.push({id, time:new Date().toLocaleString('zh-TW',{hour12:false})});
-      try{ const up=await apiPost('upload',{kind:'photo', name:`${f.sectName}${f.no}_${id}`, data}); driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds)); }catch(err){ setStatus('照片上傳雲端失敗:'+err.message); }
+      const rec={id, time:new Date().toLocaleString('zh-TW',{hour12:false})}; f.photos.push(rec);
+      try{ const up=await apiPost('upload',{kind:'photo', name:`${f.sectName}${f.no}_${id}`, data, owner:upOwner()}); keepDid(id, up.id, rec); }catch(err){ setStatus('照片上傳雲端失敗:'+err.message); }
       
     }catch(err){ setStatus('照片失敗:'+err.message); } }
   input.value=''; cur().updated=Date.now(); persist(); render(); autoSync(); sfx.photo(); setStatus('已加入照片,已上傳雲端硬碟'); }
@@ -1240,8 +1248,8 @@ async function addDocs(input){ const p=cur(); p.docs=p.docs||[];
       if(file.type==='application/pdf'){ if(file.size>8*1024*1024) throw new Error(file.name+' 超過 8MB'); data=await readAsDataURL(file); type='pdf'; }
       else { data=await shrinkDoc(file); type='image'; }
       const id='doc'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
-      p.docs.push({id, name:file.name||('申報單'+(p.docs.length+1)), type, size:data.length, time:new Date().toLocaleString('zh-TW',{hour12:false})});
-      try{ const up=await apiPost('upload',{kind:'doc', name:file.name||id, data}); driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds)); }catch(err){ setStatus('文件上傳雲端失敗:'+err.message); }
+      const rec={id, name:file.name||('申報單'+(p.docs.length+1)), type, size:data.length, time:new Date().toLocaleString('zh-TW',{hour12:false})}; p.docs.push(rec);
+      try{ const up=await apiPost('upload',{kind:'doc', name:file.name||id, data, owner:upOwner()}); keepDid(id, up.id, rec); }catch(err){ setStatus('文件上傳雲端失敗:'+err.message); }
     }catch(err){ setStatus('文件失敗:'+err.message); } }
   input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setDocsOpen(true); setStatus('已加入申報文件,已上傳雲端硬碟'); }
 function shrinkDoc(file){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(file);
@@ -1338,9 +1346,9 @@ async function addReports(input){ const p=cur(); p.reports=p.reports||[];
       await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
       const seq=(p.reports.length+1).toString().padStart(3,'0');
       const nm=`回報${seq}_${repName(p)}_${repStage}${nums.length?'_'+fmtRanges(nums).replace(/、/g,'.'):''}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
-      const up=await apiPost('upload',{kind:'photo', name:nm, data});
-      driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds));
-      p.reports.push({id, time:stamp, bag:p.bag||'', name:nm, stage:repStage, nums, numTxt, seq});
+      const up=await apiPost('upload',{kind:'photo', name:nm, data, owner:upOwner()});
+      const rec={id, time:stamp, bag:p.bag||'', name:nm, stage:repStage, nums, numTxt, seq};
+      keepDid(id, up.id, rec); p.reports.push(rec);
     }catch(err){ setStatus('回報失敗:'+err.message); sfx.err(); }
   }
   if(needNum(repStage)){ numDraft[repStage]=''; document.getElementById('repNums').value=''; }
@@ -1669,7 +1677,9 @@ async function editCode(oldCode, name){
     msg(`已改為「${r.code}」${r.self?'(這是你自己的代碼,下次用新代碼登入)':',請通知該業者'}`); sfx.ok();
   }catch(e){ msg('更改失敗:'+e.message); sfx.err(); } }
 async function copyCode(c){ try{ await navigator.clipboard.writeText(c); msg('已複製代碼 '+c+',請私下傳給該業者'); }catch{ msg('代碼:'+c); } }
-async function toggleUser(code, enable){ try{ await apiPost('setuser',{target:code, enabled:enable}); renderUsers(); msg('已更新'); }catch(e){ msg('失敗:'+e.message); } }
+async function toggleUser(code, enable){ try{ await apiPost('setuser',{target:code, enabled:enable}); await renderUsers();
+    if(DIRTY){ msg('已更新(有未儲存變更,儲存後重新整理可更新業者選單)'); return; }
+    if(!enable && VIEW_OWNER===code) VIEW_OWNER=null; await loadFromCloud(); msg('已更新'); }catch(e){ msg('失敗:'+e.message); } }
 document.getElementById('copyLink').onclick=async()=>{
   const u=apiUrl(); if(!u){ msg('尚未設定雲端網址'); return; }
   const link = location.origin + location.pathname + '?api=' + encodeURIComponent(u);
