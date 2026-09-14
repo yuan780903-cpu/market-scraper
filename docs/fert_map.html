@@ -293,6 +293,16 @@
   .docs.rep .doc{border-color:#dbe8e0}
   .docs.rep .doc button{background:var(--g-700)}
   .docs.rep .hint{color:#5d7566}
+  .stagebar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}
+  .stagebar button{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:6px 11px;
+    font-size:12px;font-weight:600;color:var(--ink-2)}
+  .stagebar button.on{background:var(--g-700);border-color:var(--g-700);color:#fff}
+  .stagebar button .n{opacity:.7;font-weight:500;margin-left:3px}
+  .row2{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .row2 .up{margin-top:0;flex:1;justify-content:center}
+  .chk{border:1px solid #cfe0d4;background:#fff;color:var(--g-700);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;font-weight:600}
+  .chkout{margin-top:8px;font-size:12px;background:#fff;border:1px solid #dbe8e0;border-radius:var(--r-sm);padding:8px 10px;line-height:1.7}
+  .chkout b{color:var(--g-700)} .chkout .miss{color:var(--red)} .chkout .ok{color:var(--g-600)}
   .docs{margin:0 0 9px;border:1px solid #ecdfc6;background:linear-gradient(180deg,#fdfaf3,#fbf6ea);
     border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-1)}
   .docs .dbar{display:flex;align-items:center;gap:9px;padding:10px 13px;cursor:pointer;user-select:none}
@@ -503,9 +513,14 @@
       <div class="docs rep" id="reports">
         <div class="dbar" id="repBar"><span></span><b>大噸袋出貨回報</b><span class="cnt" id="repCnt">0</span><span id="repArrow">▸</span></div>
         <div class="dbody" id="repBody" hidden>
+          <div class="stagebar" id="stageBar"></div>
+          <div class="hint" id="stageHint"></div>
+          <div class="row2">
+            <label class="up" id="repUp">拍照回報<input type="file" id="repInput" accept="image/*" capture="environment" multiple onchange="addReports(this)"></label>
+            <button class="chk" id="chkBtn">漏拍檢核</button>
+          </div>
+          <div id="chkOut"></div>
           <div id="repList"></div>
-          <label class="up">拍照回報(太空包卸貨)<input type="file" id="repInput" accept="image/*" capture="environment" multiple onchange="addReports(this)"></label>
-          <div class="hint">用於 500 / 1000 公斤太空包到場卸貨的存證。照片直接存到公司雲端硬碟,管理員即時看得到。</div>
         </div>
       </div>
       <div class="docs admin-only" id="docs">
@@ -1205,27 +1220,67 @@ function shrinkDoc(file){ return new Promise((res,rej)=>{ const img=new Image();
 async function openDoc(id){ const p=cur(); const d=(p.docs||[]).find(x=>x.id===id); if(!d) return; setStatus('文件載入中…'); const v=await getDoc(id); if(!v){ setStatus('文件還沒下載到,請確認同步碼與網路'); return; }
   setStatus(''); showViewer({src:v, type:d.type, cap:(p.customer||p.name)+' · '+d.name, onDel:async()=>{ p.docs=p.docs.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
     if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{}); save(); }}); }
+const STAGE_NONUM = ['出貨前查驗','過程中查驗'];
+const STAGE_NUM = ['所有噸袋照相','出貨裝車','田間裝料','田間撒播'];
+const STAGES = STAGE_NONUM.concat(STAGE_NUM);
+let repStage = STAGES[0];
+const needNum = st => STAGE_NUM.includes(st);
+function bagCount(p){ const b=+p.bag; const T=tons(p); return (b>0 && T>0) ? Math.round(T*1000/b) : 0; }
+function parseNums(txt){ const out=new Set();
+  String(txt||'').split(/[,、\s]+/).filter(Boolean).forEach(seg=>{
+    const m=seg.match(/^(\d+)\s*[-~到]\s*(\d+)$/);
+    if(m){ const a=+m[1], b=+m[2]; for(let i=Math.min(a,b); i<=Math.max(a,b); i++) out.add(i); }
+    else if(/^\d+$/.test(seg)) out.add(+seg); });
+  return [...out].sort((a,b)=>a-b); }
+function renderStages(){ const p=cur(); const bar=document.getElementById('stageBar'); if(!bar) return;
+  const cnt = st => (p.reports||[]).filter(r=>(r.stage||STAGES[0])===st).length;
+  bar.innerHTML = STAGES.map(st=>`<button class="${st===repStage?'on':''}" onclick="pickStage('${st}')">${st}<span class="n">${cnt(st)}</span></button>`).join('');
+  const n=bagCount(p);
+  document.getElementById('stageHint').innerHTML = needNum(repStage)
+    ? `此階段需輸入噸袋編號${n?`(本專案共 ${n} 包,可輸入 3 或 1-5)`:'(可輸入 3 或 1-5)'}`
+    : '此階段不分編號,整批拍即可';
+  document.getElementById('repUp').childNodes[0].nodeValue = `拍照回報 · ${repStage}`; }
+function pickStage(st){ repStage=st; renderStages(); sfx.tap(); }
+function runCheck(){ const p=cur(); const n=bagCount(p); const box=document.getElementById('chkOut');
+  if(!n){ box.innerHTML='<div class="chkout">請先在「資料」填肥料單包重量與各田噸數,才能算出應有幾包。</div>'; return; }
+  const rows=STAGE_NUM.map(st=>{ const done=new Set();
+    (p.reports||[]).filter(r=>r.stage===st).forEach(r=>(r.nums||[]).forEach(x=>done.add(x)));
+    const miss=[]; for(let i=1;i<=n;i++) if(!done.has(i)) miss.push(i);
+    return `<div><b>${st}</b>:${miss.length? `<span class="miss">缺 ${miss.length} 包(${miss.slice(0,20).join('、')}${miss.length>20?'…':''})</span>` : '<span class="ok">已完成</span>'}</div>`; });
+  const noNum=STAGE_NONUM.map(st=>{ const c=(p.reports||[]).filter(r=>r.stage===st).length;
+    return `<div><b>${st}</b>:${c? `<span class="ok">${c} 張</span>` : '<span class="miss">尚未拍</span>'}</div>`; });
+  box.innerHTML=`<div class="chkout"><div style="margin-bottom:4px">應有 <b>${n}</b> 包(${fmtT(tons(p))} 噸 ÷ ${p.bag} kg)</div>${noNum.join('')}${rows.join('')}</div>`;
+  sfx.ok(); }
 function setRepOpen(open){ document.getElementById('repBody').hidden=!open; document.getElementById('repArrow').textContent=open?'▾':'▸'; }
 document.getElementById('repBar').onclick=()=>setRepOpen(document.getElementById('repBody').hidden);
+document.getElementById('chkBtn').onclick=runCheck;
 async function addReports(input){ const p=cur(); p.reports=p.reports||[];
-  const big = String(p.bag)==='500' || String(p.bag)==='1000';
-  if(!big && input.files.length && !confirm('這個專案的單包重量不是 500 或 1000 公斤(太空包)。\n仍要用大噸袋回報嗎?')){ input.value=''; return; }
+  if(!input.files.length) return;
+  let nums=[], numTxt='';
+  if(needNum(repStage)){
+    const n=bagCount(p);
+    numTxt = prompt(`「${repStage}」請輸入噸袋編號${n?`(本專案共 ${n} 包)`:''}\n單一:3   區間:1-5   多筆:1,3,7`, '');
+    if(numTxt===null){ input.value=''; return; }
+    nums = parseNums(numTxt);
+    if(!nums.length){ setStatus('沒有讀到編號,請輸入數字'); input.value=''; sfx.err(); return; }
+  }
   for(const file of input.files){
     try{ setStatus('照片處理中…'); const data=await shrinkDoc(file);
       const id='rp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
       const stamp=new Date().toLocaleString('zh-TW',{hour12:false});
       await idb.put(id,data).catch(()=>{}); memPhoto[id]=data;
-      const nm=`回報_${(p.owner||p.customer||p.name||'專案')}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
+      const seq=(p.reports.length+1).toString().padStart(3,'0');
+      const nm=`回報${seq}_${(p.owner||p.customer||p.name||'專案')}_${repStage}${nums.length?'_'+nums.join('.'):''}_${stamp.replace(/[\/: ]/g,'')}_${id}`;
       const up=await apiPost('upload',{kind:'photo', name:nm, data});
       driveIds[id]=up.id; localStorage.setItem('fertmap_driveids', JSON.stringify(driveIds));
-      p.reports.push({id, time:stamp, bag:p.bag||'', name:nm});
+      p.reports.push({id, time:stamp, bag:p.bag||'', name:nm, stage:repStage, nums, numTxt, seq});
     }catch(err){ setStatus('回報失敗:'+err.message); sfx.err(); }
   }
   input.value=''; p.updated=Date.now(); persist(); render(); autoSync(); setRepOpen(true);
   sfx.photo(); setStatus('已回報並上傳雲端'); }
 async function openReport(id){ const p=cur(); const r=(p.reports||[]).find(x=>x.id===id); if(!r) return;
   setStatus('照片載入中…'); const v=await getPhoto(id); if(!v){ setStatus('照片還沒下載到'); return; } setStatus('');
-  showViewer({src:v, type:'image', cap:`大噸袋回報 · ${r.time}`, onDel: canEdit()? async ()=>{
+  showViewer({src:v, type:'image', cap:`${r.stage||'回報'}${r.numTxt?' · 編號 '+r.numTxt:''} · ${r.time}`, onDel: canEdit()? async ()=>{
     p.reports=p.reports.filter(x=>x.id!==id); idb.del(id).catch(()=>{}); delete memPhoto[id];
     if(driveIds[id]) apiPost('delfile',{id:driveIds[id]}).catch(()=>{});
     save(); } : null }); }
@@ -1234,8 +1289,9 @@ function renderReports(){ const p=cur(); const list=p.reports||[];
   const icoSpan=document.getElementById('reports').querySelector('.dbar>span:first-child');
   if(icoSpan) icoSpan.innerHTML=ic('camera');
   document.getElementById('repList').innerHTML = list.length
-    ? list.map(r=>`<div class="doc"><span class="ico">${ic('image')}</span><div class="n" onclick="openReport('${r.id}')">大噸袋回報<small>${esc(r.time)}${r.bag?` · ${esc(String(r.bag))} kg 太空包`:''}</small></div><button onclick="openReport('${r.id}')">檢視</button></div>`).join('')
-    : '<div class="hint">尚未回報。太空包到場卸貨時拍一張存證。</div>'; }
+    ? list.slice().reverse().map(r=>`<div class="doc"><span class="ico">${ic('image')}</span><div class="n" onclick="openReport('${r.id}')">${esc(r.stage||'回報')}${r.numTxt?` · 編號 ${esc(r.numTxt)}`:''}<small>${r.seq?`#${esc(r.seq)} · `:''}${esc(r.time)}${r.bag?` · ${esc(String(r.bag))}kg`:''}</small></div><button onclick="openReport('${r.id}')">檢視</button></div>`).join('')
+    : '<div class="hint">尚未回報。選好階段後按「拍照回報」。</div>';
+  renderStages(); }
 function renderDocs(){ const p=cur(); const docs=p.docs||[]; document.getElementById('docCnt').textContent=docs.length;
   document.getElementById('docList').innerHTML = docs.length ? docs.map(d=>`<div class="doc"><span class="ico">${d.type==='pdf'?ic('doc'):ic('image')}</span><div class="n" onclick="openDoc('${d.id}')">${esc(d.name)}<small>${esc(d.time||'')} · ${(d.size/1024/1.37|0)} KB</small></div><button onclick="openDoc('${d.id}')">出示</button></div>`).join('')
     : '<div class="hint">尚未上傳。建議把核准的申報單、肥料登記證等拍照或存 PDF 放這裡。</div>'; }
