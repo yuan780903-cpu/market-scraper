@@ -307,6 +307,8 @@
   .docs.rep .hint .cust{color:var(--amber,#9a6b12);font-weight:600}
   .row2{display:flex;gap:8px;align-items:center;margin-top:8px}
   .row2 .up{margin-top:0;flex:1;justify-content:center}
+  .docs.rep label.up.pick{background:#fff;color:var(--g-700);box-shadow:inset 0 0 0 1px #b9d3c1}
+  .row2.chkrow{justify-content:flex-end;margin-top:6px}
   .chk{border:1px solid #cfe0d4;background:#fff;color:var(--g-700);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;font-weight:600}
   .chkout{margin-top:8px;font-size:12px;background:#fff;border:1px solid #dbe8e0;border-radius:var(--r-sm);padding:8px 10px;line-height:1.7}
   .chkout b{color:var(--g-700)} .chkout .miss{color:var(--red)} .chkout .ok{color:var(--g-600)}
@@ -527,7 +529,10 @@
           <div class="stagebar" id="stageBar"></div>
           <div class="hint" id="stageHint"></div>
           <div class="row2">
-            <label class="up" id="repUp">拍照回報<input type="file" id="repInput" accept="image/*" capture="environment" multiple onchange="addReports(this)"></label>
+            <label class="up" id="repUp">拍照回報<input type="file" id="repInput" accept="image/*" capture="environment" onchange="addReports(this)"></label>
+            <label class="up pick" id="repPick">上傳照片<input type="file" id="repPickInput" accept="image/*" multiple onchange="addReports(this)"></label>
+          </div>
+          <div class="row2 chkrow">
             <button class="chk" id="chkBtn">漏拍檢核</button>
           </div>
           <div id="chkOut"></div>
@@ -1258,7 +1263,8 @@ function renderStages(){ const p=cur(); const bar=document.getElementById('stage
   document.getElementById('stageHint').innerHTML = (needNum(repStage)
     ? `此階段需輸入噸袋編號${n?`(本次共 ${n} 包,可輸入 3 或 1-5)`:'(可輸入 3 或 1-5)'}`
     : '此階段不分編號,整批拍即可') + extra;
-  document.getElementById('repUp').childNodes[0].nodeValue = `拍照回報 · ${repStage}`; }
+  document.getElementById('repUp').childNodes[0].nodeValue = `拍照 · ${repStage}`;
+  document.getElementById('repPick').childNodes[0].nodeValue = `上傳照片 · ${repStage}`; }
 function pickStage(st){ repStage=st; renderStages(); sfx.tap(); }
 function runCheck(){ const p=cur(); const n=bagCount(p); const box=document.getElementById('chkOut');
   if(!n){ box.innerHTML='<div class="chkout">請在上方「應回報包數」直接填數量,或在「資料」填肥料單包重量與各田噸數。</div>'; return; }
