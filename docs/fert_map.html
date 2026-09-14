@@ -288,6 +288,38 @@
   .prow button{border:1px solid var(--line-2);background:#fff;border-radius:var(--r-xs);padding:5px 8px;
     font-size:11.5px;font-weight:600;color:var(--ink-2);display:inline-flex;align-items:center}
   .prow button.del{border-color:#eccecb;background:var(--red-100);color:var(--red)}
+  .prow.zone{border-left:3px solid #e0a800} .prow.zone .pdot{background:#e0a800}
+  .item .acts button.zn{border-color:#ecd9a0;background:#fff7dc;color:#8a6400} .item .acts button.zn .ic{color:#8a6400}
+  #drawBar{position:absolute;left:50%;transform:translateX(-50%);top:58px;z-index:1000;display:none;align-items:center;gap:6px;
+    background:var(--surface);border:1px solid #ecd9a0;border-radius:var(--r-md);box-shadow:var(--sh-2);padding:7px 8px 7px 12px;max-width:calc(100% - 24px)}
+  #drawBar .dt{min-width:0;margin-right:4px}
+  #drawBar b{display:block;font-size:12.5px;color:#8a6400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #drawBar small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #drawBar button{border:1px solid var(--line-2);background:#fff;border-radius:var(--r-sm);padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+  #drawBar button.ok{background:#b8860b;border-color:#b8860b;color:#fff}
+  #drawBar button:disabled{opacity:.45}
+  @media (max-width:600px){ #drawBar{top:52px;flex-wrap:wrap;justify-content:flex-end} #drawBar .dt{flex:1 1 100%;margin:0 0 2px} }
+  .zonetip{background:rgba(255,248,220,.94);border:1px solid #e0a800;color:#6b4e00;font-weight:700;font-size:11px;padding:1px 6px;border-radius:6px;box-shadow:none}
+  .zonetip:before{display:none}
+  #rmDlg{position:fixed;inset:0;z-index:2100;background:rgba(9,26,16,.55);display:none;align-items:center;justify-content:center;padding:18px}
+  #rmDlg .box{background:var(--surface);border-radius:16px;max-width:380px;width:100%;padding:18px 18px 14px;box-shadow:var(--sh-2)}
+  #rmDlg .step{font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px}
+  #rmDlg h4{margin:0 0 6px;font-size:16px;color:var(--red)}
+  #rmDlg .rmname{font-weight:700;color:var(--ink);margin-bottom:10px;line-height:1.45}
+  #rmDlg ul{margin:0 0 10px;padding-left:18px;color:var(--ink-2);font-size:13px;line-height:1.7}
+  #rmDlg .warn{background:var(--red-100);color:var(--red);border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;line-height:1.5}
+  #rmDlg input{width:100%;box-sizing:border-box;margin-top:4px;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:17px;letter-spacing:.06em;font-family:inherit}
+  #rmDlg input:focus{outline:0;border-color:var(--red);box-shadow:0 0 0 3px rgba(190,40,40,.14)}
+  #rmDlg .btns{display:flex;gap:8px;margin-top:14px}
+  #rmDlg .btns button{flex:1;padding:11px;border-radius:var(--r-sm);font-size:14px;font-weight:700;border:1px solid var(--line-2);background:#fff;color:var(--ink-2);font-family:inherit}
+  #rmDlg .btns .safe{background:var(--g-700);border-color:var(--g-700);color:#fff}
+  #rmDlg .btns .danger{border-color:var(--red);color:var(--red)}
+  #rmDlg .btns .danger.go{background:var(--red);color:#fff}
+  #rmDlg .btns button:disabled{opacity:.4}
+  #undoToast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2200;display:none;align-items:center;gap:12px;
+    background:#1d2b22;color:#fff;border-radius:999px;padding:9px 10px 9px 16px;font-size:13px;box-shadow:var(--sh-2);max-width:calc(100% - 24px)}
+  #undoToast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #undoToast button{border:0;background:#f5c242;color:#1d2b22;font-weight:800;border-radius:999px;padding:6px 14px;font-family:inherit}
   .item .acts button.loc{border-color:#cfe0d4;background:var(--g-50);color:var(--g-700)}
   .item .acts button.loc .ic{color:var(--g-700)}
   .pinline{font-size:11.5px;color:var(--muted);margin-top:8px;letter-spacing:.01em}
@@ -848,6 +880,100 @@ const fmtArea = m2 => m2==null ? '面積查詢中' : `${(m2/10000).toFixed(2)} �
 const POPT={maxWidth:250, minWidth:180, autoPanPaddingTopLeft:[12,74], autoPanPaddingBottomRight:[12,26], keepInView:true};
 const PIN={mark:{n:'噴漆記號',c:'mark',t:'噴'}, drop:{n:'肥料擺放',c:'drop',t:'肥'}};
 let placing=null;
+// ---- 撒播區域(田內局部範圍)----
+let drawing=null, drawLayer=null;
+function zoneArea(pts){ if(!pts||pts.length<3) return 0; const R=6378137, rad=Math.PI/180; let t=0;
+  for(let i=0;i<pts.length;i++){ const [a1,o1]=pts[i], [a2,o2]=pts[(i+1)%pts.length]; t+=(o2-o1)*rad*(2+Math.sin(a1*rad)+Math.sin(a2*rad)); }
+  return Math.abs(t*R*R/2); }
+function drawBarEl(){ let d=document.getElementById('drawBar'); if(d) return d;
+  d=document.createElement('div'); d.id='drawBar';
+  d.innerHTML=`<div class="dt"><b id="dbTitle">劃撒播區域</b><small id="dbInfo">在地圖上依序點出區域的角落</small></div>
+    <button id="dbUndo">復原一點</button><button id="dbCancel">取消</button><button id="dbDone" class="ok">完成</button>`;
+  map.getContainer().appendChild(d); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+  d.querySelector('#dbUndo').onclick=()=>{ if(drawing&&drawing.pts.length){ drawing.pts.pop(); zonePreview(); sfx.tap(); } };
+  d.querySelector('#dbCancel').onclick=()=>zoneEnd(false);
+  d.querySelector('#dbDone').onclick=()=>zoneEnd(true);
+  return d; }
+function startZone(key,id){ if(isField()) return; const f=cur().fields[key]; if(!f) return;
+  placing=null; const z = id ? (f.zones||[]).find(x=>x.id===id) : null;
+  drawing={key, id:z?z.id:null, pts:[]};
+  map.closePopup(); map.doubleClickZoom.disable();
+  map.fitBounds(z ? L.latLngBounds(z.pts) : L.latLngBounds(f.bbox), {maxZoom:19, padding:[50,50]});
+  if(window.innerWidth<900 && typeof panelH==='function' && panelH()>panelMax()*0.6) panelSetH(Math.round(window.innerHeight*0.42),true);
+  const d=drawBarEl(); d.style.display='flex';
+  document.getElementById('dbTitle').textContent=(z?`重畫「${z.name}」`:'劃撒播區域')+` · ${f.no} 地號`;
+  zonePreview(); sfx.tap(); setStatus('在地圖上依序點出要撒的區域角落,至少 3 點後按「完成」'); }
+function zonePreview(){ if(drawLayer){ drawLayer.remove(); drawLayer=null; } if(!drawing) return;
+  const pts=drawing.pts;
+  const items=pts.map((q,i)=>L.circleMarker(q,{radius:i===0?7:5,color:'#fff',weight:2,fillColor:'#e0a800',fillOpacity:1,interactive:false}));
+  if(pts.length>=2) items.unshift(pts.length>=3
+    ? L.polygon(pts,{color:'#e0a800',weight:2.5,dashArray:'6 5',fillColor:'#ffd21f',fillOpacity:.25,interactive:false})
+    : L.polyline(pts,{color:'#e0a800',weight:2.5,dashArray:'6 5',interactive:false}));
+  drawLayer=L.layerGroup(items).addTo(map);
+  const a=zoneArea(pts), f=cur().fields[drawing.key];
+  document.getElementById('dbInfo').textContent = pts.length<3 ? `已點 ${pts.length} 點,至少要 3 點`
+    : `已點 ${pts.length} 點 · 約 ${fmtArea(a)}${f&&f.area?` · 佔本田 ${Math.round(a/f.area*100)}%`:''}`;
+  document.getElementById('dbDone').disabled = pts.length<3; }
+function zoneAddPt(ll){ drawing.pts.push([+ll.lat.toFixed(7), +ll.lng.toFixed(7)]); zonePreview(); sfx.pin(); }
+function zoneEnd(commit){ const d=document.getElementById('drawBar'); if(d) d.style.display='none'; map.doubleClickZoom.enable();
+  const dr=drawing; drawing=null; zonePreview();
+  if(!commit||!dr){ setStatus('已取消劃區域'); return; }
+  if(dr.pts.length<3){ setStatus('至少要點 3 點才能成為區域'); return; }
+  const f=cur().fields[dr.key]; if(!f) return; f.zones=f.zones||[];
+  const time=new Date().toLocaleString('zh-TW',{hour12:false});
+  if(dr.id){ const z=f.zones.find(x=>x.id===dr.id); if(z){ z.pts=dr.pts; z.time=time; } }
+  else f.zones.push({id:'zn'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'區域 '+(f.zones.length+1), pts:dr.pts, time});
+  save(); sfx.ok(); setStatus(`已儲存撒播區域,約 ${fmtArea(zoneArea(dr.pts))}`); }
+function zonePopup(f,z){ const a=zoneArea(z.pts);
+  return `<div class="pop"><b>${esc(z.name)}</b><br><small>${esc(fullName(f))}<br>約 ${fmtArea(a)}${f.area?` · 佔本田 ${Math.round(a/f.area*100)}%`:''}</small>
+    <div class="btnrow"><button class="btn admin-only" onclick="startZone('${f.key}','${z.id}')">${ic('edit')}重畫</button>
+    <button class="btn del admin-only" onclick="delZone('${f.key}','${z.id}')">${ic('trash')}刪除</button></div></div>`; }
+function flyZone(key,id){ const f=cur().fields[key]; const z=f&&(f.zones||[]).find(x=>x.id===id); if(!z) return;
+  map.fitBounds(L.latLngBounds(z.pts),{maxZoom:19,padding:[40,40]});
+  L.popup(POPT).setLatLng(L.latLngBounds(z.pts).getCenter()).setContent(zonePopup(f,z)).openOn(map); sfx.tap();
+  if(window.innerWidth<900 && typeof panelH==='function' && panelH()>panelMax()*0.6) panelSetH(Math.round(window.innerHeight*0.42),true); }
+function renameZone(key,id){ const f=cur().fields[key]; const z=f&&(f.zones||[]).find(x=>x.id===id); if(!z) return;
+  const v=prompt('區域名稱(例:東半邊、靠水溝那側):', z.name); if(v===null) return; const t=v.trim(); if(!t) return;
+  z.name=t; save(); sfx.ok(); }
+function delZone(key,id){ const f=cur().fields[key]; const z=f&&(f.zones||[]).find(x=>x.id===id); if(!z) return;
+  if(!confirm(`刪除撒播區域「${z.name}」?`)) return; f.zones=f.zones.filter(x=>x.id!==id); map.closePopup(); save(); sfx.remove(); }
+// ---- 移除田地:兩段確認 + 復原 ----
+function askRemove(key){ if(isField()) return; const f=cur().fields[key]; if(!f) return; map.closePopup();
+  let d=document.getElementById('rmDlg');
+  if(!d){ d=document.createElement('div'); d.id='rmDlg'; document.body.appendChild(d);
+    d.addEventListener('click',e=>{ if(e.target===d){ d.style.display='none'; } }); }
+  const loss=[ (f.t!=null&&f.t!=='')?`施作噸數 ${fmtT(+f.t)} 噸`:'', (f.photos||[]).length?`現場照片 ${f.photos.length} 張`:'',
+    (f.pins||[]).length?`噴漆/肥料標記 ${f.pins.length} 個`:'', (f.notes||[]).length?`備註 ${f.notes.length} 則`:'',
+    (f.zones||[]).length?`撒播區域 ${f.zones.length} 處`:'' ].filter(Boolean);
+  const no=String(f.no||'').trim();
+  const step1=()=>{ d.innerHTML=`<div class="box"><div class="step">步驟 1 / 2</div><h4>要從專案移除這塊田嗎?</h4>
+      <div class="rmname">${esc(fullName(f))}</div>
+      <ul>${loss.length? loss.map(x=>`<li>${esc(x)}</li>`).join('') : '<li>目前沒有噸數、照片或標記</li>'}</ul>
+      <div class="warn">移除後,上面這些資料會一起刪除。</div>
+      <div class="btns"><button class="safe" data-a="keep">保留,不移除</button><button class="danger" data-a="next">下一步</button></div></div>`;
+    d.querySelector('[data-a=keep]').onclick=()=>{ d.style.display='none'; sfx.tap(); };
+    d.querySelector('[data-a=next]').onclick=()=>{ sfx.warn(); step2(); }; };
+  const step2=()=>{ d.innerHTML=`<div class="box"><div class="step">步驟 2 / 2</div><h4>最後確認</h4>
+      <div class="rmname">請輸入這塊田的地號 <b style="color:var(--red)">${esc(no)}</b> 才能移除</div>
+      <input id="rmNo" inputmode="text" autocomplete="off" placeholder="輸入地號">
+      <div class="btns"><button data-a="back">返回</button><button class="danger go" data-a="go" disabled>確定移除</button></div></div>`;
+    const inp=d.querySelector('#rmNo'), go=d.querySelector('[data-a=go]');
+    inp.addEventListener('input',()=>{ go.disabled = inp.value.trim()!==no; });
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter' && !go.disabled) go.click(); });
+    d.querySelector('[data-a=back]').onclick=()=>{ sfx.tap(); step1(); };
+    go.onclick=()=>{ if(inp.value.trim()!==no) return; d.style.display='none'; doRemove(key); };
+    setTimeout(()=>{ try{ inp.focus(); }catch{} },60); };
+  step1(); d.style.display='flex'; sfx.warn(); }
+let undoTimer=null;
+function doRemove(key){ const p=cur(), f=p.fields[key]; if(!f) return;
+  const backup=JSON.parse(JSON.stringify(f)), pid=p.id, name=fullName(f);
+  unselect(key); setStatus('已移除 '+name);
+  let t=document.getElementById('undoToast'); if(!t){ t=document.createElement('div'); t.id='undoToast'; document.body.appendChild(t); }
+  t.innerHTML=`<span>已移除 ${esc(name)}</span><button>復原</button>`; t.style.display='flex';
+  clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ t.style.display='none'; },15000);
+  t.querySelector('button').onclick=()=>{ clearTimeout(undoTimer); t.style.display='none';
+    const proj=DB.projects.find(x=>x.id===pid); if(!proj) return;
+    proj.fields[backup.key]=backup; DB.curId=pid; save(); sfx.ok(); setStatus('已復原 '+name); }; }
 function startPin(key,type,id){ if(isField()) return; const L=PIN[type];
   placing={key,type,id}; sfx.tap();
   const f=cur().fields[key]; if(f && !id && f.bbox) map.fitBounds(f.bbox,{maxZoom:19, padding:[40,40]});
@@ -892,6 +1018,7 @@ function nearestSelected(lat,lng){ const fs=Object.values(cur().fields); if(!fs.
 const NEAR_M=250; // 超過這個距離視為不相鄰,加入前先確認
 let previewLayer=null, lastParcel=null;
 map.on('click', async e=>{
+  if(drawing){ zoneAddPt(e.latlng); return; }
   if(placing){ const {key,type,id}=placing; placing=null;
     id ? movePinTo(key,id,e.latlng.lat,e.latlng.lng) : addPin(key,type,e.latlng.lat,e.latlng.lng); return; }
   if(isField()) return;
@@ -900,11 +1027,10 @@ map.on('click', async e=>{
   setStatus('查詢地號中…'); if(previewLayer){ previewLayer.remove(); previewLayer=null; }
   try{
     const p = await queryParcel(lat, lng); lastParcel=p;
-    // 已在專案內 → 再點一次即取消
-    if(cur().fields[p.key]){ const old=cur().fields[p.key];
-      const rich=(old.photos||[]).length||(old.pins||[]).length||old.t!=null;
-      if(rich && !confirm(`取消選取「${fullName(p)}」?\n這塊田已有噸數/照片/標記,取消會一併刪除。`)){ setStatus('已保留 '+fullName(p)); return; }
-      unselect(p.key); setStatus('已取消選取 '+fullName(p)); return; }
+    // 已在專案內 → 只打開資訊,不會直接移除(移除要走兩段確認)
+    if(cur().fields[p.key]){ const old=cur().fields[p.key]; lastParcel=old;
+      L.popup(POPT).setLatLng(old.center).setContent(popupHTML(old,true)).openOn(map);
+      setStatus('這塊田已在專案內。要移除請按「從專案移除」'); sfx.tap(); return; }
     const inside = inBox(p.bbox, lat, lng); // 以整塊地籍框範圍為準
     const near = nearestSelected(lat, lng);
     if(!inside){ // 國土回的是最接近的地號,可能不是點到的那塊 → 先給你看清楚再決定
@@ -935,7 +1061,7 @@ const mapUrl = (lat,lng) => `https://www.google.com/maps/search/?api=1&query=${l
 function street(key){ const f=cur().fields[key]; if(f) window.open(svUrl(f.center[0],f.center[1]),'_blank'); }
 function popupHTML(p, sel){
   return `<div class="pop"><b>${esc(fullName(p))}</b><br><small>${esc(p.officeName)}地政事務所 · ${p.area?fmtArea(p.area):'面積不明'}</small>
-    ${sel ? `<button class="btn del" onclick="unselect('${p.key}')">${ic('x')}從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">${ic('check')}加入此專案</button>`}
+    ${sel ? `<button class="btn del" onclick="askRemove('${p.key}')">${ic('x')}從專案移除</button>` : `<button class="btn" onclick="selectCurrent()">${ic('check')}加入此專案</button>`}
     ${(p.notes||[]).length?`<div class="note">${p.notes.map(n=>ic('note')+esc(n.text)).join('<br>')}</div>`:''}
     <div class="btnrow"><button class="btn nav" onclick="window.open('${navUrl(p)}','_blank')">${ic('nav')}導航</button>
     <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(p.center[0],p.center[1])}','_blank')">${ic('eye')}街景</button></div></div>`;
@@ -1074,7 +1200,7 @@ function migrate(d){ // 補齊欄位;舊版公斤 → 噸只做一次(以 unit �
   const fill=x=>{ if(x && !x.did && loc[x.id]) x.did=loc[x.id]; };
   d.projects.forEach(p=>{ if(!p.docs) p.docs=[]; if(!p.reports) p.reports=[]; p.docs.forEach(fill); p.reports.forEach(fill); Object.values(p.fields||{}).forEach(f=>(f.photos||[]).forEach(fill)); if(p.dateFrom===undefined){ p.dateFrom=p.date||''; p.dateTo=''; } ['pname','productCustom','bag','region','title','customerTel','owner','ownerTel','assoc','assocPic','assocTel','form','pnameOther','repName','repCount'].forEach(k=>{ if(p[k]===undefined) p[k]=''; });
     if(conv && p.weight!==''&&p.weight!=null&&!isNaN(+p.weight)) p.weight=String(+p.weight/1000);
-    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(f.area===undefined) f.area=null; });
+    Object.values(p.fields||{}).forEach(f=>{ if(f.kg!=null&&f.t==null) f.t=+f.kg/1000; delete f.kg; if(!f.photos) f.photos=[]; if(!f.pins) f.pins=[]; if(!f.notes) f.notes=[]; if(!f.zones) f.zones=[]; if(f.area===undefined) f.area=null; });
     if(p.product && !FERT_CODES.some(([c,n])=>p.product===c+' '+n) && p.product!=='__custom'){ p.productCustom=p.product; p.product='__custom'; } });
   d.unit='t'; }
 function newProject(name){ return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, customer:'', customerTel:'', form:'', pnameOther:'', owner:'', ownerTel:'', assoc:'', assocPic:'', assocTel:'', region:'', title:'', brand:'', pname:'', product:'', productCustom:'', bag:'', weight:'', dateFrom:new Date().toISOString().slice(0,10), dateTo:'', note:'', repName:'', repCount:'', fields:{}, docs:[], reports:[], updated:Date.now()}; }
@@ -1176,13 +1302,16 @@ window.addEventListener('resize', ()=>{ if(window.innerWidth>=900){ panelEl.styl
 // ---- 畫面 ----
 const layers={}, areaTried=new Set();
 const markerHTML = f => `<div class="fieldmk">${f.no}${f.t?` · ${fmtT(f.t)}噸`:''}${(f.photos||[]).length?` · ${(f.photos||[]).length}照`:''}</div>`;
-const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${(f.notes||[]).length}|${hereKey===f.key}`;
+const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${(f.notes||[]).length}|${hereKey===f.key}|${JSON.stringify((f.zones||[]).map(z=>[z.name,z.time,z.pts.length]))}`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
   const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
     .on('click',ev=>{ L.DomEvent.stop(ev); L.popup(POPT).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); }));
-  const g=L.layerGroup([...pins, shape, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
-  g.on('click',()=>{ lastParcel=f; L.popup(POPT).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); g._sig=layerSig(f); layers[f.key]=g.addTo(map); }
+  const zones=(f.zones||[]).map(z=>L.polygon(z.pts,{color:'#e0a800',weight:2.5,fillColor:'#ffd21f',fillOpacity:.38})
+    .bindTooltip(esc(z.name),{permanent:true,direction:'center',className:'zonetip'})
+    .on('click',ev=>{ if(drawing||placing) return; L.DomEvent.stop(ev); L.popup(POPT).setLatLng(ev.latlng).setContent(zonePopup(f,z)).openOn(map); }));
+  const g=L.layerGroup([shape, ...zones, ...pins, L.marker(f.center,{icon:L.divIcon({className:'',html:markerHTML(f),iconAnchor:[0,10]})})]);
+  g.on('click',()=>{ if(drawing||placing) return; lastParcel=f; L.popup(POPT).setLatLng(f.center).setContent(popupHTML(f,true)).openOn(map); }); g._sig=layerSig(f); layers[f.key]=g.addTo(map); }
 function render(){
   const p=cur(); applyRole();
   const sel=document.getElementById('projSel');
@@ -1198,7 +1327,7 @@ function render(){
   document.getElementById('list').innerHTML = (arr.length ? arr.map(f=>`<div class="item" id="it_${f.key}">
       <div class="row"><div class="t" onclick="flyTo('${f.key}')"><b>${esc(fullName(f))}</b><small>${f.area?fmtArea(f.area):'面積查詢中…'} · ${esc(f.officeName)}地政 · 點此在地圖顯示</small></div>
         <input class="ton" type="number" inputmode="decimal" step="0.01" placeholder="噸" value="${f.t??''}" onchange="setT('${f.key}',this.value)"><span class="unit">噸${+p.bag>0&&f.t?`<br>≈${Math.round(f.t*1000/+p.bag)}包`:''}</span>
-        <button class="del admin-only" onclick="unselect('${f.key}')">移除</button></div>
+        <button class="del admin-only" onclick="askRemove('${f.key}')">移除</button></div>
       <div class="acts"><button class="loc" onclick="focusField('${f.key}')">${ic('markpin')}地圖定位</button>
         <button onclick="nav('${f.key}')">${ic('nav')}Google 導航</button>
         <button class="sv" onclick="street('${f.key}')">${ic('eye')}街景</button>
@@ -1206,6 +1335,7 @@ function render(){
         <label class="admin-only pick">${ic('image')}上傳照片<input type="file" accept="image/*" multiple onchange="addPhotos('${f.key}',this)"></label>
         <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">${ic('markpin')}噴漆記號</button>
         <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">${ic('drop')}肥料擺放</button>
+        <button class="zn admin-only" onclick="startZone('${f.key}')">${ic('ruler')}劃撒播區域</button>
         <button class="nt admin-only" onclick="addNote('${f.key}')">${ic('note')}加備註</button>
         <span class="unit">${(f.photos||[]).length} 張照片</span></div>
       ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">${ic('note')}${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">${ic('x')}</button></div>`).join('')}</div>`:''}
@@ -1215,6 +1345,13 @@ function render(){
         <button onclick="flyPin('${f.key}','${pin.id}')">${ic('markpin')}定位</button>
         <button class="admin-only" onclick="startPin('${f.key}','${pin.type}','${pin.id}')">${ic('edit')}移動</button>
         <button class="del admin-only" onclick="delPin('${f.key}','${pin.id}')">${ic('trash')}</button></div>`).join('')}</div>`:''}
+      ${(f.zones||[]).length?`<div class="pins zones">${f.zones.map(z=>{ const za=zoneArea(z.pts); return `<div class="prow zone">
+        <span class="pdot">區</span>
+        <div class="pt" onclick="flyZone('${f.key}','${z.id}')">${esc(z.name)}<small>約 ${fmtArea(za)}${f.area?` · 佔本田 ${Math.round(za/f.area*100)}%`:''} · ${z.pts.length} 點 · ${esc(z.time||'')}</small></div>
+        <button onclick="flyZone('${f.key}','${z.id}')">${ic('markpin')}定位</button>
+        <button class="admin-only" onclick="renameZone('${f.key}','${z.id}')">${ic('note')}改名</button>
+        <button class="admin-only" onclick="startZone('${f.key}','${z.id}')">${ic('edit')}重畫</button>
+        <button class="del admin-only" onclick="delZone('${f.key}','${z.id}')">${ic('trash')}</button></div>`; }).join('')}</div>`:''}
       <div class="thumbs" id="th_${f.key}">${(f.photos||[]).map(ph=>`<img data-id="${ph.id}" alt="" onclick="openPhoto('${f.key}','${ph.id}')" title="${esc(ph.time||'')}">`).join('')}</div>
     </div>`).join('')
     : (isField() ? '<div class="empty">請按上方「資料」→「匯入現場檔案」載入負責人給你的檔案</div>' : '<div class="empty">放大地圖後點田地 → 顯示地號 → 按「加入」;每塊田可填噸數、拍現場照片(噴漆記號、地形),施工人員可導航並看照片核對</div>'));
@@ -1735,6 +1872,8 @@ function buildReport(){ const p=cur(); const fs=Object.values(p.fields); const a
     ['肥料品目',productLabel(p)||'—'],['肥料單包重量',bag?bag+' kg':'—'],
     ['總施作噸數',fmtT(T)+' 噸'+(bag?`(約 ${bags(T)} 包)`:'')],
     ['施作田區',`${fs.length} 筆土地,合計 ${(area/10000).toFixed(4)} 公頃(${(area/FEN).toFixed(2)} 分)`],
+    ...(()=>{ const zs=fs.flatMap(f=>(f.zones||[]).map(z=>({no:f.no, a:zoneArea(z.pts), n:z.name})));
+      return zs.length ? [['指定撒播區域',`${zs.length} 處(${[...new Set(zs.map(x=>x.no))].length} 筆土地),合計約 ${(zs.reduce((t,x)=>t+x.a,0)/FEN).toFixed(2)} 分:`+zs.map(x=>`${x.no} 地號 ${x.n}`).join('、')]] : []; })(),
     ['大噸袋回報照片',(p.reports||[]).length? `${p.reports.length} 張 / 應回報 ${bagCount(p)||'—'} 包`:'—'],
     ['回報對象',repName(p)],
     ['備註',p.note||'—']];
