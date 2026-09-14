@@ -255,6 +255,7 @@
   .item .acts label{border-color:#cfe0d4;background:var(--g-50);color:var(--g-700)}
   .item .acts label .ic{color:var(--g-700)}
   .item .acts label input{display:none}
+  .item .acts label.pick{border-color:#cfe0d4;background:#fff;color:var(--g-700)}
   .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
   .thumbs img{width:78px;height:78px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line);
     background:var(--surface-2);cursor:zoom-in;box-shadow:var(--sh-1);transition:transform .14s var(--ease)}
@@ -1154,7 +1155,8 @@ function render(){
       <div class="acts"><button class="loc" onclick="focusField('${f.key}')">${ic('markpin')}地圖定位</button>
         <button onclick="nav('${f.key}')">${ic('nav')}Google 導航</button>
         <button class="sv" onclick="street('${f.key}')">${ic('eye')}街景</button>
-        <label class="admin-only">${ic('camera')}拍照/上傳<input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos('${f.key}',this)"></label>
+        <label class="admin-only">${ic('camera')}拍照<input type="file" accept="image/*" capture="environment" onchange="addPhotos('${f.key}',this)"></label>
+        <label class="admin-only pick">${ic('image')}上傳照片<input type="file" accept="image/*" multiple onchange="addPhotos('${f.key}',this)"></label>
         <button class="pin1 admin-only" onclick="startPin('${f.key}','mark')">${ic('markpin')}噴漆記號</button>
         <button class="pin2 admin-only" onclick="startPin('${f.key}','drop')">${ic('drop')}肥料擺放</button>
         <button class="nt admin-only" onclick="addNote('${f.key}')">${ic('note')}加備註</button>
