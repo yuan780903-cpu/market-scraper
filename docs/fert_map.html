@@ -219,6 +219,15 @@
   .form input:focus,.form select:focus{outline:0;border-color:var(--g-600);box-shadow:0 0 0 3px rgba(46,128,85,.16)}
   .form input:disabled,.form select:disabled{background:var(--surface-2);color:var(--muted)}
   .form .full{grid-column:1/-1}
+  .form[hidden]{display:none}
+  .infobar{display:flex;align-items:center;gap:10px;margin:10px 0 2px;padding:10px 13px;border:1px solid var(--line);
+    border-radius:var(--r-md);background:var(--surface);cursor:pointer;user-select:none;box-shadow:var(--sh-1)}
+  .infobar b{font-size:13.5px;color:var(--g-700);font-weight:700;letter-spacing:.02em;flex:none}
+  .infobar .sum{flex:1;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .infobar .arr{flex:none;color:var(--g-700);font-size:12px}
+  .infobar:active{transform:translateY(1px)}
+  .infobar.open{border-bottom-left-radius:var(--r-sm);border-bottom-right-radius:var(--r-sm)}
+  @media (max-width:600px){ .seg button{padding:8px 8px;font-size:12px} }
   .form .ro{background:var(--g-50);font-weight:700;color:var(--brand-ink);border-color:#cfe0d4}
 
   /* ============ 田區卡片 ============ */
@@ -561,6 +570,9 @@
           <div class="hint">被抽查時打開這裡即可出示;文件會隨同步碼上雲端,另一台裝置也看得到。</div>
         </div>
       </div>
+        <div class="infobar" id="infoBar" role="button" tabindex="0" aria-controls="form">
+          <b>基本資料</b><span class="sum" id="infoSum"></span><span class="arr" id="infoArrow">▾</span>
+        </div>
         <div class="form" id="form">
           <div><label>地區</label><select id="f_region"><option value="">— 加入田後自動帶入,或手選 —</option></select></div>
           <div><label>業務名稱</label><input id="f_customer" placeholder="例:莊政遠"></div>
@@ -699,6 +711,7 @@ const NLSC = (layer, opt={}) => L.tileLayer(`https://wmts.nlsc.gov.tw/wmts/${lay
   Object.assign({maxZoom:21, maxNativeZoom:19, attribution:'© 國土測繪中心'}, opt));
 const gSat  = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
 const gRoad = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});
+const gHyb  = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&hl=zh-TW&gl=TW&x={x}&y={y}&z={z}',{subdomains:'0123',maxZoom:21,maxNativeZoom:20,attribution:'© Google'});   // 衛星+路名+地標
 const photo = NLSC('PHOTO2'), emap = NLSC('EMAP');
 const cadastre = L.tileLayer(`${PROXY}/landmaps.nlsc.gov.tw/S_Maps/wmts/DMAPS/default/EPSG:3857/{z}/{y}/{x}`,
   {minZoom:15, maxZoom:21, maxNativeZoom:20, opacity:.9, attribution:'地籍圖僅供參考'});
@@ -707,13 +720,15 @@ const map = L.map('map',{zoomControl:false, attributionControl:false, layers:[gS
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({imperial:false, position:'bottomleft'}).addTo(map);
 L.control.attribution({prefix:false, position:'bottomright'}).addTo(map);
-const BASES={'Google 衛星':gSat,'國土正射':photo,'電子地圖':emap};
+const BASES={'Google 衛星':gSat,'Google 地標':gHyb,'國土正射':photo,'電子地圖':emap};
 const Seg=L.Control.extend({ onAdd(){ const d=L.DomUtil.create('div','seg'); L.DomEvent.disableClickPropagation(d);
-  Object.entries(BASES).forEach(([n,l])=>{ const b=L.DomUtil.create('button','',d); b.textContent=n; b.dataset.n=n; b.onclick=()=>{ Object.values(BASES).forEach(x=>map.removeLayer(x)); map.removeLayer(gRoad); l.addTo(map); l.bringToBack(); segSync(); }; }); return d; } });
+  Object.entries(BASES).forEach(([n,l])=>{ const b=L.DomUtil.create('button','',d); b.textContent=n; b.dataset.n=n; b.onclick=()=>{ Object.values(BASES).forEach(x=>map.removeLayer(x)); map.removeLayer(gRoad); l.addTo(map); l.bringToBack(); segSync(); try{ localStorage.setItem('fertmap_base', n); }catch{} }; }); return d; } });
 new Seg({position:'topleft'}).addTo(map);
 function segSync(){ document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on', map.hasLayer(BASES[b.dataset.n]))); }
 map.on('baselayerchange', segSync); setTimeout(segSync,0);
-L.control.layers({'Google 衛星':gSat,'Google 街道':gRoad,'正射影像(國土測繪)':photo,'電子地圖(國土測繪)':emap},
+(function restoreBase(){ let n=null; try{ n=localStorage.getItem('fertmap_base'); }catch{}
+  if(n && BASES[n] && BASES[n]!==gSat){ map.removeLayer(gSat); BASES[n].addTo(map); BASES[n].bringToBack(); setTimeout(segSync,0); } })();
+L.control.layers({'Google 衛星':gSat,'Google 衛星+地標':gHyb,'Google 街道':gRoad,'正射影像(國土測繪)':photo,'電子地圖(國土測繪)':emap},
   {'地籍圖(地號界線)':cadastre,'段籍圖':section},{position:'topright',collapsed:true}).addTo(map);
 
 // ================= 我的位置 =================
@@ -1109,9 +1124,9 @@ document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persis
 document.getElementById('newProj').onclick=()=>{ const n=prompt('業務名稱(承辦這案的業務)?'); if(n===null) return;
   const r=prompt('地區(可留空,加入第一塊田時自動帶入):','')||'';
   const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; p.region=r.trim();
-  DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); };
+  DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); setInfoOpen(true); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${projLabel(p)}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
-function setFormOpen(open){ document.getElementById('overview').hidden=!open; document.getElementById('form').hidden=false;
+function setFormOpen(open){ document.getElementById('overview').hidden=!open;
   const b=document.getElementById('toggleForm'); b.textContent = open ? '資料 ▾' : '只看田區 ▸';
   localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
 document.getElementById('toggleForm').onclick=()=>{ setFormOpen(document.getElementById('overview').hidden); if(!document.getElementById('overview').hidden) document.getElementById('body').scrollTop=0; };
@@ -1119,6 +1134,19 @@ document.getElementById('renameBtn').onclick=()=>{ const p=cur();
   const v=prompt('自訂專案名稱(留空=自動用「地區 客戶 總噸數」):', p.title||projLabel(p)); if(v===null) return;
   p.title=v.trim(); save(); };
 setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
+function setInfoOpen(open){ document.getElementById('form').hidden=!open;
+  document.getElementById('infoBar').classList.toggle('open', open);
+  document.getElementById('infoArrow').textContent = open ? '收起 ▾' : '展開 ▸';
+  try{ localStorage.setItem('fertmap_infoOpen', open?'1':'0'); }catch{} renderInfoSum(); }
+function renderInfoSum(){ const el=document.getElementById('infoSum'); if(!el) return; const p=cur(); if(!p){ el.textContent=''; return; }
+  if(!document.getElementById('form').hidden){ el.textContent=''; return; }
+  const pn = p.pname==='__other' ? p.pnameOther : p.pname;
+  const dt = p.dateFrom ? (p.dateFrom.slice(5).replace('-','/') + (p.dateTo ? '~'+p.dateTo.slice(5).replace('-','/') : '')) : '';
+  const parts=[p.region, p.owner, pn, p.form, p.bag?p.bag+'kg':'', dt].filter(Boolean);
+  el.textContent = parts.length ? parts.join(' · ') : '尚未填寫'; }
+document.getElementById('infoBar').addEventListener('click', ()=>{ setInfoOpen(document.getElementById('form').hidden); sfx.tap(); });
+document.getElementById('infoBar').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); document.getElementById('infoBar').click(); } });
+setInfoOpen(localStorage.getItem('fertmap_infoOpen')!=='0');
 // ---- 面板高度:可拖曳、可點擊切換 ----
 const panelEl=document.getElementById('panel');
 const panelMax=()=> window.innerHeight-130, panelMin=()=>150;
@@ -1160,7 +1188,7 @@ function render(){
   const sel=document.getElementById('projSel');
   sel.innerHTML=DB.projects.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(projLabel(x))}(${Object.keys(x.fields).length}田)</option>`).join('');
   Object.entries(F).forEach(([k,id])=>document.getElementById(id).value=p[k]||''); syncCustom();
-  refreshTotals();
+  refreshTotals(); if(typeof renderInfoSum==='function') renderInfoSum();
   const uniq=k=>[...new Set(DB.projects.map(x=>x[k]).filter(Boolean))];
   document.getElementById('dl_brand').innerHTML=uniq('brand').map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('dl_assoc').innerHTML=uniq('assoc').map(v=>`<option value="${esc(v)}">`).join('');
