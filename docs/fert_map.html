@@ -181,6 +181,19 @@
   .bar button:hover{background:var(--surface-2);border-color:var(--line-2)}
   .bar button:active{transform:translateY(1px)}
   .bar button#delProj{color:var(--red);border-color:#eccecb}
+  .bar button#infoBtn{background:var(--g-50);border-color:#cfe0d4;color:var(--g-700);font-weight:700}
+  .bar button#infoBtn .ic{color:var(--g-700)}
+  #infoDlg{position:fixed;inset:0;z-index:2000;background:rgba(9,26,16,.55);display:none;align-items:flex-end;justify-content:center}
+  #infoDlg .sheet{background:var(--surface);width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;
+    border-radius:18px 18px 0 0;box-shadow:var(--sh-2);overflow:hidden}
+  #infoDlg .sh{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+  #infoDlg .tt{flex:1;min-width:0}
+  #infoDlg .tt b{display:block;font-size:16px;color:var(--g-700)}
+  #infoDlg .tt small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  #infoDlg #infoDone{border:0;background:var(--g-700);color:#fff;border-radius:var(--r-sm);padding:9px 18px;font-size:14px;font-weight:700;font-family:inherit}
+  #infoDlg .sb{overflow-y:auto;padding:4px 16px calc(16px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  #infoDlg .form{border-bottom:0;margin-bottom:0}
+  @media (min-width:900px){ #infoDlg{align-items:center} #infoDlg .sheet{border-radius:18px} }
   .lockchip{display:inline-block;background:var(--amber-100);border:1px solid #ecd9b8;color:#7d5410;
     border-radius:var(--r-xs);padding:1px 7px;font-size:11px;font-weight:600;margin-left:7px;vertical-align:2px}
   .badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:999px;
@@ -541,6 +554,7 @@
   }
   @media (max-width:540px){
     #panel .bar b{flex:1 1 100%;margin-bottom:1px}
+    .bar button{padding:6px 8px}
   }
   @media (max-width:480px){
     .modechip{padding:8px 9px}
@@ -564,7 +578,7 @@
     <div id="mapWrap"><div id="map"></div><div id="sres"></div><div id="here"></div><div id="status">載入中…</div></div>
     <div id="panel">
       <div class="grab" id="grab"><span></span></div>
-      <div class="bar"><b id="projTitle">專案</b><button id="renameBtn" class="admin-only" title="自訂專案名稱"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20h4L20 8l-4-4L4 16z'/></svg></button><button id="toggleForm">資料 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>報表</button><button id="delProj" class="admin-only">刪除</button></div>
+      <div class="bar"><b id="projTitle">專案</b><button id="infoBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20h4L20 8l-4-4L4 16z'/></svg>基本資料</button><button id="toggleForm">總覽 ▾</button><button id="bigBtn">清單 ⤢</button><button id="reportBtn"><svg class='ic' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 8V3h10v5'/><path d='M7 18H4v-7h16v7h-3'/><path d='M7 14h10v7H7z'/></svg>報表</button><button id="delProj" class="admin-only">刪除</button></div>
       <div id="body">
         <div id="overview">
       <div class="stats" id="stats"></div>
@@ -602,37 +616,41 @@
           <div class="hint">被抽查時打開這裡即可出示;文件會隨同步碼上雲端,另一台裝置也看得到。</div>
         </div>
       </div>
-        <div class="infobar" id="infoBar" role="button" tabindex="0" aria-controls="form">
-          <b>基本資料</b><span class="sum" id="infoSum"></span><span class="arr" id="infoArrow">▾</span>
-        </div>
-        <div class="form" id="form">
-          <div><label>地區</label><select id="f_region"><option value="">— 加入田後自動帶入,或手選 —</option></select></div>
-          <div><label>業務名稱</label><input id="f_customer" placeholder="例:莊政遠"></div>
-          <div><label>業務聯絡方式</label><input id="f_customerTel" type="tel" inputmode="tel" placeholder="例:0933-000-000"></div>
-          <div class="admin-only"><label>業主名稱</label><input id="f_owner" placeholder="例:陳阿伯(地主)"></div>
-          <div class="admin-only"><label>業主聯絡方式</label><input id="f_ownerTel" type="tel" inputmode="tel" placeholder="例:0912-345-678"></div>
-          <div class="full"><label>隸屬農會</label><input id="f_assoc" list="dl_assoc" placeholder="例:麻豆區農會"><datalist id="dl_assoc"></datalist></div>
-          <div class="admin-only"><label>農會承辦人</label><input id="f_assocPic" placeholder="例:林專員"></div>
-          <div class="admin-only"><label>承辦聯絡方式</label><input id="f_assocTel" type="tel" inputmode="tel" placeholder="例:06-572-2101"></div>
-          <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
-          <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
-          <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成" value=""><datalist id="dl_brand"><option value="碩成"></datalist></div>
-          <div><label>產品名稱</label><select id="f_pname"><option value="">— 請選擇 —</option></select></div>
-          <div class="full" id="pnameOtherWrap" hidden><label>自填產品名稱</label><input id="f_pnameOther" placeholder="例:他牌有機肥"></div>
-          <div><label>性狀</label><select id="f_form"><option value="">— 請選擇 —</option><option>粒狀</option><option>粉狀</option></select></div>
-          <div class="full"><label>肥料品目(官方品目編號)</label><select id="f_product"><option value="">— 請選擇品目 —</option></select></div>
-          <div class="full" id="customWrap" hidden><label>自填品目</label><input id="f_productCustom" placeholder="例:9-01 其他肥料"></div>
-          <div><label>肥料單包重量</label><select id="f_bag"><option value="">— 請選擇 —</option><option value="20">20 公斤(粒狀)</option><option value="25">25 公斤</option><option value="500">500 公斤(太空包)</option><option value="1000">1000 公斤(太空包)</option></select></div>
-          <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
-          <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
-          <div class="full admin-only"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
-        </div>
         </div>
         <div id="list"></div>
       </div>
     </div>
   </div>
 </div>
+
+<div id="infoDlg" role="dialog" aria-modal="true" aria-labelledby="infoTitle"><div class="sheet">
+  <div class="sh"><div class="tt"><b id="infoTitle">基本資料</b><small id="infoSub"></small></div><button id="infoDone">完成</button></div>
+  <div class="sb">
+          <div class="form" id="form">
+            <div class="full admin-only"><label>專案名稱(留空=自動用「地區 業主 噸數」)</label><input id="f_title" placeholder="例:義竹翁春暉"></div>
+            <div><label>地區</label><select id="f_region"><option value="">— 加入田後自動帶入,或手選 —</option></select></div>
+            <div><label>業務名稱</label><input id="f_customer" placeholder="例:莊政遠"></div>
+            <div><label>業務聯絡方式</label><input id="f_customerTel" type="tel" inputmode="tel" placeholder="例:0933-000-000"></div>
+            <div class="admin-only"><label>業主名稱</label><input id="f_owner" placeholder="例:陳阿伯(地主)"></div>
+            <div class="admin-only"><label>業主聯絡方式</label><input id="f_ownerTel" type="tel" inputmode="tel" placeholder="例:0912-345-678"></div>
+            <div class="full"><label>隸屬農會</label><input id="f_assoc" list="dl_assoc" placeholder="例:麻豆區農會"><datalist id="dl_assoc"></datalist></div>
+            <div class="admin-only"><label>農會承辦人</label><input id="f_assocPic" placeholder="例:林專員"></div>
+            <div class="admin-only"><label>承辦聯絡方式</label><input id="f_assocTel" type="tel" inputmode="tel" placeholder="例:06-572-2101"></div>
+            <div><label>申報期間(起)</label><input id="f_dateFrom" type="date"></div>
+            <div><label>申報期間(迄)</label><input id="f_dateTo" type="date"></div>
+            <div><label>肥料品牌</label><input id="f_brand" list="dl_brand" placeholder="例:碩成" value=""><datalist id="dl_brand"><option value="碩成"></datalist></div>
+            <div><label>產品名稱</label><select id="f_pname"><option value="">— 請選擇 —</option></select></div>
+            <div class="full" id="pnameOtherWrap" hidden><label>自填產品名稱</label><input id="f_pnameOther" placeholder="例:他牌有機肥"></div>
+            <div><label>性狀</label><select id="f_form"><option value="">— 請選擇 —</option><option>粒狀</option><option>粉狀</option></select></div>
+            <div class="full"><label>肥料品目(官方品目編號)</label><select id="f_product"><option value="">— 請選擇品目 —</option></select></div>
+            <div class="full" id="customWrap" hidden><label>自填品目</label><input id="f_productCustom" placeholder="例:9-01 其他肥料"></div>
+            <div><label>肥料單包重量</label><select id="f_bag"><option value="">— 請選擇 —</option><option value="20">20 公斤(粒狀)</option><option value="25">25 公斤</option><option value="500">500 公斤(太空包)</option><option value="1000">1000 公斤(太空包)</option></select></div>
+            <div><label>每塊田預設(噸)</label><input id="f_weight" type="number" inputmode="decimal" step="0.01" placeholder="例:0.5"></div>
+            <div class="full"><label>總施作噸數(各田加總)</label><input id="f_total" class="ro" readonly></div>
+            <div class="full admin-only"><label>備註</label><input id="f_note" placeholder="例:9月中前撒完"></div>
+          </div>
+  </div>
+</div></div>
 
 <div id="dlg"><div class="box">
   <div class="tabs">
@@ -1231,13 +1249,13 @@ function refreshTotals(){ const p=cur(); const fs=Object.values(p.fields); const
   if(p.assoc) parts.push(`<span class="o" style="background:#fdf1e0;border-color:#e6d9bf;color:#8a6314">${ic('building')}${esc(p.assoc)}</span>`);
   if(p.assocPic) parts.push(`<span class="o" style="background:#fdf1e0;border-color:#e6d9bf;color:#8a6314">承辦 ${esc(p.assocPic)}</span>`);
   if(aTel) parts.push(`<a href="tel:${esc(aHref)}">${ic('phone')}${esc(aTel)}</a>`);
-  ob.innerHTML = parts.length ? parts.join('') : '<span style="color:var(--muted);font-size:12px">尚未填業務、業主與農會資訊(展開下方「資料」填寫)</span>';
+  ob.innerHTML = parts.length ? parts.join('') : '<button class="o" style="cursor:pointer;color:var(--g-700);border-style:dashed" onclick="openInfo()">尚未填業務、業主與農會資訊,按這裡填寫</button>';
   document.getElementById('stats').innerHTML = `<span>${ic('wheat')}${fs.length} 塊田</span><span>${ic('ruler')}${(area/10000).toFixed(2)} 公頃<br><small style="font-weight:500">${(area/FEN).toFixed(1)} 分${unknown?` · ${unknown} 塊待查`:''}</small></span><span>${ic('scale')}${fmtT(tons(p))} 噸${bags!=null?`<br><small style="font-weight:500">≈ ${bags} 包</small>`:''}</span>`; }
 function flyTo(key){ const f=cur().fields[key]; if(f) map.fitBounds(f.bbox,{maxZoom:18}); }
 function nav(key){ const f=cur().fields[key]; if(f) window.open(navUrl(f),'_blank'); }
 
 // ---- 表單綁定 ----
-const F={customer:'f_customer',customerTel:'f_customerTel',form:'f_form',pnameOther:'f_pnameOther',owner:'f_owner',ownerTel:'f_ownerTel',assoc:'f_assoc',assocPic:'f_assocPic',assocTel:'f_assocTel',region:'f_region',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
+const F={title:'f_title',customer:'f_customer',customerTel:'f_customerTel',form:'f_form',pnameOther:'f_pnameOther',owner:'f_owner',ownerTel:'f_ownerTel',assoc:'f_assoc',assocPic:'f_assocPic',assocTel:'f_assocTel',region:'f_region',dateFrom:'f_dateFrom',dateTo:'f_dateTo',brand:'f_brand',pname:'f_pname',product:'f_product',productCustom:'f_productCustom',bag:'f_bag',weight:'f_weight',note:'f_note'};
 const productLabel = p => p.product==='__custom' ? (p.productCustom||'') : (p.product||'');
 function syncCustom(){ document.getElementById('customWrap').hidden = document.getElementById('f_product').value!=='__custom';
   document.getElementById('pnameOtherWrap').hidden = document.getElementById('f_pname').value!=='__other'; }
@@ -1250,29 +1268,25 @@ document.getElementById('projSel').onchange=e=>{ DB.curId=e.target.value; persis
 document.getElementById('newProj').onclick=()=>{ const n=prompt('業務名稱(承辦這案的業務)?'); if(n===null) return;
   const r=prompt('地區(可留空,加入第一塊田時自動帶入):','')||'';
   const p=newProject(n||('專案 '+(DB.projects.length+1))); p.customer=n||''; p.region=r.trim();
-  DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); setInfoOpen(true); };
+  DB.projects.push(p); DB.curId=p.id; save(); setFormOpen(true); openInfo(); };
 document.getElementById('delProj').onclick=()=>{ const p=cur(); if(!confirm(`確定刪除專案「${projLabel(p)}」(含 ${Object.keys(p.fields).length} 塊田)?`)) return; DB.deleted=DB.deleted||{}; DB.deleted[p.id]=Date.now(); DB.projects=DB.projects.filter(x=>x.id!==p.id); if(!DB.projects.length) DB.projects.push(newProject('專案 1')); DB.curId=DB.projects[0].id; save(); };
 function setFormOpen(open){ document.getElementById('overview').hidden=!open;
-  const b=document.getElementById('toggleForm'); b.textContent = open ? '資料 ▾' : '只看田區 ▸';
+  const b=document.getElementById('toggleForm'); b.textContent = open ? '總覽 ▾' : '只看田區 ▸';
   localStorage.setItem('fertmap_formOpen', open?'1':'0'); }
 document.getElementById('toggleForm').onclick=()=>{ setFormOpen(document.getElementById('overview').hidden); if(!document.getElementById('overview').hidden) document.getElementById('body').scrollTop=0; };
-document.getElementById('renameBtn').onclick=()=>{ const p=cur();
+(document.getElementById('renameBtn')||{}).onclick=()=>{ const p=cur();
   const v=prompt('自訂專案名稱(留空=自動用「地區 客戶 總噸數」):', p.title||projLabel(p)); if(v===null) return;
   p.title=v.trim(); save(); };
 setFormOpen(localStorage.getItem('fertmap_formOpen')!=='0');
-function setInfoOpen(open){ document.getElementById('form').hidden=!open;
-  document.getElementById('infoBar').classList.toggle('open', open);
-  document.getElementById('infoArrow').textContent = open ? '收起 ▾' : '展開 ▸';
-  try{ localStorage.setItem('fertmap_infoOpen', open?'1':'0'); }catch{} renderInfoSum(); }
-function renderInfoSum(){ const el=document.getElementById('infoSum'); if(!el) return; const p=cur(); if(!p){ el.textContent=''; return; }
-  if(!document.getElementById('form').hidden){ el.textContent=''; return; }
-  const pn = p.pname==='__other' ? p.pnameOther : p.pname;
-  const dt = p.dateFrom ? (p.dateFrom.slice(5).replace('-','/') + (p.dateTo ? '~'+p.dateTo.slice(5).replace('-','/') : '')) : '';
-  const parts=[p.region, p.owner, pn, p.form, p.bag?p.bag+'kg':'', dt].filter(Boolean);
-  el.textContent = parts.length ? parts.join(' · ') : '尚未填寫'; }
-document.getElementById('infoBar').addEventListener('click', ()=>{ setInfoOpen(document.getElementById('form').hidden); sfx.tap(); });
-document.getElementById('infoBar').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); document.getElementById('infoBar').click(); } });
-setInfoOpen(localStorage.getItem('fertmap_infoOpen')!=='0');
+function renderInfoSum(){ const el=document.getElementById('infoSub'); if(!el) return; const p=cur(); el.textContent = p ? projLabel(p) : ''; }
+function openInfo(){ renderInfoSum(); document.getElementById('infoDlg').style.display='flex';
+  document.getElementById('infoDlg').querySelector('.sb').scrollTop=0; sfx.tap(); }
+function closeInfo(){ const a=document.activeElement; if(a && a.closest && a.closest('#infoDlg') && a.blur) a.blur();
+  document.getElementById('infoDlg').style.display='none'; }
+document.getElementById('infoBtn').onclick=openInfo;
+document.getElementById('infoDone').onclick=()=>{ closeInfo(); sfx.ok(); };
+document.getElementById('infoDlg').addEventListener('click', e=>{ if(e.target.id==='infoDlg') closeInfo(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('infoDlg').style.display==='flex') closeInfo(); });
 // ---- 面板高度:可拖曳、可點擊切換 ----
 const panelEl=document.getElementById('panel');
 const panelMax=()=> window.innerHeight-130, panelMin=()=>150;
