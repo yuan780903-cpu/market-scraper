@@ -414,6 +414,14 @@
   #dlg input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:15px;background:#fff}
   #dlg input:focus{outline:0;border-color:var(--g-600);box-shadow:0 0 0 3px rgba(46,128,85,.16)}
   #dlg .row{display:flex;gap:8px;margin-top:10px}
+  #dlg textarea,#dlg select{width:100%;box-sizing:border-box;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:15px;background:#fff;font-family:inherit;color:var(--ink)}
+  #dlg textarea{margin-top:8px;resize:vertical;line-height:1.55;font-size:13px}
+  #dlg select{appearance:none;-webkit-appearance:none}
+  #dlg textarea:focus,#dlg select:focus{outline:0;border-color:var(--g-600);box-shadow:0 0 0 3px rgba(46,128,85,.16)}
+  #dlg .row select,#dlg .row input{flex:1;min-width:0}
+  #dlg .row button:disabled{opacity:.5}
+  .implog{margin-top:8px;font-size:12.5px;color:var(--ink-2);line-height:1.65;white-space:pre-wrap}
+  .implog .bad{color:var(--red)} .implog b{color:var(--g-700)}
   #dlg .row button{flex:1;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:var(--r-sm);
     padding:11px;font-size:13.5px;font-weight:600;background:var(--g-700);color:#fff;letter-spacing:.02em;box-shadow:var(--sh-1)}
   #dlg .row button:active{transform:translateY(1px)}
@@ -663,6 +671,16 @@
     <h4>雲端資料</h4>
     <p id="cloudInfo">所有專案、照片與申報文件都存在公司的 Google 雲端硬碟,不留在這支手機。離開前若有未儲存的變更,右上角按鈕會閃橘色提醒。</p>
     <div class="row"><button id="cloudUp">立即存到雲端</button><button class="sec" id="cloudDown">重新讀取雲端</button></div>
+
+    <div class="admin-only" id="impSec">
+    <h4>匯入 Google 地圖圖釘</h4>
+    <p>一行一個點:緯度,經度 標籤。也可以直接貼 Google 地圖網址。系統會自動查出地號、加入田地並放上標記,標籤裡的「N顆」會記成包數。</p>
+    <textarea id="impText" rows="7" placeholder="23.3629244,120.212450 6顆&#10;23.3627721,120.213325 4顆 電線桿旁"></textarea>
+    <div class="row"><select id="impTarget"><option value="new">建立新專案</option><option value="cur">加入目前專案</option></select><input id="impOwner" placeholder="新專案業主,例:黃志文"></div>
+    <div class="row"><select id="impType"><option value="drop">標成肥料擺放</option><option value="mark">標成噴漆記號</option></select><select id="impBag"><option value="1000">每顆 1000 公斤</option><option value="500">每顆 500 公斤</option><option value="">不換算噸數</option></select></div>
+    <div class="row"><button id="impGo">開始匯入</button></div>
+    <div id="impLog" class="implog"></div>
+    </div>
 
     <h4>官方申報單</h4>
     <p>管理員上傳後,所有撒播業者都看得到、可開啟核對。</p>
@@ -1022,7 +1040,7 @@ function delPin(key,id){ const f=cur().fields[key]; if(!f) return; const pin=(f.
   if(pin && !confirm(`刪除這個${PIN[pin.type].n}?`)) return;
   f.pins=(f.pins||[]).filter(x=>x.id!==id); sfx.remove(); save(); map.closePopup(); }
 function pinPopup(f,pin){ const L=PIN[pin.type];
-  return `<div class="pop"><b>${L.n}</b><small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
+  return `<div class="pop"><b>${L.n}${pin.bags?` · ${pin.bags} 顆`:''}</b>${pin.note?`<div class="note">${esc(pin.note)}</div>`:''}<small>${esc(fullName(f))}<br>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''}</small>
     <div class="btnrow"><button class="btn nav" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}&travelmode=driving','_blank')">${ic('nav')}導航</button>
     <button class="btn" style="background:#6b5942" onclick="window.open('${svUrl(pin.lat,pin.lng)}','_blank')">${ic('eye')}街景</button></div>
     ${isField()?'':`<button class="btn del" onclick="delPin('${f.key}','${pin.id}')">${ic('x')}刪除這個標記</button>`}</div>`; }
@@ -1319,7 +1337,7 @@ const markerHTML = f => `<div class="fieldmk">${f.no}${f.t?` · ${fmtT(f.t)}噸`
 const layerSig = f => `${f.t}|${(f.photos||[]).length}|${(f.pins||[]).length}|${(f.notes||[]).length}|${hereKey===f.key}|${JSON.stringify((f.zones||[]).map(z=>[z.name,z.time,z.pts.length]))}`;
 function refreshMarker(f){ if(layers[f.key]){ layers[f.key].remove(); delete layers[f.key]; } addLayer(f); }
 function addLayer(f){ const here=hereKey===f.key; const shape=drawParcel(f, here?'#2e7d32':'#f57c00', here?'parcel-here':'');
-  const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
+  const pins=(f.pins||[]).map(pin=>L.marker([pin.lat,pin.lng],{icon:L.divIcon({className:'',html:`<div class="pinmk ${PIN[pin.type].c}">${pin.bags||PIN[pin.type].t}</div>`,iconSize:[26,26],iconAnchor:[13,13]})})
     .on('click',ev=>{ L.DomEvent.stop(ev); L.popup(POPT).setLatLng([pin.lat,pin.lng]).setContent(pinPopup(f,pin)).openOn(map); }));
   const zones=(f.zones||[]).map(z=>L.polygon(z.pts,{color:'#e0a800',weight:2.5,fillColor:'#ffd21f',fillOpacity:.38})
     .bindTooltip(esc(z.name),{permanent:true,direction:'center',className:'zonetip'})
@@ -1355,7 +1373,7 @@ function render(){
       ${(f.notes||[]).length?`<div class="notes">${f.notes.map(n=>`<div class="note"><span onclick="editNote('${f.key}','${n.id}')">${ic('note')}${esc(n.text)}</span><small>${esc(n.time||'')}</small><button class="admin-only" onclick="delNote('${f.key}','${n.id}')">${ic('x')}</button></div>`).join('')}</div>`:''}
       ${(f.pins||[]).length?`<div class="pins">${f.pins.map(pin=>`<div class="prow ${PIN[pin.type].c}">
         <span class="pdot">${PIN[pin.type].t}</span>
-        <div class="pt" onclick="flyPin('${f.key}','${pin.id}')">${PIN[pin.type].n}<small>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''} · ${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}</small></div>
+        <div class="pt" onclick="flyPin('${f.key}','${pin.id}')">${PIN[pin.type].n}${pin.note?` · ${esc(pin.note)}`:''}<small>${esc(pin.time||'')}${pin.acc?` · 誤差 ±${pin.acc}m`:''} · ${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}</small></div>
         <button onclick="flyPin('${f.key}','${pin.id}')">${ic('markpin')}定位</button>
         <button class="admin-only" onclick="startPin('${f.key}','${pin.type}','${pin.id}')">${ic('edit')}移動</button>
         <button class="del admin-only" onclick="delPin('${f.key}','${pin.id}')">${ic('trash')}</button></div>`).join('')}</div>`:''}
@@ -1718,7 +1736,7 @@ async function loadFromCloud(){
   } else {
     sel.hidden=true; VIEW_OWNER = SES.code; adoptData(r.data || {projects:[]});
   }
-  DIRTY=false; syncSaveBtn(); }
+  DIRTY=false; syncSaveBtn(); if(sessionStorage.getItem('fertmap_pendingImport')) setTimeout(openPendingImport, 400); }
 function adoptData(d){
   d = (d && Array.isArray(d.projects)) ? d : {projects:[], unit:'t'};
   if(!d.projects.length) d.projects=[newProject('專案 1')];
@@ -1806,6 +1824,61 @@ function showTab(t){ document.querySelectorAll('#dlg .tab').forEach(b=>b.classLi
   dlg.querySelector('.box').scrollTop=0; }
 document.querySelectorAll('#dlg .tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 document.getElementById('cfgBtn').onclick=()=>openDlg(isAdmin()?'acct':'set');
+// ---- 匯入 Google 地圖圖釘 ----
+function parseImport(txt){ const out=[];
+  String(txt||'').split(/\r?\n/).forEach(line=>{ const s=line.trim(); if(!s) return;
+    const m=s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/(-?\d{1,2}\.\d{3,})\s*[,，]\s*(-?\d{2,3}\.\d{3,})/);
+    if(!m) return; const lat=+m[1], lng=+m[2]; if(!(lat>21 && lat<26.5 && lng>118 && lng<122.5)) return;
+    let rest=s.replace(m[0],' ').replace(/https?:\/\/\S+/g,' ');
+    let acc=null; const a=rest.match(/±\s*(\d+(?:\.\d+)?)\s*m/i); if(a){ acc=Math.ceil(+a[1]); rest=rest.replace(a[0],' '); }
+    rest=rest.replace(/\s+/g,' ').replace(/^[\s,，|:]+|[\s,，|]+$/g,'');
+    const b=rest.match(/(\d+)\s*顆/);
+    out.push({lat, lng, acc, label:rest, bags:b?+b[1]:null}); });
+  return out; }
+let importing=false;
+async function runImport(){ if(isField() || importing) return;
+  const log=document.getElementById('impLog'), ta=document.getElementById('impText');
+  const pts=parseImport(ta.value);
+  if(!pts.length){ log.innerHTML='<span class="bad">沒有讀到座標。格式:緯度,經度 標籤</span>'; sfx.err(); return; }
+  const target=document.getElementById('impTarget').value, type=document.getElementById('impType').value, bagKg=+document.getElementById('impBag').value||0;
+  let p;
+  if(target==='new'){ const owner=document.getElementById('impOwner').value.trim();
+    if(!owner){ log.innerHTML='<span class="bad">請填新專案的業主名稱</span>'; sfx.err(); document.getElementById('impOwner').focus(); return; }
+    p=newProject(owner); p.owner=owner; if(bagKg) p.bag=String(bagKg); if(ta.dataset.region) p.region=ta.dataset.region;
+    DB.projects.push(p); DB.curId=p.id;
+  } else p=cur();
+  importing=true; const btn=document.getElementById('impGo'); btn.disabled=true;
+  const before=new Set(Object.keys(p.fields)), touched=new Set(), bagSum={}, fail=[]; let done=0, added=0, skipped=0;
+  const queue=pts.map((q,i)=>Object.assign({i},q));
+  const worker=async()=>{ while(queue.length){ const q=queue.shift();
+    try{ const parcel=await queryParcel(q.lat,q.lng);
+      let fld=p.fields[parcel.key]; if(!fld){ fld=parcel; p.fields[parcel.key]=fld; if(!p.region) p.region=(parcel.cty||'')+(parcel.town||''); }
+      touched.add(parcel.key); fld.pins=fld.pins||[];
+      if(fld.pins.some(x=>Math.abs(x.lat-q.lat)<1e-7 && Math.abs(x.lng-q.lng)<1e-7 && (x.note||'')===q.label)) skipped++;
+      else { fld.pins.push({id:'pin'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), type, lat:q.lat, lng:q.lng, acc:q.acc, note:q.label, bags:q.bags, src:'import', time:new Date().toLocaleString('zh-TW',{hour12:false})});
+        added++; if(q.bags) bagSum[parcel.key]=(bagSum[parcel.key]||0)+q.bags; }
+    }catch(e){ fail.push(`第 ${q.i+1} 點「${q.label||''}」:${e.message}`); }
+    done++; log.textContent=`匯入中 ${done} / ${pts.length}…(查地號需要一點時間)`; } };
+  try{ await Promise.all([worker(),worker(),worker()]); }
+  finally{ importing=false; btn.disabled=false; }
+  if(bagKg) Object.entries(bagSum).forEach(([k,n])=>{ const fld=p.fields[k]; if(fld && (fld.t==null || fld.t==='')) fld.t=+(n*bagKg/1000).toFixed(3); });
+  p.updated=Date.now(); save();
+  const fs=Object.values(p.fields); if(fs.length) map.fitBounds(L.latLngBounds(fs.flatMap(f=>f.bbox)).pad(.15));
+  const newCnt=[...touched].filter(k=>!before.has(k)).length, bags=Object.values(bagSum).reduce((t,n)=>t+n,0);
+  log.innerHTML=`<b>完成</b>:新增 ${added} 個標記,落在 ${touched.size} 塊田(新加入 ${newCnt} 塊)${bags?`,共 ${bags} 顆`:''}${skipped?`\n已存在而略過 ${skipped} 個`:''}`
+    + (fail.length? `\n<span class="bad">失敗 ${fail.length} 點:\n${fail.map(esc).join('\n')}</span>` : '');
+  if(!fail.length) try{ sessionStorage.removeItem('fertmap_pendingImport'); }catch{}
+  fail.length ? sfx.warn() : sfx.ok(); setStatus(`已匯入 ${added} 個標記`); }
+document.getElementById('impGo').onclick=runImport;
+(function absorbImport(){ try{ const h=new URLSearchParams((location.hash||'').slice(1)); const v=h.get('imp'); if(!v) return;
+  const bin=atob(v.replace(/-/g,'+').replace(/_/g,'/')); const json=new TextDecoder().decode(Uint8Array.from(bin, c=>c.charCodeAt(0)));
+  JSON.parse(json); sessionStorage.setItem('fertmap_pendingImport', json);
+  history.replaceState(null,'', location.pathname + location.search); }catch(e){} })();
+function openPendingImport(){ let d=null; try{ d=JSON.parse(sessionStorage.getItem('fertmap_pendingImport')||'null'); }catch{} if(!d || !d.text || isField()) return;
+  openDlg('data'); const ta=document.getElementById('impText'); ta.value=d.text; ta.dataset.region=d.region||'';
+  document.getElementById('impTarget').value='new'; document.getElementById('impOwner').value=d.owner||''; if(d.type) document.getElementById('impType').value=d.type;
+  document.getElementById('impLog').textContent=`已帶入 ${parseImport(d.text).length} 個點。確認業主與設定後按「開始匯入」。`;
+  setTimeout(()=>{ try{ document.getElementById('impSec').scrollIntoView({block:'start'}); }catch{} },200); }
 document.getElementById('apiBtn').onclick=()=>{ askApi(); };
 document.getElementById('logoutBtn').onclick=()=>{ dlg.style.display='none'; logout(); };
 document.getElementById('cloudUp').onclick=()=>cloudSaveNow(false);
