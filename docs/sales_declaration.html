@@ -139,6 +139,13 @@
         <select id="f_prod"></select>
       </div>
       <div>
+        <label>性狀</label>
+        <select id="f_form">
+          <option value="粉狀" selected>粉狀</option>
+          <option value="粒狀">粒狀</option>
+        </select>
+      </div>
+      <div>
         <label>包裝重量（公斤）</label>
         <select id="f_weight">
           <option value="20">20 kg（粒狀預設）</option>
@@ -184,7 +191,7 @@
         <thead>
           <tr>
             <th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th>
-            <th>廠牌商品名稱</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th>
+            <th>廠牌商品名稱</th><th>性狀</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th>
             <th>類型</th><th class="no-print">操作</th>
           </tr>
         </thead>
@@ -321,7 +328,7 @@ function addEntry(){
   const e={
     id:editId??Date.now(),
     date:f_date.value, city:f_city.value, town:f_town.value,
-    recv:f_recv.value.trim(), prod:f_prod.value, weight:getWeightValue(),
+    recv:f_recv.value.trim(), prod:f_prod.value, form:f_form.value, weight:getWeightValue(),
     qty:Number(f_qty.value)||0, gift:Number(f_gift.value)||0, type:entryType.value
   };
   if(!e.date||!e.city||!e.prod||!e.qty){alert("請至少填寫：出貨日期、送達縣市、廠牌商品名稱、包數。");return}
@@ -337,6 +344,7 @@ function editEntry(id){
   fillTownships(e.city); f_town.value=e.town;        // 先重建鄉鎮選項再賦值
   f_recv.value=e.recv;
   f_prod.value=e.prod;
+  f_form.value=e.form||"粉狀";
   setWeightValue(e.weight);                            // 還原重量（含「其他」狀態）
   f_qty.value=e.qty;f_gift.value=e.gift||"";
   entryType.value=e.type;editId=id;editHint.style.display="inline-block";
@@ -352,6 +360,7 @@ function render(){
     <tr>
       <td>${toROC(e.date)}</td><td>${e.city||""}</td><td>${e.town||""}</td>
       <td class="name">${e.recv||""}</td><td class="name">${e.prod||""}</td>
+      <td>${e.form||""}</td>
       <td>${e.weight||""}</td><td>${e.qty||""}</td>
       <td class="gift">${e.gift?e.gift:""}</td>
       <td><span class="tag ${e.type==='修正'?'tag-fix':'tag-pre'}">${e.type}</span></td>
@@ -363,7 +372,7 @@ function render(){
   const tq=entries.reduce((s,e)=>s+(e.qty||0),0);
   const tg=entries.reduce((s,e)=>s+(e.gift||0),0);
   const tw=entries.reduce((s,e)=>s+(e.qty||0)*(Number(e.weight)||0),0);
-  tfoot.innerHTML=entries.length?`<tr><td colspan="6">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td><td colspan="2" class="no-print"></td></tr>`:"";
+  tfoot.innerHTML=entries.length?`<tr><td colspan="7">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td><td colspan="2" class="no-print"></td></tr>`:"";
   emptyMsg.style.display=entries.length?"none":"block";
   countPill.textContent=entries.length+" 筆";
   s_rows.textContent=entries.length;s_qty.textContent=tq.toLocaleString();
@@ -403,9 +412,9 @@ function buildPrint(){
   ex.push(`本案經鈞長核准後送生產單位登錄；隔月5日前由生產單位依SAP銷售資料完成最後申報確認。`);
   p_expl.innerHTML=ex.map(t=>`<li>${t}</li>`).join("");
 
-  const head=`<thead><tr><th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th><th>廠牌商品名稱</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th></tr></thead>`;
-  const body=entries.map(e=>`<tr><td>${toROC(e.date)}</td><td>${e.city||""}</td><td>${e.town||""}</td><td>${e.recv||""}</td><td>${e.prod||""}</td><td>${e.weight||""}</td><td>${e.qty||""}</td><td>${e.gift||""}</td></tr>`).join("");
-  const foot=`<tfoot><tr><td colspan="6">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td></tr></tfoot>`;
+  const head=`<thead><tr><th>出貨日期</th><th>送達縣市</th><th>送達鄉鎮</th><th>收貨人/收貨點</th><th>廠牌商品名稱</th><th>性狀</th><th>包裝重量(公斤)</th><th>包數</th><th>贈送(包)</th></tr></thead>`;
+  const body=entries.map(e=>`<tr><td>${toROC(e.date)}</td><td>${e.city||""}</td><td>${e.town||""}</td><td>${e.recv||""}</td><td>${e.prod||""}</td><td>${e.form||""}</td><td>${e.weight||""}</td><td>${e.qty||""}</td><td>${e.gift||""}</td></tr>`).join("");
+  const foot=`<tfoot><tr><td colspan="7">合計</td><td>${tq.toLocaleString()}</td><td>${tg.toLocaleString()}</td></tr></tfoot>`;
   p_table.innerHTML=head+"<tbody>"+body+"</tbody>"+foot;
 }
 
@@ -417,8 +426,8 @@ function openMemo(){
 }
 
 function exportCSV(){
-  const cols=["出貨日期","送達縣市","送達鄉鎮","收貨人/收貨點","廠牌商品名稱","包裝重量(公斤)","包數","贈送(包)","類型"];
-  const rows=entries.map(e=>[toROC(e.date),e.city,e.town,e.recv,e.prod,e.weight,e.qty,e.gift||"",e.type]);
+  const cols=["出貨日期","送達縣市","送達鄉鎮","收貨人/收貨點","廠牌商品名稱","性狀","包裝重量(公斤)","包數","贈送(包)","類型"];
+  const rows=entries.map(e=>[toROC(e.date),e.city,e.town,e.recv,e.prod,e.form||"",e.weight,e.qty,e.gift||"",e.type]);
   let csv=cols.join(",")+"\n"+rows.map(r=>r.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(",")).join("\n");
   const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
