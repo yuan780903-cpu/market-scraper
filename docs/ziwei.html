@@ -1965,7 +1965,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.20.3";
+const SITE_VERSION_DATE="2026.11.20.4";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -3210,6 +3210,175 @@ function healthPrintHTML(h){
  if(h.mods.length||h.jiHua.length)s+=`<div class="rp-row"><b>煞曜／化忌</b> ${h.mods.map(m=>m.star).concat(h.jiHua.map(x=>x+"化忌")).join("、")}</div>`;
  if(h.strong.length||h.weak.length)s+=`<div class="rp-row"><b>五行失衡</b> ${h.strong.map(k=>k+"過旺").concat(h.weak.map(k=>k+"偏弱")).join("、")}</div>`;
  if(h.checks.length)s+=`<div class="rp-row"><b>建議檢查</b> ${h.checks.join("；")}</div>`;
+ return s;
+}
+
+/* ================= 財運深析 × 感情深析（付費區） ================= */
+function _dzPal(zw,name){for(let b=0;b<12;b++)if(zw.palaceName[b]===name)return b;return -1;}
+function _dzStarPal(zw,n){if(!n)return -1;for(let b=0;b<12;b++)if((zw.stars[b]||[]).some(s=>s.name===n))return b;return -1;}
+function _dzPalName(zw,b){return b>=0?zw.palaceName[b]:"";}
+const STAR_WEALTH={
+ 紫微:{src:"權位之財：靠地位、管理與決策賺錢",style:"大器，捨得花在門面與格局上",risk:"好面子與排場容易超支",tip:"把花費分成『投資自己』與『純面子』兩類，後者設上限"},
+ 天機:{src:"智慧之財：靠點子、企劃、技術與變動的機會",style:"錢來得快也動得快，喜歡嘗試新方法",risk:"想太多、換太快，投資容易追高殺低",tip:"設定明確的進出場規則，別讓聰明變成頻繁操作"},
+ 太陽:{src:"名聲之財：先付出、先被看見，財才跟著來",style:"慷慨、愛請客、捨得為人花",risk:"為面子與人情付出過多，錢散在人際上",tip:"付出要有界線，先存後花"},
+ 武曲:{src:"正財星：實業、金融、技術，靠本事與紀律累積",style:"務實、精算、能存",risk:"太執著於錢，容易過勞或因錢傷感情",tip:"固定比例投入長期資產，其餘放心花"},
+ 天同:{src:"安逸之財：薪資與福分，不求大富但不缺",style:"享受型，先快樂再說",risk:"缺乏積極性與儲蓄習慣",tip:"用自動扣款儲蓄，讓紀律替你存"},
+ 廉貞:{src:"制度之財：公職、法務、體制內，或帶點投機的領域",style:"敢賭，情緒會影響決策",risk:"官非與衝動投機最傷財",tip:"大額決定睡一晚再做，遠離灰色地帶"},
+ 天府:{src:"庫財：穩定累積、保守理財、懂得留",style:"存錢高手，重安全感",risk:"太保守錯過機會，或被信任的人拖累",tip:"拿一小部分做穩健投資，別全放定存"},
+ 太陰:{src:"細水長流之財：儲蓄、不動產、女性或母系貴人",style:"細心記帳、慢慢累積",risk:"缺安全感時過度囤積，或因感情把錢借出去",tip:"不動產與定期定額最適合你"},
+ 貪狼:{src:"偏財與人脈之財：業務、應酬、娛樂、投機",style:"敢花敢賺，交際支出大",risk:"酒色財氣與投機是最大破口",tip:"偏財要設停利停損，應酬預算分開管理"},
+ 巨門:{src:"口才之財：教學、法律、銷售、媒體",style:"精打細算，但常因是非耗財",risk:"口舌官司與疑心造成損失",tip:"合約白紙黑字，少用嘴巴承諾"},
+ 天相:{src:"輔佐之財：穩定薪資、幕僚、專業服務",style:"平穩、不冒險",risk:"幫人作保、替人扛債",tip:"不作保、不代墊，是一輩子的守財原則"},
+ 天梁:{src:"蔭財：長輩、保險、公家、醫藥或意外之助",style:"不太在乎錢，但總有人幫",risk:"太大方，被依賴的人消耗",tip:"幫人要有限度，先顧好自己的保障與退休"},
+ 七殺:{src:"衝刺之財：開拓、創業、業績，高風險高報酬",style:"大起大落，敢衝敢賠",risk:"孤注一擲、不服輸加碼",tip:"分批進場、設停損，留三成現金不動"},
+ 破軍:{src:"破而後立之財：投資、創新、轉行後翻身",style:"先破後成，財務波動大",risk:"耗損重，先花掉才想到要存",tip:"先付自己：固定比例存起來，再談投資"}
+};
+const STAR_KEEP={紫微:"守得住也重格局，置產偏好地段與門面。",天機:"常搬遷換屋，不動產進出頻繁，守財靠規劃。",太陽:"家業外顯、為家人付出多，留財靠節制。",武曲:"最會守財置產的一組，宜早買、長期持有。",天同:"享受型居家，守財普通，宜強制儲蓄。",廉貞:"家宅容易有變動或糾紛，產權與合約要清楚。",天府:"財庫星坐田宅，守財能力強，最宜不動產。",太陰:"不動產緣深，尤其適合長期持有收租。",貪狼:"家中開銷與娛樂支出大，守財要刻意安排。",巨門:"常為房事操心口舌，買賣合約逐條細看。",天相:"守成穩定，家庭收支平衡。",天梁:"祖蔭或長輩助置產，守財中上。",七殺:"不動產進出大膽，守財起伏大。",破軍:"田宅變動大、翻修搬家多，守財最需要紀律。"};
+const SHA_WEALTH={擎羊:"爭財與破耗——避免借貸擔保、與人爭利。",陀羅:"錢容易卡住、呆帳或套牢——不碰流動性差的標的。",火星:"急進急退——忌衝動下單。",鈴星:"暗耗——小額長期流失，一定要記帳。",地空:"劫財——投機必輸，遠離高槓桿。",地劫:"耗財——避免為人墊付或保證。",天馬:"流動之財——外地與流通業有利，但現金流要管好。",天刑:"財務容易有罰款或官司——守法守約。",祿存:"祿存坐守——有固定財源與積蓄之力，是您的財庫底氣。"};
+const LU_PAL={命宮:"自己就是財源，靠本事與個人品牌",兄弟:"現金流與合夥、手足互助",夫妻:"配偶或伴侶帶財、共同經營",子女:"子女、下屬或投資標的帶財",財帛:"正財穩定，賺錢路徑清楚",疾厄:"辛勞得財，小心用健康換錢",遷移:"出外、外地或異地得財",交友:"朋友、客戶與人脈帶財",官祿:"事業與職位帶財，升遷即加薪",田宅:"不動產與家業是財庫",福德:"享福之財，被動收入與福分",父母:"長輩、公家或文書契約帶財"};
+function calcWealth(zw,bz,adv){
+ const st=(adv&&adv.strength)||{xi:[],ji:[],level:""};
+ const HN={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+ const get=(b,main)=>b<0?[]:(zw.stars[b]||[]).filter(s=>main?s.type==="main":s.type!=="main");
+ const cb=_dzPal(zw,"財帛"),tb=_dzPal(zw,"田宅"),fb=_dzPal(zw,"福德");
+ let caiMains=get(cb,true),borrowed=false; if(!caiMains.length&&cb>=0){caiMains=get((cb+6)%12,true);borrowed=true;}
+ const src=caiMains.map(s=>Object.assign({star:s.name,bright:s.bright||"",hua:s.hua?HN[s.hua]:""},STAR_WEALTH[s.name]||{})).filter(x=>x.src);
+ let tianMains=get(tb,true),tBorrow=false; if(!tianMains.length&&tb>=0){tianMains=get((tb+6)%12,true);tBorrow=true;}
+ const keep=tianMains.map(s=>({star:s.name,hua:s.hua?HN[s.hua]:"",txt:STAR_KEEP[s.name]||""})).filter(x=>x.txt);
+ const sha=[]; [[cb,"財帛"],[tb,"田宅"],[fb,"福德"]].forEach(pr=>{get(pr[0],false).forEach(s=>{if(SHA_WEALTH[s.name])sha.push({star:s.name,pal:pr[1],txt:SHA_WEALTH[s.name]});});});
+ const luPalName=_dzPalName(zw,_dzStarPal(zw,"祿存"));
+ const sh=SIHUA[zw.yearGan]||[]; const ylu=sh[0]||"",yji=sh[3]||"";
+ const yluPal=_dzPalName(zw,_dzStarPal(zw,ylu)), yjiPal=_dzPalName(zw,_dzStarPal(zw,yji));
+ const money=["財帛","田宅","福德"];
+ const lv=String(st.level||""); const strong=/強|旺/.test(lv), weak=/弱/.test(lv);
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit);
+ const ln=curLN(), lnPal=zw.palaceName[ln.branch];
+ const lnLu=(ln.sihua&&ln.sihua[0])||"", lnJi=(ln.sihua&&ln.sihua[3])||"";
+ const lnLuPal=_dzPalName(zw,_dzStarPal(zw,lnLu)), lnJiPal=_dzPalName(zw,_dzStarPal(zw,lnJi));
+ return {borrowed,src,keep,tBorrow,sha,luPalName,ylu,yluPal,yji,yjiPal,jiInMoney:money.includes(yjiPal),strong,weak,level:lv,xi:st.xi||[],ji:st.ji||[],limName,pre,ln,lnPal,lnLu,lnLuPal,lnJi,lnJiPal,money};
+}
+function wealthPaidHTML(w,zw,adv,name,scores){
+ if(!w)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ const dim=(scores&&scores.dims||[]).filter(d=>d.k==="財運")[0];
+ let verdict=dim?`財運評分 <b>${dim.v}</b> 分（${dim.band}）。`:"";
+ verdict+=w.strong?"八字身強，能任財——適合主動進取、承擔較大的投資與事業規模，錢對您是工具不是壓力。":w.weak?"八字身弱，財多身弱——錢來了要守得住，避免高槓桿與擴張過快，穩健累積反而走得遠。":"八字強弱平衡，進可攻退可守，依大限流年調整節奏即可。";
+ const srcHTML=w.src.length?w.src.map(x=>`<li><b>${x.star}</b>${x.bright?"（"+x.bright+"）":""}${x.hua?"・化"+x.hua:""}${w.borrowed?"（財帛宮無主星，借對宮）":""}：${x.src}。理財風格——${x.style}。<span class="cj-care">容易破財的地方：${x.risk}。建議：${x.tip}。</span></li>`).join(""):`<li>財帛宮與對宮皆無主星，財運隨大限流年起伏較大，重點放在紀律與現金流管理。</li>`;
+ const keepHTML=w.keep.length?w.keep.map(x=>`<li><b>${x.star}</b>${x.hua?"・化"+x.hua:""}${w.tBorrow?"（田宅宮無主星，借對宮）":""}：${x.txt}</li>`).join(""):`<li>田宅宮與對宮皆無主星，守財靠後天習慣，建議每月固定儲蓄比例。</li>`;
+ let luHTML="";
+ if(w.luPalName)luHTML+=`<li><b>祿存在${w.luPalName}宮</b>：${LU_PAL[w.luPalName]||""}——這是您最穩的財源。</li>`;
+ if(w.ylu)luHTML+=`<li><b>生年化祿（${w.ylu}）在${w.yluPal||"－"}宮</b>：${LU_PAL[w.yluPal]||""}，一生財緣最常從這裡來。</li>`;
+ if(w.yji)luHTML+=`<li><b>生年化忌（${w.yji}）在${w.yjiPal||"－"}宮</b>：${w.jiInMoney?"落在財務相關宮位，代表錢財是您一生的功課——不是賺不到，而是容易因執著或牽掛而耗，理財要比別人更有紀律。":"不在財務宮位，錢財上的牽絆相對小，課題在其他面向。"}</li>`;
+ const shaHTML=w.sha.length?w.sha.map(x=>`<li><b>${x.star}</b>（${x.pal}宮）：${x.txt}</li>`).join(""):`<li>財帛、田宅、福德三宮沒有明顯煞曜，破財風險主要來自習慣而非星象。</li>`;
+ const wxLine=w.xi.length?`喜用神「${w.xi.join("、")}」——相應的生財行業如：${w.xi.map(k=>(WX_LIFE[k]||{}).業||"").filter(Boolean).join("；")}。`:"";
+ const moneyLim=/財帛|田宅|官祿|命宮/.test(w.limName), spendLim=/福德|兄弟|交友/.test(w.limName), outLim=/遷移/.test(w.limName);
+ let timing=w.pre?"目前尚在童限，財運以家庭供給為主；":`現行大限在「${w.limName}」${moneyLim?"——是聚財與衝刺收入的十年，適合擴大事業、置產與長期投資":spendLim?"——這十年支出與人情往來偏多，重點是守住底線、別讓錢流到人際與享受上":outLim?"——外地、出差或跨區域的機會帶財，別把自己綁在原地":"，財運平穩，按部就班累積即可"}；`;
+ timing+=`${w.ln.year} ${w.ln.gan}${w.ln.zhi}流年命宮落「${w.lnPal}」`;
+ if(w.lnLuPal&&w.money.concat(["命宮","官祿"]).includes(w.lnLuPal))timing+=`，今年化祿（${w.lnLu}）落在${w.lnLuPal}宮，是有財機的一年，可積極一點`;
+ if(w.lnJiPal&&w.money.includes(w.lnJiPal))timing+=`；但化忌（${w.lnJi}）落在${w.lnJiPal}宮，今年守財重於開源，避免大額投資與借貸`;
+ timing+="。";
+ const tips=[]; w.src.forEach(x=>{if(tips.length<3)tips.push(x.tip);}); if(w.sha.some(x=>x.star==="擎羊"||x.star==="地劫"||x.star==="天相"))tips.push("不作保、不代墊、不借錢給超過自己三個月生活費的人");
+ if(w.weak)tips.push("槓桿不超過淨資產三成，留足半年生活費的緊急預備金"); if(w.strong)tips.push("把收入的一部分固定投入能滾動的資產，讓錢替你工作");
+ const tipHTML=tips.slice(0,5).map(t=>`<li>${t}</li>`).join("");
+ return `<div class="rcard wide cjcard"><h3><span class="ic">財</span>財運深析 · ${name}</h3>
+ <p class="cj-verdict">${verdict}</p>
+ ${sec("財源型態（財帛宮）")}<ul class="cj-ul">${srcHTML}</ul>
+ ${sec("守財與不動產（田宅宮）")}<ul class="cj-ul">${keepHTML}</ul>
+ ${sec("祿存與生年四化：財從哪裡來、往哪裡耗")}<ul class="cj-ul">${luHTML||"<li>無明顯祿星標記。</li>"}</ul>
+ ${sec("煞曜破財提醒")}<ul class="cj-ul">${shaHTML}</ul>
+ ${wxLine?sec("八字看財")+`<p>${wxLine}</p>`:""}
+ ${sec("財運的時機")}<p>${timing}</p>
+ ${sec("理財建議")}<ul class="cj-ul">${tipHTML}</ul>
+ <p class="cj-note">以上為命理對財運傾向與時機的參考，不是投資建議；任何投資決定請依自身財務狀況審慎評估。</p></div>`;
+}
+function wealthPrintHTML(w){
+ if(!w)return "";
+ let s=`<div class="rp-sec">財運深析</div>`;
+ if(w.src.length)s+=`<div class="rp-row"><b>財源型態</b> ${w.src.map(x=>x.star+"："+x.src).join("；")}</div>`;
+ if(w.keep.length)s+=`<div class="rp-row"><b>守財</b> ${w.keep.map(x=>x.star+"："+x.txt).join("")}</div>`;
+ if(w.luPalName||w.ylu)s+=`<div class="rp-row"><b>祿星</b> ${w.luPalName?("祿存在"+w.luPalName+"宮"):""}${w.ylu?("　化祿"+w.ylu+"在"+w.yluPal+"宮"):""}${w.yji?("　化忌"+w.yji+"在"+w.yjiPal+"宮"):""}</div>`;
+ if(w.sha.length)s+=`<div class="rp-row"><b>煞曜</b> ${w.sha.map(x=>x.star+"（"+x.pal+"）").join("、")}</div>`;
+ return s;
+}
+const STAR_LOVE={
+ 紫微:{type:"有氣場、有地位或主見強的對象",self:"重視被尊重，希望伴侶配合自己",issue:"容易在關係裡爭主導權",tip:"把『聽』練好，關係會順很多"},
+ 天機:{type:"聰明、反應快、話題多但善變的對象",self:"想很多，情緒隨對方起伏",issue:"多疑與變動，感情容易動搖",tip:"少猜心，直接問"},
+ 太陽:{type:"開朗、照顧人、受歡迎的對象",self:"付出型，希望被看見",issue:"太熱情容易燃燒自己，或互搶鋒頭",tip:"留一點給自己，別把愛變成責任"},
+ 武曲:{type:"務實、能幹、不太浪漫的對象",self:"愛在心裡口難開，用做事表達",issue:"太剛硬理性，容易晚婚或聚少離多",tip:"學著說出感受，一句話比一件事更有用"},
+ 天同:{type:"溫和、好相處、帶點孩子氣的對象",self:"重感覺、享受戀愛",issue:"被動依賴，容易被寵壞或沒原則",tip:"主動經營，別只等對方來"},
+ 廉貞:{type:"有魅力、有原則也有脾氣的對象",self:"愛恨分明、佔有慾強",issue:"激情與糾纏，容易有第三方或分合課題",tip:"先定界線，再談深愛"},
+ 天府:{type:"穩重、務實、給人安全感的對象",self:"重承諾與保障",issue:"太求穩，感情可能平淡或現實考量多",tip:"偶爾製造驚喜，別讓關係只剩責任"},
+ 太陰:{type:"溫柔、體貼、顧家的對象",self:"細膩敏感，需要被懂",issue:"心事不說、暗自委屈",tip:"需求要講出來，對方不是你肚裡的蛔蟲"},
+ 貪狼:{type:"有魅力、愛玩、多才多藝的對象",self:"桃花旺、容易動心",issue:"選擇多反而難定，關係裡常有誘惑",tip:"慢一點，先看三個月再決定"},
+ 巨門:{type:"能言善道、愛講道理的對象",self:"敏感、愛分析，容易口角",issue:"溝通方式造成誤會，是非多",tip:"少講道理，多講感受"},
+ 天相:{type:"體面、有禮、願意配合的對象",self:"體貼，重視門當戶對",issue:"太在意他人眼光，或替對方扛太多",tip:"關係是兩個人的事，別活在別人的評價裡"},
+ 天梁:{type:"成熟、照顧型、常有年齡差的對象",self:"想被照顧或照顧人",issue:"長輩介入，或關係像親人少了戀人感",tip:"保留戀人的浪漫，不只做彼此的長輩"},
+ 七殺:{type:"獨立、有個性、不受拘束的對象",self:"愛得直接，需要空間",issue:"聚少離多、各自獨立，容易晚婚",tip:"給彼此空間，但約定固定的相處時間"},
+ 破軍:{type:"特別、不走尋常路的對象",self:"敢愛敢恨，關係起伏大",issue:"分合反覆、先破後立",tip:"別在氣頭上做決定"}
+};
+const LOVE_AUX={紅鸞:"正緣與喜事之星，緣分來時很明確。",天喜:"喜慶之星，常伴隨婚嫁或添丁之喜。",咸池:"桃花星——魅力強，但要分清真心與曖昧。",天姚:"風流桃花——人緣好、易生曖昧，宜自律。",孤辰:"獨處傾向——晚婚或享受單身，不是沒緣，是挑。",寡宿:"獨處傾向——需要自己的空間，伴侶要懂得尊重。",左輔:"關係裡容易有第三方介入或不只一段緣分，忠誠要靠自覺。",右弼:"關係裡容易有第三方介入或不只一段緣分，忠誠要靠自覺。",擎羊:"爭執與言語傷害——吵架別說狠話。",陀羅:"拖延與糾纏——該斷不斷最傷。",火星:"急合急離、脾氣衝——先冷靜再談。",鈴星:"悶氣與冷戰——有話要講出來。",地空:"聚少離多或過度理想化——多談現實。",地劫:"為感情付出耗損大——愛要有底線。",天刑:"刑剋孤高——宜晚婚或多磨合。"};
+const LOVE_PAL={命宮:"緣分會主動找上門，您本身就是磁場",夫妻:"正緣明確，婚姻緣分深",福德:"心先動，緣分多在興趣與價值觀相近的圈子",遷移:"在外地、旅途或工作外派時最容易遇到",子女:"桃花旺，多從社交與娛樂場合而來",交友:"透過朋友介紹或朋友圈發展",官祿:"職場或工作往來中相識",田宅:"家人、鄰里或家族介紹",兄弟:"同學、手足或同輩圈",父母:"長輩介紹或透過長輩關係",財帛:"因財務、生意往來而結緣",疾厄:"醫療、照護或運動場合相識"};
+function calcLove(zw,bz,adv,gender,by){
+ const HN={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+ const get=(b,main)=>b<0?[]:(zw.stars[b]||[]).filter(s=>main?s.type==="main":s.type!=="main");
+ const fb=_dzPal(zw,"夫妻"),mb=zw.ming;
+ let mains=get(fb,true),borrowed=false; if(!mains.length&&fb>=0){mains=get((fb+6)%12,true);borrowed=true;}
+ const modes=mains.map(s=>Object.assign({star:s.name,bright:s.bright||"",hua:s.hua?HN[s.hua]:""},STAR_LOVE[s.name]||{})).filter(x=>x.type);
+ const aux=[]; [[fb,"夫妻"],[mb,"命宮"]].forEach(pr=>{get(pr[0],false).forEach(s=>{if(LOVE_AUX[s.name])aux.push({star:s.name,pal:pr[1],txt:LOVE_AUX[s.name]});});});
+ const peach=[]; [[fb,"夫妻"],[mb,"命宮"]].forEach(pr=>{get(pr[0],true).forEach(s=>{if(s.name==="貪狼"||s.name==="廉貞")peach.push(s.name+"（"+pr[1]+"宮）");});});
+ const hongPal=_dzPalName(zw,_dzStarPal(zw,"紅鸞")), xiPal=_dzPalName(zw,_dzStarPal(zw,"天喜"));
+ const fuHua=(zw.stars[fb]||[]).filter(s=>s.hua).map(s=>s.name+"化"+HN[s.hua]);
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit);
+ const ln=curLN(), lnPal=zw.palaceName[ln.branch];
+ const lnJi=(ln.sihua&&ln.sihua[3])||"", lnLu=(ln.sihua&&ln.sihua[0])||"";
+ const lnJiPal=_dzPalName(zw,_dzStarPal(zw,lnJi)), lnLuPal=_dzPalName(zw,_dzStarPal(zw,lnLu));
+ let years=[]; try{years=(typeof marriageYears==="function")?(marriageYears(bz,gender,by,ln.year,10)||[]):[];}catch(e){years=[];}
+ return {borrowed,modes,aux,peach,hongPal,xiPal,fuHua,limName,pre,ln,lnPal,lnHong:(lnPal===hongPal),lnXi:(lnPal===xiPal),lnJi,lnJiPal,lnLu,lnLuPal,years,gender};
+}
+function lovePaidHTML(l,zw,adv,name,scores){
+ if(!l)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ const dim=(scores&&scores.dims||[]).filter(d=>d.k==="感情")[0];
+ let verdict=dim?`感情評分 <b>${dim.v}</b> 分（${dim.band}）。`:"";
+ verdict+=l.modes.length?`夫妻宮坐 ${l.modes.map(x=>x.star).join("、")}${l.borrowed?"（借對宮）":""}，您在感情裡最常吸引到的是「${l.modes[0].type}」，而您自己在關係中是「${l.modes[0].self}」的人。`:"夫妻宮與對宮皆無主星，感情樣貌受流年與對象影響大，相處模式比對象條件更重要。";
+ const modeHTML=l.modes.length?l.modes.map(x=>`<li><b>${x.star}</b>${x.bright?"（"+x.bright+"）":""}${x.hua?"・化"+x.hua:""}：吸引的對象——${x.type}；您的樣子——${x.self}。<span class="cj-care">課題：${x.issue}。建議：${x.tip}。</span></li>`).join(""):`<li>以命宮與福德宮的星性判斷相處模式，重點在溝通習慣。</li>`;
+ let fateHTML="";
+ if(l.hongPal)fateHTML+=`<li><b>紅鸞在${l.hongPal}宮</b>：${LOVE_PAL[l.hongPal]||""}。</li>`;
+ if(l.xiPal)fateHTML+=`<li><b>天喜在${l.xiPal}宮</b>：${LOVE_PAL[l.xiPal]||""}。</li>`;
+ if(l.peach.length)fateHTML+=`<li><b>桃花主星 ${l.peach.join("、")}</b>：魅力與桃花都旺，機會不缺，缺的是篩選。</li>`;
+ if(!fateHTML)fateHTML=`<li>緣分星未落在明顯位置，感情多靠相處日久生情，急不得。</li>`;
+ let auxHTML=l.aux.map(x=>`<li><b>${x.star}</b>（${x.pal}宮）：${x.txt}</li>`).join("");
+ if(l.fuHua.length)auxHTML+=`<li><b>夫妻宮四化：${l.fuHua.join("、")}</b>：${l.fuHua.some(x=>/化忌/.test(x))?"化忌入夫妻，感情是您一生最放不下也最執著的地方——學會放手與界線，是這輩子的功課。":""}${l.fuHua.some(x=>/化祿/.test(x))?"化祿入夫妻，感情緣分順、伴侶帶來福氣。":""}${l.fuHua.some(x=>/化權/.test(x))?"化權入夫妻，關係裡想作主，要留意強勢。":""}${l.fuHua.some(x=>/化科/.test(x))?"化科入夫妻，伴侶多體面有涵養，感情有貴人緣。":""}</li>`;
+ if(!auxHTML)auxHTML=`<li>夫妻宮與命宮沒有明顯煞曜或桃花雜曜，感情課題相對單純。</li>`;
+ const loveLim=/夫妻|福德|命宮|遷移|子女/.test(l.limName);
+ let timing=l.pre?"目前尚在童限，感情尚未是人生主題；":`現行大限在「${l.limName}」${loveLim?"——這十年感情容易有明顯進展或轉折（相識、定下來、或關係重整），是值得主動經營的時期":"，感情不是這步大限的主題，關係以穩定為主，不必勉強求變"}；`;
+ timing+=`${l.ln.year} ${l.ln.gan}${l.ln.zhi}流年命宮落「${l.lnPal}」`;
+ if(l.lnHong||l.lnXi)timing+=`，正逢${l.lnHong?"紅鸞":"天喜"}——今年是緣分與喜事明顯的一年，單身者多走出去、有伴者適合談定下來`;
+ if(l.lnLuPal==="夫妻")timing+=`；化祿（${l.lnLu}）落夫妻宮，今年感情有甜頭`;
+ if(l.lnJiPal==="夫妻")timing+=`；化忌（${l.lnJi}）落夫妻宮，今年感情容易卡關或多想，重大決定別急`;
+ timing+="。";
+ const yrHTML=l.years.length?`<p>未來十年感情可留意的年份：${l.years.map(y=>`<b>${y.year}</b>（${y.gz}・${y.age}歲）`).join("、")}。應期代表感情有明顯變化的機會，可能是相識、成婚，也可能是關係轉折，吉凶要配合當年四化看。</p>`:`<p>未來十年未見明顯配偶星或紅鸞天喜引動，感情步調相對平穩，重在日常經營。</p>`;
+ const tips=[]; l.modes.forEach(x=>{if(tips.length<3)tips.push(x.tip);});
+ if(l.aux.some(x=>x.star==="孤辰"||x.star==="寡宿"))tips.push("刻意安排社交與興趣活動，緣分需要場合");
+ if(l.aux.some(x=>x.star==="擎羊"||x.star==="火星"))tips.push("吵架設『暫停』規則，冷靜十分鐘再談");
+ if(l.aux.some(x=>x.star==="左輔"||x.star==="右弼"||x.star==="咸池"||x.star==="天姚"))tips.push("把界線講清楚，曖昧不拖、承諾不輕許");
+ const tipHTML=tips.slice(0,5).map(t=>`<li>${t}</li>`).join("");
+ return `<div class="rcard wide cjcard"><h3><span class="ic">緣</span>感情深析 · ${name}</h3>
+ <p class="cj-verdict">${verdict}</p>
+ ${sec("感情模式（夫妻宮）")}<ul class="cj-ul">${modeHTML}</ul>
+ ${sec("緣分從哪裡來（紅鸞・天喜・桃花星）")}<ul class="cj-ul">${fateHTML}</ul>
+ ${sec("煞曜、雜曜與四化的課題")}<ul class="cj-ul">${auxHTML}</ul>
+ ${sec("感情的時機")}<p>${timing}</p>${yrHTML}
+ ${sec("相處建議")}<ul class="cj-ul">${tipHTML}</ul>
+ <p class="cj-note">以上為命理對感情模式與時機的參考；關係的品質終究取決於兩個人的溝通與選擇。</p></div>`;
+}
+function lovePrintHTML(l){
+ if(!l)return "";
+ let s=`<div class="rp-sec">感情深析</div>`;
+ if(l.modes.length)s+=`<div class="rp-row"><b>感情模式</b> ${l.modes.map(x=>x.star+"：吸引 "+x.type+"；課題 "+x.issue).join("；")}</div>`;
+ if(l.hongPal||l.xiPal)s+=`<div class="rp-row"><b>緣分星</b> ${l.hongPal?("紅鸞在"+l.hongPal+"宮"):""}${l.xiPal?("　天喜在"+l.xiPal+"宮"):""}</div>`;
+ if(l.aux.length)s+=`<div class="rp-row"><b>煞曜雜曜</b> ${l.aux.map(x=>x.star+"（"+x.pal+"）").join("、")}</div>`;
+ if(l.years.length)s+=`<div class="rp-row"><b>感情應期</b> ${l.years.map(y=>y.year+"（"+y.age+"歲）").join("、")}</div>`;
  return s;
 }
 
@@ -4556,6 +4725,8 @@ function run(){
     adv.job={ind:((document.getElementById("jobInd")||{}).value||""),role:((document.getElementById("jobRole")||{}).value||"")};
     try{adv.career=calcCareer(zw,adv);}catch(e){adv.career=null;}
     try{adv.health=calcHealth(zw,bz,wx,adv);}catch(e){adv.health=null;}
+    try{adv.wealth=calcWealth(zw,bz,adv);}catch(e){adv.wealth=null;}
+    try{adv.love=calcLove(zw,bz,adv,gender,lunar.year);}catch(e){adv.love=null;}
     const scores=calcScores(zw,bz,wx,adv);
     const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
     render(name,gender,{y,m,d,hh,mm,solar:solarInfo},lunar,bz,zw,wx,adv,scores,fam,subText);
@@ -5608,6 +5779,27 @@ function buildAIText(){
     if(hh.checks.length)P("建議檢查："+hh.checks.join("；"));
     P("（傳統命理對體質傾向的參考，非醫療診斷；不適請諮詢合格醫師。）");
   }else P("（未產生健康深析資料）");
+
+  SEC("財運深析（系統演算）");
+  if(adv.wealth){const ww=adv.wealth;
+    if(ww.src.length)ww.src.forEach(function(x){P("財帛宮 "+x.star+(x.hua?("化"+x.hua):"")+(ww.borrowed?"（借對宮）":"")+"："+x.src+"。風格："+x.style+"。破財點："+x.risk+"。建議："+x.tip);});
+    else P("財帛宮與對宮皆無主星，財運隨大限流年起伏。");
+    ww.keep.forEach(function(x){P("田宅宮 "+x.star+"："+x.txt);});
+    if(ww.luPalName)P("祿存在"+ww.luPalName+"宮："+(LU_PAL[ww.luPalName]||""));
+    if(ww.ylu)P("生年化祿（"+ww.ylu+"）在"+(ww.yluPal||"－")+"宮："+(LU_PAL[ww.yluPal]||""));
+    if(ww.yji)P("生年化忌（"+ww.yji+"）在"+(ww.yjiPal||"－")+"宮"+(ww.jiInMoney?"（落財務宮位，理財須更有紀律）":""));
+    ww.sha.forEach(function(x){P(x.star+"（"+x.pal+"宮）："+x.txt);});
+  }else P("（未產生財運深析資料）");
+
+  SEC("感情深析（系統演算）");
+  if(adv.love){const ll=adv.love;
+    if(ll.modes.length)ll.modes.forEach(function(x){P("夫妻宮 "+x.star+(x.hua?("化"+x.hua):"")+(ll.borrowed?"（借對宮）":"")+"：吸引的對象——"+x.type+"；自己——"+x.self+"。課題："+x.issue+"。建議："+x.tip);});
+    else P("夫妻宮與對宮皆無主星，相處模式比對象條件更重要。");
+    if(ll.hongPal)P("紅鸞在"+ll.hongPal+"宮："+(LOVE_PAL[ll.hongPal]||""));
+    if(ll.xiPal)P("天喜在"+ll.xiPal+"宮："+(LOVE_PAL[ll.xiPal]||""));
+    ll.aux.forEach(function(x){P(x.star+"（"+x.pal+"宮）："+x.txt);});
+    if(ll.fuHua.length)P("夫妻宮四化："+ll.fuHua.join("、"));
+  }else P("（未產生感情深析資料）");
 
   SEC("八字重量（袁天罡稱骨）");
   const yg=bz.year.gan+bz.year.zhi;
@@ -8375,6 +8567,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>${curLN().year} 流年運程 ・ 綜合個人化論斷</li>
       <li>事業適性 ・ 現職差異詳盡分析（相符、落差、調整或轉型路徑、動與守的時機）</li>
       <li>健康深析 ・ 疾厄宮臟腑傾向、互動人體對照圖、五行失衡、大限流年引動與檢查建議</li>
+      <li>財運深析 ・ 財源型態、守財置產、祿存四化落宮、破財提醒、財機時機與理財建議</li>
+      <li>感情深析 ・ 感情模式、緣分從哪裡來、課題與相處建議、未來十年感情應期</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8557,6 +8751,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${careerPaidHTML(adv.career,zw,adv,name)}
 
   ${healthPaidHTML(adv.health,zw,adv,name)}
+
+  ${wealthPaidHTML(adv.wealth,zw,adv,name,scores)}
+
+  ${lovePaidHTML(adv.love,zw,adv,name,scores)}
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
@@ -8892,6 +9090,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-syn">${synthesis}</div>
     ${careerPrintHTML(adv.career)}
     ${healthPrintHTML(adv.health)}
+    ${wealthPrintHTML(adv.wealth)}
+    ${lovePrintHTML(adv.love)}
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
