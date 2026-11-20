@@ -1929,7 +1929,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.07.15";
+const SITE_VERSION_DATE="2026.11.20";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -2336,6 +2336,19 @@ const SIHUA={ // 年干四化：[祿,權,科,忌]
  戊:["貪狼","太陰","右弼","天機"],己:["武曲","貪狼","天梁","文曲"],
  庚:["太陽","武曲","太陰","天同"],辛:["巨門","太陽","文曲","文昌"],
  壬:["天梁","紫微","左輔","武曲"],癸:["破軍","巨門","太陰","貪狼"]};
+
+// 現行流年：依「農曆年」（正月初一為界）動態計算，與紫微定年慣例一致；記憶化供整份報告共用。
+// 取代舊版寫死的 2026／丙／午／火，跨年自動正確，無需每年改碼。
+let _curLN=null;
+function curLN(){
+  if(_curLN)return _curLN;
+  const n=new Date();let ly=n.getFullYear();
+  try{const L=solar2lunar(n.getFullYear(),n.getMonth()+1,n.getDate());if(L&&L.year)ly=L.year;}catch(e){}
+  const gi=((ly-4)%10+10)%10,zi=((ly-4)%12+12)%12;
+  const gan=GAN[gi],zhi=ZHI[zi];
+  _curLN={year:ly,gan:gan,zhi:zhi,branch:zi,wx:GAN_WX[gan],sihua:SIHUA[gan]};
+  return _curLN;
+}
 
 const PALACE_NAMES=["命宮","兄弟","夫妻","子女","財帛","疾厄","遷移","交友","官祿","田宅","福德","父母"];
 
@@ -3377,8 +3390,8 @@ function destinyGapSection(scores,name,dm,st,lk,adv,zw){
  let luckP=null;for(let i=0;i<lk.list.length;i++){const p=lk.list[i];if(adv.curAge>=p.age&&adv.curAge<p.age+10){luckP=p;break;}}
  let luckWx="",luckXi=false,luckJi=false,luckTg="";
  if(luckP){luckWx=GAN_WX[luckP.gan];luckXi=st.xi.includes(luckWx);luckJi=st.ji.includes(luckWx);luckTg=tenGod(dm,luckP.gan);}
- // —— 流年 2026 丙午（火）——
- const lnXi=st.xi.includes("火"),lnJi=st.ji.includes("火");
+ // —— 流年（依農曆年動態取天干五行；曾寫死 2026 丙午＝火）——
+ const lnXi=st.xi.includes(curLN().wx),lnJi=st.ji.includes(curLN().wx);
  // —— 落差總評 ——
  const sources=[];
  if(luckJi)sources.push("正行的大運走到忌神、時機未到");
@@ -4139,7 +4152,7 @@ function run(){
   if(system==="comp"&&!tv){err.textContent="綜合命盤需要出生時間以排定時柱與命宮，請填寫。";err.style.display="block";return;}
   const hh=bt.hh, mm=bt.mm;
   const timeDisp=bt.label?`${bt.label.split("·")[0].trim()}`:(tv||"（時辰未填）");
-  const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${timeDisp}　·　製表 2026`;
+  const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${timeDisp}　·　製表 ${new Date().getFullYear()}`;
 
   // 真太陽時校正：依出生地經度與時區中央經線，修正出生時刻供四柱／命宮排盤
   const cityEl=document.getElementById("city");
@@ -4172,7 +4185,7 @@ function run(){
     const _zwYearZhi=ZHI[((lunar.year-4)%12+12)%12];
     const zw=calcZiwei(lunar,chh,_zwYearGan,_zwYearZhi,gender);
     const wx=wuxingCount(bz);
-    const curAge=2026-y+1;                          // 虛歲
+    const curAge=curLN().year-lunar.year+1;         // 虛歲：現行農曆年 − 出生農曆年 + 1（正統虛歲，過農曆年長一歲）
     const adv={
       strength:dayStrength(bz),
       luck:calcLuck(cy,cm,cd,bz,gender,chh,cmm),
@@ -4737,7 +4750,7 @@ function renderVedic(name,gender,sol,sub){
 function renderNum(name,gender,sol,sub){
   name=esc4kol(name);   // M2 防 XSS：顯示前轉義
   const lp=lifePath(sol.y,sol.m,sol.d);
-  const py=personalYear(sol.m,sol.d,2026);
+  const py=personalYear(sol.m,sol.d,curLN().year);
   const nd=NUM_DESC[lp];
   const pyd=NUM_DESC[py];
   const html=`
@@ -5204,7 +5217,7 @@ function buildAIText(){
   P("財為養命之源，然「財旺不如身旺」——能任財者方能真正得財。");
 
   SEC("感情婚姻應期");
-  var _my=marriageYears(bz,gender,by,2026,10);
+  var _my=marriageYears(bz,gender,by,curLN().year,10);
   P(_my.length?("感情婚姻可留意的年份："+_my.map(function(y){return y.year+"（"+y.gz+"・"+y.age+"歲）";}).join("、")+"。應期主感情有明顯變化，可能成婚亦可能關係轉折，吉凶需綜合喜忌。"):"未來十年未見明顯配偶星／桃花／紅鸞天喜引動，感情步調相對平穩。");
 
   SEC("命盤綜合評分（系統演算）");
@@ -5262,15 +5275,15 @@ function buildAIText(){
   });
 
   SEC("流年（近六年・含流年四化）");
-  for(let Y=2026;Y<2032;Y++){
+  for(let Y=curLN().year;Y<curLN().year+6;Y++){
     const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12;
     const gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];
     P(Y+" "+gan+zhi+"（虛歲 "+(Y-by+1)+"）流年命宮："+zw.palaceName[zi]+"　四化："+sh[0]+"祿、"+sh[1]+"權、"+sh[2]+"科、"+sh[3]+"忌");
   }
 
-  SEC("2026 丙午年 · 流月吉凶（依節氣定月）");
+  SEC(curLN().year+" "+curLN().gan+curLN().zhi+"年 · 流月吉凶（依節氣定月）");
   const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
-  const Y2=2026,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
+  const Y2=curLN().year,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
   for(let k=0;k<12;k++){
     const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg];
     const mark=st.xi.includes(mwx)?"吉（逢喜用）":st.ji.includes(mwx)?"留意（逢忌神）":"平";
@@ -5295,7 +5308,7 @@ function buildAIText(){
   P("2) 事業方向與財運建議（參官祿宮、財帛宮、八字格局、喜用神行業）。");
   P("3) 感情婚姻與人際課題（參夫妻宮、交友宮、日支夫妻宮）。");
   P("4) 健康須留意之處（參疾厄宮、五行最弱與失衡之處）。");
-  P("5) 今年 2026 流年與流月的重點提醒、未來大運走勢及趨吉避凶之道。");
+  P("5) 今年 "+curLN().year+" 流年與流月的重點提醒、未來大運走勢及趨吉避凶之道。");
   P("6) 喜用神在生活中的具體開運應用（顏色、方位、行業、習慣）。");
   P("7) 姓名與先天命格的契合度，及後天造命的具體建議。");
   P("請以白話、具體、溫暖而正向務實的方式逐項說明，並適度引用上方命盤的實際星曜與數據佐證。");
@@ -5362,7 +5375,7 @@ function buildICS(){
       "END:VEVENT"
     );
   }
-  const Y=2026; // 流月以當前流年為準
+  const Y=curLN().year; // 流月以當前流年為準（依農曆年動態）
   const gi=((Y-4)%10+10)%10;
   const baseM=[2,4,6,8,0][gi%5];
   const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
@@ -5384,7 +5397,7 @@ function buildICS(){
     add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 聖源大師．人生實用說明書系統");
   }
   // 近六年流年提醒（每年立春當天）
-  for(let yy=2026;yy<2032;yy++){
+  for(let yy=curLN().year;yy<curLN().year+6;yy++){
     const ygi=((yy-4)%10+10)%10,yzi=((yy-4)%12+12)%12;
     const ygan=GAN[ygi],yzhi=ZHI[yzi],sh=SIHUA[ygan];
     const pname=zw.palaceName[yzi];
@@ -5418,7 +5431,7 @@ function runCalExport(){
   _downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
   const body='<div class="aiexp">'
     +'<p class="aihint">已為您產生 <b>'+(D.name||"命主")+" · 個人農民曆.ics</b> 行事曆檔，內含：<br>"
-    +'・<b>2026 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
+    +'・<b>'+curLN().year+' 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
     +'・<b>近六年流年提醒</b>（每年立春當天，含當年四化重點）<br>'
     +'・<b>未來大運切換</b>里程碑<br>'
     +'每筆皆設前一天彈出提醒，匯入後即成為您隨身的個人農民曆。</p>'
@@ -7201,7 +7214,7 @@ async function ecHandleReturn(){
 const LN_DOMAIN={命宮:"整體運勢與自我",兄弟:"手足與人際",夫妻:"感情與婚姻",子女:"子女、桃花與創作",財帛:"正財與理財",疾厄:"健康與身體",遷移:"外出、際遇與貴人",交友:"人際與部屬",僕役:"人際與部屬",官祿:"事業與工作",田宅:"家宅與不動產",福德:"福分、心性與享受",父母:"長輩與文書"};
 function lnDomain(p){return LN_DOMAIN[p]||((p||"該")+"領域");}
 function lnFindPalace(zw,starName){for(let b=0;b<12;b++){if((zw.stars[b]||[]).some(s=>s&&s.name===starName))return zw.palaceName[b];}return null;}
-function lnCurYear(){try{return new Date().getFullYear();}catch(e){return 2026;}}
+function lnCurYear(){try{return curLN().year;}catch(e){return new Date().getFullYear();}}
 function lnUnlockedLocal(key,year){try{return localStorage.getItem('zw_ln_'+key+'_'+year)==='1';}catch(e){return false;}}
 async function lnStatus(key,nh,year){try{const r=await fetch(LC_API.replace(/\/+$/,'')+'/liunian/check?key='+encodeURIComponent(key)+'&year='+year+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});const j=await r.json();return {paid:!!(j&&j.paid),price:(j&&j.price)||100,returning:!!(j&&j.returning)};}catch(e){return {paid:false,price:100,returning:false};}}
 function lnBuildBody(year){
@@ -7341,7 +7354,7 @@ function zwPalace(b){
   let summary=`對 ${name} 而言，「${pname}」這一宮坐落在 ${gz}。`;
   if(isMing)summary+="此處正是您的命宮，是全盤核心，最能代表您的本性與一生格局走向。";
   if(isCurLim)summary+=`您目前的大限（${lim.start}–${lim.end} 歲）正行經此宮，這十年的人生重心、機運與課題，便以此宮星性為主軸。`;
-  if(isLn)summary+="2026 丙午流年亦行入此宮，今年運勢起伏與此宮關係密切。";
+  if(isLn)summary+=curLN().year+" "+curLN().gan+curLN().zhi+"流年亦行入此宮，今年運勢起伏與此宮關係密切。";
   summary+="可將上方星曜特質，對照「這一宮看什麼」所代表的人生領域，相互參詳。";
   const body=`
     ${badges?`<div class="zwbadges">${badges}</div>`:""}
@@ -7380,7 +7393,7 @@ function zwLiunian(Y){
   const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name,birthYear=D.birthYear,dm=D.dm,st=D.adv.strength;
   const gi=((Y-4)%10+10)%10, zi=((Y-4)%12+12)%12;
   const gan=GAN[gi], zhi=ZHI[zi], sx=SHENGXIAO[zhi];
-  const age=Y-birthYear+1, isCur=Y===2026;
+  const age=Y-birthYear+1, isCur=Y===curLN().year;
   // 流月（五虎遁・年上起月）
   const baseM=[2,4,6,8,0][gi%5];   // 正月(寅)月干起點
   const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
@@ -7671,7 +7684,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 紫微命盤 HTML
   const cellPos={5:[1,1],6:[1,2],7:[1,3],8:[1,4],4:[2,1],9:[2,4],3:[3,1],10:[3,4],2:[4,1],1:[4,2],0:[4,3],11:[4,4]};
   let chartCells="";
-  const liunianBranch=6; // 2026 丙午年，流年命宮在午
+  const liunianBranch=curLN().branch; // 現行流年命宮地支（依農曆年動態）
   for(let b=0;b<12;b++){
     const [r,c]=cellPos[b];
     const isMing=b===zw.ming, isShen=b===zw.shen;
@@ -7760,7 +7773,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   }).join("");
 
   // ===== 流年（當年詳解；未來各年改由「流年批」年度回訪，見報告內引流）=====
-  const CUR_YEAR=(function(){try{return new Date().getFullYear();}catch(e){return 2026;}})();
+  const CUR_YEAR=(function(){try{return curLN().year;}catch(e){return new Date().getFullYear();}})();
   const _lgi=((CUR_YEAR-4)%10+10)%10, _lzi=((CUR_YEAR-4)%12+12)%12;
   const _lgan=GAN[_lgi], _lzhi=ZHI[_lzi], _lsx=SHENGXIAO[_lzhi];
   const _lpc=zw.palaceName[_lzi], _lage=CUR_YEAR-sol.y+1;
@@ -7828,7 +7841,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const jiChouTxt=`忌神為 <b style="color:#d47f8f">${st.ji.join("、")}</b>——${st.level==="身強"?"日主已旺，再逢比劫印星生扶則過猶不及，宜避之。":st.level==="身弱"?"日主偏弱，再逢財官食傷洩剋則力不從心，宜避之。":"命局中和，逢最旺一氣再加強則失衡，宜節之。"}仇神（生忌神者）為 <b style="color:#c98fa0">${chouGod.length?chouGod.join("、"):"—"}</b>，在旁助長忌神之勢，遇之亦宜留意化解。`;
 
   // ===== 感情婚姻應期（缺口5）=====
-  const marYears=marriageYears(bz,gender,sol.y,2026,10);
+  const marYears=marriageYears(bz,gender,sol.y,curLN().year,10);
   const marYearsHTML=marYears.length
     ?`<p>感情婚姻可留意的年份：${marYears.map(y=>`<b style="color:var(--gold)">${y.year}（${y.gz}・${y.age}歲）</b>`).join("、")}。<br><span style="color:var(--ink-faint)">應期主「感情有明顯變化」，可能是成婚、也可能是關係轉折，吉凶需綜合喜忌。</span></p>`
     :`<p>未來十年流年未見明顯配偶星／桃花／紅鸞天喜引動，感情步調相對平穩；緣分宜主動經營、順其自然。</p>`;
@@ -7883,9 +7896,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     `<button class="flybtn ${b===zw.ming?'on':''}" id="flybtn-${b}" onclick="zwFly(${b})">${zw.palaceName[b]}<small style="opacity:.6;margin-left:3px">${zw.palaceGan[b]}</small></button>`
   ).join("")+`<button class="flybtn syn" id="flybtn-syn" onclick="zwFlySyn()">生年四化（${zw.yearGan}干）</button>`;
 
-  // ===== 流年 2026 丙午 =====
-  const lnSihua=SIHUA["丙"];
-  const lnBranch=6, lnPalaceName=zw.palaceName[lnBranch];
+  // ===== 流年（依農曆年動態；曾寫死 2026 丙午）=====
+  const lnSihua=curLN().sihua;
+  const lnBranch=curLN().branch, lnPalaceName=zw.palaceName[lnBranch];
   const lnStars=(zw.stars[lnBranch]||[]).map(s=>s.name).join("、")||"空宮";
   const curLimName=adv.limits.curLimLabel;
 
@@ -7893,7 +7906,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const dirTxt=lk.forward?"順行":"逆行";
   const synthesis=`把 <b>${name}</b> 這張盤整個看下來：你的日主（代表你本人）是 <b style="color:var(--gold)">${dm}（${GAN_WX[dm]}）</b>，整體體質偏「${st.level}」，命裡最補你、要多親近的是 <b style="color:var(--jade)">${st.xi.join("、")}</b>，最不利、要少碰的是 <b style="color:#d47f8f">${st.ji.join("、")}</b>；八字以出生月份（月令）定出「<b style="color:var(--gold)">${adv.baziGe.name}</b>」這個格局，這就是你這輩子人生劇本的主軸。紫微這邊，命宮坐 <b style="color:var(--gold)">${mingStarTxt}</b>（在 ${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}）、搭配 <b>${zw.juName}</b>，格局屬「<b style="color:var(--gold)">${adv.ge[0].n}</b>」——這決定了你天生的個性底色與人生方向。`
     +`大運（每十年一步的運勢）從 <b>${lk.startAge}</b> 歲起運、${dirTxt}走，你現在虛歲 <b>${adv.curAge}</b>，正走在「<b style="color:var(--purple-glow)">${curLimName}</b>」這步大限，這十年就順著這個宮位所管的領域去經營、把重心放在這裡最順。`
-    +`2026 丙午流年，運勢走到「<b style="color:#e08a7a">${lnPalaceName}</b>」（坐 ${lnStars}），丙年的天干引動了 <b style="color:var(--jade)">${lnSihua[0]}化祿</b>（財福機緣，可積極把握）、<b style="color:#e0a85a">${lnSihua[1]}化權</b>（掌握主導、能擔當之處）、<b style="color:#7fa6d4">${lnSihua[2]}化科</b>（好名聲、貴人、文書之喜）、<b style="color:#d47f8f">${lnSihua[3]}化忌</b>（容易牽掛卡關、宜守不宜攻之處）——把祿權科的機會抓住、對化忌的宮位小心一點，就能趨吉避凶。`
+    +`${curLN().year} ${curLN().gan}${curLN().zhi}流年，運勢走到「<b style="color:#e08a7a">${lnPalaceName}</b>」（坐 ${lnStars}），${curLN().gan}年的天干引動了 <b style="color:var(--jade)">${lnSihua[0]}化祿</b>（財福機緣，可積極把握）、<b style="color:#e0a85a">${lnSihua[1]}化權</b>（掌握主導、能擔當之處）、<b style="color:#7fa6d4">${lnSihua[2]}化科</b>（好名聲、貴人、文書之喜）、<b style="color:#d47f8f">${lnSihua[3]}化忌</b>（容易牽掛卡關、宜守不宜攻之處）——把祿權科的機會抓住、對化忌的宮位小心一點，就能趨吉避凶。`
     +`總結一句：多發揮你 ${GAN_WX[dm]} 的長處、有意識地補「${st.xi.join("、")}」這股喜用之氣；待人真誠、做事有恆，順著四化的指引、踩準大限的節奏，就能把先天這張命，一步步打成後天實實在在的好運。`;
 
   // 存全域供觸控彈窗讀取
@@ -7966,7 +7979,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>八字月令格局・成格之機・用神趨吉</li>
       <li>命帶神煞・紫微格局・三方四正</li>
       <li>命宮主星精析・財官婚遷福德 逐宮論斷</li>
-      <li>2026 流年運程 ・ 綜合個人化論斷</li>
+      <li>${curLN().year} 流年運程 ・ 綜合個人化論斷</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8204,7 +8217,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     `<b>補強留意</b>　「${lowDim.k}」相對較弱（${lowDim.v}分），平日多用心經營、預作準備，循序漸進可化弱為穩。`,
     `<b>五行調候</b>　命局喜 <b>${st.xi.join("、")}</b>，宜親近相關方位色系與行業；忌 <b>${st.ji.join("、")}</b>，遇之以喜用神化解。`,
     `<b>當前大限</b>　現行虛歲 ${adv.curAge}，正走「${curLimName}」大限（起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運），宜順此宮位星性佈局十年重心。`,
-    `<b>2026 流年</b>　行運入「${lnPalaceName}」，把握 ${lnSihua[0]}化祿之機、慎防 ${lnSihua[3]}化忌之耗，趨吉避凶、穩中求進。`
+    `<b>${curLN().year} 流年</b>　行運入「${lnPalaceName}」，把握 ${lnSihua[0]}化祿之機、慎防 ${lnSihua[3]}化忌之耗，趨吉避凶、穩中求進。`
   ].map(t=>`<li>${t}</li>`).join("");
 
   // ===== 完整資料頁（盡可能完整呈現命盤所有數據） =====
@@ -8235,10 +8248,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   lk.list.forEach((p,i)=>{const cur=adv.curAge>=p.age&&adv.curAge<p.age+10;dyRows+=`<tr${cur?' class="cur"':''}><td class="c">${i+1}</td><td class="c"><b>${p.age}-${p.age+9}</b></td><td class="c"><b>${p.gan}${p.zhi}</b></td><td class="c">${tenGod(dm,p.gan)}</td><td class="c g">${naYin(p.gan,p.zhi)}</td><td class="c">${cur?'◆現行':''}</td></tr>`;});
   // 近六年流年
   let lnRows="";
-  for(let Y=2026;Y<2032;Y++){const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12,gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];const cur=Y===2026;lnRows+=`<tr${cur?' class="cur"':''}><td class="c"><b>${Y}</b></td><td class="c">${gan}${zhi}</td><td class="c">${Y-sol.y+1}</td><td class="c">${zw.palaceName[zi]}</td><td>${sh[0]}祿·${sh[1]}權·${sh[2]}科·${sh[3]}忌</td></tr>`;}
-  // 2026 流月吉凶
+  for(let Y=curLN().year;Y<curLN().year+6;Y++){const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12,gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];const cur=Y===curLN().year;lnRows+=`<tr${cur?' class="cur"':''}><td class="c"><b>${Y}</b></td><td class="c">${gan}${zhi}</td><td class="c">${Y-sol.y+1}</td><td class="c">${zw.palaceName[zi]}</td><td>${sh[0]}祿·${sh[1]}權·${sh[2]}科·${sh[3]}忌</td></tr>`;}
+  // 現行流年流月吉凶（依農曆年動態）
   const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
-  const Y2=2026,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
+  const Y2=curLN().year,gi2=((Y2-4)%10+10)%10,baseM=[2,4,6,8,0][gi2%5];
   let lmCells=[];
   for(let k=0;k<12;k++){const mg=GAN[(baseM+k)%10],mzh=ZHI[(2+k)%12],mwx=GAN_WX[mg];const mark=st.xi.includes(mwx)?'吉':st.ji.includes(mwx)?'留意':'平';const cls=mark==='吉'?'good':mark==='留意'?'low':'';lmCells.push(`<td class="${cls}"><b>${lmLabels[k]}月</b><br>${mg}${mzh}<br><span class="g">${mwx}・${tenGod(dm,mg)}</span><br><b>${mark}</b></td>`);}
   const lmHTML=`<table class="rp-tbl lm"><tbody><tr>${lmCells.slice(0,6).join("")}</tr><tr>${lmCells.slice(6).join("")}</tr></tbody></table>`;
@@ -8367,8 +8380,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   let dyProse=_curStep?`<div class="rp-row rp-curlim"><b>現行大限 ${_curStep.age}-${_curStep.age+9} 歲（${_curStep.gan}${_curStep.zhi}・${_curTg}）</b>：${LUCK_TG[_curTg]||'此十年宜把握星曜運勢、順勢佈局。'}</div>`:'';
   dyProse+=lk.list.map(p=>{const tg=tenGod(dm,p.gan);const cur=adv.curAge>=p.age&&adv.curAge<p.age+10;return `<div class="rp-row${cur?'':' g'}">${cur?'◆ ':''}${p.age}-${p.age+9} 歲（${p.gan}${p.zhi}・${tg}）：${LUCK_TG[tg]||'此十年宜把握星曜運勢、順勢佈局。'}</div>`;}).join("");
   // 流年白話
-  const _lnTg=tenGod(dm,GAN[((2026-4)%10+10)%10]);
-  const lnProse=`<div class="rp-row"><b>2026 丙午年</b>（虛歲 ${2026-sol.y+1}・流年命宮${zw.palaceName[((2026-4)%12+12)%12]}）：流年走「${_lnTg}」之氣。${LUCK_TG[_lnTg]||''}　本年四化＝${SIHUA['丙'][0]}化祿、${SIHUA['丙'][1]}化權、${SIHUA['丙'][2]}化科、${SIHUA['丙'][3]}化忌，宜趁化祿之機進取、防化忌之耗守成。</div>`;
+  const _lnTg=tenGod(dm,curLN().gan);
+  const lnProse=`<div class="rp-row"><b>${curLN().year} ${curLN().gan}${curLN().zhi}年</b>（虛歲 ${adv.curAge}・流年命宮${zw.palaceName[curLN().branch]}）：流年走「${_lnTg}」之氣。${LUCK_TG[_lnTg]||''}　本年四化＝${curLN().sihua[0]}化祿、${curLN().sihua[1]}化權、${curLN().sihua[2]}化科、${curLN().sihua[3]}化忌，宜趁化祿之機進取、防化忌之耗守成。</div>`;
   // 姓名學白話（數理吉凶）
   let nameProse="";
   if(_na){
