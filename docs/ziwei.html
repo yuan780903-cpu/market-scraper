@@ -634,6 +634,19 @@ header .meta b{color:var(--gold);font-weight:500}
 .lnbadge{position:absolute;top:7px;left:8px;background:#d9542f;color:#fff;font-size:.6rem;padding:1px 5px;border-radius:4px;letter-spacing:1px}
 
 /* 綜合論斷 */
+/* 事業適性與現職差異分析 */
+.cjcard .cj-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.cjcard .cj-h{font-weight:700;color:var(--gold-deep);margin:4px 0 2px;letter-spacing:.5px}
+.cjcard .cj-list{list-style:none;margin:4px 0 0;padding:0}
+.cjcard .cj-list li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.95rem}
+.cjcard .cj-score{color:var(--gold-deep);font-weight:700;white-space:nowrap}
+.cjcard .cj-cur{margin-top:14px;line-height:1.9}
+.cjcard .cj-big{font-size:1.3rem;color:var(--gold-bright)}
+.cjcard .cj-note{font-size:.84rem;color:var(--ink-faint);line-height:1.75;margin-top:10px}
+.cjcard .cj-sec{margin:16px 0 4px;font-weight:700;color:var(--gold-deep);letter-spacing:.5px}
+.cjcard .cj-ul{margin:4px 0 0 1.1em;padding:0;line-height:1.9}
+.cjcard .cj-verdict{font-weight:600;line-height:1.95}
+@media(max-width:640px){.cjcard .cj-cols{grid-template-columns:1fr}}
 .synthesis{background:var(--wash);border:1px solid var(--gold);
   border-radius:20px;padding:34px 30px;position:relative;overflow:hidden;box-shadow:0 18px 40px -30px var(--shadow)}
 .synthesis .syn-mark{font-family:"LXGW WenKai TC";position:absolute;right:6px;top:-22px;font-size:8rem;color:rgba(0,0,0,.05)}
@@ -1787,6 +1800,14 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
           </optgroup>
         </select>
       </div>
+      <div class="field">
+        <label>現有工作 · 產業領域（選填）</label>
+        <select id="jobInd"><option value="">尚未選擇</option></select>
+      </div>
+      <div class="field">
+        <label>現有工作 · 職務性質（選填）</label>
+        <select id="jobRole"><option value="">尚未選擇</option></select>
+      </div>
     </div>
 
     <details class="famwrap" id="famwrap">
@@ -1929,7 +1950,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.20";
+const SITE_VERSION_DATE="2026.11.20.2";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -2856,6 +2877,210 @@ function palaceMain(zw,name){
  const ms=(zw.stars[b]||[]).filter(s=>s.type==="main").map(s=>s.name);
  return ms.length?ms.join("、"):"空宮";
 }
+/* ================= 事業適性與現職差異分析（產業 27 類 × 職務性質 10 類） ================= */
+// 產業領域：wx＝該領域偏向之五行（供八字喜用神加減分）
+const JOB_IND=[
+ {id:"sales",n:"業務／銷售／門市",wx:["水","火"]},
+ {id:"mkt",n:"行銷／廣告／公關",wx:["火","水"]},
+ {id:"mgmt",n:"企業管理／經營／幕僚",wx:["土","金"]},
+ {id:"admin",n:"行政／總務／人資／秘書",wx:["土"]},
+ {id:"acct",n:"財務／會計／稅務",wx:["金","土"]},
+ {id:"fin",n:"金融／保險／投資／證券",wx:["金","水"]},
+ {id:"it",n:"資訊／軟體／網路／AI",wx:["火","金"]},
+ {id:"eng",n:"工程／製造／機械／電子",wx:["金","火"]},
+ {id:"prod",n:"生產作業／品管／廠務",wx:["金","土"]},
+ {id:"med",n:"醫療／護理／藥事／醫檢",wx:["木","水"]},
+ {id:"care",n:"照護／長照／社工／保母",wx:["土","木"]},
+ {id:"edu",n:"教育／教學／補教",wx:["木","火"]},
+ {id:"res",n:"學術研究／科研",wx:["木","水"]},
+ {id:"design",n:"設計／美術／攝影／影視",wx:["火","木"]},
+ {id:"media",n:"文字／出版／媒體／內容創作",wx:["木","水"]},
+ {id:"food",n:"餐飲／旅宿／觀光",wx:["火","水"]},
+ {id:"retail",n:"零售／客服／美容美髮",wx:["火","土"]},
+ {id:"gov",n:"公職／公務／政務",wx:["土","火"]},
+ {id:"police",n:"軍警／消防／保全",wx:["金","火"]},
+ {id:"law",n:"法律／會計師／專業事務所",wx:["金","木"]},
+ {id:"agri",n:"農林漁牧／環保／能源",wx:["木","土"]},
+ {id:"logi",n:"物流／運輸／駕駛／航運",wx:["水","金"]},
+ {id:"build",n:"營建／工程／不動產／仲介",wx:["土","金"]},
+ {id:"free",n:"自由接案／網路電商／自營",wx:["水","火"]},
+ {id:"spirit",n:"宗教／命理／身心靈／諮商",wx:["木","水"]},
+ {id:"sport",n:"運動／健身／休閒娛樂",wx:["火","木"]},
+ {id:"none",n:"學生／待業／家管／退休",wx:[]}
+];
+// 職務性質
+const JOB_ROLE=[
+ {id:"lead",n:"管理職（主管／經營／帶人）"},
+ {id:"pro",n:"專業職（執照／顧問／師字輩）"},
+ {id:"tech",n:"技術職（工程／研發／技藝）"},
+ {id:"biz",n:"業務職（銷售／開發／客戶經營）"},
+ {id:"plan",n:"企劃創意職（企劃／設計／內容）"},
+ {id:"support",n:"行政支援職（文書／助理／總務）"},
+ {id:"ops",n:"操作生產職（現場／作業／技術員）"},
+ {id:"service",n:"服務第一線（門市／客服／照護）"},
+ {id:"teach",n:"教學研究職（教師／講師／研究員）"},
+ {id:"owner",n:"自營創業（老闆／接案／自由工作者）"},
+ {id:"junior",n:"基層職（新進／一般員工／助理）"},
+ {id:"juniortech",n:"基層技術人員（技術員／操作員／學徒）"},
+ {id:"none",n:"尚未就業／學生／其他"}
+];
+// 星曜 → 產業／職務親和度（1–3）與白話理由
+const STAR_JOB={
+ 紫微:{why:"領導統御、氣度與決斷",ind:{mgmt:3,gov:2,fin:2,build:1,police:1,law:1},role:{lead:3,owner:2,pro:1}},
+ 天機:{why:"機敏善謀、企劃與分析",ind:{it:3,res:2,mgmt:2,mkt:2,design:1,media:1,spirit:1},role:{plan:3,pro:2,tech:2,teach:1}},
+ 太陽:{why:"光明外放、公眾服務與名望",ind:{gov:3,edu:2,mkt:2,sales:1,police:1,media:1,sport:1},role:{lead:2,biz:2,teach:2,service:1}},
+ 武曲:{why:"務實剛毅、財務與執行力",ind:{fin:3,acct:3,eng:2,prod:2,police:2,build:1,logi:1},role:{tech:2,lead:2,ops:2,pro:1}},
+ 天同:{why:"溫和親善、享受與服務",ind:{food:3,care:2,retail:2,edu:1,sport:1,admin:1},role:{service:3,support:2,plan:1}},
+ 廉貞:{why:"原則與變通並存、公關與法紀",ind:{law:2,police:2,mkt:2,design:2,it:1,gov:1},role:{biz:2,pro:2,plan:2,lead:1}},
+ 天府:{why:"穩重守成、理財管事",ind:{acct:3,admin:2,build:2,fin:2,mgmt:2,gov:1},role:{support:2,lead:2,pro:2}},
+ 太陰:{why:"細膩內斂、照顧與理財",ind:{acct:2,admin:2,care:2,build:2,design:1,media:1,med:1},role:{support:3,service:2,pro:1,plan:1}},
+ 貪狼:{why:"多才多藝、交際與企圖心",ind:{sales:3,mkt:3,food:2,sport:2,free:2,design:1,retail:1},role:{biz:3,plan:2,owner:2,service:1}},
+ 巨門:{why:"口才思辨、鑽研與說服",ind:{law:3,edu:2,media:2,sales:2,res:1,spirit:1},role:{pro:3,teach:2,biz:2}},
+ 天相:{why:"忠厚協調、幕僚與服務",ind:{admin:3,mgmt:2,gov:2,food:1,care:1},role:{support:3,service:2,lead:1,pro:1}},
+ 天梁:{why:"庇蔭照顧、醫教宗教",ind:{med:3,edu:3,gov:2,care:2,spirit:2,res:1,law:1},role:{teach:3,pro:2,lead:1,service:1}},
+ 七殺:{why:"果決衝勁、開拓與攻堅",ind:{police:3,eng:2,sales:2,free:2,sport:2,build:1,logi:1},role:{owner:3,lead:2,tech:2,biz:2,ops:1}},
+ 破軍:{why:"破舊立新、冒險與改革",ind:{free:3,it:2,design:2,logi:2,eng:1,sport:1,mkt:1},role:{owner:3,tech:2,plan:2,ops:1}},
+ 文昌:{why:"文書學術、考試與制度",ind:{edu:2,res:2,media:2,law:1,acct:1,gov:1},role:{pro:2,teach:2,support:1}},
+ 文曲:{why:"才藝口才、藝文與表達",ind:{design:2,media:2,edu:1,spirit:1,mkt:1},role:{plan:2,teach:1,biz:1}},
+ 左輔:{why:"貴人助力、協作執行",ind:{admin:1,mgmt:1},role:{support:1,lead:1}},
+ 右弼:{why:"貴人助力、協作執行",ind:{admin:1,mgmt:1},role:{support:1,lead:1}},
+ 天魁:{why:"長輩提攜、體制內運",ind:{gov:1,edu:1},role:{pro:1,lead:1}},
+ 天鉞:{why:"貴人提攜、體制內運",ind:{gov:1,edu:1},role:{pro:1,lead:1}},
+ 祿存:{why:"財祿穩聚、守成理財",ind:{fin:1,acct:1},role:{pro:1,support:1}},
+ 天馬:{why:"動態奔波、外地與流動",ind:{logi:2,sales:1,free:1},role:{biz:1,owner:1}},
+ 擎羊:{why:"銳利競爭、技術與攻堅",ind:{police:1,eng:1,med:1},role:{tech:1,ops:1}},
+ 陀羅:{why:"耐磨韌性、反覆琢磨",ind:{prod:1,res:1},role:{tech:1,ops:1}},
+ 火星:{why:"爆發行動力",ind:{sport:1,sales:1},role:{biz:1,ops:1}},
+ 鈴星:{why:"深沉專注力",ind:{res:1,it:1},role:{tech:1,pro:1}},
+ 地空:{why:"超脫思維、創意哲思",ind:{spirit:1,design:1},role:{plan:1}},
+ 地劫:{why:"超脫思維、創意哲思",ind:{spirit:1,design:1},role:{plan:1}}
+};
+// 基層職／基層技術人員 親和度補充（配合、穩定、耐磨、動手）
+(function(){const X={天同:{junior:2,juniortech:1},天相:{junior:2},太陰:{junior:2},左輔:{junior:1},右弼:{junior:1},陀羅:{junior:1,juniortech:2},武曲:{juniortech:2},七殺:{juniortech:2},擎羊:{juniortech:2},火星:{juniortech:1},鈴星:{juniortech:1},破軍:{juniortech:1},天機:{juniortech:1},祿存:{junior:1},天府:{junior:1}};for(const s in X){if(STAR_JOB[s])Object.assign(STAR_JOB[s].role,X[s]);}})();
+function calcCareer(zw,adv){
+ const st=(adv&&adv.strength)||{xi:[],ji:[],level:""};
+ const PW={"官祿":[1.0,0.45],"命宮":[0.8,0.35],"財帛":[0.4,0.15],"遷移":[0.35,0.12],"福德":[0.25,0.1]};
+ const BR={"廟":1.2,"旺":1.12,"得":1.05,"利":1.0,"平":0.95,"不":0.85,"陷":0.78};
+ const HU={lu:1.12,quan:1.12,ke:1.06,ji:0.82};
+ const indS={},roleS={},contribInd={},contribRole={},used=[];
+ JOB_IND.forEach(j=>indS[j.id]=0);JOB_ROLE.forEach(r=>roleS[r.id]=0);
+ for(let b=0;b<12;b++){
+  const pn=zw.palaceName[b]; if(!PW[pn])continue;
+  const wm=PW[pn][0],wa=PW[pn][1],isShen=(b===zw.shen);
+  (zw.stars[b]||[]).forEach(s=>{
+   const aff=STAR_JOB[s.name]; if(!aff)return;
+   const w=(s.type==="main"?wm:wa)*(BR[s.bright]||1)*(s.hua?(HU[s.hua]||1):1)*(isShen?1.25:1);
+   used.push({name:s.name,pal:pn,w:w,why:aff.why,main:s.type==="main",bright:s.bright||"",hua:s.hua||""});
+   for(const k in aff.ind){indS[k]+=aff.ind[k]*w;(contribInd[k]=contribInd[k]||[]).push({name:s.name,pal:pn,v:aff.ind[k]*w,why:aff.why});}
+   for(const k in aff.role){roleS[k]+=aff.role[k]*w;(contribRole[k]=contribRole[k]||[]).push({name:s.name,pal:pn,v:aff.role[k]*w,why:aff.why});}
+  });
+ }
+ JOB_IND.forEach(j=>{j.wx.forEach(el=>{if((st.xi||[]).includes(el))indS[j.id]+=1.2;if((st.ji||[]).includes(el))indS[j.id]-=1.0;});});
+ const lv=String(st.level||"");
+ if(/強|旺/.test(lv)){["lead","biz","owner"].forEach(k=>roleS[k]+=0.6);}
+ else if(/弱/.test(lv)){["pro","support","tech"].forEach(k=>roleS[k]+=0.6);}
+ function norm(obj){const keys=Object.keys(obj).filter(k=>k!=="none");const vals=keys.map(k=>obj[k]);const mx=Math.max.apply(null,vals),mn=Math.min.apply(null,vals);const out={none:0};keys.forEach(k=>{out[k]=Math.round(35+60*((obj[k]-mn)/Math.max(1e-6,mx-mn)));});return out;}
+ const indN=norm(indS),roleN=norm(roleS);
+ const band=v=>v>=75?"高":v>=55?"中":"低";
+ const rankInd=JOB_IND.filter(j=>j.id!=="none").map(j=>({id:j.id,n:j.n,v:indN[j.id],wx:j.wx})).sort((a,b)=>b.v-a.v);
+ const rankRole=JOB_ROLE.filter(r=>r.id!=="none").map(r=>({id:r.id,n:r.n,v:roleN[r.id]})).sort((a,b)=>b.v-a.v);
+ const job=(adv&&adv.job)||{};
+ const curInd=JOB_IND.find(j=>j.id===job.ind&&j.id!=="none")||null;
+ const curRole=JOB_ROLE.find(r=>r.id===job.role&&r.id!=="none")||null;
+ const ci=curInd?{id:curInd.id,n:curInd.n,v:indN[curInd.id],band:band(indN[curInd.id]),wx:curInd.wx,rank:rankInd.findIndex(x=>x.id===curInd.id)+1}:null;
+ const cr=curRole?{id:curRole.id,n:curRole.n,v:roleN[curRole.id],band:band(roleN[curRole.id]),rank:rankRole.findIndex(x=>x.id===curRole.id)+1}:null;
+ let combined=null; if(ci&&cr)combined=Math.round(ci.v*0.55+cr.v*0.45); else if(ci)combined=ci.v; else if(cr)combined=cr.v;
+ return {rankInd:rankInd,rankRole:rankRole,topInd:rankInd.slice(0,3),topRole:rankRole.slice(0,3),
+  cur:{ind:ci,role:cr,combined:combined,band:combined==null?null:band(combined)},
+  used:used.sort((a,b)=>b.w-a.w),contribInd:contribInd,contribRole:contribRole,xi:st.xi||[],ji:st.ji||[]};
+}
+function careerFreeHTML(c){
+ if(!c)return "";
+ const li=arr=>arr.map((x,i)=>`<li><span>${i+1}. ${x.n}</span><span class="cj-score">契合 ${x.v} 分</span></li>`).join("");
+ let cur="";
+ if(c.cur.ind||c.cur.role){
+  const parts=[];
+  if(c.cur.ind)parts.push(`產業「${c.cur.ind.n}」契合度 <b>${c.cur.ind.v}</b> 分（${c.cur.ind.band}・${c.rankInd.length} 類中第 ${c.cur.ind.rank} 名）`);
+  if(c.cur.role)parts.push(`職務「${c.cur.role.n}」契合度 <b>${c.cur.role.v}</b> 分（${c.cur.role.band}・${c.rankRole.length} 類中第 ${c.cur.role.rank} 名）`);
+  cur=`<p class="cj-cur">您的現職：${parts.join("；")}${c.cur.combined!=null?`。綜合契合度 <b class="cj-big">${c.cur.combined}</b> 分（${c.cur.band}）`:""}。</p>`;
+ }else cur=`<p class="cj-cur">尚未選擇現職類型。在排盤資料選擇「現有工作」的產業與職務性質後重新排盤，系統會比對命盤與現職的契合度並做差異分析。</p>`;
+ return `<div class="rcard wide cjcard"><h3><span class="ic">職</span>事業適性 · 命盤最適合的工作類型</h3>
+  <div class="cj-cols"><div><div class="cj-h">適合的產業領域 TOP 3</div><ol class="cj-list">${li(c.topInd)}</ol></div>
+  <div><div class="cj-h">適合的職務性質 TOP 3</div><ol class="cj-list">${li(c.topRole)}</ol></div></div>
+  ${cur}
+  <p class="cj-note">依官祿宮、命宮、身宮、財帛宮、遷移宮之主輔星（含亮度與四化），加上八字喜用神五行綜合演算。完整的「現職差異詳盡分析」（相符之處、未發揮的特質、調整或轉型路徑、動與守的時機）請見下方完整報告。</p></div>`;
+}
+function careerPaidHTML(c,zw,adv,name){
+ if(!c)return "";
+ const cur=c.cur, sec=t=>`<div class="cj-sec">${t}</div>`;
+ if(!cur.ind&&!cur.role){
+  return `<div class="rcard wide cjcard"><h3><span class="ic">職</span>現職差異詳盡分析</h3><p>您尚未在排盤資料選擇「現有工作」的產業與職務性質。選擇後重新排盤，這裡會比對命盤最適合的方向與您現職之間的相符、落差、調整路徑與時機。</p><p>依命盤，最值得優先經營的方向是：產業「<b>${c.topInd[0].n}</b>」搭配職務「<b>${c.topRole[0].n}</b>」；其次為 ${c.topInd[1].n}／${c.topRole[1].n}。</p></div>`;
+ }
+ const band=cur.band||"中";
+ let verdict="";
+ if(band==="高")verdict=`整體契合度 ${cur.combined} 分，屬於「適才適所」。現職的性質與您命盤的強項方向一致，建議在原領域深耕、往更高階或更專精的角色延伸，而不是另起爐灶。`;
+ else if(band==="中")verdict=`整體契合度 ${cur.combined} 分，屬於「方向對了一半」。通常是產業或職務性質其中一邊與命盤相合、另一邊有落差；最省力的做法是保留契合的那一邊、調整另一邊，而非整個轉換跑道。`;
+ else verdict=`整體契合度 ${cur.combined} 分，屬於「用錯力」的狀態。不是您不努力，而是現職要求的特質與命盤天生強項交集不多，容易事倍功半；建議以轉型為中長期目標，並用過渡方式降低風險。`;
+ const fitList=[];
+ if(cur.ind){(c.contribInd[cur.ind.id]||[]).slice().sort((a,b)=>b.v-a.v).slice(0,3).forEach(x=>fitList.push(`<li>${x.name}（${x.pal}宮）— ${x.why}，支持您在「${cur.ind.n}」發揮。</li>`));
+  const xiHit=cur.ind.wx.filter(el=>c.xi.includes(el));if(xiHit.length)fitList.push(`<li>此產業偏「${xiHit.join("、")}」之氣，正是您八字的喜用神，環境能量相助。</li>`);}
+ if(cur.role){(c.contribRole[cur.role.id]||[]).slice().sort((a,b)=>b.v-a.v).slice(0,3).forEach(x=>fitList.push(`<li>${x.name}（${x.pal}宮）— ${x.why}，與「${cur.role.n}」的工作型態相應。</li>`));}
+ const gapList=[];
+ c.used.slice(0,5).forEach(x=>{
+  const aff=STAR_JOB[x.name]||{ind:{},role:{}};
+  const toInd=cur.ind?(aff.ind[cur.ind.id]||0):0, toRole=cur.role?(aff.role[cur.role.id]||0):0;
+  if(toInd+toRole<=1){
+   const bestInd=Object.keys(aff.ind).sort((a,b)=>aff.ind[b]-aff.ind[a])[0], bestRole=Object.keys(aff.role).sort((a,b)=>aff.role[b]-aff.role[a])[0];
+   const bi=JOB_IND.find(j=>j.id===bestInd), br=JOB_ROLE.find(r=>r.id===bestRole);
+   gapList.push(`<li>${x.name}（${x.pal}宮）的「${x.why}」在現職用得不多——這股力更適合 ${bi?bi.n:""}${br?"、"+br.n:""}。</li>`);
+  }
+ });
+ if(cur.ind){const jiHit=cur.ind.wx.filter(el=>c.ji.includes(el));if(jiHit.length)gapList.push(`<li>此產業偏「${jiHit.join("、")}」之氣，與您八字的忌神相沖，長期在此環境容易耗神，宜用喜用神的方位、色系與作息調和。</li>`);}
+ if(!gapList.length)gapList.push(`<li>命盤主要特質在現職大多用得上，落差不大。</li>`);
+ const t1i=c.topInd[0],t2i=c.topInd[1],t1r=c.topRole[0],t2r=c.topRole[1];
+ let path="";
+ if(band==="高"){
+  const nextRole=(cur.role&&cur.role.id===t1r.id)?t2r:t1r, nextInd=(cur.ind&&cur.ind.id===t1i.id)?t2i:t1i;
+  path=`<li>深耕現職，把目標放在「${nextRole.n}」這類更進階或更專精的角色。</li><li>可延伸的相鄰領域：${nextInd.n}，適合作為第二專長或副業方向。</li>`;
+ }else if(band==="中"){
+  const keepInd=(cur.ind&&cur.role)?(cur.ind.v>=cur.role.v):!!cur.ind;
+  path=keepInd
+   ?`<li>保留產業「${cur.ind.n}」（這一邊契合度較高），把職務性質往「${t1r.n}」或「${t2r.n}」調整，例如在公司內部轉調、爭取相關專案或進修取得資格。</li><li>若公司內沒有這樣的空間，再考慮同產業中以該職務為主的公司。</li>`
+   :`<li>保留職務性質「${cur.role?cur.role.n:t1r.n}」（這一邊契合度較高），把產業往「${t1i.n}」或「${t2i.n}」移動，把現有專業帶到更合盤的領域。</li><li>先從接案、兼職或跨部門合作試水溫，再決定是否全面轉換。</li>`;
+ }else{
+  path=`<li>中長期目標：產業「${t1i.n}」配合職務「${t1r.n}」（備選：${t2i.n}／${t2r.n}）。</li><li>過渡做法：先以進修、取得證照或副業試水，累積 6 到 12 個月的實績再正式轉換；避免在沒有準備下裸辭。</li><li>轉換期間善用現職可轉移的能力（溝通、流程、人脈），把它們寫進新方向的履歷。</li>`;
+ }
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit), ln=curLN(), lnPal=zw.palaceName[ln.branch];
+ const moveLim=/官祿|遷移|命宮|財帛/.test(limName), moveLn=/官祿|遷移|命宮/.test(lnPal);
+ const jiStar=ln.sihua&&ln.sihua[3]; let jiInGuan=false;
+ for(let b=0;b<12;b++){if(zw.palaceName[b]==="官祿"&&(zw.stars[b]||[]).some(s=>s.name===jiStar))jiInGuan=true;}
+ let timing=pre?"目前尚在童限、大限未起，事業時機以流年為主；":`現行大限在「${limName}」${moveLim?"——這是與事業、對外發展直接相關的大限，十年內做調整或轉型，阻力較小、機會較多":"——這步大限的重心不在事業變動，宜先穩住現職、累積實力，把大動作留到下一步大限"}；`;
+ timing+=`${ln.year} ${ln.gan}${ln.zhi}流年命宮落「${lnPal}」${moveLn?"，今年本身就帶有變動與機會的氣息，適合主動爭取、面試或提出轉調":"，今年適合布局與準備，不急著在年內換跑道"}`;
+ timing+=jiInGuan?`；另外今年 ${jiStar} 化忌落在您的官祿宮，事業上容易有牽絆或誤判，重大決定建議多留一個緩衝期。`:"。";
+ const wxLine=c.xi.length?`命局喜用神為「${c.xi.join("、")}」，相應行業如：${c.xi.map(el=>(WX_LIFE[el]||{}).業||"").filter(Boolean).join("；")}。不論是否轉職，多親近這些行業、方位與色系，工作運會更順。`:"";
+ return `<div class="rcard wide cjcard"><h3><span class="ic">職</span>現職差異詳盡分析 · ${name}</h3>
+ <p class="cj-verdict">${verdict}</p>
+ ${sec("相符之處（命盤支持您現職的力量）")}<ul class="cj-ul">${fitList.join("")||"<li>命盤對現職的直接支持有限。</li>"}</ul>
+ ${sec("落差之處（您有、但現職用不到的特質）")}<ul class="cj-ul">${gapList.join("")}</ul>
+ ${sec("建議路徑")}<ul class="cj-ul">${path}</ul>
+ ${sec("動與守的時機")}<p>${timing}</p>
+ ${wxLine?(sec("五行調和")+`<p>${wxLine}</p>`):""}
+ <p class="cj-note">契合度為系統依星曜、亮度、四化與喜用神的相對評分（同一張盤內比較），用於看方向與落差，不是能力高低的判定。</p></div>`;
+}
+function careerPrintHTML(c){
+ if(!c)return "";
+ const cur=c.cur;
+ let s=`<div class="rp-sec">事業適性與現職差異分析</div><div class="rp-row"><b>適合產業</b> ${c.topInd.map(x=>x.n+"（"+x.v+"）").join("、")}</div><div class="rp-row"><b>適合職務</b> ${c.topRole.map(x=>x.n+"（"+x.v+"）").join("、")}</div>`;
+ if(cur.ind||cur.role){s+=`<div class="rp-row"><b>現職契合</b> ${cur.ind?("產業「"+cur.ind.n+"」"+cur.ind.v+" 分（"+cur.ind.band+"）"):""}${(cur.ind&&cur.role)?"　":""}${cur.role?("職務「"+cur.role.n+"」"+cur.role.v+" 分（"+cur.role.band+"）"):""}${cur.combined!=null?("　綜合 "+cur.combined+" 分（"+cur.band+"）"):""}</div>`;}
+ return s;
+}
+// 填入表單下拉（script 位於 body 末端，此時表單已存在）
+(function(){try{
+ const a=document.getElementById("jobInd"),b=document.getElementById("jobRole");
+ if(a)JOB_IND.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=j.n;a.appendChild(o);});
+ if(b)JOB_ROLE.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.n;b.appendChild(o);});
+}catch(e){}})();
+
 /* 分數→百分等級 PR（以全體命盤約略常態分佈 μ=70、σ=12 推估，邏輯斯近似常態 CDF）
    PR=78 即「贏過約 78% 的命盤、屬前 22%」 */
 function scoreToPR(v){
@@ -4195,6 +4420,9 @@ function run(){
       baziGe:detectBaziGe(bz),
       curAge
     };
+    // 現有工作（產業／職務性質）→ 事業適性與現職差異分析
+    adv.job={ind:((document.getElementById("jobInd")||{}).value||""),role:((document.getElementById("jobRole")||{}).value||"")};
+    try{adv.career=calcCareer(zw,adv);}catch(e){adv.career=null;}
     const scores=calcScores(zw,bz,wx,adv);
     const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
     render(name,gender,{y,m,d,hh,mm,solar:solarInfo},lunar,bz,zw,wx,adv,scores,fam,subText);
@@ -5177,7 +5405,7 @@ function buildAIText(){
   P("生肖："+SHENGXIAO[bz.year.zhi]+"　陰陽性別："+zw.yinYang+"　日主："+dm+"（"+GAN_WX[dm]+GAN_YY[dm]+"）　五行局："+zw.juName);
   P("命宮："+zw.palaceGan[zw.ming]+ZHI[zw.ming]+"　身宮："+zw.palaceGan[zw.shen]+ZHI[zw.shen]+"　命主星："+zw.mingZhu+"　身主星："+zw.shenZhu+"　斗君："+ZHI[zw.douJun]+"宮");
   const cl0=adv.limits.curBranch>=0?adv.limits.limits[adv.limits.curBranch]:null;
-  P("目前虛歲："+adv.curAge+"　起運 "+lk.startAge+" 歲（"+(lk.forward?"順行":"逆行")+"）　現行大限："+adv.limits.curLimLabel+(cl0?("（"+cl0.start+"–"+cl0.end+" 歲）"):""));
+  P("目前虛歲："+adv.curAge+"　八字大運起運 "+lk.startAge+" 歲（"+(lk.forward?"順行":"逆行")+"）　紫微大限自 "+zw.ju+" 歲起（"+(adv.limits.forward?"順行":"逆行")+"）　現行大限："+adv.limits.curLimLabel+(cl0?("（"+cl0.start+"–"+cl0.end+" 歲）"):""));
 
   SEC("子平八字（四柱八字）");
   [["年",bz.year],["月",bz.month],["日",bz.day],["時",bz.hour]].forEach(function(e){
@@ -5224,6 +5452,16 @@ function buildAIText(){
   const sc=calcScores(zw,bz,wx,adv);
   P("綜合總分："+sc.total+"／100（評等 "+sc.grade+"・"+sc.gradeText+"；約贏過 "+sc.pr+"% 的人）　五行平衡度："+sc.balance);
   sc.dims.forEach(function(d){P("・"+d.k+"："+d.v+" 分（"+d.band+"）— 主"+d.pal+"宮"+(d.star?("，主星 "+d.star):"（空宮借星）"));});
+
+  SEC("事業適性與現職差異（系統演算）");
+  if(adv.career){const cj=adv.career;
+    P("適合產業 TOP3："+cj.topInd.map(function(x){return x.n+"（"+x.v+" 分）";}).join("、"));
+    P("適合職務 TOP3："+cj.topRole.map(function(x){return x.n+"（"+x.v+" 分）";}).join("、"));
+    if(cj.cur.ind)P("現職產業："+cj.cur.ind.n+"　契合度 "+cj.cur.ind.v+" 分（"+cj.cur.ind.band+"・"+cj.rankInd.length+" 類中第 "+cj.cur.ind.rank+" 名）");
+    if(cj.cur.role)P("現職職務："+cj.cur.role.n+"　契合度 "+cj.cur.role.v+" 分（"+cj.cur.role.band+"・"+cj.rankRole.length+" 類中第 "+cj.cur.role.rank+" 名）");
+    if(cj.cur.combined!=null)P("綜合契合度："+cj.cur.combined+" 分（"+cj.cur.band+"）");
+    if(!cj.cur.ind&&!cj.cur.role)P("（未選擇現職類型；選擇後可比對差異）");
+  }else P("（未產生事業適性資料）");
 
   SEC("八字重量（袁天罡稱骨）");
   const yg=bz.year.gan+bz.year.zhi;
@@ -5278,7 +5516,7 @@ function buildAIText(){
   for(let Y=curLN().year;Y<curLN().year+6;Y++){
     const gi=((Y-4)%10+10)%10,zi=((Y-4)%12+12)%12;
     const gan=GAN[gi],zhi=ZHI[zi],sh=SIHUA[gan];
-    P(Y+" "+gan+zhi+"（虛歲 "+(Y-by+1)+"）流年命宮："+zw.palaceName[zi]+"　四化："+sh[0]+"祿、"+sh[1]+"權、"+sh[2]+"科、"+sh[3]+"忌");
+    P(Y+" "+gan+zhi+"（虛歲 "+(Y-((lunar&&lunar.year)||by)+1)+"）流年命宮："+zw.palaceName[zi]+"　四化："+sh[0]+"祿、"+sh[1]+"權、"+sh[2]+"科、"+sh[3]+"忌");
   }
 
   SEC(curLN().year+" "+curLN().gan+curLN().zhi+"年 · 流月吉凶（依節氣定月）");
@@ -5403,13 +5641,13 @@ function buildICS(){
     const pname=zw.palaceName[yzi];
     const lc=sTerm(yy,2); // 立春日
     const title="流年｜"+yy+" "+ygan+yzhi+"年 入"+pname;
-    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-by+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 聖源大師．人生實用說明書系統");
+    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-((D.lunar&&D.lunar.year)||by)+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 聖源大師．人生實用說明書系統");
   }
   // 未來大運切換里程碑（起運後各步，落在未來者）
   const curAge=adv.curAge;
   lk.list.forEach(function(p,i){
     if(p.age<=curAge)return; // 只記未來尚未到的大運起點
-    const startYear=by+p.age-1; // 虛歲 age 對應之國曆年
+    const startYear=((D.lunar&&D.lunar.year)||by)+p.age-1; // 虛歲 age 對應之年（虛歲以農曆出生年起算）
     if(startYear>2055)return;
     const tg=tenGod(dm,p.gan);
     const lc=sTerm(startYear,2);
@@ -7221,7 +7459,7 @@ function lnBuildBody(year){
   const D=window.__ZW;if(!D)return '';
   const zw=D.zw,st=D.adv.strength,birthYear=D.birthYear;
   const gi=((year-4)%10+10)%10, zi=((year-4)%12+12)%12;
-  const gan=GAN[gi],zhi=ZHI[zi],sx=SHENGXIAO[zhi],age=year-birthYear+1;
+  const gan=GAN[gi],zhi=ZHI[zi],sx=SHENGXIAO[zhi],age=year-((D.lunar&&D.lunar.year)||birthYear)+1;
   const pc=zw.palaceName[zi];
   const stars=(zw.stars[zi]||[]).filter(s=>s.type==="main").map(s=>s.name);
   const starTxt=stars.length?stars.join("、"):"空宮（借對宮論）";
@@ -7393,7 +7631,7 @@ function zwLiunian(Y){
   const D=window.__ZW;if(!D)return;const zw=D.zw,adv=D.adv,name=D.name,birthYear=D.birthYear,dm=D.dm,st=D.adv.strength;
   const gi=((Y-4)%10+10)%10, zi=((Y-4)%12+12)%12;
   const gan=GAN[gi], zhi=ZHI[zi], sx=SHENGXIAO[zhi];
-  const age=Y-birthYear+1, isCur=Y===curLN().year;
+  const age=Y-((D.lunar&&D.lunar.year)||birthYear)+1, isCur=Y===curLN().year;
   // 流月（五虎遁・年上起月）
   const baseM=[2,4,6,8,0][gi%5];   // 正月(寅)月干起點
   const lmLabels=["正","二","三","四","五","六","七","八","九","十","冬","臘"];
@@ -7904,8 +8142,15 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
 
   // ===== 綜合個人化論斷 =====
   const dirTxt=lk.forward?"順行":"逆行";
+  // 八字大運與紫微大限分開敘述（避免「八字起運歲＋紫微大限宮名」混寫在同一句）
+  const zwDirTxt=adv.limits.forward?"順行":"逆行";
+  const _cl=(adv.limits.curBranch>=0)?adv.limits.limits[adv.limits.curBranch]:null;
+  const curLimRange=_cl?`（${_cl.start}–${_cl.end} 歲）`:"";
+  const curLimTxt=adv.limits.preLimit
+    ?"尚在童限、大限未起，先以命宮本質與成長環境為主。"
+    :`正走在紫微「<b style="color:var(--purple-glow)">${curLimName}</b>」這步大限${curLimRange}，這十年就順著這個宮位所管的領域去經營、把重心放在這裡最順。`;
   const synthesis=`把 <b>${name}</b> 這張盤整個看下來：你的日主（代表你本人）是 <b style="color:var(--gold)">${dm}（${GAN_WX[dm]}）</b>，整體體質偏「${st.level}」，命裡最補你、要多親近的是 <b style="color:var(--jade)">${st.xi.join("、")}</b>，最不利、要少碰的是 <b style="color:#d47f8f">${st.ji.join("、")}</b>；八字以出生月份（月令）定出「<b style="color:var(--gold)">${adv.baziGe.name}</b>」這個格局，這就是你這輩子人生劇本的主軸。紫微這邊，命宮坐 <b style="color:var(--gold)">${mingStarTxt}</b>（在 ${zw.palaceGan[zw.ming]}${ZHI[zw.ming]}）、搭配 <b>${zw.juName}</b>，格局屬「<b style="color:var(--gold)">${adv.ge[0].n}</b>」——這決定了你天生的個性底色與人生方向。`
-    +`大運（每十年一步的運勢）從 <b>${lk.startAge}</b> 歲起運、${dirTxt}走，你現在虛歲 <b>${adv.curAge}</b>，正走在「<b style="color:var(--purple-glow)">${curLimName}</b>」這步大限，這十年就順著這個宮位所管的領域去經營、把重心放在這裡最順。`
+    +`八字大運（每十年一步）從 <b>${lk.startAge}</b> 歲起運、${dirTxt}走；紫微大限則自 <b>${zw.ju}</b> 歲起、${zwDirTxt}。你現在虛歲 <b>${adv.curAge}</b>，${curLimTxt}`
     +`${curLN().year} ${curLN().gan}${curLN().zhi}流年，運勢走到「<b style="color:#e08a7a">${lnPalaceName}</b>」（坐 ${lnStars}），${curLN().gan}年的天干引動了 <b style="color:var(--jade)">${lnSihua[0]}化祿</b>（財福機緣，可積極把握）、<b style="color:#e0a85a">${lnSihua[1]}化權</b>（掌握主導、能擔當之處）、<b style="color:#7fa6d4">${lnSihua[2]}化科</b>（好名聲、貴人、文書之喜）、<b style="color:#d47f8f">${lnSihua[3]}化忌</b>（容易牽掛卡關、宜守不宜攻之處）——把祿權科的機會抓住、對化忌的宮位小心一點，就能趨吉避凶。`
     +`總結一句：多發揮你 ${GAN_WX[dm]} 的長處、有意識地補「${st.xi.join("、")}」這股喜用之氣；待人真誠、做事有恆，順著四化的指引、踩準大限的節奏，就能把先天這張命，一步步打成後天實實在在的好運。`;
 
@@ -7969,6 +8214,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <button class="scc-btn" type="button" onclick="shareCardOpen()"><span class="ic">✦</span> 分享我的命盤重點</button>
   </div>
 
+  ${careerFreeHTML(adv.career)}
+
   <div id="paywall" class="paywall">
     <div class="pwlock">鎖</div>
     <h3>解鎖 ${name} 的完整命理精析</h3>
@@ -7980,6 +8227,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>命帶神煞・紫微格局・三方四正</li>
       <li>命宮主星精析・財官婚遷福德 逐宮論斷</li>
       <li>${curLN().year} 流年運程 ・ 綜合個人化論斷</li>
+      <li>事業適性 ・ 現職差異詳盡分析（相符、落差、調整或轉型路徑、動與守的時機）</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8158,6 +8406,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <p>${synthesis}</p>
     <div class="syn-foot">— 本論斷綜合子平八字（旺衰喜用、十神、大運）與紫微斗數（命盤十二宮、四化、大限、流年），融各家之長為 ${name} 量身而成 —</div>
   </div>
+
+  ${careerPaidHTML(adv.career,zw,adv,name)}
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
@@ -8491,6 +8741,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <ul class="rp-adv">${ppAdvice}</ul>
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
+    ${careerPrintHTML(adv.career)}
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
