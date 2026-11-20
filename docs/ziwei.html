@@ -646,6 +646,21 @@ header .meta b{color:var(--gold);font-weight:500}
 .cjcard .cj-sec{margin:16px 0 4px;font-weight:700;color:var(--gold-deep);letter-spacing:.5px}
 .cjcard .cj-ul{margin:4px 0 0 1.1em;padding:0;line-height:1.9}
 .cjcard .cj-verdict{font-weight:600;line-height:1.95}
+.cjcard .cj-care{display:block;color:var(--ink-faint);font-size:.9rem;margin-top:2px}
+/* 健康深析：人體對照圖 */
+.cjcard .hp-wrap{display:grid;grid-template-columns:210px 1fr;gap:14px;align-items:start;margin-top:8px}
+.cjcard .hp-fig svg{width:100%;height:auto;display:block}
+.cjcard .hp-sil{fill:#f6eedc;stroke:#cdb37b;stroke-width:1.5}
+.cjcard .hp .dot{fill:#d9342b;stroke:#fff;stroke-width:1.5;cursor:pointer}
+.cjcard .hp .ring{fill:none;stroke:#d9342b;stroke-width:1.5;opacity:.7;pointer-events:none}
+.cjcard .hp.amber .dot{fill:#e39b2b}
+.cjcard .hp.amber .ring{stroke:#e39b2b}
+.cjcard .hp.on .dot{stroke:#3b2a00;stroke-width:2.5}
+.cjcard .hp text{font-size:9px;fill:#6b2b22;pointer-events:none;font-weight:600}
+.cjcard .hp-box{min-height:120px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;line-height:1.85;font-size:.92rem}
+.cjcard .hp-legend{font-size:.78rem;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+@media(max-width:640px){.cjcard .hp-wrap{grid-template-columns:1fr}.cjcard .hp-fig{max-width:230px;margin:0 auto}}
+@media print{.cjcard .hp .ring{display:none}}
 @media(max-width:640px){.cjcard .cj-cols{grid-template-columns:1fr}}
 .synthesis{background:var(--wash);border:1px solid var(--gold);
   border-radius:20px;padding:34px 30px;position:relative;overflow:hidden;box-shadow:0 18px 40px -30px var(--shadow)}
@@ -1950,7 +1965,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.20.2";
+const SITE_VERSION_DATE="2026.11.20.3";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -3080,6 +3095,123 @@ function careerPrintHTML(c){
  if(a)JOB_IND.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=j.n;a.appendChild(o);});
  if(b)JOB_ROLE.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.n;b.appendChild(o);});
 }catch(e){}})();
+
+/* ================= 健康深析（疾厄宮臟腑傾向 × 煞曜化忌 × 五行失衡 × 大限流年） ================= */
+const STAR_HEALTH={
+ 紫微:{sys:["脾胃消化","頭部與腦神經"],tend:"操勞與壓力容易反映在腸胃與頭部，常見胃脹、頭痛、睡不深。",care:"三餐定時、少熬夜，給自己留白時間，頭頸多放鬆。"},
+ 天機:{sys:["肝膽","神經系統","四肢筋骨"],tend:"思慮多、神經緊繃，容易肝氣鬱結、失眠多夢、手腳筋骨痠麻。",care:"睡眠優先，規律伸展與散步，少咖啡因，練習放空。"},
+ 太陽:{sys:["心血管","眼睛","頭部"],tend:"精力外放、容易過勞，常見血壓偏高、眼睛疲勞乾澀、頭痛、心火旺。",care:"定期量血壓、護眼並減少螢幕時間，避免長期加班。"},
+ 武曲:{sys:["肺與呼吸道","鼻腔","牙齒","骨骼"],tend:"屬金，呼吸道、鼻敏感與牙齒較需照顧；動作俐落但容易有碰撞外傷。",care:"呼吸道保暖、口腔定期檢查，運動前暖身、注意安全。"},
+ 天同:{sys:["腸胃","泌尿系統","耳"],tend:"體質溫和但代謝偏慢，容易腸胃虛弱、水腫、泌尿不適、耳鳴。",care:"少冰少甜、規律運動促進代謝，多喝溫水。"},
+ 廉貞:{sys:["心血管與血液","生殖泌尿","情緒神經"],tend:"血液循環與情緒起伏是兩大主題，容易有血液相關指數波動、婦科或泌尿困擾、情緒緊繃。",care:"定期血液檢查，情緒找出口，避免長期壓抑。"},
+ 天府:{sys:["脾胃","消化系統"],tend:"愛吃也耐吃，常見胃脹、消化不良，以及體重、血糖血脂的管理課題。",care:"細嚼慢嚥、控糖控脂，餐後散步。"},
+ 太陰:{sys:["腎與水液代謝","婦科／生殖","眼睛","內分泌"],tend:"偏陰性體質，熬夜最傷；常見水腫、眼睛乾澀、婦科或內分泌失調、容易疲倦。",care:"固定睡眠時間、避免熬夜，安排年度泌尿與婦科檢查。"},
+ 貪狼:{sys:["肝膽","腎","生殖系統"],tend:"應酬多、慾望旺，肝膽與腎氣最容易被消耗，酒精與熬夜是大敵。",care:"節制飲酒、肝功能定期檢查，規律作息養腎。"},
+ 巨門:{sys:["消化道","口腔與咽喉","脾胃"],tend:"憂思傷脾，常見腸胃不適、口腔潰瘍、咽喉問題，以及不容易察覺的隱疾。",care:"飲食衛生、口腔保健，心事別悶著，定期健檢。"},
+ 天相:{sys:["皮膚","泌尿膀胱","淋巴"],tend:"皮膚敏感、容易過敏或濕疹，泌尿系統與水腫也要留意。",care:"皮膚保濕防曬、多喝水，少吃刺激性食物。"},
+ 天梁:{sys:["胃","肺與呼吸道","結節與慢性病"],tend:"體質偏穩但容易有慢性課題，常見胃疾、呼吸道問題，以及需要追蹤的良性結節。",care:"戒菸、定期健檢追蹤，慢性問題耐心調理。"},
+ 七殺:{sys:["肺與大腸","外傷意外","肝火"],tend:"性急好動，呼吸道與腸道較敏感，碰撞、跌倒、刀火燙傷等意外要防。",care:"運動與工作注意防護，腸道檢查，練習慢下來。"},
+ 破軍:{sys:["腎與生殖泌尿","血液","意外耗損"],tend:"消耗型體質，熬夜拚命會先傷腎氣與血氣，另需防意外。",care:"腎功能與血液檢查，避免長期透支，給身體修復時間。"}
+};
+const AUX_HEALTH={
+ 擎羊:"擎羊主外傷、手術、急性發炎，刀火利器要特別小心；身體有狀況宜早處理、不要拖。",
+ 陀羅:"陀羅主慢性、反覆、拖延，骨關節、牙齒與暗疾容易纏綿，宜定期追蹤、耐心調理。",
+ 火星:"火星主發炎、發熱、急症與燙傷，屬上火體質，飲食宜清淡、少熬夜。",
+ 鈴星:"鈴星主隱性、潛伏的慢性問題與皮膚困擾，平時沒感覺，但健檢不可少。",
+ 地空:"地空主神經衰弱、睡眠與精神耗弱，情緒與睡眠是健康的第一道關卡。",
+ 地劫:"地劫主耗損與意外，體力透支時最容易出狀況，安排休息比硬撐重要。",
+ 天刑:"天刑主刑傷與手術，身體有異狀宜早檢查，必要時以手術處理反而乾脆。",
+ 天馬:"天馬主奔波勞損，交通與出差頻繁者，注意腰背、睡眠與時差。"
+};
+const WX_ORGAN={木:"肝、膽、眼睛、筋腱、神經",火:"心臟、小腸、血壓血液、舌",土:"脾、胃、消化、肌肉、口",金:"肺、大腸、皮膚、鼻、呼吸道",水:"腎、膀胱、生殖、耳、骨髓"};
+const SYS_CHECK={"心血管":"血壓、血脂、心電圖","心血管與血液":"血壓、血脂、血液常規","肝膽":"肝功能、腹部超音波","腎與水液代謝":"腎功能、尿液檢查","腎與生殖泌尿":"腎功能、尿液與泌尿科檢查","腎":"腎功能、尿液檢查","肺與呼吸道":"胸部X光、肺功能","肺與大腸":"胸部X光、大腸癌篩檢","腸胃":"胃鏡或腸鏡、幽門桿菌","脾胃消化":"胃鏡、血糖","脾胃":"胃鏡、血糖血脂","消化道":"胃腸鏡、糞便潛血","消化系統":"胃腸鏡、血糖血脂","胃":"胃鏡、幽門桿菌","眼睛":"視力、眼壓、眼底","婦科／生殖":"婦科或泌尿科年度檢查","生殖系統":"婦科或泌尿科檢查","生殖泌尿":"泌尿科或婦科檢查","皮膚":"皮膚科檢查","骨骼":"骨密度","四肢筋骨":"骨密度、復健評估","神經系統":"睡眠與壓力評估","情緒神經":"睡眠與壓力評估","頭部與腦神經":"血壓、睡眠評估","口腔與咽喉":"牙科半年一次、耳鼻喉科","牙齒":"牙科半年一次","結節與慢性病":"健檢影像追蹤","泌尿系統":"尿液檢查","泌尿膀胱":"尿液檢查","內分泌":"甲狀腺與荷爾蒙檢查","淋巴":"健檢觸診與血液常規","鼻腔":"耳鼻喉科","耳":"聽力檢查","血液":"血液常規","外傷意外":"","意外耗損":"","肝火":"肝功能","頭部":"血壓、睡眠評估"};
+function calcHealth(zw,bz,wx,adv){
+ const st=(adv&&adv.strength)||{xi:[],ji:[],level:""};
+ let jb=-1; for(let b=0;b<12;b++)if(zw.palaceName[b]==="疾厄")jb=b;
+ const jiStars=jb>=0?(zw.stars[jb]||[]):[];
+ const mains=jiStars.filter(s=>s.type==="main"), auxs=jiStars.filter(s=>s.type!=="main");
+ const HN={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+ let borrowed=false, useMains=mains;
+ if(!useMains.length&&jb>=0){const ob=(jb+6)%12;useMains=(zw.stars[ob]||[]).filter(s=>s.type==="main");borrowed=true;}
+ const organs=[];
+ useMains.forEach(s=>{const h=STAR_HEALTH[s.name];if(h)organs.push({star:s.name,sys:h.sys,tend:h.tend,care:h.care,bright:s.bright||"",hua:s.hua?HN[s.hua]:""});});
+ const mingMain=(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name);
+ const mingH=mingMain.map(n=>STAR_HEALTH[n]).filter(Boolean);
+ const mods=[]; auxs.forEach(s=>{if(AUX_HEALTH[s.name])mods.push({star:s.name,txt:AUX_HEALTH[s.name]});});
+ const jiHua=jiStars.filter(s=>s.hua==="ji").map(s=>s.name);
+ const luHua=jiStars.filter(s=>s.hua==="lu"||s.hua==="ke").map(s=>s.name);
+ const keys=["木","火","土","金","水"], vals=keys.map(k=>(wx&&wx[k])||0);
+ const mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
+ const strong=keys.filter(k=>((wx&&wx[k])||0)>=4||(((wx&&wx[k])||0)===mx&&mx-mn>=2.5));
+ const weak=keys.filter(k=>((wx&&wx[k])||0)<=1);
+ const dmEl=GAN_WX[bz.dayMaster]||"";
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit);
+ const ln=curLN(), lnPal=zw.palaceName[ln.branch], lnJiStar=ln.sihua&&ln.sihua[3];
+ let lnJiWhere=""; for(let b=0;b<12;b++){if((zw.stars[b]||[]).some(s=>s.name===lnJiStar)){lnJiWhere=zw.palaceName[b];break;}}
+ const sysSet=[]; organs.forEach(o=>o.sys.forEach(x=>{if(sysSet.indexOf(x)<0)sysSet.push(x);}));
+ const checks=[]; sysSet.forEach(x=>{const c=SYS_CHECK[x];if(c&&checks.indexOf(c)<0)checks.push(c);});
+ return {jb,borrowed,organs,mingMain,mingH,mods,jiHua,luHua,strong,weak,dmEl,xi:st.xi||[],ji:st.ji||[],limName,pre,ln,lnPal,lnJiStar,lnJiWhere,sysSet,checks};
+}
+function healthPaidHTML(h,zw,adv,name){
+ if(!h)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ let base=`您的日主屬「<b>${h.dmEl}</b>」，先天以 ${WX_ORGAN[h.dmEl]||""} 為根本；`;
+ base+=h.mingH.length?`命宮坐 ${h.mingMain.join("、")}，體質上${h.mingH.map(x=>x.tend.split("，")[0]).join("；")}。`:"命宮無主星，體質較受環境與作息影響，規律生活是最大的保護。";
+ let organHTML=h.organs.length
+  ?h.organs.map(o=>`<li><b>${o.star}</b>${o.bright?"（"+o.bright+"）":""}${o.hua?"・化"+o.hua:""}${h.borrowed?"（疾厄宮無主星，借對宮）":""}：重點在 <b>${o.sys.join("、")}</b>。${o.tend}<span class="cj-care">保養：${o.care}</span></li>`).join("")
+  :`<li>疾厄宮與對宮皆無主星，健康主要看五行與作息，規律生活即是良方。</li>`;
+ let modHTML=h.mods.map(m=>`<li><b>${m.star}</b>：${m.txt}</li>`).join("");
+ if(h.jiHua.length)modHTML+=`<li><b>${h.jiHua.join("、")}化忌入疾厄宮</b>：這顆星對應的臟腑是全盤最需要長期關注的位置，建議把相關檢查列為每年固定項目。</li>`;
+ if(h.luHua.length)modHTML+=`<li><b>${h.luHua.join("、")}化祿／化科入疾厄宮</b>：遇到狀況較容易遇到好醫師、好方法，身體也會回應您的照顧，保養的投入看得到效果。</li>`;
+ if(!modHTML)modHTML=`<li>疾厄宮沒有明顯煞曜或化忌，體質課題相對單純，重點放在五行與作息即可。</li>`;
+ let wxHTML="";
+ h.strong.forEach(k=>{wxHTML+=`<li><b>${k}過旺</b>：${WX_ORGAN[k]} 容易亢進或負擔過重，相關指數與不適要留意。</li>`;});
+ h.weak.forEach(k=>{wxHTML+=`<li><b>${k}偏弱</b>：${WX_ORGAN[k]} 先天較虛，疲勞或換季時容易先出狀況，宜溫和補養。</li>`;});
+ if(h.ji.length)wxHTML+=`<li><b>忌神「${h.ji.join("、")}」</b>：對應 ${h.ji.map(k=>WX_ORGAN[k]).join("；")}，逢流年或大運走到此五行時，身體容易在這裡示警。</li>`;
+ if(h.xi.length)wxHTML+=`<li><b>喜用「${h.xi.join("、")}」</b>：補養方向——${h.xi.map(k=>(WX_LIFE[k]||{}).物||"").filter(Boolean).join("；")}。</li>`;
+ if(!wxHTML)wxHTML=`<li>五行分布勻稱，無明顯偏枯，順作息調養即可。</li>`;
+ let timing=h.pre?"目前尚在童限，健康以成長發育與家庭照護為主；":`現行大限在「${h.limName}」${h.limName==="疾厄"?"——這十年健康本身就是主題，務必把定期檢查排進行事曆":"，健康不是這步大限的主題，維持基本保養即可"}；`;
+ timing+=`${h.ln.year} ${h.ln.gan}${h.ln.zhi}流年命宮落「${h.lnPal}」${h.lnPal==="疾厄"?"，今年身體容易發出訊號，宜安排一次完整健檢":""}`;
+ timing+=h.lnJiWhere?`；今年 ${h.lnJiStar} 化忌落在「${h.lnJiWhere}」${(h.lnJiWhere==="疾厄"||h.lnJiWhere==="命宮")?"，直接牽動健康與體力，不要硬撐、小病早看":"，雖非直接落在疾厄宮，仍提醒您別讓壓力累積到身體"}。`:"。";
+ const checkHTML=h.checks.length?h.checks.map(c=>`<li>${c}</li>`).join(""):`<li>年度基礎健檢（血壓、血液常規、尿液、腹部超音波）</li>`;
+ return `<div class="rcard wide cjcard"><h3><span class="ic">康</span>健康深析 · ${name}</h3>
+ ${sec("體質根本")}<p>${base}</p>
+ ${sec("疾厄宮臟腑重點")}<ul class="cj-ul">${organHTML}</ul>
+ ${healthFigureHTML(h)}
+ ${sec("煞曜與化忌提醒")}<ul class="cj-ul">${modHTML}</ul>
+ ${sec("五行失衡與補養")}<ul class="cj-ul">${wxHTML}</ul>
+ ${sec("健康的時機")}<p>${timing}</p>
+ ${sec("建議列入的檢查項目")}<ul class="cj-ul">${checkHTML}</ul>
+ <p class="cj-note">以上為傳統命理對體質傾向的參考，不是醫療診斷或治療建議；任何不適請諮詢合格醫師，並以實際健康檢查結果為準。</p></div>`;
+}
+/* 人體對照圖：臟腑系統 → 人形座標（viewBox 200×400） */
+const BODY_POINTS={head:{x:100,y:28,l:"頭部／腦神經",side:"l"},eyes:{x:100,y:42,l:"眼睛",side:"r"},ear:{x:73,y:40,l:"耳",side:"l"},nose:{x:100,y:52,l:"鼻腔",side:"l"},mouth:{x:100,y:63,l:"口腔／咽喉／牙齒",side:"r"},neck:{x:100,y:80,l:"甲狀腺／淋巴／結節",side:"r"},lungs:{x:84,y:102,l:"肺／呼吸道",side:"l"},heart:{x:110,y:112,l:"心臟／血管／血液",side:"r"},liver:{x:80,y:136,l:"肝／膽",side:"l"},stomach:{x:104,y:140,l:"脾／胃／消化",side:"r"},kidney:{x:122,y:162,l:"腎",side:"r"},intest:{x:98,y:176,l:"腸道",side:"l"},pelvis:{x:100,y:200,l:"泌尿／膀胱／生殖",side:"r"},skin:{x:43,y:120,l:"皮膚",side:"l"},limbs:{x:82,y:300,l:"骨骼／筋骨／關節",side:"l"},limbs2:{x:118,y:300,l:"手腳外傷／意外",side:"r"}};
+const SYS_BODY={"脾胃消化":["stomach"],"頭部與腦神經":["head"],"肝膽":["liver"],"神經系統":["head"],"四肢筋骨":["limbs"],"心血管":["heart"],"眼睛":["eyes"],"頭部":["head"],"肺與呼吸道":["lungs"],"鼻腔":["nose"],"牙齒":["mouth"],"骨骼":["limbs"],"腸胃":["stomach","intest"],"泌尿系統":["pelvis"],"耳":["ear"],"心血管與血液":["heart"],"生殖泌尿":["pelvis"],"情緒神經":["head"],"脾胃":["stomach"],"消化系統":["intest"],"腎與水液代謝":["kidney"],"婦科／生殖":["pelvis"],"內分泌":["neck"],"腎":["kidney"],"生殖系統":["pelvis"],"消化道":["intest"],"口腔與咽喉":["mouth"],"皮膚":["skin"],"泌尿膀胱":["pelvis"],"淋巴":["neck"],"胃":["stomach"],"結節與慢性病":["neck"],"肺與大腸":["lungs","intest"],"外傷意外":["limbs2"],"肝火":["liver"],"腎與生殖泌尿":["kidney","pelvis"],"血液":["heart"],"意外耗損":["limbs2"]};
+const WX_BODY={木:["liver","eyes"],火:["heart"],土:["stomach"],金:["lungs","skin"],水:["kidney","pelvis"]};
+function healthFigureHTML(h){
+ const pts={}; const add=(k,level,note)=>{if(!BODY_POINTS[k])return;const p=pts[k]||(pts[k]={level:"amber",notes:[]});if(level==="red")p.level="red";if(note&&p.notes.indexOf(note)<0)p.notes.push(note);};
+ h.organs.forEach(o=>o.sys.forEach(s=>(SYS_BODY[s]||[]).forEach(k=>add(k,"red",o.star+"（疾厄宮主星"+(h.borrowed?"，借對宮":"")+"）："+s+"。"+o.tend))));
+ h.jiHua.forEach(n=>{const sh=STAR_HEALTH[n];if(sh)sh.sys.forEach(s=>(SYS_BODY[s]||[]).forEach(k=>add(k,"red",n+"化忌入疾厄宮："+s+"，建議列為每年固定檢查。")));});
+ h.strong.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber",el+"過旺："+WX_ORGAN[el]+" 容易亢進或負擔過重。")));
+ h.weak.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber",el+"偏弱："+WX_ORGAN[el]+" 先天較虛，宜溫和補養。")));
+ h.ji.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber","忌神"+el+"："+WX_ORGAN[el]+" 逢流年或大運走到此五行時容易示警。")));
+ const keys=Object.keys(pts); if(!keys.length)return "";
+ const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+ const sil=`<circle class="hp-sil" cx="100" cy="40" r="26"/><rect class="hp-sil" x="90" y="62" width="20" height="16" rx="6"/><rect class="hp-sil" x="60" y="74" width="80" height="150" rx="28"/><rect class="hp-sil" x="32" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="146" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="68" y="214" width="28" height="180" rx="14"/><rect class="hp-sil" x="104" y="214" width="28" height="180" rx="14"/>`;
+ const dots=keys.map(k=>{const b=BODY_POINTS[k],p=pts[k];const tx=b.side==="l"?b.x-10:b.x+10,anchor=b.side==="l"?"end":"start";
+  return `<g class="hp ${p.level}" data-label="${esc(b.l)}" data-note="${esc(p.notes.join("｜"))}" onclick="hpTip(this)" onmouseenter="hpTip(this)"><circle class="ring" cx="${b.x}" cy="${b.y}" r="6"><animate attributeName="r" values="6;15" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="1.6s" repeatCount="indefinite"/></circle><circle class="dot" cx="${b.x}" cy="${b.y}" r="5.5"><title>${esc(b.l)}</title></circle><text x="${tx}" y="${b.y+3}" text-anchor="${anchor}">${esc(b.l)}</text></g>`;}).join("");
+ return `<div class="cj-sec">人體對照圖（點紅點或橙點看說明）</div><div class="hp-wrap"><div class="hp-fig"><svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康重點人體對照圖">${sil}${dots}</svg><div class="hp-legend">紅點：疾厄宮主星／化忌對應臟腑　橙點：五行失衡／忌神對應臟腑</div></div><div class="hp-box" id="hpBox">共標示 ${keys.length} 個重點部位。點一下紅點或橙點，這裡會說明該部位為何需要留意。</div></div>`;
+}
+function hpTip(el){try{var box=document.getElementById("hpBox");if(!box)return;var g=(el.closest?el.closest(".hp"):el)||el;document.querySelectorAll(".hp.on").forEach(function(x){x.classList.remove("on");});g.classList.add("on");box.innerHTML="<b>"+g.getAttribute("data-label")+"</b><br>"+String(g.getAttribute("data-note")||"").split("｜").join("<br>");}catch(e){}}
+function healthPrintHTML(h){
+ if(!h)return "";
+ let s=`<div class="rp-sec">健康深析</div><div class="rp-row"><b>體質根本</b> 日主屬${h.dmEl}（${WX_ORGAN[h.dmEl]||""}）</div>`;
+ if(h.organs.length)s+=`<div class="rp-row"><b>疾厄宮重點</b> ${h.organs.map(o=>o.star+"："+o.sys.join("、")).join("；")}</div>`;
+ if(h.mods.length||h.jiHua.length)s+=`<div class="rp-row"><b>煞曜／化忌</b> ${h.mods.map(m=>m.star).concat(h.jiHua.map(x=>x+"化忌")).join("、")}</div>`;
+ if(h.strong.length||h.weak.length)s+=`<div class="rp-row"><b>五行失衡</b> ${h.strong.map(k=>k+"過旺").concat(h.weak.map(k=>k+"偏弱")).join("、")}</div>`;
+ if(h.checks.length)s+=`<div class="rp-row"><b>建議檢查</b> ${h.checks.join("；")}</div>`;
+ return s;
+}
 
 /* 分數→百分等級 PR（以全體命盤約略常態分佈 μ=70、σ=12 推估，邏輯斯近似常態 CDF）
    PR=78 即「贏過約 78% 的命盤、屬前 22%」 */
@@ -4423,6 +4555,7 @@ function run(){
     // 現有工作（產業／職務性質）→ 事業適性與現職差異分析
     adv.job={ind:((document.getElementById("jobInd")||{}).value||""),role:((document.getElementById("jobRole")||{}).value||"")};
     try{adv.career=calcCareer(zw,adv);}catch(e){adv.career=null;}
+    try{adv.health=calcHealth(zw,bz,wx,adv);}catch(e){adv.health=null;}
     const scores=calcScores(zw,bz,wx,adv);
     const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
     render(name,gender,{y,m,d,hh,mm,solar:solarInfo},lunar,bz,zw,wx,adv,scores,fam,subText);
@@ -5462,6 +5595,19 @@ function buildAIText(){
     if(cj.cur.combined!=null)P("綜合契合度："+cj.cur.combined+" 分（"+cj.cur.band+"）");
     if(!cj.cur.ind&&!cj.cur.role)P("（未選擇現職類型；選擇後可比對差異）");
   }else P("（未產生事業適性資料）");
+
+  SEC("健康深析（系統演算）");
+  if(adv.health){const hh=adv.health;
+    P("體質根本：日主屬"+hh.dmEl+"（"+(WX_ORGAN[hh.dmEl]||"")+"）"+(hh.mingMain.length?("　命宮主星 "+hh.mingMain.join("、")):""));
+    if(hh.organs.length)hh.organs.forEach(function(o){P("疾厄宮 "+o.star+(o.hua?("化"+o.hua):"")+(hh.borrowed?"（借對宮）":"")+"：重點 "+o.sys.join("、")+"。"+o.tend+" 保養："+o.care);});
+    else P("疾厄宮與對宮皆無主星，健康以五行與作息為主。");
+    hh.mods.forEach(function(m){P(m.star+"："+m.txt);});
+    if(hh.jiHua.length)P(hh.jiHua.join("、")+"化忌入疾厄宮：相關臟腑列為每年固定檢查。");
+    hh.strong.forEach(function(k){P(k+"過旺："+WX_ORGAN[k]+" 容易亢進或負擔。");});
+    hh.weak.forEach(function(k){P(k+"偏弱："+WX_ORGAN[k]+" 先天較虛，宜溫和補養。");});
+    if(hh.checks.length)P("建議檢查："+hh.checks.join("；"));
+    P("（傳統命理對體質傾向的參考，非醫療診斷；不適請諮詢合格醫師。）");
+  }else P("（未產生健康深析資料）");
 
   SEC("八字重量（袁天罡稱骨）");
   const yg=bz.year.gan+bz.year.zhi;
@@ -8228,6 +8374,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>命宮主星精析・財官婚遷福德 逐宮論斷</li>
       <li>${curLN().year} 流年運程 ・ 綜合個人化論斷</li>
       <li>事業適性 ・ 現職差異詳盡分析（相符、落差、調整或轉型路徑、動與守的時機）</li>
+      <li>健康深析 ・ 疾厄宮臟腑傾向、互動人體對照圖、五行失衡、大限流年引動與檢查建議</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8408,6 +8555,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   </div>
 
   ${careerPaidHTML(adv.career,zw,adv,name)}
+
+  ${healthPaidHTML(adv.health,zw,adv,name)}
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
@@ -8742,6 +8891,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-sec">綜合論斷</div>
     <div class="rp-syn">${synthesis}</div>
     ${careerPrintHTML(adv.career)}
+    ${healthPrintHTML(adv.health)}
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
