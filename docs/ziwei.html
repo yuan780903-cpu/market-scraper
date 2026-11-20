@@ -1965,7 +1965,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.20.4";
+const SITE_VERSION_DATE="2026.11.20.5";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -3382,6 +3382,137 @@ function lovePrintHTML(l){
  return s;
 }
 
+/* ================= 親子子女深析 × 人際貴人深析（付費區） ================= */
+const STAR_KIDS={
+ 紫微:{kid:"子女優秀、有主見、自尊心強",mode:"您對孩子期望高、重視成就",issue:"期望與壓力太大，孩子容易陽奉陰違",tip:"多讚美過程、少只看結果，孩子會更願意靠近您"},
+ 天機:{kid:"聰明靈活、點子多、反應快",mode:"您愛跟孩子講道理、動腦互動",issue:"孩子坐不住、想法多變，容易被唸『沒定性』",tip:"用引導與選項代替規定，他的聰明才會用對地方"},
+ 太陽:{kid:"開朗活潑、外向、精力旺盛",mode:"您為孩子付出多、照顧周到",issue:"孩子需要舞台與肯定，壓抑反而叛逆",tip:"給表現機會，讓他在掌聲中學會負責"},
+ 武曲:{kid:"獨立務實、早當家、不黏人",mode:"您用做事與供給表達愛",issue:"親子話不多、互動偏剛，容易疏遠",tip:"用行動陪伴（一起運動、動手做），比說教有效"},
+ 天同:{kid:"溫和可愛、愛撒嬌、人見人愛",mode:"您疼孩子、捨不得孩子吃苦",issue:"容易依賴或被寵溺、缺乏抗壓",tip:"愛要有規矩，讓他自己完成小事"},
+ 廉貞:{kid:"有個性、聰明但叛逆期明顯",mode:"您管教有原則、要求紀律",issue:"硬碰硬兩敗俱傷",tip:"先接住情緒再講道理，青春期尤其如此"},
+ 天府:{kid:"穩重乖巧、惜物、讓人放心",mode:"您給孩子穩定與安全感",issue:"孩子偏保守被動、不敢冒險",tip:"多鼓勵嘗試與犯錯，穩中帶闖"},
+ 太陰:{kid:"細膩貼心、重感受（女兒緣深）",mode:"您溫柔照顧、觀察入微",issue:"孩子心事不說、暗自委屈",tip:"固定的談心時間，比追問更能讓他開口"},
+ 貪狼:{kid:"多才多藝、人緣好、興趣廣",mode:"您願意栽培各種才藝",issue:"興趣太多難專精、易受朋友影響",tip:"陪他挑一兩樣主軸深耕，其餘當調劑"},
+ 巨門:{kid:"口才好、愛問為什麼、思辨強",mode:"您常跟孩子鬥嘴也鬥智",issue:"頂嘴與口角多，講贏了卻傷感情",tip:"鼓勵表達、別急著壓話，辯才是他的天賦"},
+ 天相:{kid:"懂事有禮、像小大人",mode:"您重視教養與形象",issue:"孩子太在意評價、容易壓抑自己",tip:"讓他知道：不完美也一樣被愛"},
+ 天梁:{kid:"老成懂事、有長姊長兄風範",mode:"孩子反過來照顧您、分擔家事",issue:"承擔太多、少了童年",tip:"讓孩子當孩子，責任大人來扛"},
+ 七殺:{kid:"獨立好動、有主見、不受管",mode:"您給空間但常擔心",issue:"衝撞與聚少離多，硬管必反彈",tip:"給空間、設底線，約定好就放手"},
+ 破軍:{kid:"特立獨行、創造力強、不走尋常路",mode:"您常看不懂孩子的選擇",issue:"用舊框架套他必起衝突",tip:"別急著糾正，他的路可能是您沒見過的"}
+};
+const STAR_FRIEND={
+ 紫微:{circle:"朋友圈多強者能人，往上社交",boon:"能引薦高層、拉抬格局",issue:"朋友強勢，容易被比較或利用",tip:"挑能互相成就的深交，別當陪襯"},
+ 天機:{circle:"謀士型朋友，交流點子與資訊",boon:"消息靈通、商量有對象",issue:"朋友來來去去、交情不易深",tip:"重質不重量，固定幾位軍師就夠"},
+ 太陽:{circle:"人緣旺、朋友多、受歡迎",boon:"號召力強，有事眾人相挺",issue:"付出多回收少，容易被情緒勒索",tip:"把心力留給會回頭看您的人"},
+ 武曲:{circle:"朋友少而精，多為事業夥伴",boon:"合作可靠、互利明確",issue:"利益往來多、溫情少",tip:"偶爾不談事，交情才走得久"},
+ 天同:{circle:"吃喝玩樂的好人緣",boon:"相處輕鬆、生活有伴",issue:"酒肉朋友多、關鍵時助力少",tip:"玩歸玩，患難見真情再深交"},
+ 廉貞:{circle:"交際手腕強、人脈面廣",boon:"各路人馬都搭得上",issue:"圈子複雜、容易惹是非",tip:"遠離灰色朋友，名聲比人脈值錢"},
+ 天府:{circle:"穩定老友與有力人士",boon:"關鍵時有實質奧援",issue:"圈子固定、少新血",tip:"每年刻意認識幾位新朋友"},
+ 太陰:{circle:"知心好友、細水長流",boon:"交情深、能交心",issue:"慢熟、朋友數量少",tip:"深交勝廣交，您不需要熱鬧"},
+ 貪狼:{circle:"朋友滿天下、應酬不斷",boon:"人脈即錢脈，機會從飯局來",issue:"應酬耗財耗身、真心難辨",tip:"設應酬預算與底線，留清醒"},
+ 巨門:{circle:"朋友間口舌是非偏多",boon:"直言的諍友難得",issue:"背後議論與誤會不斷",tip:"不傳話、不八卦，是非自然少一半"},
+ 天相:{circle:"得力助手多、朋友願意相挺",boon:"有事總有人幫",issue:"爛好人性格、幫過頭被凹",tip:"學會說不，幫忙要有界線"},
+ 天梁:{circle:"長輩型朋友多、常被當導師",boon:"貴人與長者緣厚",issue:"當所有人的靠山，自己很累",tip:"互相的關係才久，單向付出要止損"},
+ 七殺:{circle:"江湖味，各路豪傑都有",boon:"講義氣、敢為朋友出頭",issue:"聚散快、衝突也快",tip:"慢熱深交，別為義氣扛別人的債"},
+ 破軍:{circle:"朋友圈變動大、常換圈子",boon:"總能認識新世界",issue:"知心老友少",tip:"刻意維繫三五位老朋友，是您的錨"}
+};
+const GUIREN_PAL={命宮:"貴人被您本身的特質吸引，自帶貴人緣",父母:"長輩、師長、上一輩的人脈是您的靠山",官祿:"職場上司與體制內的提拔",遷移:"出外、外地遇貴人，走出去就有人幫",交友:"朋友圈與客戶群中藏貴人",財帛:"財務與生意往來中遇貴人",夫妻:"配偶及其家族人脈相助",兄弟:"同輩、手足、同學是助力",子女:"晚輩、學生、下屬反成助力",田宅:"家族、鄰里、同鄉的奧援",福德:"興趣同好圈、精神導師",疾厄:"低潮或病中遇到拉您一把的人"};
+function calcKids(zw,adv){
+ const HN={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+ const get=(b,main)=>b<0?[]:(zw.stars[b]||[]).filter(s=>main?s.type==="main":s.type!=="main");
+ const kb=_dzPal(zw,"子女");
+ let mains=get(kb,true),borrowed=false; if(!mains.length&&kb>=0){mains=get((kb+6)%12,true);borrowed=true;}
+ const modes=mains.map(s=>Object.assign({star:s.name,bright:s.bright||"",hua:s.hua?HN[s.hua]:""},STAR_KIDS[s.name]||{})).filter(x=>x.kid);
+ const AUXK={紅鸞:"添丁與喜事之兆，子女緣佳。",天喜:"喜慶入子女宮，常應驗在懷孕添丁或子女喜事。",左輔:"子女或得力下屬不只一位，晚輩助力強。",右弼:"子女或得力下屬不只一位，晚輩助力強。",擎羊:"為子女操心勞氣，管教忌動氣動手。",陀羅:"子女課題拖磨反覆，耐心是唯一解。",火星:"親子衝突來得急，先降溫再處理。",鈴星:"孩子悶心事，要主動觀察。",地空:"聚少離多或想法差距大，重質不重量。",地劫:"為子女花費大，教育金要及早規劃。",天姚:"子女人緣好、早熟，交友狀況要留意。",孤辰:"子女緣偏淡或偏晚，順其自然不強求。",寡宿:"子女緣偏淡或偏晚，順其自然不強求。"};
+ const aux=get(kb,false).map(s=>({star:s.name,txt:AUXK[s.name]||""})).filter(x=>x.txt);
+ const hua=(zw.stars[kb]||[]).filter(s=>s.hua).map(s=>({star:s.name,h:HN[s.hua]}));
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit);
+ const ln=curLN(), lnPal=zw.palaceName[ln.branch];
+ const lnLu=(ln.sihua&&ln.sihua[0])||"", lnJi=(ln.sihua&&ln.sihua[3])||"";
+ const lnLuPal=_dzPalName(zw,_dzStarPal(zw,lnLu)), lnJiPal=_dzPalName(zw,_dzStarPal(zw,lnJi));
+ return {borrowed,modes,aux,hua,limName,pre,ln,lnPal,lnLuPal,lnJiPal};
+}
+function kidsPaidHTML(k,zw,adv,name){
+ if(!k)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ let verdict=k.modes.length?`子女宮坐 ${k.modes.map(x=>x.star).join("、")}${k.borrowed?"（借對宮）":""}——孩子的樣貌偏向「${k.modes[0].kid}」，而您帶孩子的方式是「${k.modes[0].mode}」。`:"子女宮與對宮皆無主星，子女緣隨大限流年而定，親子相處以陪伴品質為重。";
+ verdict+="（尚無子女者，此宮同看桃花人緣、創作能量與帶下屬、帶學生的緣分。）";
+ const modeHTML=k.modes.length?k.modes.map(x=>`<li><b>${x.star}</b>${x.bright?"（"+x.bright+"）":""}${x.hua?"・化"+x.hua:""}：孩子特質——${x.kid}；您的教養風格——${x.mode}。<span class="cj-care">課題：${x.issue}。建議：${x.tip}。</span></li>`).join(""):`<li>以流年與對象互動為主，固定的親子時間勝過一切技巧。</li>`;
+ let auxHTML=k.aux.map(x=>`<li><b>${x.star}</b>：${x.txt}</li>`).join("");
+ k.hua.forEach(x=>{if(x.h==="祿")auxHTML+=`<li><b>${x.star}化祿入子女宮</b>：子女緣厚、晚輩帶旺，親子關係是您的福氣來源。</li>`;if(x.h==="忌")auxHTML+=`<li><b>${x.star}化忌入子女宮</b>：為子女操心是一生的牽掛——愛之深責之切，記得課題終究是孩子自己的。</li>`;if(x.h==="權")auxHTML+=`<li><b>${x.star}化權入子女宮</b>：對孩子想作主，留意別管過頭。</li>`;if(x.h==="科")auxHTML+=`<li><b>${x.star}化科入子女宮</b>：子女聰穎有名聲，讀書考運不差。</li>`;});
+ if(!auxHTML)auxHTML=`<li>子女宮無明顯雜曜四化，親子課題單純，用心陪伴即可。</li>`;
+ const kidLim=/子女|田宅|夫妻/.test(k.limName);
+ let timing=k.pre?"目前尚在童限；":`現行大限在「${k.limName}」${kidLim?"——這十年家庭與子女事是重心，添丁、教養、家中成員變化都容易發生在這段":"，親子互動平穩，維持日常陪伴即可"}；`;
+ timing+=`${k.ln.year} ${k.ln.gan}${k.ln.zhi}流年${k.lnPal==="子女"?"命宮正落子女宮，今年家中孩子的事（或添丁機會）特別有感":"命宮落「"+k.lnPal+"」"}`;
+ if(k.lnLuPal==="子女")timing+=`；化祿入子女宮，今年子女有喜、晚輩帶旺`;
+ if(k.lnJiPal==="子女")timing+=`；化忌入子女宮，今年為孩子多操心，溝通放軟、別硬碰硬`;
+ timing+="。";
+ return `<div class="rcard wide cjcard"><h3><span class="ic">嗣</span>親子子女深析 · ${name}</h3>
+ <p class="cj-verdict">${verdict}</p>
+ ${sec("子女樣貌與教養之道（子女宮）")}<ul class="cj-ul">${modeHTML}</ul>
+ ${sec("雜曜與四化的提醒")}<ul class="cj-ul">${auxHTML}</ul>
+ ${sec("親子的時機")}<p>${timing}</p>
+ <p class="cj-note">子女宮亦主桃花、創造力與下屬緣；無子女者可將上述解讀對應到作品、學生與團隊。命理僅供親子相處參考，每個孩子都是獨立的個體。</p></div>`;
+}
+function kidsPrintHTML(k){
+ if(!k)return "";
+ let s=`<div class="rp-sec">親子子女深析</div>`;
+ if(k.modes.length)s+=`<div class="rp-row"><b>子女樣貌</b> ${k.modes.map(x=>x.star+"："+x.kid+"；課題 "+x.issue).join("；")}</div>`;
+ if(k.aux.length)s+=`<div class="rp-row"><b>雜曜</b> ${k.aux.map(x=>x.star).join("、")}</div>`;
+ return s;
+}
+function calcSocial(zw,adv){
+ const HN={lu:"祿",quan:"權",ke:"科",ji:"忌"};
+ const get=(b,main)=>b<0?[]:(zw.stars[b]||[]).filter(s=>main?s.type==="main":s.type!=="main");
+ const fb=_dzPal(zw,"交友");
+ let mains=get(fb,true),borrowed=false; if(!mains.length&&fb>=0){mains=get((fb+6)%12,true);borrowed=true;}
+ const modes=mains.map(s=>Object.assign({star:s.name,bright:s.bright||"",hua:s.hua?HN[s.hua]:""},STAR_FRIEND[s.name]||{})).filter(x=>x.circle);
+ const kuiPal=_dzPalName(zw,_dzStarPal(zw,"天魁")), yuePal=_dzPalName(zw,_dzStarPal(zw,"天鉞"));
+ const zuoPal=_dzPalName(zw,_dzStarPal(zw,"左輔")), youPal=_dzPalName(zw,_dzStarPal(zw,"右弼"));
+ const AUXF={擎羊:"交友宮逢擎羊——提防口頭承諾與金錢往來，朋友爭執傷和氣。",陀羅:"交友宮逢陀羅——爛帳與糾纏的關係要快刀斬，拖越久傷越深。",火星:"交友宮逢火星——與朋友容易衝突翻臉，氣頭上先離場。",鈴星:"交友宮逢鈴星——提防表面和氣、背後較勁的暗箭。",地空:"交友宮逢地空——為朋友付出容易落空，幫忙量力而為。",地劫:"交友宮逢地劫——破財多因朋友，借貸作保千萬謹慎。",天姚:"交友宮逢天姚——異性緣好、酒場人緣旺，界線要清楚。",咸池:"交友宮逢咸池——社交場合桃花多，公私要分明。"};
+ const sha=get(fb,false).map(s=>({star:s.name,txt:AUXF[s.name]||""})).filter(x=>x.txt);
+ const hua=(zw.stars[fb]||[]).filter(s=>s.hua).map(s=>({star:s.name,h:HN[s.hua]}));
+ const parentMain=(function(){const pb=_dzPal(zw,"父母");const m=get(pb,true).map(s=>s.name);return m;})();
+ const limName=(adv.limits&&adv.limits.curLimLabel)||"", pre=!!(adv.limits&&adv.limits.preLimit);
+ const ln=curLN(), lnPal=zw.palaceName[ln.branch];
+ return {borrowed,modes,kuiPal,yuePal,zuoPal,youPal,sha,hua,parentMain,limName,pre,ln,lnPal};
+}
+function socialPaidHTML(so,zw,adv,name,scores){
+ if(!so)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ const dim=(scores&&scores.dims||[]).filter(d=>d.k==="人際")[0];
+ let verdict=dim?`人際評分 <b>${dim.v}</b> 分（${dim.band}）。`:"";
+ verdict+=so.modes.length?`交友宮坐 ${so.modes.map(x=>x.star).join("、")}${so.borrowed?"（借對宮）":""}，您的人際圈是「${so.modes[0].circle}」。`:"交友宮與對宮皆無主星，人際隨環境而變，選對圈子比經營技巧更重要。";
+ const modeHTML=so.modes.length?so.modes.map(x=>`<li><b>${x.star}</b>${x.bright?"（"+x.bright+"）":""}${x.hua?"・化"+x.hua:""}：${x.circle}。助力——${x.boon}。<span class="cj-care">課題：${x.issue}。建議：${x.tip}。</span></li>`).join(""):`<li>人際樣貌彈性大，跟著喜用神方位與行業找圈子最有利。</li>`;
+ let gHTML="";
+ if(so.kuiPal)gHTML+=`<li><b>天魁（陽貴人）在${so.kuiPal}宮</b>：${GUIREN_PAL[so.kuiPal]||""}——多為男性或年長的提攜者。</li>`;
+ if(so.yuePal)gHTML+=`<li><b>天鉞（陰貴人）在${so.yuePal}宮</b>：${GUIREN_PAL[so.yuePal]||""}——多為女性或暗中相助的人。</li>`;
+ if(so.zuoPal)gHTML+=`<li><b>左輔在${so.zuoPal}宮</b>、<b>右弼在${so.youPal||"－"}宮</b>：平輩與同事的實質助力所在，團隊作戰比單打獨鬥有利。</li>`;
+ if(!gHTML)gHTML=`<li>貴人星不顯，靠自己實力立足；但也因此不欠人情，走得自在。</li>`;
+ let shaHTML=so.sha.map(x=>`<li><b>${x.star}</b>：${x.txt}</li>`).join("");
+ so.hua.forEach(x=>{if(x.h==="忌")shaHTML+=`<li><b>${x.star}化忌入交友宮</b>：一生最容易在朋友身上受傷或破財——識人比交人重要，這是您的功課。</li>`;if(x.h==="祿")shaHTML+=`<li><b>${x.star}化祿入交友宮</b>：朋友帶財帶機會，人脈是您的資產。</li>`;});
+ if(!shaHTML)shaHTML=`<li>交友宮無明顯煞曜，人際損耗小，放心經營。</li>`;
+ const eldersHTML=so.parentMain.length?`<p>父母宮坐 <b>${so.parentMain.join("、")}</b>——這也是您與上司、長輩、體制相處的模式：${so.parentMain.map(n=>(STAR_DESC[n]&&STAR_DESC[n].t)||"").filter(Boolean).join("；")}。與長官的關係，用對待父母宮星性的方式經營最省力。</p>`:`<p>父母宮無主星，與長輩上司的緣分平淡自由，靠禮數維持即可。</p>`;
+ const socLim=/交友|遷移|兄弟|父母/.test(so.limName);
+ let timing=so.pre?"目前尚在童限；":`現行大限在「${so.limName}」${socLim?"——這十年人際是運勢的放大器：圈子選對，貴人加倍；圈子選錯，是非加倍":"，人際平穩，重點經營三五位關鍵人即可"}；`;
+ timing+=`${so.ln.year} ${so.ln.gan}${so.ln.zhi}流年命宮落「${so.lnPal}」${/交友|遷移/.test(so.lnPal)?"，今年多走動、多見人，貴人就在新場合裡":""}。`;
+ return `<div class="rcard wide cjcard"><h3><span class="ic">緣</span>人際貴人深析 · ${name}</h3>
+ <p class="cj-verdict">${verdict}</p>
+ ${sec("人際圈樣貌（交友宮）")}<ul class="cj-ul">${modeHTML}</ul>
+ ${sec("貴人從哪裡來（天魁・天鉞・左輔・右弼）")}<ul class="cj-ul">${gHTML}</ul>
+ ${sec("小人與損耗提醒")}<ul class="cj-ul">${shaHTML}</ul>
+ ${sec("與長輩上司的相處（父母宮）")}${eldersHTML}
+ ${sec("人際的時機")}<p>${timing}</p>
+ <p class="cj-note">貴人不是等來的——命盤指出貴人出現的場域，走進那個場域、先成為別人的貴人，自己的貴人才會出現。</p></div>`;
+}
+function socialPrintHTML(so){
+ if(!so)return "";
+ let s=`<div class="rp-sec">人際貴人深析</div>`;
+ if(so.modes.length)s+=`<div class="rp-row"><b>人際圈</b> ${so.modes.map(x=>x.star+"："+x.circle).join("；")}</div>`;
+ if(so.kuiPal||so.yuePal)s+=`<div class="rp-row"><b>貴人</b> ${so.kuiPal?("天魁在"+so.kuiPal+"宮"):""}${so.yuePal?("　天鉞在"+so.yuePal+"宮"):""}${so.zuoPal?("　左輔在"+so.zuoPal+"宮"):""}${so.youPal?("　右弼在"+so.youPal+"宮"):""}</div>`;
+ if(so.sha.length)s+=`<div class="rp-row"><b>提醒</b> ${so.sha.map(x=>x.star).join("、")}</div>`;
+ return s;
+}
+
 /* 分數→百分等級 PR（以全體命盤約略常態分佈 μ=70、σ=12 推估，邏輯斯近似常態 CDF）
    PR=78 即「贏過約 78% 的命盤、屬前 22%」 */
 function scoreToPR(v){
@@ -4727,6 +4858,8 @@ function run(){
     try{adv.health=calcHealth(zw,bz,wx,adv);}catch(e){adv.health=null;}
     try{adv.wealth=calcWealth(zw,bz,adv);}catch(e){adv.wealth=null;}
     try{adv.love=calcLove(zw,bz,adv,gender,lunar.year);}catch(e){adv.love=null;}
+    try{adv.kids=calcKids(zw,adv);}catch(e){adv.kids=null;}
+    try{adv.social=calcSocial(zw,adv);}catch(e){adv.social=null;}
     const scores=calcScores(zw,bz,wx,adv);
     const fam=familyAnalysis(bz,adv.strength.xi,adv.strength.ji,readFamMembers());
     render(name,gender,{y,m,d,hh,mm,solar:solarInfo},lunar,bz,zw,wx,adv,scores,fam,subText);
@@ -5800,6 +5933,25 @@ function buildAIText(){
     ll.aux.forEach(function(x){P(x.star+"（"+x.pal+"宮）："+x.txt);});
     if(ll.fuHua.length)P("夫妻宮四化："+ll.fuHua.join("、"));
   }else P("（未產生感情深析資料）");
+
+  SEC("親子子女深析（系統演算）");
+  if(adv.kids){const kk=adv.kids;
+    if(kk.modes.length)kk.modes.forEach(function(x){P("子女宮 "+x.star+(x.hua?("化"+x.hua):"")+(kk.borrowed?"（借對宮）":"")+"：孩子特質——"+x.kid+"；教養風格——"+x.mode+"。課題："+x.issue+"。建議："+x.tip);});
+    else P("子女宮與對宮皆無主星，親子以陪伴品質為重。");
+    kk.aux.forEach(function(x){P(x.star+"："+x.txt);});
+    P("（子女宮亦主桃花、創造力與下屬緣。）");
+  }else P("（未產生親子深析資料）");
+
+  SEC("人際貴人深析（系統演算）");
+  if(adv.social){const ss2=adv.social;
+    if(ss2.modes.length)ss2.modes.forEach(function(x){P("交友宮 "+x.star+(ss2.borrowed?"（借對宮）":"")+"："+x.circle+"。助力："+x.boon+"。課題："+x.issue+"。建議："+x.tip);});
+    else P("交友宮與對宮皆無主星，選對圈子比技巧重要。");
+    if(ss2.kuiPal)P("天魁（陽貴人）在"+ss2.kuiPal+"宮："+(GUIREN_PAL[ss2.kuiPal]||""));
+    if(ss2.yuePal)P("天鉞（陰貴人）在"+ss2.yuePal+"宮："+(GUIREN_PAL[ss2.yuePal]||""));
+    if(ss2.zuoPal)P("左輔在"+ss2.zuoPal+"宮、右弼在"+(ss2.youPal||"－")+"宮：平輩助力所在。");
+    ss2.sha.forEach(function(x){P(x.txt);});
+    if(ss2.parentMain.length)P("父母宮坐 "+ss2.parentMain.join("、")+"：與上司長輩相處之道同此星性。");
+  }else P("（未產生人際深析資料）");
 
   SEC("八字重量（袁天罡稱骨）");
   const yg=bz.year.gan+bz.year.zhi;
@@ -8569,6 +8721,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>健康深析 ・ 疾厄宮臟腑傾向、互動人體對照圖、五行失衡、大限流年引動與檢查建議</li>
       <li>財運深析 ・ 財源型態、守財置產、祿存四化落宮、破財提醒、財機時機與理財建議</li>
       <li>感情深析 ・ 感情模式、緣分從哪裡來、課題與相處建議、未來十年感情應期</li>
+      <li>親子子女深析 ・ 子女樣貌、教養之道、雜曜四化提醒（兼看桃花創造力與下屬緣）</li>
+      <li>人際貴人深析 ・ 人際圈樣貌、貴人從哪裡來、小人提醒、與長輩上司的相處</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8755,6 +8909,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${wealthPaidHTML(adv.wealth,zw,adv,name,scores)}
 
   ${lovePaidHTML(adv.love,zw,adv,name,scores)}
+
+  ${kidsPaidHTML(adv.kids,zw,adv,name)}
+
+  ${socialPaidHTML(adv.social,zw,adv,name,scores)}
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
@@ -9092,6 +9250,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     ${healthPrintHTML(adv.health)}
     ${wealthPrintHTML(adv.wealth)}
     ${lovePrintHTML(adv.love)}
+    ${kidsPrintHTML(adv.kids)}
+    ${socialPrintHTML(adv.social)}
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
