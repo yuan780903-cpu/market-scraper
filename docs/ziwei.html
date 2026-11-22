@@ -1965,7 +1965,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.20.5";
+const SITE_VERSION_DATE="2026.11.22";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -4693,7 +4693,7 @@ function palmSaveImg(){
  }
  ctx.textAlign="center";ctx.fillStyle="#9a8148";ctx.font=FONT(0,14);
  ctx.fillText("lifeguidetw.com　·　AI 影像參考　·　民俗娛樂用途",W/2,y+14);
- try{const a=document.createElement("a");a.download="手相掌紋分析.png";a.href=c.toDataURL("image/png");a.click();}
+ try{const a=document.createElement("a");a.download=_lgBase((document.getElementById("name")||{}).value)+"_手相掌紋.png";a.href=c.toDataURL("image/png");a.click();}
  catch(e){alert("此環境無法直接下載圖片，請改用「列印／存 PDF」或長按截圖。");}
 }
 function palmPrint(){
@@ -5730,11 +5730,14 @@ function buildPdfFromCanvases(canvases,quality){
 var _origTitle=document.title;
 function _restoreTitle(){try{document.title=_origTitle;}catch(e){}}
 window.addEventListener('afterprint',_restoreTitle);
+/* 客戶輸出檔名統一格式：「<名字>的人生實用說明書」（PDF／圖片／文字檔／ics 共用） */
+function _lgBase(n){
+  var s=String(n==null?'':n).replace(/[\/\\:*?"<>|\n\r\t]/g,'').trim();
+  return (s||'命主')+'的人生實用說明書';
+}
 function _printDocTitle(){
   var D=window.__ZW;
-  var s=(D&&D.name)?String(D.name).trim():'';
-  s=s.replace(/[\/\\:*?"<>|]/g,'').trim();
-  return (s||'命主')+'的人生實用說明書';
+  return _lgBase(D&&D.name);
 }
 /* ===== 下載 PDF 報告（v2.0.0 一鍵直接下載）：
    用已 inline 的 html2canvas 逐頁擷取 #reportPrint 的專業列印版面（.rp-page），
@@ -6062,7 +6065,7 @@ function runAIExport(){
     }catch(e){ta.focus();ta.select();okEl.textContent="請長按選取後手動複製。";}
   });
   document.getElementById("aiDlBtn").addEventListener("click",function(){
-    _downloadFile((D.name||"命盤")+"_AI分析文本.txt",txt,"text/plain;charset=utf-8");
+    _downloadFile(_lgBase(D.name)+"_AI分析文本.txt",txt,"text/plain;charset=utf-8");
     okEl.textContent="✓ 已下載文字檔。";
   });
 }
@@ -6156,7 +6159,7 @@ function runCalExport(){
   const D=window.__ZW;
   if(!D){zwOpenModal("個人農民曆","尚未排盤","",'<div class="aiexp"><p class="aihint">請先於上方輸入生辰並按「開始排盤」，產生命盤後再下載個人農民曆。</p></div>');return;}
   const ics=buildICS();
-  _downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
+  _downloadFile(_lgBase(D.name)+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
   const body='<div class="aiexp">'
     +'<p class="aihint">已為您產生 <b>'+(D.name||"命主")+" · 個人農民曆.ics</b> 行事曆檔，內含：<br>"
     +'・<b>'+curLN().year+' 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
@@ -6172,7 +6175,7 @@ function runCalExport(){
     +'<div class="aiok" id="calOk">✓ 已開始下載，請於下載資料夾開啟匯入行事曆。</div></div>';
   zwOpenModal("一鍵帶入 · 個人農民曆",D.name+" · 個人農民曆","流月吉凶 + 流年 + 大運．匯入手機隨時提醒",body);
   const re=document.getElementById("calReDlBtn");
-  if(re)re.addEventListener("click",function(){_downloadFile((D.name||"命主")+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");document.getElementById("calOk").textContent="✓ 已重新下載。";});
+  if(re)re.addEventListener("click",function(){_downloadFile(_lgBase(D.name)+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");document.getElementById("calOk").textContent="✓ 已重新下載。";});
 }
 
 function timeLabel(h){
@@ -7236,7 +7239,7 @@ function shareCardDownload(){
   try{
     var cv=document.getElementById('shareCardCanvas');
     var url=cv.toDataURL('image/png');
-    var a=document.createElement('a');a.href=url;a.download='我的命盤重點_lifeguidetw.png';
+    var a=document.createElement('a');a.href=url;a.download=_lgBase(((window.__ZW||{}).name))+'_重點卡.png';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     scMsg('已下載精華卡 PNG');
   }catch(e){scMsg('下載失敗：'+(e&&e.message||e),true);}
@@ -7461,9 +7464,9 @@ async function reportSaveAsImage(doShare){
   if(doShare && navigator.share){
     try{
       var files=[];
-      for(var i=0;i<cvs.length;i++){var b=await _cvToBlob(cvs[i]);files.push(new File([b],name+'_命理報告_'+(i+1)+'.png',{type:'image/png'}));}
+      for(var i=0;i<cvs.length;i++){var b=await _cvToBlob(cvs[i]);files.push(new File([b],_lgBase(name)+'_'+(i+1)+'.png',{type:'image/png'}));}
       if(navigator.canShare&&navigator.canShare({files:files})){
-        await navigator.share({files:files,title:name+' 的命理報告',text:name+' 的完整命理精析報告'});
+        await navigator.share({files:files,title:_lgBase(name),text:_lgBase(name)+'（完整命理精析報告）'});
         reportImgMsg('已開啟系統分享（共 '+cvs.length+' 張）。');return;
       }
     }catch(e){ if(e&&e.name==='AbortError'){reportImgMsg('');return;} /* 否則往下走下載 */ }
@@ -7473,7 +7476,7 @@ async function reportSaveAsImage(doShare){
   for(var j=0;j<cvs.length;j++){
     try{
       var url=cvs[j].toDataURL('image/png');
-      var a=document.createElement('a');a.href=url;a.download=name+'_命理報告_'+String(j+1).padStart(2,'0')+'.png';
+      var a=document.createElement('a');a.href=url;a.download=_lgBase(name)+'_'+String(j+1).padStart(2,'0')+'.png';
       document.body.appendChild(a);a.click();document.body.removeChild(a);
       okN++;
       if(j<cvs.length-1)await new Promise(function(r){setTimeout(r,350);}); // 間隔避免瀏覽器合併攔截多檔下載
