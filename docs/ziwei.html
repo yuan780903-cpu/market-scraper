@@ -1231,6 +1231,13 @@ footer .disc .sub{display:block;margin-top:12px}
   /* 封面獨佔第一頁、封底獨佔最後一頁：高度撐滿一頁（border-box 含 9mm 內距），
      留 5mm 餘裕避免瀏覽器 mm 換算進位溢出成空白頁。 */
   #reportPrint .rp-cover,#reportPrint .rp-back{min-height:0;height:292mm;break-inside:avoid;page-break-inside:avoid}
+  /* iOS（iPhone/iPad，html.ios-dev 由 JS 依 UA 加上）：AirPrint 不理 @page margin:0，
+     自帶約 15mm 上下邊界（URL/頁碼區），A4 可印高只剩約 265mm——292mm 會把封面尾段
+     （印章/頁腳）切到下一頁。改 245mm 安全高（連 Letter 247mm 可印高也裝得下），
+     內容是 flex 置中＋絕對定位頁腳，縮高不影響版面。桌機維持 292mm 滿版，勿合併。 */
+  /* 注意要連 min-height 一起歸零：螢幕規則的 min-height:1086px(≈287mm)寫在本區塊之後、
+     同權重會蓋掉上面的 min-height:0（已實測踩過——只改 height 無效，照樣 287mm 溢頁）。 */
+  html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:245mm;min-height:0}
   #reportPrint .rp-cover{break-after:page;page-break-after:always}
   #reportPrint .rp-back{break-before:page;page-break-before:always}
 }
@@ -2034,7 +2041,9 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.8";
+const SITE_VERSION_DATE="2026.11.23.9";
+/* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全高度 245mm */
+try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
