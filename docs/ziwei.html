@@ -1228,6 +1228,11 @@ footer .disc .sub{display:block;margin-top:12px}
   #reportPrint *{box-shadow:none!important}
   #reportPrint .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a!important}
   #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(70px,82px))}
+  /* 封面獨佔第一頁、封底獨佔最後一頁：高度撐滿一頁（border-box 含 9mm 內距），
+     留 5mm 餘裕避免瀏覽器 mm 換算進位溢出成空白頁。 */
+  #reportPrint .rp-cover,#reportPrint .rp-back{min-height:0;height:292mm;break-inside:avoid;page-break-inside:avoid}
+  #reportPrint .rp-cover{break-after:page;page-break-after:always}
+  #reportPrint .rp-back{break-before:page;page-break-before:always}
 }
 /* ===== 一鍵 PDF 擷取用版面（rp-cap）：在螢幕上以「等同專業列印」的樣式渲染 #reportPrint，
    供 html2canvas 逐頁擷取；擷取時以 inline style 移到畫面外（left:-99999px），使用者看不到。
@@ -1239,6 +1244,39 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint.rp-cap .rp-chart{grid-template-rows:repeat(4,minmax(70px,82px))}
 #reportPrint.rp-cap *{box-shadow:none}
 #reportPrint.rp-cap .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a}
+
+/* ===== 封面／封底（印刷級質感：描金雙框＋四角飾＋命格圓印＋硃砂方印）===== */
+#reportPrint .rp-cover,#reportPrint .rp-back{min-height:1086px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;
+  background:linear-gradient(168deg,#fdf9ee 0%,#faf2da 46%,#f4e9c6 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-cover::before,#reportPrint .rp-back::before{content:"";position:absolute;inset:26px;border:2.5px solid #b8933a;pointer-events:none}
+#reportPrint .rp-cover::after,#reportPrint .rp-back::after{content:"";position:absolute;inset:34px;border:1px solid #d8be80;pointer-events:none}
+#reportPrint .cv-cnr{position:absolute;width:26px;height:26px;border:0 solid #8a6a14;z-index:1}
+#reportPrint .cv-cnr.tl{top:19px;left:19px;border-top-width:3px;border-left-width:3px}
+#reportPrint .cv-cnr.tr{top:19px;right:19px;border-top-width:3px;border-right-width:3px}
+#reportPrint .cv-cnr.bl{bottom:19px;left:19px;border-bottom-width:3px;border-left-width:3px}
+#reportPrint .cv-cnr.br{bottom:19px;right:19px;border-bottom-width:3px;border-right-width:3px}
+#reportPrint .cv-brand{font-size:13.5px;letter-spacing:8px;text-indent:8px;color:#8a6a14}
+#reportPrint .cv-en{font-size:8px;letter-spacing:4.5px;text-indent:4.5px;color:#b9a56e;margin-top:7px}
+#reportPrint .cv-line{width:170px;height:2px;margin:22px auto;background:linear-gradient(90deg,transparent,#c2a14a,transparent);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .cv-emblem{width:118px;height:118px;border-radius:50%;border:2.5px solid #b8933a;display:flex;align-items:center;justify-content:center;margin:0 auto 26px}
+#reportPrint .cv-emb-in{width:100px;height:100px;border-radius:50%;border:1px solid #d8be80;background:#fffdf6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .cv-emb-in .g{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:26px;font-weight:700;color:#8a6a14;line-height:1.1}
+#reportPrint .cv-emb-in .t{font-size:11px;letter-spacing:2px;color:#a6833c}
+#reportPrint .cv-name{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:56px;font-weight:700;letter-spacing:16px;text-indent:16px;color:#6a4e10;line-height:1.2}
+#reportPrint .cv-sub{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:22px;letter-spacing:9px;text-indent:9px;color:#8a6a14;margin-top:10px}
+#reportPrint .cv-tag{font-size:10.5px;letter-spacing:3px;color:#a68f52;margin-top:16px}
+#reportPrint .cv-meta{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#6a562e;margin-top:2px}
+#reportPrint .cv-meta b{color:#7a5a12}
+#reportPrint .cv-seal{width:66px;height:66px;margin:26px auto 0;background:#b01e2e;border-radius:7px;display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:5px;box-sizing:border-box;
+  font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:21px;font-weight:700;color:#fff;line-height:1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .cv-no{font-size:9.5px;letter-spacing:2px;color:#a89a78;margin-top:18px}
+#reportPrint .cv-foot{position:absolute;bottom:48px;left:0;right:0;font-size:10.5px;letter-spacing:3.5px;color:#8a6a14}
+#reportPrint .bk-big{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:32px;font-weight:700;letter-spacing:11px;text-indent:11px;color:#6a4e10}
+#reportPrint .bk-quote{font-size:13px;line-height:2.3;color:#6a562e;max-width:440px;margin:0 auto}
+#reportPrint .bk-dia{width:9px;height:9px;margin:26px auto;background:linear-gradient(135deg,#d9b85a,#8a6a14);transform:rotate(45deg);border-radius:1.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .bk-brand{font-size:16px;letter-spacing:7px;text-indent:7px;color:#8a6a14}
+#reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#a68f52;margin-top:9px}
+#reportPrint .bk-note{font-size:9px;line-height:1.95;color:#a89a78;max-width:470px;margin:30px auto 0}
 
 /* ===== 演算動畫 / 抽牌 · 大師排盤 ===== */
 #castStage{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
@@ -1996,7 +2034,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.6";
+const SITE_VERSION_DATE="2026.11.23.7";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -6193,8 +6231,10 @@ function buildICS(){
   const stamp=now.getUTCFullYear()+String(now.getUTCMonth()+1).padStart(2,"0")+String(now.getUTCDate()).padStart(2,"0")+"T"+String(now.getUTCHours()).padStart(2,"0")+String(now.getUTCMinutes()).padStart(2,"0")+String(now.getUTCSeconds()).padStart(2,"0")+"Z";
   let uid=0;
   const ev=[];
-  // 一筆 VEVENT（全天事件 + 前一天提醒）
-  function add(y,m,d,title,desc){
+  // 一筆 VEVENT（全天事件＋跳出通知）。major 傳 CSS 色名（RFC 7986 COLOR）＝流年／大運
+  // 里程碑：特別顏色標注＋雙重跳出提醒（前一天 09:00＋當天 09:00）；一般事件單次提醒
+  // 用 -PT15H＝前一天 09:00（全天事件 DTSTART 為當日 00:00，-P1D 會在前一天半夜跳通知）。
+  function add(y,m,d,title,desc,major){
     uid++;
     const nd=new Date(Date.UTC(y,m-1,d)+86400000);
     ev.push(
@@ -6205,10 +6245,25 @@ function buildICS(){
       "DTEND;VALUE=DATE:"+_icsDate(nd.getUTCFullYear(),nd.getUTCMonth()+1,nd.getUTCDate()),
       "SUMMARY:"+_icsEsc(title),
       "DESCRIPTION:"+_icsEsc(desc),
-      "TRANSP:TRANSPARENT",
-      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+_icsEsc(title),"TRIGGER:-P1D","END:VALARM",
-      "END:VEVENT"
-    );
+      "TRANSP:TRANSPARENT");
+    if(major)ev.push("COLOR:"+major,"CATEGORIES:"+_icsEsc("人生實用說明書·運勢里程碑"));
+    ev.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+_icsEsc(title),"TRIGGER:-PT15H","END:VALARM");
+    if(major)ev.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+_icsEsc(title),"TRIGGER:PT9H","END:VALARM");
+    ev.push("END:VEVENT");
+  }
+  // 太歲關係（流年支 vs 本命年支）：值/沖/刑/害/破＝要注意；六合/三合＝得助力
+  const meZhi=bz.year.zhi, meSx=SHENGXIAO[meZhi];
+  const _XING={寅:"巳",巳:"申",申:"寅",丑:"戌",戌:"未",未:"丑",子:"卯",卯:"子"};
+  const _PO={子:"酉",酉:"子",午:"卯",卯:"午",寅:"亥",亥:"寅",巳:"申",申:"巳",辰:"丑",丑:"辰",戌:"未",未:"戌"};
+  function _taisui(yz){
+    if(yz===meZhi)return{k:"值太歲",bad:1,t:"本命年，值太歲——運勢起伏較大的一年，宜年初安太歲、行事低調穩健，紅色貼身衣物可助運。"};
+    if(CHONG[meZhi]===yz)return{k:"沖太歲",bad:1,t:"正沖太歲——一年中變動最大（搬遷、轉職、人事聚散皆易發生），重大決定多思量，宜安太歲化解、避免正面衝突。"};
+    if(_XING[yz]===meZhi||_XING[meZhi]===yz)return{k:"刑太歲",bad:1,t:"相刑太歲——易有口舌是非、文書糾紛，凡事留憑據、謹言慎行、勿強出頭。"};
+    if(HAI[meZhi]===yz)return{k:"害太歲",bad:1,t:"相害太歲——慎防小人暗損、合作生隙，識人宜慎、不輕易替人擔保。"};
+    if(_PO[meZhi]===yz)return{k:"破太歲",bad:1,t:"相破太歲——計畫易生枝節破耗，錢財進出守穩、以收尾整理為主。"};
+    if(LIUHE[meZhi]===yz)return{k:"六合太歲",bad:0,t:"與太歲六合——人緣貴人特旺的一年，談合作、結盟、成家皆宜把握。"};
+    if(SANHE_G[meZhi]===SANHE_G[yz])return{k:"三合太歲",bad:0,t:"與太歲三合——得助力之年，適合擴展佈局、推進醞釀已久的大事。"};
+    return null;
   }
   const Y=curLN().year; // 流月以當前流年為準（依農曆年動態）
   const gi=((Y-4)%10+10)%10;
@@ -6231,14 +6286,25 @@ function buildICS(){
       :("五行持平之月，按部就班、穩健經營即可。");
     add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 聖源大師．人生實用說明書系統");
   }
-  // 流年提醒：自今年起一路排到 2100（曆法引擎表定極限），每年立春當天一筆——一輩子的流年都在行事曆裡
+  // 流年提醒：自今年起一路排到 2100（曆法引擎表定極限），每年立春當天一筆——一輩子的流年都在行事曆裡。
+  // 每年對照命盤給「好與壞」：生肖太歲（值/沖/刑/害/破/六合/三合）＋年干五行喜忌＋紫微流年四化。
   for(let yy=curLN().year;yy<=2100;yy++){
     const ygi=((yy-4)%10+10)%10,yzi=((yy-4)%12+12)%12;
     const ygan=GAN[ygi],yzhi=ZHI[yzi],sh=SIHUA[ygan];
     const pname=zw.palaceName[yzi];
     const lc=sTerm(yy,2); // 立春日
-    const title="流年｜"+yy+" "+ygan+yzhi+"年 入"+pname;
-    add(yy,2,lc,title,yy+" 流年命宮入「"+pname+"」（虛歲 "+(yy-((D.lunar&&D.lunar.year)||by)+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌。把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。　— 聖源大師．人生實用說明書系統");
+    const ysx=SHENGXIAO[yzhi], ywx=GAN_WX[ygan], ytg=tenGod(dm,ygan);
+    const ts=_taisui(yzhi);
+    const yXi=st.xi.includes(ywx),yJi=st.ji.includes(ywx);
+    let mark;
+    if(ts&&ts.bad)mark=yXi?"變中有機":"留意";
+    else if(ts)mark=yJi?"合中藏耗":"大吉";
+    else mark=yXi?"吉":yJi?"平中防耗":"平";
+    const title="★流年｜"+yy+" "+ygan+yzhi+"・"+ysx+"年（"+mark+(ts?"·"+ts.k:"")+"）入"+pname;
+    const tsLine=ts?("【生肖太歲】"+ts.k+"："+ts.t):("【生肖太歲】"+ysx+"年與您的生肖（"+meSx+"）無沖刑害破——太歲平順，全年基調安穩。");
+    const wxLine="【五行喜忌】年干"+ygan+"屬"+ywx+"（對您為十神「"+ytg+"」），"+(yXi?"正是您的喜用神——得氣之年，宜主動進取、佈局大事。":yJi?"為您的忌神——較耗您的氣，宜守成緩進、養精蓄銳。":"與您命局平和，按部就班、穩健經營即可。");
+    const zwLine="【紫微流年】流年命宮入「"+pname+"」（虛歲 "+(yy-((D.lunar&&D.lunar.year)||by)+1)+"）。本年四化："+sh[0]+"化祿、"+sh[1]+"化權、"+sh[2]+"化科、"+sh[3]+"化忌——把握祿權科之機、留意化忌之宮，順勢經營此宮所主領域。";
+    add(yy,2,lc,title,yy+" 年立春交節，進入 "+ygan+yzhi+"（"+ysx+"）年。\n"+tsLine+"\n"+wxLine+"\n"+zwLine+"\n— 聖源大師．人生實用說明書系統 lifeguidetw.com","goldenrod");
   }
   // 未來大運切換里程碑（起運後各步，落在未來者）
   const curAge=adv.curAge;
@@ -6248,7 +6314,9 @@ function buildICS(){
     if(startYear>2100)return;
     const tg=tenGod(dm,p.gan);
     const lc=sTerm(startYear,2);
-    add(startYear,2,lc,"大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起）","虛歲 "+p.age+" 進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。新運開啟，宜順此干支之性重新佈局十年重心。　— 聖源大師．人生實用說明書系統");
+    const dwx2=GAN_WX[p.gan],dXi=st.xi.includes(dwx2),dJi=st.ji.includes(dwx2);
+    const dLine=dXi?"此運天干屬"+dwx2+"，正是您的喜用神——十年得氣之運，宜放手開創、大步向前。":dJi?"此運天干屬"+dwx2+"，為您的忌神——這十年宜穩紮穩打，重守成、健康與風險控管。":"此運天干屬"+dwx2+"，與您命局平和——按既定步調穩健經營即可。";
+    add(startYear,2,lc,"★大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起・"+(dXi?"吉":dJi?"守":"平")+"）","虛歲 "+p.age+"（"+startYear+" 年立春起）進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。\n"+dLine+"\n十年新運開啟，宜順此干支之性重新佈局人生重心。　— 聖源大師．人生實用說明書系統 lifeguidetw.com","crimson");
   });
   // ===== 每日農民曆（今起 365 天）：宜忌・沖煞・財神/貴人/喜神方位・個人五行・白話解說 =====
   function addDaily(y2,m2,d2,title,desc){
@@ -6264,7 +6332,6 @@ function buildICS(){
   const ZHI_DIR={子:"正北",丑:"東北",寅:"東北",卯:"正東",辰:"東南",巳:"東南",午:"正南",未:"西南",申:"西南",酉:"正西",戌:"西北",亥:"西北"};
   const JC_BAIHUA={建:"「開頭」的日子——求職赴任、拜訪貴人好；動土安葬先避。",除:"大掃除的日子——除舊佈新、看病調理好；嫁娶開市先緩。",滿:"豐收圓滿日——祈福、開市、交易都合適。",平:"平平穩穩的日子——日常修整可，不宜大動作。",定:"安定之日——訂約、提親、安床最合適。",執:"收尾之日——簽約、收款好；開新局、遠行先緩。",破:"破敗之日——大事都別辦，只宜拆舊、看病去疾。",危:"帶風險的日子——別冒險登高行船，靜養祈福為宜。",成:"成就之日——開業、結婚、入學，百事可成。",收:"收成之日——收款納財好；借錢給人、出遠門不宜。",開:"開展之日——開市開工、入學求職大吉。",閉:"收藏之日——適合整理收納，不宜開張出行。"};
   const SHA_DIR={申:"南",子:"南",辰:"南",寅:"北",午:"北",戌:"北",巳:"東",酉:"東",丑:"東",亥:"西",卯:"西",未:"西"};
-  const meZhi=bz.year.zhi, meSx=SHENGXIAO[meZhi];
   const t0=new Date();
   for(let i=0;i<365;i++){
     const dt=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i);
@@ -6312,9 +6379,9 @@ function runCalExport(){
     +'<p class="aihint">已為您產生 <b>'+(D.name||"命主")+" · 個人農民曆.ics</b> 行事曆檔，內含：<br>"
     +'・<b>每日農民曆 365 天</b>（今起一年：每日宜忌・沖煞・財神／貴人／喜神方位，疊加您的喜用神判讀，天天附白話解說；沖您生肖之日特別標示 ⚠）<br>'
     +'・<b>'+curLN().year+' 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
-    +'・<b>流年提醒直到 2100 年</b>（每年立春當天一筆，含當年四化與命宮落點——等於把您一輩子的流年都放進行事曆）<br>'
-    +'・<b>未來大運切換</b>里程碑<br>'
-    +'流月／流年／大運設前一天彈出提醒；每日農民曆為當日全天靜態事件（不佔行程、不吵人），點開即看今天宜忌與方位。<br><b>這是一本「活的」農民曆</b>：內容依您的命盤即時演算，之後每年回來重新下載，每日明細永遠是最新一年；流年與大運則一次給到 2100 年。</p>'
+    +'・<b>流年提醒直到 2100 年</b>（每年立春當天一筆，標題即標 ★ 與吉凶——逐年對照您的命盤給「好與壞」：生肖太歲值／沖／刑／害／破／合、年干五行喜忌、當年四化與命宮落點，等於把您一輩子的流年都放進行事曆）<br>'
+    +'・<b>未來大運切換</b>里程碑（★ 標注，附該運十年喜忌判讀）<br>'
+    +'<b>流年與大運起始日為「運勢里程碑」</b>：以特別顏色標注（支援的行事曆軟體會以金色／硃紅顯示），並設<b>雙重跳出通知</b>——前一天上午 9 點預告一次、當天上午 9 點再提醒一次，換運的大日子絕不錯過；流月設前一天上午 9 點提醒。每日農民曆為當日全天靜態事件（不佔行程、不吵人），點開即看今天宜忌與方位。<br><b>這是一本「活的」農民曆</b>：內容依您的命盤即時演算，之後每年回來重新下載，每日明細永遠是最新一年；流年與大運則一次給到 2100 年。</p>'
     +'<div class="aihint" style="background:#faf7f1;border:1px solid #e6ddcd;border-radius:10px;padding:12px 14px;line-height:1.85">'
     +'<b>如何匯入：</b><br>'
     +'<b>iPhone</b>：點下載的 .ics 檔 →「加入全部」到行事曆。<br>'
@@ -9425,7 +9492,30 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<p style="margin:0 0 9px"><b>四、名字幫不幫你（姓名學）：</b>${nameLine}</p>`
       +`<p style="margin:0"><b>五、三個系統合起來，給你的一句話：</b>紫微告訴你「<b>你是誰、舞台在哪</b>」，八字告訴你「<b>你的體質、該補什麼</b>」，姓名學告訴你「<b>後天名字有沒有幫上忙</b>」。三者一起看，你的開運方向很明確——${col?`多穿戴「<b>${col}</b>」系顏色`:""}${dir?`、桌位或床頭朝「<b>${dir}</b>」方`:""}${biz?`、往「<b>${biz}</b>」這類領域發展`:""}，都能借五行之力替你加分。發揮最強的 <b>${top.k}</b>、有意識地補 <b>${bot.k}</b>，先天這副好牌就能打到滿分。命由天定、運由己造，願你把這份說明書真正用起來，活出最順遂精彩的自己。</p>`;
   })();
+  // 專屬命書編號：姓名＋生辰之確定性雜湊——同一人每次輸出同號，作為客製化憑據
+  const bookNo=(function(){let h=5381;const s=name+'|'+sol.y+'-'+sol.m+'-'+sol.d+'-'+sol.hh+':'+sol.mm;for(let i=0;i<s.length;i++)h=(Math.imul(h,33)^s.charCodeAt(i))>>>0;const t=String(h%100000000).padStart(8,'0');return t.slice(0,4)+'-'+t.slice(4);})();
+  const coverDateStr=(function(){const n2=new Date();return n2.getFullYear()+'/'+(n2.getMonth()+1)+'/'+n2.getDate();})();
+  const _cvCorners='<span class="cv-cnr tl"></span><span class="cv-cnr tr"></span><span class="cv-cnr bl"></span><span class="cv-cnr br"></span>';
   const printHTML=`
+  <div class="rp-page rp-cover">
+    ${_cvCorners}
+    <div class="cv-brand">人生實用說明書系統</div>
+    <div class="cv-en">LIFE GUIDE · DESTINY REPORT</div>
+    <div class="cv-line"></div>
+    <div class="cv-emblem"><div class="cv-emb-in"><span class="g">${scores.gradeTier}</span><span class="t">${scores.grade}格</span></div></div>
+    <div class="cv-name">${name}</div>
+    <div class="cv-sub">的人生使用手冊</div>
+    <div class="cv-tag">紫微斗數 · 子平八字 · 姓名學　三術合參 · 個人專屬命書</div>
+    <div class="cv-line"></div>
+    <div class="cv-meta">
+      <span>國曆 <b>${sol.y} 年 ${sol.m} 月 ${sol.d} 日 ${String(sol.hh).padStart(2,'0')}:${String(sol.mm).padStart(2,'0')}</b>　·　${gender} · 屬${shengxiao}</span>
+      <span>農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]} ${bz.hour.zhi}時</b>　·　${zw.juName}</span>
+      <span>命宮 <b>${zw.palaceGan[zw.ming]}${ZHI[zw.ming]} · ${mingStarTxt}</b></span>
+    </div>
+    <div class="cv-seal"><span>聖</span><span>源</span><span>之</span><span>印</span></div>
+    <div class="cv-no">專屬命書編號 NO.${bookNo}　·　製表 ${coverDateStr}</div>
+    <div class="cv-foot">聖源大師 親論 · lifeguidetw.com</div>
+  </div>
   <div class="rp-page">
     <div class="rp-time" id="rpTime"></div>
     <div class="rp-head"><div class="b">人生實用說明書系統 · 命理精析</div>
@@ -9533,7 +9623,18 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-syn rp-lifesum">${lifeSummary}</div>
     <div class="rp-bless"><div class="bt">敬　祝</div><div class="bw">${blessing}</div><div class="bs">人生實用說明書系統 · 聖源大師　敬上</div></div>
     <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
-  </div>${famPages}`;
+  </div>${famPages}
+  <div class="rp-page rp-back">
+    ${_cvCorners}
+    <div class="bk-big">知命 · 而後造命</div>
+    <div class="cv-line"></div>
+    <div class="bk-quote">命，是先天拿到的牌；運，是後天的打法。<br>願這本專屬於您的說明書，陪您看清手上的牌，<br>在每個大運與流年的關口，都走在對的方向上。</div>
+    <div class="bk-dia"></div>
+    <div class="bk-brand">人生實用說明書系統</div>
+    <div class="bk-brand2">聖源大師 命理工作室 · lifeguidetw.com</div>
+    <div class="bk-note">本命書依命主「${name}」之生辰，以真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則）個人化生成，全球僅此一冊。命理吉凶皆為趨勢而非定數，內容僅供人生規劃參考，重大抉擇仍請審慎獨立判斷。<br>© 2026 人生實用說明書系統 · 聖源大師 版權所有</div>
+    <div class="cv-no">專屬命書編號 NO.${bookNo}</div>
+  </div>`;
   // 防撿字：列印全文報告不直接進 DOM，存 JS 記憶體；解鎖才由 __premSync 注入並掛 rp-on
   window.__PRINT_HTML=printHTML;
   const rp=document.getElementById("reportPrint");
