@@ -641,6 +641,10 @@ header .meta b{color:var(--gold);font-weight:500}
 .cjcard h3{letter-spacing:1.5px}
 .cjcard .cj-sec{position:relative;padding-left:14px}
 .cjcard .cj-sec::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:16px;background:linear-gradient(180deg,#d9b85a,#8a6a14);border-radius:3px}
+.toolcard h4 .toolval{float:right;font-size:.68rem;font-weight:600;letter-spacing:1px;color:#8a6a14;background:linear-gradient(135deg,#f7ecd0,#efdfb4);border:1px solid #d9c488;border-radius:12px;padding:3px 10px;margin-top:2px}
+.toolcard{border:1px solid var(--gold);box-shadow:0 8px 22px rgba(120,90,20,.08)}
+.toolcard p b{color:var(--gold-deep)}
+#reportPrint .rp-head2{border-bottom:1.5px solid #c8a84b;padding-bottom:6px}
 .cjcard .cj-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
 .cjcard .cj-h{font-weight:700;color:var(--gold-deep);margin:4px 0 2px;letter-spacing:.5px}
 .cjcard .cj-list{list-style:none;margin:4px 0 0;padding:0}
@@ -1971,7 +1975,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23";
+const SITE_VERSION_DATE="2026.11.23.2";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -5604,7 +5608,7 @@ function showInAppGateOnLoad(){
   }catch(e){}
 }
 /* ===== 法律文件（服務條款／免責聲明／隱私權政策）＋付款前不退費同意 ===== */
-const LEGAL_UPDATED='2026 年 7 月';
+const LEGAL_UPDATED='2026 年 11 月';
 const LEGAL_DOCS={
   terms:{seal:'約',title:'服務條款',html:
      '<p>歡迎使用「人生實用說明書系統」（下稱「本站」，品牌代表：聖源大師）。當您瀏覽、使用本站服務或完成付款，即表示您已閱讀、瞭解並同意本服務條款之全部內容。若您不同意，請停止使用本站服務。</p>'
@@ -5626,8 +5630,9 @@ const LEGAL_DOCS={
     +'<p>本站得因維護、升級、不可抗力或其他營運需要，隨時新增、修改、暫停或終止全部或部分服務，並儘可能事前公告。命理報告之性質請詳見《免責聲明》，本站不對報告內容之準確性或使用結果負責。</p>'
     +'<h4>六、準據法與管轄</h4>'
     +'<p>本條款之解釋與適用，以及與本站服務有關之爭議，均以<b>中華民國法律</b>為準據法；如因此涉訟，除法律另有強制規定外，雙方合意以<b>臺灣臺南地方法院</b>為第一審管轄法院。</p>'
-    +'<h4>七、聯絡方式</h4>'
-    +'<p>如對本條款有任何疑問，請加 LINE 官方帳號：<a href="https://line.me/R/ti/p/@910imdmw" target="_blank" rel="noopener">@910imdmw</a>（服務時間：平日 08:00–20:00）。</p>'},
+    +'<h4>七、經營者資訊與聯絡方式</h4>'
+    +'<p>本站為個人經營之數位內容服務（籌備階段）。依加值型及非加值型營業稅法相關規定，個人網路銷售勞務每月銷售額未達起徵點前得免辦稅籍登記；<b>俟銷售額達法定標準完成稅籍登記後，將依規定於本頁揭露營業人名稱與統一編號</b>。</p>'
+    +'<p>消費申訴與聯絡管道：LINE 官方帳號 <a href="https://line.me/R/ti/p/@910imdmw" target="_blank" rel="noopener">@910imdmw</a>（服務時間：平日 08:00–20:00）。我們將於收到申訴後儘速（原則三個工作日內）回覆處理。</p>'},
   disclaimer:{seal:'免',title:'免責聲明',html:
      '<div class="lgm-hi"><p>本站命理報告係以傳統命理（紫微斗數、八字等）演算，<b>僅供參考與娛樂之用，不構成醫療、心理、投資、理財、法律或任何專業建議</b>。</p></div>'
     +'<p>本站<b>不保證報告內容之準確性、完整性、即時性或對特定目的之適用性</b>。命理之說重在「知命而後造命」，一切吉凶皆為趨勢與參考，並非定數，亦不代表必然發生之事實。</p>'
@@ -5661,7 +5666,9 @@ const LEGAL_DOCS={
     +'<p>本站使用瀏覽器 localStorage／sessionStorage 記錄解鎖狀態、同意紀錄與付款流程之暫存資料，以維持服務正常運作。您可透過清除瀏覽器資料移除這些資訊，惟可能導致已解鎖狀態需重新處理。</p>'
     +'<h4>六、您的權利</h4>'
     +'<p>您得就本站所保存之個人相關資料，<b>行使查詢、閱覽、更正或請求刪除</b>等權利。因命理與解鎖資料多存於您自己的裝置，您可自行清除；如需就後端訂單資料行使權利，請加 LINE 官方帳號：<a href="https://line.me/R/ti/p/@910imdmw" target="_blank" rel="noopener">@910imdmw</a>（服務時間：平日 08:00–20:00）。</p>'
-    +'<h4>七、政策更新</h4>'
+    +'<h4>七、不提供資料之影響</h4>'
+    +'<p>出生日期、時辰與性別為命理演算所必需；若您選擇不提供，將無法產生個人化報告，惟不影響您瀏覽本站其他公開內容。姓名／稱呼僅用於報告顯示與檔名，您可以暱稱替代。</p>'
+    +'<h4>八、政策更新</h4>'
     +'<p>本政策將因法令、服務或作業之調整而不時更新，更新後將於本頁公告，並自公告時起生效。</p>'}
 };
 function renderLegal(){
@@ -10018,7 +10025,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.92;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
+    __obPad(ctx,bus,[130.81,196.00,261.63,392.00],0.016);   // 暖和聲墊底（C+G 持續和聲，豐厚不搶）
     const prog=[
       {b:130.81,n:[261.63,329.63,392.00,523.25]},              // C ：C3 / C4 E4 G4 C5
       {b:98.00, n:[293.66,392.00,493.88,587.33]},              // G ：G2 / D4 G4 B4 D5
@@ -10029,13 +10036,14 @@ const __OB={
     while(t<dur-3){
       const c=prog[bar%prog.length];
       // 明亮指法：低音 → 高聲部上下行分解和弦（Karplus–Strong 撥弦）
-      __ksGuitar(ctx,bus,c.b,    t,        v*1.0, 2.8);
+      __ksGuitar(ctx,bus,c.b,    t,        v*0.72,2.8);
       __ksGuitar(ctx,bus,c.n[0], t+step,   v*0.8, 2.0);
       __ksGuitar(ctx,bus,c.n[1], t+step*2, v*0.85,2.0);
       __ksGuitar(ctx,bus,c.n[2], t+step*3, v*0.85,2.0);
       __ksGuitar(ctx,bus,c.n[3], t+step*4, v*0.9, 2.0);
       __ksGuitar(ctx,bus,c.n[2], t+step*5, v*0.8, 2.0);
       __ksGuitar(ctx,bus,c.n[1], t+step*6, v*0.8, 2.0);
+      __obChime(ctx,bus,c.n[3]*2,t+step*2,2.6,0.016);       // 高音鐘鈴閃爍層（輕盈感）
       t+=step*7+0.1;bar++;
     }
   },
@@ -10044,7 +10052,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
+    __obPad(ctx,bus,[130.81,196.00,329.63],0.014);          // 柔和持續和聲（安定而不陰沉）
     // 溫暖民謠和弦進行 C–Am–F–G（低音根音＋高聲部，最適合指彈）
     const prog=[
       {b:130.81,n:[261.63,329.63,392.00]},                     // C ：C3 / C4 E4 G4
@@ -10056,12 +10064,13 @@ const __OB={
     while(t<dur-3.5){
       const c=prog[bar%prog.length];
       // 指法循環（拇指低音 → 內外聲部交替，柔和不搶）（Karplus–Strong 撥弦）
-      __ksGuitar(ctx,bus,c.b,      t,          v*1.0, 3.0);    // 低音根音
+      __ksGuitar(ctx,bus,c.b,      t,          v*0.7, 3.0);    // 低音根音（減重）
       __ksGuitar(ctx,bus,c.n[0],   t+step,     v*0.8, 2.3);
       __ksGuitar(ctx,bus,c.n[2],   t+step*2,   v*0.85,2.3);
       __ksGuitar(ctx,bus,c.n[1],   t+step*3,   v*0.8, 2.3);
       __ksGuitar(ctx,bus,c.b*2,    t+step*4,   v*0.65,1.9);    // 低音八度輕點
       __ksGuitar(ctx,bus,c.n[2],   t+step*5,   v*0.85,2.3);
+      if(bar%2===1)__obChime(ctx,bus,c.n[1]*4,t+step*3,3.0,0.011); // 偶現高音星光點綴
       t+=step*6+0.15;bar++;
     }
   },
@@ -10069,7 +10078,7 @@ const __OB={
     const rv=__obReverb(ctx);
     const dry=ctx.createGain();dry.gain.value=0.82;dry.connect(ctx.destination);
     const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    // 只留純木吉他撥弦（已移除暖底 pad 鋪底層）
+    __obPad(ctx,bus,[220.00,329.63,440.00],0.013);          // 星空和聲墊底（A+E，空靈豐厚）
     const prog=[
       {b:110.00,n:[440.00,554.37,659.25,880.00]},              // A ：A2 / A4 C#5 E5 A5
       {b:82.41, n:[493.88,659.25,830.61,987.77]},              // E ：E2 / B4 E5 G#5 B5
@@ -10085,6 +10094,7 @@ const __OB={
       __ksGuitar(ctx,bus,c.n[2], t+step*2, v*0.85,2.2);
       __ksGuitar(ctx,bus,c.n[3], t+step*3, v*0.75,2.2);
       __ksGuitar(ctx,bus,c.n[1], t+step*4, v*0.8, 2.2);
+      __obChime(ctx,bus,c.n[3]*2,t+step*1.5,3.2,0.014);     // 星光鐘鈴層
       t+=step*5+0.35;bar++;
     }
   },
