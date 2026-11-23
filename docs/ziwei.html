@@ -1204,6 +1204,38 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-kv{display:flex;flex-wrap:wrap;gap:4px 6px;margin:4px 0}
 #reportPrint .rp-kv span{border:1px solid #e0cf9e;border-radius:5px;padding:2px 8px;font-size:11.5px;color:#5a4a28;background:#fdfaf2}
 #reportPrint .rp-kv b{color:#8a6a14}
+/* ===== 職業契合度數據條（v.12） ===== */
+#reportPrint .rp-cjgrid{display:flex;gap:12px;margin:4px 0 6px;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-cjcol{flex:1 1 0;min-width:0}
+#reportPrint .rp-cjh{font-size:11px;font-weight:700;color:#8a6a14;letter-spacing:1px;margin:4px 0 3px;border-bottom:1px solid #e8dab2;padding-bottom:2px}
+#reportPrint .rp-cjrow{display:flex;align-items:center;gap:5px;padding:1.6px 0;font-size:9.5px;color:#4a3c20}
+#reportPrint .rp-cjrow .n{flex:0 0 96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#reportPrint .rp-cjrow .bar{flex:1 1 auto;height:7px;background:#f1e8d2;border-radius:4px;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-cjrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#dcc37a,#b8933a);border-radius:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-cjrow.top .bar i{background:linear-gradient(90deg,#b8933a,#6f5210)}
+#reportPrint .rp-cjrow.cur .n{color:#b3382c;font-weight:700}
+#reportPrint .rp-cjrow.cur .bar i{background:linear-gradient(90deg,#d08a7a,#b3382c)}
+#reportPrint .rp-cjrow .v{flex:0 0 20px;text-align:right;font-size:9.5px;color:#8a6a14}
+#reportPrint .rp-cjtag{display:inline-block;margin-left:3px;padding:0 3px;border:1px solid #b3382c;border-radius:3px;color:#b3382c;font-size:8px;vertical-align:1px}
+#reportPrint .rp-cjband{font-size:9.5px;line-height:1.8;color:#6a562e}
+#reportPrint .rp-cjana{font-size:10.5px;line-height:1.8;color:#4a3c20}
+#reportPrint .rp-cjana p{margin:0 0 4px}
+#reportPrint .rp-cjana b{color:#7a5a12}
+/* ===== 健康人體對照圖（v.12） ===== */
+#reportPrint .rp-hpfigwrap{text-align:center;margin:6px 0 4px;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-hpfigwrap svg{width:168px;height:auto;display:inline-block}
+#reportPrint .rp-hpfigwrap .hp-sil{fill:#f6efdc;stroke:#cdb47e;stroke-width:1.5}
+#reportPrint .rp-hpdot.red circle{fill:#b3382c;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-hpdot.amber circle{fill:#d08a1e;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-hpdot text.num{fill:#fff;font-size:8.5px;font-weight:700;text-anchor:middle}
+#reportPrint .rp-hpdot text.lbl{fill:#6a562e;font-size:9px}
+#reportPrint .rp-hplegend{font-size:8.5px;color:#8a7a52;margin-top:3px}
+#reportPrint .rp-hplist{column-count:2;column-gap:14px;margin-top:4px}
+#reportPrint .rp-hpitem{display:flex;gap:6px;margin-bottom:5px;font-size:10px;line-height:1.65;color:#4a3c20;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-hpitem .no{flex:0 0 15px;height:15px;border-radius:50%;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-hpitem .no.red{background:#b3382c}
+#reportPrint .rp-hpitem .no.amber{background:#d08a1e}
+#reportPrint .rp-hpitem .t b{color:#7a5a12}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
   body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicwrap,body.rp-on footer{display:none!important}
@@ -2055,7 +2087,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.11";
+const SITE_VERSION_DATE="2026.11.23.12";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全高度 245mm */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
@@ -3184,12 +3216,41 @@ function careerPaidHTML(c,zw,adv,name){
  ${wxLine?(sec("五行調和")+`<p>${wxLine}</p>`):""}
  <p class="cj-note">契合度為系統依星曜、亮度、四化與喜用神的相對評分（同一張盤內比較），用於看方向與落差，不是能力高低的判定。</p></div>`;
 }
+/* v2026.11.23.12：列印版職業契合度升級——全 27 產業×13 職務「數據條」排行＋文字分析。
+   分數 35–95 直接當長條寬度 %；前三名深金、現職硃紅＋「現職」標籤。 */
 function careerPrintHTML(c){
  if(!c)return "";
  const cur=c.cur;
- let s=`<div class="rp-sec">事業適性與現職差異分析</div><div class="rp-row"><b>適合產業</b> ${c.topInd.map(x=>x.n+"（"+x.v+"）").join("、")}</div><div class="rp-row"><b>適合職務</b> ${c.topRole.map(x=>x.n+"（"+x.v+"）").join("、")}</div>`;
- if(cur.ind||cur.role){s+=`<div class="rp-row"><b>現職契合</b> ${cur.ind?("產業「"+cur.ind.n+"」"+cur.ind.v+" 分（"+cur.ind.band+"）"):""}${(cur.ind&&cur.role)?"　":""}${cur.role?("職務「"+cur.role.n+"」"+cur.role.v+" 分（"+cur.role.band+"）"):""}${cur.combined!=null?("　綜合 "+cur.combined+" 分（"+cur.band+"）"):""}</div>`;}
- return s;
+ const barRow=(x,i,curId)=>{
+  const isCur=!!(curId&&x.id===curId);
+  return `<div class="rp-cjrow${i<3?" top":""}${isCur?" cur":""}"><span class="n">${i+1}. ${x.n}${isCur?'<span class="rp-cjtag">現職</span>':""}</span><span class="bar"><i style="width:${x.v}%"></i></span><b class="v">${x.v}</b></div>`;
+ };
+ const indBars=c.rankInd.map((x,i)=>barRow(x,i,cur.ind&&cur.ind.id)).join("");
+ const roleBars=c.rankRole.map((x,i)=>barRow(x,i,cur.role&&cur.role.id)).join("");
+ const t1=c.rankInd[0],r1=c.rankRole[0];
+ const cb=((c.contribInd||{})[t1.id]||[]).slice().sort((a,b)=>b.v-a.v).slice(0,2);
+ const rb=((c.contribRole||{})[r1.id]||[]).slice().sort((a,b)=>b.v-a.v).slice(0,2);
+ const ana=[];
+ ana.push(`<b>天賦主軸</b>：產業以「${t1.n}」居首（${t1.v} 分），主要能量來自${cb.length?cb.map(x=>x.pal+"宮"+x.name+"（"+x.why+"）").join("、"):"全盤星曜的綜合加成"}；職務性質以「${r1.n}」最合（${r1.v} 分）${rb.length?("，對應 "+rb.map(x=>x.name).join("、")+" 的特質"):""}。兩者的交集，就是您最省力的主戰場。`);
+ if((c.xi||[]).length){
+  const xiInds=c.rankInd.filter(x=>x.wx&&x.wx.some(e=>c.xi.includes(e))).slice(0,3).map(x=>"「"+x.n+"」");
+  ana.push(`<b>五行助力</b>：命局喜用神為「${c.xi.join("、")}」，${xiInds.length?(xiInds.join("、")+"等產業屬性與之相生，入行有如順水行舟"):"選擇產業時可優先靠攏此五行屬性"}${(c.ji||[]).length?("；忌神「"+c.ji.join("、")+"」屬性的領域則需加倍費力，落在排行末段者宜避開"):""}。`);
+ }
+ if(cur.combined!=null){
+  const verdict=cur.band==="高"?"屬「適才適所」——現職性質與命盤強項一致，建議在原領域深耕、往更高階或更專精延伸"
+   :cur.band==="中"?"屬「方向對了一半」——通常是產業或職務其中一邊相合、另一邊有落差，保留契合的那一邊、調整另一邊最省力"
+   :"屬「用錯力」的狀態——現職要求與天生強項交集不多，容易事倍功半，宜以中長期轉型為目標、用過渡方式降低風險";
+  const pieces=[];
+  if(cur.ind)pieces.push(`產業「${cur.ind.n}」${cur.ind.v} 分（${c.rankInd.length} 類中第 ${cur.ind.rank} 名）`);
+  if(cur.role)pieces.push(`職務「${cur.role.n}」${cur.role.v} 分（${c.rankRole.length} 類中第 ${cur.role.rank} 名）`);
+  ana.push(`<b>現職評估</b>：${pieces.join("、")}，綜合契合度 <b>${cur.combined} 分（${cur.band}）</b>，${verdict}。`);
+ }else{
+  ana.push(`<b>切入建議</b>：排盤時未填現職。起步或轉換跑道時，從上列排行前二的「產業 × 職務」組合切入，順風最多、續航力最高。`);
+ }
+ ana.push(`<b>讀圖說明</b>：分數為同一張盤內依星曜、亮度、四化與喜用神的相對評分（35–95），看的是方向與落差、不是能力高低；深金色為前三名。排行末段不代表不能做，而是先天順風較少，需要用更多後天努力去補。`);
+ return `<div class="rp-sec">職業契合度全排行 · 數據分析</div>
+ <div class="rp-cjgrid"><div class="rp-cjcol"><div class="rp-cjh">產業契合度（${c.rankInd.length} 類）</div>${indBars}</div><div class="rp-cjcol"><div class="rp-cjh">職務性質契合度（${c.rankRole.length} 類）</div>${roleBars}<div class="rp-cjh" style="margin-top:7px">契合度分級</div><div class="rp-cjband">75 分以上＝高（天賦順風區）<br>55–74 分＝中（可為，需策略）<br>54 分以下＝低（費力區，宜避開或補強）</div></div></div>
+ <div class="rp-cjana">${ana.map(x=>`<p>${x}</p>`).join("")}</div>`;
 }
 // 填入表單下拉（script 位於 body 末端，此時表單已存在）
 (function(){try{
@@ -3336,28 +3397,46 @@ function healthPaidHTML(h,zw,adv,name){
 const BODY_POINTS={head:{x:100,y:28,l:"頭部／腦神經",side:"l"},eyes:{x:100,y:42,l:"眼睛",side:"r"},ear:{x:73,y:40,l:"耳",side:"l"},nose:{x:100,y:52,l:"鼻腔",side:"l"},mouth:{x:100,y:63,l:"口腔／咽喉／牙齒",side:"r"},neck:{x:100,y:80,l:"甲狀腺／淋巴／結節",side:"r"},lungs:{x:84,y:102,l:"肺／呼吸道",side:"l"},heart:{x:110,y:112,l:"心臟／血管／血液",side:"r"},liver:{x:80,y:136,l:"肝／膽",side:"l"},stomach:{x:104,y:140,l:"脾／胃／消化",side:"r"},kidney:{x:122,y:162,l:"腎",side:"r"},intest:{x:98,y:176,l:"腸道",side:"l"},pelvis:{x:100,y:200,l:"泌尿／膀胱／生殖",side:"r"},skin:{x:43,y:120,l:"皮膚",side:"l"},limbs:{x:82,y:300,l:"骨骼／筋骨／關節",side:"l"},limbs2:{x:118,y:300,l:"手腳外傷／意外",side:"r"}};
 const SYS_BODY={"脾胃消化":["stomach"],"頭部與腦神經":["head"],"肝膽":["liver"],"神經系統":["head"],"四肢筋骨":["limbs"],"心血管":["heart"],"眼睛":["eyes"],"頭部":["head"],"肺與呼吸道":["lungs"],"鼻腔":["nose"],"牙齒":["mouth"],"骨骼":["limbs"],"腸胃":["stomach","intest"],"泌尿系統":["pelvis"],"耳":["ear"],"心血管與血液":["heart"],"生殖泌尿":["pelvis"],"情緒神經":["head"],"脾胃":["stomach"],"消化系統":["intest"],"腎與水液代謝":["kidney"],"婦科／生殖":["pelvis"],"內分泌":["neck"],"腎":["kidney"],"生殖系統":["pelvis"],"消化道":["intest"],"口腔與咽喉":["mouth"],"皮膚":["skin"],"泌尿膀胱":["pelvis"],"淋巴":["neck"],"胃":["stomach"],"結節與慢性病":["neck"],"肺與大腸":["lungs","intest"],"外傷意外":["limbs2"],"肝火":["liver"],"腎與生殖泌尿":["kidney","pelvis"],"血液":["heart"],"意外耗損":["limbs2"]};
 const WX_BODY={木:["liver","eyes"],火:["heart"],土:["stomach"],金:["lungs","skin"],水:["kidney","pelvis"]};
-function healthFigureHTML(h){
+/* 共用：依健康資料算出人體標點（螢幕互動圖與列印報告圖同源，勿各自為政） */
+function hpPoints(h){
  const pts={}; const add=(k,level,note)=>{if(!BODY_POINTS[k])return;const p=pts[k]||(pts[k]={level:"amber",notes:[]});if(level==="red")p.level="red";if(note&&p.notes.indexOf(note)<0)p.notes.push(note);};
  h.organs.forEach(o=>o.sys.forEach(s=>(SYS_BODY[s]||[]).forEach(k=>add(k,"red",o.star+"（疾厄宮主星"+(h.borrowed?"，借對宮":"")+"）："+s+"。"+o.tend))));
  h.jiHua.forEach(n=>{const sh=STAR_HEALTH[n];if(sh)sh.sys.forEach(s=>(SYS_BODY[s]||[]).forEach(k=>add(k,"red",n+"化忌入疾厄宮："+s+"，建議列為每年固定檢查。")));});
  h.strong.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber",el+"過旺："+WX_ORGAN[el]+" 容易亢進或負擔過重。")));
  h.weak.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber",el+"偏弱："+WX_ORGAN[el]+" 先天較虛，宜溫和補養。")));
  h.ji.forEach(el=>(WX_BODY[el]||[]).forEach(k=>add(k,"amber","忌神"+el+"："+WX_ORGAN[el]+" 逢流年或大運走到此五行時容易示警。")));
+ return pts;
+}
+const HP_SIL=`<circle class="hp-sil" cx="100" cy="40" r="26"/><rect class="hp-sil" x="90" y="62" width="20" height="16" rx="6"/><rect class="hp-sil" x="60" y="74" width="80" height="150" rx="28"/><rect class="hp-sil" x="32" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="146" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="68" y="214" width="28" height="180" rx="14"/><rect class="hp-sil" x="104" y="214" width="28" height="180" rx="14"/>`;
+function healthFigureHTML(h){
+ const pts=hpPoints(h);
  const keys=Object.keys(pts); if(!keys.length)return "";
  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
- const sil=`<circle class="hp-sil" cx="100" cy="40" r="26"/><rect class="hp-sil" x="90" y="62" width="20" height="16" rx="6"/><rect class="hp-sil" x="60" y="74" width="80" height="150" rx="28"/><rect class="hp-sil" x="32" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="146" y="84" width="22" height="130" rx="11"/><rect class="hp-sil" x="68" y="214" width="28" height="180" rx="14"/><rect class="hp-sil" x="104" y="214" width="28" height="180" rx="14"/>`;
+ const sil=HP_SIL;
  const dots=keys.map(k=>{const b=BODY_POINTS[k],p=pts[k];const tx=b.side==="l"?b.x-10:b.x+10,anchor=b.side==="l"?"end":"start";
   return `<g class="hp ${p.level}" data-label="${esc(b.l)}" data-note="${esc(p.notes.join("｜"))}" onclick="hpTip(this)" onmouseenter="hpTip(this)"><circle class="ring" cx="${b.x}" cy="${b.y}" r="6"><animate attributeName="r" values="6;15" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="1.6s" repeatCount="indefinite"/></circle><circle class="dot" cx="${b.x}" cy="${b.y}" r="5.5"><title>${esc(b.l)}</title></circle><text x="${tx}" y="${b.y+3}" text-anchor="${anchor}">${esc(b.l)}</text></g>`;}).join("");
  return `<div class="cj-sec">人體對照圖（點紅點或橙點看說明）</div><div class="hp-wrap"><div class="hp-fig"><svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康重點人體對照圖">${sil}${dots}</svg><div class="hp-legend">紅點：疾厄宮主星／化忌對應臟腑　橙點：五行失衡／忌神對應臟腑</div></div><div class="hp-box" id="hpBox">共標示 ${keys.length} 個重點部位。點一下紅點或橙點，這裡會說明該部位為何需要留意。</div></div>`;
 }
 function hpTip(el){try{var box=document.getElementById("hpBox");if(!box)return;var g=(el.closest?el.closest(".hp"):el)||el;document.querySelectorAll(".hp.on").forEach(function(x){x.classList.remove("on");});g.classList.add("on");box.innerHTML="<b>"+g.getAttribute("data-label")+"</b><br>"+String(g.getAttribute("data-note")||"").split("｜").join("<br>");}catch(e){}}
+/* v2026.11.23.12：列印版健康深析升級——人體對照圖（編號標點）＋圖下方逐點詳細說明。
+   標點與螢幕互動圖同源（hpPoints），編號依身體由上到下排序，圖上號碼＝下方說明號碼。 */
 function healthPrintHTML(h){
  if(!h)return "";
- let s=`<div class="rp-sec">健康深析</div><div class="rp-row"><b>體質根本</b> 日主屬${h.dmEl}（${WX_ORGAN[h.dmEl]||""}）</div>`;
+ let s=`<div class="rp-sec">健康深析 · 身體注意部位對照</div><div class="rp-row"><b>體質根本</b> 日主屬${h.dmEl}（${WX_ORGAN[h.dmEl]||""}）</div>`;
  if(h.organs.length)s+=`<div class="rp-row"><b>疾厄宮重點</b> ${h.organs.map(o=>o.star+"："+o.sys.join("、")).join("；")}</div>`;
  if(h.mods.length||h.jiHua.length)s+=`<div class="rp-row"><b>煞曜／化忌</b> ${h.mods.map(m=>m.star).concat(h.jiHua.map(x=>x+"化忌")).join("、")}</div>`;
  if(h.strong.length||h.weak.length)s+=`<div class="rp-row"><b>五行失衡</b> ${h.strong.map(k=>k+"過旺").concat(h.weak.map(k=>k+"偏弱")).join("、")}</div>`;
  if(h.checks.length)s+=`<div class="rp-row"><b>建議檢查</b> ${h.checks.join("；")}</div>`;
+ const pts=hpPoints(h);
+ const keys=Object.keys(pts).sort((a,b)=>(BODY_POINTS[a].y-BODY_POINTS[b].y)||(BODY_POINTS[a].x-BODY_POINTS[b].x));
+ if(keys.length){
+  const esc=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const dots=keys.map((k,i)=>{const b=BODY_POINTS[k],p=pts[k];const tx=b.side==="l"?b.x-12:b.x+12,anchor=b.side==="l"?"end":"start";
+   return `<g class="rp-hpdot ${p.level}"><circle cx="${b.x}" cy="${b.y}" r="7"/><text class="num" x="${b.x}" y="${b.y+2.8}">${i+1}</text><text class="lbl" x="${tx}" y="${b.y+3}" text-anchor="${anchor}">${esc(b.l)}</text></g>`;}).join("");
+  const items=keys.map((k,i)=>{const b=BODY_POINTS[k],p=pts[k];
+   return `<div class="rp-hpitem"><span class="no ${p.level}">${i+1}</span><div class="t"><b>${esc(b.l)}</b>（${p.level==="red"?"重點關注":"留意保養"}）<br>${p.notes.map(esc).join("<br>")}</div></div>`;}).join("");
+  s+=`<div class="rp-hpfigwrap"><svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="身體注意部位對照圖">${HP_SIL}${dots}</svg><div class="rp-hplegend">紅＝疾厄宮主星／化忌對應臟腑（重點關注）　·　橙＝五行失衡／忌神對應臟腑（留意保養）　·　圖上號碼對應下方詳細說明</div></div><div class="rp-hplist">${items}</div>`;
+ }
  return s;
 }
 
