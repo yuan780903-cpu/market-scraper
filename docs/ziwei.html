@@ -636,6 +636,11 @@ header .meta b{color:var(--gold);font-weight:500}
 
 /* 綜合論斷 */
 /* 事業適性與現職差異分析 */
+.cjcard{position:relative;border:1px solid var(--gold);box-shadow:0 10px 28px rgba(120,90,20,.10)}
+.cjcard::before{content:"";position:absolute;inset:7px;border:1px solid rgba(181,138,30,.28);border-radius:inherit;pointer-events:none}
+.cjcard h3{letter-spacing:1.5px}
+.cjcard .cj-sec{position:relative;padding-left:14px}
+.cjcard .cj-sec::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:16px;background:linear-gradient(180deg,#d9b85a,#8a6a14);border-radius:3px}
 .cjcard .cj-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
 .cjcard .cj-h{font-weight:700;color:var(--gold-deep);margin:4px 0 2px;letter-spacing:.5px}
 .cjcard .cj-list{list-style:none;margin:4px 0 0;padding:0}
@@ -1966,7 +1971,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.22.2";
+const SITE_VERSION_DATE="2026.11.23";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -3153,6 +3158,52 @@ function calcHealth(zw,bz,wx,adv){
  const checks=[]; sysSet.forEach(x=>{const c=SYS_CHECK[x];if(c&&checks.indexOf(c)<0)checks.push(c);});
  return {jb,borrowed,organs,mingMain,mingH,mods,jiHua,luHua,strong,weak,dmEl,xi:st.xi||[],ji:st.ji||[],limName,pre,ln,lnPal,lnJiStar,lnJiWhere,sysSet,checks};
 }
+/* ================= 補運之道（針對評分最弱面向的具體補強方案；網頁＋PDF＋AI文本皆輸出） ================= */
+const REMEDY_ACT={
+ 事業:["把大目標拆成 90 天一期的小目標，完成一期再加碼——弱的宮位最怕好高騖遠。","主動爭取一件「能見度高」的小任務，用實績累積被看見的機會。","每季檢視一次方向：做對的事，比把事做對更重要。"],
+ 財運:["先付自己：收入一進帳，先轉 10–20% 到不輕易動用的帳戶。","連續記帳 30 天，找出您最大的漏財口——通常不是大錢，是重複的小錢。","大額消費與投資一律設 24 小時冷靜期，睡一晚再決定。"],
+ 感情:["把需求說出口：每週留一段不滑手機、純粹相處的時間。","練習「先聽完、再回應」——少講道理，多講感受。","單身者每月至少讓自己出現在一個新場合，緣分需要舞台。"],
+ 人際:["主動維繫 3–5 位關鍵人：定期問候、有來有往，勝過經營一百個點頭之交。","聚會裡先當「提問的人」——少說多聽，人緣自然聚。","對消耗型關係設界線：界線不是絕情，是人際的保養品。"],
+ 健康:["先穩定就寢時間——固定時間睡，比睡得久更能養氣。","每週 3 次、每次 30 分鐘會流汗的運動，把氣血帶起來。","年度健檢排進行事曆——身體的帳，不能欠。"],
+ 智慧:["每天 15 分鐘輸入（閱讀或課程），一年就是 90 小時的差距。","做重要決定前，寫下三個理由——把直覺練成判斷。","找一位可請教的前輩，少走十年彎路。"],
+ 福德:["每天留 10 分鐘完全屬於自己的留白，不做任何「有用」的事。","培養一個與利益無關的興趣，當您的充電站。","睡前寫下今天一件好事——養福，先養心。"]
+};
+function calcRemedy(zw,adv,scores){
+ if(!scores||!scores.dims||!scores.dims.length)return null;
+ const st=(adv&&adv.strength)||{xi:[],ji:[]};
+ const sorted=scores.dims.slice().sort(function(a,b){return a.v-b.v;});
+ const weak=sorted.slice(0,2).concat(sorted.slice(2).filter(function(d){return d.v<60;})).slice(0,3);
+ const strong=sorted[sorted.length-1];
+ const items=weak.map(function(d){
+  return {k:d.k,v:d.v,band:d.band,pal:d.pal,star:d.star,acts:REMEDY_ACT[d.k]||[],
+   palTip:"多經營「"+d.pal+"宮」所主的領域"+(d.star&&d.star!=="空宮"?("（主星 "+d.star+"，順著它的特質使力）"):"（空宮借對宮，彈性大、更吃後天經營）")+"。"};
+ });
+ return {items:items,strong:strong,xi:st.xi||[],ji:st.ji||[]};
+}
+function remedyPaidHTML(r,name){
+ if(!r)return "";
+ const sec=t=>`<div class="cj-sec">${t}</div>`;
+ const blocks=r.items.map(function(it){
+  return sec("補「"+it.k+"」："+it.v+" 分（"+it.band+"）")
+   +`<p class="cj-verdict">主${it.pal}宮${it.star&&it.star!=="空宮"?("坐 "+it.star):"（空宮）"}——分數偏弱不是定數，而是先天配備較吃後天經營。具體這樣補：</p>`
+   +`<ul class="cj-ul">${it.acts.map(a=>"<li>"+a+"</li>").join("")}<li>${it.palTip}</li></ul>`;
+ }).join("");
+ const xiHTML=r.xi.length?r.xi.map(function(el){const L=WX_LIFE[el]||{};return `<li><b>${el}</b>：幸運色 ${L.色||""}；吉方 ${L.方||""}；開運做法 ${L.物||""}。</li>`;}).join(""):"<li>五行均衡，順作息自然調養即可。</li>";
+ const jiLine=r.ji.length?`<p>忌神「<b>${r.ji.join("、")}</b>」——對應的顏色、方位與行業能量宜少碰；覺得特別不順的日子，多半是走到忌神之氣，放慢腳步就好。</p>`:"";
+ return `<div class="rcard wide cjcard"><h3><span class="ic">補</span>補運之道 · ${name} 的補強方案</h3>
+ <p class="cj-verdict">命盤告訴我們的不是「命定」，而是「說明書」——哪裡原廠配備強、哪裡要後天加裝。以下針對您評分最弱的面向，給可以直接執行的補法；您最強的「${r.strong?r.strong.k:""}」（${r.strong?r.strong.v:""} 分）則是您補運的本錢，用強項帶弱項，是最省力的路。</p>
+ ${blocks}
+ ${sec("五行開運清單（喜用神日常化）")}<ul class="cj-ul">${xiHTML}</ul>${jiLine}
+ <p class="cj-note">補運不靠奇蹟，靠方向對的累積：上面每一條都做得到，挑兩條先開始，九十天後回頭看，就會知道有沒有用。</p></div>`;
+}
+function remedyPrintHTML(r){
+ if(!r)return "";
+ let s=`<div class="rp-sec">補運之道 · 補強方案</div>`;
+ r.items.forEach(function(it){s+=`<div class="rp-row"><b>補${it.k}（${it.v} 分）</b> ${it.acts.concat([it.palTip]).join("　")}</div>`;});
+ if(r.xi.length)s+=`<div class="rp-row"><b>五行開運</b> ${r.xi.map(function(el){const L=WX_LIFE[el]||{};return el+"：色 "+(L.色||"")+"／方 "+(L.方||"");}).join("；")}</div>`;
+ return s;
+}
+
 function healthPaidHTML(h,zw,adv,name){
  if(!h)return "";
  const sec=t=>`<div class="cj-sec">${t}</div>`;
@@ -4016,13 +4067,17 @@ function toolsSection(){
  return `<div class="sec-title"><span class="cn">命理應用工具</span><span class="en">Personal Tools</span></div>
  <div class="toolcards">
    <div class="toolcard">
-     <h4><span class="ic">✦</span>輸出 AI 分析文本</h4>
-     <p>一鍵複製本命盤的結構化文字，貼到 ChatGPT、Claude、Gemini 等 AI 對話框，即可請 AI 依您的命盤量身深入解讀、追問互動。</p>
+     <h4><span class="ic">✦</span>輸出 AI 分析文本<span class="toolval">完整報告加值內容</span></h4>
+     <p><b>這是什麼：</b>一鍵把您的完整命盤變成 AI 看得懂的結構化文本。<br>
+     <b>好在哪：</b>貼進 ChatGPT／Claude／Gemini，AI 立刻「讀懂您這張盤」——不用再從零描述自己，AI 的每個回答都以您的命盤為根據。<br>
+     <b>您得到：</b>一位 24 小時待命的私人命理顧問。半夜想問感情、換工作前想問時機、孩子的事想多聊兩句——隨時問、問多細都行，而且永遠是「依您的命」回答。</p>
      <button class="toolbtn" type="button" onclick="runAIExport()">產生 AI 分析文本</button>
    </div>
    <div class="toolcard">
-     <h4><span class="ic">◆</span>加入個人農民曆</h4>
-     <p>下載 .ics 行事曆檔，內含 2026 逐月流月吉凶、近六年流年提醒與未來大運切換；匯入手機行事曆後即成隨身的個人農民曆，逐項提前提醒、趨吉避凶。</p>
+     <h4><span class="ic">◆</span>加入個人農民曆<span class="toolval">完整報告加值內容</span></h4>
+     <p><b>這是什麼：</b>把您的命盤做成行事曆檔，一鍵匯入手機。<br>
+     <b>好在哪：</b>市面的農民曆人人一本都一樣；這一本是「您的個人版」——傳統<b>每日宜忌・沖煞・財神／貴人／喜神方位</b>全收錄，再疊上<b>您的喜用神</b>與流月流年、大運切換。<br>
+     <b>您得到：</b>未來 <b>365 天</b>，每天打開行事曆就知道：今天宜什麼、忌什麼，財位在哪、貴人在哪個方向，今天是不是「您的好日子」、有沒有沖到您的生肖——每一天都有白話解說，重要日子前一天還會自動提醒。</p>
      <button class="toolbtn" type="button" onclick="runCalExport()">下載個人農民曆 .ics</button>
    </div>
  </div>`;
@@ -5957,6 +6012,13 @@ function buildAIText(){
     if(ss2.parentMain.length)P("父母宮坐 "+ss2.parentMain.join("、")+"：與上司長輩相處之道同此星性。");
   }else P("（未產生人際深析資料）");
 
+  SEC("補運之道（評分最弱面向的補強方案）");
+  (function(){var r=calcRemedy(zw,adv,sc);if(!r){P("（未產生補運資料）");return;}
+    r.items.forEach(function(it){P("補「"+it.k+"」（"+it.v+" 分・"+it.band+"）：");it.acts.forEach(function(a){P("・"+a);});P("・"+it.palTip);});
+    if(r.xi.length)P("五行開運：喜用 "+r.xi.join("、")+"——"+r.xi.map(function(el){var L=WX_LIFE[el]||{};return el+"(色 "+(L.色||"")+"／方 "+(L.方||"")+")";}).join("；"));
+    if(r.ji.length)P("忌神 "+r.ji.join("、")+"：對應顏色方位行業宜少碰。");
+  })();
+
   SEC("八字重量（袁天罡稱骨）");
   const yg=bz.year.gan+bz.year.zhi;
   const wy=BONE_Y[yg]||0,wm=BONE_M[lunar.month-1]||0,wd=BONE_D[lunar.day-1]||0,wh=BONE_H[bz.hour.zhi]||0;
@@ -6128,8 +6190,8 @@ function buildICS(){
       :("五行持平之月，按部就班、穩健經營即可。");
     add(ey,monthNo,day,title,Y+" 流年 "+lmLabels[k]+"月（"+mg+mzh+"，月令十神 "+mtg+"）。"+advTxt+"　— 聖源大師．人生實用說明書系統");
   }
-  // 近六年流年提醒（每年立春當天）
-  for(let yy=curLN().year;yy<curLN().year+6;yy++){
+  // 流年提醒：自今年起一路排到 2100（曆法引擎表定極限），每年立春當天一筆——一輩子的流年都在行事曆裡
+  for(let yy=curLN().year;yy<=2100;yy++){
     const ygi=((yy-4)%10+10)%10,yzi=((yy-4)%12+12)%12;
     const ygan=GAN[ygi],yzhi=ZHI[yzi],sh=SIHUA[ygan];
     const pname=zw.palaceName[yzi];
@@ -6142,11 +6204,55 @@ function buildICS(){
   lk.list.forEach(function(p,i){
     if(p.age<=curAge)return; // 只記未來尚未到的大運起點
     const startYear=((D.lunar&&D.lunar.year)||by)+p.age-1; // 虛歲 age 對應之年（虛歲以農曆出生年起算）
-    if(startYear>2055)return;
+    if(startYear>2100)return;
     const tg=tenGod(dm,p.gan);
     const lc=sTerm(startYear,2);
     add(startYear,2,lc,"大運｜進入第"+(i+1)+"步 "+p.gan+p.zhi+"（"+p.age+"歲起）","虛歲 "+p.age+" 進入新的十年大運：第"+(i+1)+"步 "+p.gan+p.zhi+"（主十神 "+tg+"，納音 "+naYin(p.gan,p.zhi)+"）。新運開啟，宜順此干支之性重新佈局十年重心。　— 聖源大師．人生實用說明書系統");
   });
+  // ===== 每日農民曆（今起 365 天）：宜忌・沖煞・財神/貴人/喜神方位・個人五行・白話解說 =====
+  function addDaily(y2,m2,d2,title,desc){
+    uid++;
+    const nd2=new Date(Date.UTC(y2,m2-1,d2)+86400000);
+    ev.push("BEGIN:VEVENT","UID:zw-"+by+"-"+stamp+"-d"+uid+"@life-manual","DTSTAMP:"+stamp,
+      "DTSTART;VALUE=DATE:"+_icsDate(y2,m2,d2),
+      "DTEND;VALUE=DATE:"+_icsDate(nd2.getUTCFullYear(),nd2.getUTCMonth()+1,nd2.getUTCDate()),
+      "SUMMARY:"+_icsEsc(title),"DESCRIPTION:"+_icsEsc(desc),"TRANSP:TRANSPARENT","END:VEVENT");
+  }
+  const CAISHEN={甲:"東北",乙:"東北",丙:"西南",丁:"西南",戊:"正北",己:"正北",庚:"正東",辛:"正東",壬:"正南",癸:"正南"};
+  const GUIREN_Z={甲:["丑","未"],戊:["丑","未"],庚:["丑","未"],乙:["子","申"],己:["子","申"],丙:["亥","酉"],丁:["亥","酉"],壬:["卯","巳"],癸:["卯","巳"],辛:["午","寅"]};
+  const ZHI_DIR={子:"正北",丑:"東北",寅:"東北",卯:"正東",辰:"東南",巳:"東南",午:"正南",未:"西南",申:"西南",酉:"正西",戌:"西北",亥:"西北"};
+  const JC_BAIHUA={建:"「開頭」的日子——求職赴任、拜訪貴人好；動土安葬先避。",除:"大掃除的日子——除舊佈新、看病調理好；嫁娶開市先緩。",滿:"豐收圓滿日——祈福、開市、交易都合適。",平:"平平穩穩的日子——日常修整可，不宜大動作。",定:"安定之日——訂約、提親、安床最合適。",執:"收尾之日——簽約、收款好；開新局、遠行先緩。",破:"破敗之日——大事都別辦，只宜拆舊、看病去疾。",危:"帶風險的日子——別冒險登高行船，靜養祈福為宜。",成:"成就之日——開業、結婚、入學，百事可成。",收:"收成之日——收款納財好；借錢給人、出遠門不宜。",開:"開展之日——開市開工、入學求職大吉。",閉:"收藏之日——適合整理收納，不宜開張出行。"};
+  const SHA_DIR={申:"南",子:"南",辰:"南",寅:"北",午:"北",戌:"北",巳:"東",酉:"東",丑:"東",亥:"西",卯:"西",未:"西"};
+  const meZhi=bz.year.zhi, meSx=SHENGXIAO[meZhi];
+  const t0=new Date();
+  for(let i=0;i<365;i++){
+    const dt=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i);
+    const dy=dt.getFullYear(),dmo=dt.getMonth()+1,dda=dt.getDate();
+    let db;try{db=calcBazi(dy,dmo,dda,12);}catch(e){continue;}
+    const dg=db.day.gan,dz=db.day.zhi,zi2=ZHI.indexOf(dz);
+    const jc=JIANCHU[((zi2-ZHI.indexOf(db.month.zhi))%12+12)%12];
+    const hdx=HUANGDAO_SEQ[((zi2-ZHI.indexOf(HUANGDAO_START[db.month.zhi]))%12+12)%12];
+    const chong=ZHI[(zi2+6)%12], chongSx=SHENGXIAO[chong];
+    const dGood=(jc.cls==="good"&&hdx.ji), dBad=(jc.cls==="bad"&&!hdx.ji);
+    const rank=dGood?"吉日":dBad?"凶日":(jc.cls==="good"||hdx.ji)?"小吉":"平";
+    const cs=CAISHEN[dg], xs=XISHEN[dg];
+    const gdir=(GUIREN_Z[dg]||[]).map(function(z){return ZHI_DIR[z];}).join("、");
+    const dwx=GAN_WX[dg];
+    const isXi=st.xi.includes(dwx),isJi=st.ji.includes(dwx);
+    const hitMe=(chong===meZhi);
+    const yiTop=String(jc.yi).split("、").slice(0,3).join("·");
+    const title="農民曆｜"+(hitMe?"⚠沖您生肖｜":"")+rank+"｜宜 "+yiTop+"｜財神"+cs;
+    const desc=dy+"/"+dmo+"/"+dda+"（"+dg+dz+"日・"+jc.n+"日・"+hdx.n+(hdx.ji?"〔黃道〕":"〔黑道〕")+"）綜合："+rank+"\n"
+      +"宜："+jc.yi+"\n忌："+jc.ji+"\n"
+      +"沖"+chongSx+"（"+dz+"日沖"+chong+"）煞"+(SHA_DIR[dz]||"")+"方：屬"+chongSx+"者今日大事宜緩。"+(hitMe?"⚠ 今天正沖您的生肖（"+meSx+"）——重大決定、簽約、遠行建議改天。":"")+"\n"
+      +"財神方位："+cs+"——談錢、簽單、收款朝此方更順。\n"
+      +"貴人方位："+gdir+"——求人幫忙、談合作往這兩方。\n"
+      +"喜神方位："+xs+"——約會、面談、開工的好方向。\n"
+      +"白話：今天是"+(JC_BAIHUA[jc.n]||"")+(hdx.ji?"且值黃道，行事較順。":"但值黑道，宜低調、避免硬碰。")+"\n"
+      +"您的五行：今日天干"+dg+"屬"+dwx+"，"+(isXi?"正是您的喜用神——得力的日子，適合主動出擊、辦要事。":isJi?"是您的忌神——較耗您的氣，宜守不宜攻、早點休息。":"與您的命局平和，平常心行事即可。")+"\n"
+      +"— 聖源大師·人生實用說明書系統 lifeguidetw.com";
+    addDaily(dy,dmo,dda,title,desc);
+  }
   const lines=[
     "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//人生實用說明書系統//個人農民曆//ZH-TW",
     "CALSCALE:GREGORIAN","METHOD:PUBLISH",
@@ -6163,10 +6269,11 @@ function runCalExport(){
   _downloadFile(_lgBase(D.name)+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
   const body='<div class="aiexp">'
     +'<p class="aihint">已為您產生 <b>'+(D.name||"命主")+" · 個人農民曆.ics</b> 行事曆檔，內含：<br>"
+    +'・<b>每日農民曆 365 天</b>（今起一年：每日宜忌・沖煞・財神／貴人／喜神方位，疊加您的喜用神判讀，天天附白話解說；沖您生肖之日特別標示 ⚠）<br>'
     +'・<b>'+curLN().year+' 流月吉凶</b>（依節氣定月，12 個月逐月提醒）<br>'
-    +'・<b>近六年流年提醒</b>（每年立春當天，含當年四化重點）<br>'
+    +'・<b>流年提醒直到 2100 年</b>（每年立春當天一筆，含當年四化與命宮落點——等於把您一輩子的流年都放進行事曆）<br>'
     +'・<b>未來大運切換</b>里程碑<br>'
-    +'每筆皆設前一天彈出提醒，匯入後即成為您隨身的個人農民曆。</p>'
+    +'流月／流年／大運設前一天彈出提醒；每日農民曆為當日全天靜態事件（不佔行程、不吵人），點開即看今天宜忌與方位。<br><b>這是一本「活的」農民曆</b>：內容依您的命盤即時演算，之後每年回來重新下載，每日明細永遠是最新一年；流年與大運則一次給到 2100 年。</p>'
     +'<div class="aihint" style="background:#faf7f1;border:1px solid #e6ddcd;border-radius:10px;padding:12px 14px;line-height:1.85">'
     +'<b>如何匯入：</b><br>'
     +'<b>iPhone</b>：點下載的 .ics 檔 →「加入全部」到行事曆。<br>'
@@ -7980,10 +8087,10 @@ function lnBuildBody(year){
     <p>今年宜多親近喜用神五行（<b style="color:var(--jade)">${st.xi.join("、")}</b>）所屬之方位、色彩與行業能量；逢忌神（<b style="color:#d47f8f">${st.ji.join("、")}</b>）之月與化忌所在之宮，宜低調收斂、穩紮穩打。把握化祿化權之機、避開化忌之衝，順勢而為，這一年自能趨吉避凶、穩中求進。</p>`;
 }
 async function lnPrimaryCTA(){
-  // 行銷主軸＝完整報告(888)：舊客(已解鎖)→直接進流年批；新客→捲到完整報告付款區，別讓便宜品分流888。
-  try{ if(window.__LC && await lcIsUnlocked(window.__LC.payload)){ lnBuy(); return; } }catch(e){}
-  const pw=document.getElementById('paywall')||document.querySelector('.paywall');
-  if(pw){ try{pw.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){pw.scrollIntoView();} }
+  // 單一商品策略：一律導向 888 完整報告。已解鎖者捲到完整內容區，未解鎖者捲到付款區。
+  let unlocked=false;try{unlocked=!!(window.__LC&&await lcIsUnlocked(window.__LC.payload));}catch(e){}
+  const target=unlocked?document.getElementById('premZone'):(document.getElementById('paywall')||document.querySelector('.paywall'));
+  if(target){ try{target.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){target.scrollIntoView();} }
 }
 function lnShow(year){
   const D=window.__ZW;if(!D){alert('請先在上方輸入生日、演算命盤。');return;}
@@ -7991,12 +8098,12 @@ function lnShow(year){
   zwOpenModal("流年批 · "+year+" 年",D.name+" · "+GAN[gi]+ZHI[zi]+"（"+SHENGXIAO[ZHI[zi]]+"年）","舊客專屬 · 當年超詳細流年批",lnBuildBody(year));
 }
 async function lnBuy(){
-  if(!window.__LC||!window.__ZW){alert('請先在上方輸入您的生日、演算命盤，再解鎖流年批。');return;}
+  // 2026-11-23 起：流年批停售「單獨購買」，只保留曾購買者回看；新客一律導向 888 完整報告。
+  if(!window.__LC||!window.__ZW){alert('請先在上方輸入您的生日、演算命盤。');return;}
   const year=lnCurYear(), key=await lcKey(window.__LC.payload), nh=await lcNameHash(window.__LC.name);
   if(lnUnlockedLocal(key,year)){lnShow(year);return;}
-  const st=await lnStatus(key,nh,year);
-  if(st.paid){try{localStorage.setItem('zw_ln_'+key+'_'+year,'1');}catch(e){}lnShow(year);return;}
-  lnPreview(year, st.price, st.returning);
+  try{const st=await lnStatus(key,nh,year);if(st&&st.paid){try{localStorage.setItem('zw_ln_'+key+'_'+year,'1');}catch(e){}lnShow(year);return;}}catch(e){}
+  lnPrimaryCTA();
 }
 function lnPreview(year, price, returning){
   price=parseInt(price,10)||100;
@@ -8525,8 +8632,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <div class="lnhero-info">
         <div class="lnhero-chips"><span>干支 ${_lgan}${_lzhi}</span><span>生肖 ${_lsx}年</span><span>虛歲 ${_lage}</span></div>
         <div class="lnhero-pc">流年命宮 · <b>${_lpc}</b>（坐星 ${_lstarTxt}）</div>
-        <p class="lnhero-desc">${PALACE_DESC[_lpc]||""}今年運勢以此宮所主領域為核心。<br>完整的 <b>流年四化逐宮</b>、<b>財・官・感情・健康四大應期</b>、<b>逐月吉凶</b> 與 <b>開運建議</b>——都在流年批。</p>
-        <button class="lnhero-btn" type="button" onclick="lnBuy()">🔓 看 ${CUR_YEAR} 完整流年批 ▸</button>
+        <p class="lnhero-desc">${PALACE_DESC[_lpc]||""}今年運勢以此宮所主領域為核心。<br>完整的 <b>流年四化逐宮</b>、<b>財・官・感情・健康四大應期</b>、<b>逐月吉凶</b> 與 <b>開運建議</b>——都在完整報告。</p>
+        <button class="lnhero-btn" type="button" onclick="lnPrimaryCTA()">🔓 解鎖完整報告 · 看 ${CUR_YEAR} 流年運程 ▸</button>
       </div>
     </div>`;
   const liunianDetailHTML="";
@@ -8678,15 +8785,12 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="lucksub">流年命宮逐年推移、每年四化各異——先看 ${CUR_YEAR} 命宮落點</div>
   ${liunianHTML}
   <div class="lnupsell">
-    <div class="lncmp-h">要先看哪個？完整報告 vs 流年批</div>
+    <div class="lncmp-h">完整的今年運勢，都在完整報告裡</div>
     <div class="lncmp">
-      <div class="lncmp-row"><b>📖 完整報告</b><span>一次讀懂你的<b>命盤・性格・天賦・大限</b>——認識「你是誰」，一次擁有、永久回看。<i>這是地基，建議先看</i></span></div>
-      <div class="lncmp-row"><b>📅 流年批</b><span>只看「<b>當年</b>」運勢重點（財・官・感情・健康＋逐月吉凶），每年更新——認識「今年會怎樣」。</span></div>
+      <div class="lncmp-row"><b>📖 完整報告</b><span>一次讀懂你的<b>命盤・性格・天賦・大限</b>，並完整收錄 <b>${CUR_YEAR} 流年運程與逐月吉凶</b>、六大深析與補運之道——一次擁有、同裝置永久回看。<i>每年回來，看當年流年</i></span></div>
     </div>
-    <div class="lncmp-note">先看完整報告打底，之後每年只要 <span class="ln30">30 元</span> 加批流年；只想先看今年也可單購 100 元。</div>
     <div class="lncmp-btns">
-      <button class="lnbuybtn signboard" type="button" onclick="lnPrimaryCTA()">🔓 先看完整報告（推薦）▸</button>
-      <button class="lnbuybtn2" type="button" onclick="lnBuy()">只單看 ${CUR_YEAR} 流年批</button>
+      <button class="lnbuybtn signboard" type="button" onclick="lnPrimaryCTA()">🔓 解鎖完整報告 ▸</button>
     </div>
   </div>
 
@@ -8727,6 +8831,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       <li>感情深析 ・ 感情模式、緣分從哪裡來、課題與相處建議、未來十年感情應期</li>
       <li>親子子女深析 ・ 子女樣貌、教養之道、雜曜四化提醒（兼看桃花創造力與下屬緣）</li>
       <li>人際貴人深析 ・ 人際圈樣貌、貴人從哪裡來、小人提醒、與長輩上司的相處</li>
+      <li>補運之道 ・ 針對您評分最弱的面向，給具體可執行的補強方案與五行開運清單</li>
+      <li>AI 分析文本 ・ 把命盤帶去問 ChatGPT／Claude，像帶著 24 小時私人命理顧問</li>
+      <li>個人農民曆 .ics ・ 365 天每日宜忌、財神貴人方位，疊加您的喜用神，匯入手機天天提醒</li>
       <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
     </ul>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
@@ -8917,6 +9024,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${kidsPaidHTML(adv.kids,zw,adv,name)}
 
   ${socialPaidHTML(adv.social,zw,adv,name,scores)}
+
+  ${remedyPaidHTML(calcRemedy(zw,adv,scores),name)}
 
   ${nameSection(name,{sysName:"命盤",coreEl:GAN_WX[dm],coreLabel:`日主${dm}`,xi:st.xi,ji:st.ji})}
 
@@ -9256,6 +9365,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     ${lovePrintHTML(adv.love)}
     ${kidsPrintHTML(adv.kids)}
     ${socialPrintHTML(adv.social)}
+    ${remedyPrintHTML(calcRemedy(zw,adv,scores))}
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
