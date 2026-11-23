@@ -1996,7 +1996,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.3";
+const SITE_VERSION_DATE="2026.11.23.4";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -6502,14 +6502,18 @@ function __zwGoPay(){
 }
 /* 同步判斷目前是否鎖定（供免費彈窗用；premZone 的 locked class 由 lcRefresh 維護） */
 function __zwLocked(){const z=document.getElementById('premZone');return !z||z.classList.contains('locked');}
+let __lcSeq=0;   // 競態守衛：render 時那發 lcRefresh 的網路查詢若比「付款/輸碼後」的刷新晚回來，不得把畫面蓋回鎖定
 async function lcRefresh(){
+  const my=++__lcSeq;
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
   let unlocked=await lcIsUnlocked(window.__LC.payload);
   // 未解鎖時，先嘗試「同生辰＝已購買」的跨裝置自動復原；命中則寫入本機並重排讓報告自動開啟。
   if(!unlocked){
     const restored=await lcAutoRestore(window.__LC.payload,window.__LC.name);
+    if(my!==__lcSeq)return;   // 期間已有更新的刷新接手，本發作廢
     if(restored){unlocked=true;try{run();}catch(e){}return;}
   }
+  if(my!==__lcSeq)return;     // 同上：避免舊結果覆蓋新狀態
   z.classList.toggle('locked',!unlocked);
   try{__premSync(z,!!unlocked);}catch(e){}
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
