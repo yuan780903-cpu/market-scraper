@@ -1236,8 +1236,13 @@ footer .disc .sub{display:block;margin-top:12px}
      （印章/頁腳）切到下一頁。改 245mm 安全高（連 Letter 247mm 可印高也裝得下），
      內容是 flex 置中＋絕對定位頁腳，縮高不影響版面。桌機維持 292mm 滿版，勿合併。 */
   /* 注意要連 min-height 一起歸零：螢幕規則的 min-height:1086px(≈287mm)寫在本區塊之後、
-     同權重會蓋掉上面的 min-height:0（已實測踩過——只改 height 無效，照樣 287mm 溢頁）。 */
-  html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:245mm;min-height:0}
+     同權重會蓋掉上面的 min-height:0（已實測踩過——只改 height 無效，照樣 287mm 溢頁）。
+     v.10：固定 245mm 在真機仍微幅溢頁（iPhone 預覽實際可印高 < 245mm，別再猜數字），
+     改「內容自然高度」（約 170-180mm，任何邊界都裝得下）；封面頁腳 cv-foot 原為
+     absolute 貼底、auto 高度下會疊到內容，一併改回文流（static＋margin-top）。 */
+  html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:auto;min-height:0;padding-top:16mm;padding-bottom:16mm}
+  html.ios-dev #reportPrint .rp-back{padding-top:26mm;padding-bottom:26mm}
+  html.ios-dev #reportPrint .cv-foot{position:static;bottom:auto;margin-top:12mm}
   #reportPrint .rp-cover{break-after:page;page-break-after:always}
   #reportPrint .rp-back{break-before:page;page-break-before:always}
 }
@@ -2041,7 +2046,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.9";
+const SITE_VERSION_DATE="2026.11.23.10";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全高度 245mm */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
