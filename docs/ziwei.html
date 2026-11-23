@@ -1996,7 +1996,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.4";
+const SITE_VERSION_DATE="2026.11.23.6";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -5819,15 +5819,18 @@ function buildPdfFromCanvases(canvases,quality){
   putS('trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xrefOffset+'\n%%EOF\n');
   return new Blob(chunks,{type:'application/pdf'});
 }
-/* ===== 檔名機制：列印／另存 PDF 時瀏覽器以 document.title 作為預設檔名；
-   列印前設為「<命主>的人生實用說明書」，afterprint 還原成原站名（掛一次，避免重複／衝突）。 ===== */
+/* ===== 檔名機制：列印／另存 PDF 時瀏覽器以 document.title 作為預設檔名。
+   排盤完成後標題即固定為「人生實用說明書系統 · <命主>的人生使用手冊」且不再還原回站名：
+   iOS Safari 的 afterprint 在列印面板「開啟」當下就觸發（非關閉時），
+   靠印完還原會讓使用者按分享時檔名已變回站名；
+   從 Safari 選單直接列印／分享也不經過本站按鈕，必須常駐個人化標題才蓋得到。 ===== */
 var _origTitle=document.title;
-function _restoreTitle(){try{document.title=_origTitle;}catch(e){}}
+function _restoreTitle(){try{document.title=(window.__ZW&&window.__ZW.name)?_printDocTitle():_origTitle;}catch(e){}}
 window.addEventListener('afterprint',_restoreTitle);
-/* 客戶輸出檔名統一格式：「<名字>的人生實用說明書」（PDF／圖片／文字檔／ics 共用） */
+/* 客戶輸出檔名統一格式：「人生實用說明書系統 · <名字>的人生使用手冊」（PDF／圖片／文字檔／ics 共用） */
 function _lgBase(n){
   var s=String(n==null?'':n).replace(/[\/\\:*?"<>|\n\r\t]/g,'').trim();
-  return (s||'命主')+'的人生實用說明書';
+  return '人生實用說明書系統 · '+(s||'命主')+'的人生使用手冊';
 }
 function _printDocTitle(){
   var D=window.__ZW;
@@ -5887,7 +5890,7 @@ async function runPdfExport(fromFab){
     return;
   }
   try{
-    document.title=_printDocTitle();      // 列印預設檔名＝「<命主>的人生實用說明書」
+    document.title=_printDocTitle();      // 列印預設檔名＝「人生實用說明書系統 · <命主>的人生使用手冊」
     window.print();                        // 印出 #reportPrint 完整專業版（body.rp-on 已掛）
     setNote('已開啟列印視窗，請於印表機選單選「<b>另存為 PDF</b>」即可下載完整專業報告（卡片・十二宮命盤・配色皆完整呈現）。若沒跳出視窗，請改用電腦或手機的 <b>Safari／Chrome</b> 再試。',false);
   }catch(e){
@@ -9141,6 +9144,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 防撿字：真內容抽到 JS 記憶體、DOM 先放骨架；解鎖由 lcRefresh→__premSync 注入
   (function(){const z=document.getElementById('premZone');if(!z)return;
     window.__PREM_HTML=z.innerHTML;z.innerHTML=__premSkeleton();z.dataset.skel='1';})();
+
+  // 排盤後常駐個人化標題（iOS 從任何入口列印／分享 PDF 檔名才帶得到名字，見 _restoreTitle 註）
+  try{document.title=_printDocTitle();}catch(e){}
 
   // ===== 存精華分享卡所需資料（重點速覽，非全文）=====
   try{
