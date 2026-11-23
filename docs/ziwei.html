@@ -2103,9 +2103,21 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.13";
-/* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全高度 245mm */
+const SITE_VERSION_DATE="2026.11.23.14";
+/* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
+/* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
+   裝置上的正式解鎖旗標），加 ?guest=0 或關分頁即恢復。lcIsUnlocked 與 lcAutoRestore 都會看這旗標。 */
+try{
+  if(/[?&]guest=1/.test(location.search))sessionStorage.setItem('zw_guest_view','1');
+  else if(/[?&]guest=0/.test(location.search))sessionStorage.removeItem('zw_guest_view');
+  if(sessionStorage.getItem('zw_guest_view')==='1'){
+    var __gb=document.createElement('div');
+    __gb.textContent='訪客檢視模式 · 此分頁以未付費視角瀏覽（網址加 ?guest=0 關閉）';
+    __gb.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:99999;background:#36080a;color:#f0d089;font-size:12px;letter-spacing:1px;padding:6px 16px;border-radius:999px;opacity:.92;pointer-events:none';
+    document.body.appendChild(__gb);
+  }
+}catch(e){}
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -6323,9 +6335,22 @@ function buildAIText(){
   P("請以白話、具體、溫暖而正向務實的方式逐項說明，並適度引用上方命盤的實際星曜與數據佐證。");
   return L.join("\n");
 }
+/* 付費功能共用閘門（v.14）：與 PDF 同規格——未解鎖一律導向付款區。
+   註：按鈕本身藏在付費區（鎖定時不進 DOM），此閘門是第二道防線（防 console 直呼）。 */
+function _paidGate(featName){
+  const z=document.getElementById('premZone');
+  if(z&&z.classList.contains('locked')){
+    const pw=document.getElementById('paywall');
+    if(pw){pw.style.display='';pw.scrollIntoView({behavior:'smooth',block:'center'});}
+    const msg=document.getElementById('lcMsg');if(msg){msg.textContent=featName+'為付費內容，請先輸入萬用碼解鎖。';msg.className='lcmsg err';}
+    return false;
+  }
+  return true;
+}
 function runAIExport(){
   const D=window.__ZW;
   if(!D){zwOpenModal("AI 分析文本","尚未排盤","",'<div class="aiexp"><p class="aihint">請先於上方輸入生辰並按「開始排盤」，產生命盤後再輸出 AI 分析文本。</p></div>');return;}
+  if(!_paidGate('AI 分析文本'))return;
   const txt=buildAIText();
   const body='<div class="aiexp">'
     +'<p class="aihint">下方為您的命盤結構化文字。按「複製全部」後，貼到 ChatGPT、Claude、Gemini 等 AI 對話框，即可請 AI 為您深入解讀。</p>'
@@ -6509,6 +6534,7 @@ function buildICS(){
 function runCalExport(){
   const D=window.__ZW;
   if(!D){zwOpenModal("個人農民曆","尚未排盤","",'<div class="aiexp"><p class="aihint">請先於上方輸入生辰並按「開始排盤」，產生命盤後再下載個人農民曆。</p></div>');return;}
+  if(!_paidGate('個人農民曆'))return;
   const ics=buildICS();
   _downloadFile(_lgBase(D.name)+"_個人農民曆.ics",ics,"text/calendar;charset=utf-8");
   const body='<div class="aiexp">'
@@ -6605,7 +6631,7 @@ async function lcNameHash(name){
     return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
   }catch(e){return '';}
 }
-async function lcIsUnlocked(p){try{if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
+async function lcIsUnlocked(p){try{if(sessionStorage.getItem('zw_guest_view')==='1')return false;if(localStorage.getItem('zw_lic_super')==='1')return true;return localStorage.getItem('zw_lic_'+await lcKey(p))==='1';}catch(e){return false;}}
 /* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay 付款解鎖 ===== */
 let __disc=null;   // {code,amount,reuse,base,final}
 let __kol=null;    // KOL 推薦碼 {code,name,discount,base,final}（付款時穿透帶進綠界）
@@ -6651,6 +6677,7 @@ async function discApply(){
 const __lcChecked=Object.create(null);
 async function lcAutoRestore(payload,name){
   try{
+    if(sessionStorage.getItem('zw_guest_view')==='1')return false; // 訪客檢視：不觸發復原、不寫旗標
     if(!payload)return false;
     const key=await lcKey(payload);
     if(localStorage.getItem('zw_lic_'+key)==='1')return true;   // 已解鎖，無需查
