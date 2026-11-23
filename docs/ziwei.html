@@ -2103,7 +2103,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.14";
+const SITE_VERSION_DATE="2026.11.24.1";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -9688,27 +9688,27 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 專屬命書編號：姓名＋生辰之確定性雜湊——同一人每次輸出同號，作為客製化憑據
   const bookNo=(function(){let h=5381;const s=name+'|'+sol.y+'-'+sol.m+'-'+sol.d+'-'+sol.hh+':'+sol.mm;for(let i=0;i<s.length;i++)h=(Math.imul(h,33)^s.charCodeAt(i))>>>0;const t=String(h%100000000).padStart(8,'0');return t.slice(0,4)+'-'+t.slice(4);})();
   try{window.__BOOKNO=bookNo;}catch(e){}   // 供社群分享卡顯示專屬命書編號
-  const coverDateStr=(function(){const n2=new Date();return n2.getFullYear()+'/'+(n2.getMonth()+1)+'/'+n2.getDate();})();
   const _cvCorners='<span class="cv-cnr tl"></span><span class="cv-cnr tr"></span><span class="cv-cnr bl"></span><span class="cv-cnr br"></span>';
+  // 封面＝純品牌形象頁：不放姓名、生辰、分數、編號等任何個資與數據（個資只出現在內頁）
   const printHTML=`
   <div class="rp-page rp-cover"><i class="cv-bleed"></i>
     ${_cvCorners}
-    <div class="cv-brand">人生實用說明書系統</div>
+    <div class="cv-brand">聖源大師 命理工作室</div>
     <div class="cv-en">LIFE GUIDE · DESTINY REPORT</div>
     <div class="cv-line"></div>
-    <div class="cv-emblem"><div class="cv-emb-in"><span class="g">${scores.gradeTier}</span><span class="t">${scores.grade}格</span></div></div>
-    <div class="cv-name">${name}</div>
-    <div class="cv-sub">的人生使用手冊</div>
-    <div class="cv-tag">紫微斗數 · 子平八字 · 姓名學　三術合參 · 個人專屬命書</div>
+    <div class="cv-emblem"><div class="cv-emb-in"><span class="g">命</span><span class="t">知命造命</span></div></div>
+    <div class="cv-name">人生實用說明書</div>
+    <div class="cv-sub">你的人生使用手冊</div>
+    <div class="cv-tag">紫微斗數 · 子平八字 · 姓名學　三術合參 · 全書白話</div>
     <div class="cv-line"></div>
     <div class="cv-meta">
-      <span>國曆 <b>${sol.y} 年 ${sol.m} 月 ${sol.d} 日 ${String(sol.hh).padStart(2,'0')}:${String(sol.mm).padStart(2,'0')}</b>　·　${gender} · 屬${shengxiao}</span>
-      <span>農曆 <b>${leapTxt}${LUNAR_M[lunar.month-1]}月${LUNAR_D[lunar.day]} ${bz.hour.zhi}時</b>　·　${zw.juName}</span>
-      <span>命宮 <b>${zw.palaceGan[zw.ming]}${ZHI[zw.ming]} · ${mingStarTxt}</b></span>
+      <span>紫微十二宮逐宮詳解 · 生年與宮干<b>四化飛星</b> · 命宮三方四正 · 神煞白話</span>
+      <span><b>大運十年</b> × 流年流月吉凶 · 袁天罡稱骨 · 三才五格姓名學</span>
+      <span>職業契合 · 財運 · 感情 · 健康 · 人際 · <b>開運補強</b>　深度解析</span>
     </div>
     <div class="cv-seal"><span>聖</span><span>源</span><span>之</span><span>印</span></div>
-    <div class="cv-no">專屬命書編號 NO.${bookNo}　·　製表 ${coverDateStr}</div>
-    <div class="cv-foot">聖源大師 親論 · lifeguidetw.com</div>
+    <div class="cv-no">真實曆法演算 · 二十四節氣 · 真太陽時校正 · 個人專屬命書</div>
+    <div class="cv-foot">人生實用說明書系統 · lifeguidetw.com</div>
   </div>
   <div class="rp-page">
     <div class="rp-time" id="rpTime"></div>
