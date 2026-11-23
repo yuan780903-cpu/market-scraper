@@ -1240,9 +1240,18 @@ footer .disc .sub{display:block;margin-top:12px}
      v.10：固定 245mm 在真機仍微幅溢頁（iPhone 預覽實際可印高 < 245mm，別再猜數字），
      改「內容自然高度」（約 170-180mm，任何邊界都裝得下）；封面頁腳 cv-foot 原為
      absolute 貼底、auto 高度下會疊到內容，一併改回文流（static＋margin-top）。 */
-  html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:auto;min-height:0;padding-top:16mm;padding-bottom:16mm}
-  html.ios-dev #reportPrint .rp-back{padding-top:26mm;padding-bottom:26mm}
-  html.ios-dev #reportPrint .cv-foot{position:static;bottom:auto;margin-top:12mm}
+  /* v.11 iOS 滿版定案（真機實測軌跡：292 溢一大段→245 仍微溢→usable≈235-240→取 230 安全）：
+     封面/封底固定 230mm——金框完整、內容 flex 置中、cv-foot 恢復貼框底；
+     z-index:0 讓封面自成堆疊上下文——否則 .cv-bleed 的 z-index:-1 會沉到
+     #reportPrint 白底之下被蓋掉（實測踩過，頁面變全白）。 */
+  html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:230mm;min-height:0;background:none;z-index:0}
+  /* 滿版鋪底：.cv-bleed 是封面/封底第一個子元素（printHTML 內 <i class="cv-bleed">），
+     絕對定位＋297mm 高＝「單體元素」，列印分頁時只會被裁切在當頁、不會撐出新頁——
+     封面頁米金底因此越過 230mm 框一路鋪到可印區底邊（佈滿不留白）。
+     已知限制：封底是文件最後一個元素，繪製止於文件流末端（230mm），框下方可能留
+     數 mm 白條、緊貼 AirPrint 自身白邊看不出來。桌機（無 ios-dev）此層無樣式＝隱形。 */
+  html.ios-dev #reportPrint .cv-bleed{position:absolute;left:0;top:0;right:0;height:297mm;z-index:-1;
+    background:linear-gradient(168deg,#fdf9ee 0%,#faf2da 46%,#f4e9c6 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #reportPrint .rp-cover{break-after:page;page-break-after:always}
   #reportPrint .rp-back{break-before:page;page-break-before:always}
 }
@@ -2046,7 +2055,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.10";
+const SITE_VERSION_DATE="2026.11.23.11";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全高度 245mm */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
@@ -9560,7 +9569,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   const coverDateStr=(function(){const n2=new Date();return n2.getFullYear()+'/'+(n2.getMonth()+1)+'/'+n2.getDate();})();
   const _cvCorners='<span class="cv-cnr tl"></span><span class="cv-cnr tr"></span><span class="cv-cnr bl"></span><span class="cv-cnr br"></span>';
   const printHTML=`
-  <div class="rp-page rp-cover">
+  <div class="rp-page rp-cover"><i class="cv-bleed"></i>
     ${_cvCorners}
     <div class="cv-brand">人生實用說明書系統</div>
     <div class="cv-en">LIFE GUIDE · DESTINY REPORT</div>
@@ -9687,7 +9696,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-bless"><div class="bt">敬　祝</div><div class="bw">${blessing}</div><div class="bs">人生實用說明書系統 · 聖源大師　敬上</div></div>
     <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>${famPages}
-  <div class="rp-page rp-back">
+  <div class="rp-page rp-back"><i class="cv-bleed"></i>
     ${_cvCorners}
     <div class="bk-big">知命 · 而後造命</div>
     <div class="cv-line"></div>
