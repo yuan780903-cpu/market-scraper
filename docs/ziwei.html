@@ -1464,6 +1464,27 @@ footer .disc .sub{display:block;margin-top:12px}
 .paywall .discmsg{min-height:18px;font-size:.82rem;margin-top:6px;line-height:1.6}
 .paywall .discmsg.err{color:#c2576f}.paywall .discmsg.ok{color:#2f9b5e;font-weight:700}
 .paywall .pwnote{font-size:.74rem;color:var(--ink-faint);margin-top:10px}
+/* ===== 免費區收斂：上鎖列 / 彈窗鎖定框 / 付費區骨架 ===== */
+.cj-list li.cj-lock span:first-child{color:var(--ink-faint)}
+.cj-mask{display:inline-block;min-width:86px;height:.95em;vertical-align:-2px;border-radius:6px;
+  background:repeating-linear-gradient(90deg,var(--line) 0 9px,transparent 9px 13px)}
+.cj-lockchip{display:inline-flex;align-items:center;font-size:.76rem;color:var(--gold-deep);
+  border:1px dashed var(--gold);border-radius:999px;padding:2px 10px;background:rgba(200,168,75,.08);white-space:nowrap}
+.zwlockbox{margin:8px 0 2px;padding:13px 15px;border:1.5px dashed var(--gold);border-radius:12px;
+  background:rgba(200,168,75,.07);font-size:.9rem;line-height:1.8}
+.zwlockbox b{color:var(--gold-deep)}
+.zwlockbox .zwlockbtn{display:inline-block;margin-top:9px;padding:8px 18px;border:none;border-radius:999px;cursor:pointer;
+  font-weight:700;font-size:.87rem;letter-spacing:.5px;color:#fff;background:linear-gradient(135deg,#8a6a14,#c7a24a);
+  box-shadow:0 4px 12px rgba(138,106,20,.3)}
+.zwlockbox .zwlockbtn:hover{transform:translateY(-1px)}
+.pskel{padding:8px 2px}
+.pskel .psk-t{height:22px;width:42%;margin:18px auto 14px;border-radius:8px;
+  background:linear-gradient(90deg,rgba(200,168,75,.3),rgba(200,168,75,.12))}
+.pskel .psk-ring{width:150px;height:150px;border-radius:50%;margin:12px auto;
+  border:10px solid rgba(200,168,75,.25);border-top-color:rgba(138,106,20,.5)}
+.pskel .psk-r{height:13px;border-radius:7px;background:rgba(120,100,60,.16);margin:11px 0}
+.pskel .w9{width:92%}.pskel .w8{width:85%}.pskel .w7{width:74%}.pskel .w5{width:55%}
+.pskel .psk-card{border:1px solid var(--line-soft);border-radius:14px;padding:16px;margin:14px 0;background:rgba(255,255,255,.35)}
 /* 付款前閘門：App 內建瀏覽器引導彈窗 */
 .inappgate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
   padding:18px;background:rgba(24,16,40,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
@@ -1975,7 +1996,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.23.2";
+const SITE_VERSION_DATE="2026.11.23.3";
 try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
@@ -3019,17 +3040,27 @@ function calcCareer(zw,adv){
   cur:{ind:ci,role:cr,combined:combined,band:combined==null?null:band(combined)},
   used:used.sort((a,b)=>b.w-a.w),contribInd:contribInd,contribRole:contribRole,xi:st.xi||[],ji:st.ji||[]};
 }
-function careerFreeHTML(c){
+function careerFreeHTML(c,unlocked){
  if(!c)return "";
- const li=arr=>arr.map((x,i)=>`<li><span>${i+1}. ${x.n}</span><span class="cj-score">契合 ${x.v} 分</span></li>`).join("");
+ /* 免費只給第 1 名（名稱＋分數，製造「真的懂我」）；第 2、3 名與現職分數排名＝付費內容，
+    解鎖後由 lcRefresh 以 unlocked=true 重繪本卡補回完整資料（鎖定時真值不進 DOM，防撿字）。 */
+ const li=arr=>arr.map((x,i)=>(unlocked||i===0)
+   ?`<li><span>${i+1}. ${x.n}</span><span class="cj-score">契合 ${x.v} 分</span></li>`
+   :`<li class="cj-lock"><span>${i+1}. <span class="cj-mask"></span></span><span class="cj-lockchip">完整報告解鎖</span></li>`).join("");
  let cur="";
  if(c.cur.ind||c.cur.role){
-  const parts=[];
-  if(c.cur.ind)parts.push(`產業「${c.cur.ind.n}」契合度 <b>${c.cur.ind.v}</b> 分（${c.cur.ind.band}・${c.rankInd.length} 類中第 ${c.cur.ind.rank} 名）`);
-  if(c.cur.role)parts.push(`職務「${c.cur.role.n}」契合度 <b>${c.cur.role.v}</b> 分（${c.cur.role.band}・${c.rankRole.length} 類中第 ${c.cur.role.rank} 名）`);
-  cur=`<p class="cj-cur">您的現職：${parts.join("；")}${c.cur.combined!=null?`。綜合契合度 <b class="cj-big">${c.cur.combined}</b> 分（${c.cur.band}）`:""}。</p>`;
+  if(unlocked){
+   const parts=[];
+   if(c.cur.ind)parts.push(`產業「${c.cur.ind.n}」契合度 <b>${c.cur.ind.v}</b> 分（${c.cur.ind.band}・${c.rankInd.length} 類中第 ${c.cur.ind.rank} 名）`);
+   if(c.cur.role)parts.push(`職務「${c.cur.role.n}」契合度 <b>${c.cur.role.v}</b> 分（${c.cur.role.band}・${c.rankRole.length} 類中第 ${c.cur.role.rank} 名）`);
+   cur=`<p class="cj-cur">您的現職：${parts.join("；")}${c.cur.combined!=null?`。綜合契合度 <b class="cj-big">${c.cur.combined}</b> 分（${c.cur.band}）`:""}。</p>`;
+  }else{
+   const names=[c.cur.ind?`「${c.cur.ind.n}」`:"",c.cur.role?`「${c.cur.role.n}」`:""].filter(Boolean).join("＋");
+   const band=c.cur.band||(c.cur.ind&&c.cur.ind.band)||(c.cur.role&&c.cur.role.band)||"中";
+   cur=`<p class="cj-cur">您的現職 ${names} 與命盤的契合評級：<b class="cj-big">${band}</b>。確切分數與全類排名，以及相符之處、未發揮的特質、調整或轉型路徑、動與守的時機——完整報告解鎖後完整呈現。</p>`;
+  }
  }else cur=`<p class="cj-cur">尚未選擇現職類型。在排盤資料選擇「現有工作」的產業與職務性質後重新排盤，系統會比對命盤與現職的契合度並做差異分析。</p>`;
- return `<div class="rcard wide cjcard"><h3><span class="ic">職</span>事業適性 · 命盤最適合的工作類型</h3>
+ return `<div class="rcard wide cjcard" id="cjFreeCard"><h3><span class="ic">職</span>事業適性 · 命盤最適合的工作類型</h3>
   <div class="cj-cols"><div><div class="cj-h">適合的產業領域 TOP 3</div><ol class="cj-list">${li(c.topInd)}</ol></div>
   <div><div class="cj-h">適合的職務性質 TOP 3</div><ol class="cj-list">${li(c.topRole)}</ol></div></div>
   ${cur}
@@ -6432,6 +6463,45 @@ async function lcAutoRestore(payload,name){
   }catch(e){/* 失敗安全：維持未解鎖 */}
   return false;
 }
+/* ===== 防撿字（2026-11-23）=====
+   鎖定時付費區 DOM 只放「骨架」占位（blur 之下看起來仍是滿滿內容），真內容存在
+   window.__PREM_HTML / __PRINT_HTML（JS 記憶體）；解鎖才注入 DOM。
+   如此「閱讀模式、檢視原始碼、全選複製」都拿不到付費正文。 */
+function __premSkeleton(){
+  let cards='';
+  for(let i=0;i<5;i++)cards+='<div class="psk-card"><div class="psk-r w5"></div><div class="psk-r w9"></div><div class="psk-r w8"></div><div class="psk-r w7"></div><div class="psk-r w9"></div></div>';
+  return '<div class="pskel"><div class="psk-t"></div><div class="psk-ring"></div><div class="psk-r w9"></div><div class="psk-r w8"></div><div class="psk-r w7"></div>'+cards+'</div>';
+}
+function __premSync(z,unlocked){
+  const rp=document.getElementById('reportPrint');
+  if(unlocked){
+    if(z.dataset.skel==='1'&&window.__PREM_HTML){
+      z.innerHTML=window.__PREM_HTML;z.dataset.skel='0';
+      // 飛線盤需在真內容注入後初始化（原 run() 末端的初始化當時只看到骨架）
+      requestAnimationFrame(()=>{try{if(document.getElementById('flyChart')&&window.__ZW)zwFly(window.__ZW.zw.ming);}catch(e){}});
+    }
+    if(rp&&rp.dataset.filled!=='1'&&window.__PRINT_HTML){rp.innerHTML=window.__PRINT_HTML;rp.dataset.filled='1';document.body.classList.add('rp-on');}
+  }else{
+    if(z.dataset.skel!=='1'&&window.__PREM_HTML){z.innerHTML=__premSkeleton();z.dataset.skel='1';}
+    if(rp&&rp.dataset.filled==='1'){rp.innerHTML='';rp.dataset.filled='0';document.body.classList.remove('rp-on');}
+  }
+  // 事業適性免費卡：解鎖補回完整分數排名、上鎖收斂（真值不留在鎖定 DOM）
+  try{
+    const cj=document.getElementById('cjFreeCard');
+    if(cj&&window.__ZW&&window.__ZW.adv&&window.__ZW.adv.career){
+      const nw=careerFreeHTML(window.__ZW.adv.career,unlocked);
+      if(nw){const d=document.createElement('div');d.innerHTML=nw;if(d.firstElementChild)cj.replaceWith(d.firstElementChild);}
+    }
+  }catch(e){}
+}
+/* 彈窗鎖定框的「解鎖」鈕：關彈窗、捲到付款區 */
+function __zwGoPay(){
+  try{zwCloseModal();}catch(e){}
+  const pw=document.getElementById('paywall');
+  if(pw&&getComputedStyle(pw).display!=='none')pw.scrollIntoView({behavior:'smooth',block:'center'});
+}
+/* 同步判斷目前是否鎖定（供免費彈窗用；premZone 的 locked class 由 lcRefresh 維護） */
+function __zwLocked(){const z=document.getElementById('premZone');return !z||z.classList.contains('locked');}
 async function lcRefresh(){
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
   let unlocked=await lcIsUnlocked(window.__LC.payload);
@@ -6441,6 +6511,7 @@ async function lcRefresh(){
     if(restored){unlocked=true;try{run();}catch(e){}return;}
   }
   z.classList.toggle('locked',!unlocked);
+  try{__premSync(z,!!unlocked);}catch(e){}
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
   const fab=document.getElementById('pdfFab');if(fab){fab.classList.toggle('lockpdf',!unlocked);const fm=document.getElementById('pdfFabMsg');if(fm&&unlocked)fm.className='pdffabmsg';}
@@ -8225,13 +8296,20 @@ function zwLuck(i){
   const p=lk.list[i];if(!p)return;
   const tg=tenGod(dm,p.gan), ny=naYin(p.gan,p.zhi);
   const cur=adv.curAge>=p.age&&adv.curAge<p.age+10, step=i+1;
-  const body=`
+  /* 免費區收斂：只有「現行這步大運」免費看完整白話（讓人驚豔）；
+     其餘各步十年運＝付費內容，鎖定時只給干支基本盤＋預告。 */
+  const __lk=__zwLocked()&&!cur;
+  const body=__lk?`
+    <div class="zwkv"><span>年齡 <b>${p.age}–${p.age+9} 歲</b></span><span>干支 <b>${p.gan}${p.zhi}</b></span><span>納音 <b>${ny}</b></span></div>
+    <div class="zwsec">這十年的運勢白話</div>
+    <div class="zwlockbox">您一生共十步大運，每步十年各有主軸與功課。這一步（${p.age}–${p.age+9} 歲）的<b>十年主軸、十神能量與白話總評</b>，是完整報告的內容——解鎖後，十步大運每一步都能點開細看，並可對照大限與流年合參。<br><button class="zwlockbtn" type="button" onclick="__zwGoPay()">解鎖完整報告 ▸</button></div>
+    <p style="color:var(--ink-faint);font-size:.85rem">提示：您「目前正走的這步大運」免費開放完整白話，點擊有金框標示的那一柱即可體驗。</p>`:`
     ${cur?'<div class="zwbadges"><span class="zwb lim">您正行此運</span></div>':""}
     <div class="zwkv"><span>年齡 <b>${p.age}–${p.age+9} 歲</b></span><span>干支 <b>${p.gan}${p.zhi}</b></span><span>主十神 <b>${tg}</b></span><span>納音 <b>${ny}</b></span></div>
     <div class="zwsec">這十年的主軸（${tg}運）</div><p>${LUCK_TG[tg]||TENGOD_DESC[tg]||""}</p>
     <div class="zwsec">十神「${tg}」的含義</div><p>${TENGOD_DESC[tg]||""}大運天干為「${p.gan}」，相對於您的日主「${dm}」而言即為此十神，是這十年運勢的主要色彩。</p>
     <div class="zwsec">白話總評</div><p>這是 ${name} 的第 ${step} 步大運（${p.age} 歲起運），干支 ${p.gan}${p.zhi}、納音「${ny}」。${cur?"您目前正走在這步大運之中，上述特質正於生活裡上演，順勢而為、把握當下最為要緊。":p.age>adv.curAge?"這是未來將走到的運程，可預先準備、提早佈局。":"這是已走過的運程，回顧過往可印證軌跡，作為前行參照。"}</p>`;
-  zwOpenModal("子平八字 · 大運",`第 ${step} 步大運 · ${p.gan}${p.zhi}`,`${p.age}–${p.age+9} 歲 · ${tg}`,body);
+  zwOpenModal("子平八字 · 大運",`第 ${step} 步大運 · ${p.gan}${p.zhi}`,`${p.age}–${p.age+9} 歲${__lk?"":" · "+tg}`,body);
 }
 
 /* 批流年白話彈窗 */
@@ -8290,17 +8368,26 @@ function zwWuxing(el){
   else{lvl="平和";lvlTxt=`您命中「${el}」的能量大致平和（${v} 數，全局排第 ${rank}），分布均勻、不偏不倚。`;}
   const m=WX_MEAN[el], life=WX_LIFE[el];
   const isXi=st.xi.includes(el), isJi=st.ji.includes(el);
+  /* 免費區收斂：喜用神判定＋幸運色方位行業做法＝付費內容（付費牆賣點），
+     鎖定時以預告框代之；解鎖後本彈窗自動顯示完整內容。 */
+  const __lk=__zwLocked();
   let xj="";
-  if(isXi)xj=`<div class="zwsec">與您的喜用神</div><p>「${el}」正是您命局的<b style="color:var(--jade)">喜用神</b>——多親近、多運用此五行的色彩、方位與行業，最能補您命局之不足、助旺運勢。</p>`;
-  else if(isJi)xj=`<div class="zwsec">與您的忌神</div><p>「${el}」屬您命局的<b style="color:#d47f8f">忌神</b>——日常宜適度節制此五行過旺之氣，多借喜用神（${st.xi.join("、")}）來調和平衡。</p>`;
+  if(!__lk){
+   if(isXi)xj=`<div class="zwsec">與您的喜用神</div><p>「${el}」正是您命局的<b style="color:var(--jade)">喜用神</b>——多親近、多運用此五行的色彩、方位與行業，最能補您命局之不足、助旺運勢。</p>`;
+   else if(isJi)xj=`<div class="zwsec">與您的忌神</div><p>「${el}」屬您命局的<b style="color:#d47f8f">忌神</b>——日常宜適度節制此五行過旺之氣，多借喜用神（${st.xi.join("、")}）來調和平衡。</p>`;
+  }
+  const luckPart=__lk
+    ?`<div class="zwsec">開運生活應用</div>
+      <div class="zwlockbox">「${el}」的<b>幸運色、方位、適性行業、開運做法</b>，以及它是否為您命局的<b>喜用神</b>——這些是完整報告的內容，解鎖後這裡會直接顯示，並附專屬「補運之道」行動方案。<br><button class="zwlockbtn" type="button" onclick="__zwGoPay()">解鎖完整報告 ▸</button></div>`
+    :`<div class="zwsec">開運生活應用</div>
+      <div class="zwkv"><span>幸運色 <b>${life.色}</b></span><span>方位 <b>${life.方}</b></span></div>
+      <p><b>適性行業</b>：${life.業}。<br><b>開運做法</b>：${life.物}。</p>`;
   const body=`
     <div class="zwkv"><span>命中數量 <b>${v} 數</b></span><span>強弱 <b>${lvl}</b></span><span>主管 <b>${m.key}</b></span></div>
     <div class="zwsec">「${el}」代表什麼</div><p>${m.per}</p>
     <div class="zwsec">您命中的「${el}」</div><p>${lvlTxt}${m.ex}</p>
     <div class="zwsec">對應身體部位</div><p>${m.body}——此五行過旺或過弱時，相關部位較易有狀況，宜留心保養。</p>
-    <div class="zwsec">開運生活應用</div>
-    <div class="zwkv"><span>幸運色 <b>${life.色}</b></span><span>方位 <b>${life.方}</b></span></div>
-    <p><b>適性行業</b>：${life.業}。<br><b>開運做法</b>：${life.物}。</p>
+    ${luckPart}
     ${xj}`;
   zwOpenModal("子平八字 · 五行能量",`${el} · ${lvl}`,`命中 ${v} 數 · ${m.key}`,body);
 }
@@ -9047,6 +9134,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   `;
   res.innerHTML=html;
 
+  // 防撿字：真內容抽到 JS 記憶體、DOM 先放骨架；解鎖由 lcRefresh→__premSync 注入
+  (function(){const z=document.getElementById('premZone');if(!z)return;
+    window.__PREM_HTML=z.innerHTML;z.innerHTML=__premSkeleton();z.dataset.skel='1';})();
+
   // ===== 存精華分享卡所需資料（重點速覽，非全文）=====
   try{
     const _ds=[...scores.dims].sort((a,b)=>b.v-a.v);
@@ -9433,8 +9524,10 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-bless"><div class="bt">敬　祝</div><div class="bw">${blessing}</div><div class="bs">人生實用說明書系統 · 聖源大師　敬上</div></div>
     <div class="rp-foot">本報告完整呈現紫微斗數十二宮（主輔星・四化・亮度・雜曜・小限）、子平八字四柱、日主旺衰喜用、八字與紫微格局、神煞、生年四化飛星、命宮三方四正、大運十步、近六年流年、流月吉凶、袁天罡稱骨、三才五格姓名學與喜用神開運應用，依真實曆法演算為命主量身而成。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；八字重量與稱骨命格屬民俗參考，重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>${famPages}`;
+  // 防撿字：列印全文報告不直接進 DOM，存 JS 記憶體；解鎖才由 __premSync 注入並掛 rp-on
+  window.__PRINT_HTML=printHTML;
   const rp=document.getElementById("reportPrint");
-  if(rp){rp.innerHTML=printHTML;document.body.classList.add("rp-on");}
+  if(rp){rp.innerHTML="";rp.dataset.filled='0';}
 
   finishRender(subText);
   lcRefresh();
