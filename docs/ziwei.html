@@ -2102,7 +2102,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.4";
+const SITE_VERSION_DATE="2026.11.24.5";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -10244,7 +10244,7 @@ function __ensureCtx(){   // 必須在「使用者手勢」當下呼叫：先用
    /music/ 下 128kbps、loudnorm I=-20 響度正規化；sw.js 對 /music/ 直接放行（range 串流）。 */
 const SND_FILE={dawn:'music/m_dawn.mp3',calm:'music/m_calm.mp3',dream:'music/m_dream.mp3',crystal:'music/m_crystal.mp3',rain:'music/n_rain.mp3',ocean:'music/n_ocean.mp3',stream:'music/n_stream.mp3'};
 async function __renderWav(choice){      // 函式名沿用舊合成版：現在直接回傳真實音檔路徑
-  return SND_FILE[choice]||SND_FILE.calm;
+  return SND_FILE[choice]||SND_FILE.dawn;
 }
 function __fadeTo(target,ms){
   const a=__getAudioEl();
@@ -10258,10 +10258,11 @@ function __fadeTo(target,ms){
     if(k>=1){clearInterval(__fadeTimer);__fadeTimer=null;if(target===0){try{a.pause();}catch(e){}}}
   },40);
 }
-async function playSound(choice){
+async function playSound(choice,byUser){
   __ensureCtx();
   __curSound=choice; __musicOn=true;
-  try{localStorage.setItem('zw_sound',choice);localStorage.setItem('zw_music','1');}catch(e){}
+  // 只有使用者「親手選曲」才記憶選擇(zw_sound_u 旗標);自動播放不寫,預設曲改版才能全面生效
+  try{localStorage.setItem('zw_music','1');if(byUser){localStorage.setItem('zw_sound',choice);localStorage.setItem('zw_sound_u','1');}}catch(e){}
   updateMusicUI();
   const a=__getAudioEl();
   let url;
@@ -10308,7 +10309,7 @@ function updateMusicUI(){
     });
   }
   document.querySelectorAll('.mpopt').forEach(b=>b.addEventListener('click',()=>{
-    const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s);
+    const s=b.getAttribute('data-snd'); if(s==='off')stopSound(); else playSound(s,true);
     if(wrap)wrap.classList.remove('open');
   }));
   // 音量滑桿（讀回上次設定）
@@ -10322,10 +10323,15 @@ function updateMusicUI(){
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
   // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
   const hint=document.getElementById('musicHint');
-  let want='1',choice='calm';
-  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'calm';}catch(e){}
-  if(!SND_NAME[choice])choice='calm';           // 預設背景音樂＝靜心沉澱（真實錄音・安靜沉澱）
-  if(choice==='forest')choice='calm';           // 舊版森林鳥鳴已移除 → 自動升級為靜心沉澱
+  let want='1',choice='dawn';
+  try{
+    // 一次性遷移：舊版「自動播放也寫 zw_sound」→ 沒有親選旗標的記錄一律清掉，改聽新預設曲
+    if(localStorage.getItem('zw_sound')&&!localStorage.getItem('zw_sound_u'))localStorage.removeItem('zw_sound');
+    want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');
+    choice=localStorage.getItem('zw_sound')||'dawn';
+  }catch(e){}
+  if(!SND_NAME[choice])choice='dawn';           // 預設背景音樂＝晨曦暖陽
+  if(choice==='forest')choice='dawn';           // 舊版森林鳥鳴已移除 → 自動升級為晨曦暖陽
   if(want!=='0'){
     const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
     const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
