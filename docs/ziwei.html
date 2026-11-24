@@ -1345,6 +1345,20 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
 #reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
+/* ===== 流年精批（完整報告內含）：明年搶先看摺疊＋列印版紙本樣式 ===== */
+.lnnext{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
+.lnnext summary{cursor:pointer;color:var(--purple);font-weight:700;letter-spacing:1px;font-size:.95rem;list-style:none;display:flex;align-items:center;gap:8px}
+.lnnext summary::-webkit-details-marker{display:none}
+.lnnext summary::before{content:"▸";color:var(--gold);transition:transform .2s}
+.lnnext[open] summary::before{transform:rotate(90deg)}
+.lnnext .zwmbody{margin-top:8px}
+#reportPrint .rp-ln{font-size:10.5px;line-height:1.75;color:#3a3020;margin:2px 0 6px}
+#reportPrint .rp-ln .zwsec{font-size:11px;margin:7px 0 2px;color:#8a6a14;font-weight:700;display:block}
+#reportPrint .rp-ln .zwsec::before{display:none}
+#reportPrint .rp-ln p{margin:1px 0 4px}
+#reportPrint .rp-ln .zwkv{display:flex;gap:14px;font-size:10.5px;color:#6a562e;margin:2px 0 4px}
+#reportPrint .rp-ln .zwkv b{color:#6a4e10}
+
 /* ===== 今日運勢卡（付費區置頂＋回訪首頁 #todayHome；資料來自 zwDayInfo 單一來源）===== */
 #todayHome{max-width:1080px;margin:18px auto 0;padding:0 16px}
 #todayHome:empty{display:none}
@@ -2146,7 +2160,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.6";
+const SITE_VERSION_DATE="2026.11.24.7";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -8552,8 +8566,9 @@ function lnFindPalace(zw,starName){for(let b=0;b<12;b++){if((zw.stars[b]||[]).so
 function lnCurYear(){try{return curLN().year;}catch(e){return new Date().getFullYear();}}
 function lnUnlockedLocal(key,year){try{return localStorage.getItem('zw_ln_'+key+'_'+year)==='1';}catch(e){return false;}}
 async function lnStatus(key,nh,year){try{const r=await fetch(LC_API.replace(/\/+$/,'')+'/liunian/check?key='+encodeURIComponent(key)+'&year='+year+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});const j=await r.json();return {paid:!!(j&&j.paid),price:(j&&j.price)||100,returning:!!(j&&j.returning)};}catch(e){return {paid:false,price:100,returning:false};}}
-function lnBuildBody(year){
+function lnBuildBody(year,opt){
   const D=window.__ZW;if(!D)return '';
+  const noMonth=!!(opt&&opt.noMonth);
   const zw=D.zw,st=D.adv.strength,birthYear=D.birthYear;
   const gi=((year-4)%10+10)%10, zi=((year-4)%12+12)%12;
   const gan=GAN[gi],zhi=ZHI[zi],sx=SHENGXIAO[zhi],age=year-((D.lunar&&D.lunar.year)||birthYear)+1;
@@ -8576,28 +8591,30 @@ function lnBuildBody(year){
     ${huaHTML}
     <div class="zwsec">三、當年四大應期</div>
     ${yingqi}
-    <div class="zwsec">四、流月吉凶一覽（${year} 逐月）</div>
+    ${noMonth?"":`<div class="zwsec">四、流月吉凶一覽（${year} 逐月）</div>
     <div class="lmgrid">${lmHTML}</div>
-    <p class="lmnote">流月以節氣交接為界（約當國曆次月）。逢喜用神之月宜進取，逢忌神之月宜守成防耗。</p>
-    <div class="zwsec">五、開運建議</div>
+    <p class="lmnote">流月以節氣交接為界（約當國曆次月）。逢喜用神之月宜進取，逢忌神之月宜守成防耗。</p>`}
+    <div class="zwsec">${noMonth?"四":"五"}、開運建議</div>
     <p>今年宜多親近喜用神五行（<b style="color:var(--jade)">${st.xi.join("、")}</b>）所屬之方位、色彩與行業能量；逢忌神（<b style="color:#d47f8f">${st.ji.join("、")}</b>）之月與化忌所在之宮，宜低調收斂、穩紮穩打。把握化祿化權之機、避開化忌之衝，順勢而為，這一年自能趨吉避凶、穩中求進。</p>`;
 }
 async function lnPrimaryCTA(){
   // 單一商品策略：一律導向 888 完整報告。已解鎖者捲到完整內容區，未解鎖者捲到付款區。
   let unlocked=false;try{unlocked=!!(window.__LC&&await lcIsUnlocked(window.__LC.payload));}catch(e){}
-  const target=unlocked?document.getElementById('premZone'):(document.getElementById('paywall')||document.querySelector('.paywall'));
+  const target=unlocked?(document.getElementById('lnFull')||document.getElementById('premZone')):(document.getElementById('paywall')||document.querySelector('.paywall'));
   if(target){ try{target.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){target.scrollIntoView();} }
 }
 function lnShow(year){
   const D=window.__ZW;if(!D){alert('請先在上方輸入生日、演算命盤。');return;}
   const gi=((year-4)%10+10)%10,zi=((year-4)%12+12)%12;
-  zwOpenModal("流年批 · "+year+" 年",D.name+" · "+GAN[gi]+ZHI[zi]+"（"+SHENGXIAO[ZHI[zi]]+"年）","舊客專屬 · 當年超詳細流年批",lnBuildBody(year));
+  zwOpenModal("流年批 · "+year+" 年",D.name+" · "+GAN[gi]+ZHI[zi]+"（"+SHENGXIAO[ZHI[zi]]+"年）","完整報告內含 · 當年流年精批",lnBuildBody(year));
 }
 async function lnBuy(){
   // 2026-11-23 起：流年批停售「單獨購買」，只保留曾購買者回看；新客一律導向 888 完整報告。
   if(!window.__LC||!window.__ZW){alert('請先在上方輸入您的生日、演算命盤。');return;}
   const year=lnCurYear(), key=await lcKey(window.__LC.payload), nh=await lcNameHash(window.__LC.name);
   if(lnUnlockedLocal(key,year)){lnShow(year);return;}
+  // 2026-11-24 起：流年精批為完整報告內含（單一商品）——已解鎖完整報告者直接看當年精批
+  try{if(await lcIsUnlocked(window.__LC.payload)){lnShow(year);return;}}catch(e){}
   try{const st=await lnStatus(key,nh,year);if(st&&st.paid){try{localStorage.setItem('zw_ln_'+key+'_'+year,'1');}catch(e){}lnShow(year);return;}}catch(e){}
   lnPrimaryCTA();
 }
@@ -9505,17 +9522,17 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <p class="flynote">「飛星紫微斗數」的玩法是：每一宮都有自己的<b>宮干</b>，宮干會飛出祿權科忌四道能量線、落到別的宮位，藉此看出十二宮之間怎麼互相牽動。<b>祿</b>飛進去的宮，是你在那方面比較得力、受益的地方；<b>忌</b>飛進去的宮，是比較牽掛、耗神的地方；如果祿和忌互相對沖，就叫「破」。四化如果飛回自己這一宮，叫「自化」，能量自己給自己消、來得快也去得快。這算進階玩法，給喜歡研究命理的人參考；真正重大的事，還是以三方四正和本命格局為主。</p>
   </div>
 
-  <div class="sec-title"><span class="cn">流年運程 · 2026 丙午</span><span class="en">Annual Forecast</span></div>
+  <div class="sec-title" id="lnFull"><span class="cn">流年精批 · ${CUR_YEAR} ${_lgan}${_lzhi}</span><span class="en">Annual Forecast</span></div>
+  <div class="lucksub">完整報告內含・每年立春自動換新年度——流年命宮、四化逐宮、四大應期、逐月吉凶、開運建議</div>
   <div class="reading">
     <div class="rcard wide">
-      <h3><span class="ic">年</span>流年命宮 · ${lnPalaceName}</h3>
-      <div class="lead">2026 丙午年 · 行運入「${lnPalaceName}」（坐 ${lnStars}）· 虛歲 ${adv.curAge} · 大限行${curLimName}</div>
-      <p>丙年流年四化：
-        <b style="color:var(--jade)">${lnSihua[0]}化祿</b>（流年財福之機）、
-        <b style="color:#e0a85a">${lnSihua[1]}化權</b>（掌握主導之力）、
-        <b style="color:#7fa6d4">${lnSihua[2]}化科</b>（名聲文書之喜）、
-        <b style="color:#d47f8f">${lnSihua[3]}化忌</b>（須謹慎化解之處）。
-        流年逢化祿之宮可積極進取，化忌之宮宜守不宜攻、低調防耗，順勢而為則一年順遂。</p>
+      <h3><span class="ic">年</span>${CUR_YEAR} ${_lgan}${_lzhi}年 · 流年精批</h3>
+      <div class="lead">行運入「${lnPalaceName}」（坐 ${lnStars}）· 虛歲 ${adv.curAge} · 大限行${curLimName}</div>
+      <div class="zwmbody">${lnBuildBody(CUR_YEAR)}</div>
+      <details class="lnnext">
+        <summary>搶先看 ${CUR_YEAR+1} 年流年精批</summary>
+        <div class="zwmbody">${lnBuildBody(CUR_YEAR+1)}</div>
+      </details>
     </div>
   </div>
 
@@ -9939,7 +9956,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <table class="rp-tbl"><thead><tr><th>年</th><th>干支</th><th>虛歲</th><th>流年命宮</th><th>流年四化</th></tr></thead><tbody>${lnRows}</tbody></table>
     <div class="rp-sec">流年白話</div>
     ${lnProse}
-    <div class="rp-sec">2026 丙午年 · 流月吉凶（依節氣定月）</div>
+    <div class="rp-sec">${CUR_YEAR} ${_lgan}${_lzhi}年 · 流年精批（流年命宮・四化逐宮・四大應期・開運）</div>
+    <div class="rp-ln zwmbody">${lnBuildBody(CUR_YEAR,{noMonth:true})}</div>
+    <div class="rp-sec">${CUR_YEAR} ${_lgan}${_lzhi}年 · 流月吉凶（依節氣定月）</div>
     ${lmHTML}
     <div class="rp-row g">吉＝逢喜用神之月，五行得氣、宜進取佈局；留意＝逢忌神之月，宜守成緩進；平＝五行持平，按部就班即可。</div>
   </div>
