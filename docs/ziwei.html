@@ -1519,6 +1519,120 @@ footer .disc .sub{display:block;margin-top:12px}
 .zdf-bind{display:none;margin-top:10px;font-size:.9rem;line-height:1.9;color:var(--ink);background:var(--card2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px}
 .zdf-bind.show{display:block}
 .zdf-bind a{color:var(--jade);font-weight:700}
+
+/* ===== 付費區典藏化（v2026.11.25.3）===== */
+#paywall.paywall{border:1px solid #c9a561;border-radius:6px;background:var(--paper-noise),linear-gradient(180deg,#fffdf7,#fbf5e6);
+  box-shadow:inset 0 0 0 5px #fffcf3,inset 0 0 0 6px rgba(201,165,97,.5),0 26px 50px -36px rgba(90,40,20,.5)}
+#paywall .pwlock{border-radius:4px;background:linear-gradient(180deg,#a8322a,#7d1d18);color:#f6e3b0;font-family:"LXGW WenKai TC",serif;box-shadow:inset 0 0 0 2px rgba(246,227,176,.5)}
+#paywall h3{color:#4a2c0c;font-family:"LXGW WenKai TC",serif;letter-spacing:3px}
+.pwvols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 20px;text-align:left}
+.pwvol{border:1px solid rgba(201,165,97,.5);border-top:3px solid #b8933a;border-radius:4px;background:#fffefa;padding:12px 14px}
+.pwvol-h{display:flex;align-items:center;gap:8px;font-family:"LXGW WenKai TC",serif;font-size:1.08rem;letter-spacing:3px;color:#4a2c0c;font-weight:700;padding-bottom:8px;border-bottom:1px solid rgba(201,165,97,.45);margin-bottom:6px}
+.pwvol-h span{width:26px;height:26px;border-radius:3px;background:var(--seal);color:#f6e3b0;font-size:.9rem;display:flex;align-items:center;justify-content:center;letter-spacing:0}
+.pwvol ul{list-style:none;margin:0;padding:0}
+.pwvol li{position:relative;padding:5px 0 5px 14px;font-size:.84rem;line-height:1.55;color:var(--ink);border-bottom:1px dashed rgba(120,100,60,.14)}
+.pwvol li:last-child{border-bottom:none}
+.pwvol li::before{content:"";position:absolute;left:1px;top:.85em;width:5px;height:5px;background:#b8933a;transform:rotate(45deg)}
+.pwdemo-h{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 10px}
+.pwdemo-h span{font-family:"LXGW WenKai TC",serif;font-size:1.05rem;letter-spacing:4px;color:#4a2c0c}
+.pwdemo-h i{font-style:normal;font-size:.74rem;color:#8a7a5a}
+.pwdemo{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;text-align:left}
+.pwd{position:relative;border:1px solid rgba(201,165,97,.55);border-radius:4px;background:#fffefa;padding:12px 14px;overflow:hidden}
+.pwd-t{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;margin-bottom:9px;border-bottom:1px solid rgba(201,165,97,.45)}
+.pwd-t b{font-family:"LXGW WenKai TC",serif;letter-spacing:3px;color:#4a2c0c;font-size:.98rem}
+.pwd-t em{font-style:normal;font-size:.68rem;letter-spacing:2px;color:var(--seal);border:1px solid var(--seal);border-radius:2px;padding:0 6px}
+.pwd-hh{display:flex;gap:10px;align-items:center}
+.pwd-seal{flex:0 0 auto;width:58px;height:58px;border:3px double var(--seal);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-3deg)}
+.pwd-seal b{font-family:"LXGW WenKai TC",serif;font-size:1.4rem;line-height:1;color:var(--seal)}
+.pwd-seal span{font-size:.6rem;color:#8a7a5a;letter-spacing:1px}
+.pwd-tier{font-family:"LXGW WenKai TC",serif;letter-spacing:3px;color:#4a2c0c}
+.pwd-hh p{margin:3px 0 0;font-size:.76rem;line-height:1.6;color:var(--ink-dim)}
+.pwd-row{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(120,100,60,.15)}
+.pwd-row>span{width:20px;height:20px;border-radius:3px;border:1px solid rgba(201,165,97,.6);font-size:.7rem;display:flex;align-items:center;justify-content:center;color:#6f5210}
+.pwd-row.best>span{background:var(--seal);border-color:var(--seal);color:#fff}
+.pwd-row b{display:block;font-size:.8rem;color:var(--ink)}
+.pwd-row i{display:block;font-style:normal;font-size:.68rem;color:var(--jade)}
+.pwd-row em{font-style:normal;font-family:"LXGW WenKai TC",serif;font-size:.84rem;color:var(--jade);font-weight:700}
+.pwd-nm{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px dashed rgba(120,100,60,.15)}
+.pwd-nm b{font-family:"LXGW WenKai TC",serif;font-size:1.25rem;letter-spacing:5px;color:#4a2c0c}
+.pwd-nm span{font-size:.72rem;border:1.5px solid var(--seal);color:var(--seal);border-radius:3px;padding:0 6px;font-family:"LXGW WenKai TC",serif}
+.pwd-sub{margin-top:8px;font-size:.7rem;line-height:1.55;color:#8a7a5a}
+.pwsafe{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px;text-align:left}
+.pwsafe>div{display:grid;grid-template-columns:30px 1fr;column-gap:8px;align-items:start;border:1px solid rgba(201,165,97,.45);border-radius:4px;background:#fffefa;padding:10px 10px}
+.pwsafe span{grid-row:1/3;width:30px;height:30px;border-radius:3px;border:1.5px solid var(--seal);color:var(--seal);font-family:"LXGW WenKai TC",serif;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pwsafe b{font-size:.82rem;color:#4a2c0c;letter-spacing:.5px}
+.pwsafe i{font-style:normal;font-size:.7rem;line-height:1.5;color:#8a7a5a}
+.pwgift{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+#paywall .pwpay{background:#fffefa;border:1px solid rgba(201,165,97,.5);border-radius:4px;box-shadow:none}
+#paywall .pwpay-h{color:#4a2c0c;font-family:"LXGW WenKai TC",serif;letter-spacing:3px;font-weight:700}
+#paywall .pwform input{border-radius:4px;border-color:#c9a561;background:#fff}
+#paywall .pwform button{background:linear-gradient(180deg,#a8322a,#7d1d18);color:#f8e6b8;border-radius:4px;letter-spacing:3px;box-shadow:inset 0 0 0 1px rgba(248,230,184,.45)}
+#paywall .pwgift .scfind{color:var(--seal-deep);margin-top:4px}
+.ecr{position:relative;border:1px solid #c9a561;border-radius:4px;background:#fffdf7;padding:14px 16px;margin:10px 0;box-shadow:inset 0 0 0 3px #fffdf7,inset 0 0 0 4px rgba(201,165,97,.45)}
+.ecr-h{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid rgba(201,165,97,.5);padding-bottom:8px;margin-bottom:8px}
+.ecr-h b{font-family:"LXGW WenKai TC",serif;letter-spacing:4px;color:#4a2c0c;font-size:1.1rem}
+.ecr-h span{font-size:.72rem;color:#8a7a5a;letter-spacing:1px}
+.ecr-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:.86rem;border-bottom:1px dashed rgba(120,100,60,.15)}
+.ecr-row span{color:#8a7a5a}.ecr-row b{color:var(--ink);text-align:right;word-break:break-all}
+.ecr-seal{position:absolute;right:18px;top:-14px;background:#fffdf7;border:2px solid var(--seal);color:var(--seal);font-family:"LXGW WenKai TC",serif;font-weight:700;letter-spacing:3px;padding:3px 8px;border-radius:3px;transform:rotate(-10deg);opacity:.85}
+.ecr-tips{font-size:.84rem;line-height:1.85;color:var(--ink-dim);margin-top:8px}
+.ecr-mini{flex:1;font-size:.74rem;color:var(--ink-faint);margin:0 8px}
+.ecq{display:flex;gap:8px;margin-top:8px}
+.ecq input{flex:1;min-width:0;padding:10px 12px;border:1px solid #c9a561;border-radius:4px;font-family:inherit;font-size:.95rem;text-transform:uppercase}
+.ecq .toolbtn{width:auto;padding:10px 16px;background:linear-gradient(180deg,#a8322a,#7d1d18);color:#f8e6b8;border-radius:4px;letter-spacing:2px}
+@media(max-width:760px){.pwvols,.pwdemo{grid-template-columns:1fr}.pwsafe{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.pwsafe{grid-template-columns:1fr}}
+/* ===== v2026.11.25.3 典藏卷宗版面：合婚／擇日／取名／今日運勢 比照硃砂典藏封面 ===== */
+.lgt-card,.zdf-card{position:relative;border:1px solid #c9a561;border-radius:6px;
+  background:var(--paper-noise),linear-gradient(180deg,#fffdf7 0%,#fbf5e6 100%);
+  box-shadow:inset 0 0 0 5px #fffcf3,inset 0 0 0 6px rgba(201,165,97,.5),0 22px 44px -34px rgba(90,40,20,.45)}
+.lgt-card{padding:26px 28px 24px}
+.zdf-card{padding:24px 26px 22px}
+.lgt-card::before,.lgt-card::after,.zdf-card::before,.zdf-card::after{content:"";position:absolute;width:18px;height:18px;border:0 solid #b8933a;pointer-events:none}
+.lgt-card::before,.zdf-card::before{top:-1px;left:-1px;border-top-width:3px;border-left-width:3px}
+.lgt-card::after,.zdf-card::after{bottom:-1px;right:-1px;border-bottom-width:3px;border-right-width:3px}
+.lgt-hd{display:flex;align-items:center;gap:14px;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid rgba(201,165,97,.6);box-shadow:0 3px 0 -2px rgba(201,165,97,.35)}
+.lgt-stamp,.zdf-seal{flex:0 0 auto;width:48px;height:48px;border-radius:4px;background:linear-gradient(180deg,#a8322a,#7d1d18);color:#f6e3b0;
+  font-family:"LXGW WenKai TC",serif;font-size:1.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(246,227,176,.5)}
+.lgt-ttl{flex:1;min-width:0}
+.lgt-ttl b,.zdf-t{display:block;font-family:"LXGW WenKai TC",serif;font-size:1.3rem;letter-spacing:5px;color:#4a2c0c;font-weight:700}
+.lgt-ttl i{display:block;font-style:normal;font-size:.8rem;color:#8a7458;letter-spacing:.5px;margin-top:3px;line-height:1.6}
+.lgt-vol{flex:0 0 auto;border:1px solid var(--seal);color:var(--seal);font-size:.72rem;letter-spacing:3px;padding:3px 8px 3px 11px;border-radius:2px;font-family:"LXGW WenKai TC",serif}
+.lgt-form{gap:16px 18px}
+.lgt-form label{font-size:.76rem;color:#7a5a2a;letter-spacing:2px}
+.lgt-form select,.lgt-form input{background:rgba(255,255,255,.65);border:none;border-bottom:1.5px solid #c9a561;border-radius:0;padding:8px 4px;font-size:1rem;min-height:40px}
+.lgt-form select:focus,.lgt-form input:focus{outline:none;border-bottom-color:var(--seal);background:#fff}
+.lgt-card .toolbtn{background:linear-gradient(180deg,#a8322a,#7d1d18);color:#f8e6b8;border-radius:4px;letter-spacing:5px;font-family:"LXGW WenKai TC",serif;font-size:1.02rem;
+  box-shadow:inset 0 0 0 1px rgba(248,230,184,.45),0 10px 20px -12px rgba(125,29,24,.7)}
+.lgt-card .toolbtn:hover{filter:brightness(1.08)}
+.lgt-note{font-size:.76rem;color:#8a7a5a}
+.lgt-note::before{content:"※ ";color:#b8933a}
+.lgt-empty{border-radius:4px;border-color:#c9a561;background:#fffdf7}
+.zeri-h{display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:16px;border-top:3px double rgba(201,165,97,.7);font-size:1.08rem;color:#4a2c0c;letter-spacing:1.5px;line-height:1.6}
+.zeri-h{align-items:flex-start}.zeri-h::before{content:"";flex:0 0 auto;width:8px;height:8px;margin-top:.62em;background:var(--seal);transform:rotate(45deg)}
+.ng-card,.zeri-row,.hh-p,.hh-it,.hh-yr,.scf-item,.zdf-k,.zdf-w{border-radius:4px;background:#fffefa;border-color:rgba(201,165,97,.42)}
+.ng-card{padding:14px 16px;border-top:2px solid #c9a561}
+.ng-top b{color:#4a2c0c;font-size:1.6rem;letter-spacing:6px}
+.ng-top span{background:none;border:1.5px solid var(--seal);color:var(--seal);border-radius:3px;font-family:"LXGW WenKai TC",serif;padding:1px 8px;transform:rotate(-3deg)}
+.ng-wx i{border-radius:2px}
+.ng-wx i.st{color:var(--seal-deep);background:var(--seal-wash);border-color:rgba(179,56,44,.25)}
+.ng-wx i.st.on{border-color:var(--seal)}
+.ng-browse{border-radius:4px;border-color:rgba(201,165,97,.5);background:#fffdf7}
+.ng-browse summary{color:var(--seal-deep)}
+.ng-ch{border-radius:3px;background:#fffefa}
+.ng-ch.mod{border-color:#c9a561;box-shadow:inset 0 0 0 1px rgba(201,165,97,.5)}
+.ng-bgrp b{color:#4a2c0c}
+.hh-head{border-radius:4px;border-color:#c9a561;background:#fffdf7;border-top:3px double rgba(201,165,97,.8)}
+.hh-score{border-radius:6px;border:3px double var(--seal);transform:rotate(-3deg)}
+.hh-tier{color:#4a2c0c}
+.hh-sec::before{width:8px;height:8px;border-radius:0;background:var(--seal);transform:rotate(45deg)}
+.hh-sec,.scf-grp{color:#4a2c0c}
+.zeri-rank{border-radius:3px}
+.zeri-row.best{background:#fffaf0;border-color:#c9a561}
+.zdf-lv{border-radius:4px}
+.zdf-h{padding-bottom:14px;border-bottom:1px solid rgba(201,165,97,.6);box-shadow:0 3px 0 -2px rgba(201,165,97,.35)}
+.zdf-btn{border-radius:4px}
+@media(max-width:560px){.lgt-card{padding:20px 16px 18px}.zdf-card{padding:20px 16px 18px}.lgt-form{grid-template-columns:1fr 1fr;gap:14px 12px}.lgt-form .toolbtn{grid-column:1/-1}.lgt-form label{font-size:.72rem;letter-spacing:1px}.lgt-form select,.lgt-form input{font-size:.92rem}.zeri-h{font-size:1rem;letter-spacing:.5px}.lgt-vol{display:none}.lgt-stamp,.zdf-seal{width:42px;height:42px;font-size:1.3rem}.lgt-ttl b,.zdf-t{font-size:1.15rem;letter-spacing:3px}}
 @media(max-width:560px){.zdf-card{padding:16px 14px}.zdf-grid{grid-template-columns:1fr}.zdf-t{font-size:1rem;letter-spacing:1px}.zdf-seal{width:38px;height:38px;font-size:1.3rem}.zdf-h{gap:9px}.zdf-lv{padding:5px 10px}.zdf-lv b{font-size:1.15rem}.zdf-w b{font-size:.72rem}}
 @media print{#todayHome,.zdf-card{display:none!important}}
 
@@ -2283,7 +2397,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.2";
+const SITE_VERSION_DATE="2026.11.25.3";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4460,12 +4574,13 @@ const ZERI_EVENTS={
   bed:{n:"安床",kw:["安床"],bad:["破","閉","危"]},
   pray:{n:"祭祀・祈福",kw:["祭祀","祈福"],bad:["破"]}
 };
+function lgtHead(seal,title,sub,vol){return '<div class="lgt-hd"><span class="lgt-stamp">'+seal+'</span><div class="lgt-ttl"><b>'+title+'</b><i>'+sub+'</i></div><span class="lgt-vol">'+vol+'</span></div>';}
 function zeriSection(){
   const evOpts=Object.keys(ZERI_EVENTS).map(function(k){return '<option value="'+k+'">'+ZERI_EVENTS[k].n+'</option>';}).join("");
   const sxOpts=ZHI.map(function(z){return '<option value="'+z+'">屬'+SHENGXIAO[z]+'</option>';}).join("");
   return '<div class="sec-title"><span class="cn">個人擇日</span><span class="en">Date Selection</span></div>'
-    +'<div class="lucksub">從通書吉日裡，再依您的喜用神與生肖挑出「對您最好」的日子</div>'
     +'<div class="lgt-card">'
+    +lgtHead("擇","擇吉帖","從通書吉日裡，再依您的喜用神與生肖，挑出「對您最好」的日子","擇日吉課")
     +'<div class="lgt-form">'
     +'<label>要辦的事<select id="zeriEvent">'+evOpts+'</select></label>'
     +'<label>挑選範圍<select id="zeriRange"><option value="30">未來 30 天</option><option value="60" selected>未來 60 天</option><option value="90">未來 90 天</option><option value="180">未來半年</option></select></label>'
@@ -4547,8 +4662,8 @@ function hehunSection(){
   let last={};try{last=JSON.parse(localStorage.getItem('zw_hehun_last')||'{}')||{};}catch(e){}
   const scOpts='<option value="">不確定（只算八字部分）</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'"'+(String(last.hh)===String(i*2)?' selected':'')+'>'+z+'時</option>';}).join("");
   return '<div class="sec-title"><span class="cn">合婚 · 雙人合盤</span><span class="en">Compatibility</span></div>'
-    +'<div class="lucksub">輸入另一半（或交往對象）的生辰，看兩人命盤的契合度、相處之道與適合成家的年份</div>'
     +'<div class="lgt-card">'
+    +lgtHead("合","庚帖","填入另一半（或交往對象）的生辰，推演兩人命盤的契合度、相處之道與適合成家的年份","合婚批書")
     +'<div class="lgt-form">'
     +'<label>對方姓名（或暱稱）<input id="hhName" type="text" maxlength="12" autocomplete="off" value="'+zwEsc(last.n||"")+'"></label>'
     +'<label>對方性別<select id="hhGender"><option value="女"'+(last.g==="女"?' selected':'')+'>女</option><option value="男"'+(last.g==="男"?' selected':'')+'>男</option></select></label>'
@@ -4751,8 +4866,8 @@ function namingSection(name){
   const scOpts='<option value="">不確定</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'">'+z+'時</option>';}).join("");
   const stOpts='<option value="">不限風格</option>'+Object.keys(NG_STYLES).map(function(k){return '<option value="'+k+'">'+NG_STYLES[k]+'</option>';}).join("");
   return '<div class="sec-title"><span class="cn">取名建議</span><span class="en">Name Suggestions</span></div>'
-    +'<div class="lucksub">依三才五格與喜用神，為寶寶命名或自己改名——可選三個字或兩個字（單名）、可選風格、可指定用字</div>'
     +'<div class="lgt-card">'
+    +lgtHead("名","命名帖","依三才五格與喜用神，為寶寶命名或自己改名；可選三字或單名、八種風格、指定用字","取名建議")
     +'<div class="lgt-form">'
     +'<label>姓氏（單姓）<input id="ngSur" type="text" maxlength="1" autocomplete="off" value="'+zwEsc(sur)+'" oninput="ngSurSync()"></label>'
     +'<label>姓氏筆畫（康熙，可修正）<input id="ngSurStroke" type="number" min="1" max="40" inputmode="numeric" value="'+(STROKE[sur]||"")+'"></label>'
@@ -9193,6 +9308,59 @@ function giftInit(){
     if(location.hash==='#gift')setTimeout(giftOpen,500);
   }catch(e){}
 }
+/* ===== 購買保障（v2026.11.25.3）：購買憑證存本機 zw_receipts；訂單編號自助找回 ===== */
+function ecReceipts(){try{return JSON.parse(localStorage.getItem('zw_receipts')||'[]')||[];}catch(e){return [];}}
+function ecSaveReceipt(r){try{const l=ecReceipts().filter(function(x){return x.o!==r.o;});l.unshift(r);localStorage.setItem('zw_receipts',JSON.stringify(l.slice(0,30)));}catch(e){}}
+function ecFmtTime(t){const d=new Date(t);const p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function ecReceiptHTML(r){
+  return '<div class="ecr"><div class="ecr-h"><b>購買憑證</b><span>人生實用說明書系統</span></div>'
+    +'<div class="ecr-row"><span>訂單編號</span><b>'+zwEsc(r.o)+'</b></div>'
+    +'<div class="ecr-row"><span>品項</span><b>'+zwEsc(r.item||'個人命盤完整精析報告')+'</b></div>'
+    +(r.n?'<div class="ecr-row"><span>命主</span><b>'+zwEsc(r.n)+'</b></div>':'')
+    +(r.amt?'<div class="ecr-row"><span>金額</span><b>'+zwEsc(r.amt)+'</b></div>':'')
+    +'<div class="ecr-row"><span>開通時間</span><b>'+ecFmtTime(r.t)+'</b></div>'
+    +'<div class="ecr-seal">已開通</div></div>';
+}
+function ecShowReceipt(r,fresh){
+  const body=(fresh?'<p style="color:var(--jade);font-weight:700">付款成功，完整報告已為您開通。</p>':'')
+    +ecReceiptHTML(r)
+    +'<div class="ecr-tips"><b>請截圖保存這張憑證。</b>之後如果：<br>'
+    +'・<b>換手機或換瀏覽器</b>：到本站輸入相同的姓名與生辰排盤，系統會自動恢復完整報告。<br>'
+    +'・<b>沒有自動恢復</b>：在付費區按「已付款未開通・購買紀錄」，輸入上方訂單編號即可找回。<br>'
+    +'・<b>其他問題</b>：加 LINE 官方帳號 <a href="https://line.me/R/ti/p/@910imdmw" target="_blank" rel="noopener">@910imdmw</a>，提供訂單編號，客服人工協助。</div>';
+  zwOpenModal("購買","購買憑證","訂單編號請截圖保存",body);
+}
+function ecOrderOpen(){
+  const l=ecReceipts();
+  const list=l.length?('<div class="zwsec">這台裝置的購買紀錄</div>'+l.map(function(r,i){return '<div class="gift-row"><b>'+zwEsc(r.n||'完整報告')+'</b><span class="ecr-mini">'+zwEsc(r.o)+'・'+ecFmtTime(r.t).slice(0,10)+'</span><button type="button" class="scf-pick" onclick="ecShowReceipt(ecReceipts()['+i+'])">查看憑證</button></div>';}).join('')):'';
+  const body='<p>已經在綠界付款，報告卻沒有打開？輸入<b>訂單編號</b>（綠界付款完成頁與綠界寄給您的付款通知信上都有，格式像 <b>ZW</b> 開頭的英數字），系統會向金流後台確認並幫您開通。</p>'
+    +'<p class="lmnote">請先在上方用<b>購買時填寫的姓名與生辰</b>排盤，再查詢；訂單會核對是否為同一份命盤。</p>'
+    +'<div class="ecq"><input id="ecqInput" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="輸入訂單編號" onkeydown="if(event.key===\'Enter\')ecOrderLookup()"><button type="button" class="toolbtn" onclick="ecOrderLookup()">查詢並開通</button></div>'
+    +'<div id="ecqMsg" class="lcmsg" style="margin-top:8px"></div>'
+    +list
+    +'<p class="lmnote">仍有問題請加 LINE 官方帳號 <a href="https://line.me/R/ti/p/@910imdmw" target="_blank" rel="noopener">@910imdmw</a>（平日 08:00–20:00），提供訂單編號即可。</p>';
+  zwOpenModal("購買","已付款未開通・購買紀錄","用訂單編號自助找回",body);
+}
+async function ecOrderLookup(){
+  const inp=document.getElementById('ecqInput'),msg=document.getElementById('ecqMsg');
+  const o=((inp&&inp.value)||'').trim().toUpperCase();
+  const say=function(t,ok){if(msg){msg.innerHTML=t;msg.className='lcmsg'+(ok?' ok':' err');}};
+  if(!/^[A-Z0-9]{6,24}$/.test(o)){say('請輸入正確的訂單編號（英文字母與數字）。');return;}
+  if(!window.__LC){say('請先在上方輸入購買時的姓名與生辰並排盤，再查詢。');return;}
+  say('查詢中…',true);
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(o),{cache:'no-store'});
+    const j=await r.json();
+    if(!j||!j.paid){say(j&&j.reason==='notfound'?'查不到這筆訂單。請確認編號是否正確；訂單可查詢期限為付款後一年內。':'這筆訂單尚未完成付款。若您確定已付款，請稍候 1–2 分鐘再查，或聯繫 LINE 客服。');return;}
+    if(!j.key){say('這筆是<b>禮物兌換碼</b>訂單，請到「想送家人朋友一本？」查看兌換碼，或聯繫 LINE 客服。');return;}
+    const key=await lcKey(window.__LC.payload);
+    if(j.key!==key){say('這筆訂單已付款，但對應的是<b>另一組姓名與生辰</b>。請在上方改輸入購買時填寫的資料、重新排盤後再查一次。');return;}
+    try{localStorage.setItem('zw_lic_'+key,'1');}catch(e){}
+    const rc={o:o,t:Date.now(),n:window.__LC.name||'',amt:''};ecSaveReceipt(rc);
+    say('已確認付款，正在為您開通完整報告…',true);
+    setTimeout(function(){try{zwCloseModal();}catch(e){}try{run();}catch(e){}setTimeout(function(){ecShowReceipt(rc,true);},900);},600);
+  }catch(e){say('無法連線金流後台，請稍後再試，或聯繫 LINE 客服。');}
+}
 async function ecHandleReturn(){
   const p=new URLSearchParams(location.search);
   const back=p.get('ecback');
@@ -9228,7 +9396,8 @@ async function ecHandleReturn(){
           }
           try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
           localStorage.removeItem('zw_ec_pending');clean();
-          lpRestoreAndRender(pend.form);return true;
+          const rc={o:back,t:Date.now(),n:(pend.form&&pend.form.name)||'',amt:LC_PRICE};ecSaveReceipt(rc);
+          lpRestoreAndRender(pend.form);setTimeout(function(){ecShowReceipt(rc,true);},1600);return true;
         }
       }catch(e){}
       await new Promise(r=>setTimeout(r,1500));
@@ -10029,24 +10198,54 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="pwlock">鎖</div>
     <h3>解鎖 ${name} 的完整命理精析</h3>
     <div class="pwsub">以上命盤十二宮、八字四柱與大運流轉皆可免費瀏覽；以下為深度付費內容</div>
-    <ul class="pwlist">
-      <li>命盤綜合評分（整體 ＋ 六大維度）</li>
-      <li>日主旺衰・喜用神・十神格局</li>
-      <li>八字月令格局・成格之機・用神趨吉</li>
-      <li>命帶神煞・紫微格局・三方四正</li>
-      <li>命宮主星精析・財官婚遷福德 逐宮論斷</li>
-      <li>${curLN().year} 流年運程 ・ 綜合個人化論斷</li>
-      <li>事業適性 ・ 現職差異詳盡分析（相符、落差、調整或轉型路徑、動與守的時機）</li>
-      <li>健康深析 ・ 疾厄宮臟腑傾向、互動人體對照圖、五行失衡、大限流年引動與檢查建議</li>
-      <li>財運深析 ・ 財源型態、守財置產、祿存四化落宮、破財提醒、財機時機與理財建議</li>
-      <li>感情深析 ・ 感情模式、緣分從哪裡來、課題與相處建議、未來十年感情應期</li>
-      <li>親子子女深析 ・ 子女樣貌、教養之道、雜曜四化提醒（兼看桃花創造力與下屬緣）</li>
-      <li>人際貴人深析 ・ 人際圈樣貌、貴人從哪裡來、小人提醒、與長輩上司的相處</li>
-      <li>補運之道 ・ 針對您評分最弱的面向，給具體可執行的補強方案與五行開運清單</li>
-      <li>AI 分析文本 ・ 把命盤帶去問 ChatGPT／Claude，像帶著 24 小時私人命理顧問</li>
-      <li>個人農民曆 .ics ・ 365 天每日宜忌、財神貴人方位，疊加您的喜用神，匯入手機天天提醒</li>
-      <li>姓名學評分　＋　一鍵下載 PDF 專業報告</li>
-    </ul>
+    <div class="pwvols">
+      <div class="pwvol"><div class="pwvol-h"><span>壹</span>命書精析</div><ul>
+        <li>命盤綜合評分（整體＋六大維度）</li>
+        <li>日主旺衰・喜用神・十神格局</li>
+        <li>八字月令格局・神煞・紫微格局・三方四正</li>
+        <li>命宮主星精析・十二宮逐宮論斷</li>
+        <li>事業適性・現職落差與轉型路徑</li>
+        <li>健康・財運・感情・親子・人際 五大深析</li>
+        <li>補運之道・五行開運清單</li>
+        <li>綜合個人化論斷・姓名學評分</li>
+      </ul></div>
+      <div class="pwvol"><div class="pwvol-h"><span>貳</span>年運・每日</div><ul>
+        <li>今日運勢：宜忌、財神貴人方位、一週吉凶</li>
+        <li>綁定 LINE，每天輸入「今日運勢」就回覆</li>
+        <li>${curLN().year} 流年精批・十二個月逐月運勢</li>
+        <li>${curLN().year+1} 明年流年預覽</li>
+        <li>個人農民曆 .ics：365 天宜忌匯入手機</li>
+      </ul></div>
+      <div class="pwvol"><div class="pwvol-h"><span>參</span>實用工具</div><ul>
+        <li>合婚・雙人合盤：契合度與適合成家的年份</li>
+        <li>個人擇日：結婚、搬家、開業等 9 類</li>
+        <li>取名建議：近 500 個好字、8 種風格、可選單名</li>
+        <li>AI 分析文本：帶著命盤去問 ChatGPT／Claude</li>
+        <li>一鍵下載 PDF 典藏報告</li>
+      </ul></div>
+    </div>
+    <div class="pwdemo-h"><span>解鎖後的實際畫面</span><i>以下為範例，解鎖後依您的命盤即時產生</i></div>
+    <div class="pwdemo">
+      <div class="pwd"><div class="pwd-t"><b>合婚批書</b><em>範例</em></div>
+        <div class="pwd-hh"><div class="pwd-seal"><b>81</b><span>契合度</span></div><div><b class="pwd-tier">上等良緣</b><p>日主互補、生肖六合，先天條件好；日常多一點體諒，感情自然長久。</p></div></div>
+        <div class="pwd-sub">另附：五行互補、逐項合參、未來六年成家吉年</div></div>
+      <div class="pwd"><div class="pwd-t"><b>擇日吉課</b><em>範例</em></div>
+        <div class="pwd-row best"><span>1</span><div><b>週六・黃道吉日</b><i>通書宜嫁娶・逢您的喜用神</i></div><em>上上吉</em></div>
+        <div class="pwd-row"><span>2</span><div><b>週日・天德合日</b><i>通書宜嫁娶・與您生肖相合</i></div><em>大吉</em></div>
+        <div class="pwd-row"><span>3</span><div><b>週五・月德日</b><i>通書宜嫁娶</i></div><em>吉</em></div>
+        <div class="pwd-sub">依您的喜用神與生肖，從通書吉日再精挑</div></div>
+      <div class="pwd"><div class="pwd-t"><b>命名帖</b><em>範例</em></div>
+        <div class="pwd-nm"><b>林晏綸</b><span>92 分</span></div>
+        <div class="pwd-nm"><b>林宥廷</b><span>90 分</span></div>
+        <div class="pwd-nm"><b>林芯語</b><span>89 分</span></div>
+        <div class="pwd-sub">三才五格皆吉・補喜用神・可選溫文儒雅等 8 種風格</div></div>
+    </div>
+    <div class="pwsafe">
+      <div><span>即</span><b>付款後立即開通</b><i>綠界確認入帳後，自動打開完整報告</i></div>
+      <div><span>復</span><b>換手機也找得回</b><i>新裝置輸入相同姓名與生辰，自動恢復，不限期限</i></div>
+      <div><span>存</span><b>報告帶得走</b><i>一鍵下載 PDF、存成圖片，自己永久保存</i></div>
+      <div><span>查</span><b>付了沒開通也不怕</b><i>輸入訂單編號自助找回，或 LINE 客服人工協助</i></div>
+    </div>
     <div id="pwPriceLine" class="pwprice"><em>優惠價</em> ${LC_PRICE} <span>／ 單份完整報告</span></div>
     <div id="ecBtnWrap" class="lpwrap" style="display:none">
       <button id="ecBtn" class="lpbtn ecbtn" onclick="ecStartEcpay()"><span class="ecmark">綠界科技 ECPay</span>安全付款</button>
@@ -10080,7 +10279,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </div>
     <div id="lcMsg" class="lcmsg"></div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
-    <div class="pwgift"><button type="button" class="scfind" onclick="giftOpen()">想送家人朋友一本？購買禮物兌換碼</button></div>
+    <div class="pwgift"><button type="button" class="scfind" onclick="ecOrderOpen()">已付款未開通・購買紀錄</button><button type="button" class="scfind" onclick="giftOpen()">想送家人朋友一本？購買禮物兌換碼</button></div>
   </div>
 
   <div id="premZone" class="locked">
