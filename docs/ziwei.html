@@ -1299,7 +1299,10 @@ footer .disc .sub{display:block;margin-top:12px}
      已知限制：封底是文件最後一個元素，繪製止於文件流末端（230mm），框下方可能留
      數 mm 白條、緊貼 AirPrint 自身白邊看不出來。桌機（無 ios-dev）此層無樣式＝隱形。 */
   html.ios-dev #reportPrint .cv-bleed{position:absolute;left:0;top:0;right:0;height:297mm;z-index:-1;
-    background:linear-gradient(168deg,#fdf9ee 0%,#faf2da 46%,#f4e9c6 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    background:linear-gradient(170deg,#8a2320 0%,#6d1715 58%,#571010 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* iOS 230mm 版面較矮：題簽條縮短，避免印章貼到頁腳 */
+  html.ios-dev #reportPrint .cv-slip{height:430px}
+  html.ios-dev #reportPrint .cv-slip b{font-size:40px;letter-spacing:16px}
   #reportPrint .rp-cover{break-after:page;page-break-after:always}
   #reportPrint .rp-back{break-before:page;page-break-before:always}
 }
@@ -1314,38 +1317,33 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint.rp-cap *{box-shadow:none}
 #reportPrint.rp-cap .pp.lm{box-shadow:inset 0 0 0 2px #c2a14a}
 
-/* ===== 封面／封底（印刷級質感：描金雙框＋四角飾＋命格圓印＋硃砂方印）===== */
+/* ===== 封面／封底（硃砂典藏：硃砂紅底＋描金雙框＋直式題簽條＋陰刻方印，純品牌無個資）===== */
 #reportPrint .rp-cover,#reportPrint .rp-back{min-height:1086px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;
-  background:linear-gradient(168deg,#fdf9ee 0%,#faf2da 46%,#f4e9c6 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#reportPrint .rp-cover::before,#reportPrint .rp-back::before{content:"";position:absolute;inset:26px;border:2.5px solid #b8933a;pointer-events:none}
-#reportPrint .rp-cover::after,#reportPrint .rp-back::after{content:"";position:absolute;inset:34px;border:1px solid #d8be80;pointer-events:none}
-#reportPrint .cv-cnr{position:absolute;width:26px;height:26px;border:0 solid #8a6a14;z-index:1}
+  background:linear-gradient(170deg,#8a2320 0%,#6d1715 58%,#571010 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-cover::before,#reportPrint .rp-back::before{content:"";position:absolute;inset:26px;border:2.5px solid #d9b25f;pointer-events:none}
+#reportPrint .rp-cover::after,#reportPrint .rp-back::after{content:"";position:absolute;inset:34px;border:1px solid rgba(217,178,95,.45);pointer-events:none}
+#reportPrint .cv-cnr{position:absolute;width:26px;height:26px;border:0 solid #e2bd6b;z-index:1}
 #reportPrint .cv-cnr.tl{top:19px;left:19px;border-top-width:3px;border-left-width:3px}
 #reportPrint .cv-cnr.tr{top:19px;right:19px;border-top-width:3px;border-right-width:3px}
 #reportPrint .cv-cnr.bl{bottom:19px;left:19px;border-bottom-width:3px;border-left-width:3px}
 #reportPrint .cv-cnr.br{bottom:19px;right:19px;border-bottom-width:3px;border-right-width:3px}
-#reportPrint .cv-brand{font-size:13.5px;letter-spacing:8px;text-indent:8px;color:#8a6a14}
-#reportPrint .cv-en{font-size:8px;letter-spacing:4.5px;text-indent:4.5px;color:#b9a56e;margin-top:7px}
-#reportPrint .cv-line{width:170px;height:2px;margin:22px auto;background:linear-gradient(90deg,transparent,#c2a14a,transparent);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#reportPrint .cv-emblem{width:118px;height:118px;border-radius:50%;border:2.5px solid #b8933a;display:flex;align-items:center;justify-content:center;margin:0 auto 26px}
-#reportPrint .cv-emb-in{width:100px;height:100px;border-radius:50%;border:1px solid #d8be80;background:#fffdf6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#reportPrint .cv-emb-in .g{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:26px;font-weight:700;color:#8a6a14;line-height:1.1}
-#reportPrint .cv-emb-in .t{font-size:11px;letter-spacing:2px;color:#a6833c}
-#reportPrint .cv-name{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:56px;font-weight:700;letter-spacing:16px;text-indent:16px;color:#6a4e10;line-height:1.2}
-#reportPrint .cv-sub{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:22px;letter-spacing:9px;text-indent:9px;color:#8a6a14;margin-top:10px}
-#reportPrint .cv-tag{font-size:10.5px;letter-spacing:3px;color:#a68f52;margin-top:16px}
-#reportPrint .cv-meta{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:#6a562e;margin-top:2px}
-#reportPrint .cv-meta b{color:#7a5a12}
-#reportPrint .cv-seal{width:66px;height:66px;margin:26px auto 0;background:#b01e2e;border-radius:7px;display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:5px;box-sizing:border-box;
-  font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:21px;font-weight:700;color:#fff;line-height:1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#reportPrint .cv-no{font-size:9.5px;letter-spacing:2px;color:#a89a78;margin-top:18px}
-#reportPrint .cv-foot{position:absolute;bottom:48px;left:0;right:0;font-size:10.5px;letter-spacing:3.5px;color:#8a6a14}
-#reportPrint .bk-big{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:32px;font-weight:700;letter-spacing:11px;text-indent:11px;color:#6a4e10}
-#reportPrint .bk-quote{font-size:13px;line-height:2.3;color:#6a562e;max-width:440px;margin:0 auto}
-#reportPrint .bk-dia{width:9px;height:9px;margin:26px auto;background:linear-gradient(135deg,#d9b85a,#8a6a14);transform:rotate(45deg);border-radius:1.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#reportPrint .bk-brand{font-size:16px;letter-spacing:7px;text-indent:7px;color:#8a6a14}
-#reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#a68f52;margin-top:9px}
-#reportPrint .bk-note{font-size:9px;line-height:1.95;color:#a89a78;max-width:470px;margin:30px auto 0}
+#reportPrint .cv-brand{font-size:13.5px;letter-spacing:8px;text-indent:8px;color:#ecd088}
+#reportPrint .cv-en{font-size:8px;letter-spacing:4.5px;text-indent:4.5px;color:#c9a561;margin-top:7px;margin-bottom:30px}
+#reportPrint .cv-slip{width:116px;height:470px;margin:0 auto;background:linear-gradient(#fffdf4,#f7efd6);border:2.5px solid #b8933a;display:flex;align-items:flex-start;justify-content:center;padding-top:22px;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .cv-slip b{writing-mode:vertical-rl;font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:42px;letter-spacing:20px;font-weight:700;color:#4a2c0c;line-height:1}
+#reportPrint .cv-sub{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:18px;letter-spacing:8px;text-indent:8px;color:#ecd9a8;margin-top:24px}
+#reportPrint .cv-tag{font-size:10.5px;letter-spacing:3px;color:#d4b476;margin-top:12px}
+#reportPrint .cv-meta{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#d9c190;margin-top:14px}
+#reportPrint .cv-meta b{color:#f0d79c;font-weight:600}
+#reportPrint .cv-sealc{width:66px;height:66px;margin:18px auto 0;background:#fffdf4;border:2px solid #b8933a;border-radius:7px;display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:5px;box-sizing:border-box;
+  font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:21px;font-weight:700;color:#b01e2e;line-height:1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .cv-foot{position:absolute;bottom:48px;left:0;right:0;font-size:10.5px;letter-spacing:3.5px;color:#d4b476}
+#reportPrint .bk-big{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:34px;font-weight:700;letter-spacing:12px;text-indent:12px;color:#f3dfa6}
+#reportPrint .bk-quote{font-size:13px;line-height:2.4;color:#ecd9a8;max-width:440px;margin:0 auto}
+#reportPrint .bk-dia{width:9px;height:9px;margin:26px auto;background:linear-gradient(135deg,#ecd088,#b8933a);transform:rotate(45deg);border-radius:1.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .bk-brand{font-size:16px;letter-spacing:7px;text-indent:7px;color:#ecd088;margin-top:30px}
+#reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
+#reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
 /* ===== 演算動畫 / 抽牌 · 大師排盤 ===== */
 #castStage{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
@@ -2103,7 +2101,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.1";
+const SITE_VERSION_DATE="2026.11.24.2";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -9695,19 +9693,14 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     ${_cvCorners}
     <div class="cv-brand">聖源大師 命理工作室</div>
     <div class="cv-en">LIFE GUIDE · DESTINY REPORT</div>
-    <div class="cv-line"></div>
-    <div class="cv-emblem"><div class="cv-emb-in"><span class="g">命</span><span class="t">知命造命</span></div></div>
-    <div class="cv-name">人生實用說明書</div>
+    <div class="cv-slip"><b>人生實用說明書</b></div>
     <div class="cv-sub">你的人生使用手冊</div>
     <div class="cv-tag">紫微斗數 · 子平八字 · 姓名學　三術合參 · 全書白話</div>
-    <div class="cv-line"></div>
     <div class="cv-meta">
-      <span>紫微十二宮逐宮詳解 · 生年與宮干<b>四化飛星</b> · 命宮三方四正 · 神煞白話</span>
-      <span><b>大運十年</b> × 流年流月吉凶 · 袁天罡稱骨 · 三才五格姓名學</span>
-      <span>職業契合 · 財運 · 感情 · 健康 · 人際 · <b>開運補強</b>　深度解析</span>
+      <span>十二宮詳解 · <b>四化飛星</b> · 大運流年 · 稱骨姓名學</span>
+      <span>職業 · 財運 · 感情 · 健康 · 人際 · <b>開運補強</b>　深度解析</span>
     </div>
-    <div class="cv-seal"><span>聖</span><span>源</span><span>之</span><span>印</span></div>
-    <div class="cv-no">真實曆法演算 · 二十四節氣 · 真太陽時校正 · 個人專屬命書</div>
+    <div class="cv-sealc"><span>聖</span><span>源</span><span>之</span><span>印</span></div>
     <div class="cv-foot">人生實用說明書系統 · lifeguidetw.com</div>
   </div>
   <div class="rp-page">
@@ -9823,13 +9816,12 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="rp-page rp-back"><i class="cv-bleed"></i>
     ${_cvCorners}
     <div class="bk-big">知命 · 而後造命</div>
-    <div class="cv-line"></div>
-    <div class="bk-quote">命，是先天拿到的牌；運，是後天的打法。<br>願這本專屬於您的說明書，陪您看清手上的牌，<br>在每個大運與流年的關口，都走在對的方向上。</div>
     <div class="bk-dia"></div>
+    <div class="bk-quote">命，是先天拿到的牌；運，是後天的打法。<br>願這本專屬於您的說明書，陪您看清手上的牌，<br>在每個大運與流年的關口，都走在對的方向上。</div>
+    <div class="cv-sealc" style="margin-top:34px"><span>聖</span><span>源</span><span>之</span><span>印</span></div>
     <div class="bk-brand">人生實用說明書系統</div>
     <div class="bk-brand2">聖源大師 命理工作室 · lifeguidetw.com</div>
-    <div class="bk-note">本命書依命主「${name}」之生辰，以真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則）個人化生成，全球僅此一冊。命理吉凶皆為趨勢而非定數，內容僅供人生規劃參考，重大抉擇仍請審慎獨立判斷。<br>© 2026 人生實用說明書系統 · 聖源大師 版權所有</div>
-    <div class="cv-no">專屬命書編號 NO.${bookNo}</div>
+    <div class="bk-note">本命書依命主生辰以真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則）個人化生成，全球僅此一冊。命理吉凶皆為趨勢而非定數，內容僅供人生規劃參考，重大抉擇仍請審慎獨立判斷。<br>© 2026 人生實用說明書系統 · 聖源大師 版權所有</div>
   </div>`;
   // 防撿字：列印全文報告不直接進 DOM，存 JS 記憶體；解鎖才由 __premSync 注入並掛 rp-on
   window.__PRINT_HTML=printHTML;
