@@ -398,18 +398,36 @@ let CRM={}; try{CRM=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){CRM={}}
 const ck=r=>r.ds+"_"+r.id;
 const cget=r=>r.ds==="union"?(r.ex||{}):(CRM[ck(r)]||{});
 function cset(r,v){const k=ck(r);
-  const empty=!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡")&&!(v.tags&&v.tags.length)&&!(v.acts&&v.acts.length);
+  const empty=!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡")&&!(v.tags&&v.tags.length)&&!(v.acts&&v.acts.length)&&!(v.comps&&v.comps.length)&&!v.crop&&!v.scale&&!v.usage&&!v.decider;
   if(empty)delete CRM[k]; else CRM[k]=v; localStorage.setItem(KEY,JSON.stringify(CRM));}
-const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length))};
+const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length)||(c.comps&&c.comps.length)||c.crop||c.scale||c.usage||c.decider)};
 const todayStr=()=>new Date().toISOString().slice(0,10);
 const parseTags=str=>(str||"").split(/[、,，]/).map(x=>x.trim()).filter(Boolean);
 function recPatch(r,obj){
   if(r.ds==="union"){const u=UNIONS.find(x=>x.id===r.id);if(u){Object.assign(u,obj);saveU();ALL.union=unionRows();r.ex=u;}}
   else{const k=ck(r);const merged={...(CRM[k]||{}),...obj};cset(r,merged);}
 }
-function crmExtraHTML(r){const c=cget(r);const tags=c.tags||[];const acts=c.acts||[];
+function crmExtraHTML(r){const c=cget(r);const tags=c.tags||[];const acts=c.acts||[];const comps=c.comps||[];
+  const FORMS=["粒狀","粉狀","液態","有機質","其他"];
   return `<label>標籤(逗號分隔)</label>
     <input id="e_tags" value="${esc(tags.join("、"))}" placeholder="潛力客戶、大戶、已用本廠肥、競品客戶、種水稻">
+    <label style="margin-top:12px">客戶輪廓</label>
+    <input id="e_crop" value="${esc(c.crop||'')}" placeholder="主要作物:水稻、文旦、茶、蔬菜…">
+    <input id="e_scale" value="${esc(c.scale||'')}" placeholder="種植面積/規模:例 8 甲、3 公頃" style="margin-top:6px">
+    <input id="e_usage" value="${esc(c.usage||'')}" placeholder="目前用肥量:例 每季40包 / 年約20噸" style="margin-top:6px">
+    <textarea id="e_decider" placeholder="決策者與習慣:誰決定採購、何時進貨、付款習慣…" style="margin-top:6px">${esc(c.decider||'')}</textarea>
+    <label style="margin-top:12px">競品情報(現在用哪家,可記多筆)</label>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <input id="cp_brand" placeholder="廠牌/品名" style="flex:1;min-width:100px">
+      <select id="cp_form" style="width:auto;flex:none;padding:6px"><option value="">性狀</option>${FORMS.map(f=>`<option value="${f}">${f}</option>`).join("")}</select>
+      <input id="cp_spec" placeholder="規格/重量" style="width:auto;flex:none;max-width:95px">
+      <input id="cp_price" placeholder="單價" style="width:auto;flex:none;max-width:72px">
+      <input id="cp_ship" placeholder="運送" style="width:auto;flex:none;max-width:80px">
+      <input id="cp_terms" placeholder="交易條件" style="width:auto;flex:none;max-width:92px">
+      <input id="cp_promo" placeholder="其他優惠" style="flex:1;min-width:90px">
+      <button class="btn" onclick="addComp()" style="flex:none;padding:6px 10px">＋加競品</button>
+    </div>
+    <div class="acts" id="compList">${compListHTML(comps)}</div>
     <label style="margin-top:12px">互動紀錄(每次通話/拜訪記一筆,不覆蓋)</label>
     <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
       <input id="a_date" type="date" value="${todayStr()}" style="width:auto;flex:none;padding:6px">
@@ -431,6 +449,21 @@ function addAct(){if(!cr)return;const d=document.getElementById('a_date').value,
   renderKPI();renderTable();}
 function delAct(i){if(!cr)return;const acts=(cget(cr).acts||[]).slice();acts.splice(i,1);recPatch(cr,{acts});
   document.getElementById('actList').innerHTML=actListHTML(cget(cr).acts||[]);renderTable();}
+/* ── 客戶輪廓 + 競品情報 ── */
+const gv=id=>{const e=document.getElementById(id);return e?String(e.value).trim():"";};
+function profilePatch(){return {crop:gv('e_crop'),scale:gv('e_scale'),usage:gv('e_usage'),decider:gv('e_decider'),tags:parseTags(gv('e_tags'))};}
+function compListHTML(comps){if(!comps||!comps.length)return `<div style="color:var(--mut);font-size:11.5px;padding:5px 0">尚無競品紀錄,加一筆掌握對手產品/價格/條件</div>`;
+  return comps.map((a,i)=>({a,i})).reverse().map(({a,i})=>`<div class="act" style="align-items:flex-start"><span class="ax" style="flex:1"><b>${esc(a.brand||"(未填品名)")}</b>${a.form?` <span class="tagchip">${esc(a.form)}</span>`:""}${a.spec?` · ${esc(a.spec)}`:""}${a.price?` · 單價 ${esc(a.price)}`:""}${a.ship?` · 運送:${esc(a.ship)}`:""}${a.terms?` · ${esc(a.terms)}`:""}${a.promo?` · 優惠:${esc(a.promo)}`:""}</span><span class="adel" onclick="delComp(${i})">✕</span></div>`).join("");
+}
+function addComp(){if(!cr)return;const brand=gv('cp_brand');if(!brand){const e=document.getElementById('cp_brand');if(e)e.focus();return;}
+  const comp={brand,form:gv('cp_form'),spec:gv('cp_spec'),price:gv('cp_price'),ship:gv('cp_ship'),terms:gv('cp_terms'),promo:gv('cp_promo')};
+  const comps=(cget(cr).comps||[]).concat([comp]);
+  recPatch(cr,{comps,...profilePatch()});
+  ['cp_brand','cp_spec','cp_price','cp_ship','cp_terms','cp_promo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
+  const lst=document.getElementById('compList');if(lst)lst.innerHTML=compListHTML(cget(cr).comps||[]);
+  renderKPI();renderTable();}
+function delComp(i){if(!cr)return;const comps=(cget(cr).comps||[]).slice();comps.splice(i,1);recPatch(cr,{comps});
+  const lst=document.getElementById('compList');if(lst)lst.innerHTML=compListHTML(cget(cr).comps||[]);renderKPI();renderTable();}
 
 /* ── 青農聯誼會:自建名錄(本機) ── */
 const UOFF=["新北市","臺北市","桃園市","新竹縣","苗栗縣","臺中市","彰化縣","南投縣","雲林縣","嘉義縣","臺南市","高雄市","屏東縣","宜蘭縣","花蓮縣","臺東縣","金門縣"];
@@ -702,7 +735,7 @@ function openDw(r){if(r.ds==="union"){openUnion(r);return;}cr=r;const cfg=DS[cur
 }
 function closeDw(){document.getElementById('dw').classList.remove('on');document.getElementById('ov').classList.remove('on')}
 function saveCRM(){const g=id=>document.getElementById(id).value.trim();const c0=cget(cr);
-  cset(cr,{...c0,leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),tags:parseTags(g('e_tags')),ts:todayStr()});
+  cset(cr,{...c0,leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),tags:parseTags(g('e_tags')),crop:gv('e_crop'),scale:gv('e_scale'),usage:gv('e_usage'),decider:gv('e_decider'),ts:todayStr()});
   const o=document.getElementById('ok');o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1400);renderKPI();renderTable();}
 
 /* ── 雲端設定 ── */
@@ -749,11 +782,13 @@ async function gasPost(url,token,filename,content){try{const res=await fetch(url
 /* ── 存檔 / 讀回 ── */
 const csvCell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
 function crmCSV(){const cfg=DS[cur];
-  const head=["ds","id",cfg.nameLab,"縣市","區域",cfg.indLab,cfg.crmName,"電話","CRM狀態","下次跟進","備註","更新日"];
+  const head=["ds","id",cfg.nameLab,"縣市","區域",cfg.indLab,cfg.crmName,"電話","CRM狀態","下次跟進","備註","主要作物","種植規模","目前用肥量","決策者習慣","標籤","競品明細","更新日"];
   const out=[head.join(",")];
   ALL[cur].forEach(r=>{const c=cget(r);if(!hasCRM(r)&&!c.next)return;
-    out.push([r.ds,r.id,r.name,r.county,r.town,r.inds.join("、"),c.leader||"",c.phone||r.phone||"",c.status||"",c.next||"",c.note||"",c.ts||""].map(csvCell).join(","))});
+    out.push([r.ds,r.id,r.name,r.county,r.town,r.inds.join("、"),c.leader||"",c.phone||r.phone||"",c.status||"",c.next||"",c.note||"",c.crop||"",c.scale||"",c.usage||"",c.decider||"",(c.tags||[]).join("、"),compsEnc(c.comps),c.ts||""].map(csvCell).join(","))});
   return out;}
+const compsEnc=cs=>!cs||!cs.length?"":cs.map(c=>[c.brand,c.form,c.spec,c.price,c.ship,c.terms,c.promo].map(x=>String(x||"").replace(/[~║]/g,"-")).join("~")).join(" ║ ");
+const compsDec=s=>!s?[]:s.split(" ║ ").map(x=>{const p=x.split("~");return {brand:p[0]||"",form:p[1]||"",spec:p[2]||"",price:p[3]||"",ship:p[4]||"",terms:p[5]||"",promo:p[6]||""}});
 async function saveCSV(){const cfg=DS[cur];
   if(cur==="union"){
     const head=["id","縣市","區域","聯誼會名稱","職稱","會長姓名","電話","住址","所屬農會","聯絡狀況","備註"];
@@ -781,7 +816,8 @@ function loadCSV(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader(
       if(arr.length){UNIONS=arr;saveU();ALL.union=unionRows();alert(`已讀回 ${arr.length} 個聯誼會。`);render();inp.value="";return;}
     }
     lines.slice(1).forEach(l=>{const c=parse(l),ds=c[ix("ds")],id=c[ix("id")];if(!id)return;
-      CRM[ds+"_"+id]={leader:c[ix(H[6])]||"",phone:c[ix("電話")]||"",status:c[ix("CRM狀態")]||"未聯絡",next:c[ix("下次跟進")]||"",note:c[ix("備註")]||"",ts:c[ix("更新日")]||""};n++});
+      const old=CRM[ds+"_"+id]||{};
+      CRM[ds+"_"+id]={...old,leader:c[ix(H[6])]||"",phone:c[ix("電話")]||"",status:c[ix("CRM狀態")]||"未聯絡",next:c[ix("下次跟進")]||"",note:c[ix("備註")]||"",crop:c[ix("主要作物")]||"",scale:c[ix("種植規模")]||"",usage:c[ix("目前用肥量")]||"",decider:c[ix("決策者習慣")]||"",tags:parseTags(c[ix("標籤")]||"")||old.tags,comps:compsDec(c[ix("競品明細")]||""),ts:c[ix("更新日")]||""};n++});
     localStorage.setItem(KEY,JSON.stringify(CRM));alert(`已讀回 ${n} 筆 CRM 紀錄。`);render();
   }catch(e){alert("讀取失敗:請用本系統「存檔」產生的 CSV。")}inp.value="";};
   rd.readAsText(f);}
@@ -819,7 +855,8 @@ function saveUnion(id){const g=x=>document.getElementById(x).value.trim();
   Object.assign(u,{county:g('u_county'),town:g('u_town'),
     name:g('u_name')||(g('u_county')+(g('u_town')||'')+"青農聯誼會"),
     title:g('u_title'),leader:g('u_leader'),phone:g('u_phone'),addr:g('u_addr'),
-    assoc:g('u_assoc'),status:g('u_status'),note:g('u_note'),tags:parseTags((document.getElementById('e_tags')||{}).value)});
+    assoc:g('u_assoc'),status:g('u_status'),note:g('u_note'),tags:parseTags((document.getElementById('e_tags')||{}).value),
+    crop:gv('e_crop'),scale:gv('e_scale'),usage:gv('e_usage'),decider:gv('e_decider')});
   saveU();ALL.union=unionRows();
   const o=document.getElementById('ok');if(o){o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1200);}
   renderKPI();renderTable();
