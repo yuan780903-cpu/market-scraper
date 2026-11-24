@@ -2046,10 +2046,11 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 
 <div id="musicWrap" class="musicwrap">
   <div id="musicPanel" class="musicpanel" role="menu">
-    <div class="mphead">木吉他・安定歡愉</div>
+    <div class="mphead">療癒輕音樂・真實錄音</div>
+    <button class="mpopt" type="button" data-snd="calm">靜心沉澱</button>
     <button class="mpopt" type="button" data-snd="dawn">晨曦暖陽</button>
-    <button class="mpopt" type="button" data-snd="calm">靜心放鬆</button>
     <button class="mpopt" type="button" data-snd="dream">療癒星空</button>
+    <button class="mpopt" type="button" data-snd="crystal">水晶淨心</button>
     <div class="mpsub">自然音</div>
     <button class="mpopt" type="button" data-snd="rain">雨聲</button>
     <button class="mpopt" type="button" data-snd="ocean">海浪潮汐</button>
@@ -2101,7 +2102,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.2";
+const SITE_VERSION_DATE="2026.11.24.3";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -10210,11 +10211,9 @@ siteLoad();
    但透過 <audio> 媒體元素播放則不受靜音開關影響（與聽音樂、看影片同一條音訊路徑）。
    因此這裡改為：用 OfflineAudioContext 在瀏覽器端「離線合成」一段約 20 秒的自然音 WAV，
    產生 Blob 後交給 <audio loop> 播放 → 手機（即使靜音）也聽得到、且完全離線、免外部音檔。 */
-let __musicOn=false, __curSound=null, __vol=0.20, __fadeTimer=null;
+let __musicOn=false, __curSound=null, __vol=0.35, __fadeTimer=null;
 let __audioEl=null, __unlocked=false;
-const __wavCache={};   // choice -> blob URL（首次播放才合成，之後沿用）
-const SND_NAME={dawn:'晨曦暖陽',calm:'靜心放鬆',dream:'療癒星空',rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺',forest:'森林鳥鳴'};
-const __DUR={dawn:30,calm:32,dream:28,rain:18,ocean:24,stream:20,forest:24};
+const SND_NAME={calm:'靜心沉澱',dawn:'晨曦暖陽',dream:'療癒星空',crystal:'水晶淨心',rain:'雨聲',ocean:'海浪潮汐',stream:'溪流潺潺'};
 
 function __getAudioEl(){
   if(!__audioEl){
@@ -10241,287 +10240,11 @@ function __ensureCtx(){   // 必須在「使用者手勢」當下呼叫：先用
     try{ a.src=__silentSrc(); a.volume=0; const p=a.play(); if(p&&p.catch)p.catch(()=>{}); __unlocked=true; }catch(e){}
   }
 }
-/* ---- 離線合成用工具 ---- */
-function __obNoise(ctx,dur){
-  const len=Math.ceil(ctx.sampleRate*dur), buf=ctx.createBuffer(1,len,ctx.sampleRate), d=buf.getChannelData(0);
-  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
-  for(let i=0;i<len;i++){const w=Math.random()*2-1;
-    b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
-    b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
-    d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
-  const s=ctx.createBufferSource(); s.buffer=buf; s.loop=true; return s;
-}
-function __obDc(ctx,val){const c=ctx.createConstantSource();c.offset.value=val;return c;}
-/* ---- 身心靈輕音樂 合成工具（溫暖・安定・歡愉，五聲音階保證無不和諧） ---- */
-function __obReverb(ctx){            // 柔和殘響（雙延遲回授＋低通）→ 直接連到 destination，回傳送音節點
-  const send=ctx.createGain();send.gain.value=1;
-  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
-  const d1=ctx.createDelay(1.5);d1.delayTime.value=0.19;
-  const f1=ctx.createGain();f1.gain.value=0.26;       // 降低回授：避免鬼魅般長迴音尾
-  const d2=ctx.createDelay(1.5);d2.delayTime.value=0.33;
-  const f2=ctx.createGain();f2.gain.value=0.20;
-  const wet=ctx.createGain();wet.gain.value=0.16;     // 降低濕度：乾淨、近似真實鋼琴空間
-  send.connect(d1);d1.connect(f1);f1.connect(d1);d1.connect(lp);
-  send.connect(d2);d2.connect(f2);f2.connect(d2);d2.connect(lp);
-  lp.connect(wet);wet.connect(ctx.destination);
-  return send;
-}
-function __obPad(ctx,out,freqs,vol){   // 溫暖襯底和弦（乾淨八度＋低通柔化，無顫音、無拍頻）→ 安定不陰森
-  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(out);
-  freqs.forEach(f=>{
-    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
-    const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=f*2;   // 純八度：不再失諧拍頻
-    const g=ctx.createGain();g.gain.value=vol;
-    const g2=ctx.createGain();g2.gain.value=vol*0.16;
-    o.connect(g);o2.connect(g2);g.connect(lp);g2.connect(lp);
-    o.start(0);o2.start(0);
-  });
-}
-function __obPiano(ctx,out,f,t,vol,len){   // 溫潤鋼琴音：快起音（琴槌）＋自然指數衰減＋泛音，低通隨衰減轉柔
-  len=len||2.2;
-  const env=ctx.createGain();
-  env.gain.setValueAtTime(0.0001,t);
-  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.008);
-  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*0.3),t+0.45);
-  env.gain.exponentialRampToValueAtTime(0.0001,t+len);
-  const lp=ctx.createBiquadFilter();lp.type='lowpass';
-  lp.frequency.setValueAtTime(4200,t);
-  lp.frequency.exponentialRampToValueAtTime(1300,t+len);
-  env.connect(lp);lp.connect(out);
-  const parts=[[1,1],[2,0.45],[3,0.22],[4.01,0.09]];   // 含輕微非諧和高泛音，仿真實鋼琴弦
-  parts.forEach(p=>{
-    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
-    const g=ctx.createGain();g.gain.value=p[1];
-    o.connect(g);g.connect(env);o.start(t);o.stop(t+len+0.1);
-  });
-}
-function __obGuitar(ctx,out,f,t,vol,len){   // 木吉他指彈音：極快撥弦起音＋暖泛音＋撥弦瞬態（尼龍/鋼弦木頭味），安靜耐聽
-  len=len||2.4;
-  const env=ctx.createGain();
-  env.gain.setValueAtTime(0.0001,t);
-  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.004);
-  env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*0.32),t+0.26);
-  env.gain.exponentialRampToValueAtTime(0.0001,t+len);
-  const lp=ctx.createBiquadFilter();lp.type='lowpass';
-  lp.frequency.setValueAtTime(2900,t);
-  lp.frequency.exponentialRampToValueAtTime(850,t+len);                 // 隨衰減轉暖，木頭共鳴感
-  env.connect(lp);lp.connect(out);
-  const parts=[[1,1],[2,0.5],[2.99,0.27],[4,0.12],[5.01,0.05]];        // 偏低階暖泛音＋微失諧仿真弦
-  parts.forEach(p=>{
-    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
-    const g=ctx.createGain();g.gain.value=p[1];
-    o.connect(g);g.connect(env);o.start(t);o.stop(t+len+0.1);
-  });
-  // 撥弦瞬態：極短高通噪聲，模擬指腹/指甲觸弦的自然質感
-  const nb=ctx.createBufferSource();
-  const buf=ctx.createBuffer(1,Math.max(1,Math.ceil(ctx.sampleRate*0.03)),ctx.sampleRate);
-  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
-  nb.buffer=buf;
-  const nhp=ctx.createBiquadFilter();nhp.type='highpass';nhp.frequency.value=1400;
-  const ng=ctx.createGain();ng.gain.value=vol*0.22;
-  nb.connect(nhp);nhp.connect(ng);ng.connect(out);nb.start(t);
-}
-function __ksGuitar(ctx,out,freq,t,vol,len){
-  // Karplus–Strong 撥弦物理弦模型（於 JS 中直接逐樣本運算成 AudioBuffer，數值穩定、絕不爆音）：
-  //  以極短白噪聲當激勵填入長度 = 1/freq 的延遲線 → 每步取「本樣本＋前樣本」平均(=回授路徑的一階低通，
-  //  控明暗) × 回授係數(<1，控延音) 回寫延遲線，得到溫暖、撥弦起音真實、自然指數衰減的木吉他音。
-  //  取代原生 DelayNode 回授迴路（其於音訊率短延遲會數值發散成 NaN），接既有殘響 __obReverb。
-  try{
-    freq=Math.max(40,Math.min(2000,freq||110));
-    vol=(vol==null?0.08:vol); len=len||2.4;
-    const sr=ctx.sampleRate;
-    const N=Math.max(2,Math.round(sr/freq));       // 延遲線長度＝一個基頻週期
-    // --- 回授係數：一律 <1，避免無限回授爆音；高音衰減略快（延音較短，更自然）---
-    let fb=0.994 - (freq-110)*0.00004;
-    fb=Math.max(0.985,Math.min(0.9965,fb));        // 硬性夾在 (<1) 安全範圍
-    // --- 撥弦噪聲長度：以延遲線一週期為激勵，帶尾部淡出＋輕低通感，柔化起音、不刺耳 ---
-    const ring=new Float32Array(N);
-    let prev=0;
-    for(let i=0;i<N;i++){
-      const w=(Math.random()*2-1);
-      // 對激勵做輕微一階低通(0.5/0.5)，讓撥弦起音溫暖不尖銳
-      const s=0.5*w+0.5*prev; prev=w;
-      ring[i]=s*(1-i/N)+s*0.3;                      // 尾部淡出，能量集中於起音
-    }
-    // 逐樣本 KS：out[n]=ring[idx]; ring[idx]=fb*0.5*(ring[idx]+ring[nextIdx]); 前進 idx
-    const total=Math.ceil(sr*(len+0.05));
-    const buf=ctx.createBuffer(1,total,sr), d=buf.getChannelData(0);
-    let idx=0;
-    // 明暗控制：低通混合比 damp（高音弦稍亮），一階低通係數
-    const damp=Math.min(0.55,0.5+ (freq>440?0.03:0));
-    for(let n=0;n<total;n++){
-      const cur=ring[idx];
-      const nextIdx=(idx+1)%N;
-      const filtered=(1-damp)*cur+damp*ring[nextIdx];   // 回授路徑一階低通(控明暗)
-      d[n]=cur;
-      ring[idx]=fb*filtered;                            // fb<1 → 保證衰減收斂，絕不發散
-      idx=nextIdx;
-    }
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    // 整體音量包絡（快起音瞬態 + 自然指數衰減 + 收尾靜音，避免尾端喀噠）
-    const env=ctx.createGain();
-    env.gain.setValueAtTime(0.0001,t);
-    env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.006);
-    env.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*0.7),t+Math.min(len*0.6,1.4));
-    env.gain.exponentialRampToValueAtTime(0.0001,t+len);
-    // 出音再過一段低通，隨衰減轉暖（木頭共鳴感）
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass';
-    lp.frequency.setValueAtTime(Math.min(5200,freq*9+1400),t);
-    lp.frequency.exponentialRampToValueAtTime(Math.max(600,freq*3+400),t+len);
-    src.connect(lp); lp.connect(env); env.connect(out);
-    src.start(t); src.stop(t+len+0.05);
-  }catch(e){ /* 合成失敗不影響其他音符/頁面 */ }
-}
-function __obChime(ctx,out,f,t,len,vol){  // 溫柔鐘聲（多泛音、緩起緩落）→ 歡愉感
-  const parts=[[1,1],[2,0.45],[3,0.2],[4.2,0.08]];
-  parts.forEach(p=>{
-    const o=ctx.createOscillator();o.type='sine';o.frequency.value=f*p[0];
-    const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*p[1]),t+0.05);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+len);
-    o.connect(g);g.connect(out);o.start(t);o.stop(t+len+0.05);
-  });
-}
-const __OB={
-  rain(ctx,dur){
-    // 極簡：單層白噪 → 超低通(cutoff 300Hz, 低Q) → 很輕的音量。
-    // 像很悶、很遠、很輕的一片柔和底噪；無高通/帶通/LFO/雨滴顆粒/高頻成分。
-    const out=ctx.createGain();out.gain.value=0.09;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();
-    lp.type='lowpass';lp.frequency.value=300;lp.Q.value=0.3;
-    s.connect(lp);lp.connect(out);s.start();
-  },
-  ocean(ctx,dur){
-    // 柔化海浪：降低整體音量與潮汐起伏幅度、大幅降高頻（低通中心下移），變得舒緩不吵
-    const out=ctx.createGain();out.gain.value=0;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=0;lp.Q.value=0.5;
-    s.connect(lp);lp.connect(out);s.start();
-    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.08;
-    const lg=ctx.createGain();lg.gain.value=0.22;const base=__obDc(ctx,0.30);
-    lfo.connect(lg);lg.connect(out.gain);base.connect(out.gain);
-    const lf2=ctx.createOscillator();lf2.type='sine';lf2.frequency.value=0.08;
-    const lg2=ctx.createGain();lg2.gain.value=170;const fb=__obDc(ctx,430);
-    lf2.connect(lg2);lg2.connect(lp.frequency);fb.connect(lp.frequency);
-    lfo.start();base.start();lf2.start();fb.start();
-  },
-  stream(ctx,dur){
-    // 柔化溪流：降高通/降帶通中心與擺動、降低音量，去掉刺耳高頻潺潺，變得柔和安定
-    const out=ctx.createGain();out.gain.value=0.36;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),hp=ctx.createBiquadFilter(),bp=ctx.createBiquadFilter();
-    hp.type='highpass';hp.frequency.value=250;bp.type='bandpass';bp.frequency.value=850;bp.Q.value=0.6;
-    s.connect(hp);hp.connect(bp);bp.connect(out);s.start();
-    const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=0.5;
-    const lg=ctx.createGain();lg.gain.value=160;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
-  },
-  dawn(ctx,dur){          // 晨曦暖陽：木吉他指彈，明亮流動、溫暖歡愉（和弦進行 C–G–Am–F，原創合成）
-    const rv=__obReverb(ctx);
-    const dry=ctx.createGain();dry.gain.value=0.92;dry.connect(ctx.destination);
-    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,261.63,392.00],0.016);   // 暖和聲墊底（C+G 持續和聲，豐厚不搶）
-    const prog=[
-      {b:130.81,n:[261.63,329.63,392.00,523.25]},              // C ：C3 / C4 E4 G4 C5
-      {b:98.00, n:[293.66,392.00,493.88,587.33]},              // G ：G2 / D4 G4 B4 D5
-      {b:110.00,n:[261.63,329.63,440.00,523.25]},              // Am：A2 / C4 E4 A4 C5
-      {b:87.31, n:[261.63,349.23,440.00,523.25]}               // F ：F3 / C4 F4 A4 C5
-    ];
-    const v=0.085, step=0.42;let t=0.5,bar=0;                  // 稍明亮流暢
-    while(t<dur-3){
-      const c=prog[bar%prog.length];
-      // 明亮指法：低音 → 高聲部上下行分解和弦（Karplus–Strong 撥弦）
-      __ksGuitar(ctx,bus,c.b,    t,        v*0.72,2.8);
-      __ksGuitar(ctx,bus,c.n[0], t+step,   v*0.8, 2.0);
-      __ksGuitar(ctx,bus,c.n[1], t+step*2, v*0.85,2.0);
-      __ksGuitar(ctx,bus,c.n[2], t+step*3, v*0.85,2.0);
-      __ksGuitar(ctx,bus,c.n[3], t+step*4, v*0.9, 2.0);
-      __ksGuitar(ctx,bus,c.n[2], t+step*5, v*0.8, 2.0);
-      __ksGuitar(ctx,bus,c.n[1], t+step*6, v*0.8, 2.0);
-      __obChime(ctx,bus,c.n[3]*2,t+step*2,2.6,0.016);       // 高音鐘鈴閃爍層（輕盈感）
-      t+=step*7+0.1;bar++;
-    }
-  },
-  calm(ctx,dur){          // 靜心放鬆：F 大調鋼琴，低緩柔和、深層安定（和弦進行 F–Dm–B♭–C）
-    // 木吉他指彈：安靜耐聽、旋律不搶耳，適合工作/休息/夜晚低音量背景（原創合成，無版權）
-    const rv=__obReverb(ctx);
-    const dry=ctx.createGain();dry.gain.value=0.9;dry.connect(ctx.destination);
-    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[130.81,196.00,329.63],0.014);          // 柔和持續和聲（安定而不陰沉）
-    // 溫暖民謠和弦進行 C–Am–F–G（低音根音＋高聲部，最適合指彈）
-    const prog=[
-      {b:130.81,n:[261.63,329.63,392.00]},                     // C ：C3 / C4 E4 G4
-      {b:110.00,n:[261.63,329.63,440.00]},                     // Am：A2 / C4 E4 A4
-      {b:174.61,n:[261.63,349.23,440.00]},                     // F ：F3 / C4 F4 A4
-      {b:98.00, n:[293.66,392.00,493.88]}                      // G ：G2 / D4 G4 B4
-    ];
-    const v=0.07, step=0.44;let t=1.0,bar=0;                   // 音量偏小、指法從容
-    while(t<dur-3.5){
-      const c=prog[bar%prog.length];
-      // 指法循環（拇指低音 → 內外聲部交替，柔和不搶）（Karplus–Strong 撥弦）
-      __ksGuitar(ctx,bus,c.b,      t,          v*0.7, 3.0);    // 低音根音（減重）
-      __ksGuitar(ctx,bus,c.n[0],   t+step,     v*0.8, 2.3);
-      __ksGuitar(ctx,bus,c.n[2],   t+step*2,   v*0.85,2.3);
-      __ksGuitar(ctx,bus,c.n[1],   t+step*3,   v*0.8, 2.3);
-      __ksGuitar(ctx,bus,c.b*2,    t+step*4,   v*0.65,1.9);    // 低音八度輕點
-      __ksGuitar(ctx,bus,c.n[2],   t+step*5,   v*0.85,2.3);
-      if(bar%2===1)__obChime(ctx,bus,c.n[1]*4,t+step*3,3.0,0.011); // 偶現高音星光點綴
-      t+=step*6+0.15;bar++;
-    }
-  },
-  dream(ctx,dur){         // 療癒星空：木吉他指彈，空靈、高音區閃爍、夢幻療癒（和弦進行 A–E–F#m–D，原創合成）
-    const rv=__obReverb(ctx);
-    const dry=ctx.createGain();dry.gain.value=0.82;dry.connect(ctx.destination);
-    const bus=ctx.createGain();bus.gain.value=1;bus.connect(dry);bus.connect(rv);
-    __obPad(ctx,bus,[220.00,329.63,440.00],0.013);          // 星空和聲墊底（A+E，空靈豐厚）
-    const prog=[
-      {b:110.00,n:[440.00,554.37,659.25,880.00]},              // A ：A2 / A4 C#5 E5 A5
-      {b:82.41, n:[493.88,659.25,830.61,987.77]},              // E ：E2 / B4 E5 G#5 B5
-      {b:92.50, n:[440.00,554.37,739.99,880.00]},              // F#m：F#2 / A4 C#5 F#5 A5
-      {b:73.42, n:[440.00,587.33,739.99,880.00]}               // D ：D2 / A4 D5 F#5 A5
-    ];
-    const v=0.058, step=0.5;let t=0.5,bar=0;                   // 更稀疏、更空靈
-    while(t<dur-2.5){
-      const c=prog[bar%prog.length];
-      // 空靈指法：低音根音＋高音區跳躍閃爍（音符間留白多）（Karplus–Strong 撥弦）
-      __ksGuitar(ctx,bus,c.b,    t,        v*0.9, 2.6);
-      __ksGuitar(ctx,bus,c.n[0], t+step,   v*0.8, 2.2);
-      __ksGuitar(ctx,bus,c.n[2], t+step*2, v*0.85,2.2);
-      __ksGuitar(ctx,bus,c.n[3], t+step*3, v*0.75,2.2);
-      __ksGuitar(ctx,bus,c.n[1], t+step*4, v*0.8, 2.2);
-      __obChime(ctx,bus,c.n[3]*2,t+step*1.5,3.2,0.014);     // 星光鐘鈴層
-      t+=step*5+0.35;bar++;
-    }
-  },
-  forest(ctx,dur){
-    const out=ctx.createGain();out.gain.value=0.5;out.connect(ctx.destination);
-    const s=__obNoise(ctx,dur),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=850;
-    const bed=ctx.createGain();bed.gain.value=0.22;s.connect(lp);lp.connect(bed);bed.connect(out);s.start();
-    let t=0.5;
-    while(t<dur-0.3){
-      const n=1+Math.floor(Math.random()*3);
-      for(let k=0;k<n;k++){
-        const ct=t+k*0.13;if(ct>=dur-0.2)break;
-        const f0=1900+Math.random()*1700;
-        const o=ctx.createOscillator();o.type='sine';
-        o.frequency.setValueAtTime(f0,ct);
-        o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),ct+0.05);
-        o.frequency.exponentialRampToValueAtTime(f0*0.9,ct+0.11);
-        const g=ctx.createGain();g.gain.setValueAtTime(0.0001,ct);
-        g.gain.exponentialRampToValueAtTime(0.16,ct+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ct+0.13);
-        o.connect(g);g.connect(out);o.start(ct);o.stop(ct+0.16);
-      }
-      t+=1.3+Math.random()*3.6;
-    }
-  }
-};
-async function __renderWav(choice){
-  if(__wavCache[choice])return __wavCache[choice];
-  const dur=__DUR[choice]||20, sr=22050;
-  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
-  const ctx=new OAC(1,Math.ceil(sr*dur),sr);
-  (__OB[choice]||__OB.rain)(ctx,dur);
-  const rendered=await ctx.startRendering();
-  const url=URL.createObjectURL(new Blob([__wavURI(rendered.getChannelData(0),sr)],{type:'audio/wav'}));
-  __wavCache[choice]=url;
-  return url;
+/* ---- 真實錄音曲庫（Pixabay Content License・免費可商用・已下載為站內靜態檔）----
+   /music/ 下 128kbps、loudnorm I=-20 響度正規化；sw.js 對 /music/ 直接放行（range 串流）。 */
+const SND_FILE={dawn:'music/m_dawn.mp3',calm:'music/m_calm.mp3',dream:'music/m_dream.mp3',crystal:'music/m_crystal.mp3',rain:'music/n_rain.mp3',ocean:'music/n_ocean.mp3',stream:'music/n_stream.mp3'};
+async function __renderWav(choice){      // 函式名沿用舊合成版：現在直接回傳真實音檔路徑
+  return SND_FILE[choice]||SND_FILE.calm;
 }
 function __fadeTo(target,ms){
   const a=__getAudioEl();
@@ -10599,10 +10322,10 @@ function updateMusicUI(){
   // 預設進站即播放：瀏覽器規定「使用者尚未互動前」一律禁止網頁自動出聲（無法繞過），
   // 故改為在訪客第一個動作（觸控／點擊／滑動／按鍵）的瞬間自動開始，體感上等同進站即有音樂。
   const hint=document.getElementById('musicHint');
-  let want='1',choice='dawn';
-  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'dawn';}catch(e){}
-  if(!SND_NAME[choice])choice='dawn';           // 預設背景音樂＝晨曦暖陽（木吉他）
-  if(choice==='forest')choice='dawn';           // 舊版預設森林鳥鳴 → 自動升級為木吉他，不再刺耳
+  let want='1',choice='calm';
+  try{want=localStorage.getItem('zw_music')==null?'1':localStorage.getItem('zw_music');choice=localStorage.getItem('zw_sound')||'calm';}catch(e){}
+  if(!SND_NAME[choice])choice='calm';           // 預設背景音樂＝靜心沉澱（真實錄音・安靜沉澱）
+  if(choice==='forest')choice='calm';           // 舊版森林鳥鳴已移除 → 自動升級為靜心沉澱
   if(want!=='0'){
     const EVTS=['pointerdown','touchstart','touchend','mousedown','click','keydown','scroll','wheel'];
     const hideHint=()=>{ if(hint)hint.classList.remove('show'); };
