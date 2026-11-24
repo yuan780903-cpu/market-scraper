@@ -1345,6 +1345,21 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
 #reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
+/* ===== 時辰不確定模式（免費）===== */
+.scfind{margin-top:8px;background:none;border:0;padding:0;font-family:inherit;font-size:.84rem;color:var(--purple);text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
+.scf-lead{font-size:.92rem;line-height:1.85}
+.scf-grp{margin:16px 0 8px;font-weight:700;color:var(--gold-deep);letter-spacing:2px;font-size:.9rem;border-bottom:1px solid var(--line-soft);padding-bottom:4px}
+.scf-item{border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;margin:8px 0;background:var(--card2)}
+.scf-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.scf-top b{font-family:"LXGW WenKai TC",serif;font-size:1.1rem;color:var(--gold-deep)}
+.scf-top span{font-size:.78rem;color:var(--ink-faint)}
+.scf-top i{font-style:normal;font-size:.86rem;color:var(--purple);font-weight:700;margin-left:auto}
+.scf-t{font-size:.86rem;color:var(--jade);margin:4px 0 2px;font-weight:700}
+.scf-d{font-size:.86rem;color:var(--ink-dim);line-height:1.75}
+.scf-pick{margin-top:8px;border:1px solid var(--gold);background:var(--wash);color:var(--gold-deep);border-radius:999px;padding:6px 14px;font-family:inherit;font-size:.82rem;cursor:pointer;letter-spacing:.5px}
+.scf-pick.alt{margin:0 0 0 8px;border-color:var(--line);background:var(--surface);color:var(--ink-dim)}
+.scf-foot{margin-top:16px;font-size:.84rem;color:var(--ink-dim);line-height:2;border-top:1px dashed var(--line);padding-top:12px}
+
 /* ===== 命書生活工具共用樣式（擇日／合婚／取名；前綴 lgt-）===== */
 .lgt-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:6px 14px 18px;box-shadow:0 14px 34px -28px var(--shadow)}
 .lgt-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
@@ -1960,6 +1975,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
           <option value="22">亥時 · 21–23（人定）</option>
         </select>
         <span class="fieldtip" id="shichenTip" style="display:none">不確定確切時間？選出生那個時段即可，系統取時辰中點換算排盤。</span>
+        <button type="button" class="scfind" onclick="shichenFinder()">不確定出生時辰？從個性幫您反推</button>
       </div>
       <div class="field">
         <label>性別</label>
@@ -2184,7 +2200,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.8";
+const SITE_VERSION_DATE="2026.11.24.9";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4584,6 +4600,43 @@ document.getElementById("timeMode").addEventListener("click",e=>{
   document.getElementById("shichenTip").style.display=isSC?"":"none";
 });
 /* 取得出生時間（依模式）→ {tv:"HH:MM", hh, mm, label} */
+/* ===== 時辰不確定模式（免費）：列出 12 個時辰各自的紫微命宮主星與性格，讓使用者選最像自己的 ===== */
+function shichenFinder(){
+  const dv=(document.getElementById("date")||{}).value;
+  if(!dv){zwOpenModal("找出生時辰","請先填出生日期","","<p>請先在上方填好<b>出生日期</b>與<b>性別</b>，再按一次「不確定出生時辰」，系統會列出 12 個時辰各自的命宮主星讓您比對。</p>");return;}
+  const p=dv.split("-").map(Number),y=p[0],m=p[1],d=p[2];
+  const SC=[["子","23–01"],["丑","01–03"],["寅","03–05"],["卯","05–07"],["辰","07–09"],["巳","09–11"],["午","11–13"],["未","13–15"],["申","15–17"],["酉","17–19"],["戌","19–21"],["亥","21–23"]];
+  const GRP=["深夜到清晨","早上","中午到下午","傍晚到夜裡"];
+  let html='<p class="scf-lead">紫微斗數的<b>命宮每兩個小時換一宮</b>，所以不同時辰出生的人，個性底色差很多。下面是您生日當天 12 個時辰各自的命宮主星——<b>選一個最像您（或家人最常這樣形容您）的</b>，系統就用那個時辰排盤。可以先問家人「大概是白天還是晚上生的」縮小範圍。</p>';
+  try{
+    const lunar=solar2lunar(y,m,d);
+    const yg=GAN[((lunar.year-4)%10+10)%10],yz=ZHI[((lunar.year-4)%12+12)%12];
+    SC.forEach(function(sc,i){
+      if(i%3===0)html+='<div class="scf-grp">'+GRP[i/3]+'</div>';
+      const hh=i*2;
+      const zw=calcZiwei(lunar,hh,yg,yz,gender);
+      let stars=(zw.stars[zw.ming]||[]).filter(function(x){return x.type==="main";}).map(function(x){return x.name;}),borrow=false;
+      if(!stars.length){stars=(zw.stars[(zw.ming+6)%12]||[]).filter(function(x){return x.type==="main";}).map(function(x){return x.name;});borrow=true;}
+      const first=stars[0],sd=(first&&STAR_DESC[first])||STAR_DESC["空宮"]||{t:"",d:""};
+      const brief=String(sd.d||"").split("。").slice(0,2).join("。")+"。";
+      html+='<div class="scf-item"><div class="scf-top"><b>'+sc[0]+'時</b><span>'+sc[1]+' 點</span><i>命宮 '+(stars.join("、")||"空宮")+(borrow?"（空宮・借對宮）":"")+'</i></div>'
+        +'<div class="scf-t">'+(sd.t||"")+'</div><div class="scf-d">'+brief+'</div>'
+        +'<button type="button" class="scf-pick" onclick="shichenPick('+hh+')">我最像這個・用'+sc[0]+'時排盤</button></div>';
+    });
+  }catch(e){html+='<p>暫時無法推算，請確認出生日期是否正確。</p>';}
+  html+='<div class="scf-foot">都不像、完全沒頭緒？<button type="button" class="scf-pick alt" onclick="shichenPick(12)">先用午時試排</button><br>提醒：時辰未確認時，八字時柱與紫微命宮可能有出入，報告請當作參考；之後確認了時辰，再回來重新排盤即可。</div>';
+  zwOpenModal("找出生時辰","不確定出生時辰？從個性反推","12 個時辰・命宮主星對照",html);
+}
+function shichenPick(hh){
+  try{
+    const b=document.querySelector('#timeMode [data-m="shichen"]');if(b)b.click();
+    const sel=document.getElementById("shichen");if(sel)sel.value=String(hh);
+    zwCloseModal();
+    const tip=document.getElementById("shichenTip");
+    if(tip){tip.style.display="";tip.textContent="已帶入您選的時辰；確認姓名與性別後按「開始排盤」。之後若問到確切時間，再回來重排即可。";}
+    if(sel)sel.scrollIntoView({behavior:"smooth",block:"center"});
+  }catch(e){}
+}
 function getBirthTime(){
   if(timeMode==="shichen"){
     const sel=document.getElementById("shichen");
