@@ -1372,6 +1372,21 @@ footer .disc .sub{display:block;margin-top:12px}
 .ng-wx{display:flex;gap:6px;margin-top:6px;min-height:20px}
 .ng-wx i{font-style:normal;font-size:.72rem;border-radius:9px;padding:1px 9px;border:1px solid var(--line-soft);color:var(--ink-faint)}
 .ng-wx i.xi{border-color:var(--jade);color:var(--jade);background:var(--gwash)}
+.ng-wx{flex-wrap:wrap}
+.ng-wx i.st{border-color:var(--line-soft);color:var(--purple);background:var(--pwash)}
+.ng-wx i.st.on{border-color:var(--purple);font-weight:700}
+.ng-browse{margin-top:12px;border:1px solid var(--line-soft);border-radius:12px;background:var(--card2);padding:0 14px}
+.ng-browse summary{cursor:pointer;padding:11px 0;font-size:.9rem;color:var(--purple);font-weight:700;letter-spacing:.5px;list-style:none;display:flex;align-items:center;gap:8px}
+.ng-browse summary::-webkit-details-marker{display:none}
+.ng-browse summary::before{content:"▸";color:var(--gold);transition:transform .2s}
+.ng-browse[open] summary::before{transform:rotate(90deg)}
+.ng-browse[open]{padding-bottom:12px}
+.ng-bgrp{display:flex;align-items:baseline;gap:8px;margin:12px 0 6px;border-bottom:1px solid var(--line-soft);padding-bottom:3px}
+.ng-bgrp b{color:var(--gold-deep);letter-spacing:2px;font-size:.92rem}
+.ng-bgrp span{font-size:.72rem;color:var(--ink-faint)}
+.ng-chs{display:flex;flex-wrap:wrap;gap:6px}
+.ng-ch{width:38px;height:38px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface);font-family:"LXGW WenKai TC",serif;font-size:1.15rem;color:var(--ink);cursor:pointer;padding:0}
+.ng-ch:hover{border-color:var(--gold);background:var(--wash)}
 
 /* ===== 合婚・雙人合盤（前綴 hh-）===== */
 .hh-head{display:flex;align-items:center;gap:16px;margin-top:18px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,var(--wash),var(--card2))}
@@ -2267,7 +2282,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.12";
+const SITE_VERSION_DATE="2026.11.24.13";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4673,45 +4688,90 @@ function hehunRun(){
 
 /* ================= 取名建議（完整報告內含）=================
    做法：好字庫（字根五行依部首、筆畫採康熙）兩兩組合 → 用站內既有 nameAnalysis／nameScore
-   算三才五格與喜用神交叉分數 → 剔除人格/地格/總格/三才為凶者 → 依分數與字根五行排序。
-   新增好字前，務必先把康熙筆畫補進 NG_STROKE_EXTRA（氵4、艹6、扌4、忄4、王旁5、阝左8右7、辶7）。 */
+   算三才五格與喜用神交叉分數 → 剔除人格/地格/總格/三才為凶者 → 依分數、風格、字根五行排序。
+   好字格式：字＋性別（m 陽剛／f 柔美／n 中性）＋風格碼（1~8，可多碼）＋字義，逗號分隔。
+   新增好字前，務必先把康熙筆畫補進 NG_STROKE_EXTRA（氵4、艹6、扌4、忄4、玉旁5、示旁5、阝左8右7、辶7；
+   以康熙字典「部首畫數＋餘畫」為準）。 */
+const NG_STYLES={1:"溫文儒雅",2:"豪放奔馳",3:"外向大方",4:"聰慧靈秀",5:"沉穩踏實",6:"溫柔婉約",7:"清新自然",8:"福氣吉祥"};
 const NG_STROKE_EXTRA={彬:11,森:12,楷:13,桐:10,茵:12,莉:13,菁:14,蕙:18,薇:19,芷:10,苡:11,茜:12,萌:14,葳:15,蓁:16,筠:13,箏:14,
   炎:8,煒:13,昱:9,晟:11,暘:13,曜:18,旭:6,昀:8,晏:10,景:12,暄:13,丹:4,彤:7,耀:20,
   坤:8,培:11,均:7,城:10,垣:9,堯:12,岳:8,峻:10,崇:11,嵐:12,岱:8,磊:15,碩:14,
   鋒:15,鈺:13,錦:16,鑫:24,銳:15,鎮:18,鈴:13,銓:14,錡:16,釗:10,
-  清:12,澤:17,洋:10,淳:12,源:14,潤:16,雪:11,霏:16,泓:9,沐:8,洛:10,淇:12,湘:13,漢:15,澄:16,沛:8};
+  清:12,澤:17,洋:10,淳:12,源:14,潤:16,雪:11,霏:16,泓:9,沐:8,洛:10,淇:12,湘:13,漢:15,澄:16,沛:8,
+  樸:16,棟:12,柱:9,樹:16,本:5,根:10,榆:13,杏:7,橙:16,茉:11,葵:15,芽:10,苗:11,禾:5,穗:17,穩:19,穆:16,蓓:16,芊:9,苓:11,芝:10,菲:14,榛:14,芮:10,茗:12,菀:14,蔓:17,薰:20,芃:9,蕾:19,杰:8,策:12,篤:16,笑:10,朵:6,
+  昊:8,曉:16,暢:14,燦:17,煥:13,熠:15,然:12,烈:10,旺:8,曠:19,晞:11,
+  堅:11,基:11,墨:15,嶽:17,峰:10,鎧:18,錚:16,鉦:13,
+  霆:15,震:15,霄:15,凌:10,汐:7,澈:16,淨:12,泱:9,涓:11,湛:13,霓:16,沁:8,汝:7,沅:8,洵:10,
+  儒:16,書:10,斯:12,詠:12,詩:13,修:10,齊:14,允:4,恬:10,寧:14,謹:18,懷:20,逸:15,承:8,韻:19,聿:6,尚:8,知:8,行:6,守:6,仕:5,佑:7,以:5,言:7,
+  騰:20,馳:13,駿:17,驍:22,躍:21,雄:12,威:9,毅:15,剛:10,擎:17,展:10,拓:9,揚:13,振:11,航:10,冠:9,廣:15,闊:17,勁:9,虎:8,麒:19,麟:23,宸:10,颯:14,
+  朗:11,悅:11,愉:13,爽:11,朝:12,亮:9,歡:22,妙:7,彩:11,虹:9,向:6,達:16,通:14,群:13,友:4,
+  聰:17,悟:11,啟:11,學:16,巧:5,伶:7,俐:9,捷:12,瑜:14,璇:16,琦:13,玥:9,珞:11,瑤:15,璟:17,瑾:16,玟:9,玲:10,珍:10,琬:13,琇:12,
+  誠:14,實:14,厚:9,定:8,敦:12,固:8,勤:13,勉:9,耕:10,
+  婉:11,嫻:15,嫣:14,婧:11,姍:8,妘:7,娜:10,姿:9,馨:20,香:9,甜:11,紗:10,綾:14,緹:15,縈:16,念:8,憶:17,惜:12,嫚:14,媗:12,妏:7,妡:7,姝:9,孜:7,予:4,希:7,
+  野:11,原:10,青:8,翠:14,谷:7,鶴:21,燕:16,羽:6,翎:11,
+  吉:6,慶:15,禎:14,祐:10,禧:17,祿:13,裕:13,豐:18,盈:9,圓:13,全:6,盛:12,寶:20,貝:7,鼎:13,
+  辰:7,廷:7,勛:12,翊:11,睦:13,叡:16,品:9,禹:9,祈:9,綸:14,緯:15,紘:10,紹:11,竣:12,竑:9,靖:13,喬:12};
 (function(){for(const k in NG_STROKE_EXTRA){if(!STROKE[k])STROKE[k]=NG_STROKE_EXTRA[k];}})();
-/* 格式：字＋性別（m 陽剛／f 柔美／n 中性）＋字義，逗號分隔 */
 const NG_POOL={
-  木:"松m常青堅毅,柏m正直長青,梅f堅韌高潔,蘭f優雅芬芳,竹n謙虛有節,菊f淡雅長壽,荷f清新脫俗,蓮f純淨祥和,桂n榮顯芬芳,楓n熱情獨特,芳f美好名聲,萱f忘憂快樂,蓉f溫柔秀美,芸f聰慧書香,芯f細膩純真,萍f隨和自在,榮m興盛光彩,傑m才能出眾,樂n開朗喜悅,華n才華光彩,彬m文雅有禮,森m沉穩茂盛,楷m典範正直,桐n高潔正直,茵f柔和舒適,莉f清香可人,菁f精華出眾,蕙f蕙質蘭心,薇f柔美堅韌,芷f清香高雅,苡f健康堅韌,茜f亮麗有神,萌f生機希望,葳f茂盛有朝氣,蓁f豐盛繁茂,筠f清雅如竹,箏f悠揚自在",
-  火:"明n聰明光亮,昌m興旺發達,晴f開朗明亮,昕n朝氣新生,晨n清新希望,曦n晨光溫暖,映n光彩照人,星n閃耀出眾,輝m光彩成就,光m光明正大,智n聰穎明理,皓m光明潔白,炎m熱情旺盛,煒m光明盛大,昱m光明照耀,晟m興盛光明,暘m日出光明,曜m光芒耀眼,旭m朝陽初升,昀n日光和煦,晏n安樂平和,景n前程遠大,暄n溫暖和煦,丹f赤誠真心,彤f紅潤喜氣,耀m光彩顯赫,陽m開朗溫暖",
-  土:"山m穩重可靠,坤m厚德載物,培m栽培成長,均m公平穩健,城m守護可靠,垣m穩固安定,堯m賢明高遠,岳m穩重崇高,峻m高大挺拔,崇m品格崇高,嵐n清新靈秀,岱n泰然安穩,磊m光明磊落,碩m學識豐碩",
-  金:"鈞m穩重擔當,銘m銘記不忘,鋒m銳意進取,鈺n珍貴如玉,錦n前程似錦,鑫m財源豐盛,銳m敏銳進取,鎮m沉著安定,鈴f清脆靈巧,銓m衡量有度,錡m才器不凡,釗m勉勵自強",
-  水:"浩m胸懷廣大,涵n包容有內涵,海m寬廣包容,泉m源源不絕,波m靈活流動,濤m氣勢壯闊,瀅f清澈明淨,瀚m廣博浩瀚,潔f純潔清白,淑f溫柔賢淑,沂n流暢通達,霖m及時甘霖,雨f滋潤恩澤,雯f雲彩文采,雲n自在高遠,清n清明純淨,澤m恩澤深厚,洋m開闊遠大,淳n淳厚樸實,源m根本深厚,潤n溫潤滋養,雪f純潔晶瑩,霏f輕盈飄逸,泓m深廣清澈,沐n受恩潤澤,洛n靈秀流暢,淇f清澈秀麗,湘f靈秀溫婉,漢m氣度不凡,澄n清澈明淨,沛n豐沛有活力",
-  平:"志m志向遠大,建m建功立業,平n平安順遂,安n平安安定,靜f沉靜安穩,雅f文雅端莊,婷f亭亭玉立,怡f愉悅自得,君n品格端正,美f美好善良,秀f優秀清秀,娟f秀麗柔美,慧f聰慧通達,嘉n美好讚許,宇m氣宇軒昂,軒m氣度高昂,豪m豪邁大器,哲m明理有智,翔m展翅高飛,宏m宏大有為,家n顧家和樂,育n培育成長,妍f美麗聰慧,庭n家門昌盛,欣f欣喜向榮,凱m凱旋成功,維m維繫有恆,思n深思敏慧,心f真心善良,如f稱心如意,語f善於表達,琳f美玉珍貴,瑩f晶瑩透亮,珊f珍貴秀美,鵬m鵬程萬里,飛m奮發高飛,順n順利平安,勝m成功得勝,永m長久恆常,隆m興隆昌盛,康m健康安樂,健m強健進取,信m誠信可靠,仁m仁厚愛人,義m重情重義,勇m勇敢果決,忠m忠誠正直,賢m賢能有德,德m品德高尚,成m成就圓滿,立m自立有成,正m正直端方,俊m俊秀出眾,祥m吉祥和順,瑞n祥瑞吉兆,祺m吉祥福氣,鴻m鴻圖大展,博m博學多聞,翰m文采出眾,睿n睿智通達,璿n美玉珍貴,妤f美好聰慧,恩n感恩惜福,綺f美麗多彩,彥m才德兼備,佩f令人敬佩,珮f溫潤如玉,琪f美玉珍奇,瑋m珍奇不凡,瑄f美玉祥瑞,亭f亭亭端莊,佳f美好出色,妮f可愛親切,婕f敏捷聰穎,媛f美好優雅,丞m輔佐擔當,亦n謙和從容,恆m持之以恆,惠f聰慧仁愛,慈f慈愛仁厚,愛f充滿愛心,敏f聰敏靈巧,穎n聰穎出眾,貞f堅定純正,純f純真善良,真n真誠實在,善n善良美好,良m善良優秀,柔f溫柔和順,和n和氣圓融,謙m謙虛有禮,偉m偉大有成,強m堅強有力,政m正直有為,遠m志向高遠,文n文雅有學問,宥m寬厚包容,宜f合宜和順,宛f溫婉柔美"
+  木:"松m57常青堅毅,柏m5正直長青,梅f7堅韌高潔,蘭f16優雅芬芳,竹n17謙虛有節,菊f7淡雅長壽,荷f7清新脫俗,蓮f67純淨祥和,桂n8榮顯芬芳,楓n7熱情獨特,芳f6美好名聲,萱f36忘憂快樂,蓉f6溫柔秀美,芸f14聰慧書香,芯f6細膩純真,萍f7隨和自在,榮m8興盛光彩,傑m2才能出眾,樂n38開朗喜悅,華n3才華光彩,彬m1文雅有禮,森m57沉穩茂盛,楷m15典範正直,桐n7高潔正直,茵f67柔和舒適,莉f6清香可人,菁f4精華出眾,蕙f16蕙質蘭心,薇f6柔美堅韌,芷f17清香高雅,苡f7健康堅韌,茜f3亮麗有神,萌f37生機希望,葳f3茂盛有朝氣,蓁f8豐盛繁茂,筠f17清雅如竹,箏f1悠揚自在,"
+    +"樸n15樸實無華,棟m5棟樑之材,柱m5中流砥柱,樹m57挺立成蔭,本n5務本踏實,根m5根基深厚,林n7茂盛成林,榆n7堅韌質樸,杏f7溫暖豐收,橙f3明亮溫暖,茉f67清香純潔,葵f3向陽開朗,芽f7新生希望,苗n7成長茁壯,禾n7豐收踏實,穗f8豐收飽滿,穩m5穩重可靠,穆m15莊重和穆,蓓f6含苞待放,芊f7草木茂盛,苓f6靈秀清雅,芝f8祥瑞高潔,菲f3芳香美好,榛n7質樸堅實,芮f6柔嫩細緻,茗f17清雅如茶,菀f6茂盛柔美,蔓f7生機綿延,薰f16溫和芬芳,芃f7草木繁盛,蕾f36含苞待放,杰m2才智出眾,策m4謀略有方,篤m5篤實專一,笑f3笑口常開,朵f6如花美好",
+  火:"明n34聰明光亮,昌m8興旺發達,晴f3開朗明亮,昕n37朝氣新生,晨n7清新希望,曦n37晨光溫暖,映n3光彩照人,星n4閃耀出眾,輝m23光彩成就,光m3光明正大,智n4聰穎明理,皓m1光明潔白,炎m2熱情旺盛,煒m3光明盛大,昱m3光明照耀,晟m28興盛光明,暘m3日出光明,曜m2光芒耀眼,旭m23朝陽初升,昀n1日光和煦,晏n18安樂平和,景n2前程遠大,暄n36溫暖和煦,丹f3赤誠真心,彤f3紅潤喜氣,耀m2光彩顯赫,陽m3開朗溫暖,"
+    +"昊m2廣大無邊,曉n4通曉明白,暢n3順暢通達,燦n3燦爛奪目,煥m3煥然一新,熠n3光彩閃耀,然n17自然坦然,烈m2剛烈熱忱,旺m8興旺昌盛,曠m2心胸開闊,晞f7晨曦微光",
+  土:"山m5穩重可靠,坤m5厚德載物,培m5栽培成長,均m5公平穩健,城m5守護可靠,垣m5穩固安定,堯m12賢明高遠,岳m25穩重崇高,峻m2高大挺拔,崇m1品格崇高,嵐n7清新靈秀,岱n5泰然安穩,磊m5光明磊落,碩m4學識豐碩,堅m5堅定不移,基m5根基穩固,墨n1文墨書香,嶽m25巍峨崇高,峰m2登峰造極",
+  金:"鈞m5穩重擔當,銘m5銘記不忘,鋒m2銳意進取,鈺n8珍貴如玉,錦n8前程似錦,鑫m8財源豐盛,銳m24敏銳進取,鎮m5沉著安定,鈴f36清脆靈巧,銓m5衡量有度,錡m4才器不凡,釗m5勉勵自強,鎧m25堅強守護,錚m2錚錚鐵骨,鉦m5沉穩有聲",
+  水:"浩m2胸懷廣大,涵n1包容有內涵,海m2寬廣包容,泉m7源源不絕,波m3靈活流動,濤m2氣勢壯闊,瀅f6清澈明淨,瀚m12廣博浩瀚,潔f6純潔清白,淑f6溫柔賢淑,沂n7流暢通達,霖m78及時甘霖,雨f7滋潤恩澤,雯f16雲彩文采,雲n7自在高遠,清n17清明純淨,澤m8恩澤深厚,洋m23開闊遠大,淳n5淳厚樸實,源m5根本深厚,潤n16溫潤滋養,雪f67純潔晶瑩,霏f6輕盈飄逸,泓m7深廣清澈,沐n7受恩潤澤,洛n7靈秀流暢,淇f6清澈秀麗,湘f6靈秀溫婉,漢m2氣度不凡,澄n17清澈明淨,沛n3豐沛有活力,"
+    +"霆m2雷霆萬鈞,震m2聲威遠播,霄m2凌雲之志,凌m2凌雲壯志,汐f7潮汐有信,澈n7清澈通透,淨n7純淨無瑕,泱n2氣度恢宏,涓f67細水長流,湛n14深厚清澈,霓f3彩霞絢麗,沁f67沁人心脾,汝f6溫婉如水,沅n7源遠流長,洵n1誠實可信,溪f7清溪潺潺",
+  平:"志m2志向遠大,建m5建功立業,平n8平安順遂,安n58平安安定,靜f6沉靜安穩,雅f1文雅端莊,婷f6亭亭玉立,怡f36愉悅自得,君n1品格端正,美f6美好善良,秀f6優秀清秀,娟f6秀麗柔美,慧f4聰慧通達,嘉n8美好讚許,宇m2氣宇軒昂,軒m12氣度高昂,豪m2豪邁大器,哲m14明理有智,翔m2展翅高飛,宏m2宏大有為,家n5顧家和樂,育n5培育成長,妍f6美麗聰慧,庭n5家門昌盛,欣f3欣喜向榮,凱m23凱旋成功,維m5維繫有恆,思n14深思敏慧,心f6真心善良,如f6稱心如意,語f1善於表達,琳f6美玉珍貴,瑩f6晶瑩透亮,珊f6珍貴秀美,鵬m2鵬程萬里,飛m2奮發高飛,順n8順利平安,勝m2成功得勝,永m5長久恆常,隆m8興隆昌盛,康m8健康安樂,健m3強健進取,信m5誠信可靠,仁m1仁厚愛人,義m2重情重義,勇m2勇敢果決,忠m5忠誠正直,賢m1賢能有德,德m15品德高尚,成m5成就圓滿,立m5自立有成,正m5正直端方,俊m3俊秀出眾,祥m8吉祥和順,瑞n8祥瑞吉兆,祺m8吉祥福氣,鴻m2鴻圖大展,博m14博學多聞,翰m1文采出眾,睿n4睿智通達,璿n4美玉珍貴,妤f6美好聰慧,恩n8感恩惜福,綺f6美麗多彩,彥m1才德兼備,佩f6令人敬佩,珮f6溫潤如玉,琪f6美玉珍奇,瑋m4珍奇不凡,瑄f6美玉祥瑞,亭f6亭亭端莊,佳f3美好出色,妮f36可愛親切,婕f4敏捷聰穎,媛f6美好優雅,丞m5輔佐擔當,亦n1謙和從容,恆m5持之以恆,惠f6聰慧仁愛,慈f6慈愛仁厚,愛f6充滿愛心,敏f4聰敏靈巧,穎n4聰穎出眾,貞f5堅定純正,純f6純真善良,真n5真誠實在,善n1善良美好,良m1善良優秀,柔f6溫柔和順,和n18和氣圓融,謙m1謙虛有禮,偉m2偉大有成,強m2堅強有力,政m5正直有為,遠m2志向高遠,文n1文雅有學問,宥m1寬厚包容,宜f6合宜和順,宛f6溫婉柔美,"
+    +"儒m1儒雅有學養,書n1書香文采,斯n1斯文有禮,詠n1歌詠才情,詩f16詩情畫意,禮n1知書達禮,修m1修養深厚,齊m5齊心整飭,允n1誠信公允,之n1從容自在,恬f6恬靜安然,寧n58安寧平和,謹m5謹慎周全,懷m1胸懷寬廣,逸n17超逸灑脫,承m5承先啟後,韻f16氣韻動人,聿n1執筆為文,尚m1崇尚高潔,知n4知書明理,行m2行穩致遠,守m5守信有恆,仕m1學優則仕,佑m8護佑平安,以n1有所依憑,言n1言而有信,"
+    +"騰m2奔騰向上,馳m2馳騁千里,駿m2駿馬奔馳,驍m2驍勇善戰,躍m23躍然而起,雄m2雄才大略,威m2威儀有度,毅m25剛毅果決,剛m2剛正不阿,擎m2擎天之力,展m2大展鴻圖,拓m2開拓進取,揚m23揚名立萬,振m2振奮有為,航m2乘風遠航,冠m2出類拔萃,廣m2見多識廣,闊m2心胸開闊,勁m2強勁有力,虎m2虎虎生風,龍m2龍騰四海,麒m28祥瑞之獸,麟m28才德出眾,宸m2器宇不凡,颯n23英姿颯爽,天m2頂天立地,喬n2高大挺拔,勛m2功勛卓著,翊m2展翅輔佐,紘m2志向宏大,竑m2度量宏大,野m27自在不羈,川m27川流不息,"
+    +"朗m3開朗明亮,悅f3喜悅開心,愉n3愉快自在,爽m3豪爽明快,朝n3朝氣蓬勃,亮n3明亮開朗,歡n3歡喜自在,彩f3多采多姿,虹f3絢麗如虹,向m3積極向上,達m3通達豁達,通m3通情達理,群m3合群出眾,友n3友善重情,希n3懷抱希望,慶m38喜慶歡樂,燕f37輕巧靈動,"
+    +"聰m4聰明伶俐,悟n4悟性過人,啟m4啟迪開創,學n14好學不倦,巧f4心靈手巧,伶f4伶俐聰慧,俐f4聰明俐落,捷m4敏捷過人,妙f4巧妙靈動,瑜f4美玉無瑕,璇f4美玉璀璨,琦f4珍奇美好,璟n4玉之光彩,靈f4靈氣聰慧,叡m4明智通達,玲f46玲瓏剔透,"
+    +"誠m5真誠守信,實m5踏實誠懇,厚m5厚道寬容,定m5安定堅定,敦m5敦厚篤實,固m5穩固堅守,勤m5勤奮不懈,勉m5自勉上進,耕m5勤耕有成,孜f5孜孜不倦,禹m5務實治世,緯m5經天緯地,紹m5承續發揚,竣m5圓滿完成,靖m5安定平和,鼎m25一言九鼎,"
+    +"婉f6婉約柔美,嫻f16嫻靜文雅,嫣f36嫣然一笑,婧f6纖秀有才,姍f6從容優雅,妘f6美好嫻靜,娜f6婀娜多姿,姿f6風姿綽約,馨f6溫馨芬芳,香f6芬芳美好,甜f36甜美可人,紗f6輕柔如紗,綾f6細緻柔美,緹f6色澤亮麗,縈f6情意縈繞,念f6心存感念,憶f6珍藏回憶,惜f6懂得珍惜,嫚f6柔美嫻雅,媗f6美好歡悅,妏f6溫柔嫻靜,妡f6賢淑美好,姝f6美麗出眾,玥f6神珠寶玉,珞f6珠玉相連,瑤f6美玉瑤光,玟f6玉之紋理,珍f6珍惜珍貴,琬f6溫潤美玉,琇f6美石如玉,瑾f1美玉之德,月f67皎潔溫柔,"
+    +"原n7本真寬廣,青n7青春有朝氣,翠f7青翠有生機,谷m7虛懷若谷,鶴n17高潔長壽,羽n7輕盈自由,翎f7羽翼華美,辰m7星辰有序,予n1給予分享,廷m1朝廷棟樑,品n1品格端正,綸m1經綸滿腹,"
+    +"吉n8吉祥如意,禎n8吉祥禎瑞,祐m8神明護佑,禧n8幸福吉祥,祿m8福祿雙全,裕m8富足寬裕,豐m8豐收富足,盈f8圓滿充盈,圓f8圓滿和樂,全m8十全十美,盛m28興盛昌隆,寶n8如珍似寶,貝f8珍貴寶貝,福n8福氣滿滿,睦n8和睦相親,祈n8祈願美好"
 };
-const NG_CHARS=(function(){const out=[];for(const wx in NG_POOL){NG_POOL[wx].split(",").forEach(function(t){const c=t[0];if(STROKE[c])out.push({c:c,g:t[1],m:t.slice(2),wx:wx==="平"?"":wx});});}return out;})();
+const NG_CHARS=(function(){const out=[],seen={};for(const wx in NG_POOL){NG_POOL[wx].split(",").forEach(function(t){
+  const c=t[0];if(!c||seen[c]||!STROKE[c])return;seen[c]=1;
+  const m=/^(\d*)(.*)$/.exec(t.slice(2));
+  out.push({c:c,g:t[1],st:m[1].split(""),m:m[2],wx:wx==="平"?"":wx});});}return out;})();
 function namingSection(name){
   const sur=[...(name||"")].filter(function(c){return /[㐀-鿿]/.test(c);})[0]||"";
   const scOpts='<option value="">不確定</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'">'+z+'時</option>';}).join("");
+  const stOpts='<option value="">不限風格</option>'+Object.keys(NG_STYLES).map(function(k){return '<option value="'+k+'">'+NG_STYLES[k]+'</option>';}).join("");
   return '<div class="sec-title"><span class="cn">取名建議</span><span class="en">Name Suggestions</span></div>'
-    +'<div class="lucksub">依三才五格與喜用神，為寶寶命名或自己改名挑出高分好名</div>'
+    +'<div class="lucksub">依三才五格與喜用神，為寶寶命名或自己改名——可選風格、可指定用字</div>'
     +'<div class="lgt-card">'
     +'<div class="lgt-form">'
     +'<label>姓氏（單姓）<input id="ngSur" type="text" maxlength="1" autocomplete="off" value="'+zwEsc(sur)+'" oninput="ngSurSync()"></label>'
     +'<label>姓氏筆畫（康熙，可修正）<input id="ngSurStroke" type="number" min="1" max="40" inputmode="numeric" value="'+(STROKE[sur]||"")+'"></label>'
     +'<label>命名對象<select id="ngWho" onchange="ngWhoSync()"><option value="self">我自己（依我的喜用神）</option><option value="other">寶寶或家人（輸入對方生日）</option></select></label>'
-    +'<label>名字要給<select id="ngGender"><option value="m"'+(gender==="男"?' selected':'')+'>男生</option><option value="f"'+(gender==="女"?' selected':'')+'>女生</option></select></label>'
+    +'<label>名字要給<select id="ngGender" onchange="namingBrowse()"><option value="m"'+(gender==="男"?' selected':'')+'>男生</option><option value="f"'+(gender==="女"?' selected':'')+'>女生</option></select></label>'
+    +'<label>名字風格<select id="ngStyle" onchange="namingBrowse()">'+stOpts+'</select></label>'
+    +'<label>指定用字（選填）<input id="ngFix" type="text" maxlength="1" autocomplete="off" placeholder="例：睿"></label>'
     +'<label class="ng-other" style="display:none">對方出生日期（國曆）<input id="ngDate" type="date"></label>'
     +'<label class="ng-other" style="display:none">對方出生時辰<select id="ngHour">'+scOpts+'</select></label>'
     +'<button class="toolbtn" type="button" onclick="namingRun()">產生好名</button>'
     +'</div>'
     +'<div class="lgt-note">筆畫採姓名學通用的康熙字典筆畫（例：氵算 4 畫、艹算 6 畫），與日常寫法不同屬正常。</div>'
+    +'<details class="ng-browse" ontoggle="namingBrowse()"><summary>瀏覽好字庫（共 '+NG_CHARS.length+' 字・點任一個字即可指定用它取名）</summary><div id="ngBrowse"></div></details>'
     +'<div id="namingOut"></div>'
     +'</div>';
 }
 function ngSurSync(){const s=(document.getElementById("ngSur")||{}).value||"",el=document.getElementById("ngSurStroke");if(el)el.value=STROKE[s]||"";}
 function ngWhoSync(){const o=(document.getElementById("ngWho")||{}).value==="other";document.querySelectorAll(".ng-other").forEach(function(e){e.style.display=o?"":"none";});}
+function namingBrowse(){
+  const box=document.getElementById("ngBrowse");if(!box)return;
+  const d=box.closest("details");if(d&&!d.open)return;
+  const g=(document.getElementById("ngGender")||{}).value||"m",st=(document.getElementById("ngStyle")||{}).value||"";
+  const keys=st?[st]:Object.keys(NG_STYLES);
+  box.innerHTML=keys.map(function(k){
+    const cs=NG_CHARS.filter(function(x){return (x.g===g||x.g==="n")&&x.st.includes(k);});
+    return '<div class="ng-bgrp"><b>'+NG_STYLES[k]+'</b><span>'+cs.length+' 字</span></div><div class="ng-chs">'
+      +cs.map(function(x){return '<button type="button" class="ng-ch" title="'+x.m+(x.wx?'・字根五行'+x.wx:'')+'" onclick="ngPickChar(\''+x.c+'\')">'+x.c+'</button>';}).join("")+'</div>';
+  }).join("")+'<div class="lgt-note">滑鼠停在字上（手機長按）可看字義。字庫依上方「名字要給」「名字風格」即時篩選。</div>';
+}
+function ngPickChar(c){const el=document.getElementById("ngFix");if(el)el.value=c;namingRun();const o=document.getElementById("namingOut");if(o)o.scrollIntoView({behavior:"smooth",block:"nearest"});}
 function namingRun(){
   const D=window.__ZW,out=document.getElementById("namingOut");
   if(!D||!out)return;
@@ -4721,6 +4781,11 @@ function namingRun(){
   if(!/^[㐀-鿿]$/.test(sur)){out.innerHTML='<div class="lgt-empty">請輸入一個字的姓氏（目前支援單姓）。</div>';return;}
   if(!surStroke){out.innerHTML='<div class="lgt-empty">字庫裡沒有「'+zwEsc(sur)+'」的康熙筆畫，請在「姓氏筆畫」欄手動填入後再試一次。</div>';return;}
   const g=(document.getElementById("ngGender")||{}).value||"m";
+  const style=(document.getElementById("ngStyle")||{}).value||"";
+  const fix=((document.getElementById("ngFix")||{}).value||"").trim();
+  if(fix&&!/^[㐀-鿿]$/.test(fix)){out.innerHTML='<div class="lgt-empty">「指定用字」請填一個中文字，或留空。</div>';return;}
+  if(fix&&!STROKE[fix]){out.innerHTML='<div class="lgt-empty">字庫裡還沒有「'+zwEsc(fix)+'」的康熙筆畫，暫時無法指定這個字；可以從下方「瀏覽好字庫」挑字，或聯繫客服由老師人工取名。</div>';return;}
+  if(fix===sur){out.innerHTML='<div class="lgt-empty">指定用字與姓氏相同，請換一個字。</div>';return;}
   let xi=D.adv.strength.xi,ji=D.adv.strength.ji,who="您";
   if((document.getElementById("ngWho")||{}).value==="other"){
     const dv=(document.getElementById("ngDate")||{}).value;
@@ -4730,25 +4795,36 @@ function namingRun(){
     catch(e){out.innerHTML='<div class="lgt-empty">對方的出生日期無法推算，請確認後再試一次。</div>';return;}
   }
   const pool=NG_CHARS.filter(function(x){return x.c!==sur&&(x.g===g||x.g==="n");});
+  if(fix&&!pool.some(function(x){return x.c===fix;})){
+    const known=NG_CHARS.filter(function(x){return x.c===fix;})[0];
+    pool.push(known||{c:fix,g:"n",st:[],m:"您指定的字",wx:""});
+  }
   const cross={xi:xi,ji:ji},ov={0:surStroke},list=[];
+  const cls=function(v){return shuClass(shuLook(v).label);};
   for(let i=0;i<pool.length;i++){for(let j=0;j<pool.length;j++){
     if(i===j)continue;
-    const a=pool[i],b=pool[j],na=nameAnalysis(sur+a.c+b.c,ov);
+    const a=pool[i],b=pool[j];
+    if(fix&&a.c!==fix&&b.c!==fix)continue;
+    const sa=style&&a.st.includes(style),sb=style&&b.st.includes(style);
+    if(style&&!sa&&!sb)continue;
+    const na=nameAnalysis(sur+a.c+b.c,ov);
     if(!na||na.scCls==="bad")continue;
-    const cls=function(v){return shuClass(shuLook(v).label);};
     if(cls(na.ren)==="bad"||cls(na.di)==="bad"||cls(na.zong)==="bad")continue;
     const sc=nameScore(na,cross);
-    let bonus=0;[a,b].forEach(function(x){if(x.wx){if(xi.includes(x.wx))bonus+=2;else if(ji.includes(x.wx))bonus-=2;}});
     if(sc.total<72)continue;
-    list.push({a:a,b:b,na:na,total:sc.total,rank:sc.total+bonus+(a.g===g?0.3:0)+(b.g===g?0.3:0)});
+    let bonus=0;[a,b].forEach(function(x){if(x.wx){if(xi.includes(x.wx))bonus+=2;else if(ji.includes(x.wx))bonus-=2;}});
+    list.push({a:a,b:b,na:na,total:sc.total,sm:(sa?1:0)+(sb?1:0),rank:sc.total+bonus+(a.g===g?0.3:0)+(b.g===g?0.3:0)});
   }}
-  list.sort(function(p,q){return q.rank-p.rank;});
-  // 多樣性：同一個字在同位置最多出現 2 次
+  // 有選風格時：兩個字都符合風格的名字優先，其次才是只有一字符合的；同級再比分數
+  list.sort(function(p,q){return (q.sm-p.sm)||(q.rank-p.rank);});
+  // 多樣性：同一個字在同位置最多出現 2 次（指定用字不受限）
   const useA={},useB={},pick=[];
-  for(let k=0;k<list.length&&pick.length<96;k++){const it=list[k],ca=it.a.c,cb=it.b.c;
-    if((useA[ca]||0)>=2||(useB[cb]||0)>=2)continue;useA[ca]=(useA[ca]||0)+1;useB[cb]=(useB[cb]||0)+1;pick.push(it);}
-  if(!pick.length){out.innerHTML='<div class="lgt-empty">以「'+zwEsc(sur)+'」（'+surStroke+' 畫）搭配目前字庫，找不到三才五格皆吉的組合。請確認姓氏筆畫是否為康熙筆畫，或聯繫客服由老師人工取名。</div>';return;}
-  window.__ngState={pick:pick,page:0,sur:sur,surStroke:surStroke,xi:xi,who:who,g:g};
+  for(let k=0;k<list.length&&pick.length<120;k++){const it=list[k],ca=it.a.c,cb=it.b.c;
+    if((ca!==fix&&(useA[ca]||0)>=2)||(cb!==fix&&(useB[cb]||0)>=2))continue;useA[ca]=(useA[ca]||0)+1;useB[cb]=(useB[cb]||0)+1;pick.push(it);}
+  if(!pick.length){
+    out.innerHTML='<div class="lgt-empty">以「'+zwEsc(sur)+'」（'+surStroke+' 畫）'+(style?('・'+NG_STYLES[style]+'風格'):'')+(fix?('・指定「'+zwEsc(fix)+'」字'):'')+'，找不到三才五格皆吉的組合。'
+      +(fix||style?'可以放寬條件（改成不限風格，或換一個指定字）再試一次。':'請確認姓氏筆畫是否為康熙筆畫，或聯繫客服由老師人工取名。')+'</div>';return;}
+  window.__ngState={pick:pick,page:0,sur:sur,surStroke:surStroke,xi:xi,who:who,g:g,style:style,fix:fix};
   namingRender();
 }
 function namingRender(){
@@ -4757,16 +4833,18 @@ function namingRender(){
   const gl=function(v){const s=shuLook(v);return v+'（'+s.label+'）';};
   const cards=show.map(function(it){
     const na=it.na,wxTag=function(x){return x.wx?'<i class="'+(S.xi.includes(x.wx)?'xi':'')+'">'+x.c+'・'+x.wx+'</i>':'';};
+    const sts=[];it.a.st.concat(it.b.st).forEach(function(k){if(NG_STYLES[k]&&!sts.includes(k))sts.push(k);});
+    const stTags=sts.slice(0,3).map(function(k){return '<i class="st'+(k===S.style?' on':'')+'">'+NG_STYLES[k]+'</i>';}).join("");
     return '<div class="ng-card"><div class="ng-top"><b>'+zwEsc(S.sur)+it.a.c+it.b.c+'</b><span>'+it.total+' 分</span></div>'
       +'<div class="ng-grid">人格 '+gl(na.ren)+'｜地格 '+gl(na.di)+'｜總格 '+gl(na.zong)+'</div>'
       +'<div class="ng-grid">三才 '+na.sancai.join("")+'（'+na.scLabel+'）・筆畫 '+na.strokes.join("＋")+'</div>'
       +'<div class="ng-mean">「'+it.a.c+'」'+it.a.m+'；「'+it.b.c+'」'+it.b.m+'</div>'
-      +'<div class="ng-wx">'+wxTag(it.a)+wxTag(it.b)+'</div></div>';
+      +'<div class="ng-wx">'+stTags+wxTag(it.a)+wxTag(it.b)+'</div></div>';
   }).join("");
-  out.innerHTML='<div class="zeri-h">為「'+zwEsc(S.sur)+'」姓'+(S.g==="m"?"男生":"女生")+'挑出 '+S.pick.length+' 個好名（'+S.who+'的喜用神：'+S.xi.join("、")+'）・第 '+(pg+1)+'／'+pages+' 批</div>'
+  out.innerHTML='<div class="zeri-h">為「'+zwEsc(S.sur)+'」姓'+(S.g==="m"?"男生":"女生")+(S.style?('・'+NG_STYLES[S.style]):'')+(S.fix?('・指定「'+zwEsc(S.fix)+'」'):'')+'挑出 '+S.pick.length+' 個好名（'+S.who+'的喜用神：'+S.xi.join("、")+'）・第 '+(pg+1)+'／'+pages+' 批</div>'
     +'<div class="ng-list">'+cards+'</div>'
     +'<div class="lgt-act">'+(pages>1?'<button class="toolbtn" type="button" onclick="window.__ngState.page++;namingRender()">換一批</button>':'')
-    +'<span class="lgt-note">綠色標籤＝該字的字根五行正好補到喜用神。系統把關的是數理與五行；唸起來順不順口、有沒有不雅諧音，請自己多唸幾次再決定。正式改名請依戶政規定辦理。</span></div>';
+    +'<span class="lgt-note">綠色標籤＝該字的字根五行正好補到喜用神；紫色標籤＝名字的風格。系統把關的是數理與五行；唸起來順不順口、有沒有不雅諧音，請自己多唸幾次再決定。正式改名請依戶政規定辦理。</span></div>';
 }
 
 function toolsSection(){
