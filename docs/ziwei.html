@@ -1345,6 +1345,44 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
 #reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
+/* ===== 合婚・雙人合盤（前綴 hh-）===== */
+.hh-head{display:flex;align-items:center;gap:16px;margin-top:18px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,var(--wash),var(--card2))}
+.hh-score{flex:0 0 auto;width:92px;height:92px;border-radius:50%;border:3px solid var(--seal);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface)}
+.hh-score b{font-family:"LXGW WenKai TC",serif;font-size:2rem;line-height:1;color:var(--seal)}
+.hh-score span{font-size:.7rem;color:var(--ink-faint);letter-spacing:2px;margin-top:3px}
+.hh-tier{font-family:"LXGW WenKai TC",serif;font-size:1.35rem;letter-spacing:4px;color:var(--gold-deep)}
+.hh-sum p{margin:4px 0 0;font-size:.92rem;line-height:1.8;color:var(--ink)}
+.hh-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.hh-p{border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;background:var(--card2)}
+.hh-pn{font-weight:700;color:var(--gold-deep);letter-spacing:1px}
+.hh-pn span{margin-left:8px;font-size:.7rem;font-weight:400;color:var(--ink-faint);border:1px solid var(--line-soft);border-radius:8px;padding:1px 8px}
+.hh-pz{font-family:"LXGW WenKai TC",serif;font-size:1.05rem;letter-spacing:2px;color:var(--purple);margin:6px 0 4px}
+.hh-pd{font-size:.8rem;color:var(--ink-dim);line-height:1.7}
+.hh-sec{margin:20px 0 8px;font-weight:700;color:var(--gold-deep);letter-spacing:2px;font-size:.95rem;display:flex;align-items:center;gap:7px}
+.hh-sec::before{content:"";width:5px;height:16px;background:var(--gold);border-radius:3px}
+.hh-items{display:flex;flex-direction:column;gap:8px}
+.hh-it{display:grid;grid-template-columns:104px 1fr;gap:12px;border:1px solid var(--line-soft);border-left-width:4px;border-radius:10px;padding:10px 14px;background:var(--card2)}
+.hh-it.good{border-left-color:var(--jade)}.hh-it.bad{border-left-color:var(--rose)}.hh-it.mid{border-left-color:var(--line)}
+.hh-ik{font-size:.82rem;color:var(--ink-dim);font-weight:700;letter-spacing:1px;padding-top:2px}
+.hh-ib b{color:var(--ink);font-size:.95rem}
+.hh-sc{margin-left:8px;font-size:.76rem;font-weight:700;border-radius:8px;padding:1px 8px;background:var(--line-soft);color:var(--ink-dim)}
+.hh-it.good .hh-sc{background:var(--gwash);color:var(--jade)}.hh-it.bad .hh-sc{background:var(--rwash);color:var(--rose)}
+.hh-ib p{margin:4px 0 0;font-size:.86rem;line-height:1.75;color:var(--ink-dim)}
+.hh-wxs{display:flex;flex-direction:column;gap:6px}
+.hh-wx{display:grid;grid-template-columns:28px 1fr 40px;align-items:center;gap:10px;font-size:.86rem;color:var(--ink-dim)}
+.hh-wx i{display:block;height:10px;border-radius:5px;background:var(--line-soft);overflow:hidden}
+.hh-wx em{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold-bright))}
+.hh-wx b{text-align:right;color:var(--gold-deep)}
+.hh-txt{font-size:.9rem;line-height:1.85;color:var(--ink);margin:8px 0 0}
+.hh-yrs{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.hh-yr{text-align:center;border:1px solid var(--line-soft);border-radius:10px;padding:8px 2px;background:var(--card2)}
+.hh-yr b{display:block;font-size:.95rem;color:var(--ink)}
+.hh-yr span{display:block;font-size:.68rem;color:var(--ink-faint);margin:2px 0}
+.hh-yr i{font-style:normal;font-weight:700;font-size:.86rem;color:var(--gold)}
+.hh-yr.good{border-color:rgba(47,155,115,.4)}.hh-yr.good i{color:var(--jade)}
+.hh-yr.bad{border-color:rgba(196,87,111,.35)}.hh-yr.bad i{color:var(--rose)}
+@media(max-width:560px){.hh-head{flex-direction:column;text-align:center}.hh-pair{grid-template-columns:1fr}.hh-it{grid-template-columns:1fr;gap:4px}.hh-yrs{grid-template-columns:repeat(3,1fr)}}
+
 /* ===== 時辰不確定模式（免費）===== */
 .scfind{margin-top:8px;background:none;border:0;padding:0;font-family:inherit;font-size:.84rem;color:var(--purple);text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
 .scf-lead{font-size:.92rem;line-height:1.85}
@@ -2200,7 +2238,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.9";
+const SITE_VERSION_DATE="2026.11.24.10";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4453,6 +4491,155 @@ function zeriICS(){
   });
   const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//人生實用說明書系統//個人擇日//ZH-TW","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-TIMEZONE:Asia/Taipei"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n");
   _downloadFile(_lgBase(D.name)+"_擇日_"+L.ev.n.replace(/・/g,"")+".ics",ics,"text/calendar;charset=utf-8");
+}
+
+/* ================= 合婚・雙人合盤（完整報告內含）=================
+   八字：生肖、日主五行、日干五合、日支（夫妻宮）合沖刑害、喜用神雙向互補、五行互補；
+   紫微（雙方皆有時辰才算）：彼此夫妻宮主星 vs 對方命宮主星、命宮地支相合。 */
+const HEHUN_GANHE={甲:"己",己:"甲",乙:"庚",庚:"乙",丙:"辛",辛:"丙",丁:"壬",壬:"丁",戊:"癸",癸:"戊"};
+const HEHUN_XING={寅:"巳",巳:"申",申:"寅",丑:"戌",戌:"未",未:"丑",子:"卯",卯:"子"};
+function hehunSection(){
+  let last={};try{last=JSON.parse(localStorage.getItem('zw_hehun_last')||'{}')||{};}catch(e){}
+  const scOpts='<option value="">不確定（只算八字部分）</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'"'+(String(last.hh)===String(i*2)?' selected':'')+'>'+z+'時</option>';}).join("");
+  return '<div class="sec-title"><span class="cn">合婚 · 雙人合盤</span><span class="en">Compatibility</span></div>'
+    +'<div class="lucksub">輸入另一半（或交往對象）的生辰，看兩人命盤的契合度、相處之道與適合成家的年份</div>'
+    +'<div class="lgt-card">'
+    +'<div class="lgt-form">'
+    +'<label>對方姓名（或暱稱）<input id="hhName" type="text" maxlength="12" autocomplete="off" value="'+zwEsc(last.n||"")+'"></label>'
+    +'<label>對方性別<select id="hhGender"><option value="女"'+(last.g==="女"?' selected':'')+'>女</option><option value="男"'+(last.g==="男"?' selected':'')+'>男</option></select></label>'
+    +'<label>對方出生日期（國曆）<input id="hhDate" type="date" value="'+zwEsc(last.date||"")+'"></label>'
+    +'<label>對方出生時辰<select id="hhHour">'+scOpts+'</select></label>'
+    +'<button class="toolbtn" type="button" onclick="hehunRun()">開始合盤</button>'
+    +'</div>'
+    +'<div class="lgt-note">對方資料只在您的裝置上運算與記憶，不會上傳。時辰不確定也能合，只是略過紫微的部分。</div>'
+    +'<div id="hehunOut"></div>'
+    +'</div>';
+}
+function hehunZhiRel(a,b){
+  if(a===b)return {t:"同支",sc:4,note:"兩人日支相同，生活步調與習慣相近，容易懂彼此；也要留一點各自的空間。"};
+  if(LIUHE[a]===b)return {t:"六合",sc:12,note:"兩人日支六合——日支就是「夫妻宮」，六合代表婚後生活合拍、彼此扶持，是合婚裡很看重的一項。"};
+  if(SANHE_G[a]===SANHE_G[b])return {t:"三合",sc:9,note:"兩人日支三合，價值觀與生活目標容易一致，能一起把家經營起來。"};
+  if(CHONG[a]===b)return {t:"相沖",sc:-14,note:"兩人日支相沖，生活習慣與節奏差異大，同住後摩擦點較多；把家務與金錢分工先講清楚，能化解大半。"};
+  if(HEHUN_XING[a]===b||HEHUN_XING[b]===a)return {t:"相刑",sc:-8,note:"兩人日支相刑，容易在小事上互相挑剔、越講越僵；約定「先冷靜再談」的規則會很有幫助。"};
+  if(HAI[a]===b)return {t:"相害",sc:-8,note:"兩人日支相害，容易有說不出口的委屈累積；重要的事當面講開，不要靠猜。"};
+  return {t:"平和",sc:2,note:"兩人日支無合無沖，婚後生活平實，感情深淺看後天經營。"};
+}
+function hehunMinMax(wx){
+  const arr=Object.keys(wx).map(function(k){return [k,wx[k]];}).sort(function(a,b){return b[1]-a[1];});
+  return {max:arr[0][0],min:arr[arr.length-1][0]};
+}
+function hehunCalc(A,B){
+  const items=[];let total=55;
+  function push(k,t,sc,note){items.push({k:k,t:t,sc:sc,note:note});total+=sc;}
+  const aWx=GAN_WX[A.bz.dayMaster],bWx=GAN_WX[B.bz.dayMaster];
+  const zr=zodiacRel(A.bz.year.zhi,B.bz.year.zhi);
+  push("生肖",SHENGXIAO[A.bz.year.zhi]+" × "+SHENGXIAO[B.bz.year.zhi]+"・"+zr.t,Math.round(zr.sc*0.8),zr.note);
+  const er=elementRel(aWx,bWx);
+  push("日主五行",aWx+" × "+bWx+"・"+er.t,er.sc,er.note);
+  if(HEHUN_GANHE[A.bz.dayMaster]===B.bz.dayMaster)push("日干五合",A.bz.dayMaster+B.bz.dayMaster+"相合",10,"兩人日主天干五合，是命理上最經典的「夫妻合」——彼此有天生的吸引力，心意容易相通。");
+  else push("日干五合",A.bz.dayMaster+" 與 "+B.bz.dayMaster+"・無合",0,"日干無五合，屬多數伴侶的常態，不加分也不扣分。");
+  const dr=hehunZhiRel(A.bz.day.zhi,B.bz.day.zhi);
+  push("夫妻宮（日支）",A.bz.day.zhi+" × "+B.bz.day.zhi+"・"+dr.t,dr.sc,dr.note);
+  // 喜用神雙向
+  let s1=0,n1,s2=0,n2;
+  if(A.st.xi.includes(bWx)){s1=8;n1="對方日主屬"+bWx+"，正是您的喜用神——跟對方在一起，您會覺得被補足、做事更順。";}
+  else if(A.st.ji.includes(bWx)){s1=-6;n1="對方日主屬"+bWx+"，是您的忌神——相處中您較容易被消耗，記得保留自己的充電時間。";}
+  else n1="對方日主屬"+bWx+"，對您的命局中性。";
+  if(B.st.xi.includes(aWx)){s2=8;n2="您的日主屬"+aWx+"，正是對方的喜用神——您是對方命裡的助力。";}
+  else if(B.st.ji.includes(aWx)){s2=-6;n2="您的日主屬"+aWx+"，是對方的忌神——對方有時會覺得被您給壓力，表達時放軟一點。";}
+  else n2="您的日主屬"+aWx+"，對對方的命局中性。";
+  push("喜用神互補",(s1>0&&s2>0)?"互為喜用":(s1>0||s2>0)?"單向相補":(s1<0||s2<0)?"有所消耗":"中性",s1+s2,n1+n2);
+  // 五行互補
+  const am=hehunMinMax(A.wx),bm=hehunMinMax(B.wx);
+  let s3=0,n3=[];
+  if(am.min===bm.max){s3+=5;n3.push("您最缺的「"+am.min+"」，正好是對方最旺的五行");}
+  if(bm.min===am.max){s3+=5;n3.push("對方最缺的「"+bm.min+"」，正好是您最旺的五行");}
+  push("五行互補",s3>=10?"雙向互補":s3>0?"單向互補":"各自發展",s3,n3.length?(n3.join("；")+"——兩人在一起能截長補短。"):"兩人五行的強弱分布沒有特別互補，也沒有相沖，各自把自己顧好就是對關係最好的貢獻。");
+  // 紫微
+  if(A.zw&&B.zw){
+    const mainOf=function(zw,idx){return (zw.stars[idx]||[]).filter(function(x){return x.type==="main";}).map(function(x){return x.name;});};
+    const palIdx=function(zw,nm){for(let b=0;b<12;b++){if(zw.palaceName[b]===nm)return b;}return -1;};   // palaceName 是以地支序為鍵的物件，不是陣列
+    const aFq=mainOf(A.zw,palIdx(A.zw,"夫妻")),bFq=mainOf(B.zw,palIdx(B.zw,"夫妻"));
+    const aMing=mainOf(A.zw,A.zw.ming),bMing=mainOf(B.zw,B.zw.ming);
+    const hit1=aFq.filter(function(x){return bMing.includes(x);}),hit2=bFq.filter(function(x){return aMing.includes(x);});
+    let s4=0,n4=[];
+    if(hit1.length){s4+=8;n4.push("對方命宮坐「"+hit1.join("、")+"」，正是您夫妻宮裡的星——您命盤描繪的另一半樣貌，就是對方這一型");}
+    if(hit2.length){s4+=8;n4.push("您的命宮坐「"+hit2.join("、")+"」，也正是對方夫妻宮的星");}
+    const mz=zodiacRel(ZHI[A.zw.ming],ZHI[B.zw.ming]);
+    if(mz.t==="六合"||mz.t==="三合"){s4+=5;n4.push("兩人命宮地支"+mz.t+"，氣場相投");}
+    push("紫微斗數","您夫妻宮 "+(aFq.join("、")||"空宮")+"｜對方命宮 "+(bMing.join("、")||"空宮"),s4,n4.length?(n4.join("；")+"。"):"兩人的命宮、夫妻宮主星沒有直接呼應，代表吸引彼此的不是「命定類型」，而是相處累積出來的感情。");
+  }
+  total=Math.max(38,Math.min(98,Math.round(total)));
+  const tier=total>=88?"天作之合":total>=77?"上等良緣":total>=66?"穩健相伴":total>=55?"互補磨合":"需用心經營";
+  return {total:total,tier:tier,items:items,aWx:aWx,bWx:bWx};
+}
+function hehunRun(){
+  const D=window.__ZW,out=document.getElementById("hehunOut");
+  if(!D||!out)return;
+  if(!_paidGate("合婚雙人合盤"))return;
+  const dv=(document.getElementById("hhDate")||{}).value;
+  if(!dv){out.innerHTML='<div class="lgt-empty">請先填對方的出生日期。</div>';return;}
+  const p=dv.split("-").map(Number),y=p[0],m=p[1],d=p[2];
+  if(!(y>=1900&&y<=2100)||Date.UTC(y,m-1,d)<Date.UTC(1900,0,31)){out.innerHTML='<div class="lgt-empty">對方的出生日期需在 1900/1/31 之後。</div>';return;}
+  const bName=((document.getElementById("hhName")||{}).value||"").trim()||"對方";
+  const bGender=(document.getElementById("hhGender")||{}).value||"女";
+  const hv=(document.getElementById("hhHour")||{}).value,hasHour=hv!=="";
+  const hh=hasHour?Number(hv):12;
+  try{localStorage.setItem('zw_hehun_last',JSON.stringify({n:bName==="對方"?"":bName,g:bGender,date:dv,hh:hasHour?hh:""}));}catch(e){}
+  let R,B;
+  try{
+    const bz=calcBazi(y,m,d,hh,0);
+    B={name:bName,bz:bz,st:dayStrength(bz),wx:wuxingCount(bz),zw:null};
+    if(hasHour){const lunar=solar2lunar(y,m,d);B.zw=calcZiwei(lunar,hh,GAN[((lunar.year-4)%10+10)%10],ZHI[((lunar.year-4)%12+12)%12],bGender);}
+    R=hehunCalc({name:D.name,bz:D.bz,st:D.adv.strength,wx:D.wx,zw:D.zw},B);
+  }catch(e){out.innerHTML='<div class="lgt-empty">合盤時發生問題，請確認對方的出生日期後再試一次。</div>';return;}
+  const A={name:D.name,bz:D.bz,st:D.adv.strength,wx:D.wx};
+  const person=function(P,label){
+    const b=P.bz;
+    return '<div class="hh-p"><div class="hh-pn">'+zwEsc(P.name)+'<span>'+label+'</span></div>'
+      +'<div class="hh-pz">'+b.year.gan+b.year.zhi+'　'+b.month.gan+b.month.zhi+'　'+b.day.gan+b.day.zhi+(label==="對方"&&!hasHour?'':'　'+b.hour.gan+b.hour.zhi)+'</div>'
+      +'<div class="hh-pd">屬'+SHENGXIAO[b.year.zhi]+'・日主'+b.dayMaster+'（'+GAN_WX[b.dayMaster]+'）・'+P.st.level+'<br>喜用 '+P.st.xi.join("、")+'｜忌 '+P.st.ji.join("、")+'</div></div>';
+  };
+  const itemsHTML=R.items.map(function(it){
+    const cls=it.sc>0?"good":it.sc<0?"bad":"mid";
+    return '<div class="hh-it '+cls+'"><div class="hh-ik">'+it.k+'</div><div class="hh-ib"><b>'+it.t+'</b><span class="hh-sc">'+(it.sc>0?"+"+it.sc:it.sc===0?"±0":it.sc)+'</span><p>'+it.note+'</p></div></div>';
+  }).join("");
+  // 兩人五行合計
+  const WXS=["木","火","土","金","水"],sum={};let mx=0;
+  WXS.forEach(function(k){sum[k]=(A.wx[k]||0)+(B.wx[k]||0);if(sum[k]>mx)mx=sum[k];});
+  const sm=hehunMinMax(sum);
+  const bars=WXS.map(function(k){return '<div class="hh-wx"><span>'+k+'</span><i><em style="width:'+Math.round(sum[k]/mx*100)+'%"></em></i><b>'+(Math.round(sum[k]*10)/10)+'</b></div>';}).join("");
+  // 相處之道
+  const tgAB=tenGod(A.bz.dayMaster,B.bz.dayMaster),tgBA=tenGod(B.bz.dayMaster,A.bz.dayMaster);
+  const goods=R.items.filter(function(i){return i.sc>=8;}).map(function(i){return i.k;}),bads=R.items.filter(function(i){return i.sc<0;}).map(function(i){return i.k;});
+  const summary=R.total>=88?"兩人命盤高度契合，是難得的緣分；好好珍惜，把優勢經營成一輩子的默契。"
+    :R.total>=77?"兩人命盤相當合拍，先天條件好；日常多一點體貼，感情自然長久。"
+    :R.total>=66?"兩人命盤整體穩健，有合也有需要磨合的地方；把話講開、互相體諒，就能細水長流。"
+    :R.total>=55?"兩人命盤互有落差，屬於「需要彼此調整」的組合；差異處正是互補處，關鍵在願不願意為對方多走一步。"
+    :"兩人命盤先天磨合點較多，但命理看的是傾向、不是結局；感情的好壞終究取決於雙方的用心與溝通。";
+  // 近六年適合成家的年份
+  const cy=lnCurYear(),yrs=[];
+  for(let yy=cy;yy<cy+6;yy++){
+    const yz=ZHI[((yy-4)%12+12)%12];
+    const keys=[A.bz.year.zhi,B.bz.year.zhi,A.bz.day.zhi,B.bz.day.zhi];
+    const chong=keys.some(function(z){return CHONG[z]===yz;});
+    const he=keys.some(function(z){return LIUHE[z]===yz||(SANHE_G[z]===SANHE_G[yz]&&z!==yz);});
+    const mk=chong?"避":he?"宜":"平";
+    yrs.push('<div class="hh-yr '+(mk==="宜"?"good":mk==="避"?"bad":"mid")+'"><b>'+yy+'</b><span>'+GAN[((yy-4)%10+10)%10]+yz+'・'+SHENGXIAO[yz]+'年</span><i>'+mk+'</i></div>');
+  }
+  out.innerHTML='<div class="hh-head"><div class="hh-score"><b>'+R.total+'</b><span>契合度</span></div>'
+    +'<div class="hh-sum"><div class="hh-tier">'+R.tier+'</div><p>'+zwEsc(A.name)+' × '+zwEsc(B.name)+'：'+summary+'</p></div></div>'
+    +'<div class="hh-pair">'+person(A,"您")+person(B,"對方")+'</div>'
+    +'<div class="hh-sec">逐項合參</div><div class="hh-items">'+itemsHTML+'</div>'
+    +(hasHour?'':'<div class="lgt-note">對方時辰未填，本次略過紫微斗數的夫妻宮／命宮對照；補上時辰可再合一次。</div>')
+    +'<div class="hh-sec">兩人五行合計</div><div class="hh-wxs">'+bars+'</div>'
+    +'<p class="hh-txt">兩人合起來以「<b>'+sm.max+'</b>」最旺、「<b>'+sm.min+'</b>」最弱。'+(WX_ADVICE[sm.min]?('家裡可以一起補「'+sm.min+'」的能量：'+String(WX_ADVICE[sm.min]).split("。")[0]+'。'):'')+'</p>'
+    +'<div class="hh-sec">相處之道</div>'
+    +'<p class="hh-txt"><b>對方之於您是「'+tgAB+'」</b>：'+(TENGOD_DESC[tgAB]||"")+'<br><b>您之於對方是「'+tgBA+'」</b>：'+(TENGOD_DESC[tgBA]||"")+'</p>'
+    +'<p class="hh-txt">'+(goods.length?('<b>兩人的優勢</b>在「'+goods.join("、")+'」，這是感情的底氣，遇到爭執時多想想這些合拍的地方。'):'兩人沒有特別突出的先天優勢項，感情靠的是日常的相處品質。')
+    +(bads.length?('<br><b>需要留意</b>的是「'+bads.join("、")+'」，上面各項已附具體的化解方向，重點在事先約定、不要等吵起來才處理。'):'<br>各面向都沒有明顯的沖剋，是相處起來很省力的組合。')+'</p>'
+    +'<div class="hh-sec">近六年適合訂婚・結婚的年份</div><div class="hh-yrs">'+yrs.join("")+'</div>'
+    +'<div class="lgt-note">「宜」＝流年與兩人的生肖或日支相合；「避」＝流年沖到其中一人的生肖或日支，辦大事宜避開或另擇吉日（可用上方「個人擇日」挑日子）。合婚為傳統命理參考，感情的幸福終究靠兩個人一起經營。</div>';
 }
 
 function toolsSection(){
@@ -9733,6 +9920,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${baziWeightSection(bz,lunar)}
 
   ${familySection(fam)}
+
+  ${hehunSection()}
 
   ${zeriSection()}
 
