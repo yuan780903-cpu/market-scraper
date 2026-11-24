@@ -681,7 +681,24 @@ function openCfg(){const c=gasCfg();
      <label>TOKEN(你在 GAS 裡設的密碼)</label><input id="g_tok" value="${esc(c.token||'')}" placeholder="請改成你自己的密碼abc123">
      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="saveCfg()">儲存</button><button class="btn sec" onclick="testCfg()">測試連線</button>${c.url?`<button class="btn sec" onclick="clearCfg()" style="border-color:#c0504a;color:#c0504a">移除</button>`:``}</div>
      <div id="g_msg" style="margin-top:9px;font-size:12px"></div></div>
-   <div style="font-size:11.5px;color:var(--mut);margin-top:12px;line-height:1.6">還沒設定過?桌面上的 <b>GAS_雲端存檔.gs</b> 有完整步驟。沒設定也能用,存檔會下載到電腦。</div>`;
+   <details style="margin-top:12px" open>
+     <summary style="cursor:pointer;font-weight:700;color:var(--a);font-size:13px">📖 第一次設定教學(點可收合)</summary>
+     <div style="font-size:12px;color:var(--mut);margin:6px 0 8px">免查雲端硬碟任何資訊!GAS 會用你 Google 帳號自動存進你的雲端硬碟。你只要產生一個網址、自訂一組密碼。</div>
+     <ol style="font-size:12px;line-height:1.75;color:var(--ink);padding-left:20px;margin:0">
+       <li>電腦開 <a href="https://script.google.com" target="_blank" style="color:var(--b)">script.google.com</a>,<b>登入你雲端硬碟的帳號</b>(dayuanc535)</li>
+       <li>左上「<b>新增專案</b>」</li>
+       <li>刪掉預設的程式,按下方「<b>📋 複製 GAS 程式碼</b>」再貼進去</li>
+       <li>把程式第一行 <code style="background:#eef2ee;padding:0 3px">TOKEN</code> 引號裡改成<b>你自己的密碼</b>(記起來,等下要用)</li>
+       <li>右上「<b>部署</b>」→「新增部署作業」→齒輪選「<b>網頁應用程式</b>」→執行身分「<b>我</b>」、存取權「<b>所有人</b>」→部署</li>
+       <li>第一次要授權:進階 →「前往…(不安全)」→ 允許(這是你自己的程式,安全)</li>
+       <li>複製結尾 <code style="background:#eef2ee;padding:0 3px">/exec</code> 的網址 → 貼到上面「網址」欄;「TOKEN」填第 4 步的密碼 →「測試連線」看到綠字 →「儲存」</li>
+     </ol>
+     <div style="margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <button class="btn sec" onclick="copyGAS()">📋 複製 GAS 程式碼</button>
+       <span id="gasmsg" style="font-size:12px;color:var(--a)"></span>
+     </div>
+     <div style="font-size:11px;color:var(--mut);margin-top:9px;line-height:1.6">常見錯誤:測試失敗通常是①存取權沒選「所有人」②TOKEN 兩邊沒填一樣。<br>沒設定也能用:存檔會下載到電腦,再拖進雲端硬碟同步夾即可。</div>
+   </details>`;
   const d=document.getElementById('dw');d.innerHTML=h;d.classList.add('on');document.getElementById('ov').classList.add('on');}
 function saveCfg(){const u=document.getElementById('g_url').value.trim(),t=document.getElementById('g_tok').value.trim();
   if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){msgCfg("網址格式不對,應以 /exec 結尾","#c0504a");return}
@@ -780,7 +797,31 @@ function render(){if(DS.union)ALL.union=unionRows();
   document.getElementById('addUnionBtn').style.display=cur==="union"?"":"none";
   renderTop();renderReminder();renderTagSlicer();renderKPI();renderCharts();renderTable();markCfg();}
 document.getElementById('q').oninput=e=>{q=e.target.value;page=0;renderKPI();renderCharts();renderTable()};
+function copyGAS(){var t=(document.getElementById('gascode').textContent||'').trim();var ok=function(){var m=document.getElementById('gasmsg');if(m)m.textContent='✓ 已複製,到 Apps Script 貼上';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fb();});}else fb();
+  function fb(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){var m=document.getElementById('gasmsg');if(m)m.textContent='複製失敗,請手動複製桌面 GAS_雲端存檔.gs';}document.body.removeChild(ta);}}
 render();
+</script>
+<script type="text/plain" id="gascode">
+// 農業客戶儀表板 CRM 雲端存檔接收端
+const TOKEN = '請改成你自己的密碼abc123';   // ← 改成你自己的密碼(記起來,等下儀表板要填一樣的)
+const FOLDER_NAME = '台灣農業資料';          // 會存進雲端硬碟這個資料夾(沒有會自動建立)
+
+function doPost(e){
+  try{
+    var body = JSON.parse(e.postData.contents);
+    if(body.token !== TOKEN) return json({ok:false, msg:'密碼錯誤,請檢查雲端設定裡的 TOKEN'});
+    if(!body.filename || typeof body.content !== 'string') return json({ok:false, msg:'缺少檔名或內容'});
+    var folder = getOrCreateFolder(FOLDER_NAME);
+    var same = folder.getFilesByName(body.filename);
+    while(same.hasNext()) same.next().setTrashed(true);
+    var file = folder.createFile(Utilities.newBlob('﻿' + body.content, 'text/csv', body.filename));
+    return json({ok:true, msg:'已存入雲端硬碟:' + FOLDER_NAME + '/' + body.filename, url:file.getUrl()});
+  }catch(err){ return json({ok:false, msg:'錯誤:' + err}); }
+}
+function doGet(){ return json({ok:true, msg:'CRM 雲端存檔:運作中'}); }
+function getOrCreateFolder(name){ var it=DriveApp.getFoldersByName(name); return it.hasNext()?it.next():DriveApp.createFolder(name); }
+function json(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 </script>
 </body>
 </html>
