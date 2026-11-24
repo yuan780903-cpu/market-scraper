@@ -1345,6 +1345,30 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
 #reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
+/* ===== 命書生活工具共用樣式（擇日／合婚／取名；前綴 lgt-）===== */
+.lgt-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:6px 14px 18px;box-shadow:0 14px 34px -28px var(--shadow)}
+.lgt-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.lgt-form label{display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--ink-dim);letter-spacing:.5px}
+.lgt-form select,.lgt-form input{font-family:inherit;font-size:.95rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-height:42px;width:100%;box-sizing:border-box}
+.lgt-form .toolbtn{min-height:42px}
+.lgt-note{font-size:.78rem;color:var(--ink-faint);line-height:1.7;margin-top:8px}
+.lgt-empty{margin-top:14px;font-size:.92rem;color:var(--ink-dim);background:var(--card2);border:1px dashed var(--line);border-radius:12px;padding:14px 16px;line-height:1.8}
+.lgt-act{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:14px}
+.lgt-act .lgt-note{margin-top:0;flex:1;min-width:200px}
+.zeri-h{margin-top:18px;font-family:"LXGW WenKai TC",serif;font-size:1.05rem;color:var(--gold-deep);letter-spacing:1px}
+.zeri-list{margin-top:10px;display:flex;flex-direction:column;gap:9px}
+.zeri-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;background:var(--card2)}
+.zeri-row.best{border-color:var(--line);background:linear-gradient(135deg,var(--wash),var(--card2))}
+.zeri-rank{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold-deep);background:var(--surface)}
+.zeri-row.best .zeri-rank{background:var(--seal);border-color:var(--seal);color:#fff}
+.zeri-date b{font-size:1.02rem;color:var(--ink);letter-spacing:.5px}
+.zeri-date span{margin-left:8px;font-size:.78rem;color:var(--ink-faint)}
+.zeri-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.zeri-chips span{font-size:.74rem;color:var(--jade);background:var(--gwash);border-radius:10px;padding:2px 10px}
+.zeri-sub{font-size:.78rem;color:var(--ink-dim);line-height:1.6}
+.zeri-lv{font-family:"LXGW WenKai TC",serif;font-size:1.02rem;font-weight:700;color:var(--jade);letter-spacing:1px;white-space:nowrap}
+@media(max-width:560px){.lgt-card{padding:16px 14px;margin:6px 4px 16px}.zeri-row{grid-template-columns:auto 1fr;}.zeri-lv{grid-column:2;justify-self:start}.zeri-date span{display:block;margin:2px 0 0}}
+
 /* ===== 流年精批（完整報告內含）：明年搶先看摺疊＋列印版紙本樣式 ===== */
 .lnnext{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
 .lnnext summary{cursor:pointer;color:var(--purple);font-weight:700;letter-spacing:1px;font-size:.95rem;list-style:none;display:flex;align-items:center;gap:8px}
@@ -2160,7 +2184,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.7";
+const SITE_VERSION_DATE="2026.11.24.8";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4323,6 +4347,98 @@ function baziWeightSection(bz,lunar){
    <div class="bonefoot">稱骨算命相傳為唐代袁天罡所創，依出生年（干支）、農曆月、農曆日與時辰各賦「骨重」相加而得總兩數，骨重愈重多主福分愈厚。此為傳統民俗趨吉之說，重在借鏡自勉、知命造運；命運終究操之在己，請以正向心態參酌，不必執著於吉凶。</div>
  </div>`;
 }
+/* ================= 個人擇日（完整報告內含；單日資料一律取自 zwDayInfo）=================
+   規則：只挑「通書明列宜此事」的日子，剔除忌此事／沖本人生肖／沖另一位當事人生肖的日子，
+   再依個人化分數（喜用神、黃道、生肖合沖）排序。 */
+const ZERI_EVENTS={
+  marry:{n:"結婚・訂婚",kw:["嫁娶","結婚","納采"]},
+  move:{n:"搬家・入宅",kw:["移徙","入宅"],good:["成","開","定","滿"],bad:["破","執","閉","危","收"]},
+  open:{n:"開市・開業",kw:["開市","開業"]},
+  sign:{n:"簽約・交易",kw:["簽約","立券","交易"]},
+  build:{n:"動土・修造",kw:["動土","修造"]},
+  trip:{n:"出行・遠行",kw:["出行"]},
+  job:{n:"求職・上任",kw:["求職","上任","赴任","見貴"],bad:["破","閉","危"]},
+  bed:{n:"安床",kw:["安床"],bad:["破","閉","危"]},
+  pray:{n:"祭祀・祈福",kw:["祭祀","祈福"],bad:["破"]}
+};
+function zeriSection(){
+  const evOpts=Object.keys(ZERI_EVENTS).map(function(k){return '<option value="'+k+'">'+ZERI_EVENTS[k].n+'</option>';}).join("");
+  const sxOpts=ZHI.map(function(z){return '<option value="'+z+'">屬'+SHENGXIAO[z]+'</option>';}).join("");
+  return '<div class="sec-title"><span class="cn">個人擇日</span><span class="en">Date Selection</span></div>'
+    +'<div class="lucksub">從通書吉日裡，再依您的喜用神與生肖挑出「對您最好」的日子</div>'
+    +'<div class="lgt-card">'
+    +'<div class="lgt-form">'
+    +'<label>要辦的事<select id="zeriEvent">'+evOpts+'</select></label>'
+    +'<label>挑選範圍<select id="zeriRange"><option value="30">未來 30 天</option><option value="60" selected>未來 60 天</option><option value="90">未來 90 天</option><option value="180">未來半年</option></select></label>'
+    +'<label>另一位當事人生肖（選填）<select id="zeriOther"><option value="">不指定</option>'+sxOpts+'</select></label>'
+    +'<button class="toolbtn" type="button" onclick="zeriRun()">幫我挑日子</button>'
+    +'</div>'
+    +'<div class="lgt-note">結婚可填另一半、合夥簽約可填對方的生肖，系統會一併避開沖到對方的日子。</div>'
+    +'<div id="zeriOut"></div>'
+    +'</div>';
+}
+function zeriEval(I,ev,otherZhi){
+  const jn=I.jc.n,yi=String(I.jc.yi),ji=String(I.jc.ji);
+  if(ev.kw.some(function(k){return ji.includes(k);})||(ev.bad||[]).includes(jn))return null;
+  if(I.hitMe||(otherZhi&&I.chong===otherZhi))return null;
+  const hitKw=ev.kw.filter(function(k){return yi.includes(k);});
+  if(!hitKw.length&&!(ev.good||[]).includes(jn))return null;
+  const why=["通書宜"+(hitKw[0]||ev.n.split("・")[0])];
+  if(I.hdx.ji)why.push("黃道吉日（"+I.hdx.n+"）");
+  if(I.isXi)why.push("逢您的喜用神（"+I.dwx+"）");
+  if(I.heMe)why.push("與您生肖相合");
+  return {s:I.score+12+(I.hdx.ji?4:0)-(I.isJi?4:0),why:why};
+}
+function zeriRun(){
+  const D=window.__ZW,out=document.getElementById("zeriOut");
+  if(!D||!out)return;
+  if(!_paidGate("個人擇日"))return;
+  const evKey=(document.getElementById("zeriEvent")||{}).value||"marry",ev=ZERI_EVENTS[evKey];
+  const range=parseInt((document.getElementById("zeriRange")||{}).value,10)||60;
+  const otherZhi=(document.getElementById("zeriOther")||{}).value||"";
+  const ctx={xi:D.adv.strength.xi,ji:D.adv.strength.ji,meZhi:D.bz.year.zhi};
+  const t0=new Date(),hits=[];
+  for(let i=1;i<=range;i++){
+    const I=zwDayInfo(new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i),ctx);if(!I)continue;
+    const r=zeriEval(I,ev,otherZhi);if(r)hits.push({I:I,s:r.s,why:r.why});
+  }
+  if(!hits.length){out.innerHTML='<div class="lgt-empty">這段期間沒有同時符合「通書宜'+ev.n+'」且不沖您生肖的日子，請把挑選範圍拉長再試一次。</div>';return;}
+  hits.sort(function(a,b){return b.s-a.s||(a.I.y-b.I.y)||(a.I.m-b.I.m)||(a.I.d-b.I.d);});
+  const top=hits.slice(0,8);
+  window.__zeriLast={ev:ev,top:top};
+  const rows=top.map(function(h,idx){
+    const I=h.I,lv=h.s>=106?"上上吉":h.s>=96?"大吉":h.s>=84?"吉":"可用";
+    return '<div class="zeri-row'+(idx<3?' best':'')+'">'
+      +'<div class="zeri-rank">'+(idx+1)+'</div>'
+      +'<div class="zeri-main"><div class="zeri-date"><b>'+I.y+'/'+I.m+'/'+I.d+'（週'+ZW_WEEK[I.wd]+'）</b><span>'+I.dg+I.dz+'日 · '+I.jc.n+'日 · '+I.hdx.n+(I.hdx.ji?'〔黃道〕':'〔黑道〕')+'</span></div>'
+      +'<div class="zeri-chips">'+h.why.map(function(w){return '<span>'+w+'</span>';}).join("")+'</div>'
+      +'<div class="zeri-sub">沖'+I.chongSx+'・煞'+I.sha+'方（屬'+I.chongSx+'的親友當天避免擔任主要角色）｜財神'+I.cs+'・喜神'+I.xs+'・貴人'+I.gdir+'</div></div>'
+      +'<div class="zeri-lv">'+lv+'</div></div>';
+  }).join("");
+  out.innerHTML='<div class="zeri-h">'+ev.n+'・為您挑出 '+top.length+' 個好日子（共 '+hits.length+' 天合用，依個人契合度排序）</div>'
+    +'<div class="zeri-list">'+rows+'</div>'
+    +'<div class="lgt-act"><button class="toolbtn" type="button" onclick="zeriICS()">把這些吉日加入行事曆</button>'
+    +'<span class="lgt-note">擇日為傳統民俗參考；重要大事建議再綜合雙方時間、場地與長輩意見。</span></div>';
+}
+function zeriICS(){
+  const L=window.__zeriLast,D=window.__ZW;if(!L||!D)return;
+  if(!_paidGate("個人擇日"))return;
+  const now=new Date();
+  const stamp=now.getUTCFullYear()+String(now.getUTCMonth()+1).padStart(2,"0")+String(now.getUTCDate()).padStart(2,"0")+"T"+String(now.getUTCHours()).padStart(2,"0")+String(now.getUTCMinutes()).padStart(2,"0")+String(now.getUTCSeconds()).padStart(2,"0")+"Z";
+  const ev=[];
+  L.top.forEach(function(h,i){
+    const I=h.I,nd=new Date(Date.UTC(I.y,I.m-1,I.d)+86400000);
+    ev.push("BEGIN:VEVENT","UID:zw-zeri-"+stamp+"-"+i+"@life-manual","DTSTAMP:"+stamp,
+      "DTSTART;VALUE=DATE:"+_icsDate(I.y,I.m,I.d),
+      "DTEND;VALUE=DATE:"+_icsDate(nd.getUTCFullYear(),nd.getUTCMonth()+1,nd.getUTCDate()),
+      "SUMMARY:"+_icsEsc("吉日｜"+L.ev.n+"（第"+(i+1)+"順位）"),
+      "DESCRIPTION:"+_icsEsc(I.dg+I.dz+"日・"+I.jc.n+"日・"+I.hdx.n+"\n"+h.why.join("、")+"\n沖"+I.chongSx+"・煞"+I.sha+"方｜財神"+I.cs+"・喜神"+I.xs+"\n— 聖源大師·人生實用說明書系統 lifeguidetw.com"),
+      "TRANSP:TRANSPARENT","BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+_icsEsc("吉日｜"+L.ev.n),"TRIGGER:-PT15H","END:VALARM","END:VEVENT");
+  });
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//人生實用說明書系統//個人擇日//ZH-TW","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-TIMEZONE:Asia/Taipei"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n");
+  _downloadFile(_lgBase(D.name)+"_擇日_"+L.ev.n.replace(/・/g,"")+".ics",ics,"text/calendar;charset=utf-8");
+}
+
 function toolsSection(){
  return `<div class="sec-title"><span class="cn">命理應用工具</span><span class="en">Personal Tools</span></div>
  <div class="toolcards">
@@ -9564,6 +9680,8 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   ${baziWeightSection(bz,lunar)}
 
   ${familySection(fam)}
+
+  ${zeriSection()}
 
   ${toolsSection()}
   </div>
