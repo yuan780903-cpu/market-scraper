@@ -2283,7 +2283,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.1";
+const SITE_VERSION_DATE="2026.11.25.2";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -7345,7 +7345,7 @@ let LC_PRICE="888 元";   // ← 失敗安全的結緣價（後端讀取失敗�
 let LC_ORIG="888 元";    // ← 失敗安全的原價（顯示刪除線）
 // 目前生效的價格與文字標籤（由 /price/get 載入；先給預設值避免任何時序空窗）。
 let __price={
-  original:888, promo:188,
+  original:888, promo:888,
   labels:{title:"優惠價", unit:"／ 單份完整報告", origPrefix:"原價", restoreNote:"", currency:"元"}
 };
 function __priceCurrency(){return (__price&&__price.labels&&__price.labels.currency)||"元";}
@@ -8109,7 +8109,7 @@ function dmData(){
   var cur=(__price&&__price.labels&&__price.labels.currency)||'元';
   var L=(__price&&__price.labels)||{};
   return {
-    promo:(__price&&__price.promo)||188,
+    promo:(__price&&__price.promo)||888,
     original:(__price&&__price.original)||888,
     currency:cur,
     badge:g('dmBadge','限時結緣價'),
