@@ -1520,6 +1520,35 @@ footer .disc .sub{display:block;margin-top:12px}
 .zdf-bind.show{display:block}
 .zdf-bind a{color:var(--jade);font-weight:700}
 
+/* ===== 方案選擇／加購卡（v2026.11.25.4）===== */
+.pwtiers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 16px;text-align:left}
+.pwtier{position:relative;display:flex;flex-direction:column;gap:5px;border:1.5px solid rgba(201,165,97,.55);border-radius:4px;background:#fffefa;padding:14px 16px;cursor:pointer;transition:.2s}
+.pwtier input{position:absolute;opacity:0;pointer-events:none}
+.pwtier.on{border-color:var(--seal);box-shadow:inset 0 0 0 1px var(--seal),0 12px 24px -18px rgba(125,29,24,.6);background:#fffaf2}
+.pwtier-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.pwtier-h b{font-family:"LXGW WenKai TC",serif;font-size:1.2rem;letter-spacing:4px;color:#4a2c0c}
+.pwtier-h em{font-style:normal;font-family:"LXGW WenKai TC",serif;font-size:1.25rem;font-weight:700;color:var(--seal)}
+.pwtier i{font-style:normal;font-size:.8rem;line-height:1.6;color:var(--ink)}
+.pwtier small{font-size:.72rem;color:#8a7a5a;line-height:1.5}
+.pwtier::before{content:"";position:absolute;top:12px;right:-1px;width:0;height:0}
+.pwtier-badge{position:absolute;top:-10px;left:14px;background:var(--seal);color:#f6e3b0;font-size:.68rem;letter-spacing:2px;padding:1px 8px;border-radius:2px}
+.pwvol li.pwplus em{font-style:normal;display:inline-block;font-size:.64rem;letter-spacing:1px;color:var(--seal);border:1px solid rgba(179,56,44,.45);border-radius:2px;padding:0 4px;margin-right:5px;vertical-align:1px}
+.lgt-locked>*:not(.lgt-hd):not(.lgt-buy){display:none!important}
+.lgt-buy{border:1px dashed rgba(179,56,44,.45);border-radius:4px;background:#fffaf2;padding:16px 18px}
+.lgt-buy-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lgt-buy-h span{font-size:.7rem;letter-spacing:2px;color:#f6e3b0;background:var(--seal);border-radius:2px;padding:1px 7px}
+.lgt-buy-h b{flex:1;font-family:"LXGW WenKai TC",serif;font-size:1.08rem;letter-spacing:3px;color:#4a2c0c}
+.lgt-buy-h em{font-style:normal;font-family:"LXGW WenKai TC",serif;font-size:1.15rem;font-weight:700;color:var(--seal)}
+.lgt-buy ul{list-style:none;margin:0 0 12px;padding:0}
+.lgt-buy li{position:relative;padding:4px 0 4px 14px;font-size:.86rem;line-height:1.6;color:var(--ink)}
+.lgt-buy li::before{content:"";position:absolute;left:1px;top:.9em;width:5px;height:5px;background:#b8933a;transform:rotate(45deg)}
+.lgt-buy-act{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lgt-buy-act .toolbtn{width:auto;padding:11px 26px}
+.lgt-buy-all{background:none;border:1px solid var(--seal);color:var(--seal-deep);border-radius:4px;padding:10px 14px;font-family:inherit;font-size:.86rem;cursor:pointer;letter-spacing:.5px}
+.adn-opt{display:grid;grid-template-columns:22px 1fr auto;column-gap:8px;align-items:center;border:1px solid rgba(201,165,97,.5);border-radius:4px;background:#fffefa;padding:10px 12px;margin:8px 0;cursor:pointer}
+.adn-opt b{color:#4a2c0c;letter-spacing:1px}.adn-opt span{color:var(--seal);font-weight:700}
+.adn-opt i{grid-column:2/4;font-style:normal;font-size:.76rem;color:#8a7a5a}
+@media(max-width:560px){.pwtiers{grid-template-columns:1fr}.lgt-buy-act .toolbtn{width:100%}.lgt-buy-all{width:100%}}
 /* ===== 付費區典藏化（v2026.11.25.3）===== */
 #paywall.paywall{border:1px solid #c9a561;border-radius:6px;background:var(--paper-noise),linear-gradient(180deg,#fffdf7,#fbf5e6);
   box-shadow:inset 0 0 0 5px #fffcf3,inset 0 0 0 6px rgba(201,165,97,.5),0 26px 50px -36px rgba(90,40,20,.5)}
@@ -2397,7 +2426,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.3";
+const SITE_VERSION_DATE="2026.11.25.4";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4579,7 +4608,7 @@ function zeriSection(){
   const evOpts=Object.keys(ZERI_EVENTS).map(function(k){return '<option value="'+k+'">'+ZERI_EVENTS[k].n+'</option>';}).join("");
   const sxOpts=ZHI.map(function(z){return '<option value="'+z+'">屬'+SHENGXIAO[z]+'</option>';}).join("");
   return '<div class="sec-title"><span class="cn">個人擇日</span><span class="en">Date Selection</span></div>'
-    +'<div class="lgt-card">'
+    +'<div class="lgt-card" data-tool="zeri">'
     +lgtHead("擇","擇吉帖","從通書吉日裡，再依您的喜用神與生肖，挑出「對您最好」的日子","擇日吉課")
     +'<div class="lgt-form">'
     +'<label>要辦的事<select id="zeriEvent">'+evOpts+'</select></label>'
@@ -4607,6 +4636,7 @@ function zeriRun(){
   const D=window.__ZW,out=document.getElementById("zeriOut");
   if(!D||!out)return;
   if(!_paidGate("個人擇日"))return;
+  if(!zwToolGate("zeri"))return;
   const evKey=(document.getElementById("zeriEvent")||{}).value||"marry",ev=ZERI_EVENTS[evKey];
   const range=parseInt((document.getElementById("zeriRange")||{}).value,10)||60;
   const otherZhi=(document.getElementById("zeriOther")||{}).value||"";
@@ -4637,6 +4667,7 @@ function zeriRun(){
 function zeriICS(){
   const L=window.__zeriLast,D=window.__ZW;if(!L||!D)return;
   if(!_paidGate("個人擇日"))return;
+  if(!zwToolGate("zeri"))return;
   const now=new Date();
   const stamp=now.getUTCFullYear()+String(now.getUTCMonth()+1).padStart(2,"0")+String(now.getUTCDate()).padStart(2,"0")+"T"+String(now.getUTCHours()).padStart(2,"0")+String(now.getUTCMinutes()).padStart(2,"0")+String(now.getUTCSeconds()).padStart(2,"0")+"Z";
   const ev=[];
@@ -4662,7 +4693,7 @@ function hehunSection(){
   let last={};try{last=JSON.parse(localStorage.getItem('zw_hehun_last')||'{}')||{};}catch(e){}
   const scOpts='<option value="">不確定（只算八字部分）</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'"'+(String(last.hh)===String(i*2)?' selected':'')+'>'+z+'時</option>';}).join("");
   return '<div class="sec-title"><span class="cn">合婚 · 雙人合盤</span><span class="en">Compatibility</span></div>'
-    +'<div class="lgt-card">'
+    +'<div class="lgt-card" data-tool="hehun">'
     +lgtHead("合","庚帖","填入另一半（或交往對象）的生辰，推演兩人命盤的契合度、相處之道與適合成家的年份","合婚批書")
     +'<div class="lgt-form">'
     +'<label>對方姓名（或暱稱）<input id="hhName" type="text" maxlength="12" autocomplete="off" value="'+zwEsc(last.n||"")+'"></label>'
@@ -4737,6 +4768,7 @@ function hehunRun(){
   const D=window.__ZW,out=document.getElementById("hehunOut");
   if(!D||!out)return;
   if(!_paidGate("合婚雙人合盤"))return;
+  if(!zwToolGate("hehun"))return;
   const dv=(document.getElementById("hhDate")||{}).value;
   if(!dv){out.innerHTML='<div class="lgt-empty">請先填對方的出生日期。</div>';return;}
   const p=dv.split("-").map(Number),y=p[0],m=p[1],d=p[2];
@@ -4866,7 +4898,7 @@ function namingSection(name){
   const scOpts='<option value="">不確定</option>'+ZHI.map(function(z,i){return '<option value="'+(i*2)+'">'+z+'時</option>';}).join("");
   const stOpts='<option value="">不限風格</option>'+Object.keys(NG_STYLES).map(function(k){return '<option value="'+k+'">'+NG_STYLES[k]+'</option>';}).join("");
   return '<div class="sec-title"><span class="cn">取名建議</span><span class="en">Name Suggestions</span></div>'
-    +'<div class="lgt-card">'
+    +'<div class="lgt-card" data-tool="naming">'
     +lgtHead("名","命名帖","依三才五格與喜用神，為寶寶命名或自己改名；可選三字或單名、八種風格、指定用字","取名建議")
     +'<div class="lgt-form">'
     +'<label>姓氏（單姓）<input id="ngSur" type="text" maxlength="1" autocomplete="off" value="'+zwEsc(sur)+'" oninput="ngSurSync()"></label>'
@@ -4905,6 +4937,7 @@ function namingRun(){
   const D=window.__ZW,out=document.getElementById("namingOut");
   if(!D||!out)return;
   if(!_paidGate("取名建議"))return;
+  if(!zwToolGate("naming"))return;
   const sur=((document.getElementById("ngSur")||{}).value||"").trim();
   const surStroke=parseInt((document.getElementById("ngSurStroke")||{}).value,10)||STROKE[sur]||0;
   if(!/^[㐀-鿿]$/.test(sur)){out.innerHTML='<div class="lgt-empty">請輸入一個字的姓氏（目前支援單姓）。</div>';return;}
@@ -7460,7 +7493,7 @@ let LC_PRICE="888 元";   // ← 失敗安全的結緣價（後端讀取失敗�
 let LC_ORIG="888 元";    // ← 失敗安全的原價（顯示刪除線）
 // 目前生效的價格與文字標籤（由 /price/get 載入；先給預設值避免任何時序空窗）。
 let __price={
-  original:888, promo:888,
+  original:888, promo:888, basic:688, addon:150, upgrade:200,
   labels:{title:"優惠價", unit:"／ 單份完整報告", origPrefix:"原價", restoreNote:"", currency:"元"}
 };
 function __priceCurrency(){return (__price&&__price.labels&&__price.labels.currency)||"元";}
@@ -7490,6 +7523,9 @@ async function priceLoad(){
       __price={
         original:parseInt(j.original,10),
         promo:parseInt(j.promo,10),
+        basic:parseInt(j.basic,10)||688,
+        addon:parseInt(j.addon,10)||150,
+        upgrade:parseInt(j.upgrade,10)||Math.max(1,parseInt(j.promo,10)-(parseInt(j.basic,10)||688)),
         labels:Object.assign({title:"優惠價",unit:"／ 單份完整報告",origPrefix:"原價",restoreNote:"",currency:"元"},(j.labels&&typeof j.labels==='object')?j.labels:{})
       };
     }
@@ -7522,18 +7558,141 @@ async function lcIsUnlocked(p){try{if(sessionStorage.getItem('zw_guest_view')===
 /* ===== 折扣碼：客戶輸入後向 Worker 查詢，折抵後金額用 LINE Pay 付款解鎖 ===== */
 let __disc=null;   // {code,amount,reuse,base,final}
 let __kol=null;    // KOL 推薦碼 {code,name,discount,base,final}（付款時穿透帶進綠界）
+/* 方案選擇（v2026.11.25.4）：基本版＝八字命盤分析；全套＝基本版＋合婚・擇日・取名 */
+let __pwTier='full';
+const ZW_TOOLS=['hehun','zeri','naming'];
+function __tierBase(){const P=__price||{};return __pwTier==='basic'?(P.basic||688):(P.promo||888);}
+function pwTierSet(t){__pwTier=t==='basic'?'basic':'full';document.querySelectorAll('.pwtier').forEach(function(e){e.classList.toggle('on',e.dataset.tier===__pwTier);const r=e.querySelector('input');if(r)r.checked=(e.dataset.tier===__pwTier);});updatePriceUI();}
 function updatePriceUI(){
+  const P=__price||{},cur=__priceCurrency();
+  const bp=document.getElementById('pwTierBasicP'),fp=document.getElementById('pwTierFullP'),sv=document.getElementById('pwTierSave');
+  if(bp)bp.textContent=(P.basic||688)+' '+cur;
+  if(fp)fp.textContent=(P.promo||888)+' '+cur;
+  if(sv){const save=(P.basic||688)+3*(P.addon||150)-(P.promo||888);sv.textContent=save>0?('比基本版再分開加購省 '+save+' '+cur):'';}
+  document.querySelectorAll('.pwAddonP').forEach(function(e){e.textContent=(P.addon||150)+' '+cur;});
   const el=document.getElementById('pwPriceLine');if(!el)return;
-  const L=(__price&&__price.labels)||{};
-  const unit=L.unit||'／ 單份完整報告';
-  const cur=__priceCurrency();
+  const L=P.labels||{};
+  const unit=__pwTier==='basic'?'／ 基本版':'／ 全套（含合婚・擇日・取名）';
+  const base=__tierBase();
   if(__kol){
-    el.innerHTML='<em>'+esc4kol(__kol.name)+' 推薦價</em> <del>'+esc4kol(__kol.base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(__kol.final)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
+    const fin=Math.max(1,base-(parseInt(__kol.discount,10)||0));
+    el.innerHTML='<em>'+esc4kol(__kol.name)+' 推薦價</em> <del>'+esc4kol(base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(fin)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
   }else if(__disc){
-    el.innerHTML='<em>折扣後應付</em> <del>'+esc4kol(__disc.base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(__disc.final)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
+    const fin=Math.max(1,base-(parseInt(__disc.amount,10)||0));
+    el.innerHTML='<em>折扣後應付</em> <del>'+esc4kol(base)+' '+esc4kol(cur)+'</del><span class="pwfinal">'+esc4kol(fin)+' '+esc4kol(cur)+'</span> <span>'+esc4kol(unit)+'</span>';
   }else{
-    el.innerHTML='<em>'+esc4kol(L.title||'優惠價')+'</em> '+esc4kol(LC_PRICE)+' <span>'+esc4kol(unit)+'</span>';
+    el.innerHTML='<em>'+esc4kol(L.title||'優惠價')+'</em> '+esc4kol(__priceMoney(base))+' <span>'+esc4kol(unit)+'</span>';
   }
+}
+/* ===== 權益（本機）：zw_lic_<key>=1 已解鎖；zw_tier_<key>=basic 表示只有基本版，zw_tools_<key>＝已加購項目。
+   沒有 zw_tier 標記＝全套（含所有舊客、萬用碼、禮物碼、App 內購）。 ===== */
+function zwGrant(key,kind,items){try{
+  const lic='zw_lic_'+key,tk='zw_tier_'+key,ok='zw_tools_'+key;
+  const had=localStorage.getItem(lic)==='1',wasFull=had&&localStorage.getItem(tk)!=='basic';
+  localStorage.setItem(lic,'1');
+  if(kind==='full'){localStorage.removeItem(tk);localStorage.removeItem(ok);return;}
+  if(wasFull)return;   // 已是全套：任何較小的購買都不降級
+  if(kind==='basic'){localStorage.setItem(tk,'basic');if(localStorage.getItem(ok)===null)localStorage.setItem(ok,'');return;}
+  if(kind==='addon'){
+    const cur=(localStorage.getItem(ok)||'').split(',').filter(Boolean);
+    (items||[]).forEach(function(x){if(ZW_TOOLS.includes(x)&&!cur.includes(x))cur.push(x);});
+    if(ZW_TOOLS.every(function(x){return cur.includes(x);})){localStorage.removeItem(tk);localStorage.removeItem(ok);}
+    else{localStorage.setItem(tk,'basic');localStorage.setItem(ok,cur.join(','));}
+  }
+}catch(e){}}
+function zwGrantExact(key,ent,tools){try{
+  localStorage.setItem('zw_lic_'+key,'1');
+  if(ent==='basic'){localStorage.setItem('zw_tier_'+key,'basic');localStorage.setItem('zw_tools_'+key,(tools||[]).filter(function(x){return ZW_TOOLS.includes(x);}).join(','));}
+  else{localStorage.removeItem('zw_tier_'+key);localStorage.removeItem('zw_tools_'+key);}
+}catch(e){}}
+function zwIsBasicOnly(){try{const k=window.__LCK;return !!k&&localStorage.getItem('zw_lic_super')!=='1'&&localStorage.getItem('zw_tier_'+k)==='basic';}catch(e){return false;}}
+function zwHasTool(t){try{
+  if(sessionStorage.getItem('zw_guest_view')==='1')return false;
+  if(localStorage.getItem('zw_lic_super')==='1')return true;
+  const k=window.__LCK;if(!k||localStorage.getItem('zw_lic_'+k)!=='1')return false;
+  if(localStorage.getItem('zw_tier_'+k)!=='basic')return true;
+  return (localStorage.getItem('zw_tools_'+k)||'').split(',').includes(t);
+}catch(e){return false;}}
+function addonOwned(){try{return (localStorage.getItem('zw_tools_'+window.__LCK)||'').split(',').filter(Boolean);}catch(e){return [];}}
+function addonTotal(items){const P=__price||{},A=P.addon||150,U=P.upgrade||Math.max(1,(P.promo||888)-(P.basic||688));return (addonOwned().length===0&&items.length===ZW_TOOLS.length)?Math.min(items.length*A,U):items.length*A;}
+const ZW_TOOL_INFO={
+  hehun:{n:"合婚・雙人合盤",d:["輸入另一半的生辰，算出兩人契合度與合婚等級","五行互補、生肖與日柱合沖逐項合參","未來六年適合成家的吉年"]},
+  zeri:{n:"個人擇日",d:["結婚、搬家、開業、簽約等 9 類大事","從通書吉日裡，再依您的喜用神與生肖精挑","挑好的日子可一鍵匯入手機行事曆"]},
+  naming:{n:"取名建議",d:["近 500 個好字、8 種風格，可選三字或單名","三才五格皆吉，並補您或寶寶的喜用神","現代美學用字，避開老派字與同音字"]}
+};
+function zwToolGate(t){if(zwHasTool(t))return true;addonOpen([t]);return false;}
+function addonCardHTML(t){
+  const I=ZW_TOOL_INFO[t],P=__price||{},cur=__priceCurrency(),own=addonOwned();
+  return '<div class="lgt-buy-h"><span>加購</span><b>'+I.n+'</b><em>'+(P.addon||150)+' '+cur+'</em></div>'
+    +'<ul>'+I.d.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
+    +'<div class="lgt-buy-act"><button class="toolbtn" type="button" onclick="addonOpen([\''+t+'\'])">加購這一項</button>'
+    +(own.length===0?'<button class="lgt-buy-all" type="button" onclick="addonOpen(ZW_TOOLS.slice())">三項一起加購 · '+(P.upgrade||200)+' '+cur+'（＝升級全套）</button>':'')+'</div>'
+    +'<div class="lgt-note">您目前是基本版。加購後立即開通；換手機只要輸入相同的姓名與生辰，加購的項目也會一起恢復。</div>';
+}
+function zwToolGateSync(){
+  document.querySelectorAll('.lgt-card[data-tool]').forEach(function(c){
+    const t=c.dataset.tool,has=zwHasTool(t);
+    c.classList.toggle('lgt-locked',!has);
+    let b=c.querySelector('.lgt-buy');
+    if(!has){if(!b){b=document.createElement('div');b.className='lgt-buy';const hd=c.querySelector('.lgt-hd');if(hd)hd.after(b);else c.prepend(b);}b.innerHTML=addonCardHTML(t);}
+    else if(b)b.remove();
+  });
+}
+const __entChecked=Object.create(null);
+async function zwEntRefresh(){
+  try{
+    const k=window.__LCK;if(!k||!zwIsBasicOnly()||__entChecked[k])return;__entChecked[k]=1;
+    const nh=await lcNameHash(window.__LC.name);
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(k)+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.paid&&j.ent){zwGrantExact(k,j.ent,j.tools||[]);zwToolGateSync();}
+  }catch(e){}
+}
+function addonOpen(sel){
+  const own=addonOwned(),opts=ZW_TOOLS.filter(function(t){return !own.includes(t);}),cur=__priceCurrency(),P=__price||{};
+  if(!opts.length){zwToolGateSync();return;}
+  const body='<p>您已擁有<b>基本版</b>（八字命盤完整分析）。下面的實用工具可以只挑需要的加購：</p>'
+    +opts.map(function(t){return '<label class="adn-opt"><input type="checkbox" value="'+t+'"'+((sel||[]).includes(t)?' checked':'')+' onchange="addonCalc()"><b>'+ZW_TOOL_INFO[t].n+'</b><span>'+(P.addon||150)+' '+cur+'</span><i>'+ZW_TOOL_INFO[t].d[0]+'</i></label>';}).join('')
+    +'<div id="adnTotal" class="lnlockbox"></div>'
+    +'<label class="lncsx"><input type="checkbox" id="adnConsent"> 我已閱讀並同意<a onclick="openLegal(\'terms\')">《服務條款》</a><a onclick="openLegal(\'privacy\')">《隱私權政策》</a>，並瞭解本服務為數位內容，一經開通即無法退費</label>'
+    +'<button class="engbtn" type="button" onclick="addonStartPay()" style="width:100%;margin-top:6px">綠界安全付款 · 加購</button>'
+    +'<div id="adnMsg" class="lcmsg" style="margin-top:8px"></div>';
+  zwOpenModal("加購","加購實用工具","已購基本版專屬",body);
+  addonCalc();
+}
+function addonCalc(){
+  const it=[...document.querySelectorAll('.adn-opt input:checked')].map(function(x){return x.value;});
+  const el=document.getElementById('adnTotal');if(!el)return;
+  if(!it.length){el.innerHTML='請至少勾選一項';return;}
+  const full=addonOwned().length===0&&it.length===ZW_TOOLS.length;
+  el.innerHTML='應付 <b style="color:var(--seal)">'+addonTotal(it)+' '+__priceCurrency()+'</b>'+(full?'<br><span style="font-size:.82rem;color:var(--ink-faint)">三項一起＝補差價升級全套</span>':'');
+}
+async function addonStartPay(){
+  const it=[...document.querySelectorAll('.adn-opt input:checked')].map(function(x){return x.value;});
+  const msg=document.getElementById('adnMsg'),cs=document.getElementById('adnConsent');
+  const say=function(t,err){if(msg){msg.textContent=t;msg.className='lcmsg'+(err?' err':'');}};
+  if(!it.length){say('請至少勾選一項。',1);return;}
+  if(cs&&!cs.checked){say('請先勾選同意條款再付款。',1);return;}
+  if(typeof inAppPayGate==='function'&&inAppPayGate())return;
+  if(!window.__LC)return;
+  const key=await lcKey(window.__LC.payload);
+  const form={};LP_FORM_KEYS.forEach(function(id){const el=document.getElementById(id);if(el)form[id]=el.value;});form.gender=gender;
+  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key:key,form:form,product:'addon',items:it,ts:Date.now()}));}catch(e){}
+  say('正在前往綠界付款頁…');
+  const nh=await lcNameHash(window.__LC.name);
+  const ret=location.origin+location.pathname;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?product=addon&items='+encodeURIComponent(it.join(','))+'&key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.action&&j.params){
+      const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
+      Object.keys(j.params).forEach(function(k){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=j.params[k];f.appendChild(i);});
+      document.body.appendChild(f);f.submit();
+    }else{
+      const why={owned:'您已擁有這些項目，請重新整理頁面。',nobase:'查不到這份命盤的基本版購買紀錄。請用購買時填寫的姓名與生辰排盤，或聯繫 LINE 客服 @910imdmw。'}[j&&j.reason];
+      say('✗ '+(why||('無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請稍後再試。')),1);
+    }
+  }catch(e){say('✗ 無法連線付款伺服器，請稍後再試。',1);}
 }
 function esc4kol(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 /* R1 合規：已停用「限時循環倒數」計時器（原為永不真正結束的假限時，違反不實促銷）。
@@ -7577,7 +7736,7 @@ async function lcAutoRestore(payload,name){
     const r=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(key)+nhQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.paid){
-      try{localStorage.setItem('zw_lic_'+key,'1');}catch(e){}
+      zwGrantExact(key,j.ent||'full',j.tools||[]);
       return true;
     }
   }catch(e){/* 失敗安全：維持未解鎖 */}
@@ -7627,6 +7786,7 @@ let __lcSeq=0;   // 競態守衛：render 時那發 lcRefresh 的網路查詢若
 async function lcRefresh(){
   const my=++__lcSeq;
   const z=document.getElementById('premZone');if(!z||!window.__LC)return;
+  try{window.__LCK=await lcKey(window.__LC.payload);}catch(e){}
   let unlocked=await lcIsUnlocked(window.__LC.payload);
   // 未解鎖時，先嘗試「同生辰＝已購買」的跨裝置自動復原；命中則寫入本機並重排讓報告自動開啟。
   if(!unlocked){
@@ -7637,6 +7797,8 @@ async function lcRefresh(){
   if(my!==__lcSeq)return;     // 同上：避免舊結果覆蓋新狀態
   z.classList.toggle('locked',!unlocked);
   try{__premSync(z,!!unlocked);}catch(e){}
+  try{zwToolGateSync();}catch(e){}
+  if(unlocked)zwEntRefresh();
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
   try{const gc=sessionStorage.getItem('zw_gift_code');
     if(gc&&unlocked){sessionStorage.removeItem('zw_gift_code');const gb=document.getElementById('giftBanner');if(gb)gb.innerHTML='';}
@@ -7663,7 +7825,7 @@ async function lcUnlock(){
   try{res=await lcRedeem(code);}
   catch(e){msg.textContent='✗ 無法連線驗證伺服器，請確認網路後再試一次。';msg.className='lcmsg err';return;}
   if(res&&res.ok){
-    try{localStorage.setItem('zw_lic_'+await lcKey(window.__LC.payload),'1');}catch(e){}
+    try{zwGrant(await lcKey(window.__LC.payload),'full');}catch(e){}
     msg.textContent=res.super?'✓ 超級萬用碼驗證成功，完整精析已開啟！':'✓ 解鎖成功，完整精析已開啟！';
     msg.className='lcmsg ok';
     await lcRefresh();
@@ -7761,7 +7923,9 @@ function superOpen(){
     <div class="engsec">
       <div class="englbl">⓪ 價格修改（全站顯示與綠界收款金額）</div>
       <div class="engrow"><span class="engk">原價</span><input id="engPriceOrig" class="enginp2" type="number" min="1" placeholder="例如 888"><span class="engu">元（顯示刪除線）</span></div>
-      <div class="engrow"><span class="engk">限時優惠價</span><input id="engPricePromo" class="enginp2" type="number" min="1" placeholder="例如 188"><span class="engu">元（＝實際收款金額）</span></div>
+      <div class="engrow"><span class="engk">限時優惠價</span><input id="engPricePromo" class="enginp2" type="number" min="1" placeholder="例如 888"><span class="engu">元（＝全套實際收款金額）</span></div>
+      <div class="engrow"><span class="engk">基本版價</span><input id="engPriceBasic" class="enginp2" type="number" min="1" placeholder="例如 688"><span class="engu">元（須低於全套）</span></div>
+      <div class="engrow"><span class="engk">每項加購價</span><input id="engPriceAddon" class="enginp2" type="number" min="1" placeholder="例如 150"><span class="engu">元（合婚／擇日／取名）</span></div>
       <div class="engrow"><span class="engk">優惠價前綴</span><input id="engPriceTitle" class="enginp2" placeholder="人生航路限時結緣價" maxlength="40" autocomplete="off" spellcheck="false"></div>
       <div class="engrow"><span class="engk">價格後綴</span><input id="engPriceUnit" class="enginp2" placeholder="／ 單份完整報告" maxlength="40" autocomplete="off" spellcheck="false"></div>
       <div class="engrow"><span class="engk">原價前綴</span><input id="engPriceOrigPrefix" class="enginp2" placeholder="原價" maxlength="20" autocomplete="off" spellcheck="false"></div>
@@ -7969,7 +8133,7 @@ async function engLoadPrice(){
   if(!(j&&j.ok)){ engOut('engPriceOut','載入失敗。','err'); return; }
   const L=(j.labels&&typeof j.labels==='object')?j.labels:{};
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=(v==null?'':v);};
-  set('engPriceOrig',j.original); set('engPricePromo',j.promo);
+  set('engPriceOrig',j.original); set('engPricePromo',j.promo); set('engPriceBasic',j.basic); set('engPriceAddon',j.addon);
   set('engPriceTitle',L.title); set('engPriceUnit',L.unit); set('engPriceOrigPrefix',L.origPrefix);
   set('engPriceRestore',L.restoreNote); set('engPriceCurrency',L.currency);
   engOut('engPriceOut','目前：原價 '+j.original+' 元 · 優惠價 '+j.promo+' 元'+(j.fallback?'（後端尚無設定，顯示為預設值，儲存後即生效）':'')+'。','ok');
@@ -7983,6 +8147,9 @@ async function engSavePrice(){
   const gv=id=>((document.getElementById(id)||{}).value||'').trim();
   const q=[];
   q.push('original='+orig,'promo='+promo);
+  const eb=parseInt(gv('engPriceBasic'),10),ea=parseInt(gv('engPriceAddon'),10);
+  if(eb>=1){if(eb>=promo){engOut('engPriceOut','基本版價須低於全套（限時優惠價）。','err');return;}q.push('basic='+eb);}
+  if(ea>=1)q.push('addon='+ea);
   // 文字標籤：有填才帶（未帶則後端沿用預設）
   const t=gv('engPriceTitle'); if(t)q.push('labTitle='+encodeURIComponent(t));
   const u=gv('engPriceUnit'); if(u)q.push('labUnit='+encodeURIComponent(u));
@@ -7993,7 +8160,7 @@ async function engSavePrice(){
   let j;try{ j=await engFetch('/price/set?'+q.join('&')); }
   catch(e){ engOut('engPriceOut',(e&&e.msg)||'連線失敗，請確認網路。','err'); return; }
   if(j&&j.ok){
-    engOut('engPriceOut','✓ 已儲存並生效：原價 '+j.original+' 元 · 優惠價 '+j.promo+' 元（全站與綠界收款同步更新）。','ok');
+    engOut('engPriceOut','✓ 已儲存並生效：全套 '+j.promo+' 元 · 基本版 '+j.basic+' 元 · 每項加購 '+j.addon+' 元（全站與綠界收款同步更新）。','ok');
     try{ if(window.__price!==undefined){} }catch(e){}
     try{ __ecInfo=undefined; }catch(e){}   // 讓 /ecpay/ready 快取失效，重新取得新金額
     try{ await priceLoad(); }catch(e){}     // 立即把新價反映到目前畫面付款區
@@ -9192,7 +9359,7 @@ function __iapBuy(){
 }
 // 供原生端在內購成功後呼叫，走與付款相同的解鎖路徑
 window.__iapUnlock = async function(){
-  try{if(window.__LC)localStorage.setItem('zw_lic_'+await lcKey(window.__LC.payload),'1');}catch(e){}
+  try{if(window.__LC){const k=await lcKey(window.__LC.payload);if(String(window.__LC.payload).indexOf('palm:')===0)localStorage.setItem('zw_lic_'+k,'1');else zwGrant(k,'full');}}catch(e){}
   if(window.__LC&&String(window.__LC.payload).indexOf('palm:')===0){__palmRerenderUnlocked();return;}
   const m=document.getElementById('lcMsg');if(m){m.textContent='✓ 購買成功，完整報告已開啟！';m.className='lcmsg ok';}
   try{await lcRefresh();}catch(e){}
@@ -9225,7 +9392,8 @@ async function ecStartEcpay(){
   const key=await lcKey(window.__LC.payload);
   const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
   form.gender=gender;
-  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
+  const tierQ=__pwTier==='basic'?'&product=basic':'';
+  try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,product:__pwTier==='basic'?'basic':'',ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname;
   const discQ=(__disc&&__disc.code)?('&disc='+encodeURIComponent(__disc.code)):'';
@@ -9234,7 +9402,7 @@ async function ecStartEcpay(){
   const nh=await lcNameHash(window.__LC.name);
   const nhQ=nh?('&nh='+encodeURIComponent(nh)):'';
   try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+discQ+kolQ+nhQ,{cache:'no-store'});
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?key='+encodeURIComponent(key)+'&ret='+encodeURIComponent(ret)+tierQ+discQ+kolQ+nhQ,{cache:'no-store'});
     const j=await r.json();
     if(j&&j.ok&&j.action&&j.params){
       const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
@@ -9309,6 +9477,7 @@ function giftInit(){
   }catch(e){}
 }
 /* ===== 購買保障（v2026.11.25.3）：購買憑證存本機 zw_receipts；訂單編號自助找回 ===== */
+function ecItemName(kind,items){return kind==='basic'?'八字命盤分析報告（基本版）':kind==='addon'?('命書加購：'+(items||[]).map(function(x){return (ZW_TOOL_INFO[x]||{}).n||x;}).join('、')):'個人命盤完整精析報告（全套）';}
 function ecReceipts(){try{return JSON.parse(localStorage.getItem('zw_receipts')||'[]')||[];}catch(e){return [];}}
 function ecSaveReceipt(r){try{const l=ecReceipts().filter(function(x){return x.o!==r.o;});l.unshift(r);localStorage.setItem('zw_receipts',JSON.stringify(l.slice(0,30)));}catch(e){}}
 function ecFmtTime(t){const d=new Date(t);const p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
@@ -9355,8 +9524,11 @@ async function ecOrderLookup(){
     if(!j.key){say('這筆是<b>禮物兌換碼</b>訂單，請到「想送家人朋友一本？」查看兌換碼，或聯繫 LINE 客服。');return;}
     const key=await lcKey(window.__LC.payload);
     if(j.key!==key){say('這筆訂單已付款，但對應的是<b>另一組姓名與生辰</b>。請在上方改輸入購買時填寫的資料、重新排盤後再查一次。');return;}
-    try{localStorage.setItem('zw_lic_'+key,'1');}catch(e){}
-    const rc={o:o,t:Date.now(),n:window.__LC.name||'',amt:''};ecSaveReceipt(rc);
+    const kind=j.prod==='basic'?'basic':j.prod==='addon'?'addon':'full';
+    let ent=null;
+    try{const nh=await lcNameHash(window.__LC.name);const r2=await fetch(LC_API.replace(/\/+$/,'')+'/lic/check?key='+encodeURIComponent(key)+(nh?('&nh='+encodeURIComponent(nh)):''),{cache:'no-store'});const j2=await r2.json();if(j2&&j2.paid&&j2.ent)ent=j2;}catch(e){}
+    if(ent)zwGrantExact(key,ent.ent,ent.tools||[]);else zwGrant(key,kind,j.items);
+    const rc={o:o,t:Date.now(),n:window.__LC.name||'',item:ecItemName(kind,j.items)};ecSaveReceipt(rc);
     say('已確認付款，正在為您開通完整報告…',true);
     setTimeout(function(){try{zwCloseModal();}catch(e){}try{run();}catch(e){}setTimeout(function(){ecShowReceipt(rc,true);},900);},600);
   }catch(e){say('無法連線金流後台，請稍後再試，或聯繫 LINE 客服。');}
@@ -9394,10 +9566,11 @@ async function ecHandleReturn(){
             if(pend.palm){__palmLast=pend.palm;renderPalm(pend.palm.age,pend.palm.hand,pend.palm.hasAlt,pend.palm.features);}
             return true;
           }
-          try{localStorage.setItem('zw_lic_'+pend.key,'1');}catch(e){}
+          const kind=pend.product==='basic'?'basic':pend.product==='addon'?'addon':'full';
+          zwGrant(pend.key,kind,pend.items);
           localStorage.removeItem('zw_ec_pending');clean();
-          const rc={o:back,t:Date.now(),n:(pend.form&&pend.form.name)||'',amt:LC_PRICE};ecSaveReceipt(rc);
-          lpRestoreAndRender(pend.form);setTimeout(function(){ecShowReceipt(rc,true);},1600);return true;
+          const rc={o:back,t:Date.now(),n:(pend.form&&pend.form.name)||'',item:ecItemName(kind,pend.items)};ecSaveReceipt(rc);
+          lpRestoreAndRender(pend.form);setTimeout(function(){ecShowReceipt(rc,true);if(kind==='addon'){const c=document.querySelector('.lgt-card[data-tool="'+((pend.items||[])[0]||'')+'"]');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});}},1600);return true;
         }
       }catch(e){}
       await new Promise(r=>setTimeout(r,1500));
@@ -10217,11 +10390,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         <li>個人農民曆 .ics：365 天宜忌匯入手機</li>
       </ul></div>
       <div class="pwvol"><div class="pwvol-h"><span>參</span>實用工具</div><ul>
-        <li>合婚・雙人合盤：契合度與適合成家的年份</li>
-        <li>個人擇日：結婚、搬家、開業等 9 類</li>
-        <li>取名建議：近 500 個好字、8 種風格、可選單名</li>
         <li>AI 分析文本：帶著命盤去問 ChatGPT／Claude</li>
         <li>一鍵下載 PDF 典藏報告</li>
+        <li class="pwplus"><em>全套／加購</em>合婚・雙人合盤：契合度與適合成家的年份</li>
+        <li class="pwplus"><em>全套／加購</em>個人擇日：結婚、搬家、開業等 9 類</li>
+        <li class="pwplus"><em>全套／加購</em>取名建議：近 500 個好字、8 種風格、可選單名</li>
       </ul></div>
     </div>
     <div class="pwdemo-h"><span>解鎖後的實際畫面</span><i>以下為範例，解鎖後依您的命盤即時產生</i></div>
@@ -10239,6 +10412,16 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         <div class="pwd-nm"><b>林宥廷</b><span>90 分</span></div>
         <div class="pwd-nm"><b>林芯語</b><span>89 分</span></div>
         <div class="pwd-sub">三才五格皆吉・補喜用神・可選溫文儒雅等 8 種風格</div></div>
+    </div>
+    <div class="pwtiers">
+      <label class="pwtier" data-tier="basic" onclick="pwTierSet('basic')"><input type="radio" name="pwTier" value="basic">
+        <div class="pwtier-h"><b>基本版</b><em id="pwTierBasicP">688 元</em></div>
+        <i>八字命盤完整分析（卷壹＋卷貳）、流年精批、今日運勢、AI 文本、PDF 報告</i>
+        <small>合婚、擇日、取名之後需要再單項加購，每項 <span class="pwAddonP">150 元</span></small></label>
+      <label class="pwtier on" data-tier="full" onclick="pwTierSet('full')"><input type="radio" name="pwTier" value="full" checked><span class="pwtier-badge">最划算</span>
+        <div class="pwtier-h"><b>全套</b><em id="pwTierFullP">888 元</em></div>
+        <i>基本版全部內容，再加上合婚・雙人合盤、個人擇日、取名建議三項工具</i>
+        <small id="pwTierSave"></small></label>
     </div>
     <div class="pwsafe">
       <div><span>即</span><b>付款後立即開通</b><i>綠界確認入帳後，自動打開完整報告</i></div>
