@@ -1345,6 +1345,22 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .bk-brand2{font-size:10.5px;letter-spacing:2.5px;color:#d4b476;margin-top:9px}
 #reportPrint .bk-note{font-size:9px;line-height:1.95;color:#c9a561;max-width:470px;margin:28px auto 0}
 
+/* ===== 送禮：禮物兌換碼（前綴 gift-）===== */
+#giftBanner{max-width:1080px;margin:14px auto 0;padding:0 16px}
+#giftBanner:empty{display:none}
+.gift-banner{border:1px solid var(--seal);border-left-width:5px;border-radius:12px;background:var(--seal-wash);padding:12px 16px;font-size:.92rem;line-height:1.8;color:var(--ink)}
+.gift-banner b:first-child{display:block;color:var(--seal);letter-spacing:2px;font-size:1rem}
+.gift-code{font-family:"LXGW WenKai TC",ui-monospace,monospace;font-size:2rem;letter-spacing:6px;text-align:center;color:var(--seal);border:2px dashed var(--seal);border-radius:14px;padding:14px 8px;margin:8px 0 14px;background:var(--seal-wash);user-select:all}
+.gift-share{font-size:.88rem;line-height:1.8;color:var(--ink);background:var(--card2);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;margin:6px 0 10px;user-select:all;word-break:break-all}
+.gift-btns{display:flex;flex-wrap:wrap;gap:10px}
+.gift-btns .toolbtn{flex:1;min-width:140px}
+.gift-ok{font-size:.84rem;color:var(--jade);min-height:1.4em;margin-top:6px}
+.gift-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line-soft);border-radius:10px;padding:8px 12px;margin:6px 0;background:var(--card2)}
+.gift-row b{font-family:ui-monospace,monospace;letter-spacing:2px;color:var(--gold-deep)}
+.gift-row .scf-pick{margin-top:0}
+.pwgift{text-align:center;margin-top:10px}
+@media print{#giftBanner{display:none!important}}
+
 /* ===== 取名建議（前綴 ng-）===== */
 .ng-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:10px}
 .ng-card{border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;background:var(--card2)}
@@ -1948,6 +1964,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 </header>
 
 <div id="todayHome"></div>
+<div id="giftBanner"></div>
 
 <section class="intro">
   <p class="introlead">我們不寫嚇人的命書，而是把你的命盤，寫成一本<b>看得懂、用得上的人生使用手冊</b>——讓你在每個十字路口，都握得住自己的<b>人生方向盤</b>。</p>
@@ -2250,7 +2267,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.24.11";
+const SITE_VERSION_DATE="2026.11.24.12";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4768,6 +4785,13 @@ function toolsSection(){
      <b>好在哪：</b>市面的農民曆人人一本都一樣；這一本是「您的個人版」——傳統<b>每日宜忌・沖煞・財神／貴人／喜神方位</b>全收錄，再疊上<b>您的喜用神</b>與流月流年、大運切換。<br>
      <b>您得到：</b>未來 <b>365 天</b>，每天打開行事曆就知道：今天宜什麼、忌什麼，財位在哪、貴人在哪個方向，今天是不是「您的好日子」、有沒有沖到您的生肖——每一天都有白話解說，重要日子前一天還會自動提醒。</p>
      <button class="toolbtn" type="button" onclick="runCalExport()">下載個人農民曆 .ics</button>
+   </div>
+   <div class="toolcard">
+     <h4><span class="ic">❖</span>送一本給重要的人<span class="toolval">禮物兌換碼</span></h4>
+     <p><b>這是什麼：</b>買一組禮物兌換碼，送給家人、另一半或好朋友。<br>
+     <b>好在哪：</b>對方用自己的生辰排盤、輸入兌換碼，就能開啟屬於他的完整命書——今日運勢、流年精批、合婚、擇日、取名，全部功能一次擁有。<br>
+     <b>您得到：</b>一份「讀懂自己」的禮物。生日、新婚、轉職、新生兒彌月，都很適合。</p>
+     <button class="toolbtn" type="button" onclick="giftOpen()">購買禮物兌換碼</button>
    </div>
  </div>`;
 }
@@ -7381,6 +7405,10 @@ async function lcRefresh(){
   z.classList.toggle('locked',!unlocked);
   try{__premSync(z,!!unlocked);}catch(e){}
   const pw=document.getElementById('paywall');if(pw)pw.style.display=unlocked?'none':'';
+  try{const gc=sessionStorage.getItem('zw_gift_code');
+    if(gc&&unlocked){sessionStorage.removeItem('zw_gift_code');const gb=document.getElementById('giftBanner');if(gb)gb.innerHTML='';}
+    else if(gc){const li=document.getElementById('lcInput'),lm=document.getElementById('lcMsg');if(li&&!li.value){li.value=gc;if(lm){lm.textContent='已為您帶入禮物兌換碼，按「確認」即可開啟完整報告。';lm.className='lcmsg';}}}
+  }catch(e){}
   const tb=document.getElementById('toolbar');if(tb)tb.classList.toggle('lockpdf',!unlocked);
   const fab=document.getElementById('pdfFab');if(fab){fab.classList.toggle('lockpdf',!unlocked);const fm=document.getElementById('pdfFabMsg');if(fm&&unlocked)fm.className='pdffabmsg';}
   // 安全網：僅在「已解鎖 且 處於無法下載 PDF 的 App 內建瀏覽器(LINE/FB/IG…)」時，才顯示「把報告存成圖片」卡；
@@ -8982,6 +9010,71 @@ async function ecStartEcpay(){
     }else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請改用萬用碼或稍後再試。';msg.className='lcmsg err';}
   }catch(e){if(msg){msg.textContent='✗ 無法連線付款伺服器，請稍後再試。';msg.className='lcmsg err';}}
 }
+/* ===== 送禮：禮物兌換碼（買一組「單次兌換碼」送人；後端 /ecpay/request?product=gift，付款成功由後端產生 g:1 碼）=====
+   買家不需要命盤；憑前端亂數憑證 gt 向 /ecpay/state 領碼。碼存本機 zw_gifts 供日後再查看。 */
+function giftList(){try{return JSON.parse(localStorage.getItem('zw_gifts')||'[]')||[];}catch(e){return [];}}
+function giftSave(code){try{const l=giftList();if(!l.some(function(x){return x.c===code;})){l.unshift({c:code,t:Date.now()});localStorage.setItem('zw_gifts',JSON.stringify(l.slice(0,30)));}}catch(e){}}
+function giftShareText(code){return '送你一本專屬的《人生實用說明書》命書！\n到 https://lifeguidetw.com/?gift='+code+' 輸入姓名與生辰排盤，系統會自動帶入兌換碼「'+code+'」，按確認就能開啟完整報告。';}
+function giftOpen(){
+  const mine=giftList();
+  const mineHTML=mine.length?('<div class="zwsec">我買過的禮物兌換碼</div>'+mine.map(function(x){return '<div class="gift-row"><b>'+x.c+'</b><button type="button" class="scf-pick" onclick="giftShowCode(\''+x.c+'\')">查看・分享</button></div>';}).join('')):'';
+  const body='<p>買一組<b>禮物兌換碼</b>送給家人朋友：對方到本站輸入自己的生辰排盤後，輸入兌換碼就能開啟<b>完整命書</b>（含今日運勢、流年精批、合婚、擇日、取名等全部功能）。</p>'
+    +'<p>・一組兌換碼可開啟<b>一份</b>完整報告，沒有使用期限。<br>・付款完成後兌換碼會立刻顯示，也會存在您這台裝置的「我買過的禮物兌換碼」。</p>'
+    +'<div class="lnlockbox">禮物兌換碼 · <b style="color:var(--gold)">'+LC_PRICE+'</b><br><span style="font-size:.82rem;color:var(--ink-faint)">與完整報告同價 · 綠界安全付款</span></div>'
+    +'<label class="lncsx"><input type="checkbox" id="giftConsent"> 我已閱讀並同意《服務條款》《隱私權政策》，並同意數位內容於兌換碼發出後不適用七日鑑賞期</label>'
+    +'<button class="engbtn" type="button" onclick="giftStartPay()" style="width:100%;margin-top:6px">綠界安全付款 · 購買禮物兌換碼</button>'
+    +'<div id="giftMsg" class="lcmsg" style="margin-top:8px"></div>'+mineHTML;
+  zwOpenModal("送禮","送一本命書給重要的人","禮物兌換碼",body);
+}
+async function giftStartPay(){
+  const msg=document.getElementById('giftMsg'),cs=document.getElementById('giftConsent');
+  if(cs&&!cs.checked){if(msg){msg.textContent='請先勾選同意條款再付款。';msg.className='lcmsg err';}return;}
+  if(typeof inAppPayGate==='function'&&inAppPayGate())return;
+  const gt=[...crypto.getRandomValues(new Uint8Array(16))].map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  try{localStorage.setItem('zw_ec_pending',JSON.stringify({product:'gift',gt:gt,ts:Date.now()}));}catch(e){}
+  if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
+  const ret=location.origin+location.pathname;
+  try{
+    const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/request?product=gift&gt='+gt+'&ret='+encodeURIComponent(ret),{cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok&&j.action&&j.params){
+      const f=document.createElement('form');f.method='POST';f.action=j.action;f.style.display='none';
+      Object.keys(j.params).forEach(function(k){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=j.params[k];f.appendChild(i);});
+      document.body.appendChild(f);f.submit();
+    }else if(msg){msg.textContent='✗ 無法建立付款（'+((j&&(j.msg||j.reason))||'未知')+'），請稍後再試。';msg.className='lcmsg err';}
+  }catch(e){if(msg){msg.textContent='✗ 無法連線付款伺服器，請稍後再試。';msg.className='lcmsg err';}}
+}
+function giftShowCode(code,fresh){
+  const body=(fresh?'<p style="color:var(--jade);font-weight:700">付款成功，這是您的禮物兌換碼：</p>':'')
+    +'<div class="gift-code">'+code+'</div>'
+    +'<p>把下面這段文字傳給對方即可（對方點連結會自動帶入兌換碼）：</p>'
+    +'<div class="gift-share">'+giftShareText(code).replace(/\n/g,'<br>')+'</div>'
+    +'<div class="gift-btns"><button class="toolbtn" type="button" onclick="giftCopy(\''+code+'\')">複製分享文字</button>'
+    +(navigator.share?'<button class="toolbtn" type="button" onclick="giftShare(\''+code+'\')">分享給朋友</button>':'')+'</div>'
+    +'<div class="gift-ok" id="giftOk"></div>'
+    +'<p class="lmnote">兌換碼只能使用一次，請直接傳給要送的人，不要公開張貼。之後想再看這組碼：回到本站「送一本給重要的人」就找得到。</p>';
+  zwOpenModal("送禮","禮物兌換碼","一組開啟一份完整命書",body);
+}
+function giftCopy(code){
+  const t=giftShareText(code),ok=document.getElementById('giftOk');
+  const done=function(){if(ok)ok.textContent='✓ 已複製，貼到 LINE 或訊息傳給對方即可。';};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){if(ok)ok.textContent='請長按上方文字手動複製。';});return;}}catch(e){}
+  try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}catch(e){if(ok)ok.textContent='請長按上方文字手動複製。';}
+}
+function giftShare(code){try{navigator.share({title:'人生實用說明書 · 禮物兌換碼',text:giftShareText(code)}).catch(function(){});}catch(e){}}
+/* 收禮者：?gift=兌換碼 → 記在本分頁、首頁顯示提示；排盤後由 lcRefresh 自動帶入解鎖欄。#gift → 直接開購買彈窗 */
+function giftInit(){
+  try{
+    const p=new URLSearchParams(location.search),g=(p.get('gift')||'').trim().toUpperCase();
+    if(/^[A-Z0-9]{6,16}$/.test(g)){
+      sessionStorage.setItem('zw_gift_code',g);p.delete('gift');const q=p.toString();
+      history.replaceState(null,'',location.pathname+(q?('?'+q):'')+location.hash);
+    }
+    const gc=sessionStorage.getItem('zw_gift_code'),b=document.getElementById('giftBanner');
+    if(gc&&b)b.innerHTML='<div class="gift-banner"><b>您收到一份禮物</b>有人送您一本完整命書。請在下方輸入姓名與生辰、按「開始排盤」，系統會自動帶入兌換碼 <b>'+gc+'</b>，再按「確認」就能開啟。</div>';
+    if(location.hash==='#gift')setTimeout(giftOpen,500);
+  }catch(e){}
+}
 async function ecHandleReturn(){
   const p=new URLSearchParams(location.search);
   const back=p.get('ecback');
@@ -8992,8 +9085,12 @@ async function ecHandleReturn(){
     // 綠界背景通知可能略晚於顧客返回，故輪詢數次
     for(let i=0;i<12;i++){
       try{
-        const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(back),{cache:'no-store'});
+        const r=await fetch(LC_API.replace(/\/+$/,'')+'/ecpay/state?order='+encodeURIComponent(back)+(pend.gt?('&gt='+encodeURIComponent(pend.gt)):''),{cache:'no-store'});
         const j=await r.json();
+        if(pend.product==='gift'){
+          // 禮物兌換碼：付款入帳且後端已產碼 → 存本機、顯示兌換碼與分享文字
+          if(j&&j.paid&&j.gift){giftSave(j.gift);localStorage.removeItem('zw_ec_pending');clean();giftShowCode(j.gift,true);return true;}
+        }else
         if(j&&j.paid&&j.key===pend.key){
           if(pend.product==='liunian'){
             // 流年批：標記該年解鎖 → 復原命盤 → 顯示流年批
@@ -9018,6 +9115,7 @@ async function ecHandleReturn(){
       }catch(e){}
       await new Promise(r=>setTimeout(r,1500));
     }
+    if(pend.product==='gift'){alert('付款確認中，綠界通知可能稍有延遲。請在同一個瀏覽器稍候約 1 分鐘後重新整理本頁，兌換碼就會出現；若仍未出現，請加 LINE 官方帳號 @910imdmw 並提供訂單編號 '+back+'。');return true;}
     // 綠界背景通知偶有延遲：保留 zw_ec_pending 與網址上的 ?ecback= 訂單號（不呼叫 clean），
     // 讓使用者在同一瀏覽器重新整理本頁時，ecHandleReturn 能再次輪詢 /ecpay/state 確認並自動解鎖。
     alert('付款確認中，綠界通知可能稍有延遲。若您已完成付款卻未自動解鎖，請在同一個瀏覽器稍候（約 1 分鐘）重新整理本頁再試；仍未解鎖請加 LINE 官方帳號 @910imdmw 聯繫客服（服務時間：平日 08:00–20:00），附上您的付款時間協助處理。');return true;
@@ -9864,6 +9962,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     </div>
     <div id="lcMsg" class="lcmsg"></div>
     <div class="pwnote">輸入萬用碼後立即開啟完整報告；解鎖後此裝置將永久記住此報告。命理計算全程在本機，不上傳任何個資。</div>
+    <div class="pwgift"><button type="button" class="scfind" onclick="giftOpen()">想送家人朋友一本？購買禮物兌換碼</button></div>
   </div>
 
   <div id="premZone" class="locked">
@@ -10849,6 +10948,7 @@ function kcDownload(){
 
 siteLoad();
 try{zwHomeDaily();}catch(e){}
+try{giftInit();}catch(e){}
 
 /* ===== 自然之聲背景音樂（Web Audio 即時合成，無外部檔案・無版權問題） ===== */
 /* ===== 背景自然音引擎（HTML5 <audio> 播放）=====
