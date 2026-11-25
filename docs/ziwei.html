@@ -319,6 +319,13 @@ header .meta b{color:var(--gold);font-weight:500}
 .ymd{align-items:center;gap:4px;flex-wrap:wrap}.ymd-roc{flex:0 0 100%;font-size:.74rem;color:var(--ink-faint);letter-spacing:1px;min-height:1em}.ymd-u{font-style:normal;flex:0 0 auto;font-size:.86rem;color:var(--ink-dim);margin-right:3px}
 .lgt-form label:has(.ymd){grid-column:span 2}
 .ymd.hm select{flex:1 1 0}
+/* 工具表單內：民國年小字改浮在下拉下方，不撐高欄位，避免同列欄位高低不齊 */
+.lgt-form .ymd{position:relative}
+.lgt-form .ymd-roc{position:absolute;left:0;top:100%;margin-top:5px;white-space:nowrap}
+.lgt-form:has(.ymd){row-gap:30px}
+/* 三個工具表單一致：欄位等高、按鈕獨立一列置中 */
+.lgt-form select,.lgt-form input{height:42px;box-sizing:border-box}
+.lgt-form>.toolbtn{grid-column:1/-1;justify-self:center;width:min(100%,360px)}
 @media(min-width:700px){.grid-in>.field:has(> .ymd:not(.hm)){grid-column:span 2}}
 @media(max-width:560px){.lgt-form label:has(.ymd){grid-column:1/-1}}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden}
@@ -2434,7 +2441,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.6";
+const SITE_VERSION_DATE="2026.11.25.7";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
