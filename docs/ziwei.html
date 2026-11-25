@@ -1284,14 +1284,15 @@ footer .disc .sub{display:block;margin-top:12px}
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 #reportPrint .rp-head2::after{width:120px}
 #reportPrint .rp-page>.rp-head2:first-child{margin-top:4px}
-#reportPrint .rp-pgrid,#reportPrint .rp-fgrid{column-count:2;column-gap:7px}
-#reportPrint .rp-pgrid>.rp-prow,#reportPrint .rp-fgrid>.rp-frow{display:contents!important}
+#reportPrint .rp-pgrid,#reportPrint .rp-fgrid{display:flex;gap:7px;align-items:flex-start}
+#reportPrint .rp-pgrid>.rp-scol,#reportPrint .rp-fgrid>.rp-scol{flex:1 1 0;min-width:0}
 #reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{display:block;width:100%!important;box-sizing:border-box;margin:0 0 7px!important;
   break-inside:auto;page-break-inside:auto;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 /* v.25.11：卡片允許在欄底／頁底接續（框線兩段都補齊），標題不落單、合參列與條列不切半，消除整張卡跳頁造成的頁底空白 */
 #reportPrint .rp-pgrid .ph,#reportPrint .rp-fgrid .fh{break-after:avoid;page-break-after:avoid;break-inside:avoid;page-break-inside:avoid}
 #reportPrint .rp-pgrid .pb,#reportPrint .rp-pgrid .pb>.ps:first-child,#reportPrint .rp-fgrid .fbd,#reportPrint .rp-fgrid .fbd>.fxr:first-child{break-before:avoid;page-break-before:avoid}
-#reportPrint .rp-pgrid .px,#reportPrint .rp-pgrid .ps,#reportPrint .rp-fgrid .fxr{break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-pgrid .px,#reportPrint .rp-fgrid .fxr{break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-pgrid .ps{orphans:2;widows:2}
 #reportPrint .rp-tbl td.g{line-height:1.55}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
@@ -1363,11 +1364,14 @@ footer .disc .sub{display:block;margin-top:12px}
   html:not(.ios-dev) #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(96px,100px))}
   html:not(.ios-dev) #reportPrint .rp-chart .pps{font-size:12px}
   #reportPrint .rp-sec{margin-top:18px}
+  #reportPrint .rp-head2{margin:14px 0 8px;padding-bottom:9px}
   /* 結尾「綜合命理白話總評」：允許從上一頁底部開始接續，不再整段跳頁留下約 3cm 空白。
      框線改 slice（跨頁處上下開口、像書本的「續頁」）——clone 會在頁底多要一截內距＋框線，實測就是放不下的原因；
      段落允許 1 行起頭（第一段只有 2 行，至少 2 行規則等於整段不能拆）。 */
   #reportPrint .rp-lifesum{-webkit-box-decoration-break:slice!important;box-decoration-break:slice!important}
   #reportPrint .rp-lifesum p{orphans:1;widows:1}
+  /* v.25.14：結尾「敬祝」區塊置底——下載時由 zwFitClosing() 量出最後一頁剩餘高度，寫進 --zw-bless-push */
+  #reportPrint .rp-bless{margin-top:calc(16px + var(--zw-bless-push,0px))}
 }
 /* ===== 一鍵 PDF 擷取用版面（rp-cap）：在螢幕上以「等同專業列印」的樣式渲染 #reportPrint，
    供 html2canvas 逐頁擷取；擷取時以 inline style 移到畫面外（left:-99999px），使用者看不到。
@@ -2492,7 +2496,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.13";
+const SITE_VERSION_DATE="2026.11.25.14";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
@@ -6965,6 +6969,7 @@ async function runPdfExport(fromFab){
   }
   // 更新報告輸出時間戳
   const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr()+'　·　版本 v'+SITE_VERSION_DATE;
+  try{zwFitClosing();}catch(e){}
   // v2.0.1：下載改回瀏覽器原生列印（window.print），印出 #reportPrint 完整專業版（11 頁詳細）。
   // in-app 內建瀏覽器（LINE／FB／IG）window.print 常被擋且靜默失效 → 明確引導，不靜默。
   const inApp=(typeof isInAppBrowser==='function')?isInAppBrowser():false;
@@ -6982,6 +6987,40 @@ async function runPdfExport(fromFab){
     setNote('✗ 無法開啟列印視窗，請改用<b>電腦或手機的 Safari／Chrome</b> 再試。',true);
   }
   setTimeout(_restoreTitle,3000);          // 保險還原標題（afterprint 亦已掛 _restoreTitle）
+}
+/* v.25.14 結尾置底：列印前（同步、不重繪）暫時把所有 @media print 規則套到畫面，
+   把 #reportPrint 放進「每欄＝一頁內容區（210×273mm）」的多欄容器模擬分頁，
+   量出最後一頁內容結束處到頁底的剩餘高度，推給「敬祝＋版權聲明」當上距 → 結尾貼齊頁底。
+   iOS／Safari 列印自帶頁首尾邊界、可印高不同，不做（維持原排版，避免誤推出多一頁）。 */
+function zwFitClosing(){
+  const rp=document.getElementById('reportPrint');if(!rp)return 0;
+  rp.style.setProperty('--zw-bless-push','0px');
+  if(document.documentElement.classList.contains('ios-dev'))return 0;
+  const pages=[...rp.querySelectorAll('.rp-page:not(.rp-cover):not(.rp-back)')];
+  const last=pages[pages.length-1],bless=last&&last.querySelector('.rp-bless');
+  if(!bless)return 0;                       // 有人際合盤附卷時，敬祝不在最末頁 → 不推
+  let css='';
+  for(const sh of document.styleSheets){let rs;try{rs=sh.cssRules;}catch(e){continue;}
+    for(const r of rs){if(r.media&&/print/.test(r.media.mediaText)){for(const x of r.cssRules){if(!(x instanceof CSSPageRule))css+=x.cssText+'\n';}}}}
+  css+='#reportPrint .rp-cover,#reportPrint .rp-back{display:none!important}';
+  const st=document.createElement('style');st.textContent=css;
+  const box=document.createElement('div');
+  box.style.cssText='position:absolute;left:0;top:0;width:210mm;height:273mm;column-width:210mm;column-gap:0;column-fill:auto;overflow:visible;visibility:hidden';
+  const parent=rp.parentNode,next=rp.nextSibling;
+  let push=0;
+  try{
+    document.head.appendChild(st);document.body.appendChild(box);box.appendChild(rp);
+    const H=box.getBoundingClientRect().height, top=box.getBoundingClientRect().top;
+    const endEl=last.lastElementChild;
+    const er=[...endEl.getClientRects()].pop(), br=bless.getClientRects()[0];
+    if(er&&br&&Math.abs(er.left-br.left)<5){   // 敬祝與結尾同一頁（同一欄）才推
+      const remain=H-(er.bottom-top);
+      if(remain>8)push=Math.floor(remain-8);
+    }
+  }catch(e){push=0;}
+  finally{parent.insertBefore(rp,next);box.remove();st.remove();}
+  rp.style.setProperty('--zw-bless-push',push+'px');
+  return push;
 }
 document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
 document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
@@ -10868,6 +10907,11 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   // 將扁平卡片「兩張一列」包進 row wrapper：列印時 row 為分頁最小單位（break-inside:avoid），
   // 同時 row 內 flex 讓同列兩卡等高、色塊鋪滿到底邊、底邊對齊。
   const _pairRows=(cards,rowCls)=>{let o="";for(let i=0;i<cards.length;i+=2){o+=`<div class="${rowCls}">`+cards[i]+(cards[i+1]||"")+`</div>`;}return o;};
+  /* v.25.14 雙欄卡片改「兩條獨立直欄」：依文字量平衡分配（保持原順序），短卡不再被拉等高留白；
+     不用 CSS 多欄（column-count）——它在列印分頁與「結尾置底」量測模擬下斷頁結果不一致。 */
+  const _twoCols=cards=>{const L=[],Rr=[];let a=0,b=0;
+    cards.forEach(c=>{const w=c.replace(/<[^>]+>/g,"").length+60;if(a<=b){L.push(c);a+=w;}else{Rr.push(c);b+=w;}});
+    return `<div class="rp-scol">${L.join("")}</div><div class="rp-scol">${Rr.join("")}</div>`;};
   let _pcards=[];
   for(let b=0;b<12;b++){
     const pn=zw.palaceName[b];
@@ -10895,7 +10939,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<div class="pb">${body}</div>${px}</div>`);
   }
   ppPalaceProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 論命要訣「不以一宮論斷」</b>：每一宮的吉凶，須連同<b>正對面的對宮</b>與<b>左右兩個三合宮</b>（合稱三方四正）一起交叉合參，才算準確；空宮則借對宮主星入本宮論之。以下每張宮位卡片下方均已附「三方四正合參」，請對照同看。</div>`
-    +`<div class="rp-pgrid">${_pairRows(_pcards,"rp-prow")}</div>`;
+    +`<div class="rp-pgrid">${_twoCols(_pcards)}</div>`;
   if(_hasEmptyPalace){
     ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}</div>`;
   }
@@ -10941,7 +10985,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<div class="fbd">${rows}</div></div>`;
   };
   const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動；以下每宮一格、依色辨識，並附白話。</div>`
-    +`<div class="rp-fgrid">`+_pairRows(Array.from({length:12},(_,b)=>_flyCard(b)),"rp-frow")+`</div>`;
+    +`<div class="rp-fgrid">`+_twoCols(Array.from({length:12},(_,b)=>_flyCard(b)))+`</div>`;
   // 三方四正白話
   const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
   // 大運白話（現行大限 + 各步十神綱要）
