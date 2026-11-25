@@ -1284,8 +1284,12 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .rp-page>.rp-head2:first-child{margin-top:4px}
 #reportPrint .rp-pgrid,#reportPrint .rp-fgrid{column-count:2;column-gap:7px}
 #reportPrint .rp-pgrid>.rp-prow,#reportPrint .rp-fgrid>.rp-frow{display:contents!important}
-#reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{display:inline-block;width:100%!important;box-sizing:border-box;margin:0 0 7px!important;
-  break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;vertical-align:top}
+#reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{display:block;width:100%!important;box-sizing:border-box;margin:0 0 7px!important;
+  break-inside:auto;page-break-inside:auto;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* v.25.11：卡片允許在欄底／頁底接續（框線兩段都補齊），標題不落單、合參列與條列不切半，消除整張卡跳頁造成的頁底空白 */
+#reportPrint .rp-pgrid .ph,#reportPrint .rp-fgrid .fh{break-after:avoid;page-break-after:avoid;break-inside:avoid;page-break-inside:avoid}
+#reportPrint .rp-pgrid .pb,#reportPrint .rp-pgrid .pb>.ps:first-child,#reportPrint .rp-fgrid .fbd,#reportPrint .rp-fgrid .fbd>.fxr:first-child{break-before:avoid;page-break-before:avoid}
+#reportPrint .rp-pgrid .px,#reportPrint .rp-pgrid .ps,#reportPrint .rp-fgrid .fxr{break-inside:avoid;page-break-inside:avoid}
 #reportPrint .rp-tbl td.g{line-height:1.55}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
@@ -2470,7 +2474,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.10";
+const SITE_VERSION_DATE="2026.11.25.11";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
