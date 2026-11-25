@@ -1347,6 +1347,12 @@ footer .disc .sub{display:block;margin-top:12px}
   /* iOS 230mm 版面較矮：題簽條縮短，避免印章貼到頁腳 */
   html.ios-dev #reportPrint .cv-slip{height:430px}
   html.ios-dev #reportPrint .cv-slip b{font-size:40px;letter-spacing:16px}
+  /* v.25.17 Mac 桌機 Safari：實測它會套用 @page 上 11／下 13mm 邊界（內容區 273mm，不支援具名頁 0 邊界），
+     封底是文件最後元素、230mm 以下不繪製 → 下方一大段白。Mac 版封面／封底改 270mm 撐滿內容區（留 3mm 餘裕），
+     題簽條恢復桌機尺寸。iPhone／iPad（AirPrint 可印高約 235–240mm）維持 230mm，勿合併。 */
+  html.mac-safari #reportPrint .rp-cover,html.mac-safari #reportPrint .rp-back{height:270mm}
+  html.mac-safari #reportPrint .cv-slip{height:470px}
+  html.mac-safari #reportPrint .cv-slip b{font-size:42px;letter-spacing:20px}
   /* v.25.8：深析長卡（健康／財運／感情／親子／人際等，每張半頁到一頁）原本整張不可跨頁，
      放不下就整張跳到下一頁、前頁下半部空白。改為卡片可跨頁、跨頁處兩段都補上框線與內距；
      仍保護小單位（標題不落單、條列與段落不被切半、命盤／圖表整塊）。 */
@@ -2502,9 +2508,9 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.16";
+const SITE_VERSION_DATE="2026.11.25.17";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
-try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
+try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
    裝置上的正式解鎖旗標），加 ?guest=0 或關分頁即恢復。lcIsUnlocked 與 lcAutoRestore 都會看這旗標。 */
