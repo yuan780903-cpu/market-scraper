@@ -1273,6 +1273,20 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .cj-big{font-size:12px;color:#b3382c}
 #reportPrint .cj-note{font-size:8.5px;color:#8a7a52;margin-top:3px;border-top:1px dashed #e0d2a8;padding-top:3px}
 #reportPrint .rcard b{color:#7a5a12}
+
+/* v.25.10 內頁：章節標題改「卷」字分隔（連續流排版下出現在頁中也合理，不再寫第幾頁）；
+   宮位／飛化卡片改雙欄瀑布流（短卡不再被拉成與鄰卡等高而留大片空白） */
+#reportPrint .rp-head2{display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;letter-spacing:5px;color:#7a5a12;font-weight:700;
+  margin:30px 0 14px;padding:0 0 12px;break-after:avoid;page-break-after:avoid}
+#reportPrint .rp-head2 span{font-size:11px;letter-spacing:3px;color:#fff;background:#963a31;border-radius:3px;padding:2px 8px 2px 11px;font-weight:600;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+#reportPrint .rp-head2::after{width:120px}
+#reportPrint .rp-page>.rp-head2:first-child{margin-top:4px}
+#reportPrint .rp-pgrid,#reportPrint .rp-fgrid{column-count:2;column-gap:7px}
+#reportPrint .rp-pgrid>.rp-prow,#reportPrint .rp-fgrid>.rp-frow{display:contents!important}
+#reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{display:inline-block;width:100%!important;box-sizing:border-box;margin:0 0 7px!important;
+  break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;vertical-align:top}
+#reportPrint .rp-tbl td.g{line-height:1.55}
 @media print{
   body.rp-on #result,body.rp-on #reportHead{display:none!important}
   body.rp-on .sky,body.rp-on .stars,body.rp-on .stars2,body.rp-on .bagua,body.rp-on header,body.rp-on .panel,body.rp-on .toolbar,body.rp-on .pdffab,body.rp-on .musicwrap,body.rp-on footer{display:none!important}
@@ -2008,7 +2022,9 @@ footer .ftlegal a{color:var(--gold,#a9801c);text-decoration:none;cursor:pointer;
 footer .ftlegal a:hover{color:var(--gold-bright,#c2941d);border-color:var(--gold,#a9801c)}
 footer .ftlegal .ftsep{opacity:.5;margin:0 8px}
 footer .ftcopy{margin-top:10px;font-size:.78rem;color:var(--ink-faint,#9a93ad);letter-spacing:.6px}
-footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opacity:.5;letter-spacing:.8px}
+footer .ftver{margin-top:6px;font-size:.72rem;color:var(--ink-faint,#9a93ad);opacity:.8;letter-spacing:.8px}
+header .hdver{margin-top:10px;font-size:.7rem;letter-spacing:1.5px;color:var(--ink-faint,#9a93ad);opacity:.85}
+header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
 /* 路線B：個人收款 + 手動發碼 的付款說明區 */
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
   background:var(--pwash,rgba(106,63,181,.06));border:1px solid var(--line-soft);border-radius:16px;padding:16px 18px}
@@ -2147,6 +2163,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
     <div>命盤系統 <b>北派紫微斗數</b></div>
     <div>適用範圍 <b>西元 1900–2100</b></div>
   </div>
+  <div class="hdver">版本 <b id="hdVer"></b></div>
 </header>
 
 <div id="todayHome"></div>
@@ -2453,7 +2470,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.9";
+const SITE_VERSION_DATE="2026.11.25.10";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
@@ -2469,7 +2486,7 @@ try{
     document.body.appendChild(__gb);
   }
 }catch(e){}
-try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 "+SITE_VERSION+" · "+SITE_VERSION_DATE;}catch(e){}
+try{var _sv=document.getElementById("siteVersion");if(_sv)_sv.textContent="版本 v"+SITE_VERSION_DATE;var _hv=document.getElementById("hdVer");if(_hv)_hv.textContent="v"+SITE_VERSION_DATE;}catch(e){}
 
 /* ================= 基礎常數 ================= */
 const GAN=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
@@ -6925,7 +6942,7 @@ async function runPdfExport(fromFab){
     setNote('✗ 找不到報告內容，請重新排盤後再試。',true);return;
   }
   // 更新報告輸出時間戳
-  const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr();
+  const rt=document.getElementById('rpTime');if(rt)rt.textContent=expTimeStr()+'　·　版本 v'+SITE_VERSION_DATE;
   // v2.0.1：下載改回瀏覽器原生列印（window.print），印出 #reportPrint 完整專業版（11 頁詳細）。
   // in-app 內建瀏覽器（LINE／FB／IG）window.print 常被擋且靜默失效 → 明確引導，不靜默。
   const inApp=(typeof isInAppBrowser==='function')?isInAppBrowser():false;
@@ -10765,7 +10782,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     if(zw.suiPre&&zw.suiPre[b])za.push(zw.suiPre[b]);
     const xa=(zw.xiaoXian[b]||[]).slice(0,6).join("/");
     const mk=(b===zw.ming?'·命':'')+(b===zw.shen?'·身':'')+(b===adv.limits.curBranch?'·限':'');
-    ppDetailRows+=`<tr><td class="c"><b>${zw.palaceName[b]}</b><span class="g">${mk}</span><br><span class="g">${zw.palaceGan[b]}${ZHI[b]}</span></td><td>${starTxt}</td><td class="c g">${za.join(' ')||'—'}<br>限${adv.limits.limits[b].start}-${adv.limits.limits[b].end}<br>小限 ${xa}</td></tr>`;
+    ppDetailRows+=`<tr><td class="c"><b>${zw.palaceName[b]}</b><span class="g">${mk}</span><br><span class="g">${zw.palaceGan[b]}${ZHI[b]}</span></td><td>${starTxt}</td><td class="g">${za.join(' ')||'—'}</td><td class="g">大限 ${adv.limits.limits[b].start}–${adv.limits.limits[b].end} 歲<br>小限 ${xa}</td></tr>`;
   }
   // 神煞
   const ssTxt=adv.ss&&adv.ss.length?adv.ss.map(s=>`${s.name}（${s.at}柱）`).join("、"):"無顯著神煞";
@@ -10939,7 +10956,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
         </div>`:"";
       const bullets=mb.bullets.map(b=>`<li>${b}</li>`).join("");
       return `<div class="rp-page">
-        <div class="rp-head2">人生實用說明書系統 · 人際合盤交叉分析　—　命主 ${name} 與 ${mb.rel}${mb.name?`（${mb.name}）`:""}</div>
+        <div class="rp-head2"><span>附卷</span>人際合盤 · ${name} 與 ${mb.rel}${mb.name?`（${mb.name}）`:""}</div>
         <div class="rp-id">
           <span>命主 <b>${name} · ${gender}</b></span>
           <span>對象 <b>${mb.rel}${mb.name?` · ${mb.name}`:""}</b></span>
@@ -11025,7 +11042,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-row"><b style="color:#bf4660">最弱項 ${bot.k}（${bot.v}分・PR ${scoreToPR(bot.v)}）轉弱為強</b>：${ba}</div>`;})()}
   </div>
   <div class="rp-page">
-    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（續・第二頁）</div>
+    <div class="rp-head2"><span>卷貳</span>八字格局 · 人生深析</div>
     <div class="rp-sec">子平八字 · 四柱五行</div>
     <div class="rp-fp">${ppFp}</div>
     <div class="rp-wx">五行能量：${ppWx}　·　最旺 <b>${strongest}</b>、最弱 <b>${weakest}</b></div>
@@ -11053,9 +11070,9 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-foot">本報告採真實曆法演算（農曆轉換・二十四節氣・真太陽時校正・六十甲子・紫微安星法則），融子平八字與紫微斗數為命主量身而成。曆法適用 1900/1/31–2100 年，節氣與立春定年採太陽視黃經演算達「分」級精度，交節當日依出生時刻自動判定年月柱邊界（臨界數分鐘內宜再核對），閏月以該月月份排盤。命理重在「知命而後造命」，吉凶皆為趨勢、非定數；重大抉擇仍請審慎獨立判斷。　·　© 2026 人生實用說明書系統．聖源大師 版權所有</div>
   </div>
   <div class="rp-page">
-    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第三頁 · 紫微命盤詳解）</div>
+    <div class="rp-head2"><span>卷參</span>紫微命盤詳解</div>
     <div class="rp-sec">紫微斗數 · 十二宮逐宮詳解（主星 · 輔星 · 四化 · 亮度 · 雜曜）</div>
-    <table class="rp-tbl"><thead><tr><th style="width:18%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:24%">雜曜 · 大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
+    <table class="rp-tbl"><thead><tr><th style="width:11%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:21%">雜曜</th><th style="width:22%">大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
     <div class="rp-row g">四化標記：化祿（福祿機緣）· 化權（掌控主導）· 化科（名聲貴人）· 化忌（牽絆耗損）。〔命〕命宮 〔身〕身宮 〔限〕現行大限。</div>
     <div class="rp-sec">十二宮白話逐宮解讀（宮位職掌 · 主星性格）</div>
     ${ppPalaceProse}
@@ -11072,7 +11089,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     ${sfszProse}
   </div>
   <div class="rp-page">
-    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第四頁 · 大運 · 流年 · 流月）</div>
+    <div class="rp-head2"><span>卷肆</span>大運 · 流年 · 流月</div>
     <div class="rp-sec">大運 · 每步十年</div>
     <div class="rp-row g">起運 ${lk.startAge} 歲・${lk.forward?'順行':'逆行'}佈運</div>
     <table class="rp-tbl"><thead><tr><th>步</th><th>歲數</th><th>干支</th><th>主十神</th><th>納音</th><th>現行</th></tr></thead><tbody>${dyRows}</tbody></table>
@@ -11089,7 +11106,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
     <div class="rp-row g">吉＝逢喜用神之月，五行得氣、宜進取佈局；留意＝逢忌神之月，宜守成緩進；平＝五行持平，按部就班即可。</div>
   </div>
   <div class="rp-page">
-    <div class="rp-head2">人生實用說明書系統 · 命理精析　—　${name} · ${gender}（第五頁 · 稱骨 · 姓名 · 開運）</div>
+    <div class="rp-head2"><span>卷伍</span>稱骨 · 姓名 · 開運</div>
     <div class="rp-sec">八字重量 · 袁天罡稱骨（八字份量說明解析）</div>
     <div class="rp-row">您的八字共重 <b style="font-size:16px;color:#c2576f">${boneStr}</b>，由出生年、農曆月、農曆日、時辰四項「骨重」相加而成，各項份量如下：</div>
     <div class="rp-kv2">
