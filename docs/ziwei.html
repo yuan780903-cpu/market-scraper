@@ -1074,7 +1074,9 @@ footer .disc .sub{display:block;margin-top:12px}
 /* ===== PDF 列印報告版面 ===== */
 #reportHead{display:none}
 @media print{
-  @page{size:A4;margin:0}
+  @page{size:A4;margin:11mm 0 13mm;
+    @bottom-center{content:"— " counter(page) " —";font-size:8pt;color:#b09a5c;letter-spacing:1px;font-family:"Noto Serif TC","PingFang TC",serif}}
+  @page cover{margin:0;@bottom-center{content:none}}
   html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .sky,.stars,.bagua{display:none!important}
   header,.panel,.toolbar,.pdffab,.musicwrap,footer{display:none!important}
@@ -1350,6 +1352,17 @@ footer .disc .sub{display:block;margin-top:12px}
   #reportPrint .rp-hpbox{break-inside:auto}
   #reportPrint .rp-cover{break-after:page;page-break-after:always}
   #reportPrint .rp-back{break-before:page;page-break-before:always}
+  /* v.25.12：內頁改用真正的頁面邊界（@page 上 11mm／下 13mm，底部置中頁碼）；封面、封底走具名頁 cover（0 邊界滿版）。
+     先前 @page margin:0＋區塊 padding 的作法，在段落中間換頁時接續頁上下 0 邊距（字貼紙緣、實體印表機會裁字）。
+     指定了頁邊框內容（@bottom-center）後，Chrome 不再印預設的網址／日期頁首頁尾。 */
+  #reportPrint .rp-cover,#reportPrint .rp-back{page:cover}
+  #reportPrint .rp-page:not(.rp-cover):not(.rp-back){padding:0 12mm}
+  #reportPrint .rp-page+.rp-page:not(.rp-back){padding-top:0}
+  #reportPrint .rp-time{position:static;text-align:right;margin:0 0 2px}
+  /* 第 2 頁（命盤總覽）底部約 2.8cm 留白：命盤格放大填滿（也更好讀）；iOS／Safari 可印高較小，維持原尺寸 */
+  html:not(.ios-dev) #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(96px,100px))}
+  html:not(.ios-dev) #reportPrint .rp-chart .pps{font-size:12px}
+  #reportPrint .rp-sec{margin-top:18px}
 }
 /* ===== 一鍵 PDF 擷取用版面（rp-cap）：在螢幕上以「等同專業列印」的樣式渲染 #reportPrint，
    供 html2canvas 逐頁擷取；擷取時以 inline style 移到畫面外（left:-99999px），使用者看不到。
@@ -2474,7 +2487,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.11";
+const SITE_VERSION_DATE="2026.11.25.12";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
