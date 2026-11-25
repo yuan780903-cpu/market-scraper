@@ -318,6 +318,8 @@ header .meta b{color:var(--gold);font-weight:500}
 .ymd .ymd-y{flex:2 1 0}
 .ymd{align-items:center;gap:4px;flex-wrap:wrap}.ymd-roc{flex:0 0 100%;font-size:.74rem;color:var(--ink-faint);letter-spacing:1px;min-height:1em}.ymd-u{font-style:normal;flex:0 0 auto;font-size:.86rem;color:var(--ink-dim);margin-right:3px}
 .lgt-form label:has(.ymd){grid-column:span 2}
+.ymd.hm select{flex:1 1 0}
+@media(min-width:700px){.grid-in>.field:has(> .ymd:not(.hm)){grid-column:span 2}}
 @media(max-width:560px){.lgt-form label:has(.ymd){grid-column:1/-1}}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden}
 .seg button{flex:1;background:var(--surface);border:none;color:var(--ink-dim);padding:13px 0;
@@ -2183,7 +2185,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
       </div>
       <div class="field">
         <label>出生日期（國曆）</label>
-        <input id="date" type="date" value="1990-01-01">
+        <input id="date" type="date" value="">
       </div>
       <div class="field">
         <label>出生時間</label>
@@ -2191,7 +2193,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
           <button type="button" data-m="clock" class="on">時鐘時間</button>
           <button type="button" data-m="shichen">只記得時辰</button>
         </div>
-        <input id="time" type="time" value="12:00">
+        <input id="time" type="time" value="">
         <select id="shichen" style="display:none" aria-label="出生時辰">
           <option value="0">子時 · 23–01（夜半）</option>
           <option value="2">丑時 · 01–03（雞鳴）</option>
@@ -2310,7 +2312,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
       <div class="grid-in">
         <div class="field">
           <label>出生日期（自動推算年齡）</label>
-          <input id="palmBirth" type="date" value="1990-01-01">
+          <input id="palmBirth" type="date" value="">
         </div>
         <div class="field">
           <label>慣用手</label>
@@ -2432,7 +2434,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.5";
+const SITE_VERSION_DATE="2026.11.25.6";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -4779,6 +4781,7 @@ function hehunRun(){
   if(!dv){out.innerHTML='<div class="lgt-empty">請先填對方的出生日期。</div>';return;}
   const p=dv.split("-").map(Number),y=p[0],m=p[1],d=p[2];
   if(!(y>=1900&&y<=2100)||Date.UTC(y,m-1,d)<Date.UTC(1900,0,31)){out.innerHTML='<div class="lgt-empty">對方的出生日期需在 1900/1/31 之後。</div>';return;}
+  if(!zwValidYmd(y,m,d)||zwIsFuture(y,m,d)){out.innerHTML='<div class="lgt-empty">對方的出生日期不存在或晚於今天，請重新選擇。</div>';return;}
   const bName=((document.getElementById("hhName")||{}).value||"").trim()||"對方";
   const bGender=(document.getElementById("hhGender")||{}).value||"女";
   const hv=(document.getElementById("hhHour")||{}).value,hasHour=hv!=="";
@@ -4915,7 +4918,7 @@ function namingSection(name){
     +'<label>名字風格<select id="ngStyle" onchange="namingBrowse()">'+stOpts+'</select></label>'
     +'<label>用字年代感<select id="ngEra" onchange="namingBrowse()"><option value="">現代感（不出老派字）</option><option value="all">不限（含經典傳統用字）</option></select></label>'
     +'<label>指定用字（選填）<input id="ngFix" type="text" maxlength="1" autocomplete="off" placeholder="例：睿"></label>'
-    +'<label class="ng-other" style="display:none">對方出生日期（國曆）<input id="ngDate" type="date"></label>'
+    +'<label class="ng-other" style="display:none">對方出生日期（國曆；未出生可填預產期）<input id="ngDate" type="date" data-maxy="1"></label>'
     +'<label class="ng-other" style="display:none">對方出生時辰<select id="ngHour">'+scOpts+'</select></label>'
     +'<button class="toolbtn" type="button" onclick="namingRun()">產生好名</button>'
     +'</div>'
@@ -4959,6 +4962,7 @@ function namingRun(){
     const dv=(document.getElementById("ngDate")||{}).value;
     if(!dv){out.innerHTML='<div class="lgt-empty">請填對方的出生日期，系統才能算出他的喜用神。</div>';return;}
     const p=dv.split("-").map(Number),hv=(document.getElementById("ngHour")||{}).value;
+    if(!zwValidYmd(p[0],p[1],p[2])||Date.UTC(p[0],p[1]-1,p[2])<Date.UTC(1900,0,31)){out.innerHTML='<div class="lgt-empty">對方的出生日期不存在，請重新選擇（需在 1900/1/31 之後）。</div>';return;}
     try{const st=dayStrength(calcBazi(p[0],p[1],p[2],hv===""?12:Number(hv),0));xi=st.xi;ji=st.ji;who="對方";}
     catch(e){out.innerHTML='<div class="lgt-empty">對方的出生日期無法推算，請確認後再試一次。</div>';return;}
   }
@@ -5188,7 +5192,7 @@ document.getElementById("timeMode").addEventListener("click",e=>{
   document.querySelectorAll("#timeMode button").forEach(x=>x.classList.remove("on"));
   b.classList.add("on"); timeMode=b.dataset.m;
   const isSC=timeMode==="shichen";
-  document.getElementById("time").style.display=isSC?"none":"";
+  {const tw=document.getElementById("timeHm");if(tw)tw.style.display=isSC?"none":"";else document.getElementById("time").style.display=isSC?"none":"";}
   document.getElementById("shichen").style.display=isSC?"":"none";
   document.getElementById("shichenTip").style.display=isSC?"":"none";
 });
@@ -5261,7 +5265,7 @@ applyTheme(sysSel.value);  /* 初始主題 */
 let palmHand="right",palmMainFile=null,palmAltFile=null,__palmLast=null;
 function __palmAge(){
   const v=document.getElementById("palmBirth").value;if(!v)return NaN;
-  const b=new Date(v),n=new Date();let a=n.getFullYear()-b.getFullYear();
+  const pv=v.split("-").map(Number),b=new Date(pv[0],pv[1]-1,pv[2]),n=new Date();if(b>n)return NaN;let a=n.getFullYear()-b.getFullYear();
   const mo=n.getMonth()-b.getMonth();if(mo<0||(mo===0&&n.getDate()<b.getDate()))a--;
   return a;
 }
@@ -5823,6 +5827,19 @@ function addFamMember(){
 }
 document.getElementById("addFamBtn").addEventListener("click",addFamMember);
 
+function famValidate(){
+  let msg="";
+  document.querySelectorAll("#famList .fammember").forEach(function(row,i){
+    if(msg)return;
+    const dv=row.querySelector(".f-date").value,nm=row.querySelector(".f-name").value.trim(),tv=row.querySelector(".f-time").value;
+    const who="家人第 "+(i+1)+" 位"+(nm?("（"+nm+"）"):"");
+    if(!dv){if(nm||tv!=="")msg=who+"還沒選出生日期；不需要的話請按「移除」。";return;}
+    const p=dv.split("-").map(Number);
+    if(!zwValidYmd(p[0],p[1],p[2])||Date.UTC(p[0],p[1]-1,p[2])<Date.UTC(1900,0,31))msg=who+"的出生日期不存在，請重新選擇（需在 1900/1/31 之後）。";
+    else if(zwIsFuture(p[0],p[1],p[2]))msg=who+"的出生日期晚於今天，請確認年份。";
+  });
+  return msg;
+}
 function readFamMembers(){
   const arr=[];
   document.querySelectorAll("#famList .fammember").forEach(row=>{
@@ -5880,11 +5897,14 @@ function run(){
   const tv=bt.tv;
   const name=document.getElementById("name").value.trim();
   if(!name){err.textContent="請輸入姓名。";err.style.display="block";document.getElementById("name").focus();return;}
-  if(!dv){err.textContent="請填寫出生日期。";err.style.display="block";return;}
+  if(!dv){err.textContent="請選好出生日期的年、月、日。";err.style.display="block";return;}
   const [y,m,d]=dv.split("-").map(Number);
+  if(!zwValidYmd(y,m,d)){err.textContent="出生日期不存在，請重新選擇。";err.style.display="block";return;}
+  if(zwIsFuture(y,m,d)){err.textContent="出生日期不能晚於今天，請確認年份。";err.style.display="block";return;}
   if(y<1900||y>2100){err.textContent="本系統適用範圍為西元 1900–2100 年。";err.style.display="block";return;}
   if(Date.UTC(y,m-1,d)<Date.UTC(1900,0,31)){err.textContent="本系統農曆推算自 1900 年 1 月 31 日（庚子年正月初一）起，請確認出生日期。";err.style.display="block";return;}
-  if(system==="comp"&&!tv){err.textContent="綜合命盤需要出生時間以排定時柱與命宮，請填寫。";err.style.display="block";return;}
+  if(system==="comp"&&!tv){err.textContent="請選好出生時間的「時」和「分」。不知道確切時間？可以改按「只記得時辰」，或按下方「不確定出生時辰？從個性幫您反推」。";err.style.display="block";return;}
+  {const famErr=famValidate();if(famErr){err.textContent=famErr;err.style.display="block";return;}}
   const hh=bt.hh, mm=bt.mm;
   const timeDisp=bt.label?`${bt.label.split("·")[0].trim()}`:(tv||"（時辰未填）");
   const subText=`${name}　${gender}　·　國曆 ${y}/${m}/${d} ${timeDisp}　·　製表 ${new Date().getFullYear()}`;
@@ -7682,7 +7702,7 @@ async function addonStartPay(){
   if(typeof inAppPayGate==='function'&&inAppPayGate())return;
   if(!window.__LC)return;
   const key=await lcKey(window.__LC.payload);
-  const form={};LP_FORM_KEYS.forEach(function(id){const el=document.getElementById(id);if(el)form[id]=el.value;});form.gender=gender;
+  const form=lpCaptureForm();
   try{localStorage.setItem('zw_ec_pending',JSON.stringify({key:key,form:form,product:'addon',items:it,ts:Date.now()}));}catch(e){}
   say('正在前往綠界付款頁…');
   const nh=await lcNameHash(window.__LC.name);
@@ -9248,7 +9268,15 @@ async function superActivate(val){
    流程：前端送出 key(報告識別) + ret(返回網址) → Worker 建立付款 → 導向 LINE Pay；
    付款成功後 LINE Pay 導回 Worker /linepay/confirm，確認後 302 回本頁帶 ?lpok=訂單號；
    本頁向 /linepay/state 確認該訂單已付款 → 寫入本機解鎖 → 自動重排該命盤。 */
-const LP_FORM_KEYS=['system','date','time','name','city'];
+const LP_FORM_KEYS=['system','date','time','name','city','shichen','jobInd','jobRole'];
+/* 付款跳轉前保存完整表單；付款回來 lpRestoreAndRender 依此還原（v2026.11.25.6 補：時辰模式、工作、家人，避免回來後排出不同的盤而解不開） */
+function lpCaptureForm(){
+  const form={};LP_FORM_KEYS.forEach(function(id){const el=document.getElementById(id);if(el)form[id]=el.value;});
+  form.gender=gender;
+  try{form.tm=timeMode;}catch(e){}
+  try{form.fam=[...document.querySelectorAll("#famList .fammember")].map(function(r){return {rel:r.querySelector(".f-rel").value,name:r.querySelector(".f-name").value,date:r.querySelector(".f-date").value,time:r.querySelector(".f-time").value};});}catch(e){}
+  return form;
+}
 let __lpInfo=undefined; // 快取 /linepay/ready 結果
 async function lpReady(){
   if(__lpInfo!==undefined)return __lpInfo;
@@ -9280,8 +9308,7 @@ async function lcStartLinePay(){
   // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
   if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
-  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
-  form.gender=gender;
+  const form=lpCaptureForm();
   try{localStorage.setItem('zw_lp_pending',JSON.stringify({key,form,ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往 LINE Pay 付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname;
@@ -9319,6 +9346,10 @@ async function lpHandleReturn(){
 function lpRestoreAndRender(form){
   if(!form)return;
   LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el&&form[id]!=null)el.value=form[id];});
+  try{if(form.tm){const b=document.querySelector('#timeMode [data-m="'+form.tm+'"]');if(b)b.click();if(form.shichen!=null){const sc=document.getElementById('shichen');if(sc)sc.value=form.shichen;}}}catch(e){}
+  try{if(Array.isArray(form.fam)&&form.fam.length){const fl=document.getElementById('famList');if(fl)fl.innerHTML='';
+    form.fam.forEach(function(f){addFamMember();const r=[...document.querySelectorAll('#famList .fammember')].pop();if(!r)return;
+      r.querySelector('.f-rel').value=f.rel||'';r.querySelector('.f-name').value=f.name||'';r.querySelector('.f-date').value=f.date||'';r.querySelector('.f-time').value=f.time||'';});}}catch(e){}
   if(form.gender){gender=form.gender;document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x.dataset.g===form.gender));}
   const sysSel2=document.getElementById('system');
   if(sysSel2){const fw=document.getElementById('famwrap');if(fw)fw.style.display=sysSel2.value==='comp'?'':'none';document.body.dataset.theme=sysSel2.value;}
@@ -9396,8 +9427,7 @@ async function ecStartEcpay(){
   // 付款前閘門：若處於不支援下載 PDF 的 App 內建瀏覽器，先擋下並引導改用外部瀏覽器
   if(inAppPayGate())return;
   const key=await lcKey(window.__LC.payload);
-  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
-  form.gender=gender;
+  const form=lpCaptureForm();
   const tierQ=__pwTier==='basic'?'&product=basic':'';
   try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,product:__pwTier==='basic'?'basic':'',ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
@@ -9668,8 +9698,7 @@ async function lnStartPay(year){
   if(cs&&!cs.checked){if(msg){msg.textContent='請先勾選同意條款再付款。';msg.className='lcmsg err';}return;}
   if(typeof inAppPayGate==='function'&&inAppPayGate())return;
   const key=await lcKey(window.__LC.payload), nh=await lcNameHash(window.__LC.name);
-  const form={};LP_FORM_KEYS.forEach(id=>{const el=document.getElementById(id);if(el)form[id]=el.value;});
-  form.gender=gender;
+  const form=lpCaptureForm();
   try{localStorage.setItem('zw_ec_pending',JSON.stringify({key,form,product:'liunian',year,ts:Date.now()}));}catch(e){}
   if(msg){msg.textContent='正在前往綠界付款頁…';msg.className='lcmsg';}
   const ret=location.origin+location.pathname, nhQ=nh?('&nh='+encodeURIComponent(nh)):'';
@@ -11604,12 +11633,14 @@ try{setTimeout(function(){try{showInAppGateOnLoad();}catch(e){}},0);}catch(e){}
 /* ===== 生日選擇器（v2026.11.25.5）：客戶用的國曆日期欄改成「年／月／日」三個下拉。
    原生日期框在電腦上要逐位打年份、月曆只能一個月一個月翻，選生日很難用。
    原本的 <input type=date> 保留（隱藏），值永遠同步成 YYYY-MM-DD，既有程式讀寫 .value 完全不用改。 ===== */
+function zwValidYmd(y,m,d){if(!(y>=1&&m>=1&&m<=12&&d>=1))return false;return d<=new Date(y,m,0).getDate();}
+function zwIsFuture(y,m,d){const n=new Date();return new Date(y,m-1,d).getTime()>new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();}
 const ZW_YMD_SEL='#date,#palmBirth,#hhDate,#ngDate,.f-date';
 const __ymdDesc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
 function zwYmdEnhance(inp){
   if(!inp||inp.dataset.ymd==='1'||inp.type!=='date')return;
   inp.dataset.ymd='1';
-  const nowY=new Date().getFullYear();
+  const nowY=new Date().getFullYear()+(inp.dataset.maxy?(+inp.dataset.maxy||0):0);
   const mk=function(cls,ph,opts){const s=document.createElement('select');s.className='ymd-'+cls;s.setAttribute('aria-label',ph);s.innerHTML='<option value="">'+ph+'</option>'+opts;return s;};
   let yo='';for(let y=nowY;y>=1900;y--)yo+='<option value="'+y+'">'+y+'</option>';
   let mo='';for(let m=1;m<=12;m++)mo+='<option value="'+m+'">'+m+'</option>';
@@ -11632,6 +11663,30 @@ function zwYmdEnhance(inp){
   inp.after(wrap);
 }
 function zwYmdScan(root){try{(root||document).querySelectorAll(ZW_YMD_SEL).forEach(zwYmdEnhance);}catch(e){}}
+/* 出生時間：原生時間框在電腦上要逐位打、還有上午／下午切換，改成「時／分」兩個下拉（24 小時制，附時辰） */
+function zwHmEnhance(inp){
+  if(!inp||inp.dataset.hm==='1')return;inp.dataset.hm='1';
+  const SCN=["子","丑","丑","寅","寅","卯","卯","辰","辰","巳","巳","午","午","未","未","申","申","酉","酉","戌","戌","亥","亥","子"];
+  const sh=document.createElement('select'),sm=document.createElement('select');sh.className='hm-h';sm.className='hm-m';
+  sh.setAttribute('aria-label','時');sm.setAttribute('aria-label','分');
+  let ho='<option value="">時</option>';for(let h=0;h<24;h++)ho+='<option value="'+h+'">'+String(h).padStart(2,'0')+'</option>';
+  let mo='<option value="">分</option>';for(let m=0;m<60;m++)mo+='<option value="'+m+'">'+String(m).padStart(2,'0')+'</option>';
+  sh.innerHTML=ho;sm.innerHTML=mo;
+  const u=function(t){const e=document.createElement('i');e.className='ymd-u';e.textContent=t;return e;};
+  const cap=document.createElement('small');cap.className='ymd-roc';
+  const wrap=document.createElement('span');wrap.className='ymd hm';wrap.id=inp.id+'Hm';wrap.append(sh,u('時'),sm,u('分'),cap);
+  const capSync=function(){const h=sh.value;cap.textContent=h===''?'24 小時制，例如下午 2 點選 14':('屬'+SCN[+h]+'時（'+(+h<12?'上午':+h===12?'中午':'下午')+'）');};
+  const fromVal=function(v){const m=/^(\d{1,2}):(\d{2})/.exec(v||'');if(m){sh.value=String(+m[1]);sm.value=String(+m[2]);}else{sh.value='';sm.value='';}capSync();};
+  const toVal=function(){if(sh.value!==''&&sm.value==='')sm.value='0';capSync();
+    const v=(sh.value!==''&&sm.value!=='')?(String(sh.value).padStart(2,'0')+':'+String(sm.value).padStart(2,'0')):'';
+    __ymdDesc.set.call(inp,v);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));};
+  sh.addEventListener('change',toVal);sm.addEventListener('change',toVal);
+  Object.defineProperty(inp,'value',{configurable:true,get:function(){return __ymdDesc.get.call(inp);},set:function(v){__ymdDesc.set.call(inp,v);fromVal(__ymdDesc.get.call(inp));}});
+  fromVal(__ymdDesc.get.call(inp));
+  wrap.style.display=inp.style.display==='none'?'none':'';
+  inp.style.display='none';inp.tabIndex=-1;inp.after(wrap);
+}
+try{zwHmEnhance(document.getElementById('time'));}catch(e){}
 try{zwYmdScan();new MutationObserver(function(ms){for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;
   if(n.matches&&n.matches(ZW_YMD_SEL))zwYmdEnhance(n);else if(n.querySelector&&n.querySelector('input[type=date]'))zwYmdScan(n);}}).observe(document.body,{childList:true,subtree:true});}catch(e){}
 </script>
