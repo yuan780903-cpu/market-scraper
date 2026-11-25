@@ -165,8 +165,22 @@ td.crm{background:#fbfdfc}
   <h1 id="ttl">農業客戶儀表板 <span style="font-weight:400;font-size:13px;color:var(--mut)">＋ CRM</span></h1>
   <span class="s" id="subttl"></span>
   <span class="upd" id="upd"></span>
-  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:auto;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.2 · 2026/11/25 21:46</span>
+  <button id="btnUpd" onclick="openUpd()" title="更新全站農業資料(在你的 Mac 上執行)" style="margin-left:auto;font-size:12.5px;cursor:pointer;color:#0a7d3e;background:#e7f6ec;border:1px solid #bfe6cd;border-radius:999px;padding:4px 12px;white-space:nowrap;font-weight:600">🔄 更新資料</button>
+  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.3 · 2026/11/26 07:12</span>
 </header>
+<div id="updMask" onclick="if(event.target===this)closeUpd()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:520px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:22px 22px 18px;font-size:14px;line-height:1.7">
+    <div style="display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;margin-bottom:10px">🔄 更新全站農業資料</div>
+    <p style="margin:0 0 12px;color:var(--mut,#5b6b78)">資料抓取+重建要在<b>你的 Mac</b> 上跑(政府網站有的擋海外,雲端代跑不了)。完整一次約 <b>3–5 小時</b>,建議晚上掛著。做法:複製下面指令 → 打開「終端機」→ 貼上按 <b>Enter</b>,它會自動幫你跑那支一鍵更新。</p>
+    <div style="background:#0f1720;color:#d6f5e0;border-radius:9px;padding:11px 13px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all;margin-bottom:10px" id="updCmdBox"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+      <button id="updCopyBtn" onclick="copyUpd()" style="cursor:pointer;background:#0a7d3e;color:#fff;border:0;border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600">📋 複製指令</button>
+      <button onclick="closeUpd()" style="cursor:pointer;background:#eef2f4;color:#333;border:1px solid var(--bd,#d7dde2);border-radius:8px;padding:9px 16px;font-size:13.5px">關閉</button>
+      <span id="updCopyMsg" style="color:#0a7d3e;font-weight:600;font-size:12.5px"></span>
+    </div>
+    <p style="margin:12px 0 0;color:var(--mut,#8795a1);font-size:12px">💡 不想碰終端機的話,也可以直接到資料夾雙擊檔案:<br><code style="font-size:11.5px">claude code ▸ 農業資料爬蟲 ▸ 產銷班更新腳本 ▸ 全系統一鍵更新.command</code><br>終端機位置:Spotlight(⌘+空白鍵)打「終端機」即可開。</p>
+  </div>
+</div>
 <div class="wrap">
   <div class="slicers">
     <div class="srow">
@@ -454,6 +468,14 @@ function cset(r,v){const k=ck(r);
   if(empty)delete CRM[k]; else CRM[k]=v; localStorage.setItem(KEY,JSON.stringify(CRM));}
 const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length)||(c.comps&&c.comps.length)||c.crop||c.scale||c.usage||c.decider)};
 const todayStr=()=>new Date().toISOString().slice(0,10);
+// 🔄 更新資料彈窗(資料更新在本機 Mac 跑,網頁只提供可複製的指令)
+const UPD_CMD='open "/Users/yuanchuang/Desktop/claude code/農業資料爬蟲/產銷班更新腳本/全系統一鍵更新.command"';
+function openUpd(){const b=document.getElementById('updCmdBox');if(b)b.textContent=UPD_CMD;const m=document.getElementById('updCopyMsg');if(m)m.textContent='';document.getElementById('updMask').style.display='flex';}
+function closeUpd(){document.getElementById('updMask').style.display='none';}
+function copyUpd(){const done=()=>{const m=document.getElementById('updCopyMsg');if(m){m.textContent='已複製 ✓ 貼到終端機按 Enter';setTimeout(()=>{if(m)m.textContent='';},4000);}};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(UPD_CMD).then(done).catch(()=>fallbackCopy(UPD_CMD,done));}else{fallbackCopy(UPD_CMD,done);}}
+function fallbackCopy(t,cb){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);cb&&cb();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeUpd();});
 const parseTags=str=>(str||"").split(/[、,，]/).map(x=>x.trim()).filter(Boolean);
 function recPatch(r,obj){
   if(r.ds==="union"){const u=UNIONS.find(x=>x.id===r.id);if(u){Object.assign(u,obj);saveU();ALL.union=unionRows();r.ex=u;}}
