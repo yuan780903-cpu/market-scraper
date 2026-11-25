@@ -1284,9 +1284,11 @@ footer .disc .sub{display:block;margin-top:12px}
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 #reportPrint .rp-head2::after{width:120px}
 #reportPrint .rp-page>.rp-head2:first-child{margin-top:4px}
-#reportPrint .rp-pgrid,#reportPrint .rp-fgrid{display:flex;gap:7px;align-items:flex-start}
-#reportPrint .rp-pgrid>.rp-scol,#reportPrint .rp-fgrid>.rp-scol{flex:1 1 0;min-width:0}
-#reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{display:block;width:100%!important;box-sizing:border-box;margin:0 0 7px!important;
+/* v.25.16（站長要求「每一格拉至平均」）：卡片回到兩兩一列、同列等高、上下對齊；
+   整列可在頁底接續到下一頁（兩張卡同步斷開、框線兩段補齊），不再整列跳頁留白 */
+#reportPrint .rp-pgrid,#reportPrint .rp-fgrid{display:block}
+#reportPrint .rp-pgrid>.rp-prow,#reportPrint .rp-fgrid>.rp-frow{display:flex;align-items:stretch;gap:7px;margin-bottom:7px}
+#reportPrint .rp-pgrid .rp-pcard,#reportPrint .rp-fgrid .rp-fcard{flex:1 1 0;width:50%;min-width:0;box-sizing:border-box;margin:0!important;
   break-inside:auto;page-break-inside:auto;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 /* v.25.11：卡片允許在欄底／頁底接續（框線兩段都補齊），標題不落單、合參列與條列不切半，消除整張卡跳頁造成的頁底空白 */
 #reportPrint .rp-pgrid .ph,#reportPrint .rp-fgrid .fh{break-after:avoid;page-break-after:avoid;break-inside:avoid;page-break-inside:avoid}
@@ -1364,6 +1366,10 @@ footer .disc .sub{display:block;margin-top:12px}
   html:not(.ios-dev) #reportPrint .rp-chart{grid-template-rows:repeat(4,minmax(96px,100px))}
   html:not(.ios-dev) #reportPrint .rp-chart .pps{font-size:12px}
   #reportPrint .rp-sec{margin-top:18px}
+  #reportPrint .rp-pgrid>.rp-prow,#reportPrint .rp-fgrid>.rp-frow{break-inside:auto;page-break-inside:auto}
+  /* 短表格（大運／流年／流月）不重複表頭：Chrome 列印「重複表頭」的斷頁判斷與「結尾置底」量測不一致（實測差 2cm、會推出多一頁）；
+     改一般列後兩邊一致（5 組命盤驗證）。十二宮長表（.rp-long）維持跨頁重複表頭。 */
+  #reportPrint table.rp-tbl:not(.rp-long) thead{display:table-row-group}
   #reportPrint .rp-head2{margin:14px 0 8px;padding-bottom:9px}
   /* 結尾「綜合命理白話總評」：允許從上一頁底部開始接續，不再整段跳頁留下約 3cm 空白。
      框線改 slice（跨頁處上下開口、像書本的「續頁」）——clone 會在頁底多要一截內距＋框線，實測就是放不下的原因；
@@ -2496,7 +2502,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.15";
+const SITE_VERSION_DATE="2026.11.25.16";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
@@ -10939,7 +10945,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<div class="pb">${body}</div>${px}</div>`);
   }
   ppPalaceProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 論命要訣「不以一宮論斷」</b>：每一宮的吉凶，須連同<b>正對面的對宮</b>與<b>左右兩個三合宮</b>（合稱三方四正）一起交叉合參，才算準確；空宮則借對宮主星入本宮論之。以下每張宮位卡片下方均已附「三方四正合參」，請對照同看。</div>`
-    +`<div class="rp-pgrid">${_twoCols(_pcards)}</div>`;
+    +`<div class="rp-pgrid">${_pairRows(_pcards,"rp-prow")}</div>`;
   if(_hasEmptyPalace){
     ppPalaceProse+=`<div class="rp-row g" style="margin-top:6px"><b>備註 · 空宮說明</b>：${(STAR_DESC["空宮"]&&STAR_DESC["空宮"].d)||"命宮（或他宮）無主星，謂之空宮，須借對宮星曜論之。"}</div>`;
   }
@@ -10985,7 +10991,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       +`<div class="fbd">${rows}</div></div>`;
   };
   const flyChartProse=`<div class="rp-row g" style="margin:2px 0 6px"><b>※ 何謂「四化飛星（飛線盤）」</b>：每一宮位都有自己的「宮干」，宮干會飛出<b>祿（緣助）・權（掌控）・科（名聲）・忌（牽掛）</b>四道能量線，落入其他宮位，代表「<b>這個宮所管的事，會牽動、影響到哪些人生面向</b>」。飛回本宮稱「自化」，主能量自給自消、來去快速。這是飛星派交叉論命的核心，比單看一宮更能看出宮與宮之間的連動；以下每宮一格、依色辨識，並附白話。</div>`
-    +`<div class="rp-fgrid">`+_twoCols(Array.from({length:12},(_,b)=>_flyCard(b)))+`</div>`;
+    +`<div class="rp-fgrid">`+_pairRows(Array.from({length:12},(_,b)=>_flyCard(b)),"rp-frow")+`</div>`;
   // 三方四正白話
   const sfszProse=`<div class="rp-row g">「三方四正」是論命最關鍵的格局組合：以命宮為本宮，加上正對面的遷移宮（對宮）、以及左右三合的官祿宮與財帛宮，四宮星曜會共同影響命宮，等於把「我、事業、財富、在外際遇」綁在一起綜合判斷，比單看命宮更準。命宮為${(zw.stars[zw.ming]||[]).filter(s=>s.type==="main").map(s=>s.name).join("、")||"空宮"}，宜參酌上列四宮星性，截長補短、整體佈局。</div>`;
   // 大運白話（現行大限 + 各步十神綱要）
@@ -11138,7 +11144,7 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
   <div class="rp-page">
     <div class="rp-head2"><span>卷參</span>紫微命盤詳解</div>
     <div class="rp-sec">紫微斗數 · 十二宮逐宮詳解（主星 · 輔星 · 四化 · 亮度 · 雜曜）</div>
-    <table class="rp-tbl"><thead><tr><th style="width:11%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:21%">雜曜</th><th style="width:22%">大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
+    <table class="rp-tbl rp-long"><thead><tr><th style="width:11%">宮位</th><th>星曜（含亮度／四化）</th><th style="width:21%">雜曜</th><th style="width:22%">大限 · 小限</th></tr></thead><tbody>${ppDetailRows}</tbody></table>
     <div class="rp-row g">四化標記：化祿（福祿機緣）· 化權（掌控主導）· 化科（名聲貴人）· 化忌（牽絆耗損）。〔命〕命宮 〔身〕身宮 〔限〕現行大限。</div>
     <div class="rp-sec">十二宮白話逐宮解讀（宮位職掌 · 主星性格）</div>
     ${ppPalaceProse}
