@@ -313,6 +313,12 @@ header .meta b{color:var(--gold);font-weight:500}
   transition:.25s;outline:none}
 .field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--wash);background:#fff}
 .field select option{background:#fff;color:var(--ink)}
+.ymd{display:flex;gap:6px;width:100%;min-width:0}
+.ymd select{flex:1 1 0;min-width:0;width:auto!important;padding-left:8px!important;padding-right:4px!important;letter-spacing:0!important}
+.ymd .ymd-y{flex:2 1 0}
+.ymd{align-items:center;gap:4px;flex-wrap:wrap}.ymd-roc{flex:0 0 100%;font-size:.74rem;color:var(--ink-faint);letter-spacing:1px;min-height:1em}.ymd-u{font-style:normal;flex:0 0 auto;font-size:.86rem;color:var(--ink-dim);margin-right:3px}
+.lgt-form label:has(.ymd){grid-column:span 2}
+@media(max-width:560px){.lgt-form label:has(.ymd){grid-column:1/-1}}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden}
 .seg button{flex:1;background:var(--surface);border:none;color:var(--ink-dim);padding:13px 0;
   font-family:inherit;font-size:.96rem;letter-spacing:2px;cursor:pointer;transition:.25s}
@@ -2426,7 +2432,7 @@ footer .ftver{margin-top:6px;font-size:.68rem;color:var(--ink-faint,#9a93ad);opa
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.25.4";
+const SITE_VERSION_DATE="2026.11.25.5";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* 訪客檢視模式（v.14，站長自測用）：網址加 ?guest=1 → 本分頁一律視為「未解鎖」（不動、也不洩漏
@@ -11595,6 +11601,39 @@ function updateMusicUI(){
 /* 載入即警示：DOM 已就緒（此 script 位於 </body> 前），若處於 App 內建瀏覽器且未設逃生旗標，
    立即跳出「請先改用外部瀏覽器，再填折扣碼與付款」引導。一般瀏覽器完全不受影響、不跳任何東西。 */
 try{setTimeout(function(){try{showInAppGateOnLoad();}catch(e){}},0);}catch(e){}
+/* ===== 生日選擇器（v2026.11.25.5）：客戶用的國曆日期欄改成「年／月／日」三個下拉。
+   原生日期框在電腦上要逐位打年份、月曆只能一個月一個月翻，選生日很難用。
+   原本的 <input type=date> 保留（隱藏），值永遠同步成 YYYY-MM-DD，既有程式讀寫 .value 完全不用改。 ===== */
+const ZW_YMD_SEL='#date,#palmBirth,#hhDate,#ngDate,.f-date';
+const __ymdDesc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+function zwYmdEnhance(inp){
+  if(!inp||inp.dataset.ymd==='1'||inp.type!=='date')return;
+  inp.dataset.ymd='1';
+  const nowY=new Date().getFullYear();
+  const mk=function(cls,ph,opts){const s=document.createElement('select');s.className='ymd-'+cls;s.setAttribute('aria-label',ph);s.innerHTML='<option value="">'+ph+'</option>'+opts;return s;};
+  let yo='';for(let y=nowY;y>=1900;y--)yo+='<option value="'+y+'">'+y+'</option>';
+  let mo='';for(let m=1;m<=12;m++)mo+='<option value="'+m+'">'+m+'</option>';
+  const sy=mk('y','年',yo),sm=mk('m','月',mo),sd=mk('d','日','');
+  const wrap=document.createElement('span');wrap.className='ymd';const u=function(t){const e=document.createElement('i');e.className='ymd-u';e.textContent=t;return e;};const roc=document.createElement('small');roc.className='ymd-roc';wrap.append(sy,u('年'),sm,u('月'),sd,u('日'),roc);
+  const rocSync=function(){const y=+sy.value;roc.textContent=y>1911?('民國 '+(y-1911)+' 年'+(sm.value?(' '+sm.value+' 月'):'')+(sd.value?(' '+sd.value+' 日'):'')):'';};
+  const fillDays=function(){const y=+sy.value||2000,m=+sm.value||1,n=new Date(y,m,0).getDate(),cur=sd.value;
+    let o='<option value="">日</option>';for(let d=1;d<=n;d++)o+='<option value="'+d+'">'+d+'</option>';sd.innerHTML=o;if(cur&&+cur<=n)sd.value=cur;};
+  const fromVal=function(v){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');
+    if(m){const y=String(+m[1]);sy.value=y;if(sy.value!==y){const o=document.createElement('option');o.value=y;o.textContent=y;sy.appendChild(o);sy.value=y;}
+      sm.value=String(+m[2]);fillDays();sd.value=String(+m[3]);}
+    else{sy.value='';sm.value='';fillDays();sd.value='';}rocSync();};
+  const toVal=function(){fillDays();
+    const v=(sy.value&&sm.value&&sd.value)?(sy.value+'-'+String(sm.value).padStart(2,'0')+'-'+String(sd.value).padStart(2,'0')):'';
+    rocSync();__ymdDesc.set.call(inp,v);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));};
+  [sy,sm,sd].forEach(function(s){s.addEventListener('change',toVal);});
+  Object.defineProperty(inp,'value',{configurable:true,get:function(){return __ymdDesc.get.call(inp);},set:function(v){__ymdDesc.set.call(inp,v);fromVal(__ymdDesc.get.call(inp));}});
+  fromVal(__ymdDesc.get.call(inp));
+  inp.style.display='none';inp.tabIndex=-1;
+  inp.after(wrap);
+}
+function zwYmdScan(root){try{(root||document).querySelectorAll(ZW_YMD_SEL).forEach(zwYmdEnhance);}catch(e){}}
+try{zwYmdScan();new MutationObserver(function(ms){for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;
+  if(n.matches&&n.matches(ZW_YMD_SEL))zwYmdEnhance(n);else if(n.querySelector&&n.querySelector('input[type=date]'))zwYmdScan(n);}}).observe(document.body,{childList:true,subtree:true});}catch(e){}
 </script>
 </body>
 </html>
