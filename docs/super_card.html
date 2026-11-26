@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#13233d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="超級名片">
-<title>超級名片</title>
+<meta name="apple-mobile-web-app-title" content="業務超級名片王">
+<title>業務超級名片王</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;
   padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;display:flex;align-items:center;gap:10px}
 header{gap:6px}
-header h1{font-size:18px;margin:0;flex:1;min-width:0;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1{font-size:17px;margin:0;flex:1;min-width:0;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header .ic{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:10px;padding:7px 9px;font-size:14px;white-space:nowrap;flex:none}
 .wrap{max-width:720px;margin:0 auto;padding:12px 16px 110px}
 
@@ -302,8 +302,8 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
-  <div class="logo"><img src="super_card_logo.svg" alt="超級名片"></div>
-  <h2>超級名片</h2>
+  <div class="logo"><img src="super_card_logo.svg" alt="業務超級名片王"></div>
+  <h2>業務超級名片王</h2>
   <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
   <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
   <div style="height:10px"></div>
@@ -320,7 +320,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 <!-- 主畫面 -->
 <div id="vMain" class="hide">
   <header>
-    <h1><img class="brand" src="super_card_logo.svg" alt="">超級名片<span class="ver" id="verBadge"></span></h1>
+    <h1><img class="brand" src="super_card_logo.svg" alt="">業務超級名片王<span class="ver" id="verBadge"></span></h1>
     <button class="ic" id="btnMap" title="地圖" data-ic="map">地圖</button>
     <button class="ic" id="btnMenu" title="更多" data-ic="menu"></button>
   </header>
@@ -331,6 +331,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnLogout" data-ic="logout">登出</button>
     <button id="btnBooks" data-ic="stack">名片簿</button>
     <button id="btnTheme" data-ic="palette">風格模板</button>
+    <button id="btnSound" data-ic="volume">音效:開</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
@@ -420,7 +421,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     </div>
     <div class="exp">
       <h3>📊 Google 試算表</h3>
-      <p>所有名片本來就存在你雲端的「超級名片_資料庫」,可以直接打開篩選、列印。</p>
+      <p>所有名片本來就存在你雲端的名片資料庫試算表,可以直接打開篩選、列印。</p>
       <a class="btn sec" id="btnSheet" data-ic="sheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
     </div>
     <p class="stat" style="margin-top:14px">※ 在 LINE 裡開這個網頁可能無法下載,請改用 Safari / Chrome 開啟。</p>
@@ -473,9 +474,9 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
       <summary style="font-weight:700;font-size:16px;cursor:pointer">🆕 新使用者:建立自己的名片資料庫(約 5 分鐘)</summary>
       <ol style="padding-left:20px;line-height:1.8;font-size:14px;color:var(--ink)">
         <li>用電腦或手機登入<b>你自己的 Google 帳號</b>,按下面按鈕 →「建立副本」,資料庫就會存到你自己的雲端硬碟(可以改名、搬到任何資料夾)。</li>
-        <li>打開剛複製的試算表,上方選單「<b>超級名片 → ① 初始化</b>」,照畫面授權。會顯示你的<b>存取碼</b>。</li>
+        <li>打開剛複製的試算表,上方選單「<b>業務超級名片王 → ① 初始化</b>」,照畫面授權。會顯示你的<b>存取碼</b>。</li>
         <li>選單「擴充功能 → Apps Script」→ 右上「<b>部署 → 新增部署作業</b>」→ 類型選「網頁應用程式」→ 執行身分「我」、誰可以存取「<b>所有人</b>」→ 部署。</li>
-        <li>回到試算表,選單「<b>超級名片 → ② 顯示連線資訊</b>」→ 用手機點「加入超級名片」連結,輸入存取碼就完成。</li>
+        <li>回到試算表,選單「<b>業務超級名片王 → ② 顯示連線資訊</b>」→ 用手機點「加入業務超級名片王」連結,輸入存取碼就完成。</li>
       </ol>
       <a class="btn" id="btnTplCopy" data-ic="copy" target="_blank" rel="noopener" style="text-decoration:none">複製名片資料庫範本到我的雲端</a>
       <p style="font-size:13px;color:var(--sub);margin-top:8px">名片和照片都只存在你自己的 Google 雲端,其他人看不到;全部免費。</p>
@@ -631,7 +632,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.13", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.14", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -669,6 +670,7 @@ var ICONS={
  check:'<path d="M20 6 9 17l-5-5"/>',
  x:'<path d="M18 6 6 18M6 6l12 12"/>',
  crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+ volume:'<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
  palette:'<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>'
 };
 function ic(n,sz){ sz=sz||18; return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[n]||"")+'</svg>'; }
@@ -707,7 +709,7 @@ function renderQuick(){
 function $(id){return document.getElementById(id);}
 function ls(k,v){try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){return null;}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-function toast(t){var el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove("on");},2600);}
+function toast(t){ if(/^✅/.test(t)) sfx("success"); else if(/失敗|錯誤|無法|中斷/.test(t)) sfx("error"); else if(/^已刪除|^已略過/.test(t)) sfx("del"); var el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove("on");},2600);}
 function show(v){["vLogin","vMain"].forEach(function(x){$(x).classList.toggle("hide",x!==v);});}
 function gasUrl(){return ls("sc_gas")||DEFAULT_GAS;}
 
@@ -955,6 +957,7 @@ async function scanFile(file){
     var r=await post({action:"scan", image:b64, mime:"image/jpeg"});
     if(!r.ok) throw new Error(r.error);
     openEdit(r.fields, {image:b64, thumb:thumb, preview:big, method:r.method, raw:r.raw, warn:r.warn, dup:findDup(r.fields)});
+    sfx("done");
   }catch(e){
     toast("辨識失敗:"+e.message);
     openEdit(null,{preview:$("photo").src, warn:"辨識失敗,可手動填寫後儲存。("+e.message+")"});
@@ -1082,6 +1085,7 @@ function camTick(){
   if(!steady){ CAM.still=0; hint("保持不動…"); prog(0); ready(false); return; }
   if(!sharp){ CAM.still=0; hint("對焦中,稍微拉遠一點"); prog(0); ready(false); return; }
   CAM.still++; ready(true); prog(CAM.still/CAM_NEED);
+  if(CAM.still===1) sfx("ready");
   if(!CAM.auto){ hint("可以按快門了"); return; }
   hint("拍攝中…");
   if(CAM.still>=CAM_NEED) camShoot();
@@ -1103,7 +1107,7 @@ async function camShoot(){
   var cx=c.getContext("2d"); cx.imageSmoothingQuality="high";
   cx.drawImage($("camVideo"),r.x,r.y,r.w,r.h,0,0,c.width,c.height);
   var fl=$("camFlash"); fl.classList.add("on"); setTimeout(function(){fl.classList.remove("on");},60);
-  try{ navigator.vibrate && navigator.vibrate(40); }catch(e){}
+  sfx("shutter");
   CAM.count++; CAM.armed=false; CAM.lastSig=CAM.m&&CAM.m.sig; CAM.still=0; prog(0);
   if(batch){
     var q=detectQuad(c), out=q ? warpQuad(c,q) : c;   // 批量不停下來修邊:偵測到四角就自動拉正
@@ -1400,7 +1404,7 @@ function applyTheme(t){
 function cssVar(n){ return (getComputedStyle(document.documentElement).getPropertyValue(n)||"").trim(); }
 function themePreview(t){
   return '<div class="tpv" style="background:'+t.bg+'">'+
-    '<div class="tph" style="background:linear-gradient(180deg,'+t.pri2+','+t.pri+')"><img src="'+logoURL(t)+'" alt=""><b>超級名片</b>'+
+    '<div class="tph" style="background:linear-gradient(180deg,'+t.pri2+','+t.pri+')"><img src="'+logoURL(t)+'" alt=""><b>業務超級名片王</b>'+
       '<em style="color:'+t.acc2+';border-color:'+t.acc+'">v'+APP_VER+'</em></div>'+
     '<div class="tpb"><span class="tpc" style="background:'+t.pri+'">全部</span><span class="tpc" style="color:'+t.acc+';border-color:'+t.acc+'">客戶</span>'+
       '<span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("phone",13)+'</span><span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("nav",13)+'</span>'+
@@ -1418,7 +1422,7 @@ function openThemes(){
 }
 function pickTheme(id){
   var t=THEMES.find(function(x){return x.id===id;}); if(!t) return;
-  ls("sc_theme",t.id); applyTheme(t); openThemes();
+  ls("sc_theme",t.id); applyTheme(t); openThemes(); sfx("swish");
   toast("已換成「"+t.name+"」");
 }
 
@@ -1449,7 +1453,7 @@ function toCSV(rows){
 }
 function exportCsv(){
   var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
-  download(new Blob([toCSV(rowsFor(cs,false))],{type:"text/csv;charset=utf-8"}), "超級名片_"+today()+".csv");
+  download(new Blob([toCSV(rowsFor(cs,false))],{type:"text/csv;charset=utf-8"}), "業務超級名片王_"+today()+".csv");
   toast("✅ 已匯出 "+cs.length+" 張(CSV)");
 }
 function ioProg(id, p, t){ var el=$(id); el.classList.toggle("hide", p==null); if(p!=null){ el.querySelector("b").style.width=Math.round(p*100)+"%"; el.querySelector("span").textContent=t||""; } }
@@ -1486,10 +1490,10 @@ async function exportZip(){
     zip.file("名片.xlsx", XLSX.write(wb,{bookType:"xlsx",type:"array"}));
     zip.file("名片.csv", toCSV(rows));
     zip.file("通訊錄.vcf", cs.map(function(c){return toVcard(c,true);}).join("\r\n")+"\r\n");
-    zip.file("說明.txt", "超級名片完整備份 "+today()+"\r\n共 "+cs.length+" 張名片,照片 "+(jobs.length-miss)+" 張("+(full?"原圖":"縮圖")+")。\r\n"+
-      "名片.xlsx / 名片.csv 的「照片檔名」欄對應 photos 資料夾,用超級名片「匯入」選這個 ZIP 就能連照片一起還原。\r\n通訊錄.vcf 可直接匯入手機或 Google 通訊錄。\r\n");
+    zip.file("說明.txt", "業務超級名片王 完整備份 "+today()+"\r\n共 "+cs.length+" 張名片,照片 "+(jobs.length-miss)+" 張("+(full?"原圖":"縮圖")+")。\r\n"+
+      "名片.xlsx / 名片.csv 的「照片檔名」欄對應 photos 資料夾,用業務超級名片王「匯入」選這個 ZIP 就能連照片一起還原。\r\n通訊錄.vcf 可直接匯入手機或 Google 通訊錄。\r\n");
     var blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"},function(m){ ioProg("xProg",0.88+0.12*m.percent/100,"壓縮中 "+Math.round(m.percent)+"%"); });
-    download(blob, "超級名片_完整備份_"+today()+"_"+cs.length+"張.zip");
+    download(blob, "業務超級名片王_完整備份_"+today()+"_"+cs.length+"張.zip");
     ioProg("xProg",1,"完成"); toast("✅ 已匯出 "+cs.length+" 張+照片 "+(jobs.length-miss)+" 張");
   }catch(e){ toast("匯出失敗:"+e.message); }
   b.disabled=false; setTimeout(function(){ ioProg("xProg",null); },2500);
@@ -1613,7 +1617,7 @@ function vcToCard(c){
   r["姓名"]=nm||""; ["公司","部門","職稱","地址","網站","標籤"].forEach(function(k){ if(f[k]) r[k]=f[k]; });
   r["手機"]=c.cell.join(" / "); r["電話"]=c.tel.join(" / "); r["傳真"]=c.fax.join(" / "); r["Email"]=c.mail.join(" / ");
   if(f.note){   // 我們自己匯出的 NOTE 會帶 統編 / LINE
-    var note=f.note.replace(/\n?\(來自超級名片[^)]*\)/,"");
+    var note=f.note.replace(/\n?\(來自(業務)?超級名片王?[^)]*\)/,"");
     var m=note.match(/統編\s*(\d{8})/); if(m){ r["統編"]=m[1]; note=note.replace(m[0],""); }
     m=note.match(/LINE\s*[:：]?\s*([\w.@-]+)/i); if(m){ r["LINE"]=m[1]; note=note.replace(m[0],""); }
     note=note.replace(/^\s+|\s+$/g,"").replace(/\n{2,}/g,"\n"); if(note) r["備註"]=note;
@@ -1748,7 +1752,7 @@ function switchBook(id){
   ls("sc_book",b.id); ls("sc_gas",b.url); if(b.code) ls("sc_code",b.code); else ls("sc_code",null);
   S.code=b.code||""; S.cards=[]; S.syncAt=""; S.fullAt=0; S.q=[]; S.groups=[]; S.backVer=""; S.ftag=""; S.fcity=""; S.syncMsg="";
   ls("sc_sheet",null); $("gasUrl").value=b.url; renderQ(); closeSheets(); renderBookName();
-  if(S.code){ enter(); toast("已切換到「"+b.name+"」"); }
+  if(S.code){ enter(); sfx("swish"); toast("已切換到「"+b.name+"」"); }
   else{ show("vLogin"); $("code").value=""; $("loginMsg").textContent="請輸入「"+b.name+"」的存取碼"; }
 }
 function openBooks(prefill){
@@ -1801,11 +1805,57 @@ function checkJoinLink(){
   var q={}; h.slice(1).split("&").forEach(function(kv){ var i=kv.indexOf("="); if(i>0) q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
   try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
   if(!q.join) return false;
-  var name=String(q.name||"").replace(/^超級名片_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
+  var name=String(q.name||"").replace(/^(業務)?超級名片王?_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
   openBooks({url:q.join, name:name});
   toast("輸入存取碼就能加入這本名片簿");
   return true;
 }
+
+/* ===== 互動音效(Web Audio 即時合成,不用下載音檔)+ 震動回饋 ===== */
+var SFX={ ctx:null, on: ls("sc_sound")!=="0", last:{} };
+function sfxCtx(){
+  if(!SFX.ctx){ var A=window.AudioContext||window.webkitAudioContext; if(!A) return null; SFX.ctx=new A(); }
+  if(SFX.ctx.state==="suspended") SFX.ctx.resume();
+  return SFX.ctx;
+}
+/** 一個音:頻率 f(可滑到 f2)、長度 d 秒、音色 type、音量 v、延遲 t0 */
+function tone(f,d,o){
+  o=o||{}; var c=sfxCtx(); if(!c) return;
+  var t=c.currentTime+(o.t0||0), os=c.createOscillator(), g=c.createGain();
+  os.type=o.type||"sine"; os.frequency.setValueAtTime(f,t);
+  if(o.f2) os.frequency.exponentialRampToValueAtTime(o.f2,t+d);
+  var v=o.v||0.12;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v,t+Math.min(0.012,d/4)); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  os.connect(g); g.connect(c.destination); os.start(t); os.stop(t+d+0.02);
+}
+function noise(d,o){
+  o=o||{}; var c=sfxCtx(); if(!c) return;
+  var t=c.currentTime+(o.t0||0), n=Math.round(c.sampleRate*d), b=c.createBuffer(1,n,c.sampleRate), ch=b.getChannelData(0);
+  for(var i=0;i<n;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,o.decay||3);
+  var s=c.createBufferSource(); s.buffer=b;
+  var fl=c.createBiquadFilter(); fl.type=o.ftype||"bandpass"; fl.frequency.value=o.freq||3000; fl.Q.value=o.q||0.8;
+  var g=c.createGain(); g.gain.value=o.v||0.18;
+  s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(t);
+}
+var SOUNDS={
+  tap:    function(){ tone(1650,0.035,{v:0.05,type:"sine",f2:1300}); },
+  ready:  function(){ tone(880,0.07,{v:0.06}); tone(1320,0.09,{v:0.05,t0:0.06}); },
+  shutter:function(){ noise(0.05,{freq:4200,q:0.7,v:0.22,decay:4}); noise(0.07,{freq:1800,q:0.9,v:0.16,decay:3,t0:0.055}); tone(180,0.05,{v:0.05,type:"triangle",t0:0.05}); },
+  done:   function(){ tone(1046.5,0.12,{v:0.07}); tone(1318.5,0.12,{v:0.07,t0:0.08}); tone(1568,0.22,{v:0.07,t0:0.16}); },
+  success:function(){ tone(784,0.11,{v:0.08}); tone(1175,0.24,{v:0.08,t0:0.09}); },
+  del:    function(){ noise(0.22,{ftype:"lowpass",freq:900,q:0.5,v:0.14,decay:1.5}); tone(330,0.18,{v:0.05,f2:160,type:"triangle"}); },
+  error:  function(){ tone(440,0.13,{v:0.08,type:"triangle"}); tone(311,0.2,{v:0.08,type:"triangle",t0:0.12}); },
+  swish:  function(){ noise(0.16,{freq:2400,q:0.6,v:0.1,decay:2}); tone(660,0.12,{v:0.04,f2:990}); }
+};
+var VIB={ tap:8, ready:15, shutter:30, done:[20,40,20], success:[15,30,25], del:25, error:[40,60,40], swish:10 };
+function sfx(name){
+  if(typeof SFX==="undefined" || !SFX || !SFX.on || !SOUNDS[name]) return;
+  var now=Date.now(); if(now-(SFX.last[name]||0)<60) return; SFX.last[name]=now;   // 避免連發
+  try{ SOUNDS[name](); }catch(e){}
+  try{ if(navigator.vibrate && VIB[name]) navigator.vibrate(VIB[name]); }catch(e){}
+}
+function renderSoundBtn(){ setLabel($("btnSound"), SFX.on ? "音效:開" : "音效:關"); }
+function toggleSound(){ SFX.on=!SFX.on; ls("sc_sound",SFX.on?"1":"0"); renderSoundBtn(); if(SFX.on){ sfxCtx(); sfx("success"); } toast(SFX.on?"🔊 音效已開啟":"🔇 音效已關閉"); }
 
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
 function inAppName(){
@@ -2319,7 +2369,7 @@ async function exportXlsx(){
     ws["!autofilter"]={ref:"A1:"+XLSX.utils.encode_col(XCOLS.length-1)+rows.length};
     var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "名片");
     var out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-    download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "超級名片_"+today()+".xlsx");
+    download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "業務超級名片王_"+today()+".xlsx");
     toast("✅ 已匯出 "+cs.length+" 張");
   }catch(e){ toast("匯出失敗:"+e.message); }
   b.disabled=false; setLabel(b,"下載 Excel(.xlsx)");
@@ -2359,7 +2409,7 @@ function toVcard(c, withPhoto){
   if(c["統編"]) note.push("統編 "+c["統編"]);
   if(c["LINE"]) note.push("LINE "+c["LINE"]);
   if(c["備註"]) note.push(c["備註"]);
-  note.push("(來自超級名片"+(c["建立時間"]?" "+String(c["建立時間"]).slice(0,10):"")+")");
+  note.push("(來自業務超級名片王"+(c["建立時間"]?" "+String(c["建立時間"]).slice(0,10):"")+")");
   L.push("NOTE:"+vEsc(note.join("\n")));
   var th=String(c["縮圖"]||"");
   if(withPhoto && th.indexOf("base64,")>0) L.push("PHOTO;ENCODING=b;TYPE=JPEG:"+th.split("base64,")[1]);
@@ -2370,7 +2420,7 @@ function exportVcf(){
   var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
   var ph=$("xPhoto").checked;
   var txt=cs.map(function(c){return toVcard(c,ph);}).join("\r\n")+"\r\n";
-  download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "超級名片_"+today()+"_"+cs.length+"人.vcf");
+  download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "業務超級名片王_"+today()+"_"+cs.length+"人.vcf");
   toast("✅ 已匯出 "+cs.length+" 位聯絡人");
 }
 /** 編輯頁:目前畫面上的這張加入通訊錄 */
@@ -2624,7 +2674,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -2658,6 +2708,12 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnSound").onclick=toggleSound;
+document.addEventListener("pointerdown",function(e){
+  var el=e.target.closest("button,a.btn,.qa a,.chip,.item,[data-q],label.opt");
+  if(!el || el.id==="btnShutter" || el.disabled) return;
+  sfx("tap");
+},true);
 $("btnBooks").onclick=function(){ openBooks(); };
 $("btnLoginBooks").onclick=function(){ openBooks({guide:!books().some(function(b){return b.code;})}); };
 $("btnBooksBack").onclick=function(){ $("vBooks").classList.add("hide"); };
@@ -2716,7 +2772,7 @@ applyTheme(curTheme());
 decorateIcons();
 initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
-initBooks();
+initBooks(); renderSoundBtn();
 if(S.code && gasUrl()) enter(); else show("vLogin");
 checkJoinLink();
 </script>
