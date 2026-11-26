@@ -325,6 +325,21 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .nmvs b{color:var(--pri);font-size:16px;text-align:center}
 .nmul{margin:6px 0 0;padding-left:20px;line-height:1.7;font-size:14px}
 .nmsum{background:var(--chip)}
+/* ===== 姓名學分數 ===== */
+.nmscore{border-color:var(--acc)}
+.nmring{display:flex;align-items:center;gap:14px;padding:8px 0}
+.nmring .ring{--p:0;--c:#17803d;width:78px;height:78px;border-radius:50%;flex:none;background:conic-gradient(var(--c) calc(var(--p)*1%),#ece9e2 0);display:flex;align-items:center;justify-content:center;position:relative}
+.nmring .ring::before{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+.nmring .ring b{position:relative;font-size:26px;font-weight:800;color:var(--ink)} .nmring .ring small{position:relative;font-size:11px;color:var(--sub);margin-left:1px;margin-top:8px}
+.nmring .rt{font-weight:700;color:var(--ink);font-size:15px} .nmring .rg{font-weight:800;font-size:18px} .nmring .rs{font-size:12.5px;color:var(--sub);line-height:1.5}
+.nmpair{background:var(--chip);border-radius:14px;padding:4px 12px;margin-top:6px}
+.nmpair .ring{width:92px;height:92px} .nmpair .ring b{font-size:32px}
+.nmdet{margin-top:10px} .nmdet summary{color:var(--acc);font-weight:700;cursor:pointer}
+.nmdet h4{margin:12px 0 4px;font-size:15px;color:var(--pri)}
+.nmtb{width:100%;border-collapse:collapse;font-size:13px} .nmtb th{text-align:left;color:var(--sub);font-weight:600;border-bottom:1px solid var(--line);padding:4px}
+.nmtb td{border-bottom:1px solid var(--line);padding:6px 4px;vertical-align:top;color:var(--ink)} .nmtb td small{display:block;color:var(--sub);font-size:11px}
+.nmtb td:last-child{white-space:nowrap;text-align:right} .nmnote{font-size:13px;color:var(--sub);margin:4px 0}
+.nmlogic{margin-top:12px;font-size:12.5px;line-height:1.7;color:var(--sub);background:var(--bg);border-radius:10px;padding:10px}
 /* ===== 群組管理 ===== */
 .gadd{display:flex;gap:8px}
 .gadd .inp{flex:1}
@@ -777,7 +792,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.19", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.20", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -2541,6 +2556,8 @@ function nameReport(their, mine){
 function reportText(o){
   var R=o.R, L=[];
   L.push("【姓名學分析】"+R.name+"(康熙筆畫 "+R.chars.map(function(c){return c.ch+c.n;}).join(" ")+")");
+  var ps=personScore(R); L.push("姓名分數:"+ps.total+" 分("+grade(ps.total)[0]+")");
+  if(o.M){ var pp=pairScore(o.M,R); L.push("我("+o.M.name+")"+personScore(o.M).total+" 分;配對分數:"+pp.total+" 分——"+pairGrade(pp.total)); }
   ["tian","ren","di","wai","zong"].forEach(function(k){ var a=n81(R[k]); L.push(GE_INFO[k][0]+" "+R[k]+"("+wx(R[k])+")"+a[0]+" "+a[1]); });
   L.push("三才 "+o.sc.combo+":"+o.sc.level);
   L.push("類型:"+o.P.type+"|"+o.P.trait);
@@ -2549,6 +2566,77 @@ function reportText(o){
   L.push("(姓名學僅供參考)");
   return L.join("\n");
 }
+/* ===== 姓名學計分(邏輯公開、可展開明細) ===== */
+var GE_W={ren:30, zong:25, di:20, wai:15, tian:10};          // 五格權重(合計 100)
+var LV_F={"大吉":1, "吉":0.85, "半吉":0.6, "凶":0.3};      // 81 數理吉凶 → 得分比例
+var SC_F={"大吉":100, "吉":80, "平":60, "須注意":35};       // 三才配置分
+var REL_S={"被生":95, "比和":85, "生":75, "剋":55, "被剋":45};   // 五行互動分(以「我 → 他」看)
+var REL_W=[["ren",40,"人格互動","核心個性合不合"],["wai",20,"外格互動","社交、應對場合合不合"],["di",15,"地格互動","執行與配合合不合"]];
+var REL_TXT={"被生":"他生你:他是你的貴人","比和":"比和:個性相近好溝通","生":"你生他:你付出較多","剋":"你剋他:你較強勢","被剋":"他剋你:他給你壓力"};
+function lvF(lv){ return LV_F[lv]!=null ? LV_F[lv] : 0.3; }
+function grade(n){
+  return n>=90?["極佳","#17803d"]:n>=80?["優良","#2f7d4f"]:n>=70?["良好","#b8925a"]:n>=60?["普通","#a1621b"]:["須留意","#b42318"];
+}
+function pairGrade(n){
+  return n>=90?"天作之合:放心深耕,長期合作首選":n>=80?"合作愉快:默契好,適合主力經營":n>=70?"可以合作:用對方法就順":n>=60?"需要經營:多花心思建立信任":"多加保障:合作前把條件談清楚、寫明白";
+}
+/** 個人分數:五格 80% + 三才 20% */
+function personScore(R){
+  var items=[], wuge=0;
+  ["ren","zong","di","wai","tian"].forEach(function(k){
+    var a=n81(R[k]), f=lvF(a[0]), pts=GE_W[k]*f; wuge+=pts;
+    items.push({k:GE_INFO[k][0], v:R[k]+"("+wx(R[k])+")", lv:a[0], pts:pts, max:GE_W[k]});
+  });
+  var sc=sancai(R), scp=SC_F[sc.level]||60;
+  var total=Math.round(wuge*0.8 + scp*0.2);
+  return { total:total, wuge:Math.round(wuge), sc:sc, scp:scp, items:items };
+}
+/** 配對分數:人格 40 + 外格 20 + 地格 15(五行互動)+ 雙方總格穩定 25 */
+function pairScore(M,R){
+  var items=[], sum=0;
+  REL_W.forEach(function(w){
+    var r=rel(wx(M[w[0]]),wx(R[w[0]])), p=REL_S[r]*w[1]/100; sum+=p;
+    items.push({k:w[2], why:w[3], d:"你 "+M[w[0]]+"("+wx(M[w[0]])+")→ 他 "+R[w[0]]+"("+wx(R[w[0]])+"):"+REL_TXT[r], pts:p, max:w[1]});
+  });
+  var fz=(lvF(n81(M.zong)[0])+lvF(n81(R.zong)[0]))/2, p4=25*fz; sum+=p4;
+  items.push({k:"總格穩定", why:"長期合作穩不穩", d:"你 總格 "+M.zong+"("+n81(M.zong)[0]+")、他 總格 "+R.zong+"("+n81(R.zong)[0]+")", pts:p4, max:25});
+  return { total:Math.round(sum), items:items };
+}
+function ringHtml(n,label,sub){
+  var g=grade(n);
+  return '<div class="nmring"><div class="ring" style="--p:'+n+';--c:'+g[1]+'"><b>'+n+'</b><small>分</small></div>'+
+    '<div class="rl"><div class="rt">'+esc(label)+'</div><div class="rg" style="color:'+g[1]+'">'+g[0]+'</div>'+(sub?'<div class="rs">'+esc(sub)+'</div>':'')+'</div></div>';
+}
+function scoreTable(items){
+  return '<table class="nmtb"><tr><th>項目</th><th>內容</th><th>得分</th></tr>'+items.map(function(i){
+    return '<tr><td>'+esc(i.k)+(i.why?'<small>'+esc(i.why)+'</small>':'')+'</td><td>'+esc(i.d||(i.v+" "+i.lv))+'</td><td><b>'+(Math.round(i.pts*10)/10)+'</b>/'+i.max+'</td></tr>';
+  }).join("")+'</table>';
+}
+function scoreSectionHtml(o){
+  var ps=personScore(o.R), h='<div class="exp nmscore"><h3>📊 姓名分數</h3>';
+  h+=ringHtml(ps.total, o.R.name+" 的姓名分數", "五格 "+ps.wuge+"/100 × 80% + 三才 "+ps.scp+" × 20%");
+  var pm=null, pp=null;
+  if(o.M){
+    pm=personScore(o.M); h+=ringHtml(pm.total, o.M.name+"(你)的姓名分數", "五格 "+pm.wuge+"/100 × 80% + 三才 "+pm.scp+" × 20%");
+    pp=pairScore(o.M,o.R);
+    h+='<div class="nmpair">'+ringHtml(pp.total,"你們的配對分數",pairGrade(pp.total))+'</div>';
+  }
+  h+='<details class="nmdet"><summary>看計分明細與邏輯</summary>';
+  h+='<h4>'+esc(o.R.name)+':個人分數 '+ps.total+'</h4>'+scoreTable(ps.items)+'<p class="nmnote">三才 '+ps.sc.combo+'('+ps.sc.level+')= '+ps.scp+' 分</p>';
+  if(pm) h+='<h4>'+esc(o.M.name)+':個人分數 '+pm.total+'</h4>'+scoreTable(pm.items)+'<p class="nmnote">三才 '+pm.sc.combo+'('+pm.sc.level+')= '+pm.scp+' 分</p>';
+  if(pp) h+='<h4>配對分數 '+pp.total+'</h4>'+scoreTable(pp.items);
+  h+='<div class="nmlogic"><b>計分邏輯</b><br>'+
+    '・個人分數 = 五格數理 × 80% + 三才配置 × 20%。<br>'+
+    '・五格權重:人格 30(主運)、總格 25(後運)、地格 20(前運)、外格 15(人際)、天格 10(祖運);每格依 81 數理:大吉 100%、吉 85%、半吉 60%、凶 30%。<br>'+
+    '・三才:大吉 100、吉 80、平 60、須注意 35。<br>'+
+    '・配對分數 = 人格互動 40 + 外格互動 20 + 地格互動 15 + 雙方總格穩定 25。<br>'+
+    '・五行互動(以你看他):他生你 95、比和 85、你生他 75、你剋他 55、他剋你 45(%)。<br>'+
+    '・等級:90↑ 極佳、80↑ 優良、70↑ 良好、60↑ 普通、60↓ 須留意。</div>';
+  h+='</details></div>';
+  o.scores={person:ps.total, mine:pm?pm.total:null, pair:pp?pp.total:null};
+  return h;
+}
+
 function myNameDefault(){ return ls("sc_myname") || (MY.card&&MY.card.name) || ""; }
 async function openNameView(name){
   $("vName").classList.remove("hide"); $("vName").scrollTop=0;
@@ -2566,7 +2654,7 @@ async function renderNameView(){
   var okMine=/^[㐀-鿿豈-﫿]{2,5}$/.test(mine), o=nameReport(their, okMine?mine:"");
   NM.last=o;
   var chips=function(R,who){ return '<div class="nmchars">'+R.chars.map(function(c){ return '<span class="nmch"><b>'+esc(c.ch)+'</b><em>'+c.n+'</em><button data-kx="'+esc(c.ch)+'" data-d="-1">−</button><button data-kx="'+esc(c.ch)+'" data-d="1">＋</button></span>'; }).join("")+'</div>'; };
-  var h='';
+  var h=scoreSectionHtml(o);
   h+='<div class="exp"><h3>'+esc(o.R.name)+' 的康熙筆畫</h3>'+chips(o.R)+'<p>姓名學用康熙字典筆畫(例:「氵」算水 4 畫、「艹」算艸 6 畫)。跟你參考的老師或書不同時,按 −/＋ 微調,會記住。</p></div>';
   h+='<div class="exp"><h3>五格剖象</h3>'+geHtml(o.R)+'</div>';
   h+='<div class="exp"><h3>三才配置:'+o.sc.combo+' <span class="nmtag '+(o.sc.level==="須注意"?"bad":o.sc.level==="平"?"mid":"good")+'">'+o.sc.level+'</span></h3><p>'+o.sc.text.join("<br>")+'</p></div>';
@@ -2592,7 +2680,7 @@ async function nmShare(){
 function nmSaveNote(){
   if(!NM.last || !S.cur) return;
   var el=$("form").querySelector('[data-k="備註"]'); if(!el) return;
-  var o=NM.last, line="【姓名學】"+o.P.type+";與我:"+(o.adv?o.adv.head:"—")+"。"+(o.summary||"");
+  var o=NM.last, sc=o.scores||{}, line="【姓名學】"+o.P.type+"|姓名 "+sc.person+" 分"+(sc.pair!=null?"|配對 "+sc.pair+" 分":"")+";與我:"+(o.adv?o.adv.head:"—")+"。"+(o.summary||"");
   el.value=(el.value?el.value+"\n":"")+line; $("vName").classList.add("hide");
   toast("✅ 已加到備註,記得按「儲存到雲端」");
 }
