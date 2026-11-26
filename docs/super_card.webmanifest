@@ -5,8 +5,8 @@
   "start_url": "./super_card.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f6f5",
-  "theme_color": "#0f766e",
+  "background_color": "#f5f4f0",
+  "theme_color": "#13233d",
   "lang": "zh-Hant",
   "icons": [
     { "src": "super_card_logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },

@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#13233d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="超級名片">
 <title>超級名片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="super_card.webmanifest">
 <link rel="apple-touch-icon" href="super_card_icon180.png">
 <link rel="icon" type="image/svg+xml" href="super_card_logo.svg">
@@ -162,6 +165,56 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .share .btn{margin-bottom:10px;text-align:left}
 .share pre{white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:10px;font-size:13px;margin:0 0 12px;max-height:140px;overflow:auto;font-family:inherit}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
+
+/* ===== v1.6 商業風格:深海藍 × 香檳金 ===== */
+:root{ --bg:#f5f4f0; --card:#fff; --ink:#1b2333; --sub:#6b7280; --line:#e6e3dc;
+  --pri:#13233d; --pri2:#1d3557; --acc:#b8925a; --acc2:#d9b98a; --chip:#f1ebe0; --warn:#a1621b; --danger:#b42318; }
+html,body{background:var(--bg)}
+.serif,header h1,.login h2,.exp h3,.share h3,#mergeNote b{font-family:"Noto Serif TC","Songti TC","STSong",serif}
+header{background:linear-gradient(180deg,var(--pri2),var(--pri));box-shadow:inset 0 -1px 0 rgba(184,146,90,.45)}
+header h1{letter-spacing:2px;font-weight:700}
+header h1 .brand{box-shadow:0 0 0 1px rgba(217,185,138,.55)}
+header .ic{background:transparent;border:1px solid rgba(255,255,255,.24);display:inline-flex;align-items:center;gap:5px;padding:7px 10px}
+header .ic svg{color:var(--acc2)}
+.ver{background:transparent;border:1px solid var(--acc);color:var(--acc2);font-family:-apple-system,sans-serif}
+.ver.warn{background:var(--acc);color:var(--pri)}
+.inp{border-color:var(--line)} .inp:focus{outline:2px solid rgba(184,146,90,.35);border-color:var(--acc)}
+.btn{background:var(--pri);display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.5px;box-shadow:0 2px 6px rgba(19,35,61,.18)}
+.btn svg{color:var(--acc2);flex:none}
+.btn.sec{background:#fff;color:var(--pri);border:1px solid #cdd3dc;box-shadow:none}
+.btn.sec svg{color:var(--acc)}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid #f0cfcb;box-shadow:none} .btn.danger svg{color:var(--danger)}
+.share .btn{justify-content:flex-start}
+.fab{background:var(--pri);border:1px solid var(--acc);display:flex;align-items:center;gap:8px;box-shadow:0 10px 22px rgba(19,35,61,.35)}
+.fab svg{color:var(--acc2)}
+.fab2{color:var(--pri);border-color:var(--pri);display:flex;align-items:center;gap:6px}
+.fab2 svg{color:var(--acc)}
+.chip{color:var(--sub)} .chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.stat{letter-spacing:.3px}
+.item{border-radius:14px;box-shadow:0 1px 2px rgba(19,35,61,.05)}
+.item .n{letter-spacing:.5px}
+.item .tg span{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+.thumb.ph{background:var(--pri);color:var(--acc2);font-family:"Noto Serif TC","Songti TC",serif;font-size:22px;font-weight:700}
+.qa{display:flex;flex-direction:column;gap:5px;flex:none}
+.qa a{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--chip);color:var(--pri);display:flex;align-items:center;justify-content:center}
+.qa a.off{opacity:.25;pointer-events:none}
+.quick{display:flex;gap:8px;margin-top:12px}
+.quick button{flex:1;border:0;background:var(--pri);color:#fff;border-radius:12px;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12.5px;letter-spacing:1px}
+.quick button svg{color:var(--acc2)}
+.quick button:disabled{opacity:.3}
+.row a.act2{width:34px;height:34px;border-radius:50%;background:var(--pri);color:var(--acc2);display:flex;align-items:center;justify-content:center;flex:none}
+.badge{background:var(--chip);color:var(--pri)} .badge.ocr{background:#fbf3e6;color:var(--warn)}
+.menu button{display:flex;align-items:center;gap:10px} .menu svg{color:var(--acc);flex:none}
+.login h2{font-size:28px;letter-spacing:4px;color:var(--pri)}
+.login .logo img{box-shadow:0 10px 24px rgba(19,35,61,.3)}
+.sides button.on{background:var(--pri);border-color:var(--pri)}
+.exp,.form,.mrow{border-color:var(--line)}
+.dist{color:var(--pri)}
+.dupbar{background:#fbf6ee;border-color:#ead9bd}
+.mini.pri{background:var(--pri);border-color:var(--pri)}
+.tag{background:#fbf3e6;color:var(--warn)}
+.vbar .ic svg,.vbar .sides svg{color:var(--acc2)}
+.ic svg,.btn svg,.fab svg,.fab2 svg,.menu svg,.quick svg,.qa svg,.act2 svg{display:block}
 </style>
 </head>
 <body>
@@ -179,7 +232,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
   <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
   <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
   <div style="height:10px"></div>
-  <button id="btnLogin" class="btn">進入</button>
+  <button id="btnLogin" class="btn" data-ic="check">進入</button>
   <div id="loginMsg" class="msg"></div>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
   <details><summary>後端網址設定</summary>
@@ -191,15 +244,15 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <div id="vMain" class="hide">
   <header>
     <h1><img class="brand" src="super_card_logo.svg" alt="">超級名片<span class="ver" id="verBadge"></span></h1>
-    <button class="ic" id="btnMap" title="地圖">🗺 地圖</button>
-    <button class="ic" id="btnMenu" title="更多">☰</button>
+    <button class="ic" id="btnMap" title="地圖" data-ic="map">地圖</button>
+    <button class="ic" id="btnMenu" title="更多" data-ic="menu"></button>
   </header>
   <div id="menu" class="menu hide">
-    <button id="btnExport">📤 匯出 Excel / 通訊錄</button>
-    <button id="btnDups">🔍 找重複名片</button>
-    <button id="btnReload">⟳ 重新整理</button>
-    <button id="btnLogout">🚪 登出</button>
-    <button id="btnVer">ℹ️ 版本</button>
+    <button id="btnExport" data-ic="download">匯出 Excel / 通訊錄</button>
+    <button id="btnDups" data-ic="copy">找重複名片</button>
+    <button id="btnReload" data-ic="refresh">重新整理</button>
+    <button id="btnLogout" data-ic="logout">登出</button>
+    <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
     <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select></div>
@@ -207,8 +260,8 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
     <div id="stat" class="stat"></div>
     <div id="list" class="list"></div>
   </div>
-  <button class="fab2" id="btnBatch">📚 批量連拍</button>
-  <button class="fab" id="btnScan">📷 掃名片</button>
+  <button class="fab2" id="btnBatch" data-ic="stack">批量連拍</button>
+  <button class="fab" id="btnScan" data-ic="camera">掃名片</button>
   <input id="file" type="file" accept="image/*" capture="environment" class="hide">
   <input id="fileCam" type="file" accept="image/*" capture="environment" class="hide">
   <input id="fileMulti" type="file" accept="image/*" multiple class="hide">
@@ -219,18 +272,18 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 批量連拍佇列 -->
 <div id="vBatch" class="sheet hide">
   <header>
-    <button class="ic" id="btnBatchBack">← 返回</button>
+    <button class="ic" id="btnBatchBack" data-ic="back">返回</button>
     <h1>批量連拍</h1>
   </header>
   <div class="wrap">
-    <div class="duo"><button class="btn" id="btnShot">📷 拍下一張</button><button class="btn sec" id="btnPick">🖼 相簿多選</button></div>
+    <div class="duo"><button class="btn" id="btnShot" data-ic="camera">拍下一張</button><button class="btn sec" id="btnPick" data-ic="image">相簿多選</button></div>
     <input id="qTag" class="inp" style="margin-top:10px;font-size:15px" placeholder="🏷 這批共同標籤(選填,例:2026農機展)">
     <label class="dual"><input type="checkbox" id="qDual"> 🔁 雙面模式:拍完正面接著拍背面,自動配成同一張</label>
     <div id="qStat" class="stat" style="margin-top:12px"></div>
     <div id="qList" class="list"></div>
     <div class="acts">
-      <button class="btn" id="btnSaveAll">💾 全部儲存</button>
-      <button class="btn danger" id="btnClearQ">清空佇列</button>
+      <button class="btn" id="btnSaveAll" data-ic="save">全部儲存</button>
+      <button class="btn danger" id="btnClearQ" data-ic="trash">清空佇列</button>
     </div>
   </div>
 </div>
@@ -238,9 +291,9 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- ④ 地圖 -->
 <div id="vMap" class="sheet hide">
   <header>
-    <button class="ic" id="btnMapBack">← 返回</button>
+    <button class="ic" id="btnMapBack" data-ic="back">返回</button>
     <h1 id="mapTitle">地圖</h1>
-    <button class="ic" id="btnLocate">📍 附近</button>
+    <button class="ic" id="btnLocate" data-ic="pin">附近</button>
   </header>
   <div class="wrap">
     <div id="map"></div>
@@ -252,7 +305,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 匯出 -->
 <div id="vExport" class="sheet hide">
   <header>
-    <button class="ic" id="btnExportBack">← 返回</button>
+    <button class="ic" id="btnExportBack" data-ic="back">返回</button>
     <h1>匯出名片</h1>
   </header>
   <div class="wrap">
@@ -264,18 +317,18 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
     <div class="exp">
       <h3>📗 Excel 表格</h3>
       <p>一張名片一列,電話保留開頭 0,可直接用 Excel、Numbers、Google 試算表開啟。</p>
-      <button class="btn" id="btnXlsx">下載 Excel(.xlsx)</button>
+      <button class="btn" id="btnXlsx" data-ic="sheet">下載 Excel(.xlsx)</button>
     </div>
     <div class="exp">
       <h3>👤 手機通訊錄(.vcf)</h3>
       <p>iPhone:下載後點開 → 「加入全部聯絡人」。<br>Android:下載後用「聯絡人」App 開啟或匯入。<br>Google 通訊錄:contacts.google.com → 匯入 → 選這個檔。</p>
       <label><input type="checkbox" id="xPhoto"> 附名片縮圖當聯絡人照片(檔案會變大)</label>
-      <button class="btn" id="btnVcf" style="margin-top:6px">下載通訊錄檔(.vcf)</button>
+      <button class="btn" id="btnVcf" style="margin-top:6px" data-ic="user">下載通訊錄檔(.vcf)</button>
     </div>
     <div class="exp">
       <h3>📊 Google 試算表</h3>
       <p>所有名片本來就存在你雲端的「超級名片_資料庫」,可以直接打開篩選、列印。</p>
-      <a class="btn sec" id="btnSheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
+      <a class="btn sec" id="btnSheet" data-ic="sheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
     </div>
     <p class="stat" style="margin-top:14px">※ 在 LINE 裡開這個網頁可能無法下載,請改用 Safari / Chrome 開啟。</p>
   </div>
@@ -284,7 +337,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 找重複 -->
 <div id="vDups" class="sheet hide">
   <header>
-    <button class="ic" id="btnDupsBack">← 返回</button>
+    <button class="ic" id="btnDupsBack" data-ic="back">返回</button>
     <h1>找重複名片</h1>
   </header>
   <div class="wrap">
@@ -295,7 +348,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <div id="vEdit" class="sheet hide" style="z-index:12">
   <header>
-    <button class="ic" id="btnBack">← 返回</button>
+    <button class="ic" id="btnBack" data-ic="back">返回</button>
     <h1 id="editTitle">新名片</h1>
   </header>
   <div class="wrap">
@@ -306,15 +359,19 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
       <div style="margin-top:10px"><span id="method" class="badge"></span></div>
       <div id="warn" class="note hide"></div>
       <div id="dupBar" class="dupbar hide"></div>
+      <div class="quick" id="quick">
+        <button type="button" data-q="tel">撥打</button><button type="button" data-q="nav">導航</button>
+        <button type="button" data-q="mail">寄信</button><button type="button" data-q="share">分享</button>
+      </div>
       <div class="form" id="form"></div>
       <div class="acts">
-        <button class="btn" id="btnSave">💾 儲存到雲端</button>
-        <button class="btn sec" id="btnAddBack">📷 加拍背面</button>
-        <button class="btn sec" id="btnShareCard">📤 分享名片</button>
-        <button class="btn sec" id="btnContact">👤 加入手機通訊錄</button>
-        <button class="btn sec hide" id="btnRescan">📷 換一張重拍</button>
-        <button class="btn sec hide" id="btnPhoto">🔍 看大圖</button>
-        <button class="btn danger hide" id="btnDel">刪除這張名片</button>
+        <button class="btn" id="btnSave" data-ic="save">儲存到雲端</button>
+        <button class="btn sec" id="btnAddBack" data-ic="camera">加拍背面</button>
+        <button class="btn sec" id="btnShareCard" data-ic="share">分享名片</button>
+        <button class="btn sec" id="btnContact" data-ic="userplus">加入手機通訊錄</button>
+        <button class="btn sec hide" id="btnRescan" data-ic="camera">換一張重拍</button>
+        <button class="btn sec hide" id="btnPhoto" data-ic="zoom">看大圖</button>
+        <button class="btn danger hide" id="btnDel" data-ic="trash">刪除這張名片</button>
       </div>
       <details id="rawBox" class="hide"><summary>辨識原始文字</summary><pre id="raw"></pre></details>
     </div>
@@ -324,13 +381,13 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 合併 -->
 <div id="vMerge" class="sheet hide" style="z-index:14">
   <header>
-    <button class="ic" id="btnMergeBack">← 返回</button>
+    <button class="ic" id="btnMergeBack" data-ic="back">返回</button>
     <h1>合併名片</h1>
   </header>
   <div class="wrap">
     <div id="mergeNote" class="stat" style="line-height:1.6"></div>
     <div id="mergeBody"></div>
-    <div class="acts"><button class="btn" id="btnMergeOk">✅ 確認合併</button></div>
+    <div class="acts"><button class="btn" id="btnMergeOk" data-ic="check">確認合併</button></div>
   </div>
 </div>
 
@@ -340,9 +397,9 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
     <h3>📤 分享名片</h3>
     <p id="shareWho"></p>
     <pre id="shareText"></pre>
-    <button class="btn" id="btnShareText">💬 傳文字(貼到 LINE 最方便)</button>
-    <button class="btn sec" id="btnShareVcf">👤 傳電子名片(.vcf,對方可直接存聯絡人)</button>
-    <button class="btn sec" id="btnSharePic">🖼 傳名片照片</button>
+    <button class="btn" id="btnShareText" data-ic="message">傳文字(貼到 LINE 最方便)</button>
+    <button class="btn sec" id="btnShareVcf" data-ic="user">傳電子名片(.vcf,對方可直接存聯絡人)</button>
+    <button class="btn sec" id="btnSharePic" data-ic="image">傳名片照片</button>
     <button class="btn sec" id="btnShareClose" style="text-align:center">取消</button>
   </div>
 </div>
@@ -350,14 +407,14 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 看大圖 -->
 <div id="vPhoto" class="viewer hide">
   <div class="vbar">
-    <button class="ic" id="btnViewClose">✕ 關閉</button>
+    <button class="ic" id="btnViewClose" data-ic="x">關閉</button>
     <div id="vSides" class="sides hide"><button type="button" data-vs="f">正面</button><button type="button" data-vs="b">背面</button></div>
     <span id="vMsg" class="vmsg"></span>
   </div>
   <div id="vBox" class="vbox"><img id="vImg" alt="名片大圖"></div>
   <div class="vbar bottom">
     <span class="vmsg" style="text-align:left">雙擊放大・兩指縮放・拖曳移動</span>
-    <button class="ic" id="btnViewShare">📤 分享</button>
+    <button class="ic" id="btnViewShare" data-ic="share">分享</button>
   </div>
 </div>
 
@@ -365,7 +422,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.5", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.6", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -373,6 +430,67 @@ var FIELDS = [
   ["地址","text"],["縣市","text"],["網站","url"],["統編","text"],["LINE","text"],
   ["標籤","text"],["備註","area"]
 ];
+
+/* ===== 線條圖示 ===== */
+var ICONS={
+ phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+ nav:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+ mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+ map:'<path d="M14.1 6.3 9.9 4.2a2 2 0 0 0-1.8 0L3.6 6.5A1 1 0 0 0 3 7.4v12.2a1 1 0 0 0 1.4.9l3.7-1.9a2 2 0 0 1 1.8 0l4.2 2.1a2 2 0 0 0 1.8 0l4.5-2.3a1 1 0 0 0 .6-.9V5.4a1 1 0 0 0-1.4-.9l-3.7 1.9a2 2 0 0 1-1.8 0z"/><path d="M15 6v15M9 3v15"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
+ stack:'<rect x="3" y="7" width="15" height="13" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v11"/>',
+ back:'<path d="m15 18-6-6 6-6"/>',
+ share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/>',
+ line:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3-.5L3 21l1.6-4.3A8 8 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>',
+ message:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+ copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+ refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
+ logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+ info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+ image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+ save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+ pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+ sheet:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ userplus:'<circle cx="10" cy="8" r="4"/><path d="M2 21a8 8 0 0 1 13.3-6M19 16v6M16 19h6"/>',
+ zoom:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>',
+ trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ x:'<path d="M18 6 6 18M6 6l12 12"/>'
+};
+function ic(n,sz){ sz=sz||18; return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[n]||"")+'</svg>'; }
+/** 有 data-ic 的元素:前面加圖示,文字包進 .lb(之後用 setLabel 改字不會把圖示洗掉) */
+function decorateIcons(root){
+  (root||document).querySelectorAll("[data-ic]").forEach(function(el){
+    if(el.dataset.icDone) return; el.dataset.icDone="1";
+    var t=el.textContent.trim();
+    el.innerHTML=ic(el.dataset.ic, el.classList.contains("btn")||el.classList.contains("fab")?19:17)+(t?'<span class="lb">'+esc(t)+'</span>':'');
+  });
+}
+function setLabel(el,t){ var lb=el&&el.querySelector(".lb"); if(lb) lb.textContent=t; else if(el) el.textContent=t; }
+function phThumb(c){ return '<div class="thumb ph">'+esc(String((c&&(c["姓名"]||c["公司"]))||"?").charAt(0))+'</div>'; }
+function firstTel(c){ return (String(c["手機"]||"").trim()||String(c["電話"]||"")).split("/")[0].replace(/#.*/,"").replace(/[^\d+]/g,""); }
+function firstMail(c){ return String(c.Email||"").split("/")[0].trim(); }
+function qaHtml(c){
+  var t=firstTel(c), a=String(c["地址"]||"").trim(), m=firstMail(c);
+  return '<div class="qa">'+
+    '<a href="#" data-qa="tel" title="撥打" class="'+(t?'':'off')+'">'+ic("phone",16)+'</a>'+
+    '<a href="#" data-qa="nav" title="導航" class="'+(a?'':'off')+'">'+ic("nav",16)+'</a>'+
+    '<a href="#" data-qa="mail" title="寄信" class="'+(m?'':'off')+'">'+ic("mail",16)+'</a></div>';
+}
+function quickAct(kind,c){
+  if(kind==="tel"){ var t=firstTel(c); if(t) location.href="tel:"+t; else toast("這張沒有電話"); }
+  if(kind==="nav"){ if(String(c["地址"]||"").trim()) window.open(navUrl(c["地址"]),"_blank"); else toast("這張沒有地址"); }
+  if(kind==="mail"){ var m=firstMail(c); if(m) location.href="mailto:"+m; else toast("這張沒有 Email"); }
+  if(kind==="share") openShare();
+}
+function renderQuick(){
+  var f=formData(), has={tel:!!firstTel(f), nav:!!String(f["地址"]||"").trim(), mail:!!firstMail(f), share:!!(f["姓名"]||f["公司"])};
+  var ics={tel:"phone",nav:"nav",mail:"mail",share:"share"}, lb={tel:"撥打",nav:"導航",mail:"寄信",share:"分享"};
+  $("quick").querySelectorAll("[data-q]").forEach(function(b){ var k=b.dataset.q; b.innerHTML=ic(ics[k],20)+"<span>"+lb[k]+"</span>"; b.disabled=!has[k]; });
+}
 
 /* ===== 小工具 ===== */
 function $(id){return document.getElementById(id);}
@@ -437,7 +555,7 @@ function renderVer(){
   var mis = S.backVer && S.backVer!==APP_VER;
   $("verBadge").textContent="v"+APP_VER+(mis?" ⚠":"");
   $("verBadge").classList.toggle("warn",!!mis);
-  $("btnVer").textContent="ℹ️ 版本 v"+APP_VER+(S.backVer?"(後端 v"+S.backVer+")":"");
+  setLabel($("btnVer"),"版本 v"+APP_VER+(S.backVer?"(後端 v"+S.backVer+")":""));
 }
 function showVer(){
   var mis = S.backVer && S.backVer!==APP_VER;
@@ -549,13 +667,13 @@ function renderList(){
   if(!S.cards.length){ $("list").innerHTML='<div class="empty">還沒有名片<br>按右下角「📷 掃名片」開始</div>'; return; }
   if(!arr.length){ $("list").innerHTML='<div class="empty">沒有符合的名片</div>'; return; }
   $("list").innerHTML = arr.map(function(c,i){
-    var th = c["縮圖"] ? '<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">' : '<div class="thumb ph">📇</div>';
+    var th = c["縮圖"] ? '<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">' : phThumb(c);
     return '<div class="item" data-id="'+esc(c.ID)+'">'+th+'<div class="t">'+
       '<div class="n">'+esc(c["姓名"]||"(未填姓名)")+'<small>'+esc(c["職稱"])+'</small></div>'+
       '<div class="c">'+esc(c["公司"])+'</div>'+
       '<div class="p">'+esc([c["手機"],c["電話"]].filter(Boolean).join(" · ")||c["縣市"])+'</div>'+
       (tagsOf(c).length?'<div class="tg">'+tagsOf(c).map(function(t){return '<span>'+esc(t)+'</span>';}).join("")+'</div>':'')+
-      '</div></div>';
+      '</div>'+qaHtml(c)+'</div>';
   }).join("");
 }
 
@@ -572,9 +690,10 @@ function openEdit(card, opts){
   renderSides("f");
   $("form").innerHTML = FIELDS.map(function(f){
     var k=f[0], v=esc(card&&card[k]||""), link="";
-    if(k==="手機"||k==="電話") link='<a data-act="tel" data-k="'+k+'" href="#">📞</a>';
-    if(k==="Email") link='<a data-act="mail" href="#">✉️</a>';
-    if(k==="地址") link='<a data-act="nav" href="#" title="導航">🧭</a>';
+    if(k==="手機"||k==="電話") link='<a class="act2" data-act="tel" data-k="'+k+'" href="#" title="撥打">'+ic("phone",17)+'</a>';
+    if(k==="Email") link='<a class="act2" data-act="mail" href="#" title="寄信">'+ic("mail",17)+'</a>';
+    if(k==="地址") link='<a class="act2" data-act="nav" href="#" title="導航">'+ic("nav",17)+'</a>';
+    if(k==="LINE") link='<a class="act2" data-act="line" href="#" title="加 LINE 好友">'+ic("line",17)+'</a>';
     var input = f[1]==="area" ? '<textarea data-k="'+k+'">'+v+'</textarea>'
       : '<input data-k="'+k+'" type="'+(f[1]==="tel"?"text":f[1])+'" '+(f[1]==="tel"?'inputmode="tel"':'')+' value="'+v+'">';
     return '<div class="row"><label>'+k+'</label>'+input+link+'</div>';
@@ -582,6 +701,7 @@ function openEdit(card, opts){
   var tr=$("form").querySelector('[data-k="標籤"]').closest(".row");
   tr.insertAdjacentHTML("afterend",'<div class="tagpick" id="tagpick"></div>');
   renderTagPick();
+  renderQuick();
   var isNew=!(card&&card.ID);
   $("method").textContent = isNew ? (S.cur.method==="AI"?"✨ AI 辨識":S.cur.method==="OCR"?"🔤 OCR 辨識(請核對)":"手動輸入")
                                   : ("建立 "+(card["建立時間"]||"").slice(0,16)+" · "+(card["辨識方式"]||""));
@@ -622,7 +742,7 @@ async function onFile(ev){
 async function save(){
   var f=formData();
   if(!f["姓名"]&&!f["公司"]){ toast("姓名或公司至少填一個"); return; }
-  var b=$("btnSave"); b.disabled=true; b.textContent="儲存中…";
+  var b=$("btnSave"); b.disabled=true; setLabel(b,"儲存中…");
   var qid=S.cur.qid; if(qid) f=withQTag(f);
   try{
     var r=await post({action:"save", id:S.cur.id, fields:f, image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw,
@@ -633,7 +753,7 @@ async function save(){
     if(qid) qRemove(qid);
     renderList(); closeEdit(); toast("✅ 已存到 Google 雲端");
   }catch(e){ toast("儲存失敗:"+e.message); }
-  b.disabled=false; b.textContent="💾 儲存到雲端";
+  b.disabled=false; setLabel(b,"儲存到雲端");
 }
 
 async function del(){
@@ -655,12 +775,12 @@ function renderSides(side){
   $("sides").querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.side===c.side); });
   var src = c.side==="b" ? c.backSrc : c.frontSrc;
   if(src){ $("photo").src=src; $("photo").classList.remove("hide"); }
-  $("btnAddBack").textContent = c.backSrc ? "📷 重拍背面" : "📷 加拍背面";
+  setLabel($("btnAddBack"), c.backSrc ? "重拍背面" : "加拍背面");
 }
 async function onBackFile(ev){
   var file=ev.target.files[0]; ev.target.value="";
   if(!file || !S.cur) return;
-  var cur=S.cur, b=$("btnAddBack"); b.disabled=true; b.textContent="背面辨識中…";
+  var cur=S.cur, b=$("btnAddBack"); b.disabled=true; setLabel(b,"背面辨識中…");
   try{
     var im=await loadImg(file), big=shrink(im,1600,0.85);
     cur.backImage=big.split(",")[1]; cur.backThumb=shrink(im,240,0.6); cur.backSrc=big;
@@ -942,7 +1062,7 @@ function qDupInBatch(it){
 function renderQ(){
   var n={wait:0,scan:0,ok:0,dup:0,err:0,saving:0};
   S.q.forEach(function(x){n[x.st]++;});
-  $("btnBatch").textContent = S.q.length ? ("📚 批量("+S.q.length+")") : "📚 批量連拍";
+  setLabel($("btnBatch"), S.q.length ? ("批量("+S.q.length+")") : "批量連拍");
   qSaveSoon();
   if($("vBatch").classList.contains("hide")) return;
   $("qStat").textContent = S.q.length
@@ -965,7 +1085,7 @@ function renderQ(){
       '<div class="c">'+esc(f["公司"]||"")+'</div>'+
       '<div class="p st '+x.st+'">'+esc(st)+'</div></div></div>';
   }).join("");
-  $("btnSaveAll").textContent="💾 全部儲存("+n.ok+" 張)";
+  setLabel($("btnSaveAll"),"全部儲存("+n.ok+" 張)");
   $("btnSaveAll").disabled=!n.ok;
   $("btnClearQ").classList.toggle("hide",!S.q.length);
 }
@@ -1101,7 +1221,7 @@ async function doMerge(){
   if(m.mode==="new"){ if(useB && m.other.image){ body.image=m.other.image; body.thumb=m.other.thumb; body.method=m.other.method; body.raw=m.other.raw;
                                                   body.backImage=m.other.backImage||""; body.backThumb=m.other.backThumb||""; } }
   else { body.dropId=m.other.card.ID; body.useDropPhoto=useB; }
-  $("btnMergeOk").disabled=true; $("btnMergeOk").textContent="合併中…";
+  $("btnMergeOk").disabled=true; setLabel($("btnMergeOk"),"合併中…");
   try{
     var r=await post(body);
     if(!r.ok) throw new Error(r.error);
@@ -1113,7 +1233,7 @@ async function doMerge(){
     renderList(); if(!$("vDups").classList.contains("hide")) renderDups();
     toast("✅ 已合併");
   }catch(e){ toast("合併失敗:"+e.message); $("btnMergeOk").disabled=false; }
-  $("btnMergeOk").textContent="✅ 確認合併";
+  setLabel($("btnMergeOk"),"確認合併");
 }
 
 /* ===== ② 找重複(既有名片) ===== */
@@ -1140,7 +1260,7 @@ function renderDups(){
   var ps=dupPairs(); S.pairs=ps;
   $("dupStat").textContent = ps.length ? ("找到 "+ps.length+" 組可能重複,點一組來合併") : ("檢查了 "+S.cards.length+" 張,沒有重複的名片 👍");
   $("dupList").innerHTML = ps.map(function(p,i){
-    var th=function(c){return c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':'<div class="thumb ph">📇</div>';};
+    var th=function(c){return c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':phThumb(c);};
     return '<div class="item" data-i="'+i+'">'+th(p.a)+'<div class="t">'+
       '<div class="n">'+esc(p.a["姓名"]||p.a["公司"])+' ⇄ '+esc(p.b["姓名"]||p.b["公司"])+'</div>'+
       '<div class="c">'+esc(p.a["公司"]||"")+(p.a["公司"]!==p.b["公司"]?' / '+esc(p.b["公司"]||""):"")+'</div>'+
@@ -1184,7 +1304,7 @@ function loadXLSX(){
 }
 async function exportXlsx(){
   var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
-  var b=$("btnXlsx"); b.disabled=true; b.textContent="產生中…";
+  var b=$("btnXlsx"); b.disabled=true; setLabel(b,"產生中…");
   try{
     await loadXLSX();
     var rows=[XCOLS].concat(cs.map(function(c){ return XCOLS.map(function(k){ return String(c[k]||""); }); }));
@@ -1196,7 +1316,7 @@ async function exportXlsx(){
     download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "超級名片_"+today()+".xlsx");
     toast("✅ 已匯出 "+cs.length+" 張");
   }catch(e){ toast("匯出失敗:"+e.message); }
-  b.disabled=false; b.textContent="下載 Excel(.xlsx)";
+  b.disabled=false; setLabel(b,"下載 Excel(.xlsx)");
 }
 
 /* vCard 3.0 */
@@ -1347,7 +1467,7 @@ function renderNear(){
   var arr=filtered().filter(hasLL).map(function(c){return {c:c, d:km(ME,[+c["緯度"],+c["經度"]])};})
     .sort(function(a,b){return a.d-b.d;}).slice(0,30);
   $("nearList").innerHTML='<div class="stat">📍 離你最近的 '+arr.length+' 張</div>'+arr.map(function(x){
-    var c=x.c, th=c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':'<div class="thumb ph">📇</div>';
+    var c=x.c, th=c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':phThumb(c);
     return '<div class="item" data-id="'+esc(c.ID)+'">'+th+'<div class="t"><div class="n">'+esc(c["姓名"]||c["公司"])+'<small>'+esc(c["職稱"]||"")+'</small></div>'+
       '<div class="c">'+esc(c["公司"]||"")+'</div><div class="p">'+esc(c["地址"]||"")+'</div></div>'+
       '<div class="dist">'+(x.d<1?Math.round(x.d*1000)+" 公尺":x.d.toFixed(1)+" 公里")+'<a href="'+esc(navUrl(c["地址"]))+'" target="_blank" rel="noopener" title="導航">🧭</a></div></div>';
@@ -1429,8 +1549,10 @@ document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) cl
 $("chips").addEventListener("click",function(e){ var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList(); });
 $("fCity").addEventListener("change",function(){ S.fcity=this.value; renderList(); });
 $("form").addEventListener("click",function(e){ if(e.target.closest("#tagpick")) onTagPick(e); });
+$("quick").addEventListener("click",function(e){ var b=e.target.closest("[data-q]"); if(b && !b.disabled) quickAct(b.dataset.q, formData()); });
 $("form").addEventListener("input",function(e){
   var k=e.target.dataset && e.target.dataset.k;
+  if(/手機|電話|地址|Email|姓名|公司/.test(k||"")) renderQuick();
   if(k==="標籤") renderTagPick();
   if(k==="地址"){ var c=cityOf(e.target.value); if(c) $("form").querySelector('[data-k="縣市"]').value=c; }   // 改地址時縣市跟著變
 });
@@ -1465,6 +1587,8 @@ document.addEventListener("visibilitychange",function(){
 $("btnSave").onclick=save;
 $("btnDel").onclick=del;
 $("list").addEventListener("click",function(e){
+  var q=e.target.closest("[data-qa]");
+  if(q){ e.preventDefault(); var cc=S.cards.find(function(x){return x.ID===q.closest(".item").dataset.id;}); if(cc) quickAct(q.dataset.qa,cc); return; }
   var it=e.target.closest(".item"); if(!it) return;
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
@@ -1473,11 +1597,13 @@ $("form").addEventListener("click",function(e){
   var f=formData();
   if(a.dataset.act==="tel"){ var n=(f[a.dataset.k]||"").split("/")[0].replace(/#.*/,"").replace(/[^\d+]/g,""); if(n) location.href="tel:"+n; }
   if(a.dataset.act==="nav"&&f["地址"]) window.open(navUrl(f["地址"]),"_blank");
+  if(a.dataset.act==="line"&&f["LINE"]) window.open("https://line.me/R/ti/p/~"+encodeURIComponent(f["LINE"].replace(/^@?/,"")),"_blank");
   if(a.dataset.act==="mail"&&f.Email) location.href="mailto:"+f.Email.split("/")[0].trim();
 });
 
 /* ===== 啟動 ===== */
 $("gasUrl").value=gasUrl();
+decorateIcons();
 initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
 if(S.code && gasUrl()) enter(); else show("vLogin");
