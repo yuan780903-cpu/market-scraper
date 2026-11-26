@@ -280,6 +280,12 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.mytabs{margin:-2px 0 10px}
+.mytabs .chips{padding-bottom:6px}
+.mytabs .chip.add{border-style:dashed;color:var(--acc)}
+.mytabs .chip .st{font-size:11px;margin-left:4px;opacity:.75}
+.mytools{display:flex;gap:6px;flex-wrap:wrap}
+.mytools .mini.danger{color:#b42318}
 .pubsw{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;font-size:15px}
 .pubsw input{width:22px;height:22px;flex:none;margin-top:2px}
 .pubsw small{color:var(--sub);font-size:12.5px}
@@ -548,6 +554,8 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <h1>我的數位名片</h1>
   </header>
   <div class="wrap">
+    <div class="mytabs"><div class="chips" id="myTabs"></div>
+      <div class="mytools"><button class="mini" id="btnMyCopy">複製成新名片</button><button class="mini" id="btnMyMain">設為主要名片</button><button class="mini danger" id="btnMyDel">刪除這張</button></div></div>
     <canvas id="myCv" class="mycv"></canvas>
     <div class="sides" style="margin-top:10px"><button type="button" data-side2="zh" class="on">中文面</button><button type="button" data-side2="en">英文面</button></div>
     <div class="chips" id="myDesigns" style="margin-top:10px;flex-wrap:wrap"></div>
@@ -797,7 +805,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.23", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.24", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -2278,15 +2286,15 @@ function toggleSound(){ SFX.on=!SFX.on; ls("sc_sound",SFX.on?"1":"0"); renderSou
 
 /* ===== 我的數位名片 ===== */
 var MYF=[
- ["基本資料",[["name","姓名"],["title","職稱"],["dept","部門"],["company","公司"],["intro","一句話介紹(選填)"]]],
+ ["基本資料",[["label","這張名片的名稱(自己辨識用,例:碩成、大成)"],["name","姓名"],["title","職稱"],["dept","部門"],["company","公司"],["intro","一句話介紹(選填)"]]],
  ["英文(名片背面)",[["ename","英文姓名"],["etitle","英文職稱"],["edept","英文部門"],["ecompany","英文公司名稱"]]],
  ["聯絡方式",[["mobile","手機"],["email","Email"],["line","LINE ID"],["website","網站"],["linkedin","LinkedIn 網址"],["taxid","統一編號"]]],
  ["據點一",[["loc1name","名稱(例:有機肥料廠)"],["loc1ename","英文名稱(例:Head Office)"],["loc1addr","地址"],["loc1eaddr","英文地址"],["loc1tel","電話"],["loc1fax","傳真"]]],
  ["據點二(選填)",[["loc2name","名稱(例:總公司)"],["loc2ename","英文名稱"],["loc2addr","地址"],["loc2eaddr","英文地址"],["loc2tel","電話"],["loc2fax","傳真"]]]
 ];
 var DESIGNS=[["print","印刷經典"],["classic","經典"],["modern","現代"],["minimal","極簡"],["business","商務"]];
-var MY={card:null, side:"zh", imgs:{}};
-function myLink(c){ return APP_URL_PUBLIC+"#card="+gasUrl(); }
+var MY={card:null, cards:[], saved:"", side:"zh", imgs:{}};
+function myLink(c){ c=c||MY.card||{}; return APP_URL_PUBLIC+"#card="+gasUrl()+(c.id?"&mid="+encodeURIComponent(c.id):""); }
 var APP_URL_PUBLIC=location.origin+location.pathname;
 function loadQR(){
   if(window.qrcode) return Promise.resolve();
@@ -2429,9 +2437,53 @@ async function renderMyCard(cv,c,side,k){
 async function openMyCard(){
   $("vMyCard").classList.remove("hide"); $("vMyCard").scrollTop=0;
   $("myStat").textContent="讀取中…";
-  try{ var r=await post({action:"myGet"}); if(!r.ok) throw new Error(r.error); MY.card=r.card||{}; }
-  catch(e){ $("myStat").textContent="讀取失敗:"+e.message; MY.card=MY.card||{}; }
-  renderMyForm(); renderMyPreview();
+  try{
+    var r=await post({action:"myList"}); if(!r.ok) throw new Error(r.error);
+    MY.cards=r.cards||[]; var keep=MY.card&&MY.card.id;
+    MY.card=MY.cards.filter(function(c){return c.id===keep;})[0] || MY.cards.filter(function(c){return c.main;})[0] || MY.cards[0] || {};
+  }catch(e){ $("myStat").textContent="讀取失敗:"+e.message; MY.card=MY.card||{}; }
+  showMy(MY.card);
+}
+/* ---------- 多張名片:切換 / 新增 / 複製 / 主要 / 刪除 ---------- */
+function myLabel(c){ return c.label || c.company || c.name || "未命名名片"; }
+function showMy(c){ MY.card=Object.assign({},c||{}); renderMyForm(); MY.saved=JSON.stringify(myCollect()); renderMyTabs(); renderMyPreview(); }
+function myDirty(){ return JSON.stringify(myCollect())!==MY.saved; }
+function myLeaveOk(){ return !myDirty() || confirm("「"+myLabel(myCollect())+"」還沒儲存,要放棄修改嗎?"); }
+function renderMyTabs(){
+  var cur=MY.card||{}, list=MY.cards.slice();
+  if(!cur.id) list.push(cur);   // 還沒儲存的新名片
+  $("myTabs").innerHTML=list.map(function(c,i){
+    var on = c.id ? c.id===cur.id : !cur.id;
+    return '<button type="button" class="chip'+(on?' on':'')+'" data-myid="'+esc(c.id||"")+'">'+(c.main?'★ ':'')+esc(myLabel(c))+
+      '<span class="st">'+(c.id?(c.published?'公開':'未公開'):'未儲存')+'</span></button>';
+  }).join("")+'<button type="button" class="chip add" id="btnMyAdd">＋ 新增名片</button>';
+  $("btnMyMain").classList.toggle("hide", !cur.id || !!cur.main || MY.cards.length<2);
+  $("btnMyDel").classList.toggle("hide", !cur.id);
+  $("btnMyCopy").classList.toggle("hide", !cur.id);
+}
+function myPick(id){
+  if(id===(MY.card.id||"")) return; if(!myLeaveOk()) return;
+  showMy(MY.cards.filter(function(c){return c.id===id;})[0]||{});
+}
+function myAdd(copy){
+  if(!myLeaveOk()) return;
+  var c = copy ? Object.assign({},myCollect()) : {design:(MY.card&&MY.card.design)||"print"};
+  delete c.id; delete c.updated; c.main=false; c.published=false;
+  c.label = copy ? myLabel(c)+"(複本)" : "";
+  showMy(c); $("vMyCard").scrollTop=0;
+  toast(copy ? "已複製,改好後按「儲存我的名片」" : "填好新名片後按「儲存我的名片」");
+  if(!copy) setTimeout(function(){ var el=document.querySelector('[data-my="label"]'); if(el) el.focus(); },50);
+}
+async function mySetMain(){
+  var c=myCollect(); if(!c.id) return; c.main=true;
+  try{ var r=await post({action:"mySave", card:c}); if(!r.ok) throw new Error(r.error); MY.cards=r.cards; showMy(r.card); toast("★ 已設為主要名片(舊的分享連結、姓名學會用這張)"); }
+  catch(e){ toast("設定失敗:"+e.message); }
+}
+async function myDel(){
+  var c=MY.card; if(!c.id) return;
+  if(!confirm("刪除「"+myLabel(c)+"」這張名片?\n已經發出去的這張 QR Code/連結會失效,無法復原。")) return;
+  try{ var r=await post({action:"myDelete", id:c.id}); if(!r.ok) throw new Error(r.error); MY.cards=r.cards||[]; showMy(MY.cards.filter(function(x){return x.main;})[0]||MY.cards[0]||{}); toast("已刪除"); }
+  catch(e){ toast("刪除失敗:"+e.message); }
 }
 function renderMyForm(){
   var c=MY.card||{};
@@ -2464,7 +2516,7 @@ function renderMyPreview(){
 async function saveMyCard(){
   var c=myCollect(); if(!c.name){ toast("請至少填姓名"); return; }
   var b=$("btnMySave"); b.disabled=true; setLabel(b,"儲存中…");
-  try{ var r=await post({action:"mySave", card:c}); if(!r.ok) throw new Error(r.error); MY.card=r.card; toast("✅ 已儲存我的名片"+(c.published?"(已公開)":"")); $("myStat").textContent="上次儲存 "+String(r.card.updated||"").slice(0,16); }
+  try{ var r=await post({action:"mySave", card:c}); if(!r.ok) throw new Error(r.error); MY.cards=r.cards||MY.cards; showMy(r.card); toast("✅ 已儲存「"+myLabel(r.card)+"」"+(c.published?"(已公開)":"")); $("myStat").textContent="上次儲存 "+String(r.card.updated||"").slice(0,16); }
   catch(e){ toast("儲存失敗:"+e.message); }
   b.disabled=false; setLabel(b,"儲存我的名片");
 }
@@ -2495,6 +2547,7 @@ function clearMyImg(kind){ MY.card=myCollect(); MY.card[kind]=""; $(kind==="avat
 function needPublished(){
   var c=myCollect();
   if(!c.published || !(MY.card&&MY.card.updated)){ toast("先打開「公開我的名片」並按「儲存我的名片」,對方才看得到"); return false; }
+  if(myDirty()){ toast("這張有修改還沒儲存,先按「儲存我的名片」"); return false; }
   return true;
 }
 async function showMyQR(){
@@ -2537,10 +2590,10 @@ async function shareMyVcf(c){
 }
 
 /* ---------- 對方打開連結看到的名片頁(免登入) ---------- */
-async function openCardView(url){
+async function openCardView(url, mid){
   $("vCardView").classList.remove("hide"); $("cvStat").textContent="名片載入中…";
   try{
-    var r=await fetch(url+(url.indexOf("?")>0?"&":"?")+"my=1"); var d=await r.json();
+    var r=await fetch(url+(url.indexOf("?")>0?"&":"?")+"my=1"+(mid?"&id="+encodeURIComponent(mid):"")); var d=await r.json();
     if(!d.ok) throw new Error(d.error||"讀取失敗");
     MY.view=d.card; MY.vside="zh";
     await drawCardView();
@@ -2559,9 +2612,9 @@ async function openCardView(url){
 async function drawCardView(){ await renderMyCard($("cvCv"),MY.view,MY.vside,2); document.querySelectorAll("[data-vside]").forEach(function(b){ b.classList.toggle("on",b.dataset.vside===MY.vside); }); }
 function checkCardLink(){
   var h=location.hash||""; if(h.indexOf("#card=")!==0) return false;
-  var url=decodeURIComponent(h.slice(6));
+  var parts=h.slice(6).split("&mid="), url=decodeURIComponent(parts[0]), mid=parts[1]?decodeURIComponent(parts[1]):"";
   if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(url)) return false;
-  openCardView(url); return true;
+  openCardView(url, mid); return true;
 }
 
 /* ===== 姓名學分析(康熙筆畫・五格・81 數・三才・雙人對照) ===== */
@@ -3762,7 +3815,9 @@ $("btnNmShare").onclick=nmShare;
 $("btnNmSave").onclick=nmSaveNote;
 $("nmOut").addEventListener("click",function(e){ var b=e.target.closest("[data-kx]"); if(b) nmAdjust(b.dataset.kx, +b.dataset.d); });
 $("btnMyCard").onclick=openMyCard;
-$("btnMyBack").onclick=function(){ $("vMyCard").classList.add("hide"); };
+$("btnMyBack").onclick=function(){ if(!myLeaveOk()) return; $("vMyCard").classList.add("hide"); };
+$("myTabs").addEventListener("click",function(e){ if(e.target.closest("#btnMyAdd")){ myAdd(false); return; } var b=e.target.closest("[data-myid]"); if(b) myPick(b.dataset.myid); });
+$("btnMyCopy").onclick=function(){ myAdd(true); }; $("btnMyMain").onclick=mySetMain; $("btnMyDel").onclick=myDel;
 $("myForm").addEventListener("input",renderMyPreview);
 $("myDesigns").addEventListener("click",function(e){ var b=e.target.closest("[data-design]"); if(!b) return; MY.card=myCollect(); MY.card.design=b.dataset.design; document.querySelectorAll("#myDesigns .chip").forEach(function(x){x.classList.toggle("on",x===b);}); renderMyPreview(); });
 document.querySelectorAll("[data-side2]").forEach(function(b){ b.addEventListener("click",function(){ MY.side=b.dataset.side2; renderMySide(); renderMyPreview(); }); });
