@@ -149,10 +149,28 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .vmsg{font-size:13px;color:#9fb3ad;flex:1;text-align:right}
 .vbox{flex:1;overflow:auto;display:flex;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 .vbox img{margin:auto;flex:none;width:100%;max-width:none;display:block;user-select:none;-webkit-user-select:none}
+/* ③ LINE 提示 / 分享面板 */
+.inapp{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#7c2d12;font-size:14px;line-height:1.55;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;display:flex;gap:10px;align-items:flex-start;position:relative;z-index:9}
+.inapp .t{flex:1}
+.inapp button{flex:none;border:0;border-radius:9px;padding:7px 10px;font-size:13px;font-weight:700}
+.inapp .go{background:var(--pri);color:#fff;margin-top:6px}
+.inapp .x{background:transparent;color:#9a3412;font-size:18px;padding:0 4px}
+.sheetbg{position:fixed;inset:0;z-index:17;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}
+.share{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+.share h3{margin:0 0 4px;font-size:17px}
+.share p{margin:0 0 12px;font-size:13px;color:var(--sub)}
+.share .btn{margin-bottom:10px;text-align:left}
+.share pre{white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:10px;font-size:13px;margin:0 0 12px;max-height:140px;overflow:auto;font-family:inherit}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
 </style>
 </head>
 <body>
+<div id="inApp" class="inapp hide">
+  <div class="t">⚠️ 你正在 <b id="inAppName">LINE</b> 裡開啟,<b>下載、匯出、分享可能不能用</b>。
+    <span id="inAppIos">請點右上角「⋯」或下方分享鈕 →「<b>以預設瀏覽器開啟</b>/在 Safari 中開啟」。</span>
+    <div><button class="go hide" id="btnOpenExt">用瀏覽器開啟</button></div></div>
+  <button class="x" id="btnInAppX" aria-label="關閉提示">✕</button>
+</div>
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
@@ -292,6 +310,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
       <div class="acts">
         <button class="btn" id="btnSave">💾 儲存到雲端</button>
         <button class="btn sec" id="btnAddBack">📷 加拍背面</button>
+        <button class="btn sec" id="btnShareCard">📤 分享名片</button>
         <button class="btn sec" id="btnContact">👤 加入手機通訊錄</button>
         <button class="btn sec hide" id="btnRescan">📷 換一張重拍</button>
         <button class="btn sec hide" id="btnPhoto">🔍 看大圖</button>
@@ -315,6 +334,19 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
   </div>
 </div>
 
+<!-- 分享名片 -->
+<div id="vShare" class="sheetbg hide">
+  <div class="share">
+    <h3>📤 分享名片</h3>
+    <p id="shareWho"></p>
+    <pre id="shareText"></pre>
+    <button class="btn" id="btnShareText">💬 傳文字(貼到 LINE 最方便)</button>
+    <button class="btn sec" id="btnShareVcf">👤 傳電子名片(.vcf,對方可直接存聯絡人)</button>
+    <button class="btn sec" id="btnSharePic">🖼 傳名片照片</button>
+    <button class="btn sec" id="btnShareClose" style="text-align:center">取消</button>
+  </div>
+</div>
+
 <!-- 看大圖 -->
 <div id="vPhoto" class="viewer hide">
   <div class="vbar">
@@ -333,7 +365,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.4", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.5", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -397,6 +429,7 @@ async function enter(){
     S.cards=c.cards; S.syncAt=c.syncAt||""; S.fullAt=c.fullAt||0;
     S.syncMsg="手機上的資料・同步中…"; renderList();
   }
+  await qRestore();
   syncList(false);
 }
 /* ===== 版本 ===== */
@@ -410,7 +443,10 @@ function showVer(){
   var mis = S.backVer && S.backVer!==APP_VER;
   toast("網頁 v"+APP_VER+"("+APP_DATE+")"+(S.backVer?"|後端 v"+S.backVer:"")+(mis?"|版本不一致,請重新整理或重跑更新":""));
 }
-function logout(){ ls("sc_code",null); S.code=""; $("code").value=""; S.cards=[]; S.syncAt=""; cacheClear(); show("vLogin"); }
+function logout(){
+  if(S.q.length && !confirm("批量佇列還有 "+S.q.length+" 張沒存,登出會一併清除。確定登出?")) return;
+  S.q=[]; qSaveNow(); renderQ();
+  ls("sc_code",null); S.code=""; $("code").value=""; S.cards=[]; S.syncAt=""; cacheClear(); show("vLogin"); }
 
 /* ===== 列表 ===== */
 /* ===== ① 手機快取(IndexedDB)+ 增量同步 ===== */
@@ -467,7 +503,7 @@ async function syncList(force){
     }
     S.syncAt=r.now||""; S.lastSync=Date.now();
     S.syncMsg = "已同步 "+hhmm()+(full?"":(r.cards.length?"(更新 "+r.cards.length+" 張)":""));
-    renderList(); cacheSave();
+    renderList(); cacheSave(); qRecheck();
   }catch(e){
     if(/存取碼/.test(e.message)){ S.syncing=false; logout(); $("loginMsg").textContent="存取碼已變更,請重新輸入"; return; }
     S.syncMsg = S.cards.length ? ("⚠ 離線中,顯示手機上的資料"+(S.syncAt?"(上次同步 "+S.syncAt.slice(5,16)+")":"")) : ("讀取失敗:"+e.message);
@@ -645,6 +681,86 @@ async function onBackFile(ev){
   b.disabled=false; renderSides(S.cur===cur ? cur.side : "f");
 }
 
+/* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
+function inAppName(){
+  var ua=navigator.userAgent||"";
+  if(/\bLine\//i.test(ua)) return "LINE";
+  if(/FBAN|FBAV|FB_IAB/i.test(ua)) return "Facebook";
+  if(/Instagram/i.test(ua)) return "Instagram";
+  return "";
+}
+function initInApp(){
+  var n=inAppName(); if(!n) return;
+  try{ if(sessionStorage.getItem("sc_inapp_x")) return; }catch(e){}
+  var android=/Android/i.test(navigator.userAgent);
+  $("inAppName").textContent=n;
+  $("inAppIos").classList.toggle("hide", android && n==="LINE");
+  $("btnOpenExt").classList.toggle("hide", !(android && n==="LINE"));   // openExternalBrowser 只有 Android 版 LINE 有效
+  $("inApp").classList.remove("hide");
+}
+
+/* ===== 分享名片 ===== */
+function cardText(f){
+  var L=[];
+  L.push("【名片】"+(f["姓名"]||"")+(f["職稱"]?" "+f["職稱"]:""));
+  if(f["公司"]) L.push(f["公司"]+(f["部門"]?" "+f["部門"]:""));
+  if(f["手機"]) L.push("📱 "+f["手機"]);
+  if(f["電話"]) L.push("☎️ "+f["電話"]);
+  if(f["傳真"]) L.push("📠 "+f["傳真"]);
+  if(f["Email"]) L.push("✉️ "+f["Email"]);
+  if(f["LINE"]) L.push("💬 LINE:"+f["LINE"]);
+  if(f["地址"]) L.push("📍 "+f["地址"]+"\n🧭 "+navUrl(f["地址"]));
+  if(f["網站"]) L.push("🌐 "+f["網站"]);
+  return L.join("\n");
+}
+function openShare(){
+  var f=formData();
+  if(!f["姓名"]&&!f["公司"]){ toast("姓名或公司至少要有一個"); return; }
+  $("shareWho").textContent="要把「"+(f["姓名"]||f["公司"])+"」的名片傳給誰?選一種方式:";
+  $("shareText").textContent=cardText(f);
+  $("btnSharePic").classList.toggle("hide",!(S.cur&&S.cur.frontSrc));
+  $("vShare").classList.remove("hide");
+}
+function closeShare(){ $("vShare").classList.add("hide"); }
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  try{ var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); var ok=document.execCommand("copy"); ta.remove(); return ok; }catch(e){ return false; }
+}
+async function shareCardText(){
+  var t=cardText(formData());
+  try{
+    if(navigator.share){ await navigator.share({text:t}); closeShare(); return; }
+  }catch(e){ if(e.name==="AbortError") return; }
+  toast(await copyText(t) ? "✅ 已複製,到 LINE 貼上即可" : "無法分享,請長按上方文字複製");
+}
+async function shareCardVcf(){
+  var f=formData(); f["縮圖"]=(S.cur&&S.cur.thumb)||(S.cur&&S.cur.frontSrc)||"";
+  if(String(f["縮圖"]).indexOf("data:")!==0) f["縮圖"]="";
+  var name=(f["姓名"]||f["公司"]).replace(/[\\\/:*?"<>|]/g,"")+".vcf", file=new File([toVcard(f,true)+"\r\n"],name,{type:"text/vcard"});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); closeShare(); return; }
+  }catch(e){ if(e.name==="AbortError") return; }
+  download(file,name); toast("已下載 "+name);
+}
+async function shareCardPic(){
+  var c=S.cur; if(!c) return;
+  var src=c.image ? c.frontSrc : "";
+  if(!src && c.id){
+    if(BIG[c.id+"|f"]) src=BIG[c.id+"|f"];
+    else{
+      toast("讀取名片照片中…");
+      try{ var r=await post({action:"photo", id:c.id, side:"f"}); if(r.ok){ src="data:"+r.mime+";base64,"+r.data; bigPut(c.id+"|f",src); } }catch(e){}
+    }
+  }
+  src=src||c.frontSrc; if(!src){ toast("這張沒有照片"); return; }
+  var f=formData(), name=(f["姓名"]||f["公司"]||"名片")+".jpg";
+  try{
+    var blob=await (await fetch(src)).blob(), file=new File([blob],name,{type:blob.type||"image/jpeg"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); closeShare(); return; }
+    download(file,name); toast("已下載 "+name);
+  }catch(e){ if(e.name!=="AbortError") toast("分享失敗:"+e.message); }
+}
+
 /* ===== 看大圖 ===== */
 var BIG={}, BIG_KEYS=[];   // 大圖暫存(最多 12 張,只在記憶體)
 function bigPut(k,v){ if(!BIG[k]){ BIG_KEYS.push(k); if(BIG_KEYS.length>12) delete BIG[BIG_KEYS.shift()]; } BIG[k]=v; }
@@ -783,8 +899,8 @@ function qPump(){
 }
 async function qScan(it){
   try{
-    var im=await loadImg(it.file);
-    it.big=shrink(im,1600,0.85); it.thumb=shrink(im,240,0.6); it.file=null;
+    if(!it.big){ var im=await loadImg(it.file); it.big=shrink(im,1600,0.85); it.thumb=shrink(im,240,0.6); }
+    it.file=null;
     renderQ();
     var r=await post({action:"scan", image:it.big.split(",")[1], mime:"image/jpeg"});
     if(!r.ok) throw new Error(r.error);
@@ -796,8 +912,8 @@ async function qScan(it){
 /** 背面辨識:只補正面空著的欄位 */
 async function qScanBack(it){
   try{
-    var im=await loadImg(it.backFile); it.backFile=null;
-    it.backBig=shrink(im,1600,0.85); it.backThumb=shrink(im,240,0.6);
+    if(!it.backBig){ var im=await loadImg(it.backFile); it.backBig=shrink(im,1600,0.85); it.backThumb=shrink(im,240,0.6); }
+    it.backFile=null;
     renderQ();
     var r=await post({action:"scan", image:it.backBig.split(",")[1], mime:"image/jpeg"});
     if(!r.ok) throw new Error(r.error);
@@ -827,6 +943,7 @@ function renderQ(){
   var n={wait:0,scan:0,ok:0,dup:0,err:0,saving:0};
   S.q.forEach(function(x){n[x.st]++;});
   $("btnBatch").textContent = S.q.length ? ("📚 批量("+S.q.length+")") : "📚 批量連拍";
+  qSaveSoon();
   if($("vBatch").classList.contains("hide")) return;
   $("qStat").textContent = S.q.length
     ? ("共 "+S.q.length+" 張|辨識中 "+(n.wait+n.scan)+"|可儲存 "+n.ok+"|待你決定 "+n.dup+"|失敗 "+n.err)
@@ -891,6 +1008,35 @@ async function saveAll(){
   renderList();
   var left=S.q.filter(function(x){return x.st==="dup";}).length;
   toast("✅ 已儲存 "+done+" 張"+(fail?",失敗 "+fail+" 張":"")+(left?",還有 "+left+" 張重複待你決定":""));
+}
+/* ===== ③ 批量佇列存手機(IndexedDB),重新整理/關掉 App 也不會丟 ===== */
+function qKey(){ return "queue|"+gasUrl(); }
+function qSer(x){
+  return { qid:x.qid, st:(x.st==="scan"||x.st==="wait")?"wait":(x.st==="saving"?"ok":x.st),
+    file:x.file||null, backFile:x.backFile||null, big:x.big||"", thumb:x.thumb||"", backBig:x.backBig||"", backThumb:x.backThumb||"",
+    fields:x.fields||null, method:x.method||"", raw:x.raw||"", warn:x.warn||"", err:x.err||"", backErr:x.backErr||"",
+    wantBack:!!x.wantBack, saving:x.st==="saving" };
+}
+function qSaveNow(){
+  return idbDo("readwrite",function(st){ return st.put({v:1, items:S.q.map(qSer), tag:$("qTag").value, dual:$("qDual").checked}, qKey()); });
+}
+function qSaveSoon(){ clearTimeout(qSaveSoon._t); qSaveSoon._t=setTimeout(qSaveNow,500); }
+async function qRestore(){
+  if(S.q.length) return;
+  var d=await idbDo("readonly",function(st){ return st.get(qKey()); });
+  if(!d || !d.items || !d.items.length) return;
+  S.q=d.items.map(function(x){ var o=Object.assign({},x); if(o.st==="ok"||o.st==="dup") o.st="ok"; return o; });
+  qSeq=Math.max.apply(null,S.q.map(function(x){return x.qid;}).concat([qSeq]));
+  $("qTag").value=d.tag||""; $("qDual").checked=!!d.dual;
+  qRecheck();
+  var unsure=S.q.filter(function(x){return x.saving;}).length;
+  toast("📚 上次還有 "+S.q.length+" 張名片沒存,已幫你保留"+(unsure?"(其中 "+unsure+" 張存到一半,請確認是否重複)":""));
+  renderQ(); qPump();
+}
+/** 還原或同步完後,重新判斷重複(名片清單可能變了) */
+function qRecheck(){
+  S.q.forEach(function(x){ if((x.st==="ok"||x.st==="dup") && x.fields) qFinish(x); });
+  if(S.q.length) renderQ();
 }
 function clearQ(){
   if(!S.q.length) return;
@@ -1242,6 +1388,15 @@ $("q").addEventListener("input",renderList);
 $("btnScan").onclick=function(){$("file").click();};
 $("btnRescan").onclick=function(){$("file").click();};
 $("btnAddBack").onclick=function(){$("fileBack").click();};
+$("btnShareCard").onclick=openShare;
+$("btnShareClose").onclick=closeShare;
+$("vShare").addEventListener("click",function(e){ if(e.target.id==="vShare") closeShare(); });
+$("btnShareText").onclick=shareCardText;
+$("btnShareVcf").onclick=shareCardVcf;
+$("btnSharePic").onclick=shareCardPic;
+$("btnInAppX").onclick=function(){ $("inApp").classList.add("hide"); try{ sessionStorage.setItem("sc_inapp_x","1"); }catch(e){} };
+$("btnOpenExt").onclick=function(){ var u=new URL(location.href); u.searchParams.set("openExternalBrowser","1"); location.href=u.toString(); };
+$("qTag").addEventListener("input",qSaveSoon);
 $("photo").addEventListener("click",function(){ openViewer(S.cur&&S.cur.side); });
 $("btnPhoto").onclick=function(){ openViewer(S.cur&&S.cur.side); };
 $("btnViewClose").onclick=closeViewer;
@@ -1306,7 +1461,7 @@ $("dupList").addEventListener("click",function(e){
 document.addEventListener("visibilitychange",function(){
   if(document.visibilityState==="visible" && S.code && !$("vMain").classList.contains("hide") && Date.now()-(S.lastSync||0)>60000) syncList(false);
 });
-window.addEventListener("beforeunload",function(e){ if(S.q.length){ e.preventDefault(); e.returnValue=""; } });
+// ③ 佇列隨時存在手機,重新整理也不會丟,所以不再跳「確定離開」
 $("btnSave").onclick=save;
 $("btnDel").onclick=del;
 $("list").addEventListener("click",function(e){
@@ -1323,6 +1478,7 @@ $("form").addEventListener("click",function(e){
 
 /* ===== 啟動 ===== */
 $("gasUrl").value=gasUrl();
+initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
 if(S.code && gasUrl()) enter(); else show("vLogin");
 </script>
