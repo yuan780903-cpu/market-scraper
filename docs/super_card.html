@@ -252,6 +252,14 @@ header .ic svg{color:var(--acc2)}
 .vbar .ic svg,.vbar .sides svg{color:var(--acc2)}
 .ic svg,.btn svg,.fab svg,.fab2 svg,.menu svg,.quick svg,.qa svg,.act2 svg{display:block}
 
+/* ===== 群組管理 ===== */
+.gadd{display:flex;gap:8px}
+.gadd .inp{flex:1}
+.gadd .btn{width:auto;flex:none;padding:12px 16px}
+.grow{display:flex;align-items:center;gap:8px;min-height:54px;border-bottom:1px solid var(--line)}
+.grow:last-child{border-bottom:0}
+.grow .gn{flex:1;font-size:16px;font-weight:600;color:var(--ink)}
+.grow .gn small{font-weight:400;color:var(--sub);font-size:12px;margin-left:8px}
 /* ===== v2.0 風格模板 ===== */
 .tlist{display:flex;flex-direction:column;gap:12px;margin-top:6px}
 .tcard{background:#fff;border:1.5px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05)}
@@ -391,6 +399,19 @@ header .ic svg{color:var(--acc2)}
   </div>
 </div>
 
+<!-- 群組管理 -->
+<div id="vGroups" class="sheet hide">
+  <header>
+    <button class="ic" id="btnGroupsBack" data-ic="back">返回</button>
+    <h1>群組管理</h1>
+  </header>
+  <div class="wrap">
+    <div class="gadd"><input id="gNew" class="inp" placeholder="新群組名稱(例:嘉義經銷商、2026農機展)" maxlength="20"><button class="btn" id="btnGAdd" data-ic="check">新增</button></div>
+    <div id="gStat" class="stat" style="margin-top:10px;line-height:1.6"></div>
+    <div id="gList" class="form" style="padding:2px 14px"></div>
+  </div>
+</div>
+
 <!-- v2.0 風格模板 -->
 <div id="vTheme" class="sheet hide">
   <header>
@@ -526,7 +547,7 @@ header .ic svg{color:var(--acc2)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.10", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.11", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -650,7 +671,7 @@ async function enter(){
   // ① 先把手機上存的名片秒開顯示,再到背景跟雲端同步
   var c=await cacheLoad();
   if(c && c.cards){
-    S.cards=c.cards; S.syncAt=c.syncAt||""; S.fullAt=c.fullAt||0;
+    S.cards=c.cards; S.syncAt=c.syncAt||""; S.fullAt=c.fullAt||0; S.groups=c.groups||[];
     S.syncMsg="手機上的資料・同步中…"; renderList();
   }
   await qRestore();
@@ -703,7 +724,7 @@ function cacheSave(){   // 連續變動時合併成一次寫入
   clearTimeout(cacheSave._t);
   cacheSave._t=setTimeout(function(){
     if(!S.code) return;
-    idbDo("readwrite",function(st){ return st.put({v:CACHE_VER, cards:S.cards, syncAt:S.syncAt||"", fullAt:S.fullAt||0, savedAt:Date.now()}, cacheKey()); });
+    idbDo("readwrite",function(st){ return st.put({v:CACHE_VER, cards:S.cards, groups:S.groups||[], syncAt:S.syncAt||"", fullAt:S.fullAt||0, savedAt:Date.now()}, cacheKey()); });
   },400);
 }
 function cacheClear(){ idbDo("readwrite",function(st){return st.clear();}); }
@@ -718,6 +739,7 @@ async function syncList(force){
     var r=await post(full ? {action:"list"} : {action:"list", since:S.syncAt});
     if(!r.ok) throw new Error(r.error);
     if(r.ver){ S.backVer=r.ver; renderVer(); }
+    if(r.groups) S.groups=r.groups;
     if(r.full || full){
       S.cards=r.cards; S.fullAt=Date.now();
     }else{
@@ -755,12 +777,16 @@ function filterDesc(){
 function renderFilters(){
   var cnt={}, city={};
   S.cards.forEach(function(c){ tagsOf(c).forEach(function(t){cnt[t]=(cnt[t]||0)+1;}); if(c["縣市"]) city[c["縣市"]]=(city[c["縣市"]]||0)+1; });
-  if(S.ftag && !cnt[S.ftag]) S.ftag="";
+  var own=(S.groups||[]);
+  if(S.ftag && !cnt[S.ftag] && own.indexOf(S.ftag)<0) S.ftag="";
   if(S.fcity && !city[S.fcity]) S.fcity="";
-  var tags=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b);});
-  $("chips").innerHTML = tags.length ? ('<button class="chip'+(S.ftag?'':' on')+'" data-tag="">全部</button>'+
-    tags.map(function(t){return '<button class="chip'+(S.ftag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' '+cnt[t]+'</button>';}).join("")) : "";
-  $("chips").classList.toggle("hide",!tags.length);
+  // 自訂群組照你排的順序(沒名片也顯示),其他標籤依張數
+  var rest=Object.keys(cnt).filter(function(t){return own.indexOf(t)<0;}).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b);});
+  var tags=own.concat(rest);
+  $("chips").innerHTML = '<button class="chip'+(S.ftag?'':' on')+'" data-tag="">全部</button>'+
+    tags.map(function(t){return '<button class="chip'+(S.ftag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' '+(cnt[t]||0)+'</button>';}).join("")+
+    '<button class="chip add" data-gadd="1">＋ 群組</button>';
+  $("chips").classList.remove("hide");
   var cs=Object.keys(city).sort(function(a,b){return city[b]-city[a];});
   $("fCity").innerHTML='<option value="">全部縣市</option>'+cs.map(function(c){return '<option value="'+esc(c)+'"'+(S.fcity===c?' selected':'')+'>'+esc(c)+'('+city[c]+')</option>';}).join("");
 }
@@ -1893,22 +1919,78 @@ function addContact(){
 }
 
 /* ===== ④ 標籤 ===== */
-function allTags(){
-  var seen={}, out=[];
-  PRESET_TAGS.concat.apply(PRESET_TAGS, S.cards.map(tagsOf)).forEach(function(t){ if(!seen[t]){ seen[t]=1; out.push(t); } });
-  return out;
+function allTags(){ return groupNames(); }
+/* ===== 群組管理(群組 = 名片上的標籤) ===== */
+function groupNames(){
+  var g=(S.groups&&S.groups.length)?S.groups.slice():PRESET_TAGS.slice();
+  S.cards.forEach(function(c){ tagsOf(c).forEach(function(t){ if(g.indexOf(t)<0) g.push(t); }); });
+  return g;
+}
+function usedTags(){ var g=[]; S.cards.forEach(function(c){ tagsOf(c).forEach(function(t){ if(g.indexOf(t)<0) g.push(t); }); }); return g; }
+/** 你自己管理的群組清單(建立過的+名片上用到的);還沒管理過時就是用到的 */
+function myGroups(){ var g=(S.groups&&S.groups.length)?S.groups.slice():[]; usedTags().forEach(function(t){ if(g.indexOf(t)<0) g.push(t); }); return g; }
+function groupCount(name){ return S.cards.filter(function(c){return tagsOf(c).indexOf(name)>=0;}).length; }
+function cleanName(t){ return String(t||"").trim().replace(/[,，、\s]+/g,"").slice(0,20); }
+async function ensureGroupsSaved(){   // 第一次編輯時,把目前看到的清單(預設+已用過的)存進雲端
+  if(S.groups && S.groups.length) return;
+  var r=await post({action:"groupsSave", groups:myGroups()}); if(r.ok) S.groups=r.groups;
+}
+function retagLocal(from,to){
+  S.cards.forEach(function(c){
+    var t=tagsOf(c); if(t.indexOf(from)<0) return;
+    var out=[]; t.forEach(function(x){ var y=x===from?to:x; if(y && out.indexOf(y)<0) out.push(y); });
+    c["標籤"]=out.join(", ");
+  });
+}
+function openGroups(){ renderGroups(); $("vGroups").classList.remove("hide"); }
+function renderGroups(){
+  var g=myGroups();
+  $("gStat").textContent=(g.length?"共 "+g.length+" 個群組。":"還沒有群組,在上面輸入名稱新增。")+"改名會一起改到每張名片;刪除群組不會刪名片,只會拿掉這個群組。";
+  $("gList").innerHTML=g.map(function(n){
+    return '<div class="grow"><div class="gn">'+esc(n)+'<small>'+groupCount(n)+' 張</small></div>'+
+      '<button class="mini" data-gren="'+esc(n)+'">改名</button><button class="mini" data-gdel="'+esc(n)+'">刪除</button></div>';
+  }).join("");
+}
+async function addGroup(){
+  var n=cleanName($("gNew").value); if(!n){ toast("請輸入群組名稱"); return; }
+  var g=myGroups(); if(g.indexOf(n)>=0){ toast("「"+n+"」已經有了"); return; }
+  g.push(n);
+  try{ var r=await post({action:"groupsSave", groups:g}); if(!r.ok) throw new Error(r.error); S.groups=r.groups; }
+  catch(e){ toast("新增失敗:"+e.message); return; }
+  $("gNew").value=""; renderGroups(); renderList(); toast("✅ 已新增群組「"+n+"」");
+}
+async function renameGroup(old){
+  var n=cleanName(prompt("把「"+old+"」改名為:",old)); if(!n || n===old) return;
+  try{
+    await ensureGroupsSaved();
+    toast("改名中…");
+    var r=await post({action:"renameTag", from:old, to:n}); if(!r.ok) throw new Error(r.error);
+    retagLocal(old,n); S.groups=r.groups; if(S.ftag===old) S.ftag=n;
+    renderGroups(); renderList(); toast("✅ 已改名,"+r.changed+" 張名片一起更新");
+  }catch(e){ toast("改名失敗:"+e.message); }
+}
+async function deleteGroup(name){
+  var c=groupCount(name);
+  if(!confirm("刪除群組「"+name+"」?"+(c?"\n"+c+" 張名片會拿掉這個群組,名片本身不會刪除。":""))) return;
+  try{
+    await ensureGroupsSaved();
+    var r=await post({action:"deleteTag", name:name}); if(!r.ok) throw new Error(r.error);
+    retagLocal(name,""); S.groups=r.groups; if(S.ftag===name) S.ftag="";
+    renderGroups(); renderList(); toast("✅ 已刪除群組「"+name+"」");
+  }catch(e){ toast("刪除失敗:"+e.message); }
 }
 function renderTagPick(){
   var box=$("tagpick"); if(!box) return;
   var inp=$("form").querySelector('[data-k="標籤"]'), cur=tagsOf({"標籤":inp.value});
   var list=allTags(); cur.forEach(function(t){ if(list.indexOf(t)<0) list.push(t); });
   box.innerHTML=list.map(function(t){return '<button type="button" class="chip'+(cur.indexOf(t)>=0?' on':'')+'" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join("")+
-    '<button type="button" class="chip add" data-t="">＋ 新標籤</button>';
+    '<button type="button" class="chip add" data-t="">＋ 新群組</button>';
 }
 function onTagPick(e){
   var b=e.target.closest("[data-t]"); if(!b) return;
   var inp=$("form").querySelector('[data-k="標籤"]'), cur=tagsOf({"標籤":inp.value}), t=b.dataset.t;
-  if(!t){ t=(prompt("新標籤名稱(例:芒果、2026農機展)")||"").trim().replace(/[,，、\s]+/g,""); if(!t) return; if(cur.indexOf(t)<0) cur.push(t); }
+  if(!t){ t=cleanName(prompt("新群組名稱(例:芒果、2026農機展)")); if(!t) return; if(cur.indexOf(t)<0) cur.push(t);
+    var g=myGroups(); if(g.indexOf(t)<0){ g.push(t); post({action:"groupsSave", groups:g}).then(function(r){ if(r.ok){ S.groups=r.groups; renderList(); } }).catch(function(){}); } }
   else if(cur.indexOf(t)>=0) cur.splice(cur.indexOf(t),1); else cur.push(t);
   inp.value=cur.join(", "); renderTagPick();
 }
@@ -2073,7 +2155,17 @@ $("btnMenu").onclick=function(e){
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
 ["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
-$("chips").addEventListener("click",function(e){ var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList(); });
+$("chips").addEventListener("click",function(e){
+  if(e.target.closest("[data-gadd]")){ openGroups(); return; }
+  var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
+});
+$("btnGroupsBack").onclick=function(){ $("vGroups").classList.add("hide"); };
+$("btnGAdd").onclick=addGroup;
+$("gNew").addEventListener("keydown",function(e){ if(e.key==="Enter") addGroup(); });
+$("gList").addEventListener("click",function(e){
+  var r=e.target.closest("[data-gren]"), d=e.target.closest("[data-gdel]");
+  if(r) renameGroup(r.dataset.gren); if(d) deleteGroup(d.dataset.gdel);
+});
 $("fCity").addEventListener("change",function(){ S.fcity=this.value; renderList(); });
 $("form").addEventListener("click",function(e){ if(e.target.closest("#tagpick")) onTagPick(e); });
 $("quick").addEventListener("click",function(e){ var b=e.target.closest("[data-q]"); if(b && !b.disabled) quickAct(b.dataset.q, formData()); });
