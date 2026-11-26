@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="超級名片">
+<title>超級名片</title>
+<link rel="manifest" href="super_card.webmanifest">
+<link rel="apple-touch-icon" href="super_card_icon180.png">
+<link rel="icon" type="image/png" href="super_card_icon192.png">
+<style>
+:root{
+  --bg:#f4f6f5; --card:#fff; --ink:#1c2321; --sub:#66706d; --line:#e3e8e6;
+  --pri:#0f766e; --pri2:#14b8a6; --warn:#b45309; --danger:#c62828; --chip:#e6f4f1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  -webkit-text-size-adjust:100%;overflow-x:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+.hide{display:none!important}
+
+header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;display:flex;align-items:center;gap:10px}
+header{gap:6px}
+header h1{font-size:18px;margin:0;flex:1;min-width:0;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .ic{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:10px;padding:7px 9px;font-size:14px;white-space:nowrap;flex:none}
+.wrap{max-width:720px;margin:0 auto;padding:12px 16px 110px}
+
+/* 登入 */
+.login{max-width:380px;margin:12vh auto 0;padding:0 16px;text-align:center}
+.login .logo{font-size:52px}
+.login h2{margin:6px 0 4px}
+.login p{color:var(--sub);margin:0 0 22px;font-size:14px}
+.inp{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-size:16px;font-weight:600;background:var(--pri);color:#fff;width:100%}
+.btn.sec{background:#fff;color:var(--pri);border:1px solid var(--pri)}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid #f1c4c4}
+.btn:disabled{opacity:.55}
+.msg{margin-top:12px;font-size:14px;color:var(--danger);min-height:20px}
+
+/* 列表 */
+.search{display:flex;gap:8px;margin-bottom:10px}
+.search input{flex:1}
+.stat{font-size:13px;color:var(--sub);margin:4px 2px 10px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;align-items:center;cursor:pointer}
+.item:active{background:#f0f5f4}
+.thumb{width:84px;height:52px;border-radius:8px;object-fit:cover;background:#e9eeec;flex:none}
+.thumb.ph{display:flex;align-items:center;justify-content:center;color:#9aa5a1;font-size:22px}
+.item .t{flex:1;min-width:0}
+.item .n{font-weight:700;font-size:16px}
+.item .n small{font-weight:400;color:var(--sub);font-size:13px;margin-left:6px}
+.item .c,.item .p{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:var(--sub);padding:50px 10px;line-height:1.8}
+
+.fab{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 20px);z-index:6;
+  background:var(--pri);color:#fff;border:0;border-radius:30px;padding:15px 22px;font-size:17px;font-weight:700;
+  box-shadow:0 6px 18px rgba(15,118,110,.35)}
+
+/* 編輯頁 */
+.sheet{position:fixed;inset:0;z-index:10;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.photo{width:100%;max-height:260px;object-fit:contain;background:#dfe5e3;border-radius:14px;display:block}
+.badge{display:inline-block;font-size:12px;padding:3px 9px;border-radius:20px;background:var(--chip);color:var(--pri);font-weight:600}
+.badge.ocr{background:#fff4e5;color:var(--warn)}
+.note{font-size:13px;color:var(--warn);margin:8px 0}
+.form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin-top:12px}
+.row{display:flex;align-items:center;border-bottom:1px solid var(--line);min-height:48px;gap:10px}
+.row:last-child{border-bottom:0}
+.row label{width:64px;flex:none;font-size:14px;color:var(--sub)}
+.row input,.row textarea{flex:1;min-width:0;border:0;outline:0;padding:12px 0;font-size:16px;background:transparent}
+.row textarea{resize:vertical;min-height:60px}
+.row a{font-size:20px;text-decoration:none;flex:none}
+.acts{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 0;color:var(--sub)}
+.spin{width:38px;height:38px;border:4px solid #cfe3df;border-top-color:var(--pri);border-radius:50%;animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+details{margin-top:12px;font-size:13px;color:var(--sub)}
+details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0 0}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);
+  background:#1c2321;color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;z-index:20;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:.94}
+
+/* ② 批量 / 去重 / 合併 */
+.fab2{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:6;
+  background:#fff;color:var(--pri);border:1px solid var(--pri);border-radius:30px;padding:11px 18px;font-size:15px;font-weight:700;
+  box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.dupbar{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;line-height:1.5}
+.dupbar .b{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.mini{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;cursor:pointer}
+.mini.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.duo{display:flex;gap:10px}
+.duo .btn{flex:1}
+.st.ok{color:var(--pri)} .st.dup{color:var(--warn)} .st.err{color:var(--danger)}
+.mrow{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.mrow.conflict{border-color:#fdba74}
+.mrow .k{font-size:13px;color:var(--sub);margin-bottom:4px}
+.mrow .same{font-size:15px;white-space:pre-wrap;word-break:break-all}
+.mrow label.opt{display:flex;gap:8px;align-items:center;padding:7px 0;font-size:15px;word-break:break-all}
+.mrow label.opt input{flex:none;width:18px;height:18px}
+.exp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.exp h3{margin:0 0 4px;font-size:16px}
+.exp p{margin:4px 0 10px;font-size:13px;color:var(--sub);line-height:1.6}
+.exp label{display:flex;gap:8px;align-items:center;font-size:15px;padding:5px 0}
+.exp label input{width:18px;height:18px;flex:none}
+/* ④ 標籤 / 地圖 */
+.search select{flex:none;width:118px;padding:0 8px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:15px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:#fff;border-radius:16px;padding:6px 12px;font-size:14px;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip.add{border-style:dashed;color:var(--sub)}
+.item .tg{margin-top:4px;white-space:nowrap;overflow:hidden}
+.item .tg span{display:inline-block;font-size:11px;background:var(--chip);color:var(--pri);border-radius:8px;padding:1px 7px;margin-right:4px}
+.tagpick{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 12px;border-bottom:1px solid var(--line)}
+.tagpick .chip{padding:4px 10px;font-size:13px}
+.menu{position:fixed;right:10px;z-index:8;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);overflow:hidden;min-width:170px}
+.menu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:#fff;padding:13px 18px;font-size:15px;color:var(--ink)}
+.menu button:last-child{border-bottom:0}
+#map{height:56vh;border-radius:14px;border:1px solid var(--line);background:#e9eeec}
+.pin{font-size:26px;line-height:28px;text-align:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.pop{font-size:14px;line-height:1.55;min-width:170px}
+.pop b{font-size:15px}
+.pop .pa{display:flex;gap:6px;margin-top:6px}
+.pop .pa a{flex:1;text-align:center;border:1px solid var(--pri);border-radius:8px;padding:5px 0;text-decoration:none;color:var(--pri);font-weight:600}
+.dist{flex:none;text-align:right;font-size:13px;color:var(--pri);font-weight:700}
+.dist a{display:block;font-size:20px;text-decoration:none;margin-top:2px}
+.tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
+</style>
+</head>
+<body>
+
+<!-- 登入 -->
+<div id="vLogin" class="login hide">
+  <div class="logo">📇</div>
+  <h2>超級名片</h2>
+  <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
+  <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
+  <div style="height:10px"></div>
+  <button id="btnLogin" class="btn">進入</button>
+  <div id="loginMsg" class="msg"></div>
+  <details><summary>後端網址設定</summary>
+    <input id="gasUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="https://script.google.com/macros/s/.../exec">
+  </details>
+</div>
+
+<!-- 主畫面 -->
+<div id="vMain" class="hide">
+  <header>
+    <h1>📇 超級名片</h1>
+    <button class="ic" id="btnMap" title="地圖">🗺 地圖</button>
+    <button class="ic" id="btnMenu" title="更多">☰</button>
+  </header>
+  <div id="menu" class="menu hide">
+    <button id="btnExport">📤 匯出 Excel / 通訊錄</button>
+    <button id="btnDups">🔍 找重複名片</button>
+    <button id="btnReload">⟳ 重新整理</button>
+    <button id="btnLogout">🚪 登出</button>
+  </div>
+  <div class="wrap">
+    <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select></div>
+    <div id="chips" class="chips"></div>
+    <div id="stat" class="stat"></div>
+    <div id="list" class="list"></div>
+  </div>
+  <button class="fab2" id="btnBatch">📚 批量連拍</button>
+  <button class="fab" id="btnScan">📷 掃名片</button>
+  <input id="file" type="file" accept="image/*" capture="environment" class="hide">
+  <input id="fileCam" type="file" accept="image/*" capture="environment" class="hide">
+  <input id="fileMulti" type="file" accept="image/*" multiple class="hide">
+</div>
+
+<!-- 編輯 / 詳情 -->
+<!-- 批量連拍佇列 -->
+<div id="vBatch" class="sheet hide">
+  <header>
+    <button class="ic" id="btnBatchBack">← 返回</button>
+    <h1>批量連拍</h1>
+  </header>
+  <div class="wrap">
+    <div class="duo"><button class="btn" id="btnShot">📷 拍下一張</button><button class="btn sec" id="btnPick">🖼 相簿多選</button></div>
+    <input id="qTag" class="inp" style="margin-top:10px;font-size:15px" placeholder="🏷 這批共同標籤(選填,例:2026農機展)">
+    <div id="qStat" class="stat" style="margin-top:12px"></div>
+    <div id="qList" class="list"></div>
+    <div class="acts">
+      <button class="btn" id="btnSaveAll">💾 全部儲存</button>
+      <button class="btn danger" id="btnClearQ">清空佇列</button>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 地圖 -->
+<div id="vMap" class="sheet hide">
+  <header>
+    <button class="ic" id="btnMapBack">← 返回</button>
+    <h1 id="mapTitle">地圖</h1>
+    <button class="ic" id="btnLocate">📍 附近</button>
+  </header>
+  <div class="wrap">
+    <div id="map"></div>
+    <div id="mapStat" class="stat" style="margin-top:10px;line-height:1.6"></div>
+    <div id="nearList" class="list"></div>
+  </div>
+</div>
+
+<!-- 匯出 -->
+<div id="vExport" class="sheet hide">
+  <header>
+    <button class="ic" id="btnExportBack">← 返回</button>
+    <h1>匯出名片</h1>
+  </header>
+  <div class="wrap">
+    <div class="exp">
+      <h3>範圍</h3>
+      <label><input type="radio" name="xScope" value="all" checked> <span id="xAll">全部</span></label>
+      <label id="xFiltRow"><input type="radio" name="xScope" value="filt"> <span id="xFilt">目前搜尋結果</span></label>
+    </div>
+    <div class="exp">
+      <h3>📗 Excel 表格</h3>
+      <p>一張名片一列,電話保留開頭 0,可直接用 Excel、Numbers、Google 試算表開啟。</p>
+      <button class="btn" id="btnXlsx">下載 Excel(.xlsx)</button>
+    </div>
+    <div class="exp">
+      <h3>👤 手機通訊錄(.vcf)</h3>
+      <p>iPhone:下載後點開 → 「加入全部聯絡人」。<br>Android:下載後用「聯絡人」App 開啟或匯入。<br>Google 通訊錄:contacts.google.com → 匯入 → 選這個檔。</p>
+      <label><input type="checkbox" id="xPhoto"> 附名片縮圖當聯絡人照片(檔案會變大)</label>
+      <button class="btn" id="btnVcf" style="margin-top:6px">下載通訊錄檔(.vcf)</button>
+    </div>
+    <div class="exp">
+      <h3>📊 Google 試算表</h3>
+      <p>所有名片本來就存在你雲端的「超級名片_資料庫」,可以直接打開篩選、列印。</p>
+      <a class="btn sec" id="btnSheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
+    </div>
+    <p class="stat" style="margin-top:14px">※ 在 LINE 裡開這個網頁可能無法下載,請改用 Safari / Chrome 開啟。</p>
+  </div>
+</div>
+
+<!-- 找重複 -->
+<div id="vDups" class="sheet hide">
+  <header>
+    <button class="ic" id="btnDupsBack">← 返回</button>
+    <h1>找重複名片</h1>
+  </header>
+  <div class="wrap">
+    <div id="dupStat" class="stat"></div>
+    <div id="dupList" class="list"></div>
+  </div>
+</div>
+
+<div id="vEdit" class="sheet hide" style="z-index:12">
+  <header>
+    <button class="ic" id="btnBack">← 返回</button>
+    <h1 id="editTitle">新名片</h1>
+  </header>
+  <div class="wrap">
+    <img id="photo" class="photo hide" alt="名片照片">
+    <div id="scanning" class="loading hide"><div class="spin"></div><div>辨識中,約 3–10 秒…</div></div>
+    <div id="editBody" class="hide">
+      <div style="margin-top:10px"><span id="method" class="badge"></span></div>
+      <div id="warn" class="note hide"></div>
+      <div id="dupBar" class="dupbar hide"></div>
+      <div class="form" id="form"></div>
+      <div class="acts">
+        <button class="btn" id="btnSave">💾 儲存到雲端</button>
+        <button class="btn sec" id="btnContact">👤 加入手機通訊錄</button>
+        <button class="btn sec hide" id="btnRescan">📷 換一張重拍</button>
+        <a class="btn sec hide" id="btnPhoto" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🖼 查看原始照片(Drive)</a>
+        <button class="btn danger hide" id="btnDel">刪除這張名片</button>
+      </div>
+      <details id="rawBox" class="hide"><summary>辨識原始文字</summary><pre id="raw"></pre></details>
+    </div>
+  </div>
+</div>
+
+<!-- 合併 -->
+<div id="vMerge" class="sheet hide" style="z-index:14">
+  <header>
+    <button class="ic" id="btnMergeBack">← 返回</button>
+    <h1>合併名片</h1>
+  </header>
+  <div class="wrap">
+    <div id="mergeNote" class="stat" style="line-height:1.6"></div>
+    <div id="mergeBody"></div>
+    <div class="acts"><button class="btn" id="btnMergeOk">✅ 確認合併</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===== 設定 ===== */
+var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
+var FIELDS = [
+  ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
+  ["手機","tel"],["電話","tel"],["傳真","tel"],["Email","email"],
+  ["地址","text"],["縣市","text"],["網站","url"],["統編","text"],["LINE","text"],
+  ["標籤","text"],["備註","area"]
+];
+
+/* ===== 小工具 ===== */
+function $(id){return document.getElementById(id);}
+function ls(k,v){try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){return null;}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove("on");},2600);}
+function show(v){["vLogin","vMain"].forEach(function(x){$(x).classList.toggle("hide",x!==v);});}
+function gasUrl(){return ls("sc_gas")||DEFAULT_GAS;}
+
+var S = { code: ls("sc_code")||"", cards: [], cur: null };
+
+async function post(body){
+  body.code = S.code;
+  var r = await fetch(gasUrl(), {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body)});
+  var t = await r.text();
+  try { return JSON.parse(t); } catch(e){ throw new Error("後端回應異常(可能尚未授權或網址錯誤)"); }
+}
+
+/* ===== 影像壓縮 ===== */
+function loadImg(file){
+  return new Promise(function(res,rej){
+    var u=URL.createObjectURL(file), im=new Image();
+    im.onload=function(){res(im);}; im.onerror=function(){rej(new Error("讀不到這張圖片"));}; im.src=u;
+  });
+}
+function shrink(im,max,q){
+  var w=im.naturalWidth,h=im.naturalHeight,s=Math.min(1,max/Math.max(w,h));
+  var c=document.createElement("canvas"); c.width=Math.round(w*s); c.height=Math.round(h*s);
+  c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",q);
+}
+
+/* ===== 登入 ===== */
+async function login(){
+  var code=$("code").value.trim(), u=$("gasUrl").value.trim();
+  if(u) ls("sc_gas",u);
+  if(!gasUrl()){ $("loginMsg").textContent="請先在下方填入後端網址"; return; }
+  if(!code){ $("loginMsg").textContent="請輸入存取碼"; return; }
+  $("btnLogin").disabled=true; $("loginMsg").textContent="";
+  S.code=code;
+  try{
+    var r=await post({action:"ping"});
+    if(!r.ok) throw new Error(r.error);
+    ls("sc_code",code); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl);
+    enter();
+  }catch(e){ $("loginMsg").textContent=e.message; S.code=""; }
+  $("btnLogin").disabled=false;
+}
+function enter(){ show("vMain"); loadList(); }
+function logout(){ ls("sc_code",null); S.code=""; $("code").value=""; show("vLogin"); }
+
+/* ===== 列表 ===== */
+async function loadList(){
+  $("stat").textContent="讀取中…";
+  try{
+    var r=await post({action:"list"});
+    if(!r.ok) throw new Error(r.error);
+    S.cards=r.cards; renderList();
+  }catch(e){
+    $("stat").textContent="讀取失敗:"+e.message;
+    if(/存取碼/.test(e.message)) logout();
+  }
+}
+var PRESET_TAGS=["客戶","經銷商","農友","農會","產銷班","供應商","同業","潛在客戶"];
+function tagsOf(c){ return String((c&&c["標籤"])||"").split(/[,，、\s]+/).filter(Boolean); }
+function filtered(){
+  var q=$("q").value.trim().toLowerCase();
+  return S.cards.filter(function(c){
+    if(S.ftag && tagsOf(c).indexOf(S.ftag)<0) return false;
+    if(S.fcity && c["縣市"]!==S.fcity) return false;
+    if(!q) return true;
+    return ["姓名","公司","職稱","手機","電話","地址","縣市","標籤","Email","備註"].some(function(k){return String(c[k]||"").toLowerCase().indexOf(q)>=0;});
+  });
+}
+function filterDesc(){
+  var p=[]; var q=$("q").value.trim();
+  if(S.fcity) p.push(S.fcity); if(S.ftag) p.push("標籤「"+S.ftag+"」"); if(q) p.push("搜尋「"+q+"」");
+  return p.join("+");
+}
+function renderFilters(){
+  var cnt={}, city={};
+  S.cards.forEach(function(c){ tagsOf(c).forEach(function(t){cnt[t]=(cnt[t]||0)+1;}); if(c["縣市"]) city[c["縣市"]]=(city[c["縣市"]]||0)+1; });
+  if(S.ftag && !cnt[S.ftag]) S.ftag="";
+  if(S.fcity && !city[S.fcity]) S.fcity="";
+  var tags=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b);});
+  $("chips").innerHTML = tags.length ? ('<button class="chip'+(S.ftag?'':' on')+'" data-tag="">全部</button>'+
+    tags.map(function(t){return '<button class="chip'+(S.ftag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' '+cnt[t]+'</button>';}).join("")) : "";
+  $("chips").classList.toggle("hide",!tags.length);
+  var cs=Object.keys(city).sort(function(a,b){return city[b]-city[a];});
+  $("fCity").innerHTML='<option value="">全部縣市</option>'+cs.map(function(c){return '<option value="'+esc(c)+'"'+(S.fcity===c?' selected':'')+'>'+esc(c)+'('+city[c]+')</option>';}).join("");
+}
+function renderList(){
+  renderFilters();
+  var arr=filtered(), fd=filterDesc();
+  $("stat").textContent = fd ? (fd+":"+arr.length+" 張 / 共 "+S.cards.length+" 張") : ("共 "+S.cards.length+" 張名片");
+  if(MAP && !$("vMap").classList.contains("hide")) renderMap(false);
+  if(!S.cards.length){ $("list").innerHTML='<div class="empty">還沒有名片<br>按右下角「📷 掃名片」開始</div>'; return; }
+  if(!arr.length){ $("list").innerHTML='<div class="empty">沒有符合的名片</div>'; return; }
+  $("list").innerHTML = arr.map(function(c,i){
+    var th = c["縮圖"] ? '<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">' : '<div class="thumb ph">📇</div>';
+    return '<div class="item" data-id="'+esc(c.ID)+'">'+th+'<div class="t">'+
+      '<div class="n">'+esc(c["姓名"]||"(未填姓名)")+'<small>'+esc(c["職稱"])+'</small></div>'+
+      '<div class="c">'+esc(c["公司"])+'</div>'+
+      '<div class="p">'+esc([c["手機"],c["電話"]].filter(Boolean).join(" · ")||c["縣市"])+'</div>'+
+      (tagsOf(c).length?'<div class="tg">'+tagsOf(c).map(function(t){return '<span>'+esc(t)+'</span>';}).join("")+'</div>':'')+
+      '</div></div>';
+  }).join("");
+}
+
+/* ===== 編輯頁 ===== */
+function openEdit(card, opts){
+  opts=opts||{};
+  S.cur={ id: card&&card.ID||"", image: opts.image||"", thumb: opts.thumb||"", method: opts.method||"", raw: opts.raw||"",
+           qid: opts.qid||0, dup: opts.dup||null };
+  $("editTitle").textContent = card&&card.ID ? (card["姓名"]||"名片") : "新名片";
+  var src = opts.preview || (card&&card["縮圖"]) || "";
+  $("photo").src=src; $("photo").classList.toggle("hide",!src);
+  $("form").innerHTML = FIELDS.map(function(f){
+    var k=f[0], v=esc(card&&card[k]||""), link="";
+    if(k==="手機"||k==="電話") link='<a data-act="tel" data-k="'+k+'" href="#">📞</a>';
+    if(k==="Email") link='<a data-act="mail" href="#">✉️</a>';
+    if(k==="地址") link='<a data-act="nav" href="#" title="導航">🧭</a>';
+    var input = f[1]==="area" ? '<textarea data-k="'+k+'">'+v+'</textarea>'
+      : '<input data-k="'+k+'" type="'+(f[1]==="tel"?"text":f[1])+'" '+(f[1]==="tel"?'inputmode="tel"':'')+' value="'+v+'">';
+    return '<div class="row"><label>'+k+'</label>'+input+link+'</div>';
+  }).join("");
+  var tr=$("form").querySelector('[data-k="標籤"]').closest(".row");
+  tr.insertAdjacentHTML("afterend",'<div class="tagpick" id="tagpick"></div>');
+  renderTagPick();
+  var isNew=!(card&&card.ID);
+  $("method").textContent = isNew ? (S.cur.method==="AI"?"✨ AI 辨識":S.cur.method==="OCR"?"🔤 OCR 辨識(請核對)":"手動輸入")
+                                  : ("建立 "+(card["建立時間"]||"").slice(0,16)+" · "+(card["辨識方式"]||""));
+  $("method").className = "badge"+(S.cur.method==="OCR"?" ocr":"");
+  $("warn").classList.toggle("hide",!opts.warn); $("warn").textContent=opts.warn||"";
+  $("btnRescan").classList.toggle("hide",!isNew||!!S.cur.qid);
+  renderDupBar();
+  $("btnDel").classList.toggle("hide",isNew);
+  $("btnPhoto").classList.toggle("hide",!(card&&card["照片連結"]));
+  if(card&&card["照片連結"]) $("btnPhoto").href=card["照片連結"];
+  $("rawBox").classList.toggle("hide",!S.cur.raw); $("raw").textContent=S.cur.raw;
+  $("scanning").classList.add("hide"); $("editBody").classList.remove("hide");
+  $("vEdit").classList.remove("hide"); $("vEdit").scrollTop=0;
+}
+function closeEdit(){ $("vEdit").classList.add("hide"); S.cur=null; }
+function formData(){
+  var o={}; $("form").querySelectorAll("input[data-k],textarea[data-k]").forEach(function(el){o[el.dataset.k]=el.value.trim();}); return o;
+}
+
+async function onFile(ev){
+  var file=ev.target.files[0]; ev.target.value="";
+  if(!file) return;
+  $("editTitle").textContent="辨識中";
+  $("vEdit").classList.remove("hide"); $("editBody").classList.add("hide"); $("scanning").classList.remove("hide");
+  try{
+    var im=await loadImg(file);
+    var big=shrink(im,1600,0.85), thumb=shrink(im,240,0.6);
+    $("photo").src=big; $("photo").classList.remove("hide");
+    var b64=big.split(",")[1];
+    var r=await post({action:"scan", image:b64, mime:"image/jpeg"});
+    if(!r.ok) throw new Error(r.error);
+    openEdit(r.fields, {image:b64, thumb:thumb, preview:big, method:r.method, raw:r.raw, warn:r.warn, dup:findDup(r.fields)});
+  }catch(e){
+    toast("辨識失敗:"+e.message);
+    openEdit(null,{preview:$("photo").src, warn:"辨識失敗,可手動填寫後儲存。("+e.message+")"});
+  }
+}
+
+async function save(){
+  var f=formData();
+  if(!f["姓名"]&&!f["公司"]){ toast("姓名或公司至少填一個"); return; }
+  var b=$("btnSave"); b.disabled=true; b.textContent="儲存中…";
+  var qid=S.cur.qid; if(qid) f=withQTag(f);
+  try{
+    var r=await post({action:"save", id:S.cur.id, fields:f, image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw});
+    if(!r.ok) throw new Error(r.error);
+    var i=S.cards.findIndex(function(c){return c.ID===r.id;});
+    if(i>=0) S.cards[i]=r.card; else S.cards.unshift(r.card);
+    if(qid) qRemove(qid);
+    renderList(); closeEdit(); toast("✅ 已存到 Google 雲端");
+  }catch(e){ toast("儲存失敗:"+e.message); }
+  b.disabled=false; b.textContent="💾 儲存到雲端";
+}
+
+async function del(){
+  if(!S.cur||!S.cur.id) return;
+  if(!confirm("確定刪除這張名片?照片會移到 Drive 垃圾桶。")) return;
+  try{
+    var r=await post({action:"delete", id:S.cur.id});
+    if(!r.ok) throw new Error(r.error);
+    S.cards=S.cards.filter(function(c){return c.ID!==S.cur.id;});
+    renderList(); closeEdit(); toast("已刪除");
+  }catch(e){ toast("刪除失敗:"+e.message); }
+}
+
+/* ===== ② 重複偵測 ===== */
+function phoneKeys(s){ return String(s||"").split(/[\/、,;]/).map(function(x){return x.replace(/#.*/,"").replace(/\D/g,"").replace(/^886/,"0");}).filter(function(x){return x.length>=8;}); }
+function normCo(s){ return String(s||"").replace(/\s/g,"").replace(/臺/g,"台").replace(/(股份)?有限公司$|公司$/,"").toLowerCase(); }
+function mailKeys(s){ return String(s||"").toLowerCase().split(/[\s\/,;]+/).filter(function(x){return x.indexOf("@")>0;}); }
+function normName(s){ return String(s||"").replace(/\s/g,""); }
+/** 兩張名片是不是同一人;回傳原因文字,不像就回空字串 */
+function dupReason(a,b){
+  var ma=phoneKeys(a["手機"]), mb=phoneKeys(b["手機"]);
+  if(ma.some(function(x){return mb.indexOf(x)>=0;})) return "手機相同";
+  var ea=mailKeys(a.Email), eb=mailKeys(b.Email);
+  if(ea.some(function(x){return eb.indexOf(x)>=0;})) return "Email 相同";
+  var na=normName(a["姓名"]), nb=normName(b["姓名"]);
+  if(na && na===nb){
+    var ca=normCo(a["公司"]), cb=normCo(b["公司"]);
+    if(ca && cb && (ca===cb || ca.indexOf(cb)>=0 || cb.indexOf(ca)>=0)) return "姓名+公司相同";
+    if(!ca || !cb) return "姓名相同";
+  }
+  return "";
+}
+function findDup(f, exceptId){
+  for(var i=0;i<S.cards.length;i++){
+    var c=S.cards[i]; if(c.ID===exceptId) continue;
+    var r=dupReason(f,c); if(r) return {card:c, reason:r};
+  }
+  return null;
+}
+function renderDupBar(){
+  var d=S.cur&&S.cur.dup, bar=$("dupBar");
+  bar.classList.toggle("hide",!d); if(!d) return;
+  var who = d.card ? [d.card["姓名"],d.card["公司"]].filter(Boolean).join("・")
+                   : ("這批第 "+(S.q.indexOf(d.q)+1)+" 張 "+((d.q.fields||{})["姓名"]||""));
+  bar.innerHTML='⚠️ 可能和「'+esc(who)+'」是同一人('+esc(d.reason)+')'+
+    '<div class="b">'+(d.card?'<button class="mini pri" data-dup="merge">🔀 合併進舊名片</button>':'')+
+    '<button class="mini" data-dup="keep">➕ 仍另存新的</button><button class="mini" data-dup="skip">🗑 略過這張</button></div>';
+}
+function onDupBar(e){
+  var b=e.target.closest("[data-dup]"); if(!b||!S.cur) return;
+  var act=b.dataset.dup, qid=S.cur.qid, it=qGet(qid);
+  if(act==="keep"){
+    S.cur.dup=null; renderDupBar();
+    if(it){ it.dup=null; it.st="ok"; renderQ(); }
+    toast("好,這張會另存成新名片");
+  }else if(act==="skip"){
+    if(it) qRemove(qid);
+    closeEdit(); toast("已略過這張");
+  }else if(act==="merge"){
+    openMerge(S.cur.dup.card, {fields:formData(), image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw, qid:qid}, "new");
+  }
+}
+
+/* ===== ② 批量連拍佇列 ===== */
+S.q=[]; var qSeq=0, qRunning=0, Q_MAX=2;
+function qGet(qid){ return qid ? S.q.find(function(x){return x.qid===qid;}) : null; }
+function qRemove(qid){ S.q=S.q.filter(function(x){return x.qid!==qid;}); renderQ(); }
+function qAdd(files){
+  Array.prototype.forEach.call(files||[], function(f){ S.q.push({qid:++qSeq, file:f, st:"wait", fields:null}); });
+  renderQ(); qPump();
+}
+function qPump(){
+  while(qRunning<Q_MAX){
+    var it=S.q.find(function(x){return x.st==="wait";}); if(!it) break;
+    it.st="scan"; qRunning++;
+    qScan(it).then(function(){ qRunning--; renderQ(); qPump(); });
+  }
+  renderQ();
+}
+async function qScan(it){
+  try{
+    var im=await loadImg(it.file);
+    it.big=shrink(im,1600,0.85); it.thumb=shrink(im,240,0.6); it.file=null;
+    renderQ();
+    var r=await post({action:"scan", image:it.big.split(",")[1], mime:"image/jpeg"});
+    if(!r.ok) throw new Error(r.error);
+    it.fields=r.fields; it.method=r.method; it.raw=r.raw; it.warn=r.warn;
+    if(!it.fields["姓名"] && !it.fields["公司"]) throw new Error("沒辨識到姓名或公司");
+    it.dup=findDup(it.fields)||qDupInBatch(it);
+    it.st=it.dup?"dup":"ok";
+  }catch(e){ it.st="err"; it.err=e.message; it.fields=it.fields||{}; }
+}
+/** 同一批裡重複拍到同一張 */
+function qDupInBatch(it){
+  for(var i=0;i<S.q.length;i++){
+    var x=S.q[i]; if(x===it) break;
+    if(x.fields && x.st!=="err"){ var r=dupReason(it.fields,x.fields); if(r) return {q:x, reason:r}; }
+  }
+  return null;
+}
+function renderQ(){
+  var n={wait:0,scan:0,ok:0,dup:0,err:0,saving:0};
+  S.q.forEach(function(x){n[x.st]++;});
+  $("btnBatch").textContent = S.q.length ? ("📚 批量("+S.q.length+")") : "📚 批量連拍";
+  if($("vBatch").classList.contains("hide")) return;
+  $("qStat").textContent = S.q.length
+    ? ("共 "+S.q.length+" 張|辨識中 "+(n.wait+n.scan)+"|可儲存 "+n.ok+"|待你決定 "+n.dup+"|失敗 "+n.err)
+    : "一直按「📷 拍下一張」連續拍,辨識會在背景同時進行;拍完再一次儲存。";
+  var ST={wait:"⏳ 排隊中",scan:"🔄 辨識中…",ok:"✅ 可儲存",err:"❌ 辨識失敗,點開手動填",saving:"💾 儲存中…"};
+  $("qList").innerHTML = S.q.map(function(x){
+    var f=x.fields||{};
+    var th = x.thumb ? '<img class="thumb" src="'+x.thumb+'" alt="">' : '<div class="thumb ph">⏳</div>';
+    var st = x.st==="dup" ? (x.dup.card ? ("⚠️ 可能和已存的「"+(x.dup.card["姓名"]||x.dup.card["公司"])+"」重複("+x.dup.reason+")")
+                                        : ("⚠️ 這批重複拍到("+x.dup.reason+")")) : ST[x.st];
+    if(x.st==="err" && x.err) st+="("+x.err+")";
+    if(x.st==="ok" && x.saveErr) st="⚠️ 上次儲存失敗,可再按全部儲存";
+    var nm = f["姓名"] || ((x.st==="wait"||x.st==="scan") ? "…" : "(沒有姓名)");
+    return '<div class="item" data-qid="'+x.qid+'">'+th+'<div class="t">'+
+      '<div class="n">'+esc(nm)+'<small>'+esc(f["職稱"]||"")+'</small></div>'+
+      '<div class="c">'+esc(f["公司"]||"")+'</div>'+
+      '<div class="p st '+x.st+'">'+esc(st)+'</div></div></div>';
+  }).join("");
+  $("btnSaveAll").textContent="💾 全部儲存("+n.ok+" 張)";
+  $("btnSaveAll").disabled=!n.ok;
+  $("btnClearQ").classList.toggle("hide",!S.q.length);
+}
+function openBatch(){ $("vBatch").classList.remove("hide"); renderQ(); }
+function openQItem(qid){
+  var it=qGet(qid); if(!it) return;
+  // 同批重複的那張已經存檔了 → 改成跟已存的名片比對,才能直接合併
+  if(it.dup && it.dup.q && S.q.indexOf(it.dup.q)<0) it.dup = findDup(it.fields) || null;
+  if(it.st==="dup" && !it.dup) it.st="ok";
+  if(it.st==="wait"||it.st==="scan"||it.st==="saving"){ toast("這張還在處理中,稍等一下"); return; }
+  openEdit(withQTag(Object.assign({},it.fields)), {image:it.big.split(",")[1], thumb:it.thumb, preview:it.big, method:it.method, raw:it.raw,
+    warn: it.st==="err" ? ("辨識失敗,可手動填寫後儲存。("+it.err+")") : it.warn, dup:it.dup, qid:qid});
+}
+/** 從佇列開的編輯頁按返回:把手動改的內容存回佇列 */
+function backFromEdit(){
+  var it=S.cur&&qGet(S.cur.qid);
+  if(it){
+    it.fields=formData();
+    if(it.st==="err" && (it.fields["姓名"]||it.fields["公司"])){ it.dup=findDup(it.fields)||null; it.st=it.dup?"dup":"ok"; }
+    renderQ();
+  }
+  closeEdit();
+}
+async function saveAll(){
+  var items=S.q.filter(function(x){return x.st==="ok";}); if(!items.length) return;
+  $("btnSaveAll").disabled=true;
+  var done=0, fail=0;
+  for(var i=0;i<items.length;i++){   // 依序存(後端有鎖,並行也不會比較快)
+    var it=items[i]; it.st="saving"; renderQ();
+    try{
+      var r=await post({action:"save", fields:withQTag(it.fields), image:it.big.split(",")[1], thumb:it.thumb, method:it.method, raw:it.raw});
+      if(!r.ok) throw new Error(r.error);
+      S.cards.unshift(r.card); S.q=S.q.filter(function(x){return x!==it;}); done++;
+    }catch(e){ it.st="ok"; it.saveErr=e.message; fail++; }
+    renderQ();
+  }
+  renderList();
+  var left=S.q.filter(function(x){return x.st==="dup";}).length;
+  toast("✅ 已儲存 "+done+" 張"+(fail?",失敗 "+fail+" 張":"")+(left?",還有 "+left+" 張重複待你決定":""));
+}
+function clearQ(){
+  if(!S.q.length) return;
+  if(!confirm("清空佇列?還沒儲存的 "+S.q.length+" 張照片會被丟掉。")) return;
+  S.q=[]; renderQ();   // 還在辨識中的,回來時已不在佇列,結果自動丟棄
+}
+
+/* ===== ② 合併 ===== */
+var MF = FIELDS.map(function(f){return f[0];});
+var MULTI = {"手機":1,"電話":1,"傳真":1,"Email":1,"LINE":1,"標籤":1,"備註":1};
+function joinVals(k,a,b){
+  if(k==="備註") return a+"\n"+b;
+  var sep = k==="標籤" ? /[,，、\s]+/ : /\s*\/\s*/;
+  var out=[], seen={};
+  a.split(sep).concat(b.split(sep)).forEach(function(x){
+    x=x.trim(); if(!x) return;
+    var key = /手機|電話|傳真/.test(k) ? x.replace(/\D/g,"") : x.toLowerCase();
+    if(seen[key]) return; seen[key]=1; out.push(x);
+  });
+  return out.join(k==="標籤" ? ", " : " / ");
+}
+/** keep=要保留的舊名片;other={fields, image?, thumb?, qid?, card?};mode "new"=新拍併進舊、"two"=兩張舊的互併 */
+function openMerge(keep, other, mode){
+  S.m={keep:keep, other:other, mode:mode};
+  var a=keep, b=other.fields;
+  var html=MF.map(function(k){
+    var va=String(a[k]||"").trim(), vb=String(b[k]||"").trim();
+    if(!va && !vb) return "";
+    if(!va || !vb || va===vb) return '<div class="mrow"><div class="k">'+k+'</div><div class="same">'+esc(va||vb)+'</div></div>';
+    var nm='m_'+k;
+    return '<div class="mrow conflict"><div class="k">'+k+'<span class="tag">不同,請選</span></div>'+
+      '<label class="opt"><input type="radio" name="'+nm+'" value="a"> 舊:'+esc(va)+'</label>'+
+      '<label class="opt"><input type="radio" name="'+nm+'" value="b"'+(MULTI[k]?'':' checked')+'> 新:'+esc(vb)+'</label>'+
+      (MULTI[k] ? '<label class="opt"><input type="radio" name="'+nm+'" value="both" checked> 兩個都留:'+esc(joinVals(k,va,vb))+'</label>' : '')+
+      '</div>';
+  }).join("");
+  var pa=a["縮圖"], pb = mode==="new" ? other.thumb : other.card["縮圖"];
+  if(pa && pb) html+='<div class="mrow conflict"><div class="k">照片<span class="tag">請選</span></div>'+
+    '<label class="opt"><input type="radio" name="m_photo" value="a"> 保留舊照片 <img class="thumb" src="'+esc(pa)+'" alt=""></label>'+
+    '<label class="opt"><input type="radio" name="m_photo" value="b" checked> 用新照片 <img class="thumb" src="'+esc(pb)+'" alt=""></label></div>';
+  $("mergeBody").innerHTML=html;
+  $("mergeNote").textContent = mode==="new"
+    ? ("把剛拍的這張併進「"+(a["姓名"]||a["公司"])+"」。一樣的欄位自動合併,不一樣的請選要留哪個。")
+    : ("兩張合併成一張:保留較早建立的那筆,另一筆會刪除(照片移到 Drive 垃圾桶)。「舊」是較早的,「新」是較晚的。");
+  $("btnMergeOk").disabled=false;
+  $("vMerge").classList.remove("hide"); $("vMerge").scrollTop=0;
+}
+async function doMerge(){
+  var m=S.m; if(!m) return;
+  var a=m.keep, b=m.other.fields, f={};
+  MF.forEach(function(k){
+    var va=String(a[k]||"").trim(), vb=String(b[k]||"").trim();
+    if(!va || !vb || va===vb){ f[k]=va||vb; return; }
+    var r=document.querySelector('input[name="m_'+k+'"]:checked'), v=r?r.value:"b";
+    f[k] = v==="a" ? va : v==="b" ? vb : joinVals(k,va,vb);
+  });
+  var ph=document.querySelector('input[name="m_photo"]:checked');
+  var pb = m.mode==="new" ? m.other.thumb : m.other.card["縮圖"];
+  var useB = ph ? ph.value==="b" : (!a["縮圖"] && !!pb);
+  if(m.other.qid) f=withQTag(f);
+  var body={action:"merge", keepId:a.ID, fields:f};
+  if(m.mode==="new"){ if(useB && m.other.image){ body.image=m.other.image; body.thumb=m.other.thumb; body.method=m.other.method; body.raw=m.other.raw; } }
+  else { body.dropId=m.other.card.ID; body.useDropPhoto=useB; }
+  $("btnMergeOk").disabled=true; $("btnMergeOk").textContent="合併中…";
+  try{
+    var r=await post(body);
+    if(!r.ok) throw new Error(r.error);
+    var i=S.cards.findIndex(function(c){return c.ID===r.id;}); if(i>=0) S.cards[i]=r.card;
+    if(r.dropped) S.cards=S.cards.filter(function(c){return c.ID!==r.dropped;});
+    if(m.other.qid) qRemove(m.other.qid);
+    $("vMerge").classList.add("hide"); S.m=null;
+    if(m.mode==="new") closeEdit();
+    renderList(); if(!$("vDups").classList.contains("hide")) renderDups();
+    toast("✅ 已合併");
+  }catch(e){ toast("合併失敗:"+e.message); $("btnMergeOk").disabled=false; }
+  $("btnMergeOk").textContent="✅ 確認合併";
+}
+
+/* ===== ② 找重複(既有名片) ===== */
+function dupPairs(){
+  var cs=S.cards.slice().sort(function(x,y){return String(x["建立時間"]).localeCompare(String(y["建立時間"]));});  // 舊的在前
+  var bucket={};
+  cs.forEach(function(c,i){
+    var keys=phoneKeys(c["手機"]).map(function(k){return "m"+k;});
+    mailKeys(c.Email).forEach(function(e){ keys.push("e"+e); });
+    var n=normName(c["姓名"]); if(n) keys.push("n"+n);
+    keys.forEach(function(k){ (bucket[k]=bucket[k]||[]).push(i); });
+  });
+  var seen={}, out=[];
+  Object.keys(bucket).forEach(function(k){
+    var ix=bucket[k];
+    for(var p=0;p<ix.length;p++) for(var q=p+1;q<ix.length;q++){
+      var key=ix[p]+"-"+ix[q]; if(seen[key]) continue; seen[key]=1;
+      var r=dupReason(cs[ix[p]],cs[ix[q]]); if(r) out.push({a:cs[ix[p]], b:cs[ix[q]], reason:r});
+    }
+  });
+  return out;
+}
+function renderDups(){
+  var ps=dupPairs(); S.pairs=ps;
+  $("dupStat").textContent = ps.length ? ("找到 "+ps.length+" 組可能重複,點一組來合併") : ("檢查了 "+S.cards.length+" 張,沒有重複的名片 👍");
+  $("dupList").innerHTML = ps.map(function(p,i){
+    var th=function(c){return c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':'<div class="thumb ph">📇</div>';};
+    return '<div class="item" data-i="'+i+'">'+th(p.a)+'<div class="t">'+
+      '<div class="n">'+esc(p.a["姓名"]||p.a["公司"])+' ⇄ '+esc(p.b["姓名"]||p.b["公司"])+'</div>'+
+      '<div class="c">'+esc(p.a["公司"]||"")+(p.a["公司"]!==p.b["公司"]?' / '+esc(p.b["公司"]||""):"")+'</div>'+
+      '<div class="p st dup">'+esc(p.reason)+'</div></div>'+th(p.b)+'</div>';
+  }).join("");
+}
+
+/* ===== ③ 匯出 ===== */
+function today(){ var d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+function download(blob, name){
+  var u=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){URL.revokeObjectURL(u);},60000);
+}
+function openExport(){
+  var q=filterDesc(), n=filtered().length;
+  $("xAll").textContent="全部("+S.cards.length+" 張)";
+  $("xFilt").textContent="目前篩選:"+q+"("+n+" 張)";
+  $("xFiltRow").classList.toggle("hide",!q);
+  document.querySelector('input[name="xScope"][value="'+(q?"filt":"all")+'"]').checked=true;
+  var su=ls("sc_sheet"); $("btnSheet").classList.toggle("hide",!su); if(su) $("btnSheet").href=su;
+  if(!su) post({action:"ping"}).then(function(r){ if(r.sheetUrl){ ls("sc_sheet",r.sheetUrl); $("btnSheet").href=r.sheetUrl; $("btnSheet").classList.remove("hide"); } }).catch(function(){});
+  $("vExport").classList.remove("hide");
+}
+function exportCards(){
+  var v=document.querySelector('input[name="xScope"]:checked').value;
+  return v==="filt" ? filtered() : S.cards.slice();
+}
+
+/* Excel:用 SheetJS(第一次按才載入) */
+var XCOLS=["姓名","公司","職稱","部門","手機","電話","傳真","Email","地址","縣市","網站","統編","LINE","標籤","備註","建立時間","更新時間","照片連結"];
+var XW   =[10,   26,   12,   12,   14,   20,   14,   28,     34,   8,     24,   10,   12,   14,   24,   17,      17,      30];
+function loadXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  return new Promise(function(res,rej){
+    var sc=document.createElement("script");
+    sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload=res; sc.onerror=function(){rej(new Error("Excel 元件載入失敗,請確認網路"));};
+    document.head.appendChild(sc);
+  });
+}
+async function exportXlsx(){
+  var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
+  var b=$("btnXlsx"); b.disabled=true; b.textContent="產生中…";
+  try{
+    await loadXLSX();
+    var rows=[XCOLS].concat(cs.map(function(c){ return XCOLS.map(function(k){ return String(c[k]||""); }); }));
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"]=XW.map(function(w){return {wch:w};});
+    ws["!autofilter"]={ref:"A1:"+XLSX.utils.encode_col(XCOLS.length-1)+rows.length};
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "名片");
+    var out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+    download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "超級名片_"+today()+".xlsx");
+    toast("✅ 已匯出 "+cs.length+" 張");
+  }catch(e){ toast("匯出失敗:"+e.message); }
+  b.disabled=false; b.textContent="下載 Excel(.xlsx)";
+}
+
+/* vCard 3.0 */
+var FUSURNAME=["歐陽","司徒","司馬","上官","諸葛","東方","張簡","范姜","皇甫","長孫","公孫","夏侯","端木"];
+function vEsc(s){ return String(s||"").replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/([,;])/g,"\\$1"); }
+function vSplit(s){ return String(s||"").split(/\s*\/\s*/).map(function(x){return x.trim();}).filter(Boolean); }
+function vTel(s){ return s.replace(/\s*#\s*/,",").replace(/[^\d+(),\-]/g,""); }   // 分機用逗號(撥號時自動暫停後撥)
+function vFold(line){   // 每行最多 75 字元,續行開頭一個空白
+  if(line.length<=75) return line;
+  var out=[line.slice(0,75)]; for(var i=75;i<line.length;i+=74) out.push(" "+line.slice(i,i+74));
+  return out.join("\r\n");
+}
+function nameParts(n){
+  n=String(n||"").trim(); if(!n) return ["",""];
+  if(/^[A-Za-z]/.test(n)){ var w=n.split(/\s+/); return w.length>1 ? [w.pop(), w.join(" ")] : [n,""]; }
+  for(var i=0;i<FUSURNAME.length;i++) if(n.indexOf(FUSURNAME[i])===0 && n.length>2) return [FUSURNAME[i], n.slice(2)];
+  return n.length>1 ? [n.charAt(0), n.slice(1)] : [n,""];
+}
+function toVcard(c, withPhoto){
+  var L=["BEGIN:VCARD","VERSION:3.0"];
+  var np=nameParts(c["姓名"]), fn=c["姓名"]||c["公司"]||"(未命名)";
+  L.push("N:"+vEsc(np[0])+";"+vEsc(np[1])+";;;");
+  L.push("FN:"+vEsc(fn));
+  if(c["公司"]||c["部門"]) L.push("ORG:"+vEsc(c["公司"])+(c["部門"]?";"+vEsc(c["部門"]):""));
+  if(c["職稱"]) L.push("TITLE:"+vEsc(c["職稱"]));
+  vSplit(c["手機"]).forEach(function(t){ L.push("TEL;TYPE=CELL:"+vTel(t)); });
+  vSplit(c["電話"]).forEach(function(t){ L.push("TEL;TYPE=WORK,VOICE:"+vTel(t)); });
+  vSplit(c["傳真"]).forEach(function(t){ L.push("TEL;TYPE=WORK,FAX:"+vTel(t)); });
+  vSplit(c["Email"]).forEach(function(t){ L.push("EMAIL;TYPE=INTERNET,WORK:"+vEsc(t)); });
+  if(c["地址"]) L.push("ADR;TYPE=WORK:;;"+vEsc(c["地址"])+";;;;台灣");
+  if(c["網站"]) L.push("URL:"+(/^https?:/i.test(c["網站"])?"":"https://")+c["網站"]);
+  if(c["標籤"]) L.push("CATEGORIES:"+String(c["標籤"]).split(/[,，、\s]+/).filter(Boolean).map(vEsc).join(","));
+  var note=[];
+  if(c["統編"]) note.push("統編 "+c["統編"]);
+  if(c["LINE"]) note.push("LINE "+c["LINE"]);
+  if(c["備註"]) note.push(c["備註"]);
+  note.push("(來自超級名片"+(c["建立時間"]?" "+String(c["建立時間"]).slice(0,10):"")+")");
+  L.push("NOTE:"+vEsc(note.join("\n")));
+  var th=String(c["縮圖"]||"");
+  if(withPhoto && th.indexOf("base64,")>0) L.push("PHOTO;ENCODING=b;TYPE=JPEG:"+th.split("base64,")[1]);
+  L.push("END:VCARD");
+  return L.map(vFold).join("\r\n");
+}
+function exportVcf(){
+  var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
+  var ph=$("xPhoto").checked;
+  var txt=cs.map(function(c){return toVcard(c,ph);}).join("\r\n")+"\r\n";
+  download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "超級名片_"+today()+"_"+cs.length+"人.vcf");
+  toast("✅ 已匯出 "+cs.length+" 位聯絡人");
+}
+/** 編輯頁:目前畫面上的這張加入通訊錄 */
+function addContact(){
+  var f=formData();
+  if(!f["姓名"]&&!f["公司"]){ toast("姓名或公司至少要有一個"); return; }
+  f["縮圖"] = (S.cur&&S.cur.thumb) || $("photo").getAttribute("src") || "";
+  if(f["縮圖"].indexOf("data:")!==0) f["縮圖"]="";
+  var old=S.cur&&S.cur.id&&S.cards.find(function(c){return c.ID===S.cur.id;}); if(old) f["建立時間"]=old["建立時間"];
+  var txt=toVcard(f,true)+"\r\n", name=(f["姓名"]||f["公司"]).replace(/[\\\/:*?"<>|]/g,"")+".vcf";
+  var file=new File([txt],name,{type:"text/vcard"});
+  // 手機優先用「分享」,可直接選「聯絡人」;不支援就下載
+  if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+    navigator.share({files:[file], title:name}).catch(function(e){ if(e.name!=="AbortError") download(file,name); });
+  }else download(file,name);
+}
+
+/* ===== ④ 標籤 ===== */
+function allTags(){
+  var seen={}, out=[];
+  PRESET_TAGS.concat.apply(PRESET_TAGS, S.cards.map(tagsOf)).forEach(function(t){ if(!seen[t]){ seen[t]=1; out.push(t); } });
+  return out;
+}
+function renderTagPick(){
+  var box=$("tagpick"); if(!box) return;
+  var inp=$("form").querySelector('[data-k="標籤"]'), cur=tagsOf({"標籤":inp.value});
+  var list=allTags(); cur.forEach(function(t){ if(list.indexOf(t)<0) list.push(t); });
+  box.innerHTML=list.map(function(t){return '<button type="button" class="chip'+(cur.indexOf(t)>=0?' on':'')+'" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join("")+
+    '<button type="button" class="chip add" data-t="">＋ 新標籤</button>';
+}
+function onTagPick(e){
+  var b=e.target.closest("[data-t]"); if(!b) return;
+  var inp=$("form").querySelector('[data-k="標籤"]'), cur=tagsOf({"標籤":inp.value}), t=b.dataset.t;
+  if(!t){ t=(prompt("新標籤名稱(例:芒果、2026農機展)")||"").trim().replace(/[,，、\s]+/g,""); if(!t) return; if(cur.indexOf(t)<0) cur.push(t); }
+  else if(cur.indexOf(t)>=0) cur.splice(cur.indexOf(t),1); else cur.push(t);
+  inp.value=cur.join(", "); renderTagPick();
+}
+function withQTag(f){
+  var t=$("qTag").value.trim().replace(/[,，、\s]+/g,""); if(!t) return f;
+  var o=Object.assign({},f); o["標籤"]=joinVals("標籤",String(o["標籤"]||""),t); return o;
+}
+
+/* ===== ④ 地圖 / 導航 ===== */
+var CITY22=["臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","彰化縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
+function cityOf(a){ a=String(a||"").replace(/台/g,"臺"); for(var i=0;i<CITY22.length;i++) if(a.indexOf(CITY22[i])>=0) return CITY22[i]; return ""; }
+function navUrl(addr){ return "https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(addr); }
+function hasLL(c){ return isFinite(parseFloat(c["緯度"])) && isFinite(parseFloat(c["經度"])); }
+function km(a,b){
+  var R=6371, r=Math.PI/180, dLa=(b[0]-a[0])*r, dLo=(b[1]-a[1])*r;
+  var x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+var MAP=null, LAYER=null, ME=null, ME_MK=null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  var css=document.createElement("link"); css.rel="stylesheet"; css.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(css);
+  return new Promise(function(res,rej){
+    var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    sc.onload=res; sc.onerror=function(){rej(new Error("地圖元件載入失敗,請確認網路"));}; document.head.appendChild(sc);
+  });
+}
+async function openMap(){
+  $("vMap").classList.remove("hide"); $("mapStat").textContent="載入地圖中…";
+  try{ await loadLeaflet(); }catch(e){ $("mapStat").textContent=e.message; return; }
+  if(!MAP){
+    MAP=L.map("map").setView([23.6,120.9],7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(MAP);
+    LAYER=L.layerGroup().addTo(MAP);
+  }
+  setTimeout(function(){ MAP.invalidateSize(); renderMap(true); },60);
+  geoFillMissing();
+}
+function popHtml(c){
+  var tel=(String(c["手機"]||c["電話"]||"").split("/")[0]).replace(/#.*/,"").replace(/[^\d+]/g,"");
+  return '<div class="pop"><b>'+esc(c["姓名"]||c["公司"])+'</b> '+esc(c["職稱"]||"")+'<br>'+esc(c["公司"]||"")+'<br>'+
+    '<span style="color:#66706d">'+esc(c["地址"]||"")+'</span><div class="pa">'+
+    (tel?'<a href="tel:'+tel+'">📞 撥號</a>':'')+
+    '<a href="'+esc(navUrl(c["地址"]))+'" target="_blank" rel="noopener">🧭 導航</a>'+
+    '<a href="#" data-open="'+esc(c.ID)+'">📇 名片</a></div></div>';
+}
+function renderMap(fit){
+  if(!MAP) return;
+  var cs=filtered(), pts=cs.filter(hasLL);
+  var icon=L.divIcon({className:"pin",html:"📍",iconSize:[28,28],iconAnchor:[14,27],popupAnchor:[0,-24]});
+  LAYER.clearLayers();
+  pts.forEach(function(c){ L.marker([+c["緯度"],+c["經度"]],{icon:icon,title:c["姓名"]||c["公司"]}).bindPopup(popHtml(c)).addTo(LAYER); });
+  $("mapTitle").textContent="地圖("+pts.length+" 張)";
+  var noAddr=cs.filter(function(c){return !String(c["地址"]||"").trim();}).length;
+  var bad=cs.filter(function(c){return String(c["地址"]||"").trim() && c["緯度"]==="x";}).length;
+  var wait=cs.filter(function(c){return String(c["地址"]||"").trim() && (c["緯度"]==null||c["緯度"]==="");}).length;
+  var fd=filterDesc();
+  $("mapStat").innerHTML=(fd?"篩選:"+esc(fd)+"<br>":"")+"地圖上 "+pts.length+" 張"+
+    (wait?"|🔄 定位中 "+wait+" 張":"")+(noAddr?"|沒填地址 "+noAddr+" 張":"")+(bad?"|地址找不到位置 "+bad+" 張(到名片頁改地址再存即可)":"")+
+    (ME?"":"<br>按右上「📍 附近」可列出離你最近的名片");
+  if(fit && pts.length) MAP.fitBounds(pts.map(function(c){return [+c["緯度"],+c["經度"]];}),{padding:[30,30],maxZoom:14});
+  renderNear();
+}
+function renderNear(){
+  if(!ME){ $("nearList").innerHTML=""; return; }
+  var arr=filtered().filter(hasLL).map(function(c){return {c:c, d:km(ME,[+c["緯度"],+c["經度"]])};})
+    .sort(function(a,b){return a.d-b.d;}).slice(0,30);
+  $("nearList").innerHTML='<div class="stat">📍 離你最近的 '+arr.length+' 張</div>'+arr.map(function(x){
+    var c=x.c, th=c["縮圖"]?'<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">':'<div class="thumb ph">📇</div>';
+    return '<div class="item" data-id="'+esc(c.ID)+'">'+th+'<div class="t"><div class="n">'+esc(c["姓名"]||c["公司"])+'<small>'+esc(c["職稱"]||"")+'</small></div>'+
+      '<div class="c">'+esc(c["公司"]||"")+'</div><div class="p">'+esc(c["地址"]||"")+'</div></div>'+
+      '<div class="dist">'+(x.d<1?Math.round(x.d*1000)+" 公尺":x.d.toFixed(1)+" 公里")+'<a href="'+esc(navUrl(c["地址"]))+'" target="_blank" rel="noopener" title="導航">🧭</a></div></div>';
+  }).join("");
+}
+function locate(){
+  if(!navigator.geolocation){ toast("這個瀏覽器不支援定位"); return; }
+  toast("定位中…");
+  navigator.geolocation.getCurrentPosition(function(p){
+    ME=[p.coords.latitude,p.coords.longitude];
+    if(ME_MK) ME_MK.remove();
+    ME_MK=L.circleMarker(ME,{radius:8,color:"#fff",weight:3,fillColor:"#2563eb",fillOpacity:1}).addTo(MAP).bindPopup("你在這裡");
+    MAP.setView(ME,12); renderMap(false); toast("已列出離你最近的名片");
+  },function(e){ toast("無法定位:"+(e.code===1?"請允許瀏覽器使用位置":e.message)); },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
+/** 舊名片(或之前查座標失敗的)在背景補座標 */
+async function geoFillMissing(){
+  var miss=S.cards.filter(function(c){return String(c["地址"]||"").trim() && (c["緯度"]==null||c["緯度"]==="");});
+  if(!miss.length || S.geoBusy) return;
+  S.geoBusy=true;
+  try{
+    for(var i=0;i<8;i++){
+      var r=await post({action:"geofill", max:30}); if(!r.ok) break;
+      r.cards.forEach(function(u){ var c=S.cards.find(function(x){return x.ID===u.ID;}); if(c){ c["緯度"]=u["緯度"]; c["經度"]=u["經度"]; } });
+      renderMap(i===0);
+      if(!r.left || !r.done) break;
+    }
+  }catch(e){}
+  S.geoBusy=false;
+}
+
+/* ===== 事件 ===== */
+$("btnLogin").onclick=login;
+$("code").addEventListener("keydown",function(e){if(e.key==="Enter")login();});
+$("btnLogout").onclick=logout;
+$("btnReload").onclick=loadList;
+$("q").addEventListener("input",renderList);
+$("btnScan").onclick=function(){$("file").click();};
+$("btnRescan").onclick=function(){$("file").click();};
+$("file").addEventListener("change",onFile);
+$("btnBack").onclick=backFromEdit;
+$("dupBar").addEventListener("click",onDupBar);
+$("btnBatch").onclick=openBatch;
+$("btnBatchBack").onclick=function(){ $("vBatch").classList.add("hide"); };
+$("btnShot").onclick=function(){ $("fileCam").click(); };
+$("btnPick").onclick=function(){ $("fileMulti").click(); };
+["fileCam","fileMulti"].forEach(function(id){ $(id).addEventListener("change",function(e){ qAdd(e.target.files); e.target.value=""; }); });
+$("qList").addEventListener("click",function(e){ var it=e.target.closest("[data-qid]"); if(it) openQItem(+it.dataset.qid); });
+$("btnSaveAll").onclick=saveAll;
+$("btnClearQ").onclick=clearQ;
+$("btnMergeBack").onclick=function(){ $("vMerge").classList.add("hide"); S.m=null; };
+$("btnMergeOk").onclick=doMerge;
+function closeMenu(){ $("menu").classList.add("hide"); }
+$("btnMenu").onclick=function(e){
+  e.stopPropagation(); var m=$("menu");
+  m.style.top=(document.querySelector("#vMain header").getBoundingClientRect().bottom+4)+"px";
+  m.classList.toggle("hide");
+};
+document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
+["btnExport","btnDups","btnReload","btnLogout"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+$("chips").addEventListener("click",function(e){ var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList(); });
+$("fCity").addEventListener("change",function(){ S.fcity=this.value; renderList(); });
+$("form").addEventListener("click",function(e){ if(e.target.closest("#tagpick")) onTagPick(e); });
+$("form").addEventListener("input",function(e){
+  var k=e.target.dataset && e.target.dataset.k;
+  if(k==="標籤") renderTagPick();
+  if(k==="地址"){ var c=cityOf(e.target.value); if(c) $("form").querySelector('[data-k="縣市"]').value=c; }   // 改地址時縣市跟著變
+});
+$("btnMap").onclick=openMap;
+$("btnMapBack").onclick=function(){ $("vMap").classList.add("hide"); };
+$("btnLocate").onclick=function(){ if(MAP) locate(); };
+$("map").addEventListener("click",function(e){
+  var a=e.target.closest("[data-open]"); if(!a) return; e.preventDefault();
+  var c=S.cards.find(function(x){return x.ID===a.dataset.open;}); if(c) openEdit(c,{method:c["辨識方式"]});
+});
+$("nearList").addEventListener("click",function(e){
+  if(e.target.closest("a")) return;
+  var it=e.target.closest(".item"); if(!it) return;
+  var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
+});
+$("btnExport").onclick=openExport;
+$("btnExportBack").onclick=function(){ $("vExport").classList.add("hide"); };
+$("btnXlsx").onclick=exportXlsx;
+$("btnVcf").onclick=exportVcf;
+$("btnContact").onclick=addContact;
+$("btnDups").onclick=function(){ $("vDups").classList.remove("hide"); renderDups(); };
+$("btnDupsBack").onclick=function(){ $("vDups").classList.add("hide"); };
+$("dupList").addEventListener("click",function(e){
+  var it=e.target.closest("[data-i]"); if(!it) return;
+  var p=S.pairs[+it.dataset.i]; openMerge(p.a, {fields:p.b, card:p.b}, "two");
+});
+window.addEventListener("beforeunload",function(e){ if(S.q.length){ e.preventDefault(); e.returnValue=""; } });
+$("btnSave").onclick=save;
+$("btnDel").onclick=del;
+$("list").addEventListener("click",function(e){
+  var it=e.target.closest(".item"); if(!it) return;
+  var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
+});
+$("form").addEventListener("click",function(e){
+  var a=e.target.closest("a[data-act]"); if(!a) return; e.preventDefault();
+  var f=formData();
+  if(a.dataset.act==="tel"){ var n=(f[a.dataset.k]||"").split("/")[0].replace(/#.*/,"").replace(/[^\d+]/g,""); if(n) location.href="tel:"+n; }
+  if(a.dataset.act==="nav"&&f["地址"]) window.open(navUrl(f["地址"]),"_blank");
+  if(a.dataset.act==="mail"&&f.Email) location.href="mailto:"+f.Email.split("/")[0].trim();
+});
+
+/* ===== 啟動 ===== */
+$("gasUrl").value=gasUrl();
+if(S.code && gasUrl()) enter(); else show("vLogin");
+</script>
+</body>
+</html>
