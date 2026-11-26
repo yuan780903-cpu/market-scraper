@@ -131,6 +131,11 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .pop .pa a{flex:1;text-align:center;border:1px solid var(--pri);border-radius:8px;padding:5px 0;text-decoration:none;color:var(--pri);font-weight:600}
 .dist{flex:none;text-align:right;font-size:13px;color:var(--pri);font-weight:700}
 .dist a{display:block;font-size:20px;text-decoration:none;margin-top:2px}
+.sides{display:flex;gap:6px;margin-bottom:8px}
+.sides button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px;font-size:14px;font-weight:600;color:var(--sub)}
+.sides button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.dual{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.dual input{width:20px;height:20px;flex:none}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
 </style>
 </head>
@@ -176,6 +181,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
   <input id="file" type="file" accept="image/*" capture="environment" class="hide">
   <input id="fileCam" type="file" accept="image/*" capture="environment" class="hide">
   <input id="fileMulti" type="file" accept="image/*" multiple class="hide">
+  <input id="fileBack" type="file" accept="image/*" capture="environment" class="hide">
 </div>
 
 <!-- 編輯 / 詳情 -->
@@ -188,6 +194,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
   <div class="wrap">
     <div class="duo"><button class="btn" id="btnShot">📷 拍下一張</button><button class="btn sec" id="btnPick">🖼 相簿多選</button></div>
     <input id="qTag" class="inp" style="margin-top:10px;font-size:15px" placeholder="🏷 這批共同標籤(選填,例:2026農機展)">
+    <label class="dual"><input type="checkbox" id="qDual"> 🔁 雙面模式:拍完正面接著拍背面,自動配成同一張</label>
     <div id="qStat" class="stat" style="margin-top:12px"></div>
     <div id="qList" class="list"></div>
     <div class="acts">
@@ -261,6 +268,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
     <h1 id="editTitle">新名片</h1>
   </header>
   <div class="wrap">
+    <div id="sides" class="sides hide"><button type="button" data-side="f" class="on">正面</button><button type="button" data-side="b">背面</button></div>
     <img id="photo" class="photo hide" alt="名片照片">
     <div id="scanning" class="loading hide"><div class="spin"></div><div>辨識中,約 3–10 秒…</div></div>
     <div id="editBody" class="hide">
@@ -270,6 +278,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
       <div class="form" id="form"></div>
       <div class="acts">
         <button class="btn" id="btnSave">💾 儲存到雲端</button>
+        <button class="btn sec" id="btnAddBack">📷 加拍背面</button>
         <button class="btn sec" id="btnContact">👤 加入手機通訊錄</button>
         <button class="btn sec hide" id="btnRescan">📷 換一張重拍</button>
         <a class="btn sec hide" id="btnPhoto" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🖼 查看原始照片(Drive)</a>
@@ -297,7 +306,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.2", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.3", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -491,10 +500,13 @@ function renderList(){
 function openEdit(card, opts){
   opts=opts||{};
   S.cur={ id: card&&card.ID||"", image: opts.image||"", thumb: opts.thumb||"", method: opts.method||"", raw: opts.raw||"",
-           qid: opts.qid||0, dup: opts.dup||null };
+           qid: opts.qid||0, dup: opts.dup||null,
+           backImage: opts.backImage||"", backThumb: opts.backThumb||"",
+           frontSrc: opts.preview || (card&&card["縮圖"]) || "", backSrc: opts.backPreview || (card&&card["背面縮圖"]) || "" };
   $("editTitle").textContent = card&&card.ID ? (card["姓名"]||"名片") : "新名片";
   var src = opts.preview || (card&&card["縮圖"]) || "";
   $("photo").src=src; $("photo").classList.toggle("hide",!src);
+  renderSides("f");
   $("form").innerHTML = FIELDS.map(function(f){
     var k=f[0], v=esc(card&&card[k]||""), link="";
     if(k==="手機"||k==="電話") link='<a data-act="tel" data-k="'+k+'" href="#">📞</a>';
@@ -551,7 +563,8 @@ async function save(){
   var b=$("btnSave"); b.disabled=true; b.textContent="儲存中…";
   var qid=S.cur.qid; if(qid) f=withQTag(f);
   try{
-    var r=await post({action:"save", id:S.cur.id, fields:f, image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw});
+    var r=await post({action:"save", id:S.cur.id, fields:f, image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw,
+                      backImage:S.cur.backImage, backThumb:S.cur.backThumb});
     if(!r.ok) throw new Error(r.error);
     var i=S.cards.findIndex(function(c){return c.ID===r.id;});
     if(i>=0) S.cards[i]=r.card; else S.cards.unshift(r.card);
@@ -570,6 +583,40 @@ async function del(){
     S.cards=S.cards.filter(function(c){return c.ID!==S.cur.id;});
     renderList(); closeEdit(); toast("已刪除");
   }catch(e){ toast("刪除失敗:"+e.message); }
+}
+
+/* ===== 正反面 ===== */
+function renderSides(side){
+  var c=S.cur; if(!c) return;
+  c.side = (side==="b" && c.backSrc) ? "b" : "f";
+  $("sides").classList.toggle("hide",!c.backSrc);
+  $("sides").querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.side===c.side); });
+  var src = c.side==="b" ? c.backSrc : c.frontSrc;
+  if(src){ $("photo").src=src; $("photo").classList.remove("hide"); }
+  $("btnAddBack").textContent = c.backSrc ? "📷 重拍背面" : "📷 加拍背面";
+}
+async function onBackFile(ev){
+  var file=ev.target.files[0]; ev.target.value="";
+  if(!file || !S.cur) return;
+  var cur=S.cur, b=$("btnAddBack"); b.disabled=true; b.textContent="背面辨識中…";
+  try{
+    var im=await loadImg(file), big=shrink(im,1600,0.85);
+    cur.backImage=big.split(",")[1]; cur.backThumb=shrink(im,240,0.6); cur.backSrc=big;
+    renderSides("b");
+    var r=await post({action:"scan", image:cur.backImage, mime:"image/jpeg"});
+    if(!r.ok) throw new Error(r.error);
+    if(S.cur!==cur) return;   // 已離開編輯頁
+    var f=formData(), n=0;
+    MF.forEach(function(k){
+      if(k==="標籤"||k==="備註") return;
+      var el=$("form").querySelector('input[data-k="'+k+'"]');
+      if(el && !el.value.trim() && String(r.fields[k]||"").trim()){ el.value=r.fields[k]; n++; }
+    });
+    cur.raw=(cur.raw?cur.raw+"\n\n":"")+"【背面】\n"+(r.raw||"");
+    $("raw").textContent=cur.raw; $("rawBox").classList.remove("hide");
+    toast(n ? ("✅ 背面已辨識,補上 "+n+" 個空欄位") : "✅ 背面已加入(正面資料都齊了,沒有覆蓋)");
+  }catch(e){ toast("背面辨識失敗,照片仍會一起存:"+e.message); }
+  b.disabled=false; renderSides(S.cur===cur ? cur.side : "f");
 }
 
 /* ===== ② 重複偵測 ===== */
@@ -618,7 +665,8 @@ function onDupBar(e){
     if(it) qRemove(qid);
     closeEdit(); toast("已略過這張");
   }else if(act==="merge"){
-    openMerge(S.cur.dup.card, {fields:formData(), image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw, qid:qid}, "new");
+    openMerge(S.cur.dup.card, {fields:formData(), image:S.cur.image, thumb:S.cur.thumb, method:S.cur.method, raw:S.cur.raw, qid:qid,
+                               backImage:S.cur.backImage, backThumb:S.cur.backThumb}, "new");
   }
 }
 
@@ -627,7 +675,14 @@ S.q=[]; var qSeq=0, qRunning=0, Q_MAX=2;
 function qGet(qid){ return qid ? S.q.find(function(x){return x.qid===qid;}) : null; }
 function qRemove(qid){ S.q=S.q.filter(function(x){return x.qid!==qid;}); renderQ(); }
 function qAdd(files){
-  Array.prototype.forEach.call(files||[], function(f){ S.q.push({qid:++qSeq, file:f, st:"wait", fields:null}); });
+  var dual=$("qDual").checked;
+  Array.prototype.forEach.call(files||[], function(f){
+    var last=S.q[S.q.length-1];
+    if(dual && last && last.wantBack){   // 雙面模式:這張是上一張的背面
+      last.wantBack=false; last.backFile=f;
+      if(last.st!=="wait" && last.st!=="scan") qBackLate(last);
+    }else S.q.push({qid:++qSeq, file:f, st:"wait", fields:null, wantBack:dual});
+  });
   renderQ(); qPump();
 }
 function qPump(){
@@ -646,10 +701,31 @@ async function qScan(it){
     var r=await post({action:"scan", image:it.big.split(",")[1], mime:"image/jpeg"});
     if(!r.ok) throw new Error(r.error);
     it.fields=r.fields; it.method=r.method; it.raw=r.raw; it.warn=r.warn;
-    if(!it.fields["姓名"] && !it.fields["公司"]) throw new Error("沒辨識到姓名或公司");
-    it.dup=findDup(it.fields)||qDupInBatch(it);
-    it.st=it.dup?"dup":"ok";
-  }catch(e){ it.st="err"; it.err=e.message; it.fields=it.fields||{}; }
+  }catch(e){ it.err=e.message; it.fields=it.fields||{}; }
+  if(it.backFile) await qScanBack(it);   // 雙面:正面辨識完接著辨識背面
+  qFinish(it);
+}
+/** 背面辨識:只補正面空著的欄位 */
+async function qScanBack(it){
+  try{
+    var im=await loadImg(it.backFile); it.backFile=null;
+    it.backBig=shrink(im,1600,0.85); it.backThumb=shrink(im,240,0.6);
+    renderQ();
+    var r=await post({action:"scan", image:it.backBig.split(",")[1], mime:"image/jpeg"});
+    if(!r.ok) throw new Error(r.error);
+    it.backN=fillBlankObj(it.fields, r.fields);
+    it.raw=(it.raw?it.raw+"\n\n":"")+"【背面】\n"+(r.raw||"");
+  }catch(e){ it.backFile=null; it.backErr=e.message; }
+}
+function qFinish(it){
+  if(!it.fields["姓名"] && !it.fields["公司"]){ it.st="err"; it.err=it.err||"沒辨識到姓名或公司"; return; }
+  it.err=""; it.dup=findDup(it.fields)||qDupInBatch(it); it.st=it.dup?"dup":"ok";
+}
+async function qBackLate(it){ it.st="scan"; renderQ(); await qScanBack(it); qFinish(it); renderQ(); }
+function fillBlankObj(dst, src){
+  var n=0;
+  MF.forEach(function(k){ if(k==="標籤"||k==="備註") return; if(!String(dst[k]||"").trim() && String(src[k]||"").trim()){ dst[k]=src[k]; n++; } });
+  return n;
 }
 /** 同一批裡重複拍到同一張 */
 function qDupInBatch(it){
@@ -667,6 +743,7 @@ function renderQ(){
   $("qStat").textContent = S.q.length
     ? ("共 "+S.q.length+" 張|辨識中 "+(n.wait+n.scan)+"|可儲存 "+n.ok+"|待你決定 "+n.dup+"|失敗 "+n.err)
     : "一直按「📷 拍下一張」連續拍,辨識會在背景同時進行;拍完再一次儲存。";
+  if($("qDual").checked) $("qStat").textContent+="|🔁 雙面模式:依序拍 正面→背面→正面→背面…;沒有背面的名片先關掉開關再拍";
   var ST={wait:"⏳ 排隊中",scan:"🔄 辨識中…",ok:"✅ 可儲存",err:"❌ 辨識失敗,點開手動填",saving:"💾 儲存中…"};
   $("qList").innerHTML = S.q.map(function(x){
     var f=x.fields||{};
@@ -675,6 +752,8 @@ function renderQ(){
                                         : ("⚠️ 這批重複拍到("+x.dup.reason+")")) : ST[x.st];
     if(x.st==="err" && x.err) st+="("+x.err+")";
     if(x.st==="ok" && x.saveErr) st="⚠️ 上次儲存失敗,可再按全部儲存";
+    if(x.backBig) st+=" · 含背面"; else if(x.wantBack) st+=" · 👉 下一張拍背面";
+    if(x.backErr) st+="(背面辨識失敗,照片仍會存)";
     var nm = f["姓名"] || ((x.st==="wait"||x.st==="scan") ? "…" : "(沒有姓名)");
     return '<div class="item" data-qid="'+x.qid+'">'+th+'<div class="t">'+
       '<div class="n">'+esc(nm)+'<small>'+esc(f["職稱"]||"")+'</small></div>'+
@@ -693,6 +772,7 @@ function openQItem(qid){
   if(it.st==="dup" && !it.dup) it.st="ok";
   if(it.st==="wait"||it.st==="scan"||it.st==="saving"){ toast("這張還在處理中,稍等一下"); return; }
   openEdit(withQTag(Object.assign({},it.fields)), {image:it.big.split(",")[1], thumb:it.thumb, preview:it.big, method:it.method, raw:it.raw,
+    backImage: it.backBig ? it.backBig.split(",")[1] : "", backThumb: it.backThumb||"", backPreview: it.backBig||"",
     warn: it.st==="err" ? ("辨識失敗,可手動填寫後儲存。("+it.err+")") : it.warn, dup:it.dup, qid:qid});
 }
 /** 從佇列開的編輯頁按返回:把手動改的內容存回佇列 */
@@ -700,6 +780,7 @@ function backFromEdit(){
   var it=S.cur&&qGet(S.cur.qid);
   if(it){
     it.fields=formData();
+    if(S.cur.backImage){ it.backBig="data:image/jpeg;base64,"+S.cur.backImage; it.backThumb=S.cur.backThumb; it.raw=S.cur.raw; it.wantBack=false; }
     if(it.st==="err" && (it.fields["姓名"]||it.fields["公司"])){ it.dup=findDup(it.fields)||null; it.st=it.dup?"dup":"ok"; }
     renderQ();
   }
@@ -712,7 +793,8 @@ async function saveAll(){
   for(var i=0;i<items.length;i++){   // 依序存(後端有鎖,並行也不會比較快)
     var it=items[i]; it.st="saving"; renderQ();
     try{
-      var r=await post({action:"save", fields:withQTag(it.fields), image:it.big.split(",")[1], thumb:it.thumb, method:it.method, raw:it.raw});
+      var r=await post({action:"save", fields:withQTag(it.fields), image:it.big.split(",")[1], thumb:it.thumb, method:it.method, raw:it.raw,
+                        backImage: it.backBig ? it.backBig.split(",")[1] : "", backThumb: it.backThumb||""});
       if(!r.ok) throw new Error(r.error);
       S.cards.unshift(r.card); S.q=S.q.filter(function(x){return x!==it;}); done++;
     }catch(e){ it.st="ok"; it.saveErr=e.message; fail++; }
@@ -782,7 +864,8 @@ async function doMerge(){
   var useB = ph ? ph.value==="b" : (!a["縮圖"] && !!pb);
   if(m.other.qid) f=withQTag(f);
   var body={action:"merge", keepId:a.ID, fields:f};
-  if(m.mode==="new"){ if(useB && m.other.image){ body.image=m.other.image; body.thumb=m.other.thumb; body.method=m.other.method; body.raw=m.other.raw; } }
+  if(m.mode==="new"){ if(useB && m.other.image){ body.image=m.other.image; body.thumb=m.other.thumb; body.method=m.other.method; body.raw=m.other.raw;
+                                                  body.backImage=m.other.backImage||""; body.backThumb=m.other.backThumb||""; } }
   else { body.dropId=m.other.card.ID; body.useDropPhoto=useB; }
   $("btnMergeOk").disabled=true; $("btnMergeOk").textContent="合併中…";
   try{
@@ -854,8 +937,8 @@ function exportCards(){
 }
 
 /* Excel:用 SheetJS(第一次按才載入) */
-var XCOLS=["姓名","公司","職稱","部門","手機","電話","傳真","Email","地址","縣市","網站","統編","LINE","標籤","備註","建立時間","更新時間","照片連結"];
-var XW   =[10,   26,   12,   12,   14,   20,   14,   28,     34,   8,     24,   10,   12,   14,   24,   17,      17,      30];
+var XCOLS=["姓名","公司","職稱","部門","手機","電話","傳真","Email","地址","縣市","網站","統編","LINE","標籤","備註","建立時間","更新時間","照片連結","背面照片連結"];
+var XW   =[10,   26,   12,   12,   14,   20,   14,   28,     34,   8,     24,   10,   12,   14,   24,   17,      17,      30,       30];
 function loadXLSX(){
   if(window.XLSX) return Promise.resolve();
   return new Promise(function(res,rej){
@@ -1070,6 +1153,10 @@ $("btnReload").onclick=loadList;
 $("q").addEventListener("input",renderList);
 $("btnScan").onclick=function(){$("file").click();};
 $("btnRescan").onclick=function(){$("file").click();};
+$("btnAddBack").onclick=function(){$("fileBack").click();};
+$("fileBack").addEventListener("change",onBackFile);
+$("sides").addEventListener("click",function(e){ var b=e.target.closest("[data-side]"); if(b) renderSides(b.dataset.side); });
+$("qDual").addEventListener("change",function(){ if(!this.checked) S.q.forEach(function(x){x.wantBack=false;}); renderQ(); });
 $("file").addEventListener("change",onFile);
 $("btnBack").onclick=backFromEdit;
 $("dupBar").addEventListener("click",onDupBar);
