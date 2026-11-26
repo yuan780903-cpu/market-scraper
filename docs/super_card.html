@@ -136,6 +136,19 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .sides button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 .dual{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .dual input{width:20px;height:20px;flex:none}
+/* 看大圖 */
+.photo{cursor:zoom-in}
+.viewer{position:fixed;inset:0;z-index:18;background:#0b0f0e;display:flex;flex-direction:column;color:#fff}
+.vbar{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px}
+.vbar.bottom{padding:10px 12px calc(env(safe-area-inset-bottom) + 12px);justify-content:space-between}
+.vbar .ic{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;padding:8px 12px;font-size:15px;text-decoration:none}
+.vbar .sides{margin:0;flex:none}
+.vbar .sides button{flex:none;padding:7px 16px;white-space:nowrap}
+.vbar .sides button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#cfd8d5}
+.vbar .sides button.on{background:#fff;color:var(--pri)}
+.vmsg{font-size:13px;color:#9fb3ad;flex:1;text-align:right}
+.vbox{flex:1;overflow:auto;display:flex;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+.vbox img{margin:auto;flex:none;width:100%;max-width:none;display:block;user-select:none;-webkit-user-select:none}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
 </style>
 </head>
@@ -281,7 +294,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
         <button class="btn sec" id="btnAddBack">📷 加拍背面</button>
         <button class="btn sec" id="btnContact">👤 加入手機通訊錄</button>
         <button class="btn sec hide" id="btnRescan">📷 換一張重拍</button>
-        <a class="btn sec hide" id="btnPhoto" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🖼 查看原始照片(Drive)</a>
+        <button class="btn sec hide" id="btnPhoto">🔍 看大圖</button>
         <button class="btn danger hide" id="btnDel">刪除這張名片</button>
       </div>
       <details id="rawBox" class="hide"><summary>辨識原始文字</summary><pre id="raw"></pre></details>
@@ -302,11 +315,25 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
   </div>
 </div>
 
+<!-- 看大圖 -->
+<div id="vPhoto" class="viewer hide">
+  <div class="vbar">
+    <button class="ic" id="btnViewClose">✕ 關閉</button>
+    <div id="vSides" class="sides hide"><button type="button" data-vs="f">正面</button><button type="button" data-vs="b">背面</button></div>
+    <span id="vMsg" class="vmsg"></span>
+  </div>
+  <div id="vBox" class="vbox"><img id="vImg" alt="名片大圖"></div>
+  <div class="vbar bottom">
+    <span class="vmsg" style="text-align:left">雙擊放大・兩指縮放・拖曳移動</span>
+    <button class="ic" id="btnViewShare">📤 分享</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.3", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.4", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -527,8 +554,7 @@ function openEdit(card, opts){
   $("btnRescan").classList.toggle("hide",!isNew||!!S.cur.qid);
   renderDupBar();
   $("btnDel").classList.toggle("hide",isNew);
-  $("btnPhoto").classList.toggle("hide",!(card&&card["照片連結"]));
-  if(card&&card["照片連結"]) $("btnPhoto").href=card["照片連結"];
+  $("btnPhoto").classList.toggle("hide",!S.cur.frontSrc);
   $("rawBox").classList.toggle("hide",!S.cur.raw); $("raw").textContent=S.cur.raw;
   $("scanning").classList.add("hide"); $("editBody").classList.remove("hide");
   $("vEdit").classList.remove("hide"); $("vEdit").scrollTop=0;
@@ -618,6 +644,68 @@ async function onBackFile(ev){
   }catch(e){ toast("背面辨識失敗,照片仍會一起存:"+e.message); }
   b.disabled=false; renderSides(S.cur===cur ? cur.side : "f");
 }
+
+/* ===== 看大圖 ===== */
+var BIG={}, BIG_KEYS=[];   // 大圖暫存(最多 12 張,只在記憶體)
+function bigPut(k,v){ if(!BIG[k]){ BIG_KEYS.push(k); if(BIG_KEYS.length>12) delete BIG[BIG_KEYS.shift()]; } BIG[k]=v; }
+function setZoom(z, cx, cy){
+  var box=$("vBox"), img=$("vImg"), old=S.vz||1;
+  z=Math.max(1,Math.min(5,z)); S.vz=z;
+  // 以手指/點擊位置為中心縮放
+  var rx=(box.scrollLeft+(cx==null?box.clientWidth/2:cx))/(img.offsetWidth||1), ry=(box.scrollTop+(cy==null?box.clientHeight/2:cy))/(img.offsetHeight||1);
+  img.style.width=(z*100)+"%";
+  box.scrollLeft=rx*img.offsetWidth-(cx==null?box.clientWidth/2:cx);
+  box.scrollTop=ry*img.offsetHeight-(cy==null?box.clientHeight/2:cy);
+}
+async function openViewer(side){
+  var c=S.cur; if(!c) return;
+  side = (side==="b" && c.backSrc) ? "b" : "f";
+  S.vSide=side; $("vPhoto").classList.remove("hide");
+  $("vSides").classList.toggle("hide",!c.backSrc);
+  $("vSides").querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.vs===side); });
+  var local = side==="b" ? (c.backImage ? c.backSrc : "") : (c.image ? c.frontSrc : "");   // 剛拍的:手機上已有大圖
+  var key=c.id+"|"+side, img=$("vImg");
+  img.src = local || BIG[key] || (side==="b" ? c.backSrc : c.frontSrc);   // 先秀小圖
+  S.vz=1; img.style.width="100%";
+  if(local || BIG[key] || !c.id){ $("vMsg").textContent=""; return; }
+  $("vMsg").textContent="載入高解析中…";
+  try{
+    var r=await post({action:"photo", id:c.id, side:side});
+    if(!r.ok) throw new Error(r.error);
+    var url="data:"+r.mime+";base64,"+r.data; bigPut(key,url);
+    if(S.vSide===side && S.cur===c && !$("vPhoto").classList.contains("hide")){ img.src=url; $("vMsg").textContent=""; }
+  }catch(e){ $("vMsg").textContent="大圖載入失敗,先顯示小圖"; }
+}
+function closeViewer(){ $("vPhoto").classList.add("hide"); $("vImg").removeAttribute("src"); }
+async function shareViewer(){
+  var src=$("vImg").src; if(!src) return;
+  var c=S.cur||{}, name=(formData()["姓名"]||formData()["公司"]||"名片")+(S.vSide==="b"?"_背面":"")+".jpg";
+  try{
+    var blob=await (await fetch(src)).blob(), file=new File([blob],name,{type:blob.type||"image/jpeg"});
+    if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file], title:name});
+    else download(file,name);
+  }catch(e){ if(e.name!=="AbortError") toast("分享失敗:"+e.message); }
+}
+(function(){   // 雙擊放大、兩指縮放
+  var box=$("vBox"), lastTap=0, pin=null;
+  box.addEventListener("dblclick",function(e){ var r=box.getBoundingClientRect(); setZoom((S.vz||1)>1?1:2.5, e.clientX-r.left, e.clientY-r.top); });
+  box.addEventListener("touchend",function(e){
+    if(e.touches.length) return;
+    var now=Date.now(), t=e.changedTouches[0];
+    if(now-lastTap<300 && !pin){ var r=box.getBoundingClientRect(); setZoom((S.vz||1)>1?1:2.5, t.clientX-r.left, t.clientY-r.top); e.preventDefault(); lastTap=0; }
+    else lastTap=now;
+    pin=null;
+  });
+  function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+  box.addEventListener("touchstart",function(e){ if(e.touches.length===2){ pin={d:dist(e.touches), z:S.vz||1}; } },{passive:true});
+  box.addEventListener("touchmove",function(e){
+    if(e.touches.length===2 && pin){
+      e.preventDefault();
+      var r=box.getBoundingClientRect(), cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left, cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+      setZoom(pin.z*dist(e.touches)/pin.d, cx, cy);
+    }
+  },{passive:false});
+})();
 
 /* ===== ② 重複偵測 ===== */
 function phoneKeys(s){ return String(s||"").split(/[\/、,;]/).map(function(x){return x.replace(/#.*/,"").replace(/\D/g,"").replace(/^886/,"0");}).filter(function(x){return x.length>=8;}); }
@@ -1154,6 +1242,11 @@ $("q").addEventListener("input",renderList);
 $("btnScan").onclick=function(){$("file").click();};
 $("btnRescan").onclick=function(){$("file").click();};
 $("btnAddBack").onclick=function(){$("fileBack").click();};
+$("photo").addEventListener("click",function(){ openViewer(S.cur&&S.cur.side); });
+$("btnPhoto").onclick=function(){ openViewer(S.cur&&S.cur.side); };
+$("btnViewClose").onclick=closeViewer;
+$("btnViewShare").onclick=shareViewer;
+$("vSides").addEventListener("click",function(e){ var b=e.target.closest("[data-vs]"); if(b) openViewer(b.dataset.vs); });
 $("fileBack").addEventListener("change",onBackFile);
 $("sides").addEventListener("click",function(e){ var b=e.target.closest("[data-side]"); if(b) renderSides(b.dataset.side); });
 $("qDual").addEventListener("change",function(){ if(!this.checked) S.q.forEach(function(x){x.wantBack=false;}); renderQ(); });
