@@ -261,6 +261,8 @@ header .ic svg{color:var(--acc2)}
 .mrowi .mh{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--ink);word-break:break-all}
 .mrowi .mh small{display:block;font-weight:400;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mrowi select{flex:none;width:118px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;letter-spacing:0;color:var(--acc2);margin-left:6px;vertical-align:middle;max-width:96px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini.pri{color:#fff}
 /* ===== 群組管理 ===== */
 .gadd{display:flex;gap:8px}
 .gadd .inp{flex:1}
@@ -307,6 +309,8 @@ header .ic svg{color:var(--acc2)}
   <div style="height:10px"></div>
   <button id="btnLogin" class="btn" data-ic="check">進入</button>
   <div id="loginMsg" class="msg"></div>
+  <div id="loginBook" class="stat" style="margin-top:10px;color:var(--acc);font-weight:600"></div>
+  <button class="btn sec" id="btnLoginBooks" data-ic="stack" style="margin-top:14px">名片簿 / 新使用者建立自己的資料庫</button>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
   <details><summary>後端網址設定</summary>
     <input id="gasUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="https://script.google.com/macros/s/.../exec">
@@ -325,6 +329,7 @@ header .ic svg{color:var(--acc2)}
     <button id="btnDups" data-ic="copy">找重複名片</button>
     <button id="btnReload" data-ic="refresh">重新整理</button>
     <button id="btnLogout" data-ic="logout">登出</button>
+    <button id="btnBooks" data-ic="stack">名片簿</button>
     <button id="btnTheme" data-ic="palette">風格模板</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
@@ -445,6 +450,36 @@ header .ic svg{color:var(--acc2)}
       <button class="btn" id="btnImpGo" data-ic="check">開始匯入</button>
       <div class="ioprog hide" id="impProg"><div class="bar"><b></b></div><span></span></div>
     </div>
+  </div>
+</div>
+
+<!-- 名片簿(多使用者) -->
+<div id="vBooks" class="sheet hide" style="z-index:15">
+  <header>
+    <button class="ic" id="btnBooksBack" data-ic="back">返回</button>
+    <h1>名片簿</h1>
+  </header>
+  <div class="wrap">
+    <div class="stat" style="line-height:1.6">每本名片簿各自存在一個人的 Google 雲端。這裡切換、加入或移除(移除只是從這支手機拿掉,雲端資料不會刪)。</div>
+    <div id="bkList" class="form" style="padding:2px 14px"></div>
+    <div class="exp">
+      <h3>＋ 加入名片簿</h3>
+      <input id="bkName" class="inp" placeholder="名稱(例:我的、公司共用、曾思博)" maxlength="20">
+      <input id="bkUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="後端網址 https://script.google.com/macros/s/…/exec">
+      <input id="bkCode" class="inp" style="margin-top:8px" placeholder="存取碼" inputmode="text">
+      <button class="btn" id="btnBkAdd" style="margin-top:10px" data-ic="check">加入這本名片簿</button>
+    </div>
+    <details class="exp" id="bkGuide">
+      <summary style="font-weight:700;font-size:16px;cursor:pointer">🆕 新使用者:建立自己的名片資料庫(約 5 分鐘)</summary>
+      <ol style="padding-left:20px;line-height:1.8;font-size:14px;color:var(--ink)">
+        <li>用電腦或手機登入<b>你自己的 Google 帳號</b>,按下面按鈕 →「建立副本」,資料庫就會存到你自己的雲端硬碟(可以改名、搬到任何資料夾)。</li>
+        <li>打開剛複製的試算表,上方選單「<b>超級名片 → ① 初始化</b>」,照畫面授權。會顯示你的<b>存取碼</b>。</li>
+        <li>選單「擴充功能 → Apps Script」→ 右上「<b>部署 → 新增部署作業</b>」→ 類型選「網頁應用程式」→ 執行身分「我」、誰可以存取「<b>所有人</b>」→ 部署。</li>
+        <li>回到試算表,選單「<b>超級名片 → ② 顯示連線資訊</b>」→ 用手機點「加入超級名片」連結,輸入存取碼就完成。</li>
+      </ol>
+      <a class="btn" id="btnTplCopy" data-ic="copy" target="_blank" rel="noopener" style="text-decoration:none">複製名片資料庫範本到我的雲端</a>
+      <p style="font-size:13px;color:var(--sub);margin-top:8px">名片和照片都只存在你自己的 Google 雲端,其他人看不到;全部免費。</p>
+    </details>
   </div>
 </div>
 
@@ -596,7 +631,7 @@ header .ic svg{color:var(--acc2)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.12", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.13", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -711,6 +746,7 @@ async function login(){
     var r=await post({action:"ping"});
     if(!r.ok) throw new Error(r.error);
     ls("sc_code",code); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl); S.backVer=r.ver||"";
+    if(!books().length) initBooks(); updateCurBook({url:gasUrl(), code:code});
     enter();
   }catch(e){ $("loginMsg").textContent=e.message; S.code=""; }
   $("btnLogin").disabled=false;
@@ -740,7 +776,7 @@ function showVer(){
 function logout(){
   if(S.q.length && !confirm("批量佇列還有 "+S.q.length+" 張沒存,登出會一併清除。確定登出?")) return;
   S.q=[]; qSaveNow(); renderQ();
-  ls("sc_code",null); S.code=""; $("code").value=""; S.cards=[]; S.syncAt=""; cacheClear(); show("vLogin"); }
+  ls("sc_code",null); S.code=""; $("code").value=""; S.cards=[]; S.syncAt=""; cacheClear(); updateCurBook({code:""}); show("vLogin"); }
 
 /* ===== 列表 ===== */
 /* ===== ① 手機快取(IndexedDB)+ 增量同步 ===== */
@@ -776,7 +812,7 @@ function cacheSave(){   // 連續變動時合併成一次寫入
     idbDo("readwrite",function(st){ return st.put({v:CACHE_VER, cards:S.cards, groups:S.groups||[], syncAt:S.syncAt||"", fullAt:S.fullAt||0, savedAt:Date.now()}, cacheKey()); });
   },400);
 }
-function cacheClear(){ idbDo("readwrite",function(st){return st.clear();}); }
+function cacheClear(){ var k=cacheKey(), q=qKey(); idbDo("readwrite",function(st){return st.delete(k);}); idbDo("readwrite",function(st){return st.delete(q);}); }   // 只清目前這本名片簿
 function hhmm(){ var d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 
 /** 跟雲端同步。force=true 或超過一天沒完整同步 → 完整重抓;否則只抓有變動的 */
@@ -842,7 +878,7 @@ function renderFilters(){
 function renderList(){
   renderFilters();
   var arr=filtered(), fd=filterDesc();
-  $("stat").textContent = (fd ? (fd+":"+arr.length+" 張 / 共 "+S.cards.length+" 張") : ("共 "+S.cards.length+" 張名片"))+(S.syncMsg?" · "+S.syncMsg:"");
+  $("stat").textContent = (S.bookLabel?"📒 "+S.bookLabel+" · ":"")+(fd ? (fd+":"+arr.length+" 張 / 共 "+S.cards.length+" 張") : ("共 "+S.cards.length+" 張名片"))+(S.syncMsg?" · "+S.syncMsg:"");
   if(S.cards.length || S.syncAt) cacheSave();
   if(MAP && !$("vMap").classList.contains("hide")) renderMap(false);
   if(!S.cards.length){ $("list").innerHTML='<div class="empty">還沒有名片<br>按右下角「📷 掃名片」開始</div>'; return; }
@@ -1675,6 +1711,102 @@ async function runImport(){
   b.disabled=false; setTimeout(function(){ ioProg("impProg",null); },2000);
 }
 
+/* ===== 名片簿(多使用者:每本對應一個人自己的 Google 雲端後端) ===== */
+var TEMPLATE_COPY_URL="https://docs.google.com/spreadsheets/d/1laJTy97g0zFKQrd_cF5tygxcfMgVPlm9vsVjCViKwzw/copy";
+function books(){ try{ return JSON.parse(ls("sc_books")||"[]"); }catch(e){ return []; } }
+function saveBooks(b){ ls("sc_books",JSON.stringify(b)); }
+function curBook(){ var id=ls("sc_book"), b=books(); return b.find(function(x){return x.id===id;})||b[0]||null; }
+/** 第一次:把原本單一的後端變成「我的名片簿」 */
+function initBooks(){
+  var b=books();
+  if(!b.length){ b=[{id:"b"+Date.now(), name:"我的名片簿", url:gasUrl(), code:ls("sc_code")||""}]; saveBooks(b); ls("sc_book",b[0].id); }
+  var c=curBook();
+  if(c){ ls("sc_book",c.id); ls("sc_gas",c.url); if(c.code) ls("sc_code",c.code); else ls("sc_code",null); S.code=c.code||""; }
+  renderBookName();
+}
+function updateCurBook(patch){
+  var b=books(), c=curBook(); if(!c) return;
+  var i=b.findIndex(function(x){return x.id===c.id;}); Object.assign(b[i],patch); saveBooks(b); renderBookName();
+}
+function renderBookName(){
+  var c=curBook(), many=books().length>1;
+  S.bookLabel = many&&c ? c.name : "";
+  setLabel($("btnBooks"),"名片簿"+(c?":"+c.name:""));
+  $("loginBook").textContent = c&&many ? "名片簿:"+c.name : "";
+}
+async function postTo(url,code,body){
+  body=Object.assign({},body,{code:code});
+  var r;
+  try{ r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}); }
+  catch(e){ throw new Error("連不到這個後端:可能還沒部署、還沒授權,或部署時「誰可以存取」沒選「所有人」"); }
+  var t=await r.text(); try{ return JSON.parse(t); }catch(e){ throw new Error("連不到這個後端(網址錯誤、還沒部署,或部署時「誰可以存取」不是「所有人」)"); }
+}
+function closeSheets(){ ["vEdit","vBatch","vMap","vExport","vDups","vMerge","vTheme","vGroups","vImport","vBooks"].forEach(function(id){ var e=$(id); if(e) e.classList.add("hide"); }); }
+function switchBook(id){
+  var b=books().find(function(x){return x.id===id;}); if(!b) return;
+  if(S.q.length) qSaveNow();   // 佇列跟著名片簿各自保存,切回來還在
+  ls("sc_book",b.id); ls("sc_gas",b.url); if(b.code) ls("sc_code",b.code); else ls("sc_code",null);
+  S.code=b.code||""; S.cards=[]; S.syncAt=""; S.fullAt=0; S.q=[]; S.groups=[]; S.backVer=""; S.ftag=""; S.fcity=""; S.syncMsg="";
+  ls("sc_sheet",null); $("gasUrl").value=b.url; renderQ(); closeSheets(); renderBookName();
+  if(S.code){ enter(); toast("已切換到「"+b.name+"」"); }
+  else{ show("vLogin"); $("code").value=""; $("loginMsg").textContent="請輸入「"+b.name+"」的存取碼"; }
+}
+function openBooks(prefill){
+  renderBooks();
+  $("bkName").value=(prefill&&prefill.name)||""; $("bkUrl").value=(prefill&&prefill.url)||""; $("bkCode").value="";
+  $("bkGuide").open=!!(prefill&&prefill.guide);
+  $("vBooks").classList.remove("hide"); $("vBooks").scrollTop=0;
+  if(prefill&&prefill.url) setTimeout(function(){ $("bkCode").focus(); },300);
+}
+function renderBooks(){
+  var c=curBook();
+  $("bkList").innerHTML=books().map(function(b){
+    var on=c&&c.id===b.id, u=String(b.url).replace(/^https:\/\/script\.google\.com\/macros\/s\//,"").slice(0,14)+"…";
+    return '<div class="grow"><div class="gn">'+esc(b.name)+(on?' <span class="tuse" style="--tacc:var(--acc)">'+ic("check",12)+' 使用中</span>':'')+
+      '<small style="display:block;margin:2px 0 0">'+esc(u)+(b.code?"":" · 未登入")+'</small></div>'+
+      (on?'':'<button class="mini pri" data-bsw="'+b.id+'">切換</button>')+
+      '<button class="mini" data-bren="'+b.id+'">改名</button><button class="mini" data-bdel="'+b.id+'">移除</button></div>';
+  }).join("");
+}
+async function addBook(){
+  var name=cleanName($("bkName").value)||"名片簿", url=$("bkUrl").value.trim(), code=$("bkCode").value.trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(url)){ toast("後端網址格式不對(要是 https://script.google.com/macros/s/…/exec)"); return; }
+  if(!code){ toast("請輸入這本名片簿的存取碼"); return; }
+  if(books().some(function(b){return b.url===url;})){ toast("這個後端已經在名片簿清單裡了"); return; }
+  var btn=$("btnBkAdd"); btn.disabled=true; setLabel(btn,"連線檢查中…");
+  try{
+    var r=await postTo(url,code,{action:"ping"}); if(!r.ok) throw new Error(r.error);
+    var b=books(), id="b"+Date.now(); b.push({id:id,name:name,url:url,code:code}); saveBooks(b);
+    switchBook(id); toast("✅ 已加入並切換到「"+name+"」");
+  }catch(e){ toast("加入失敗:"+e.message); }
+  btn.disabled=false; setLabel(btn,"加入這本名片簿");
+}
+function renameBook(id){
+  var b=books(), x=b.find(function(y){return y.id===id;}); if(!x) return;
+  var n=cleanName(prompt("名片簿名稱:",x.name)); if(!n) return;
+  x.name=n; saveBooks(b); renderBooks(); renderBookName();
+}
+function removeBook(id){
+  var b=books(), x=b.find(function(y){return y.id===id;}); if(!x) return;
+  if(!confirm("從這支手機移除「"+x.name+"」?\n雲端上的名片不會被刪除,之後可以用後端網址+存取碼再加回來。")) return;
+  idbDo("readwrite",function(st){ return st.delete("cards|"+x.url); }); idbDo("readwrite",function(st){ return st.delete("queue|"+x.url); });
+  b=b.filter(function(y){return y.id!==id;}); saveBooks(b);
+  var c=ls("sc_book");
+  if(c===id){ if(b.length) switchBook(b[0].id); else{ ls("sc_book",null); ls("sc_code",null); ls("sc_gas",null); S.code=""; closeSheets(); show("vLogin"); } }
+  else{ renderBooks(); renderBookName(); renderList(); }
+}
+/** 試算表「顯示連線資訊」的連結:#join=後端網址&name=名稱 */
+function checkJoinLink(){
+  var h=location.hash||""; if(h.indexOf("#join=")!==0) return false;
+  var q={}; h.slice(1).split("&").forEach(function(kv){ var i=kv.indexOf("="); if(i>0) q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  if(!q.join) return false;
+  var name=String(q.name||"").replace(/^超級名片_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
+  openBooks({url:q.join, name:name});
+  toast("輸入存取碼就能加入這本名片簿");
+  return true;
+}
+
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
 function inAppName(){
   var ua=navigator.userAgent||"";
@@ -2492,7 +2624,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -2526,6 +2658,15 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnBooks").onclick=function(){ openBooks(); };
+$("btnLoginBooks").onclick=function(){ openBooks({guide:!books().some(function(b){return b.code;})}); };
+$("btnBooksBack").onclick=function(){ $("vBooks").classList.add("hide"); };
+$("btnBkAdd").onclick=addBook;
+$("btnTplCopy").href=TEMPLATE_COPY_URL;
+$("bkList").addEventListener("click",function(e){
+  var a=e.target.closest("[data-bsw]"), r=e.target.closest("[data-bren]"), d=e.target.closest("[data-bdel]");
+  if(a) switchBook(a.dataset.bsw); if(r) renameBook(r.dataset.bren); if(d) removeBook(d.dataset.bdel);
+});
 $("btnCsv").onclick=exportCsv;
 $("btnZip").onclick=exportZip;
 $("btnImport").onclick=function(){ $("fileImport").click(); };
@@ -2575,7 +2716,9 @@ applyTheme(curTheme());
 decorateIcons();
 initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
+initBooks();
 if(S.code && gasUrl()) enter(); else show("vLogin");
+checkJoinLink();
 </script>
 </body>
 </html>
