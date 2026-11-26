@@ -758,7 +758,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.17", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.18", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1647,17 +1647,8 @@ var THEMES=[
   pri:"#1f3326", pri2:"#2d4a37", lg:"#3b5f47", acc:"#a8784a", acc2:"#cfa57a", chip:"#f1ebe2", bg:"#f5f4ef", line:"#e3e2d9", ink:"#1a241d", sub2:"#687064"}
 ];
 function curTheme(){ var id=ls("sc_theme")||"navy"; return THEMES.find(function(t){return t.id===id;})||THEMES[0]; }
-function logoSvg(t){
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'+
-    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+t.lg+'"/><stop offset="1" stop-color="'+t.pri+'"/></linearGradient></defs>'+
-    '<rect width="512" height="512" rx="112" fill="url(#g)"/>'+
-    '<g fill="none" stroke="'+t.acc2+'" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><path d="M88 168V112h56"/><path d="M368 112h56v56"/><path d="M424 344v56h-56"/><path d="M144 400H88v-56"/></g>'+
-    '<g transform="rotate(-8 256 256)"><rect x="120" y="170" width="272" height="172" rx="22" fill="#fff"/>'+
-    '<circle cx="182" cy="236" r="30" fill="'+t.pri+'"/><path d="M140 312c8-28 26-40 42-40s34 12 42 40z" fill="'+t.pri+'"/>'+
-    '<rect x="242" y="214" width="116" height="18" rx="9" fill="'+t.pri+'"/><rect x="242" y="248" width="88" height="14" rx="7" fill="'+t.acc2+'"/>'+
-    '<rect x="242" y="276" width="104" height="14" rx="7" fill="#cbd5d3"/></g>'+
-    '<path d="M402 70l14 34 34 14-34 14-14 34-14-34-34-14 34-14z" fill="'+t.acc2+'"/></svg>';
-}
+var LOGO_SVG="<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><defs><radialGradient id=\"r\" cx=\".5\" cy=\".4\" r=\".75\"><stop offset=\"0\" stop-color=\"#e8322f\"/><stop offset=\"1\" stop-color=\"#9b0f12\"/></radialGradient><linearGradient id=\"au\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff2b0\"/><stop offset=\".55\" stop-color=\"#f5b81c\"/><stop offset=\"1\" stop-color=\"#c47d0a\"/></linearGradient></defs><rect width=\"512\" height=\"512\" rx=\"112\" fill=\"url(#r)\"/><g fill=\"none\" stroke=\"#f5b81c\" stroke-width=\"5\" opacity=\".35\"><circle cx=\"256\" cy=\"256\" r=\"210\"/><circle cx=\"256\" cy=\"256\" r=\"190\"/></g><circle cx=\"256\" cy=\"214\" r=\"128\" fill=\"url(#au)\" stroke=\"#8a5300\" stroke-width=\"8\"/><circle cx=\"256\" cy=\"214\" r=\"104\" fill=\"none\" stroke=\"#8a5300\" stroke-width=\"5\"/><rect x=\"232\" y=\"190\" width=\"48\" height=\"48\" fill=\"#b01518\" stroke=\"#8a5300\" stroke-width=\"6\"/><text x=\"256\" y=\"150\" text-anchor=\"middle\" font-family=\"'PingFang TC','Heiti TC',sans-serif\" font-size=\"44\" font-weight=\"900\" fill=\"#8a5300\">招</text><text x=\"256\" y=\"300\" text-anchor=\"middle\" font-family=\"'PingFang TC','Heiti TC',sans-serif\" font-size=\"44\" font-weight=\"900\" fill=\"#8a5300\">財</text><text x=\"166\" y=\"230\" text-anchor=\"middle\" font-family=\"'PingFang TC','Heiti TC',sans-serif\" font-size=\"40\" font-weight=\"900\" fill=\"#8a5300\">業</text><text x=\"346\" y=\"230\" text-anchor=\"middle\" font-family=\"'PingFang TC','Heiti TC',sans-serif\" font-size=\"40\" font-weight=\"900\" fill=\"#8a5300\">務</text><g transform=\"rotate(-6 256 400)\"><rect x=\"140\" y=\"336\" width=\"232\" height=\"116\" rx=\"14\" fill=\"#fff8e6\" stroke=\"#8a5300\" stroke-width=\"7\"/><circle cx=\"186\" cy=\"380\" r=\"20\" fill=\"#e8322f\"/><rect x=\"220\" y=\"366\" width=\"118\" height=\"13\" rx=\"6\" fill=\"#8a5300\"/><rect x=\"220\" y=\"392\" width=\"84\" height=\"10\" rx=\"5\" fill=\"#e8322f\"/><rect x=\"220\" y=\"414\" width=\"100\" height=\"10\" rx=\"5\" fill=\"#c47d0a\"/></g><path d=\"M60 430c20-30 60-30 74 0z\" fill=\"url(#au)\" stroke=\"#8a5300\" stroke-width=\"5\"/><ellipse cx=\"97\" cy=\"420\" rx=\"16\" ry=\"10\" fill=\"#fff2b0\"/><path d=\"M378 430c20-30 60-30 74 0z\" fill=\"url(#au)\" stroke=\"#8a5300\" stroke-width=\"5\"/><ellipse cx=\"415\" cy=\"420\" rx=\"16\" ry=\"10\" fill=\"#fff2b0\"/></svg>";   // 招財風格 logo(品牌固定紅金,不隨風格模板變色)
+function logoSvg(t){ return LOGO_SVG; }
 function logoURL(t){ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSvg(t)); }
 function applyTheme(t){
   var r=document.documentElement.style;
