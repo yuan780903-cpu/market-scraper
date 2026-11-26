@@ -2516,7 +2516,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.26.1";
+const SITE_VERSION_DATE="2026.11.27.1";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* v.25.8：Mac 桌機 Safari 列印同樣自留上下邊界（頁首頁尾），沿用 iOS 的封面/封底安全高度＋滿版鋪底，避免封面尾巴溢到第 2 頁、封底後多一張空白頁 */
@@ -7965,9 +7965,33 @@ async function lcUnlock(){
   const code=inp.value.trim().replace(/\s+/g,'');
   if(!/^[0-9A-Za-z\u4e00-\u9fff]{2,24}$/.test(code)){msg.textContent='請輸入萬用碼或折扣碼。';msg.className='lcmsg err';return;}
   msg.textContent='驗證中…';msg.className='lcmsg';
+  /* v.26.2 修正：(a) 先查折扣碼（/discCheck 不計失敗次數），再驗萬用碼——舊順序讓每次輸入折扣碼都被 /redeem 記一次失敗，
+     同一 IP 10 分鐘 8 次即被鎖，之後連正確通行碼也顯示「代碼無效」；(b) 英文字母大小寫不分（手機常打成小寫）；
+     (c) 後端回 ratelimited 時明確提示稍後再試。 */
+  const codeU=code.toUpperCase();const cands=codeU!==code?[code,codeU]:[code];
+  let discReason='';
+  for(const c of cands){
+    try{
+      const r=await fetch(LC_API.replace(/\/+$/,'')+'/discCheck?code='+encodeURIComponent(c),{cache:'no-store'});
+      const j=await r.json();
+      if(j&&j.ok){
+        __disc={code:c,amount:j.amount,reuse:j.reuse,base:j.base,final:j.final};
+        updatePriceUI();
+        msg.textContent='✓ 已套用折扣碼，折抵 '+j.amount+' 元，付款只需 '+j.final+' 元。請於下方按綠界安全付款。';
+        msg.className='lcmsg ok';
+        const ec=document.getElementById('ecBtnWrap');
+        if(ec&&getComputedStyle(ec).display!=='none')ec.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+      if(j&&j.reason&&j.reason!=='invalid')discReason=j.reason;
+    }catch(e){/* 折扣碼查詢失敗 → 繼續驗萬用碼 */}
+  }
+  // 折扣碼已存在但過期／已用過 → 直接提示，不再送 /redeem（避免白白累計失敗次數）
+  if(discReason==='expired'||discReason==='used'){msg.textContent=discReason==='expired'?'✗ 此折扣碼已逾有效期限，無法使用，請向 聖源大師索取新碼。':'✗ 這組折扣碼已被使用過，無法再次使用。';msg.className='lcmsg err';return;}
   let res;
-  try{res=await lcRedeem(code);}
+  try{res=await lcRedeem(code);if(!(res&&res.ok)&&res&&res.reason==='invalid'&&codeU!==code)res=await lcRedeem(codeU);}
   catch(e){msg.textContent='✗ 無法連線驗證伺服器，請確認網路後再試一次。';msg.className='lcmsg err';return;}
+  if(res&&res.reason==='ratelimited'){msg.textContent='✗ 嘗試次數過多，系統暫時鎖定，請約 10 分鐘後再試（輸入時請留意大小寫與空格）。';msg.className='lcmsg err';return;}
   if(res&&res.ok){
     try{zwGrant(await lcKey(window.__LC.payload),'full');}catch(e){}
     msg.textContent=res.super?'✓ 超級萬用碼驗證成功，完整精析已開啟！':'✓ 解鎖成功，完整精析已開啟！';
@@ -7976,22 +8000,6 @@ async function lcUnlock(){
     const z=document.getElementById('premZone');if(z)z.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  // (2) 不是萬用碼 → 當「折扣碼」查詢：成功則套用折扣、引導往下付款
-  let discReason='';
-  try{
-    const r=await fetch(LC_API.replace(/\/+$/,'')+'/discCheck?code='+encodeURIComponent(code),{cache:'no-store'});
-    const j=await r.json();
-    if(j&&j.ok){
-      __disc={code:code,amount:j.amount,reuse:j.reuse,base:j.base,final:j.final};
-      updatePriceUI();
-      msg.textContent='✓ 已套用折扣碼，折抵 '+j.amount+' 元，付款只需 '+j.final+' 元。請於下方按綠界安全付款。';
-      msg.className='lcmsg ok';
-      const ec=document.getElementById('ecBtnWrap');
-      if(ec&&getComputedStyle(ec).display!=='none')ec.scrollIntoView({behavior:'smooth',block:'center'});
-      return;
-    }
-    discReason=(j&&j.reason)||'';
-  }catch(e){/* 折扣碼查詢失敗 → 落到下方通用錯誤訊息 */}
   // (2.5) 不是萬用碼、也不是折扣碼 → 當「KOL 推薦碼」查詢：成功則套用推薦價、引導往下付款
   try{
     const r=await fetch(LC_API.replace(/\/+$/,'')+'/kol/check?code='+encodeURIComponent(code),{cache:'no-store'});
@@ -8010,7 +8018,7 @@ async function lcUnlock(){
   // (3) 三者皆非
   const reason=res?res.reason:'';
   msg.textContent=(reason==='expired'||discReason==='expired')?'✗ 此代碼已逾有效期限，無法使用，請向 聖源大師索取新碼。'
-                :reason==='used'?'✗ 這組萬用碼已被使用過，無法再次使用。'
+                :(reason==='used'||discReason==='used')?'✗ 這組代碼已被使用過，無法再次使用。'
                 :'✗ 代碼無效：查無此萬用碼或折扣碼，請確認後再試，或洽 聖源大師。';
   msg.className='lcmsg err';
 }
