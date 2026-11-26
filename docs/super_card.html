@@ -166,6 +166,31 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .share pre{white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:10px;font-size:13px;margin:0 0 12px;max-height:140px;overflow:auto;font-family:inherit}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:#ffedd5;color:var(--warn);margin-left:4px}
 
+/* ===== v1.7 即時掃描相機 ===== */
+.cam{position:fixed;inset:0;z-index:30;background:#000;color:#fff;overflow:hidden;touch-action:none}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam .shade{position:absolute;border-radius:16px;box-shadow:0 0 0 200vmax rgba(8,14,26,.58);pointer-events:none;transition:border-color .2s}
+.cam .shade i{position:absolute;width:30px;height:30px;border:4px solid #d9b98a}
+.cam .shade i.a{left:-3px;top:-3px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+.cam .shade i.b{right:-3px;top:-3px;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
+.cam .shade i.c{left:-3px;bottom:-3px;border-right:0;border-top:0;border-radius:0 0 0 14px}
+.cam .shade i.d{right:-3px;bottom:-3px;border-left:0;border-top:0;border-radius:0 0 14px 0}
+.cam .shade.ready i{border-color:#4ade80}
+.cam .shade .prog{position:absolute;left:12%;right:12%;bottom:-16px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);overflow:hidden}
+.cam .shade .prog b{display:block;height:100%;width:0;background:#d9b98a;transition:width .15s}
+.cam .top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
+.cam .top .ttl{flex:1;font-family:"Noto Serif TC","Songti TC",serif;font-size:17px;letter-spacing:1px;text-align:center}
+.cam .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:18px;padding:7px 12px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
+.cam .pill.on{background:#d9b98a;color:#13233d;border-color:#d9b98a;font-weight:700}
+.cam .hint{position:absolute;left:0;right:0;text-align:center;font-size:16px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.cam .bot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:18px 26px calc(env(safe-area-inset-bottom) + 22px);background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.cam .shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0}
+.cam .shutter:active{background:#fff}
+.cam .side{width:96px;font-size:14px;text-align:center}
+.cam .side .pill{white-space:nowrap;padding:7px 10px}
+.cam .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.cam .flash.on{opacity:.85;transition:none}
+.cam .last{width:84px;height:52px;border-radius:8px;border:2px solid #fff;object-fit:cover;display:block}
 /* ===== v1.6 商業風格:深海藍 × 香檳金 ===== */
 :root{ --bg:#f5f4f0; --card:#fff; --ink:#1b2333; --sub:#6b7280; --line:#e6e3dc;
   --pri:#13233d; --pri2:#1d3557; --acc:#b8925a; --acc2:#d9b98a; --chip:#f1ebe0; --warn:#a1621b; --danger:#b42318; }
@@ -418,11 +443,29 @@ header .ic svg{color:var(--acc2)}
   </div>
 </div>
 
+<!-- v1.7 即時掃描相機 -->
+<div id="vCam" class="cam hide">
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div id="camShade" class="shade"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="prog"><b id="camProg"></b></div></div>
+  <div class="top">
+    <button class="pill" id="btnCamClose" data-ic="x">關閉</button>
+    <div class="ttl" id="camTitle">掃描名片</div>
+    <button class="pill" id="btnCamOrient">橫式</button>
+  </div>
+  <div class="hint" id="camHint">把名片放進框內</div>
+  <div class="bot">
+    <div class="side"><button class="pill on" id="btnCamAuto">自動拍 開</button></div>
+    <button class="shutter" id="btnShutter" aria-label="拍照"></button>
+    <div class="side" id="camSide"><span id="camCount"></span></div>
+  </div>
+  <div class="flash" id="camFlash"></div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.6", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.7", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -722,7 +765,9 @@ function formData(){
 
 async function onFile(ev){
   var file=ev.target.files[0]; ev.target.value="";
-  if(!file) return;
+  if(file) scanFile(file);
+}
+async function scanFile(file){
   $("editTitle").textContent="辨識中";
   $("vEdit").classList.remove("hide"); $("editBody").classList.add("hide"); $("scanning").classList.remove("hide");
   try{
@@ -767,6 +812,126 @@ async function del(){
   }catch(e){ toast("刪除失敗:"+e.message); }
 }
 
+/* ===== v1.7 即時掃描:引導框 + 自動偵測 + 自動拍 + 自動裁切 ===== */
+var CAM={ stream:null, mode:"single", timer:null, prev:null, still:0, armed:true, lastSig:null, count:0, portrait:false, auto:true, busy:false };
+var CAM_NEED=6;   // 連續幾次(約 0.15 秒一次)都穩定才拍,約 0.9 秒
+function camSupported(){ return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && !inAppName(); }
+/** mode: single=單張掃描、batch=批量連拍、back=拍背面 */
+async function openCam(mode){
+  if(!camSupported()){ fallbackPick(mode); return; }
+  CAM.mode=mode; CAM.count=0; CAM.armed=true; CAM.still=0; CAM.prev=null; CAM.lastSig=null; CAM.busy=false;
+  try{ CAM.auto = ls("sc_camauto")!=="0"; CAM.portrait = ls("sc_camport")==="1"; }catch(e){}
+  $("camTitle").textContent = mode==="batch" ? ("批量連拍"+($("qDual").checked?"・雙面":"")) : mode==="back" ? "拍背面" : "掃描名片";
+  $("camCount").textContent=""; renderCamBtns();
+  $("vCam").classList.remove("hide");
+  try{
+    CAM.stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ideal:"environment"}, width:{ideal:2560}, height:{ideal:1440} } });
+  }catch(e){
+    closeCam(); toast(e.name==="NotAllowedError" ? "沒有相機權限,改用拍照/選照片" : "相機無法開啟,改用拍照/選照片"); fallbackPick(mode); return;
+  }
+  var v=$("camVideo"); v.srcObject=CAM.stream;
+  try{ await v.play(); }catch(e){}
+  layoutGuide();
+  clearInterval(CAM.timer); CAM.timer=setInterval(camTick,150);
+}
+function fallbackPick(mode){ if(mode==="back") $("fileBack").click(); else if(mode==="batch") $("fileCam").click(); else $("file").click(); }
+function closeCam(){
+  clearInterval(CAM.timer); CAM.timer=null;
+  if(CAM.stream){ CAM.stream.getTracks().forEach(function(t){t.stop();}); CAM.stream=null; }
+  $("camVideo").srcObject=null; $("vCam").classList.add("hide");
+}
+function renderCamBtns(){
+  setLabel($("btnCamAuto"), CAM.auto?"自動拍 開":"自動拍 關"); $("btnCamAuto").classList.toggle("on",CAM.auto);
+  $("btnCamOrient").textContent = CAM.portrait ? "直式" : "橫式";
+}
+/** 引導框:名片比例 9:5.4(≈1.67),橫式寬 86%、直式高 62% */
+function layoutGuide(){
+  var W=innerWidth, H=innerHeight, r=90/54, w, h;
+  if(CAM.portrait){ h=Math.min(H*0.62, W*0.8*r); w=h/r; } else { w=Math.min(W*0.86, H*0.5*r); h=w/r; }
+  var x=(W-w)/2, y=(H-h)/2-H*0.03, sh=$("camShade");
+  sh.style.left=x+"px"; sh.style.top=y+"px"; sh.style.width=w+"px"; sh.style.height=h+"px";
+  $("camHint").style.top=(y+h+30)+"px";
+  CAM.g={x:x,y:y,w:w,h:h};
+}
+/** 螢幕上的引導框 → 影片原始像素座標(video 用 object-fit:cover) */
+function guideInVideo(pad){
+  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight; if(!vw) return null;
+  var W=v.clientWidth, H=v.clientHeight, sc=Math.max(W/vw,H/vh), ox=(W-vw*sc)/2, oy=(H-vh*sc)/2, g=CAM.g;
+  var px=g.w*(pad||0), py=g.h*(pad||0);
+  var x=(g.x-px-ox)/sc, y=(g.y-py-oy)/sc, w=(g.w+2*px)/sc, h=(g.h+2*py)/sc;
+  x=Math.max(0,x); y=Math.max(0,y); w=Math.min(vw-x,w); h=Math.min(vh-y,h);
+  return {x:x,y:y,w:w,h:h};
+}
+/** 取框內(含外圍一圈)縮小灰階,算:有沒有名片、穩不穩、清不清楚 */
+function camMeasure(){
+  var r=guideInVideo(0.18); if(!r) return null;
+  var SW=120, SH=Math.max(40,Math.round(SW*r.h/r.w));
+  var c=camMeasure.c||(camMeasure.c=document.createElement("canvas")); c.width=SW; c.height=SH;
+  var x=c.getContext("2d",{willReadFrequently:true}); x.drawImage($("camVideo"),r.x,r.y,r.w,r.h,0,0,SW,SH);
+  var d=x.getImageData(0,0,SW,SH).data, g=new Float32Array(SW*SH);
+  for(var i=0,j=0;i<g.length;i++,j+=4) g[i]=0.299*d[j]+0.587*d[j+1]+0.114*d[j+2];
+  // 框內 = 中間 1/1.36 區域(pad 0.18 → 內框佔 1/(1+0.36))
+  var ix0=Math.round(SW*0.18/1.36), ix1=SW-ix0, iy0=Math.round(SH*0.18/1.36), iy1=SH-iy0;
+  var sIn=0,nIn=0,sOut=0,nOut=0,sq=0,lap=0,nl=0;
+  for(var yy=1;yy<SH-1;yy++) for(var xx=1;xx<SW-1;xx++){
+    var k=yy*SW+xx, v=g[k], inside = xx>=ix0+2 && xx<ix1-2 && yy>=iy0+2 && yy<iy1-2, outside = xx<ix0-2 || xx>=ix1+2 || yy<iy0-2 || yy>=iy1+2;
+    if(inside){ sIn+=v; sq+=v*v; nIn++; var L=4*v-g[k-1]-g[k+1]-g[k-SW]-g[k+SW]; lap+=L*L; nl++; }
+    else if(outside){ sOut+=v; nOut++; }
+  }
+  var mIn=sIn/nIn, mOut=sOut/Math.max(1,nOut), std=Math.sqrt(Math.max(0,sq/nIn-mIn*mIn)), sharp=lap/nl;
+  var motion=0;
+  if(CAM.prev && CAM.prev.length===g.length){ for(var q=0;q<g.length;q+=3) motion+=Math.abs(g[q]-CAM.prev[q]); motion/=g.length/3; }
+  else motion=99;
+  CAM.prev=g;
+  return { inOut:Math.abs(mIn-mOut), std:std, sharp:sharp, motion:motion, sig:g };
+}
+function sigDiff(a,b){ if(!a||!b||a.length!==b.length) return 999; var s=0; for(var i=0;i<a.length;i+=3) s+=Math.abs(a[i]-b[i]); return s/(a.length/3); }
+function camTick(){
+  if(CAM.busy || $("vCam").classList.contains("hide")) return;
+  var m=camMeasure(); if(!m) return;
+  CAM.m=m;
+  // 拍過一張後,要等名片換掉(畫面明顯變化)才再拍,避免同一張連拍
+  if(!CAM.armed){
+    if(sigDiff(m.sig,CAM.lastSig)>18 || m.motion>12){ CAM.armed=true; }
+    hint(CAM.mode==="batch" ? ("已拍 "+CAM.count+" 張,換下一張"+($("qDual").checked && CAM.count%2===1 ? "(翻背面)" : "")) : "✓ 已拍下"); prog(0); return;
+  }
+  var present = m.inOut>14 || m.std>26;
+  var steady = m.motion<4.5, sharp = m.sharp>60;
+  if(!present){ CAM.still=0; hint("把名片放進框內"); prog(0); ready(false); return; }
+  if(!steady){ CAM.still=0; hint("保持不動…"); prog(0); ready(false); return; }
+  if(!sharp){ CAM.still=0; hint("對焦中,稍微拉遠一點"); prog(0); ready(false); return; }
+  CAM.still++; ready(true); prog(CAM.still/CAM_NEED);
+  if(!CAM.auto){ hint("可以按快門了"); return; }
+  hint("拍攝中…");
+  if(CAM.still>=CAM_NEED) camShoot();
+}
+function hint(t){ if($("camHint").textContent!==t) $("camHint").textContent=t; }
+function prog(p){ $("camProg").style.width=Math.min(100,p*100)+"%"; }
+function ready(b){ $("camShade").classList.toggle("ready",!!b); }
+/** 拍下:只裁引導框範圍(外加 3% 邊)存成 JPEG */
+async function camShoot(){
+  if(CAM.busy) return; var r=guideInVideo(0.03); if(!r) return;
+  CAM.busy=true;
+  // 太小就放大到長邊 1400(小字比較辨識得到),太大就縮到 1800
+  var L=Math.max(r.w,r.h), sc = L<1400 ? 1400/L : Math.min(1, 1800/L), c=document.createElement("canvas");
+  c.width=Math.round(r.w*sc); c.height=Math.round(r.h*sc);
+  var cx=c.getContext("2d"); cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
+  cx.drawImage($("camVideo"),r.x,r.y,r.w,r.h,0,0,c.width,c.height);
+  var fl=$("camFlash"); fl.classList.add("on"); setTimeout(function(){fl.classList.remove("on");},60);
+  try{ navigator.vibrate && navigator.vibrate(40); }catch(e){}
+  var blob=await new Promise(function(res){ c.toBlob(res,"image/jpeg",0.9); });
+  var file=new File([blob],"card_"+Date.now()+".jpg",{type:"image/jpeg"});
+  CAM.count++; CAM.armed=false; CAM.lastSig=CAM.m&&CAM.m.sig; CAM.still=0; prog(0);
+  if(CAM.mode==="batch"){
+    qAdd([file]);
+    $("camCount").innerHTML='<img class="last" src="'+c.toDataURL("image/jpeg",0.5)+'" alt=""><div style="margin-top:4px">已拍 '+CAM.count+' 張</div>';
+    CAM.busy=false;
+  }else{
+    closeCam(); CAM.busy=false;
+    if(CAM.mode==="back") backFile(file); else scanFile(file);
+  }
+}
+
 /* ===== 正反面 ===== */
 function renderSides(side){
   var c=S.cur; if(!c) return;
@@ -779,7 +944,10 @@ function renderSides(side){
 }
 async function onBackFile(ev){
   var file=ev.target.files[0]; ev.target.value="";
-  if(!file || !S.cur) return;
+  if(file) backFile(file);
+}
+async function backFile(file){
+  if(!S.cur) return;
   var cur=S.cur, b=$("btnAddBack"); b.disabled=true; setLabel(b,"背面辨識中…");
   try{
     var im=await loadImg(file), big=shrink(im,1600,0.85);
@@ -1505,9 +1673,17 @@ $("code").addEventListener("keydown",function(e){if(e.key==="Enter")login();});
 $("btnLogout").onclick=logout;
 $("btnReload").onclick=loadList;
 $("q").addEventListener("input",renderList);
-$("btnScan").onclick=function(){$("file").click();};
-$("btnRescan").onclick=function(){$("file").click();};
-$("btnAddBack").onclick=function(){$("fileBack").click();};
+$("btnScan").onclick=function(){ openCam("single"); };
+$("btnRescan").onclick=function(){ openCam("single"); };
+$("btnAddBack").onclick=function(){ openCam("back"); };
+$("btnCamClose").onclick=function(){
+  var batch=CAM.mode==="batch"; closeCam();
+  if(batch){ openBatch(); if(CAM.count) toast("已拍 "+CAM.count+" 張,辨識中,好了按「全部儲存」"); }
+};
+$("btnShutter").onclick=function(){ if(CAM.stream) camShoot(); };
+$("btnCamAuto").onclick=function(){ CAM.auto=!CAM.auto; ls("sc_camauto",CAM.auto?"1":"0"); renderCamBtns(); };
+$("btnCamOrient").onclick=function(){ CAM.portrait=!CAM.portrait; ls("sc_camport",CAM.portrait?"1":"0"); renderCamBtns(); layoutGuide(); CAM.prev=null; };
+window.addEventListener("resize",function(){ if(!$("vCam").classList.contains("hide")) layoutGuide(); });
 $("btnShareCard").onclick=openShare;
 $("btnShareClose").onclick=closeShare;
 $("vShare").addEventListener("click",function(e){ if(e.target.id==="vShare") closeShare(); });
@@ -1530,7 +1706,7 @@ $("btnBack").onclick=backFromEdit;
 $("dupBar").addEventListener("click",onDupBar);
 $("btnBatch").onclick=openBatch;
 $("btnBatchBack").onclick=function(){ $("vBatch").classList.add("hide"); };
-$("btnShot").onclick=function(){ $("fileCam").click(); };
+$("btnShot").onclick=function(){ openCam("batch"); };
 $("btnPick").onclick=function(){ $("fileMulti").click(); };
 ["fileCam","fileMulti"].forEach(function(id){ $(id).addEventListener("change",function(e){ qAdd(e.target.files); e.target.value=""; }); });
 $("qList").addEventListener("click",function(e){ var it=e.target.closest("[data-qid]"); if(it) openQItem(+it.dataset.qid); });
