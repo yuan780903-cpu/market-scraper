@@ -191,6 +191,13 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .cam .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
 .cam .flash.on{opacity:.85;transition:none}
 .cam .last{width:84px;height:52px;border-radius:8px;border:2px solid #fff;object-fit:cover;display:block}
+/* ===== 多張掃描 ===== */
+.cam .ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cam .modes{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 122px);display:flex;justify-content:center;gap:8px}
+.cam .modes button{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:16px;padding:6px 14px;font-size:14px}
+.cam .modes button.on{background:var(--acc2);color:var(--pri);border-color:var(--acc2);font-weight:700}
+.cam .shade.multi{border-radius:18px}
+.cam .pill.on#btnCamTorch{background:#fde68a;color:#111}
 /* ===== v1.9 修邊框線 / 點選對焦 ===== */
 .crop{background:#0b0f0e}
 .crop .cropbox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 64px);bottom:calc(env(safe-area-inset-bottom) + 132px)}
@@ -369,6 +376,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <input id="fileCam" type="file" accept="image/*" capture="environment" class="hide">
   <input id="fileMulti" type="file" accept="image/*" multiple class="hide">
   <input id="fileBack" type="file" accept="image/*" capture="environment" class="hide">
+  <input id="fileMultiCards" type="file" accept="image/*" class="hide">
 </div>
 
 <!-- 編輯 / 詳情 -->
@@ -379,6 +387,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <h1>批量連拍</h1>
   </header>
   <div class="wrap">
+    <button class="btn" id="btnMultiShot" data-ic="stack" style="margin-bottom:8px">一次拍多張(最多 8 張)</button>
     <div class="duo"><button class="btn" id="btnShot" data-ic="camera">拍下一張</button><button class="btn sec" id="btnPick" data-ic="image">相簿多選</button></div>
     <input id="qTag" class="inp" style="margin-top:10px;font-size:15px" placeholder="🏷 這批共同標籤(選填,例:2026農機展)">
     <label class="dual"><input type="checkbox" id="qDual"> 🔁 雙面模式:拍完正面接著拍背面,自動配成同一張</label>
@@ -671,15 +680,19 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 <!-- v1.7 即時掃描相機 -->
 <div id="vCam" class="cam hide">
   <video id="camVideo" playsinline muted autoplay></video>
+  <canvas id="camOv" class="ov"></canvas>
   <div id="camShade" class="shade"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="prog"><b id="camProg"></b></div></div>
   <div class="top">
     <button class="pill" id="btnCamClose" data-ic="x">關閉</button>
     <div class="ttl" id="camTitle">掃描名片</div>
+    <button class="pill" id="btnCamAlbum" data-ic="image">相簿</button>
+    <button class="pill hide" id="btnCamTorch">閃光燈</button>
     <button class="pill hide" id="btnCamZoom">1×</button>
     <button class="pill" id="btnCamOrient">橫式</button>
   </div>
   <div class="hint" id="camHint">把名片放進框內</div>
   <div class="hint hide" id="camDbg" style="font-size:12px;font-weight:400;font-family:ui-monospace,Menlo,monospace;color:#d9b98a"></div>
+  <div class="modes" id="camModes"><button type="button" data-cm="single">單張</button><button type="button" data-cm="batch">連續</button><button type="button" data-cm="multi">多張</button></div>
   <div class="bot">
     <div class="side"><button class="pill on" id="btnCamAuto">自動拍 開</button></div>
     <button class="shutter" id="btnShutter" aria-label="拍照"></button>
@@ -706,7 +719,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.15", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.16", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1075,7 +1088,7 @@ async function openCam(mode){
   if(!camSupported()){ fallbackPick(mode); return; }
   CAM.mode=mode; CAM.count=0; CAM.armed=true; CAM.still=0; CAM.prev=null; CAM.lastSig=null; CAM.busy=false;
   try{ CAM.auto = ls("sc_camauto")!=="0"; CAM.portrait = ls("sc_camport")==="1"; }catch(e){}
-  $("camTitle").textContent = mode==="batch" ? ("批量連拍"+($("qDual").checked?"・雙面":"")) : mode==="back" ? "拍背面" : "掃描名片";
+  setCamMode(mode);
   $("camCount").textContent=""; renderCamBtns();
   $("vCam").classList.remove("hide");
   try{
@@ -1101,10 +1114,13 @@ function renderCamBtns(){
 /** 引導框:名片比例 9:5.4(≈1.67),橫式寬 86%、直式高 62% */
 function layoutGuide(){
   var W=innerWidth, H=innerHeight, r=90/54, w, h;
-  if(CAM.portrait){ h=Math.min(H*0.62, W*0.8*r); w=h/r; } else { w=Math.min(W*0.86, H*0.5*r); h=w/r; }
+  if(CAM.mode==="multi"){ w=W*0.92; h=Math.min(H*0.6, W*1.35); }
+  else if(CAM.portrait){ h=Math.min(H*0.62, W*0.8*r); w=h/r; } else { w=Math.min(W*0.86, H*0.5*r); h=w/r; }
   var x=(W-w)/2, y=(H-h)/2-H*0.03, sh=$("camShade");
   sh.style.left=x+"px"; sh.style.top=y+"px"; sh.style.width=w+"px"; sh.style.height=h+"px";
-  $("camHint").style.top=(y+h+30)+"px"; $("camDbg").style.top=(y+h+58)+"px";
+  // 多張模式框很大,提示放在框的上方,才不會壓到「單張/連續/多張」
+  if(CAM.mode==="multi"){ $("camHint").style.top=Math.max(64,y-34)+"px"; $("camDbg").style.top=(y+8)+"px"; }
+  else{ $("camHint").style.top=(y+h+30)+"px"; $("camDbg").style.top=(y+h+58)+"px"; }
   CAM.g={x:x,y:y,w:w,h:h};
 }
 /** 螢幕上的引導框 → 影片原始像素座標(video 用 object-fit:cover) */
@@ -1148,6 +1164,7 @@ function camTick(){
     var v=$("camVideo");
     $("camDbg").textContent="亮度差 "+m.inOut.toFixed(0)+"|對比 "+m.std.toFixed(0)+"|晃動 "+m.motion.toFixed(1)+"|清晰 "+m.sharp.toFixed(0)+"|"+v.videoWidth+"×"+v.videoHeight;
   }
+  if(CAM.mode==="multi"){ camTickMulti(m); return; }
   // 拍過一張後,要等名片換掉(畫面明顯變化)才再拍,避免同一張連拍
   if(!CAM.armed){
     if(sigDiff(m.sig,CAM.lastSig)>18 || m.motion>12){ CAM.armed=true; }
@@ -1173,6 +1190,7 @@ function prog(p){ $("camProg").style.width=Math.min(100,p*100)+"%"; }
 function ready(b){ $("camShade").classList.toggle("ready",!!b); }
 /** 拍下:只裁引導框範圍(外加 3% 邊)存成 JPEG */
 async function camShoot(){
+  if(CAM.mode==="multi") return camShootMulti();
   if(CAM.busy) return;
   var batch=CAM.mode==="batch", r=guideInVideo(batch?0.06:0.12); if(!r) return;   // 單張多留邊,讓修邊時可以往外拉
   CAM.busy=true;
@@ -1212,6 +1230,141 @@ function imgToCanvas(im, max){
   c.getContext("2d").drawImage(im,0,0,c.width,c.height); return c;
 }
 function loadSrc(src){ return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im);}; im.onerror=function(){rej(new Error("讀不到圖片"));}; im.src=src; }); }
+
+/* ===== 多張同時掃描:一張照片找出最多 8 張名片 ===== */
+var MULTI_MAX=8;
+/** 回傳名片四邊形陣列(原圖座標,依由上而下、由左而右排序) */
+function multiDetect(src, maxDim){
+  maxDim=maxDim||360;
+  var S=maxDim/Math.max(src.width,src.height), w=Math.max(40,Math.round(src.width*S)), h=Math.max(30,Math.round(src.height*S));
+  var c=multiDetect.c||(multiDetect.c=document.createElement("canvas")); c.width=w; c.height=h;
+  var x=c.getContext("2d",{willReadFrequently:true}); x.drawImage(src,0,0,w,h);
+  var d=x.getImageData(0,0,w,h).data, n=w*h, g=new Uint8Array(n), hist=new Array(256).fill(0);
+  for(var i=0,j=0;i<n;i++,j+=4){ var v=(0.299*d[j]+0.587*d[j+1]+0.114*d[j+2])|0; g[i]=v; hist[v]++; }
+  var sum=0; for(var t=0;t<256;t++) sum+=t*hist[t];
+  var sB=0,wB=0,best=0,thr=128; for(t=0;t<256;t++){ wB+=hist[t]; if(!wB) continue; var wF=n-wB; if(!wF) break; sB+=t*hist[t]; var mB=sB/wB, mF=(sum-sB)/wF, bt=wB*wF*(mB-mF)*(mB-mF); if(bt>best){best=bt;thr=t;} }
+  var bs=0,bn=0; for(var xx=0;xx<w;xx++){ bs+=g[xx]+g[(h-1)*w+xx]; bn+=2; } for(var yy=0;yy<h;yy++){ bs+=g[yy*w]+g[yy*w+w-1]; bn+=2; }
+  var inv=bs/bn>thr, m=new Uint8Array(n);
+  for(i=0;i<n;i++) m[i]= inv ? (g[i]<=thr?1:0) : (g[i]>thr?1:0);
+  var lab=new Int32Array(n), stack=new Int32Array(n), id=0, found=[];
+  for(i=0;i<n;i++){
+    if(!m[i]||lab[i]) continue; id++; var top=0,cnt=0; stack[top++]=i; lab[i]=id;
+    var q={tl:[1e9,0,0],br:[-1e9,0,0],tr:[-1e9,0,0],bl:[1e9,0,0]}, edge=false;
+    while(top){ var p=stack[--top], px=p%w, py=(p/w)|0; cnt++;
+      if(px===0||py===0||px===w-1||py===h-1) edge=true;
+      var s1=px+py, s2=px-py;
+      if(s1<q.tl[0]) q.tl=[s1,px,py]; if(s1>q.br[0]) q.br=[s1,px,py]; if(s2>q.tr[0]) q.tr=[s2,px,py]; if(s2<q.bl[0]) q.bl=[s2,px,py];
+      if(px>0 && m[p-1] && !lab[p-1]){ lab[p-1]=id; stack[top++]=p-1; }
+      if(px<w-1 && m[p+1] && !lab[p+1]){ lab[p+1]=id; stack[top++]=p+1; }
+      if(py>0 && m[p-w] && !lab[p-w]){ lab[p-w]=id; stack[top++]=p-w; }
+      if(py<h-1 && m[p+w] && !lab[p+w]){ lab[p+w]=id; stack[top++]=p+w; }
+    }
+    if(cnt<n*0.006 || cnt>n*0.7) continue;            // 太小是雜點、太大是整個背景
+    var quad=[q.tl,q.tr,q.br,q.bl].map(function(a){return {x:a[1],y:a[2]};});
+    var qa=Math.abs(polyArea(quad)); if(!qa) continue;
+    var fill=cnt/qa; if(fill<0.7 || fill>1.2) continue;  // 不夠方正(兩張黏在一起、或不是名片)
+    var D=function(a,b){return Math.hypot(a.x-b.x,a.y-b.y);};
+    var ww=(D(quad[0],quad[1])+D(quad[3],quad[2]))/2, hh=(D(quad[0],quad[3])+D(quad[1],quad[2]))/2, ar=Math.max(ww,hh)/Math.max(1,Math.min(ww,hh));
+    if(ar<1.15 || ar>2.6) continue;                      // 名片比例約 1.67
+    if(edge && cnt<n*0.05) continue;                     // 貼邊又小:多半是被切到的雜物
+    found.push({q:quad.map(function(p){return {x:p.x/S, y:p.y/S};}), area:cnt});
+  }
+  found.sort(function(a,b){return b.area-a.area;}); found=found.slice(0,MULTI_MAX);
+  // 閱讀順序:先分列(上→下),同列再左→右
+  var cy=function(f){ return (f.q[0].y+f.q[2].y)/2; }, cx=function(f){ return (f.q[0].x+f.q[2].x)/2; };
+  var hAvg=found.reduce(function(s,f){ return s+Math.abs(f.q[3].y-f.q[0].y); },0)/Math.max(1,found.length);
+  found.sort(function(a,b){ var dy=cy(a)-cy(b); return Math.abs(dy)>hAvg*0.5 ? dy : cx(a)-cx(b); });
+  return found.map(function(f){return f.q;});
+}
+/** 一次把多張拉正(只讀一次像素,比較快) */
+function warpMany(src, quads){
+  var sd={data:src.getContext("2d").getImageData(0,0,src.width,src.height).data, w:src.width, h:src.height};
+  return quads.map(function(q){ return warpQuad(src,q,sd); });
+}
+/** 相機畫面上即時畫綠框 */
+function drawMultiOverlay(quads, r, scaleSmall){
+  var ov=$("camOv"), dpr=window.devicePixelRatio||1, W=innerWidth, H=innerHeight;
+  if(ov.width!==W*dpr){ ov.width=W*dpr; ov.height=H*dpr; }
+  var x=ov.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H);
+  if(!quads || !quads.length) return;
+  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight, sc=Math.max(v.clientWidth/vw,v.clientHeight/vh), ox=(v.clientWidth-vw*sc)/2, oy=(v.clientHeight-vh*sc)/2;
+  quads.forEach(function(q,k){
+    var P=q.map(function(p){ return {x:ox+(r.x+p.x/scaleSmall)*sc, y:oy+(r.y+p.y/scaleSmall)*sc}; });
+    x.beginPath(); x.moveTo(P[0].x,P[0].y); for(var i=1;i<4;i++) x.lineTo(P[i].x,P[i].y); x.closePath();
+    x.fillStyle="rgba(74,222,128,.16)"; x.fill(); x.lineWidth=3; x.strokeStyle="#4ade80"; x.stroke();
+    var c={x:(P[0].x+P[2].x)/2, y:(P[0].y+P[2].y)/2};
+    x.beginPath(); x.arc(c.x,c.y,15,0,Math.PI*2); x.fillStyle="#4ade80"; x.fill();
+    x.fillStyle="#0b2a17"; x.font="700 15px -apple-system,sans-serif"; x.textAlign="center"; x.textBaseline="middle"; x.fillText(String(k+1),c.x,c.y);
+  });
+}
+function clearMultiOverlay(){ var ov=$("camOv"); ov.getContext("2d").clearRect(0,0,ov.width,ov.height); }
+/** 多張模式的每一拍判斷 */
+function camTickMulti(m){
+  var r=guideInVideo(0); if(!r) return;
+  var SW=360, k=SW/Math.max(r.w,r.h), c=camTickMulti.c||(camTickMulti.c=document.createElement("canvas"));
+  c.width=Math.round(r.w*k); c.height=Math.round(r.h*k); c.getContext("2d").drawImage($("camVideo"),r.x,r.y,r.w,r.h,0,0,c.width,c.height);
+  var qs=multiDetect(c,SW); drawMultiOverlay(qs,r,k);
+  if(!CAM.armed){
+    if(sigDiff(m.sig,CAM.lastSig)>18 || m.motion>12) CAM.armed=true;
+    hint("已拍 "+CAM.count+" 張,換下一批名片"); prog(0); return;
+  }
+  if(!qs.length){ CAM.still=0; hint("把名片平放在框內(最多 8 張,間隔約 2 公分,深色桌面最好)"); prog(0); ready(false); return; }
+  if(qs.length!==CAM.lastN){ CAM.still=0; CAM.lastN=qs.length; }
+  if(m.motion>=4.5){ CAM.still=0; hint("偵測到 "+qs.length+" 張,保持不動…"); prog(0); ready(false); return; }
+  if(m.sharp<35){ CAM.still=0; hint("偵測到 "+qs.length+" 張,對焦中…"); prog(0); ready(false); return; }
+  CAM.still++; ready(true); prog(CAM.still/(CAM_NEED+2));
+  if(CAM.still===1) sfx("ready");
+  if(!CAM.auto){ hint("偵測到 "+qs.length+" 張,可以按快門了"); return; }
+  hint("偵測到 "+qs.length+" 張,拍攝中…");
+  if(CAM.still>=CAM_NEED+2) camShootMulti();
+}
+async function camShootMulti(){
+  if(CAM.busy) return; var r=guideInVideo(0); if(!r) return;
+  CAM.busy=true;
+  var L=Math.max(r.w,r.h), sc=Math.min(1,3000/L), c=document.createElement("canvas");
+  c.width=Math.round(r.w*sc); c.height=Math.round(r.h*sc);
+  c.getContext("2d").drawImage($("camVideo"),r.x,r.y,r.w,r.h,0,0,c.width,c.height);
+  var fl=$("camFlash"); fl.classList.add("on"); setTimeout(function(){fl.classList.remove("on");},60); sfx("shutter");
+  CAM.armed=false; CAM.lastSig=CAM.m&&CAM.m.sig; CAM.still=0; prog(0);
+  var n=await addMultiFromCanvas(c);
+  if(n){ CAM.count+=n; hint("✓ 已加入 "+n+" 張,辨識中"); }
+  else hint("沒找到名片:請平放、彼此分開,換深色桌面再試");
+  CAM.busy=false;
+}
+/** 從一張大圖切出多張 → 加入批量佇列;回傳張數 */
+async function addMultiFromCanvas(c){
+  var qs=multiDetect(c,520); if(!qs.length) return 0;
+  var outs=warpMany(c,qs), files=[];
+  for(var i=0;i<outs.length;i++) files.push(await canvasFile(outs[i]));
+  var dual=$("qDual").checked; $("qDual").checked=false;   // 多張模式每張都是正面
+  qAdd(files); $("qDual").checked=dual;
+  $("camCount").innerHTML='<img class="last" src="'+outs[0].toDataURL("image/jpeg",0.5)+'" alt=""><div style="margin-top:4px">已拍 '+(CAM.count+files.length)+' 張</div>';
+  return files.length;
+}
+/** 相簿挑一張「很多名片」的照片 */
+async function onMultiPhoto(ev){
+  var f=ev.target.files[0]; ev.target.value=""; if(!f) return;
+  try{
+    var im=await loadImg(f), c=imgToCanvas(im,3000), n=await addMultiFromCanvas(c);
+    if(!n){ toast("這張照片沒找到名片:請平放、彼此分開、深色背景"); return; }
+    CAM.count+=n; closeCam(); openBatch(); toast("✅ 從照片切出 "+n+" 張名片,辨識中");
+  }catch(e){ toast("讀不到這張照片"); }
+}
+/** 相機模式切換:單張 / 連續 / 多張 */
+function setCamMode(mode){
+  CAM.mode=mode; CAM.still=0; CAM.armed=true; CAM.prev=null; CAM.lastN=0; clearMultiOverlay();
+  document.querySelectorAll("[data-cm]").forEach(function(b){ b.classList.toggle("on",b.dataset.cm===mode); });
+  $("camTitle").textContent = mode==="multi" ? "一次拍多張" : mode==="batch" ? ("連續拍攝"+($("qDual").checked?"・雙面":"")) : mode==="back" ? "拍背面" : "掃描名片";
+  $("btnCamOrient").classList.toggle("hide", mode==="multi");
+  $("camModes").classList.toggle("hide", mode==="back");
+  $("camShade").classList.toggle("multi", mode==="multi");
+  layoutGuide();
+}
+async function toggleTorch(){
+  var t=camTrack(); if(!t) return; CAM.torch=!CAM.torch;
+  try{ await t.applyConstraints({advanced:[{torch:CAM.torch}]}); $("btnCamTorch").classList.toggle("on",CAM.torch); }
+  catch(e){ CAM.torch=false; toast("這支手機的瀏覽器不支援開閃光燈"); }
+}
 
 /* ===== v1.9 自動找名片四角 + 透視拉正 ===== */
 function detectQuad(src){
@@ -1261,12 +1414,12 @@ function homography(from,to){   // 解 8 元一次方程:from(輸出座標) → 
   return B.map(function(b,i){ return b/A[i][i]; });
 }
 /** 把四邊形(左上、右上、右下、左下)拉成長方形 */
-function warpQuad(src,q){
+function warpQuad(src,q,pre){
   var D=function(a,b){return Math.hypot(a.x-b.x,a.y-b.y);};
   var W=Math.max(D(q[0],q[1]),D(q[3],q[2])), H=Math.max(D(q[0],q[3]),D(q[1],q[2])), k=Math.min(1,1800/Math.max(W,H));
   W=Math.max(10,Math.round(W*k)); H=Math.max(10,Math.round(H*k));
   var h=homography([{x:0,y:0},{x:W,y:0},{x:W,y:H},{x:0,y:H}], q);
-  var sw=src.width, sh=src.height, sd=src.getContext("2d").getImageData(0,0,sw,sh).data;
+  var sw=pre?pre.w:src.width, sh=pre?pre.h:src.height, sd=pre?pre.data:src.getContext("2d").getImageData(0,0,sw,sh).data;
   var out=document.createElement("canvas"); out.width=W; out.height=H;
   var oc=out.getContext("2d"), od=oc.createImageData(W,H), o=od.data, idx=0;
   for(var v=0;v<H;v++) for(var u=0;u<W;u++){
@@ -1378,6 +1531,7 @@ async function focusAt(ex,ey){
 }
 function initZoom(){
   var t=camTrack(), caps={}; try{ caps=t&&t.getCapabilities?t.getCapabilities():{}; }catch(e){}
+  $("btnCamTorch").classList.toggle("hide",!caps.torch); CAM.torch=false;
   var z=caps.zoom, ok=!!(z && z.max>z.min);
   $("btnCamZoom").classList.toggle("hide",!ok);
   if(!ok) return;
@@ -2983,7 +3137,7 @@ $("btnScan").onclick=function(){ openCam("single"); };
 $("btnRescan").onclick=function(){ openCam("single"); };
 $("btnAddBack").onclick=function(){ openCam("back"); };
 $("btnCamClose").onclick=function(){
-  var batch=CAM.mode==="batch"; closeCam();
+  var batch=CAM.mode==="batch"||CAM.mode==="multi"; closeCam();
   if(batch){ openBatch(); if(CAM.count) toast("已拍 "+CAM.count+" 張,辨識中,好了按「全部儲存」"); }
 };
 $("camTitle").addEventListener("click",toggleCamDbg);
@@ -2995,6 +3149,15 @@ $("btnCropAuto").onclick=function(){ if(!CROP.src) return; var q=detectQuad(CROP
 $("btnCropRetake").onclick=function(){ var r=CROP.opt&&CROP.opt.retake; closeCrop(); if(r) r(); };
 $("btnCrop").onclick=recropCurrent;
 window.addEventListener("resize",function(){ if(CROP.src) drawCrop(); });
+document.querySelectorAll("[data-cm]").forEach(function(b){ b.addEventListener("click",function(){ setCamMode(b.dataset.cm); }); });
+$("btnCamAlbum").onclick=function(){
+  var m=CAM.mode;
+  if(m==="multi"){ $("fileMultiCards").click(); return; }
+  closeCam(); if(m==="batch"){ openBatch(); $("fileMulti").click(); } else if(m==="back") $("fileBack").click(); else $("file").click();
+};
+$("fileMultiCards").addEventListener("change",onMultiPhoto);
+$("btnCamTorch").onclick=toggleTorch;
+$("btnMultiShot").onclick=function(){ openCam("multi"); };
 $("btnShutter").onclick=function(){ if(CAM.stream) camShoot(); };
 $("btnCamAuto").onclick=function(){ CAM.auto=!CAM.auto; ls("sc_camauto",CAM.auto?"1":"0"); renderCamBtns(); };
 $("btnCamOrient").onclick=function(){ CAM.portrait=!CAM.portrait; ls("sc_camport",CAM.portrait?"1":"0"); renderCamBtns(); layoutGuide(); CAM.prev=null; };
