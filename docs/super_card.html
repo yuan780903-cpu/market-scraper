@@ -283,6 +283,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myf:last-child{border-bottom:0}
 .myf span{width:118px;flex:none;font-size:13px;color:var(--sub)}
 .myf input{flex:1;min-width:0;border:0;outline:0;font-size:16px;padding:10px 0;background:transparent}
+.exp label.myf input{width:auto;height:auto;flex:1}   /* 蓋掉 .exp label input 的勾選框尺寸 */
 .imgrow{display:flex;align-items:center;gap:8px;margin-top:8px}
 .imgrow img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
 .imgrow img.logo{border-radius:8px;object-fit:contain;width:84px;background:#fff}
@@ -292,6 +293,25 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .qrn{font-family:"Noto Serif TC","Songti TC",serif;font-size:22px;font-weight:700;text-align:center;color:var(--ink)}
 .cvacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .cvacts .btn{padding:11px 8px;font-size:15px;text-decoration:none}
+/* ===== 姓名學 ===== */
+.nmchars{display:flex;flex-wrap:wrap;gap:8px}
+.nmch{display:flex;align-items:center;gap:4px;background:var(--chip);border-radius:12px;padding:6px 8px}
+.nmch b{font-family:"Noto Serif TC","Songti TC",serif;font-size:22px;color:var(--ink)}
+.nmch em{font-style:normal;font-weight:700;color:var(--acc);min-width:22px;text-align:center}
+.nmch button{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:14px;line-height:1;padding:0}
+.nmrow{display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid var(--line);padding:9px 0}
+.nmrow:last-child{border-bottom:0}
+.nmk{width:84px;flex:none;font-weight:700;color:var(--ink)} .nmk small{display:block;font-weight:400;font-size:11px;color:var(--sub)}
+.nmv{width:46px;flex:none;font-size:20px;font-weight:800;color:var(--pri);text-align:center} .nmv small{display:block;font-size:12px;font-weight:600;color:var(--acc)}
+.nmd{flex:1;font-size:14px;color:var(--ink);line-height:1.5} .nmd small{color:var(--sub)}
+.nmtag{display:inline-block;font-size:12px;font-weight:700;border-radius:8px;padding:1px 8px}
+.nmtag.good{background:#e7f6ec;color:#17803d} .nmtag.mid{background:#fdf3e1;color:#a1621b} .nmtag.bad{background:#fdeaea;color:#b42318}
+.exp p{line-height:1.7}
+.nmrel{border-color:var(--acc)}
+.nmvs{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:13px;color:var(--sub);margin:6px 0;background:var(--chip);border-radius:10px;padding:8px}
+.nmvs b{color:var(--pri);font-size:16px;text-align:center}
+.nmul{margin:6px 0 0;padding-left:20px;line-height:1.7;font-size:14px}
+.nmsum{background:var(--chip)}
 /* ===== 群組管理 ===== */
 .gadd{display:flex;gap:8px}
 .gadd .inp{flex:1}
@@ -355,6 +375,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   </header>
   <div id="menu" class="menu hide">
     <button id="btnMyCard" data-ic="user">我的數位名片</button>
+    <button id="btnNameMenu" data-ic="star">姓名學分析</button>
     <button id="btnExport" data-ic="download">匯入 / 匯出</button>
     <button id="btnDups" data-ic="copy">找重複名片</button>
     <button id="btnReload" data-ic="refresh">重新整理</button>
@@ -537,6 +558,23 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   </div>
 </div>
 
+<!-- 姓名學 -->
+<div id="vName" class="sheet hide" style="z-index:14">
+  <header>
+    <button class="ic" id="btnNmBack" data-ic="back">返回</button>
+    <h1>姓名學分析</h1>
+  </header>
+  <div class="wrap">
+    <div class="exp">
+      <label class="myf"><span>對方姓名</span><input id="nmTheir" placeholder="例:王小明"></label>
+      <label class="myf"><span>我的姓名</span><input id="nmMine" placeholder="填了就有雙人對照"></label>
+      <div class="duo" style="margin-top:10px"><button class="btn" id="btnNmGo" data-ic="star">開始分析</button><button class="btn sec" id="btnNmShare" data-ic="share">分享分析</button></div>
+      <button class="btn sec hide" id="btnNmSave" data-ic="save" style="margin-top:8px">加到這張名片的備註</button>
+    </div>
+    <div id="nmOut"></div>
+  </div>
+</div>
+
 <!-- 名片簿(多使用者) -->
 <div id="vBooks" class="sheet hide" style="z-index:15">
   <header>
@@ -626,6 +664,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
         <button class="btn" id="btnSave" data-ic="save">儲存到雲端</button>
         <button class="btn sec" id="btnAddBack" data-ic="camera">加拍背面</button>
         <button class="btn sec" id="btnShareCard" data-ic="share">分享名片</button>
+        <button class="btn sec" id="btnNameCard" data-ic="star">姓名學分析(與我對照)</button>
         <button class="btn sec" id="btnContact" data-ic="userplus">加入手機通訊錄</button>
         <button class="btn sec hide" id="btnRescan" data-ic="camera">換一張重拍</button>
         <button class="btn sec hide" id="btnPhoto" data-ic="zoom">看大圖</button>
@@ -719,7 +758,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.16", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.17", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -757,6 +796,7 @@ var ICONS={
  check:'<path d="M20 6 9 17l-5-5"/>',
  x:'<path d="M18 6 6 18M6 6l12 12"/>',
  crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+ star:'<path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.6z"/>',
  volume:'<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
  palette:'<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>'
 };
@@ -2373,6 +2413,174 @@ function checkCardLink(){
   openCardView(url); return true;
 }
 
+/* ===== 姓名學分析(康熙筆畫・五格・81 數・三才・雙人對照) ===== */
+var KX=null;
+function loadKX(){
+  if(KX) return Promise.resolve(KX);
+  return fetch("super_card_kangxi.json").then(function(r){return r.json();}).then(function(d){ KX=d; return d; });
+}
+function kxFix(){ try{ return JSON.parse(ls("sc_kxfix")||"{}"); }catch(e){ return {}; } }
+function kxStroke(ch){
+  var f=kxFix(); if(f[ch]) return f[ch];
+  var c=ch.codePointAt(0), r=KX&&KX.r; if(!r) return 0;
+  for(var k in r){ var a=parseInt(k,16), s=r[k]; if(c>=a && c<a+s.length) return s.charCodeAt(c-a)-48; }
+  return 0;
+}
+var FU_SUR=["歐陽","司馬","上官","諸葛","司徒","東方","張簡","范姜","夏侯","皇甫","長孫","公孫","端木","慕容","尉遲","令狐","宇文","軒轅","獨孤","南宮","西門","澹臺","鍾離","呼延","第五","萬俟"];
+function splitName(n){
+  n=String(n||"").replace(/\s/g,"");
+  var sur = FU_SUR.some(function(s){return n.indexOf(s)===0;}) && n.length>2 ? n.slice(0,2) : n.slice(0,1);
+  return { sur:sur, given:n.slice(sur.length) };
+}
+function wx(n){ var d=n%10; return d===1||d===2?"木":d===3||d===4?"火":d===5||d===6?"土":d===7||d===8?"金":"水"; }
+var SHENG={"木":"火","火":"土","土":"金","金":"水","水":"木"}, KE={"木":"土","土":"水","水":"火","火":"金","金":"木"};
+function rel(a,b){ if(a===b) return "比和"; if(SHENG[a]===b) return "生"; if(SHENG[b]===a) return "被生"; if(KE[a]===b) return "剋"; return "被剋"; }
+/** 81 數理:[吉凶, 名稱, 說明] */
+var N81=[null,
+["大吉","太極之數","萬物開泰,根基穩固,能得眾人信任,事業可長可久"],["凶","兩儀之數","搖擺不定,易受人左右,做事宜有人搭配"],["大吉","三才之數","天地人和,才能出眾,名利雙收"],["凶","四象之數","起伏較大,須防半途而廢"],["大吉","五行之數","陰陽和合,圓融通達,福祿長久"],
+["大吉","六爻之數","天德地祥,家道興隆,安穩吉慶"],["吉","七政之數","剛毅果斷,獨立性強,宜收斂鋒芒"],["吉","八卦之數","意志堅定,勤奮努力,終能成功"],["凶","大成之數","雖有才智但多波折,宜守成穩進"],["凶","終結之數","運勢較弱,須防財物損失"],
+["大吉","旱苗逢雨","萬物更新,重振家運,步步高升"],["凶","掘井無泉","根基薄弱,須量力而為"],["大吉","春日牡丹","才藝多能,智謀過人,易得成功"],["凶","破兆之數","人緣較薄,須多經營關係"],["大吉","福壽之數","福壽圓滿,得人緣,事業順遂"],
+["大吉","厚重之數","德高望重,貴人相助,財源廣進"],["吉","剛強之數","突破萬難,有權威,但宜柔和待人"],["吉","鐵鏡重磨","有志竟成,先苦後甘"],["凶","多難之數","風雲蔽日,須防意外阻礙"],["凶","屋下藏金","起伏多變,宜穩健保守"],
+["大吉","明月中天","獨立權威,領導能力強,事業有成"],["凶","秋草逢霜","困難較多,須加倍努力"],["大吉","旭日東昇","壯麗發展,氣勢如虹,可成大業"],["大吉","掘藏得金","家門餘慶,白手起家,財源豐厚"],["吉","資性英敏","聰明有才,能抓住機會"],
+["半吉","變怪之數","英雄豪傑型,大起大落,宜防衝動"],["半吉","增長之數","自我心強,宜廣納意見"],["凶","闊水浮萍","變動多,宜穩紮穩打"],["吉","智謀之數","智謀兼備,財力歸集,名利可得"],["半吉","浮沉之數","吉凶參半,成敗多在一念"],
+["大吉","春日花開","智勇雙全,得志立業"],["大吉","寶馬金鞍","僥倖多望,貴人提攜,財運亨通"],["大吉","旭日升天","家門隆昌,才德兼備,名揚四方"],["凶","破家之數","見識宜廣,防災厄"],["吉","高樓望月","溫和平靜,文藝才能佳"],
+["半吉","波瀾重疊","俠義心腸,易為他人奔波"],["大吉","猛虎出林","權威顯達,熱誠忠信,事業有成"],["半吉","磨鐵成針","具文藝才華,宜持之以恆"],["吉","富貴榮華","財帛豐盈,地位提升"],["半吉","退安之數","智謀膽力兼具,宜防投機失利"],
+["大吉","純陽獨秀","德高望重,和順暢達,名利雙收"],["半吉","寒蟬在柳","博識多能,宜專精一項"],["凶","散財之數","外祥內苦,理財須謹慎"],["凶","煩悶之數","須防壓力與損失"],["大吉","順風之數","新生泰和,順風順水,名利雙收"],
+["凶","浪裡淘金","辛苦多,宜穩中求進"],["大吉","點石成金","花開之象,有貴人,事業興隆"],["大吉","古松立鶴","智謀兼備,德望兼得,適合當顧問領導"],["半吉","吉凶參半","轉變多,宜慎選方向"],["半吉","小舟入海","先吉後難,宜守成"],
+["半吉","盛衰交加","沉浮之數,宜未雨綢繆"],["大吉","卓識達眼","有先見之明,能成大業"],["半吉","外祥內患","表面風光,內需調整"],["凶","石上栽花","付出多回報少,宜換方法"],["半吉","外美內苦","宜務實經營"],
+["凶","浪裡行舟","阻礙多,宜謹慎"],["吉","寒雪青松","時來運轉,堅忍終能成功"],["半吉","晚行遇月","先苦後甜,晚運佳"],["凶","寒蟬悲風","宜防消極,保持信心"],["凶","無謀之數","宜多聽專業意見"],
+["吉","名利雙收","牡丹芙蓉,修身得福"],["凶","衰敗之數","宜保守,勿冒進"],["大吉","舟出平海","富貴榮華,順利發展"],["凶","非命之數","宜謹慎規劃"],["大吉","巨流歸海","富貴長壽,事業圓滿"],
+["凶","岩頭步馬","進退兩難,宜三思"],["大吉","順風通達","事事如意,家道繁昌"],["大吉","順風吹帆","智慮周密,集眾信任,可成大業"],["凶","非業之數","宜防變故"],["凶","殘菊逢霜","寂寞無奈,宜廣結善緣"],
+["半吉","石上金花","須踏實努力方有成"],["凶","勞苦之數","付出多,宜量力"],["半吉","志高力微","宜循序漸進"],["凶","殘菊經霜","宜守成"],["半吉","退守之數","宜保守經營"],
+["凶","離散之數","宜防人事變動"],["半吉","半吉半凶","先甘後苦,宜防晚運"],["半吉","晚苦之數","前運佳,晚年宜保守"],["凶","雲頭望月","宜腳踏實地"],["凶","遁吉之數","宜修身養性"],
+["大吉","萬物回春","還本歸元,大吉大利"]];
+function n81(n){ n=((n-1)%80)+1; return N81[n]; }
+/** 五格計算 */
+function wuge(name){
+  var sp=splitName(name), s=sp.sur.split("").map(kxStroke), g=sp.given.split("").map(kxStroke);
+  if(g.length>2) g=[g[0], g.slice(1).reduce(function(a,b){return a+b;},0)];   // 三字名:後兩字合併
+  var S=s.reduce(function(a,b){return a+b;},0), G=g.reduce(function(a,b){return a+b;},0), two=s.length===2;
+  var tian = two ? s[0]+s[1] : s[0]+1;
+  var ren  = (two?s[1]:s[0]) + (g[0]||0);
+  var di   = g.length>=2 ? g[0]+g[1] : (g[0]||0)+1;
+  var zong = S+G;
+  var wai  = two ? (g.length>=2 ? s[0]+g[1] : s[0]+1) : (g.length>=2 ? g[1]+1 : 2);
+  var chars=(sp.sur+sp.given).split("").map(function(ch){return {ch:ch,n:kxStroke(ch)};});
+  return { name:name, sp:sp, chars:chars, tian:tian, ren:ren, di:di, wai:wai, zong:zong };
+}
+var GE_INFO={tian:["天格","先天、祖上(影響較小)"],ren:["人格","主運:個性與事業核心"],di:["地格","前運:基礎、家庭與部屬"],wai:["外格","副運:人際社交、外在助力"],zong:["總格","後運:整體成就與晚景"]};
+var WX_PROFILE={
+ "木":{type:"仁厚穩健型",trait:"溫和有耐心、重情義、做事有計畫,喜歡長期穩定的關係。",value:"重視人品、口碑與長期合作,不喜歡被逼著做決定。",talk:"先聊理念、產業與他的經營故事,慢熱型,第一次見面不急著成交。",nego:"用口碑、老客戶案例與長期配合方案打動他;價格可分階段、給長期合作優惠。",mine:"強迫推銷、說話急躁、只談價格不談關係。",sign:"關係建立後才會簽;可以透過熟人或推薦人加分,簽約前給他回去考慮的時間。"},
+ "火":{type:"熱情行動型",trait:"積極熱情、反應快、重面子,喜歡被肯定,決斷速度快。",value:"重視面子、新鮮感與被重視的感覺。",talk:"多讚美他的成就,氣氛要熱絡,簡報要有亮點與故事。",nego:"給他舞台與面子,強調「別人都跟上了」「限量、首批」;讓步時說成是給他的特別待遇。",mine:"冷淡、拖拖拉拉、當眾否定或糾正他。",sign:"適合趁熱打鐵、當場拍板;但他興頭過了容易反悔,簽約後要盡快出貨服務、保持熱度。"},
+ "土":{type:"穩重務實型",trait:"踏實守信、保守謹慎、重實績,做決定慢但承諾了就會做到。",value:"重視保證、風險低、實際效益與信用。",talk:"多給數據、田間實績、試驗報告與保證,講話要實在。",nego:"提供試用、分批進貨、保證條款與售後服務;不要誇大承諾,報價一次到位比較好。",mine:"誇大其詞、條件變來變去、催他立刻決定。",sign:"需要時間評估,可先小量試用再擴大;條件白紙黑字寫清楚,他會更安心。"},
+ "金":{type:"果斷理性型",trait:"有原則、重效率與利益、講求公平,說話直接。",value:"重視投資報酬、效率與合約條件是否公平清楚。",talk:"開門見山,直接講重點、條件和可以帶給他的利益,不要寒暄太久。",nego:"準備好成本效益(ROI)與價格條件比較表;讓步要換到對等條件(例如量大才降價)。",mine:"拐彎抹角、條款含糊、臨時加價。",sign:"條件談清楚就會簽,動作快;合約條款、付款期限要精準,他會照章辦事。"},
+ "水":{type:"靈活智慧型",trait:"聰明靈活、善溝通、資訊多,會多方比較,重彈性。",value:"重視資訊充分、彈性與選擇權,也很在意自己有沒有買貴。",talk:"多提供市場資訊與趨勢,讓他覺得跟你聊有收穫。",nego:"準備 2~3 個方案讓他選,附比較表;設定期限優惠促成,注意他會拿去比價。",mine:"死板只給一個選擇、資訊不透明。",sign:"用期限、名額或優惠截止日促成;簽約前再確認一次條件,避免他後續又想調整。"}
+};
+var REL_ADVICE={
+ "比和":{head:"五行相同:比和",desc:"你們個性相近、容易投緣,溝通不費力。",how:"可以用你自己喜歡被對待的方式對待他;但兩人缺點也相同(例如都慢或都急),關鍵事項要指定期限與負責人推進。"},
+ "生":{head:"你生他:你是付出方",desc:"你自然會照顧他、為他著想,他跟你相處會很舒服。",how:"很好建立關係,但小心讓步太多、被要求越來越多;底線與價格條件一開始就講清楚。"},
+ "被生":{head:"他生你:他是你的貴人",desc:"他容易欣賞你、願意幫你,是貴人型客戶。",how:"多請教、多感謝,讓他有成就感;成交後可以請他轉介紹其他客戶。"},
+ "剋":{head:"你剋他:你較占上風",desc:"在氣勢上你比較容易主導,他可能感到壓力。",how:"說話放軟、多給他面子與選擇權,讓決定看起來是他自己做的,避免他覺得被壓而防衛。"},
+ "被剋":{head:"他剋你:他對你較有壓力",desc:"他容易挑剔、要求多,你在他面前比較吃力。",how:"準備要更充分,用數據與實績說話;必要時找共同認識的人或主管陪同,緩衝壓力。"}
+};
+function geHtml(r){
+  return '<div class="nmge">'+["tian","ren","di","wai","zong"].map(function(k){
+    var v=r[k], a=n81(v), cls=a[0].indexOf("凶")>=0?"bad":a[0]==="半吉"?"mid":"good";
+    return '<div class="nmrow"><div class="nmk">'+GE_INFO[k][0]+'<small>'+GE_INFO[k][1]+'</small></div><div class="nmv">'+v+'<small>'+wx(v)+'</small></div>'+
+      '<div class="nmd"><span class="nmtag '+cls+'">'+a[0]+'</span> '+a[1]+'<br><small>'+a[2]+'</small></div></div>';
+  }).join("")+'</div>';
+}
+function sancai(r){
+  var t=wx(r.tian), p=wx(r.ren), d=wx(r.di), a=rel(t,p), b=rel(p,d), score=0, txt=[];
+  if(a==="生"||a==="比和"){ score++; txt.push("天格("+t+")"+(a==="生"?"生":"助")+"人格("+p+"):得長輩、上級提攜"); }
+  else if(a==="剋"){ score--; txt.push("天格剋人格:承受上面壓力較大,宜培養抗壓力"); }
+  else txt.push("人格與天格互動普通");
+  if(b==="生"||b==="比和"){ score++; txt.push("人格("+p+")"+(b==="生"?"生":"合")+"地格("+d+"):基礎穩固、部屬與家庭助力"); }
+  else if(b==="被剋"){ score--; txt.push("地格剋人格:基礎易動搖,宜穩紮穩打"); }
+  else if(b==="剋") txt.push("人格剋地格:掌控力強,宜多體恤部屬");
+  else if(b==="被生"){ score++; txt.push("地格生人格:根基給他源源不絕的支援"); }
+  return { combo:t+"・"+p+"・"+d, level: score>=2?"大吉":score===1?"吉":score===0?"平":"須注意", text:txt };
+}
+function luckCount(r){ return ["ren","di","wai","zong"].filter(function(k){ return n81(r[k])[0].indexOf("吉")>=0 && n81(r[k])[0]!=="半吉"; }).length; }
+/** 組出完整分析(對方;有我的姓名就加雙人對照) */
+function nameReport(their, mine){
+  var R=wuge(their), P=WX_PROFILE[wx(R.ren)], sc=sancai(R);
+  var o={ R:R, P:P, sc:sc, wxRen:wx(R.ren) };
+  if(mine){
+    var M=wuge(mine), rl=rel(wx(M.ren), wx(R.ren));
+    o.M=M; o.rel=rl; o.adv=REL_ADVICE[rl];
+    var risk=[];
+    if(n81(R.di)[0].indexOf("凶")>=0) risk.push("他的地格(基礎)較弱:付款條件、交貨與退換貨責任要寫清楚,可採分批出貨、分期收款");
+    if(n81(R.zong)[0].indexOf("凶")>=0) risk.push("他的總格起伏較大:長期合約加上可檢討條款,注意應收帳款");
+    if(n81(R.wai)[0].indexOf("凶")>=0) risk.push("他的外格(人際)較不穩:確認真正的決策者與窗口,重要事項要多方確認");
+    if(n81(R.ren)[0].indexOf("凶")>=0) risk.push("他的人格起伏較大:情緒或想法容易變,談定的條件當天就用訊息或書面確認");
+    if(!risk.length) risk.push("他的五格整體穩定,照一般流程即可;條款仍以書面為準");
+    o.risk=risk;
+    var good=luckCount(R);
+    o.summary = (good>=3?"運勢穩健、適合長期合作的對象":good>=2?"有潛力、需要用心經營的對象":"起伏較大、合作要多一層保障的對象")+
+      "。他是「"+P.type+"」,和你是「"+o.adv.head.split(":")[0]+"」的關係,"+o.adv.how.split(";")[0]+"。";
+  }
+  return o;
+}
+function reportText(o){
+  var R=o.R, L=[];
+  L.push("【姓名學分析】"+R.name+"(康熙筆畫 "+R.chars.map(function(c){return c.ch+c.n;}).join(" ")+")");
+  ["tian","ren","di","wai","zong"].forEach(function(k){ var a=n81(R[k]); L.push(GE_INFO[k][0]+" "+R[k]+"("+wx(R[k])+")"+a[0]+" "+a[1]); });
+  L.push("三才 "+o.sc.combo+":"+o.sc.level);
+  L.push("類型:"+o.P.type+"|"+o.P.trait);
+  if(o.M){ L.push("與我("+o.M.name+")的關係:"+o.adv.head+";"+o.adv.how);
+    L.push("談生意:"+o.P.nego); L.push("簽約:"+o.P.sign); L.push("注意:"+o.risk.join(";")); L.push("總評:"+o.summary); }
+  L.push("(姓名學僅供參考)");
+  return L.join("\n");
+}
+function myNameDefault(){ return ls("sc_myname") || (MY.card&&MY.card.name) || ""; }
+async function openNameView(name){
+  $("vName").classList.remove("hide"); $("vName").scrollTop=0;
+  $("nmTheir").value=name||""; $("nmMine").value=myNameDefault();
+  if(!$("nmMine").value){ try{ var r=await post({action:"myGet"}); if(r.ok&&r.card&&r.card.name){ MY.card=MY.card||r.card; $("nmMine").value=r.card.name; } }catch(e){} }
+  await renderNameView();
+}
+async function renderNameView(){
+  var their=$("nmTheir").value.replace(/\s/g,""), mine=$("nmMine").value.replace(/\s/g,"");
+  if(mine) ls("sc_myname",mine);
+  var box=$("nmOut");
+  if(!/^[㐀-鿿豈-﫿]{2,5}$/.test(their)){ box.innerHTML='<div class="stat">請輸入對方的中文姓名(2~5 個字)。英文名字無法做姓名學分析。</div>'; return; }
+  box.innerHTML='<div class="stat">計算中…</div>';
+  try{ await loadKX(); }catch(e){ box.innerHTML='<div class="stat">筆畫資料載入失敗,請確認網路</div>'; return; }
+  var okMine=/^[㐀-鿿豈-﫿]{2,5}$/.test(mine), o=nameReport(their, okMine?mine:"");
+  NM.last=o;
+  var chips=function(R,who){ return '<div class="nmchars">'+R.chars.map(function(c){ return '<span class="nmch"><b>'+esc(c.ch)+'</b><em>'+c.n+'</em><button data-kx="'+esc(c.ch)+'" data-d="-1">−</button><button data-kx="'+esc(c.ch)+'" data-d="1">＋</button></span>'; }).join("")+'</div>'; };
+  var h='';
+  h+='<div class="exp"><h3>'+esc(o.R.name)+' 的康熙筆畫</h3>'+chips(o.R)+'<p>姓名學用康熙字典筆畫(例:「氵」算水 4 畫、「艹」算艸 6 畫)。跟你參考的老師或書不同時,按 −/＋ 微調,會記住。</p></div>';
+  h+='<div class="exp"><h3>五格剖象</h3>'+geHtml(o.R)+'</div>';
+  h+='<div class="exp"><h3>三才配置:'+o.sc.combo+' <span class="nmtag '+(o.sc.level==="須注意"?"bad":o.sc.level==="平"?"mid":"good")+'">'+o.sc.level+'</span></h3><p>'+o.sc.text.join("<br>")+'</p></div>';
+  h+='<div class="exp"><h3>個性與做事風格:'+o.P.type+'(人格屬'+o.wxRen+')</h3><p>'+o.P.trait+'<br><b>他重視:</b>'+o.P.value+'</p></div>';
+  if(o.M){
+    h+='<div class="exp nmrel"><h3>🤝 你('+esc(o.M.name)+')與他的關係</h3><div class="nmvs"><span>你:人格 '+o.M.ren+'('+wx(o.M.ren)+')</span><b>'+o.adv.head+'</b><span>他:人格 '+o.R.ren+'('+o.wxRen+')</span></div><p>'+o.adv.desc+'<br>'+o.adv.how+'</p></div>';
+    h+='<div class="exp"><h3>💬 相處之道</h3><p><b>開場話題:</b>'+o.P.talk+'<br><b>地雷:</b>'+o.P.mine+'</p></div>';
+    h+='<div class="exp"><h3>💼 談生意的眉角</h3><p>'+o.P.nego+'</p></div>';
+    h+='<div class="exp"><h3>✍️ 簽約時機與注意事項</h3><p>'+o.P.sign+'</p><ul class="nmul">'+o.risk.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul></div>';
+    h+='<div class="exp nmsum"><h3>📌 總評</h3><p>'+o.summary+'</p></div>';
+  }else h+='<div class="exp"><p>填上「我的姓名」就會加上<b>你們兩人的相處之道、談生意與簽約眉角</b>。</p></div>';
+  h+='<p class="stat" style="text-align:center">姓名學僅供參考,實際仍以相處與交易狀況為準</p>';
+  box.innerHTML=h;
+  $("btnNmSave").classList.toggle("hide", !NM.cardOpen);
+}
+var NM={last:null, cardOpen:false};
+function nmAdjust(ch,d){ var f=kxFix(), cur=kxStroke(ch); f[ch]=Math.max(1,cur+d); ls("sc_kxfix",JSON.stringify(f)); renderNameView(); }
+async function nmShare(){
+  if(!NM.last) return; var t=reportText(NM.last);
+  try{ if(navigator.share){ await navigator.share({text:t}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  toast(await copyText(t) ? "✅ 分析已複製" : "無法分享");
+}
+function nmSaveNote(){
+  if(!NM.last || !S.cur) return;
+  var el=$("form").querySelector('[data-k="備註"]'); if(!el) return;
+  var o=NM.last, line="【姓名學】"+o.P.type+";與我:"+(o.adv?o.adv.head:"—")+"。"+(o.summary||"");
+  el.value=(el.value?el.value+"\n":"")+line; $("vName").classList.add("hide");
+  toast("✅ 已加到備註,記得按「儲存到雲端」");
+}
+
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
 function inAppName(){
   var ua=navigator.userAgent||"";
@@ -3199,7 +3407,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnMyCard"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -3233,6 +3441,13 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnNameCard").onclick=function(){ NM.cardOpen=true; openNameView(formData()["姓名"]); };
+$("btnNameMenu").onclick=function(){ NM.cardOpen=false; openNameView(""); };
+$("btnNmBack").onclick=function(){ $("vName").classList.add("hide"); };
+$("btnNmGo").onclick=renderNameView;
+$("btnNmShare").onclick=nmShare;
+$("btnNmSave").onclick=nmSaveNote;
+$("nmOut").addEventListener("click",function(e){ var b=e.target.closest("[data-kx]"); if(b) nmAdjust(b.dataset.kx, +b.dataset.d); });
 $("btnMyCard").onclick=openMyCard;
 $("btnMyBack").onclick=function(){ $("vMyCard").classList.add("hide"); };
 $("myForm").addEventListener("input",renderMyPreview);
