@@ -170,18 +170,18 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .cam{position:fixed;inset:0;z-index:30;background:#000;color:#fff;overflow:hidden;touch-action:none}
 .cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cam .shade{position:absolute;border-radius:16px;box-shadow:0 0 0 200vmax rgba(8,14,26,.58);pointer-events:none;transition:border-color .2s}
-.cam .shade i{position:absolute;width:30px;height:30px;border:4px solid #d9b98a}
+.cam .shade i{position:absolute;width:30px;height:30px;border:4px solid var(--acc2)}
 .cam .shade i.a{left:-3px;top:-3px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
 .cam .shade i.b{right:-3px;top:-3px;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
 .cam .shade i.c{left:-3px;bottom:-3px;border-right:0;border-top:0;border-radius:0 0 0 14px}
 .cam .shade i.d{right:-3px;bottom:-3px;border-left:0;border-top:0;border-radius:0 0 14px 0}
 .cam .shade.ready i{border-color:#4ade80}
 .cam .shade .prog{position:absolute;left:12%;right:12%;bottom:-16px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);overflow:hidden}
-.cam .shade .prog b{display:block;height:100%;width:0;background:#d9b98a;transition:width .15s}
+.cam .shade .prog b{display:block;height:100%;width:0;background:var(--acc2);transition:width .15s}
 .cam .top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
 .cam .top .ttl{flex:1;font-family:"Noto Serif TC","Songti TC",serif;font-size:17px;letter-spacing:1px;text-align:center}
 .cam .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:18px;padding:7px 12px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
-.cam .pill.on{background:#d9b98a;color:#13233d;border-color:#d9b98a;font-weight:700}
+.cam .pill.on{background:var(--acc2);color:var(--pri);border-color:var(--acc2);font-weight:700}
 .cam .hint{position:absolute;left:0;right:0;text-align:center;font-size:16px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .cam .bot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:18px 26px calc(env(safe-area-inset-bottom) + 22px);background:linear-gradient(transparent,rgba(0,0,0,.6))}
 .cam .shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0}
@@ -199,22 +199,22 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .crop .bot{justify-content:center;gap:10px}
 .crop .bot .pill{padding:10px 12px;font-size:15px;white-space:nowrap;flex:none}
 .crop .bot{gap:8px;padding-left:12px;padding-right:12px}
-.crop .bot .ok{background:#d9b98a;color:#13233d;border-color:#d9b98a;font-weight:700;padding:10px 22px}
-.cam .fring{position:absolute;width:72px;height:72px;border:2px solid #d9b98a;border-radius:14px;transform:translate(-50%,-50%) scale(1.35);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.crop .bot .ok{background:var(--acc2);color:var(--pri);border-color:var(--acc2);font-weight:700;padding:10px 22px}
+.cam .fring{position:absolute;width:72px;height:72px;border:2px solid var(--acc2);border-radius:14px;transform:translate(-50%,-50%) scale(1.35);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 .cam .fring.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 /* ===== v1.6 商業風格:深海藍 × 香檳金 ===== */
 :root{ --bg:#f5f4f0; --card:#fff; --ink:#1b2333; --sub:#6b7280; --line:#e6e3dc;
   --pri:#13233d; --pri2:#1d3557; --acc:#b8925a; --acc2:#d9b98a; --chip:#f1ebe0; --warn:#a1621b; --danger:#b42318; }
 html,body{background:var(--bg)}
 .serif,header h1,.login h2,.exp h3,.share h3,#mergeNote b{font-family:"Noto Serif TC","Songti TC","STSong",serif}
-header{background:linear-gradient(180deg,var(--pri2),var(--pri));box-shadow:inset 0 -1px 0 rgba(184,146,90,.45)}
+header{background:linear-gradient(180deg,var(--pri2),var(--pri));box-shadow:inset 0 -1px 0 var(--acc)}
 header h1{letter-spacing:2px;font-weight:700}
 header h1 .brand{box-shadow:0 0 0 1px rgba(217,185,138,.55)}
 header .ic{background:transparent;border:1px solid rgba(255,255,255,.24);display:inline-flex;align-items:center;gap:5px;padding:7px 10px}
 header .ic svg{color:var(--acc2)}
 .ver{background:transparent;border:1px solid var(--acc);color:var(--acc2);font-family:-apple-system,sans-serif}
 .ver.warn{background:var(--acc);color:var(--pri)}
-.inp{border-color:var(--line)} .inp:focus{outline:2px solid rgba(184,146,90,.35);border-color:var(--acc)}
+.inp{border-color:var(--line)} .inp:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
 .btn{background:var(--pri);display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.5px;box-shadow:0 2px 6px rgba(19,35,61,.18)}
 .btn svg{color:var(--acc2);flex:none}
 .btn.sec{background:#fff;color:var(--pri);border:1px solid #cdd3dc;box-shadow:none}
@@ -239,18 +239,38 @@ header .ic svg{color:var(--acc2)}
 .quick button svg{color:var(--acc2)}
 .quick button:disabled{opacity:.3}
 .row a.act2{width:34px;height:34px;border-radius:50%;background:var(--pri);color:var(--acc2);display:flex;align-items:center;justify-content:center;flex:none}
-.badge{background:var(--chip);color:var(--pri)} .badge.ocr{background:#fbf3e6;color:var(--warn)}
+.badge{background:var(--chip);color:var(--pri)} .badge.ocr{background:var(--chip);color:var(--warn)}
 .menu button{display:flex;align-items:center;gap:10px} .menu svg{color:var(--acc);flex:none}
 .login h2{font-size:28px;letter-spacing:4px;color:var(--pri)}
 .login .logo img{box-shadow:0 10px 24px rgba(19,35,61,.3)}
 .sides button.on{background:var(--pri);border-color:var(--pri)}
 .exp,.form,.mrow{border-color:var(--line)}
 .dist{color:var(--pri)}
-.dupbar{background:#fbf6ee;border-color:#ead9bd}
+.dupbar{background:var(--chip);border-color:var(--line)}
 .mini.pri{background:var(--pri);border-color:var(--pri)}
-.tag{background:#fbf3e6;color:var(--warn)}
+.tag{background:var(--chip);color:var(--warn)}
 .vbar .ic svg,.vbar .sides svg{color:var(--acc2)}
 .ic svg,.btn svg,.fab svg,.fab2 svg,.menu svg,.quick svg,.qa svg,.act2 svg{display:block}
+
+/* ===== v2.0 風格模板 ===== */
+.tlist{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.tcard{background:#fff;border:1.5px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.tcard.on{border-color:var(--tacc);box-shadow:0 0 0 3px color-mix(in srgb,var(--tacc) 25%,transparent)}
+.tpv{padding:0 0 12px;position:relative}
+.tph{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff}
+.tph img{width:24px;height:24px;border-radius:6px}
+.tph b{font-family:"Noto Serif TC","Songti TC",serif;letter-spacing:2px;font-size:15px}
+.tph em{font-style:normal;font-size:10px;border:1px solid;border-radius:8px;padding:0 6px;margin-left:2px}
+.tpb{display:flex;align-items:center;gap:6px;padding:10px 12px 0}
+.tpc{font-size:11px;border-radius:12px;padding:3px 10px;color:#fff;border:1px solid transparent}
+.tpc+.tpc{background:#fff;margin-right:auto}
+.tpd{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.tpf{position:absolute;right:12px;top:52px;color:#fff;font-size:12px;font-weight:700;border:1px solid;border-radius:16px;padding:5px 11px;display:flex;gap:5px;align-items:center;display:none}
+.tt{padding:10px 14px 14px;border-top:1px solid var(--line)}
+.tn{font-family:"Noto Serif TC","Songti TC",serif;font-size:19px;font-weight:700;letter-spacing:2px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.tuse{font-family:-apple-system,sans-serif;font-size:12px;letter-spacing:0;color:var(--tacc);border:1px solid var(--tacc);border-radius:10px;padding:1px 8px;display:inline-flex;align-items:center;gap:3px}
+.ts{font-size:13px;color:var(--tacc);margin-top:2px;font-weight:600}
+.td{font-size:14px;color:var(--sub);margin-top:4px;line-height:1.55}
 </style>
 </head>
 <body>
@@ -288,6 +308,7 @@ header .ic svg{color:var(--acc2)}
     <button id="btnDups" data-ic="copy">找重複名片</button>
     <button id="btnReload" data-ic="refresh">重新整理</button>
     <button id="btnLogout" data-ic="logout">登出</button>
+    <button id="btnTheme" data-ic="palette">風格模板</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
@@ -367,6 +388,18 @@ header .ic svg{color:var(--acc2)}
       <a class="btn sec" id="btnSheet" data-ic="sheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
     </div>
     <p class="stat" style="margin-top:14px">※ 在 LINE 裡開這個網頁可能無法下載,請改用 Safari / Chrome 開啟。</p>
+  </div>
+</div>
+
+<!-- v2.0 風格模板 -->
+<div id="vTheme" class="sheet hide">
+  <header>
+    <button class="ic" id="btnThemeBack" data-ic="back">返回</button>
+    <h1>風格模板</h1>
+  </header>
+  <div class="wrap">
+    <div class="stat" style="line-height:1.6">選一款喜歡的商業配色,整個 App(標題、按鈕、logo、相機框)會立刻換上;設定存在這支手機。</div>
+    <div id="themeList" class="tlist"></div>
   </div>
 </div>
 
@@ -493,7 +526,7 @@ header .ic svg{color:var(--acc2)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.9", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.10", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -530,7 +563,8 @@ var ICONS={
  trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
  check:'<path d="M20 6 9 17l-5-5"/>',
  x:'<path d="M18 6 6 18M6 6l12 12"/>',
- crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>'
+ crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+ palette:'<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>'
 };
 function ic(n,sz){ sz=sz||18; return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[n]||"")+'</svg>'; }
 /** 有 data-ic 的元素:前面加圖示,文字包進 .lb(之後用 setLabel 改字不會把圖示洗掉) */
@@ -1081,15 +1115,15 @@ function drawCrop(){
   x.save(); x.beginPath(); x.rect(0,0,G.W,G.H); x.moveTo(P[0].x,P[0].y); for(var i=1;i<4;i++) x.lineTo(P[i].x,P[i].y); x.closePath();
   x.fillStyle="rgba(5,10,20,.55)"; x.fill("evenodd"); x.restore();
   x.beginPath(); x.moveTo(P[0].x,P[0].y); for(i=1;i<4;i++) x.lineTo(P[i].x,P[i].y); x.closePath();
-  x.lineWidth=2; x.strokeStyle="#d9b98a"; x.stroke();
-  P.forEach(function(p,i){ x.beginPath(); x.arc(p.x,p.y,CROP.drag===i?15:12,0,Math.PI*2); x.fillStyle="rgba(255,255,255,.92)"; x.fill(); x.lineWidth=3; x.strokeStyle="#b8925a"; x.stroke(); });
+  x.lineWidth=2; x.strokeStyle=cssVar("--acc2"); x.stroke();
+  P.forEach(function(p,i){ x.beginPath(); x.arc(p.x,p.y,CROP.drag===i?15:12,0,Math.PI*2); x.fillStyle="rgba(255,255,255,.92)"; x.fill(); x.lineWidth=3; x.strokeStyle=cssVar("--acc"); x.stroke(); });
   if(CROP.drag>=0){   // 放大鏡:手指會擋住角落,放大顯示在旁邊
     var p=P[CROP.drag], R=54, Z=2.6, cx=p.x, cy=p.y-R-36; if(cy<R+4) cy=p.y+R+36;
     x.save(); x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.clip();
     x.fillStyle="#000"; x.fillRect(cx-R,cy-R,R*2,R*2);
     var sx=(p.x-G.ox)/G.s, sy=(p.y-G.oy)/G.s;
     x.drawImage(CROP.src, sx-R/(G.s*Z), sy-R/(G.s*Z), 2*R/(G.s*Z), 2*R/(G.s*Z), cx-R, cy-R, 2*R, 2*R);
-    x.strokeStyle="#d9b98a"; x.lineWidth=1.5; x.beginPath(); x.moveTo(cx-12,cy); x.lineTo(cx+12,cy); x.moveTo(cx,cy-12); x.lineTo(cx,cy+12); x.stroke();
+    x.strokeStyle=cssVar("--acc2"); x.lineWidth=1.5; x.beginPath(); x.moveTo(cx-12,cy); x.lineTo(cx+12,cy); x.moveTo(cx,cy-12); x.lineTo(cx,cy+12); x.stroke();
     x.restore(); x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.lineWidth=3; x.strokeStyle="#fff"; x.stroke();
   }
 }
@@ -1204,6 +1238,77 @@ async function backFile(file){
     toast(n ? ("✅ 背面已辨識,補上 "+n+" 個空欄位") : "✅ 背面已加入(正面資料都齊了,沒有覆蓋)");
   }catch(e){ toast("背面辨識失敗,照片仍會一起存:"+e.message); }
   b.disabled=false; renderSides(S.cur===cur ? cur.side : "f");
+}
+
+/* ===== v2.0 風格模板(10 款高質感商業配色) ===== */
+var THEMES=[
+ {id:"navy",    name:"鴻圖大展", sub:"深海藍 × 香檳金", desc:"穩健可信的金融顧問質感,談合作一開場就專業。",
+  pri:"#13233d", pri2:"#1d3557", lg:"#2b4a78", acc:"#b8925a", acc2:"#d9b98a", chip:"#f1ebe0", bg:"#f5f4f0", line:"#e6e3dc", ink:"#1b2333", sub2:"#6b7280"},
+ {id:"emerald", name:"財源廣進", sub:"墨綠 × 赤金", desc:"沉穩的綠象徵豐收與成長,最適合農業與通路經營。",
+  pri:"#0e3a2f", pri2:"#155443", lg:"#1f6b55", acc:"#b8964f", acc2:"#dcc48e", chip:"#eef0e4", bg:"#f4f5f0", line:"#e1e5dc", ink:"#16241f", sub2:"#66706a"},
+ {id:"burgundy",name:"鴻運當頭", sub:"酒紅 × 玫瑰金", desc:"熱情有分寸、貴氣滿滿,好運跟著名片走。",
+  pri:"#4a1420", pri2:"#6b1d2e", lg:"#8a2a3e", acc:"#b9826a", acc2:"#e3bba6", chip:"#f6ebe6", bg:"#f7f3f1", line:"#ebe1dd", ink:"#2a1418", sub2:"#75666a"},
+ {id:"purple",  name:"紫氣東來", sub:"深紫 × 琥珀金", desc:"尊榮典雅、貴人運旺,適合高端客戶往來。",
+  pri:"#2b1d47", pri2:"#3f2b66", lg:"#57418a", acc:"#b8964f", acc2:"#dfc78f", chip:"#f0ecf4", bg:"#f6f4f8", line:"#e6e1ec", ink:"#1f1a2b", sub2:"#6d6878"},
+ {id:"obsidian",name:"黑金致勝", sub:"曜石黑 × 金", desc:"俐落頂級的質感,氣場全開、所向披靡。",
+  pri:"#141414", pri2:"#2a2a2a", lg:"#3d3d3d", acc:"#b8944a", acc2:"#e2c887", chip:"#f2eee3", bg:"#f5f4f1", line:"#e5e2da", ink:"#161616", sub2:"#6b6b6b"},
+ {id:"teal",    name:"青雲直上", sub:"孔雀藍 × 霧銀", desc:"清新專業、步步高升,創新團隊首選。",
+  pri:"#0c3a44", pri2:"#12545f", lg:"#1b6f7c", acc:"#7e959e", acc2:"#cfdde2", chip:"#e7f0f1", bg:"#f2f6f6", line:"#dde7e8", ink:"#13252a", sub2:"#61737a"},
+ {id:"graphite",name:"金石為開", sub:"石墨灰 × 琥珀橙", desc:"務實堅定、誠意十足,再難談的生意也能打開。",
+  pri:"#2e3338", pri2:"#444b52", lg:"#5b636b", acc:"#c08035", acc2:"#e6b878", chip:"#f4ece1", bg:"#f5f5f3", line:"#e4e3df", ink:"#202326", sub2:"#6c7075"},
+ {id:"cocoa",   name:"旭日東昇", sub:"可可棕 × 晨曦橘", desc:"溫暖有活力,每天都是新的開始。",
+  pri:"#3b2418", pri2:"#573626", lg:"#74492f", acc:"#cf7f34", acc2:"#f0b878", chip:"#f8ece0", bg:"#f8f4ef", line:"#ece2d8", ink:"#2b1d15", sub2:"#786a60"},
+ {id:"cobalt",  name:"海納百川", sub:"寶藍 × 冰銀", desc:"大氣包容、人脈四通八達,適合開拓業務。",
+  pri:"#12307a", pri2:"#1d46a3", lg:"#2d5fcf", acc:"#8393ad", acc2:"#d4dcea", chip:"#e8edf7", bg:"#f3f5fa", line:"#dfe4ee", ink:"#141d33", sub2:"#63708a"},
+ {id:"forest",  name:"松柏長青", sub:"森林綠 × 古銅", desc:"長久經營、基業長青,客戶關係越陳越香。",
+  pri:"#1f3326", pri2:"#2d4a37", lg:"#3b5f47", acc:"#a8784a", acc2:"#cfa57a", chip:"#f1ebe2", bg:"#f5f4ef", line:"#e3e2d9", ink:"#1a241d", sub2:"#687064"}
+];
+function curTheme(){ var id=ls("sc_theme")||"navy"; return THEMES.find(function(t){return t.id===id;})||THEMES[0]; }
+function logoSvg(t){
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'+
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+t.lg+'"/><stop offset="1" stop-color="'+t.pri+'"/></linearGradient></defs>'+
+    '<rect width="512" height="512" rx="112" fill="url(#g)"/>'+
+    '<g fill="none" stroke="'+t.acc2+'" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><path d="M88 168V112h56"/><path d="M368 112h56v56"/><path d="M424 344v56h-56"/><path d="M144 400H88v-56"/></g>'+
+    '<g transform="rotate(-8 256 256)"><rect x="120" y="170" width="272" height="172" rx="22" fill="#fff"/>'+
+    '<circle cx="182" cy="236" r="30" fill="'+t.pri+'"/><path d="M140 312c8-28 26-40 42-40s34 12 42 40z" fill="'+t.pri+'"/>'+
+    '<rect x="242" y="214" width="116" height="18" rx="9" fill="'+t.pri+'"/><rect x="242" y="248" width="88" height="14" rx="7" fill="'+t.acc2+'"/>'+
+    '<rect x="242" y="276" width="104" height="14" rx="7" fill="#cbd5d3"/></g>'+
+    '<path d="M402 70l14 34 34 14-34 14-14 34-14-34-34-14 34-14z" fill="'+t.acc2+'"/></svg>';
+}
+function logoURL(t){ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSvg(t)); }
+function applyTheme(t){
+  var r=document.documentElement.style;
+  [["--pri","pri"],["--pri2","pri2"],["--acc","acc"],["--acc2","acc2"],["--chip","chip"],["--bg","bg"],["--line","line"],["--ink","ink"],["--sub","sub2"]]
+    .forEach(function(p){ r.setProperty(p[0], t[p[1]]); });
+  var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",t.pri);
+  var u=logoURL(t);
+  document.querySelectorAll("img.brand, .login .logo img").forEach(function(i){ i.src=u; });
+  var fav=document.querySelector('link[rel="icon"][type="image/svg+xml"]'); if(fav) fav.href=u;
+  S.theme=t;
+}
+function cssVar(n){ return (getComputedStyle(document.documentElement).getPropertyValue(n)||"").trim(); }
+function themePreview(t){
+  return '<div class="tpv" style="background:'+t.bg+'">'+
+    '<div class="tph" style="background:linear-gradient(180deg,'+t.pri2+','+t.pri+')"><img src="'+logoURL(t)+'" alt=""><b>超級名片</b>'+
+      '<em style="color:'+t.acc2+';border-color:'+t.acc+'">v'+APP_VER+'</em></div>'+
+    '<div class="tpb"><span class="tpc" style="background:'+t.pri+'">全部</span><span class="tpc" style="color:'+t.acc+';border-color:'+t.acc+'">客戶</span>'+
+      '<span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("phone",13)+'</span><span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("nav",13)+'</span>'+
+      '<span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("mail",13)+'</span></div>'+
+    '<div class="tpf" style="background:'+t.pri+';border-color:'+t.acc+'"><span style="color:'+t.acc2+'">'+ic("camera",14)+'</span>掃名片</div></div>';
+}
+function openThemes(){
+  var cur=curTheme().id;
+  $("themeList").innerHTML=THEMES.map(function(t){
+    return '<div class="tcard'+(t.id===cur?' on':'')+'" data-theme="'+t.id+'" style="--tacc:'+t.acc+'">'+themePreview(t)+
+      '<div class="tt"><div class="tn">'+esc(t.name)+(t.id===cur?'<span class="tuse">'+ic("check",13)+' 使用中</span>':'')+'</div>'+
+      '<div class="ts">'+esc(t.sub)+'</div><div class="td">'+esc(t.desc)+'</div></div></div>';
+  }).join("");
+  $("vTheme").classList.remove("hide"); $("vTheme").scrollTop=0;
+}
+function pickTheme(id){
+  var t=THEMES.find(function(x){return x.id===id;}); if(!t) return;
+  ls("sc_theme",t.id); applyTheme(t); openThemes();
+  toast("已換成「"+t.name+"」");
 }
 
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
@@ -1967,7 +2072,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){ var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList(); });
 $("fCity").addEventListener("change",function(){ S.fcity=this.value; renderList(); });
 $("form").addEventListener("click",function(e){ if(e.target.closest("#tagpick")) onTagPick(e); });
@@ -1991,6 +2096,9 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnTheme").onclick=openThemes;
+$("btnThemeBack").onclick=function(){ $("vTheme").classList.add("hide"); };
+$("themeList").addEventListener("click",function(e){ var c=e.target.closest("[data-theme]"); if(c) pickTheme(c.dataset.theme); });
 $("btnExport").onclick=openExport;
 $("btnExportBack").onclick=function(){ $("vExport").classList.add("hide"); };
 $("btnXlsx").onclick=exportXlsx;
@@ -2025,6 +2133,7 @@ $("form").addEventListener("click",function(e){
 
 /* ===== 啟動 ===== */
 $("gasUrl").value=gasUrl();
+applyTheme(curTheme());
 decorateIcons();
 initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
