@@ -1,6 +1,6 @@
 {
-  "name": "業務超級名片王",
-  "short_name": "業務超級名片王",
+  "name": "超級業務名片王",
+  "short_name": "超級業務名片王",
   "description": "拍名片→自動分欄→存進自己的 Google 雲端",
   "start_url": "./super_card.html",
   "scope": "./",

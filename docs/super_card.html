@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#13233d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="業務超級名片王">
-<title>業務超級名片王</title>
+<meta name="apple-mobile-web-app-title" content="超級業務名片王">
+<title>超級業務名片王</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -263,6 +263,28 @@ header .ic svg{color:var(--acc2)}
 .mrowi select{flex:none;width:118px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
 header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;letter-spacing:0;color:var(--acc2);margin-left:6px;vertical-align:middle;max-width:96px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini.pri{color:#fff}
+/* ===== 我的數位名片 ===== */
+.mycv{width:100%;height:auto;aspect-ratio:1050/600;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:block;background:#fff}
+.myrow{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--sub);margin-top:6px}
+.myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
+.shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.shareg .btn{padding:11px 8px;font-size:15px}
+.pubsw{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;font-size:15px}
+.pubsw input{width:22px;height:22px;flex:none;margin-top:2px}
+.pubsw small{color:var(--sub);font-size:12.5px}
+.myf{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);min-height:46px}
+.myf:last-child{border-bottom:0}
+.myf span{width:118px;flex:none;font-size:13px;color:var(--sub)}
+.myf input{flex:1;min-width:0;border:0;outline:0;font-size:16px;padding:10px 0;background:transparent}
+.imgrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.imgrow img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+.imgrow img.logo{border-radius:8px;object-fit:contain;width:84px;background:#fff}
+.qrbox{position:fixed;inset:0;z-index:45;background:rgba(10,15,25,.7);display:flex;align-items:center;justify-content:center;padding:20px}
+.qrin{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px}
+.qrin canvas{width:100%;height:auto;display:block;margin:10px 0}
+.qrn{font-family:"Noto Serif TC","Songti TC",serif;font-size:22px;font-weight:700;text-align:center;color:var(--ink)}
+.cvacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cvacts .btn{padding:11px 8px;font-size:15px;text-decoration:none}
 /* ===== 群組管理 ===== */
 .gadd{display:flex;gap:8px}
 .gadd .inp{flex:1}
@@ -302,8 +324,8 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
-  <div class="logo"><img src="super_card_logo.svg" alt="業務超級名片王"></div>
-  <h2>業務超級名片王</h2>
+  <div class="logo"><img src="super_card_logo.svg" alt="超級業務名片王"></div>
+  <h2>超級業務名片王</h2>
   <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
   <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
   <div style="height:10px"></div>
@@ -320,11 +342,12 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 <!-- 主畫面 -->
 <div id="vMain" class="hide">
   <header>
-    <h1><img class="brand" src="super_card_logo.svg" alt="">業務超級名片王<span class="ver" id="verBadge"></span></h1>
+    <h1><img class="brand" src="super_card_logo.svg" alt="">超級業務名片王<span class="ver" id="verBadge"></span></h1>
     <button class="ic" id="btnMap" title="地圖" data-ic="map">地圖</button>
     <button class="ic" id="btnMenu" title="更多" data-ic="menu"></button>
   </header>
   <div id="menu" class="menu hide">
+    <button id="btnMyCard" data-ic="user">我的數位名片</button>
     <button id="btnExport" data-ic="download">匯入 / 匯出</button>
     <button id="btnDups" data-ic="copy">找重複名片</button>
     <button id="btnReload" data-ic="refresh">重新整理</button>
@@ -454,6 +477,57 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   </div>
 </div>
 
+<!-- 我的數位名片 -->
+<div id="vMyCard" class="sheet hide" style="z-index:13">
+  <header>
+    <button class="ic" id="btnMyBack" data-ic="back">返回</button>
+    <h1>我的數位名片</h1>
+  </header>
+  <div class="wrap">
+    <canvas id="myCv" class="mycv"></canvas>
+    <div class="sides" style="margin-top:10px"><button type="button" data-side2="zh" class="on">中文面</button><button type="button" data-side2="en">英文面</button></div>
+    <div class="chips" id="myDesigns" style="margin-top:10px;flex-wrap:wrap"></div>
+    <label class="myrow"><input type="checkbox" id="myColorUse"> 自訂名片主色 <input type="color" id="myColor"></label>
+    <div class="shareg">
+      <button class="btn" id="btnMyQR" data-ic="zoom">QR Code</button>
+      <button class="btn" id="btnMyLink" data-ic="share">分享連結</button>
+      <button class="btn sec" id="btnMyImg" data-ic="image">存成圖片</button>
+      <button class="btn sec" id="btnMyVcf" data-ic="userplus">聯絡人卡片</button>
+    </div>
+    <label class="pubsw"><input type="checkbox" id="myPub"> <span><b>公開我的名片</b><br><small>開啟後,掃 QR Code 或點連結的人才看得到這一張(只有這張,看不到你的其他名片)</small></span></label>
+    <div id="myStat" class="stat" style="margin-top:8px"></div>
+    <div class="exp"><h3>大頭照與公司 Logo</h3>
+      <div class="imgrow"><img id="myAvatarPrev" class="hide" alt=""><button class="mini" id="btnMyAvatar">換大頭照</button><button class="mini" id="btnMyAvatarX">移除</button></div>
+      <div class="imgrow"><img id="myLogoPrev" class="hide logo" alt=""><button class="mini" id="btnMyLogo">換公司 Logo</button><button class="mini" id="btnMyLogoX">移除</button></div>
+    </div>
+    <div id="myForm"></div>
+    <div class="acts"><button class="btn" id="btnMySave" data-ic="save">儲存我的名片</button></div>
+  </div>
+</div>
+
+<!-- QR Code 全螢幕 -->
+<div id="vQR" class="qrbox hide">
+  <div class="qrin">
+    <div id="qrName" class="qrn"></div>
+    <canvas id="qrCv"></canvas>
+    <div class="stat" style="text-align:center">請對方用手機相機掃描,就能看到並存下我的名片</div>
+    <div class="duo"><button class="btn sec" id="btnQRShare" data-ic="share">分享連結</button><button class="btn" id="btnQRClose" data-ic="x">關閉</button></div>
+  </div>
+</div>
+
+<!-- 對方看到的名片頁(免登入) -->
+<div id="vCardView" class="sheet hide" style="z-index:40">
+  <header><h1>數位名片</h1></header>
+  <div class="wrap">
+    <div id="cvStat" class="stat"></div>
+    <canvas id="cvCv" class="mycv"></canvas>
+    <div class="sides hide" id="cvSideBox" style="margin-top:10px"><button type="button" data-vside="zh" class="on">中文面</button><button type="button" data-vside="en">英文面</button></div>
+    <button class="btn" id="btnCvSave" data-ic="userplus" style="margin-top:14px">存到我的通訊錄</button>
+    <div id="cvActs" class="cvacts"></div>
+    <a class="stat" id="cvMake" style="display:block;text-align:center;margin-top:22px;color:var(--acc)">用「超級業務名片王」也做一張我的數位名片 →</a>
+  </div>
+</div>
+
 <!-- 名片簿(多使用者) -->
 <div id="vBooks" class="sheet hide" style="z-index:15">
   <header>
@@ -474,9 +548,9 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
       <summary style="font-weight:700;font-size:16px;cursor:pointer">🆕 新使用者:建立自己的名片資料庫(約 5 分鐘)</summary>
       <ol style="padding-left:20px;line-height:1.8;font-size:14px;color:var(--ink)">
         <li>用電腦或手機登入<b>你自己的 Google 帳號</b>,按下面按鈕 →「建立副本」,資料庫就會存到你自己的雲端硬碟(可以改名、搬到任何資料夾)。</li>
-        <li>打開剛複製的試算表,上方選單「<b>業務超級名片王 → ① 初始化</b>」,照畫面授權。會顯示你的<b>存取碼</b>。</li>
+        <li>打開剛複製的試算表,上方選單「<b>超級業務名片王 → ① 初始化</b>」,照畫面授權。會顯示你的<b>存取碼</b>。</li>
         <li>選單「擴充功能 → Apps Script」→ 右上「<b>部署 → 新增部署作業</b>」→ 類型選「網頁應用程式」→ 執行身分「我」、誰可以存取「<b>所有人</b>」→ 部署。</li>
-        <li>回到試算表,選單「<b>業務超級名片王 → ② 顯示連線資訊</b>」→ 用手機點「加入業務超級名片王」連結,輸入存取碼就完成。</li>
+        <li>回到試算表,選單「<b>超級業務名片王 → ② 顯示連線資訊</b>」→ 用手機點「加入超級業務名片王」連結,輸入存取碼就完成。</li>
       </ol>
       <a class="btn" id="btnTplCopy" data-ic="copy" target="_blank" rel="noopener" style="text-decoration:none">複製名片資料庫範本到我的雲端</a>
       <p style="font-size:13px;color:var(--sub);margin-top:8px">名片和照片都只存在你自己的 Google 雲端,其他人看不到;全部免費。</p>
@@ -632,7 +706,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.14", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.15", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1404,7 +1478,7 @@ function applyTheme(t){
 function cssVar(n){ return (getComputedStyle(document.documentElement).getPropertyValue(n)||"").trim(); }
 function themePreview(t){
   return '<div class="tpv" style="background:'+t.bg+'">'+
-    '<div class="tph" style="background:linear-gradient(180deg,'+t.pri2+','+t.pri+')"><img src="'+logoURL(t)+'" alt=""><b>業務超級名片王</b>'+
+    '<div class="tph" style="background:linear-gradient(180deg,'+t.pri2+','+t.pri+')"><img src="'+logoURL(t)+'" alt=""><b>超級業務名片王</b>'+
       '<em style="color:'+t.acc2+';border-color:'+t.acc+'">v'+APP_VER+'</em></div>'+
     '<div class="tpb"><span class="tpc" style="background:'+t.pri+'">全部</span><span class="tpc" style="color:'+t.acc+';border-color:'+t.acc+'">客戶</span>'+
       '<span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("phone",13)+'</span><span class="tpd" style="background:'+t.pri+';color:'+t.acc2+'">'+ic("nav",13)+'</span>'+
@@ -1453,7 +1527,7 @@ function toCSV(rows){
 }
 function exportCsv(){
   var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
-  download(new Blob([toCSV(rowsFor(cs,false))],{type:"text/csv;charset=utf-8"}), "業務超級名片王_"+today()+".csv");
+  download(new Blob([toCSV(rowsFor(cs,false))],{type:"text/csv;charset=utf-8"}), "超級業務名片王_"+today()+".csv");
   toast("✅ 已匯出 "+cs.length+" 張(CSV)");
 }
 function ioProg(id, p, t){ var el=$(id); el.classList.toggle("hide", p==null); if(p!=null){ el.querySelector("b").style.width=Math.round(p*100)+"%"; el.querySelector("span").textContent=t||""; } }
@@ -1490,10 +1564,10 @@ async function exportZip(){
     zip.file("名片.xlsx", XLSX.write(wb,{bookType:"xlsx",type:"array"}));
     zip.file("名片.csv", toCSV(rows));
     zip.file("通訊錄.vcf", cs.map(function(c){return toVcard(c,true);}).join("\r\n")+"\r\n");
-    zip.file("說明.txt", "業務超級名片王 完整備份 "+today()+"\r\n共 "+cs.length+" 張名片,照片 "+(jobs.length-miss)+" 張("+(full?"原圖":"縮圖")+")。\r\n"+
-      "名片.xlsx / 名片.csv 的「照片檔名」欄對應 photos 資料夾,用業務超級名片王「匯入」選這個 ZIP 就能連照片一起還原。\r\n通訊錄.vcf 可直接匯入手機或 Google 通訊錄。\r\n");
+    zip.file("說明.txt", "超級業務名片王 完整備份 "+today()+"\r\n共 "+cs.length+" 張名片,照片 "+(jobs.length-miss)+" 張("+(full?"原圖":"縮圖")+")。\r\n"+
+      "名片.xlsx / 名片.csv 的「照片檔名」欄對應 photos 資料夾,用超級業務名片王「匯入」選這個 ZIP 就能連照片一起還原。\r\n通訊錄.vcf 可直接匯入手機或 Google 通訊錄。\r\n");
     var blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"},function(m){ ioProg("xProg",0.88+0.12*m.percent/100,"壓縮中 "+Math.round(m.percent)+"%"); });
-    download(blob, "業務超級名片王_完整備份_"+today()+"_"+cs.length+"張.zip");
+    download(blob, "超級業務名片王_完整備份_"+today()+"_"+cs.length+"張.zip");
     ioProg("xProg",1,"完成"); toast("✅ 已匯出 "+cs.length+" 張+照片 "+(jobs.length-miss)+" 張");
   }catch(e){ toast("匯出失敗:"+e.message); }
   b.disabled=false; setTimeout(function(){ ioProg("xProg",null); },2500);
@@ -1617,7 +1691,7 @@ function vcToCard(c){
   r["姓名"]=nm||""; ["公司","部門","職稱","地址","網站","標籤"].forEach(function(k){ if(f[k]) r[k]=f[k]; });
   r["手機"]=c.cell.join(" / "); r["電話"]=c.tel.join(" / "); r["傳真"]=c.fax.join(" / "); r["Email"]=c.mail.join(" / ");
   if(f.note){   // 我們自己匯出的 NOTE 會帶 統編 / LINE
-    var note=f.note.replace(/\n?\(來自(業務)?超級名片王?[^)]*\)/,"");
+    var note=f.note.replace(/\n?\(來自(業務)?超級(業務)?名片王?[^)]*\)/,"");
     var m=note.match(/統編\s*(\d{8})/); if(m){ r["統編"]=m[1]; note=note.replace(m[0],""); }
     m=note.match(/LINE\s*[:：]?\s*([\w.@-]+)/i); if(m){ r["LINE"]=m[1]; note=note.replace(m[0],""); }
     note=note.replace(/^\s+|\s+$/g,"").replace(/\n{2,}/g,"\n"); if(note) r["備註"]=note;
@@ -1805,7 +1879,7 @@ function checkJoinLink(){
   var q={}; h.slice(1).split("&").forEach(function(kv){ var i=kv.indexOf("="); if(i>0) q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
   try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
   if(!q.join) return false;
-  var name=String(q.name||"").replace(/^(業務)?超級名片王?_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
+  var name=String(q.name||"").replace(/^(業務)?超級(業務)?名片王?_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
   openBooks({url:q.join, name:name});
   toast("輸入存取碼就能加入這本名片簿");
   return true;
@@ -1856,6 +1930,294 @@ function sfx(name){
 }
 function renderSoundBtn(){ setLabel($("btnSound"), SFX.on ? "音效:開" : "音效:關"); }
 function toggleSound(){ SFX.on=!SFX.on; ls("sc_sound",SFX.on?"1":"0"); renderSoundBtn(); if(SFX.on){ sfxCtx(); sfx("success"); } toast(SFX.on?"🔊 音效已開啟":"🔇 音效已關閉"); }
+
+/* ===== 我的數位名片 ===== */
+var MYF=[
+ ["基本資料",[["name","姓名"],["title","職稱"],["dept","部門"],["company","公司"],["intro","一句話介紹(選填)"]]],
+ ["英文(名片背面)",[["ename","英文姓名"],["etitle","英文職稱"],["edept","英文部門"],["ecompany","英文公司名稱"]]],
+ ["聯絡方式",[["mobile","手機"],["email","Email"],["line","LINE ID"],["website","網站"],["linkedin","LinkedIn 網址"],["taxid","統一編號"]]],
+ ["據點一",[["loc1name","名稱(例:有機肥料廠)"],["loc1ename","英文名稱(例:Head Office)"],["loc1addr","地址"],["loc1eaddr","英文地址"],["loc1tel","電話"],["loc1fax","傳真"]]],
+ ["據點二(選填)",[["loc2name","名稱(例:總公司)"],["loc2ename","英文名稱"],["loc2addr","地址"],["loc2eaddr","英文地址"],["loc2tel","電話"],["loc2fax","傳真"]]]
+];
+var DESIGNS=[["print","印刷經典"],["classic","經典"],["modern","現代"],["minimal","極簡"],["business","商務"]];
+var MY={card:null, side:"zh", imgs:{}};
+function myLink(c){ return APP_URL_PUBLIC+"#card="+gasUrl(); }
+var APP_URL_PUBLIC=location.origin+location.pathname;
+function loadQR(){
+  if(window.qrcode) return Promise.resolve();
+  return new Promise(function(res,rej){ var s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload=res; s.onerror=function(){rej(new Error("QR 元件載入失敗"));}; document.head.appendChild(s); });
+}
+function qrMatrix(text){ var q=qrcode(0,"M"); q.addData(text); q.make(); return q; }
+function drawQR(x,q,px,py,size,dark,light){
+  var n=q.getModuleCount(), m=4, cell=size/(n+m*2);
+  x.fillStyle=light||"#fff"; x.fillRect(px,py,size,size); x.fillStyle=dark||"#111";
+  for(var r=0;r<n;r++) for(var c=0;c<n;c++) if(q.isDark(r,c)) x.fillRect(px+(c+m)*cell, py+(r+m)*cell, Math.ceil(cell), Math.ceil(cell));
+}
+function imgOf(src){
+  if(!src) return Promise.resolve(null);
+  if(MY.imgs[src]) return Promise.resolve(MY.imgs[src]);
+  return loadSrc(src).then(function(im){ MY.imgs[src]=im; return im; }).catch(function(){ return null; });
+}
+function fitFont(x,text,maxW,size,font,minSize){
+  size=size||24; minSize=minSize||12;
+  do{ x.font=font.replace("{s}",size); if(x.measureText(text).width<=maxW) break; size--; }while(size>minSize);
+  return size;
+}
+function cardColors(c){
+  var t=curTheme(), acc=c.color||t.acc;
+  return { pri:t.pri, pri2:t.pri2, acc:acc, acc2:c.color||t.acc2, chip:t.chip, ink:"#1b1f24", sub:"#5b6168", line:"#e5e2dc" };
+}
+/** 聯絡資訊行(中/英) */
+function myLines(c,side){
+  var L=[], zh=side!=="en";
+  [1,2].forEach(function(i){
+    var nm=zh?c["loc"+i+"name"]:c["loc"+i+"ename"], ad=zh?c["loc"+i+"addr"]:(c["loc"+i+"eaddr"]||c["loc"+i+"addr"]), tel=c["loc"+i+"tel"], fax=c["loc"+i+"fax"];
+    if(!ad && !tel) return;
+    L.push({b:true, k: nm ? (zh?nm+":":nm+": ") : "", v: ad||""});
+    var tf=[]; if(tel) tf.push((zh?"電話:":"Tel: ")+(zh?tel:intlTel(tel))); if(fax) tf.push((zh?"傳真:":"Fax: ")+(zh?fax:intlTel(fax)));
+    if(tf.length) L.push({b:false, k:"", v:tf.join("     ")});
+  });
+  if(zh && c.taxid) L.push({b:true,k:"統一編號:",v:c.taxid});
+  if(c.mobile) L.push({b:true,k:zh?"行動電話:":"Mobile: ",v:zh?c.mobile:intlTel(c.mobile),big:zh});
+  if(c.email) L.push({b:true,k:zh?"電子郵件:":"E-mail: ",v:c.email});
+  if(c.line) L.push({b:true,k:"LINE:",v:c.line});
+  return L;
+}
+function intlTel(t){   // (05)2267170 → +886-5-2267170;0910-373286 → +886-910-373286
+  var s=String(t||"").trim(); if(!s || /^\+/.test(s)) return s;
+  if(/^09\d{2}/.test(s.replace(/\D/g,""))){ var dg=s.replace(/\D/g,""); return "+886-"+dg.slice(1,4)+"-"+dg.slice(4); }   // 手機 0910373286 → +886-910-373286
+  var m=s.match(/^\(?0(\d{1,2})\)?[\s-]?(.*)$/); if(!m) return s;
+  return "+886-"+m[1]+"-"+m[2].replace(/\s+/g,"");
+}
+/** 畫名片(W×H 邏輯尺寸,k=倍率) */
+async function renderMyCard(cv,c,side,k){
+  k=k||2; var W=1050,H=600; cv.width=W*k; cv.height=H*k;
+  var x=cv.getContext("2d"); x.setTransform(k,0,0,k,0,0); x.textBaseline="alphabetic";
+  try{ await document.fonts.ready; }catch(e){}
+  var C=cardColors(c), zh=side!=="en", d=c.design||"print";
+  var serif='"Noto Serif TC","Songti TC",serif', sans='-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif';
+  var name=zh?(c.name||""):(c.ename||c.name||""), title=zh?(c.title||""):(c.etitle||c.title||""), dept=zh?(c.dept||""):(c.edept||c.dept||"");
+  var comp=zh?(c.company||""):(c.ecompany||c.company||""), ecomp=c.ecompany||"";
+  var logo=await imgOf(c.logo), av=await imgOf(c.avatar);
+  await loadQR(); var q=qrMatrix(myLink(c));
+  var lines=myLines(c,side);
+  var drawLines=function(x0,y0,maxW,size,color,bullet){
+    var y=y0, lh=size*1.55;
+    lines.forEach(function(l){
+      x.fillStyle=color; var tx=x0;
+      if(l.b && bullet){ x.fillStyle=bullet; x.fillRect(x0,y-size*0.72,size*0.55,size*0.55); tx=x0+size*0.9; x.fillStyle=color; }
+      else if(!l.b) tx=x0+(bullet?size*0.9:0);
+      var txt=(l.k||"")+(l.v||""), s2=l.big?size*1.18:size;
+      fitFont(x,txt,maxW-(tx-x0),s2,"{s}px "+sans,11); x.fillText(txt,tx,y);
+      y+=lh;
+    });
+    return y;
+  };
+  var drawLogo=function(px,py,maxW,maxH){ if(!logo) return 0; var r=Math.min(maxW/logo.width,maxH/logo.height); x.drawImage(logo,px,py,logo.width*r,logo.height*r); return logo.width*r; };
+  var drawAvatar=function(cx,cy,r,ring){ if(!av) return false; x.save(); x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.closePath(); x.clip(); var s=Math.max(2*r/av.width,2*r/av.height); x.drawImage(av,cx-av.width*s/2,cy-av.height*s/2,av.width*s,av.height*s); x.restore(); if(ring){ x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.lineWidth=4; x.strokeStyle=ring; x.stroke(); } return true; };
+  var qrBox=function(px,py,size,dark){ drawQR(x,q,px,py,size,dark||"#111","#fff"); };
+
+  if(d==="print"){   // 仿印刷名片:左上 logo、右上姓名、中間公司、清單、下方雙色條
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    drawLogo(48,40,190,120);
+    x.textAlign="right"; x.fillStyle=C.ink;
+    if(zh){ var sp=name.split("").join(" "); fitFont(x,sp,420,52,"700 {s}px "+serif,28); x.fillText(sp,W-56,98);
+      x.font="22px "+sans; x.fillStyle="#333"; var bx=W-56-Math.max(x.measureText(dept).width,x.measureText(title).width)/2-6;
+      x.textAlign="center"; if(dept) x.fillText(dept,bx+6,132); if(title) x.fillText(title,bx+6,160); }
+    else{ fitFont(x,name,460,38,"700 {s}px Georgia,'Times New Roman',serif",22); x.fillText(name,W-90,82);
+      x.font="22px Georgia,'Times New Roman',serif"; x.fillStyle="#222"; if(title) x.fillText(title,W-90,116); if(dept) x.fillText(dept,W-90,146); }
+    x.textAlign="center"; x.fillStyle="#111";
+    if(zh){ fitFont(x,comp.split("").join(" "),W-120,40,"700 {s}px "+sans,22); x.fillText(comp.split("").join(" "),W/2,236);
+      if(ecomp){ x.font="22px "+sans; x.fillStyle="#222"; x.fillText(ecomp,W/2,268); } }
+    else{ fitFont(x,comp,W-120,38,"800 {s}px Arial,Helvetica,sans-serif",20); x.fillText(comp,W/2,230); }
+    x.textAlign="left";
+    drawLines(zh?150:160, zh?318:300, W-160-170-(zh?150:160)+150, zh?20:18, "#222", "#9a9a9a");
+    qrBox(W-170,H-200,138);
+    x.font="12px "+sans; x.fillStyle="#888"; x.textAlign="center"; x.fillText(zh?"掃描存我的名片":"Scan to save",W-101,H-52); x.textAlign="left";
+    x.fillStyle="#b3b3b3"; x.fillRect(0,H-26,W*0.37,26); x.fillStyle=C.acc; x.fillRect(W*0.37,H-26,W*0.63,26);
+  }else if(d==="modern"){   // 深色底+金字
+    var g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,C.pri2); g.addColorStop(1,C.pri); x.fillStyle=g; x.fillRect(0,0,W,H);
+    x.strokeStyle=C.acc2; x.globalAlpha=0.35; x.lineWidth=1; x.strokeRect(24,24,W-48,H-48); x.globalAlpha=1;
+    var ax=drawAvatar(150,170,84,C.acc2) ? 270 : 70;
+    if(logo) drawLogo(W-230,56,170,80);
+    x.fillStyle="#fff"; fitFont(x,name,520,58,"700 {s}px "+serif,28); x.fillText(name,ax,170);
+    x.fillStyle=C.acc2; x.font="24px "+sans; x.fillText([title,dept].filter(Boolean).join(" · "),ax,212);
+    x.fillStyle="rgba(255,255,255,.85)"; fitFont(x,comp,W-ax-240,24,"{s}px "+sans,14); x.fillText(comp,ax,250);
+    drawLines(70,330,W-70-250,19,"rgba(255,255,255,.88)",C.acc2);
+    qrBox(W-215,H-235,165);
+  }else if(d==="minimal"){   // 白底極簡
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    if(logo) drawLogo(70,56,180,70);
+    x.fillStyle=C.ink; fitFont(x,name,560,60,"600 {s}px "+serif,28); x.fillText(name,70,logo?205:150);
+    x.fillStyle=C.acc; x.fillRect(70,(logo?225:170),70,3);
+    x.fillStyle=C.sub; x.font="22px "+sans; x.fillText([title,dept,comp].filter(Boolean).join("|"),70,(logo?262:207));
+    drawLines(70,logo?330:290,W-70-230,19,"#333",null);
+    qrBox(W-200,H-200,140,C.pri);
+  }else if(d==="business"){   // 左色塊+右資訊
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    var g2=x.createLinearGradient(0,0,0,H); g2.addColorStop(0,C.pri2); g2.addColorStop(1,C.pri); x.fillStyle=g2; x.fillRect(0,0,W*0.36,H);
+    var hasAv=drawAvatar(W*0.18,150,78,C.acc2);
+    x.textAlign="center"; x.fillStyle="#fff"; fitFont(x,name,W*0.32,48,"700 {s}px "+serif,24); x.fillText(name,W*0.18,hasAv?290:200);
+    x.fillStyle=C.acc2; x.font="21px "+sans; x.fillText(title,W*0.18,hasAv?326:240); if(dept){ x.fillStyle="rgba(255,255,255,.8)"; x.fillText(dept,W*0.18,hasAv?356:270); }
+    drawQR(x,q,W*0.18-75,H-190,150,C.pri,"#fff"); x.textAlign="left";
+    var rx=W*0.36+44; if(logo) drawLogo(rx,44,200,80);
+    x.fillStyle=C.ink; fitFont(x,comp,W-rx-40,30,"700 {s}px "+sans,16); x.fillText(comp,rx,logo?168:110);
+    x.fillStyle=C.acc; x.fillRect(rx,logo?186:128,56,3);
+    drawLines(rx,logo?238:180,W-rx-40,19,"#333",C.acc);
+  }else{   // classic:白底+斜色帶(像數位名片 App)
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    x.fillStyle=C.chip; x.beginPath(); x.moveTo(0,H*0.62); x.bezierCurveTo(W*0.35,H*0.42,W*0.6,H*0.95,W,H*0.55); x.lineTo(W,H); x.lineTo(0,H); x.closePath(); x.fill();
+    x.globalAlpha=0.5; x.fillStyle=C.acc2; x.beginPath(); x.moveTo(0,H*0.8); x.bezierCurveTo(W*0.4,H*0.62,W*0.7,H*1.05,W,H*0.75); x.lineTo(W,H); x.lineTo(0,H); x.closePath(); x.fill(); x.globalAlpha=1;
+    var bx2=drawAvatar(120,130,66,"#fff") ? 210 : 64;
+    x.fillStyle=C.ink; fitFont(x,name,560,46,"700 {s}px "+serif,24); x.fillText(name,bx2,122);
+    x.fillStyle=C.acc; x.font="20px "+sans; x.fillText([title,dept].filter(Boolean).join(" · "),bx2,156);
+    x.fillStyle=C.sub; fitFont(x,comp,W-bx2-260,20,"{s}px "+sans,13); x.fillText(comp,bx2,186);
+    if(logo) drawLogo(W-240,40,180,80);
+    drawLines(64,262,W-64-240,18,"#2b2f36",C.pri);
+    qrBox(W-205,H-215,150);
+  }
+  x.textAlign="left";
+  return cv;
+}
+
+/* ---------- 編輯頁 ---------- */
+async function openMyCard(){
+  $("vMyCard").classList.remove("hide"); $("vMyCard").scrollTop=0;
+  $("myStat").textContent="讀取中…";
+  try{ var r=await post({action:"myGet"}); if(!r.ok) throw new Error(r.error); MY.card=r.card||{}; }
+  catch(e){ $("myStat").textContent="讀取失敗:"+e.message; MY.card=MY.card||{}; }
+  renderMyForm(); renderMyPreview();
+}
+function renderMyForm(){
+  var c=MY.card||{};
+  $("myForm").innerHTML=MYF.map(function(g){
+    return '<div class="exp"><h3>'+esc(g[0])+'</h3>'+g[1].map(function(f){
+      return '<label class="myf"><span>'+esc(f[1])+'</span><input data-my="'+f[0]+'" value="'+esc(c[f[0]]||"")+'"></label>';
+    }).join("")+'</div>';
+  }).join("");
+  $("myDesigns").innerHTML=DESIGNS.map(function(d){ return '<button type="button" class="chip'+((c.design||"print")===d[0]?' on':'')+'" data-design="'+d[0]+'">'+d[1]+'</button>'; }).join("");
+  $("myColor").value=c.color||curTheme().acc; $("myColorUse").checked=!!c.color;
+  $("myPub").checked=!!c.published;
+  $("myAvatarPrev").src=c.avatar||""; $("myAvatarPrev").classList.toggle("hide",!c.avatar);
+  $("myLogoPrev").src=c.logo||""; $("myLogoPrev").classList.toggle("hide",!c.logo);
+  $("myStat").textContent = c.updated ? "上次儲存 "+String(c.updated).slice(0,16) : "還沒建立,填好後按「儲存我的名片」";
+  renderMySide();
+}
+function myCollect(){
+  var c=Object.assign({},MY.card||{});
+  document.querySelectorAll("[data-my]").forEach(function(el){ c[el.dataset.my]=el.value.trim(); });
+  c.color=$("myColorUse").checked ? $("myColor").value : "";
+  c.published=$("myPub").checked;
+  return c;
+}
+function renderMySide(){ document.querySelectorAll("[data-side2]").forEach(function(b){ b.classList.toggle("on",b.dataset.side2===MY.side); }); }
+var myPrevT=null;
+function renderMyPreview(){
+  clearTimeout(myPrevT);
+  myPrevT=setTimeout(function(){ MY.card=myCollect(); renderMyCard($("myCv"),MY.card,MY.side,2).catch(function(e){ console.warn(e); }); },150);
+}
+async function saveMyCard(){
+  var c=myCollect(); if(!c.name){ toast("請至少填姓名"); return; }
+  var b=$("btnMySave"); b.disabled=true; setLabel(b,"儲存中…");
+  try{ var r=await post({action:"mySave", card:c}); if(!r.ok) throw new Error(r.error); MY.card=r.card; toast("✅ 已儲存我的名片"+(c.published?"(已公開)":"")); $("myStat").textContent="上次儲存 "+String(r.card.updated||"").slice(0,16); }
+  catch(e){ toast("儲存失敗:"+e.message); }
+  b.disabled=false; setLabel(b,"儲存我的名片");
+}
+async function pickMyImg(kind){
+  var inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange=async function(){
+    var f=inp.files[0]; if(!f) return;
+    try{
+      var im=await loadImg(f), out;
+      if(kind==="avatar"){   // 正方形置中裁切 320px
+        var s=Math.min(im.naturalWidth,im.naturalHeight), c=document.createElement("canvas"); c.width=c.height=320;
+        c.getContext("2d").drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/2,s,s,0,0,320,320); out=c.toDataURL("image/jpeg",0.82);
+      }else{   // Logo 保留透明,寬最多 420
+        var k=Math.min(1,420/im.naturalWidth,200/im.naturalHeight), c2=document.createElement("canvas"); c2.width=Math.round(im.naturalWidth*k); c2.height=Math.round(im.naturalHeight*k);
+        c2.getContext("2d").drawImage(im,0,0,c2.width,c2.height); out=c2.toDataURL("image/png");
+        if(out.length>45000) out=c2.toDataURL("image/webp",0.9);
+        if(out.length>45000){ var c3=document.createElement("canvas"); c3.width=Math.round(c2.width*0.7); c3.height=Math.round(c2.height*0.7); c3.getContext("2d").drawImage(c2,0,0,c3.width,c3.height); out=c3.toDataURL("image/png"); }
+      }
+      MY.card=myCollect(); MY.card[kind]=out; $(kind==="avatar"?"myAvatarPrev":"myLogoPrev").src=out; $(kind==="avatar"?"myAvatarPrev":"myLogoPrev").classList.remove("hide");
+      renderMyPreview(); toast("已換上,記得按「儲存我的名片」");
+    }catch(e){ toast("讀不到這張圖片"); }
+  };
+  inp.click();
+}
+function clearMyImg(kind){ MY.card=myCollect(); MY.card[kind]=""; $(kind==="avatar"?"myAvatarPrev":"myLogoPrev").classList.add("hide"); renderMyPreview(); }
+
+/* ---------- 分享 ---------- */
+function needPublished(){
+  var c=myCollect();
+  if(!c.published || !(MY.card&&MY.card.updated)){ toast("先打開「公開我的名片」並按「儲存我的名片」,對方才看得到"); return false; }
+  return true;
+}
+async function showMyQR(){
+  if(!needPublished()) return;
+  await loadQR(); var q=qrMatrix(myLink()), cv=$("qrCv"), S2=560; cv.width=cv.height=S2;
+  drawQR(cv.getContext("2d"),q,0,0,S2,"#111","#fff");
+  $("qrName").textContent=(MY.card.name||"")+(MY.card.title?" · "+MY.card.title:"");
+  $("vQR").classList.remove("hide");
+}
+async function shareMyLink(){
+  if(!needPublished()) return;
+  var u=myLink(), t=(MY.card.name||"")+" 的數位名片";
+  try{ if(navigator.share){ await navigator.share({title:t, text:t, url:u}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  toast(await copyText(u) ? "✅ 名片連結已複製,貼到 LINE 就能傳" : u);
+}
+async function shareMyImage(){
+  var c=myCollect(), a=document.createElement("canvas"), b=document.createElement("canvas");
+  await renderMyCard(a,c,"zh",2);
+  var hasEn=!!(c.ename||c.ecompany);
+  var out=document.createElement("canvas"), gap=60;
+  out.width=a.width; out.height=hasEn ? a.height*2+gap : a.height;
+  var x=out.getContext("2d"); x.fillStyle="#eceae5"; x.fillRect(0,0,out.width,out.height); x.drawImage(a,0,0);
+  if(hasEn){ await renderMyCard(b,c,"en",2); x.drawImage(b,0,a.height+gap); }
+  var blob=await new Promise(function(r){ out.toBlob(r,"image/png"); }), name=(c.name||"我的名片")+"_名片.png", file=new File([blob],name,{type:"image/png"});
+  try{ if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  download(file,name); toast("已下載 "+name);
+}
+function myToCardFields(c){
+  var n=[]; if(c.intro) n.push(c.intro); if(c.ename) n.push(c.ename+(c.etitle?", "+c.etitle:"")); if(c.ecompany) n.push(c.ecompany); if(c.linkedin) n.push("LinkedIn: "+c.linkedin);
+  return { "姓名":c.name, "公司":c.company, "部門":c.dept, "職稱":c.title, "手機":c.mobile,
+    "電話":[c.loc1tel,c.loc2tel].filter(Boolean).join(" / "), "傳真":[c.loc1fax,c.loc2fax].filter(Boolean).join(" / "),
+    "Email":c.email, "地址":c.loc1addr||c.loc2addr||"", "網站":c.website, "統編":c.taxid, "LINE":c.line, "備註":n.join("\n"),
+    "縮圖": c.avatar||c.logo||"" };
+}
+async function shareMyVcf(c){
+  c=c||myCollect(); var f=myToCardFields(c), name=(c.name||"名片")+".vcf";
+  var file=new File([toVcard(f,true)+"\r\n"],name,{type:"text/vcard"});
+  try{ if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){ await navigator.share({files:[file], title:name}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  download(file,name);
+}
+
+/* ---------- 對方打開連結看到的名片頁(免登入) ---------- */
+async function openCardView(url){
+  $("vCardView").classList.remove("hide"); $("cvStat").textContent="名片載入中…";
+  try{
+    var r=await fetch(url+(url.indexOf("?")>0?"&":"?")+"my=1"); var d=await r.json();
+    if(!d.ok) throw new Error(d.error||"讀取失敗");
+    MY.view=d.card; MY.vside="zh";
+    await drawCardView();
+    var c=d.card, A=[];
+    if(c.mobile) A.push(['tel:'+String(c.mobile).replace(/[^\d+]/g,""),"phone","撥打手機"]);
+    if(c.line) A.push(["https://line.me/R/ti/p/~"+encodeURIComponent(c.line),"line","加 LINE"]);
+    if(c.email) A.push(["mailto:"+c.email,"mail","寄 Email"]);
+    if(c.loc1addr||c.loc2addr) A.push([navUrl(c.loc1addr||c.loc2addr),"nav","導航"]);
+    if(c.website) A.push([(/^https?:/i.test(c.website)?"":"https://")+c.website,"map","網站"]);
+    if(c.linkedin) A.push([(/^https?:/i.test(c.linkedin)?"":"https://")+c.linkedin,"user","LinkedIn"]);
+    $("cvActs").innerHTML=A.map(function(a){ return '<a class="btn sec" href="'+esc(a[0])+'" target="_blank" rel="noopener">'+ic(a[1],18)+'<span class="lb">'+a[2]+'</span></a>'; }).join("");
+    $("cvSideBox").classList.toggle("hide",!(c.ename||c.ecompany));
+    $("cvStat").textContent=""; document.title=(c.name||"")+" 的數位名片";
+  }catch(e){ $("cvStat").textContent="打不開這張名片:"+e.message; }
+}
+async function drawCardView(){ await renderMyCard($("cvCv"),MY.view,MY.vside,2); document.querySelectorAll("[data-vside]").forEach(function(b){ b.classList.toggle("on",b.dataset.vside===MY.vside); }); }
+function checkCardLink(){
+  var h=location.hash||""; if(h.indexOf("#card=")!==0) return false;
+  var url=decodeURIComponent(h.slice(6));
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(url)) return false;
+  openCardView(url); return true;
+}
 
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
 function inAppName(){
@@ -2369,7 +2731,7 @@ async function exportXlsx(){
     ws["!autofilter"]={ref:"A1:"+XLSX.utils.encode_col(XCOLS.length-1)+rows.length};
     var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "名片");
     var out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-    download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "業務超級名片王_"+today()+".xlsx");
+    download(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "超級業務名片王_"+today()+".xlsx");
     toast("✅ 已匯出 "+cs.length+" 張");
   }catch(e){ toast("匯出失敗:"+e.message); }
   b.disabled=false; setLabel(b,"下載 Excel(.xlsx)");
@@ -2409,7 +2771,7 @@ function toVcard(c, withPhoto){
   if(c["統編"]) note.push("統編 "+c["統編"]);
   if(c["LINE"]) note.push("LINE "+c["LINE"]);
   if(c["備註"]) note.push(c["備註"]);
-  note.push("(來自業務超級名片王"+(c["建立時間"]?" "+String(c["建立時間"]).slice(0,10):"")+")");
+  note.push("(來自超級業務名片王"+(c["建立時間"]?" "+String(c["建立時間"]).slice(0,10):"")+")");
   L.push("NOTE:"+vEsc(note.join("\n")));
   var th=String(c["縮圖"]||"");
   if(withPhoto && th.indexOf("base64,")>0) L.push("PHOTO;ENCODING=b;TYPE=JPEG:"+th.split("base64,")[1]);
@@ -2420,7 +2782,7 @@ function exportVcf(){
   var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
   var ph=$("xPhoto").checked;
   var txt=cs.map(function(c){return toVcard(c,ph);}).join("\r\n")+"\r\n";
-  download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "業務超級名片王_"+today()+"_"+cs.length+"人.vcf");
+  download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "超級業務名片王_"+today()+"_"+cs.length+"人.vcf");
   toast("✅ 已匯出 "+cs.length+" 位聯絡人");
 }
 /** 編輯頁:目前畫面上的這張加入通訊錄 */
@@ -2674,7 +3036,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnMyCard"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -2708,6 +3070,21 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnMyCard").onclick=openMyCard;
+$("btnMyBack").onclick=function(){ $("vMyCard").classList.add("hide"); };
+$("myForm").addEventListener("input",renderMyPreview);
+$("myDesigns").addEventListener("click",function(e){ var b=e.target.closest("[data-design]"); if(!b) return; MY.card=myCollect(); MY.card.design=b.dataset.design; document.querySelectorAll("#myDesigns .chip").forEach(function(x){x.classList.toggle("on",x===b);}); renderMyPreview(); });
+document.querySelectorAll("[data-side2]").forEach(function(b){ b.addEventListener("click",function(){ MY.side=b.dataset.side2; renderMySide(); renderMyPreview(); }); });
+$("myColor").addEventListener("input",function(){ $("myColorUse").checked=true; renderMyPreview(); });
+$("myColorUse").addEventListener("change",renderMyPreview);
+$("btnMySave").onclick=saveMyCard;
+$("btnMyAvatar").onclick=function(){ pickMyImg("avatar"); }; $("btnMyLogo").onclick=function(){ pickMyImg("logo"); };
+$("btnMyAvatarX").onclick=function(){ clearMyImg("avatar"); }; $("btnMyLogoX").onclick=function(){ clearMyImg("logo"); };
+$("btnMyQR").onclick=showMyQR; $("btnMyLink").onclick=shareMyLink; $("btnMyImg").onclick=shareMyImage; $("btnMyVcf").onclick=function(){ shareMyVcf(); };
+$("btnQRClose").onclick=function(){ $("vQR").classList.add("hide"); }; $("btnQRShare").onclick=shareMyLink;
+$("btnCvSave").onclick=function(){ if(MY.view) shareMyVcf(MY.view); };
+document.querySelectorAll("[data-vside]").forEach(function(b){ b.addEventListener("click",function(){ MY.vside=b.dataset.vside; drawCardView(); }); });
+$("cvMake").href=location.pathname;
 $("btnSound").onclick=toggleSound;
 document.addEventListener("pointerdown",function(e){
   var el=e.target.closest("button,a.btn,.qa a,.chip,.item,[data-q],label.opt");
@@ -2775,6 +3152,7 @@ $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
 initBooks(); renderSoundBtn();
 if(S.code && gasUrl()) enter(); else show("vLogin");
 checkJoinLink();
+checkCardLink();
 </script>
 </body>
 </html>
