@@ -9,7 +9,8 @@
 <title>超級名片</title>
 <link rel="manifest" href="super_card.webmanifest">
 <link rel="apple-touch-icon" href="super_card_icon180.png">
-<link rel="icon" type="image/png" href="super_card_icon192.png">
+<link rel="icon" type="image/svg+xml" href="super_card_logo.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="super_card_icon192.png">
 <style>
 :root{
   --bg:#f4f6f5; --card:#fff; --ink:#1c2321; --sub:#66706d; --line:#e3e8e6;
@@ -31,7 +32,8 @@ header .ic{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:10
 
 /* 登入 */
 .login{max-width:380px;margin:12vh auto 0;padding:0 16px;text-align:center}
-.login .logo{font-size:52px}
+.login .logo img{width:96px;height:96px;border-radius:24px;box-shadow:0 8px 20px rgba(15,118,110,.28);display:block;margin:0 auto 6px}
+header h1 .brand{width:28px;height:28px;border-radius:7px;vertical-align:-7px;margin-right:7px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
 .login h2{margin:6px 0 4px}
 .login p{color:var(--sub);margin:0 0 22px;font-size:14px}
 .inp{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
@@ -136,7 +138,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
-  <div class="logo brand">📇</div>
+  <div class="logo"><img src="super_card_logo.svg" alt="超級名片"></div>
   <h2>超級名片</h2>
   <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
   <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
@@ -152,7 +154,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 主畫面 -->
 <div id="vMain" class="hide">
   <header>
-    <h1><span class="brand">📇</span> 超級名片<span class="ver" id="verBadge"></span></h1>
+    <h1><img class="brand" src="super_card_logo.svg" alt="">超級名片<span class="ver" id="verBadge"></span></h1>
     <button class="ic" id="btnMap" title="地圖">🗺 地圖</button>
     <button class="ic" id="btnMenu" title="更多">☰</button>
   </header>
@@ -295,7 +297,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.0", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.1", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],

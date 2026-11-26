@@ -9,7 +9,9 @@
   "theme_color": "#0f766e",
   "lang": "zh-Hant",
   "icons": [
-    { "src": "super_card_icon192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "super_card_icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "super_card_logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "super_card_icon192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "super_card_icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "super_card_icon512m.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
