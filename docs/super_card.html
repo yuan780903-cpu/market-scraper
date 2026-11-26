@@ -39,6 +39,8 @@ header .ic{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:10
 .btn.sec{background:#fff;color:var(--pri);border:1px solid var(--pri)}
 .btn.danger{background:#fff;color:var(--danger);border:1px solid #f1c4c4}
 .btn:disabled{opacity:.55}
+.ver{font-size:11px;font-weight:600;background:rgba(255,255,255,.22);border-radius:10px;padding:2px 7px;margin-left:6px;vertical-align:middle;letter-spacing:0}
+.ver.warn{background:#fbbf24;color:#1c2321}
 .msg{margin-top:12px;font-size:14px;color:var(--danger);min-height:20px}
 
 /* 列表 */
@@ -134,13 +136,14 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
-  <div class="logo">📇</div>
+  <div class="logo brand">📇</div>
   <h2>超級名片</h2>
   <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
   <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
   <div style="height:10px"></div>
   <button id="btnLogin" class="btn">進入</button>
   <div id="loginMsg" class="msg"></div>
+  <div id="loginVer" class="stat" style="margin-top:18px"></div>
   <details><summary>後端網址設定</summary>
     <input id="gasUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="https://script.google.com/macros/s/.../exec">
   </details>
@@ -149,7 +152,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 <!-- 主畫面 -->
 <div id="vMain" class="hide">
   <header>
-    <h1>📇 超級名片</h1>
+    <h1><span class="brand">📇</span> 超級名片<span class="ver" id="verBadge"></span></h1>
     <button class="ic" id="btnMap" title="地圖">🗺 地圖</button>
     <button class="ic" id="btnMenu" title="更多">☰</button>
   </header>
@@ -158,6 +161,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
     <button id="btnDups">🔍 找重複名片</button>
     <button id="btnReload">⟳ 重新整理</button>
     <button id="btnLogout">🚪 登出</button>
+    <button id="btnVer">ℹ️ 版本</button>
   </div>
   <div class="wrap">
     <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select></div>
@@ -291,6 +295,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 <script>
 /* ===== 設定 ===== */
+var APP_VER = "1.0", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -341,12 +346,26 @@ async function login(){
   try{
     var r=await post({action:"ping"});
     if(!r.ok) throw new Error(r.error);
-    ls("sc_code",code); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl);
+    ls("sc_code",code); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl); S.backVer=r.ver||"";
     enter();
   }catch(e){ $("loginMsg").textContent=e.message; S.code=""; }
   $("btnLogin").disabled=false;
 }
-function enter(){ show("vMain"); loadList(); }
+function enter(){
+  show("vMain"); loadList(); renderVer();
+  if(!S.backVer) post({action:"ping"}).then(function(r){ if(r.ok){ S.backVer=r.ver||""; if(r.sheetUrl) ls("sc_sheet",r.sheetUrl); renderVer(); } }).catch(function(){});
+}
+/* ===== 版本 ===== */
+function renderVer(){
+  var mis = S.backVer && S.backVer!==APP_VER;
+  $("verBadge").textContent="v"+APP_VER+(mis?" ⚠":"");
+  $("verBadge").classList.toggle("warn",!!mis);
+  $("btnVer").textContent="ℹ️ 版本 v"+APP_VER+(S.backVer?"(後端 v"+S.backVer+")":"");
+}
+function showVer(){
+  var mis = S.backVer && S.backVer!==APP_VER;
+  toast("網頁 v"+APP_VER+"("+APP_DATE+")"+(S.backVer?"|後端 v"+S.backVer:"")+(mis?"|版本不一致,請重新整理或重跑更新":""));
+}
 function logout(){ ls("sc_code",null); S.code=""; $("code").value=""; show("vLogin"); }
 
 /* ===== 列表 ===== */
@@ -1010,7 +1029,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){ var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList(); });
 $("fCity").addEventListener("change",function(){ S.fcity=this.value; renderList(); });
 $("form").addEventListener("click",function(e){ if(e.target.closest("#tagpick")) onTagPick(e); });
@@ -1031,6 +1050,7 @@ $("nearList").addEventListener("click",function(e){
   var it=e.target.closest(".item"); if(!it) return;
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
+$("btnVer").onclick=showVer;
 $("btnExport").onclick=openExport;
 $("btnExportBack").onclick=function(){ $("vExport").classList.add("hide"); };
 $("btnXlsx").onclick=exportXlsx;
@@ -1059,6 +1079,7 @@ $("form").addEventListener("click",function(e){
 
 /* ===== 啟動 ===== */
 $("gasUrl").value=gasUrl();
+$("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
 if(S.code && gasUrl()) enter(); else show("vLogin");
 </script>
 </body>
