@@ -293,6 +293,19 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .qrn{font-family:"Noto Serif TC","Songti TC",serif;font-size:22px;font-weight:700;text-align:center;color:var(--ink)}
 .cvacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .cvacts .btn{padding:11px 8px;font-size:15px;text-decoration:none}
+/* ===== 排序 / 索引 ===== */
+.search select{width:92px;font-size:14px}
+.search .inp{min-width:0}
+.sortbtn{flex:none;border:1px solid var(--line);background:#fff;border-radius:12px;padding:0 10px;display:flex;align-items:center;gap:4px;font-size:14px;color:var(--pri)}
+.sortbtn svg{color:var(--acc)}
+.sech{position:sticky;top:calc(env(safe-area-inset-top) + 62px);z-index:2;background:var(--bg);font-family:"Noto Serif TC","Songti TC",serif;font-weight:700;color:var(--pri);font-size:15px;padding:8px 4px 4px;border-bottom:2px solid var(--acc);margin-top:4px}
+.idxbar{position:fixed;right:2px;top:50%;transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.85);border-radius:12px;padding:4px 2px;box-shadow:0 2px 8px rgba(0,0,0,.1);max-height:70vh;overflow:hidden;touch-action:none}
+.idxbar b{font-size:11px;line-height:1.35;color:var(--pri);padding:0 5px;cursor:pointer}
+.sortbox{background:#fff;border-radius:22px;padding:18px;width:86%;max-width:340px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.sortbox h3{text-align:center;margin:2px 0 12px;font-size:18px;color:var(--ink)}
+.sortopt{display:flex;justify-content:center;align-items:center;gap:10px;width:100%;border:0;background:var(--chip);border-radius:22px;padding:13px;margin-bottom:10px;font-size:17px;font-weight:700;color:var(--ink)}
+.sortopt.on{background:var(--pri);color:#fff}
+.sortopt span{color:var(--acc2)}
 /* ===== 姓名學 ===== */
 .nmchars{display:flex;flex-wrap:wrap;gap:8px}
 .nmch{display:flex;align-items:center;gap:4px;background:var(--chip);border-radius:12px;padding:6px 8px}
@@ -386,10 +399,11 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
-    <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select></div>
+    <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select><button class="sortbtn" id="btnSort" data-ic="sort">排序</button></div>
     <div id="chips" class="chips"></div>
     <div id="stat" class="stat"></div>
     <div id="list" class="list"></div>
+    <div id="idxBar" class="idxbar hide"></div>
   </div>
   <button class="fab2" id="btnBatch" data-ic="stack">批量連拍</button>
   <button class="fab" id="btnScan" data-ic="camera">掃名片</button>
@@ -556,6 +570,11 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <div id="cvActs" class="cvacts"></div>
     <a class="stat" id="cvMake" style="display:block;text-align:center;margin-top:22px;color:var(--acc)">用「超級業務名片王」也做一張我的數位名片 →</a>
   </div>
+</div>
+
+<!-- 排序方式 -->
+<div id="vSort" class="sheetbg hide" style="align-items:center">
+  <div class="sortbox"><h3>排序方式</h3><div id="sortList"></div></div>
 </div>
 
 <!-- 姓名學 -->
@@ -758,7 +777,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.18", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.19", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -796,6 +815,7 @@ var ICONS={
  check:'<path d="M20 6 9 17l-5-5"/>',
  x:'<path d="M18 6 6 18M6 6l12 12"/>',
  crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+ sort:'<path d="M3 6h18M6 12h12M10 18h4"/>',
  star:'<path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.6z"/>',
  volume:'<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
  palette:'<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>'
@@ -1012,7 +1032,13 @@ function renderList(){
   if(MAP && !$("vMap").classList.contains("hide")) renderMap(false);
   if(!S.cards.length){ $("list").innerHTML='<div class="empty">還沒有名片<br>按右下角「📷 掃名片」開始</div>'; return; }
   if(!arr.length){ $("list").innerHTML='<div class="empty">沒有符合的名片</div>'; return; }
-  $("list").innerHTML = arr.map(function(c,i){
+  var secs=sortSections(arr);
+  $("list").innerHTML = secs.map(function(sec){
+    return (sec.h ? '<div class="sech" data-secid="'+esc(sec.id)+'">'+esc(sec.h)+'</div>' : '')+sec.list.map(itemHtml).join("");
+  }).join("");
+  renderIndexBar(secs);
+}
+function itemHtml(c){
     var th = c["縮圖"] ? '<img class="thumb" src="'+esc(c["縮圖"])+'" alt="">' : phThumb(c);
     return '<div class="item" data-id="'+esc(c.ID)+'">'+th+'<div class="t">'+
       '<div class="n">'+esc(c["姓名"]||"(未填姓名)")+'<small>'+esc(c["職稱"])+'</small></div>'+
@@ -1020,7 +1046,6 @@ function renderList(){
       '<div class="p">'+esc([c["手機"],c["電話"]].filter(Boolean).join(" · ")||c["縣市"])+'</div>'+
       (tagsOf(c).length?'<div class="tg">'+tagsOf(c).map(function(t){return '<span>'+esc(t)+'</span>';}).join("")+'</div>':'')+
       '</div>'+qaHtml(c)+'</div>';
-  }).join("");
 }
 
 /* ===== 編輯頁 ===== */
@@ -2572,6 +2597,86 @@ function nmSaveNote(){
   toast("✅ 已加到備註,記得按「儲存到雲端」");
 }
 
+/* ===== 排序:注音 / 拼音 / 群組 / 最近新增(+ 右側快速索引) ===== */
+var PY=null;
+function loadPY(){
+  if(PY) return Promise.resolve(PY);
+  if(loadPY.p) return loadPY.p;
+  loadPY.p=fetch("super_card_pinyin.json").then(function(r){return r.json();}).then(function(d){ PY=d; return d; });
+  return loadPY.p;
+}
+// 姓氏特殊讀音(破音字)
+var SUR_PY={"曾":"zeng","單":"shan","解":"xie","仇":"qiu","區":"ou","查":"zha","樂":"yue","朴":"piao","繆":"miao","蓋":"ge","覃":"qin","沈":"shen","長":"zhang","尉":"yu","万":"mo","種":"chong","華":"hua","秘":"bi","隗":"wei","員":"yun","賁":"ben","冼":"xian","宓":"fu","呂":"lv","盛":"sheng","重":"chong","柏":"bai","藏":"zang","句":"gou","祭":"zhai","缪":"miao","单":"shan","区":"ou","乐":"yue"};
+function pyChar(ch, isSurname){
+  if(isSurname && SUR_PY[ch]) return SUR_PY[ch];
+  if(!PY) return "";
+  var c=ch.codePointAt(0), r=PY.r;
+  for(var k in r){ var a=parseInt(k,16), s=r[k]; if(c>=a && c<a+s.length){ var i=s.charCodeAt(c-a)-0x100; return i>=0 ? PY.syl[i] : ""; } }
+  return "";
+}
+var ZY_ORDER="ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ";
+function zyInitial(p){
+  if(!p) return "";
+  var two={zh:"ㄓ",ch:"ㄔ",sh:"ㄕ"}; if(two[p.slice(0,2)]) return two[p.slice(0,2)];
+  var one={b:"ㄅ",p:"ㄆ",m:"ㄇ",f:"ㄈ",d:"ㄉ",t:"ㄊ",n:"ㄋ",l:"ㄌ",g:"ㄍ",k:"ㄎ",h:"ㄏ",j:"ㄐ",q:"ㄑ",x:"ㄒ",r:"ㄖ",z:"ㄗ",c:"ㄘ",s:"ㄙ"};
+  if(one[p[0]]) return one[p[0]];
+  if(p[0]==="y") return /^(yu|yue|yuan|yun|yong)/.test(p) ? "ㄩ" : "ㄧ";
+  if(p[0]==="w") return "ㄨ";
+  if(/^ai/.test(p)) return "ㄞ"; if(/^ao/.test(p)) return "ㄠ"; if(/^ang/.test(p)) return "ㄤ"; if(/^an/.test(p)) return "ㄢ"; if(p[0]==="a") return "ㄚ";
+  if(/^ou/.test(p)) return "ㄡ"; if(p[0]==="o") return "ㄛ";
+  if(/^er/.test(p)) return "ㄦ"; if(/^ei/.test(p)) return "ㄟ"; if(/^eng/.test(p)) return "ㄥ"; if(/^en/.test(p)) return "ㄣ"; if(p[0]==="e") return "ㄜ";
+  return "";
+}
+/** 名片的排序鍵:{py:全名拼音, zy:注音首字母, letter:拼音首字母} */
+function sortKeyOf(c){
+  var n=String(c["姓名"]||c["公司"]||"").trim(); if(!n) return {py:"~", zy:"#", letter:"#"};
+  var ch=n.charAt(0);
+  if(/[A-Za-z]/.test(ch)) return {py:n.toLowerCase(), zy:"A-Z", letter:ch.toUpperCase()};
+  if(!/[㐀-鿿豈-﫿]/.test(ch)) return {py:"~"+n, zy:"#", letter:"#"};
+  var py=n.split("").map(function(x,i){ return /[㐀-鿿豈-﫿]/.test(x) ? pyChar(x,i===0) : x.toLowerCase(); }).join(" ");
+  var first=py.split(" ")[0]||"";
+  return {py:py, zy:zyInitial(first)||"#", letter:(first[0]||"#").toUpperCase()};
+}
+var SORTS=[["zhuyin","按注音排序"],["group","按群組排序"],["pinyin","按拼音排序"],["recent","最近新增"]];
+function curSort(){ return ls("sc_sort")||"recent"; }
+/** 依排序方式把名片分段:回傳 [{h:標題, list:[...]}];最近新增不分段 */
+function sortSections(arr){
+  var mode=curSort();
+  if(mode==="recent" || ((mode==="zhuyin"||mode==="pinyin") && !PY)) return [{h:"", list:arr}];
+  if(mode==="group"){
+    var order=myGroups(), map={};
+    arr.forEach(function(c){ var t=tagsOf(c)[0]||"未分組"; (map[t]=map[t]||[]).push(c); });
+    var keys=Object.keys(map).sort(function(a,b){
+      if(a==="未分組") return 1; if(b==="未分組") return -1;
+      var ia=order.indexOf(a), ib=order.indexOf(b); return (ia<0?999:ia)-(ib<0?999:ib) || a.localeCompare(b);
+    });
+    return keys.map(function(k){ var l=map[k].slice().sort(function(x,y){ return sortKeyOf(x).py.localeCompare(sortKeyOf(y).py); }); return {h:k+"("+l.length+")", id:"g_"+k, list:l}; });
+  }
+  var withK=arr.map(function(c){ return {c:c, k:sortKeyOf(c)}; });
+  var head=function(k){ return mode==="zhuyin" ? k.zy : k.letter; };
+  var rank=function(h){ if(mode==="zhuyin"){ var i=ZY_ORDER.indexOf(h); return i>=0?i:(h==="A-Z"?90:99); } return h==="#"?99:h.charCodeAt(0); };
+  withK.sort(function(a,b){ return rank(head(a.k))-rank(head(b.k)) || a.k.py.localeCompare(b.k.py); });
+  var out=[], cur=null;
+  withK.forEach(function(x){ var h=head(x.k); if(!cur || cur.h!==h){ cur={h:h, id:"s_"+h, list:[]}; out.push(cur); } cur.list.push(x.c); });
+  return out;
+}
+function renderIndexBar(secs){
+  var mode=curSort(), bar=$("idxBar");
+  var show = (mode==="zhuyin"||mode==="pinyin") && secs.length>1 && $("vMain").offsetParent!==null;
+  bar.classList.toggle("hide",!show); $("list").style.marginRight=show?"20px":""; if(!show){ bar.innerHTML=""; return; }
+  bar.innerHTML=secs.map(function(s){ return '<b data-sec="'+esc(s.id)+'">'+esc(s.h==="A-Z"?"A":s.h)+'</b>'; }).join("");
+}
+function openSortMenu(){
+  var m=curSort();
+  $("sortList").innerHTML=SORTS.map(function(s){ return '<button type="button" class="sortopt'+(s[0]===m?' on':'')+'" data-sort="'+s[0]+'">'+s[1]+(s[0]===m?' <span>✓</span>':'')+'</button>'; }).join("");
+  $("vSort").classList.remove("hide");
+}
+function pickSort(m){
+  ls("sc_sort",m); $("vSort").classList.add("hide"); setLabel($("btnSort"), (SORTS.find(function(s){return s[0]===m;})||[0,"排序"])[1].replace("按","").replace("排序",""));
+  if((m==="zhuyin"||m==="pinyin") && !PY){ toast("讀取注音資料中…"); loadPY().then(function(){ renderList(); }).catch(function(){ toast("注音資料載入失敗"); }); }
+  renderList();
+}
+
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
 function inAppName(){
   var ua=navigator.userAgent||"";
@@ -3432,6 +3537,15 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnSort").onclick=openSortMenu;
+$("sortList").addEventListener("click",function(e){ var b=e.target.closest("[data-sort]"); if(b) pickSort(b.dataset.sort); });
+$("vSort").addEventListener("click",function(e){ if(e.target.id==="vSort") $("vSort").classList.add("hide"); });
+(function(){   // 右側索引:點或滑動跳到該段
+  var bar=$("idxBar");
+  function go(e){ var t=e.touches?e.touches[0]:e, el=document.elementFromPoint(t.clientX,t.clientY), b=el&&el.closest&&el.closest("[data-sec]"); if(!b) return;
+    var h=document.querySelector('[data-secid="'+b.dataset.sec.replace(/"/g,'')+'"]'); if(h){ window.scrollTo({top:h.getBoundingClientRect().top+window.scrollY-70}); if(navigator.vibrate) try{navigator.vibrate(5);}catch(er){} } }
+  bar.addEventListener("click",go); bar.addEventListener("touchstart",function(e){ e.preventDefault(); go(e); },{passive:false}); bar.addEventListener("touchmove",function(e){ e.preventDefault(); go(e); },{passive:false});
+})();
 $("btnNameCard").onclick=function(){ NM.cardOpen=true; openNameView(formData()["姓名"]); };
 $("btnNameMenu").onclick=function(){ NM.cardOpen=false; openNameView(""); };
 $("btnNmBack").onclick=function(){ $("vName").classList.add("hide"); };
@@ -3519,6 +3633,8 @@ decorateIcons();
 initInApp();
 $("loginVer").textContent="v"+APP_VER+" · "+APP_DATE; renderVer();
 initBooks(); renderSoundBtn();
+setLabel($("btnSort"), (SORTS.find(function(x){return x[0]===curSort();})||[0,"排序"])[1].replace("按","").replace("排序","")||"排序");
+if(curSort()==="zhuyin"||curSort()==="pinyin") loadPY().then(function(){ if(S.cards.length) renderList(); }).catch(function(){});
 if(S.code && gasUrl()) enter(); else show("vLogin");
 checkJoinLink();
 checkCardLink();
