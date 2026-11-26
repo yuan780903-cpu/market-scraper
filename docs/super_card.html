@@ -797,7 +797,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.22", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.23", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1314,13 +1314,13 @@ async function camShoot(){
   sfx("shutter");
   CAM.count++; CAM.armed=false; CAM.lastSig=CAM.m&&CAM.m.sig; CAM.still=0; prog(0);
   if(batch){
-    var q=detectQuad(c), out=q ? warpQuad(c,q) : c;   // 批量不停下來修邊:偵測到四角就自動拉正
+    var q=smartQuad(c,expOf(c,0.06)), out=warpQuad(c,q);   // 批量不停下來修邊:用引導框位置找四角自動拉正
     qAdd([await canvasFile(out)]);
     $("camCount").innerHTML='<img class="last" src="'+out.toDataURL("image/jpeg",0.5)+'" alt=""><div style="margin-top:4px">已拍 '+CAM.count+' 張</div>';
     CAM.busy=false;
   }else{
     var mode=CAM.mode; closeCam(); CAM.busy=false;
-    openCrop(c,{ retake:function(){ openCam(mode); },
+    openCrop(c,{ exp:expOf(c,0.12), retake:function(){ openCam(mode); },
       done:async function(out){ var f=await canvasFile(out); if(mode==="back") backFile(f); else scanFile(f); } });
   }
 }
@@ -1513,6 +1513,85 @@ function detectQuad(src){
   if(area<full*0.18 || area>full*0.97 || bestN<n*0.15) return null;   // 太小(沒找到)或幾乎整張(名片比框大)→ 不採用
   return quad;
 }
+/* ===== v1.23 引導式抓邊:利用「使用者已把名片對準框」這件事,在預期位置附近找四條最直、最明顯的邊 ===== */
+/** exp:預期名片位置 {x0,y0,x1,y1}(原圖座標);回傳 {q, conf} 或 null */
+function detectQuadGuided(src, exp){
+  var S=560/Math.max(src.width,src.height), w=Math.max(40,Math.round(src.width*S)), h=Math.max(30,Math.round(src.height*S));
+  var c=document.createElement("canvas"); c.width=w; c.height=h;
+  var x=c.getContext("2d",{willReadFrequently:true}); x.drawImage(src,0,0,w,h);
+  var d=x.getImageData(0,0,w,h).data, n=w*h, g0=new Float32Array(n);
+  for(var i=0,j=0;i<n;i++,j+=4) g0[i]=0.299*d[j]+0.587*d[j+1]+0.114*d[j+2];
+  var g=g0.slice();   // 最外圈保留原值(不能留 0,否則圖片邊界會被當成很強的邊)
+  // 3×3 平均去雜訊(鍵盤字、名片小字)
+  for(var yy=1;yy<h-1;yy++) for(var xx=1;xx<w-1;xx++){ var k=yy*w+xx, s=0; for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++) s+=g0[k+dy*w+dx]; g[k]=s/9; }
+  var E={x0:exp.x0*S, y0:exp.y0*S, x1:exp.x1*S, y1:exp.y1*S}, EW=E.x1-E.x0, EH=E.y1-E.y0;
+  // 名片比背景亮還是暗:比較預期框中央 vs 框外一圈
+  var sin=0,nin=0,sout=0,nout=0;
+  for(yy=2;yy<h-2;yy+=2) for(xx=2;xx<w-2;xx+=2){
+    var v=g[yy*w+xx];
+    if(xx>E.x0+EW*0.15 && xx<E.x1-EW*0.15 && yy>E.y0+EH*0.15 && yy<E.y1-EH*0.15){ sin+=v; nin++; }
+    else if(xx<E.x0-EW*0.03 || xx>E.x1+EW*0.03 || yy<E.y0-EH*0.03 || yy>E.y1+EH*0.03){ sout+=v; nout++; }
+  }
+  var pol = (nout && sin/nin < sout/nout) ? -1 : 1;   // 1 = 名片較亮
+  var px=function(X,Y){ X=X<0?0:X>w-1?w-1:X; Y=Y<0?0:Y>h-1?h-1:Y; return g[(Y|0)*w+(X|0)]; };
+  /** 找一條邊:horiz=true 找水平邊(y=a+b·x);side=-1 名片在線的下/右方,1 在上/左方 */
+  function edge(horiz, at, side, angC){
+    var L0 = horiz ? E.x0+EW*0.12 : E.y0+EH*0.12, L1 = horiz ? E.x1-EW*0.12 : E.y1-EH*0.12;   // 沿邊取樣範圍(避開角落)
+    var span = horiz ? EH : EW, lo=Math.max(4, at-span*0.32), hi=Math.min((horiz?h:w)-5, at+span*0.32);
+    var N=48, best=-1, bestA=at, bestB=0, mid=(L0+L1)/2;
+    var A0=angC==null?-12:angC-4, A1=angC==null?12:angC+4;
+    for(var ang=A0; ang<=A1; ang+=0.75){
+      var b=Math.tan(ang*Math.PI/180);
+      for(var a=lo; a<=hi; a+=1){
+        var sc=0, hit=0;
+        for(var t=0;t<N;t++){
+          var u=L0+(L1-L0)*t/(N-1), p=a+b*(u-mid), gr;
+          // 名片內側 - 外側,乘上亮暗方向
+          gr = horiz ? (px(u,p-side*2.5)-px(u,p+side*2.5)) : (px(p-side*2.5,u)-px(p+side*2.5,u));
+          gr*=pol; if(gr>0){ sc+=Math.min(gr,110); if(gr>18) hit++; }
+        }
+        // 越接近預期位置越加分(使用者已經對準框)
+        var off=(a-at)/(span*0.32), score=sc*(1-0.35*off*off)*(0.5+0.5*hit/N);
+        if(score>best){ best=score; bestA=a; bestB=b; }
+      }
+    }
+    return {a:bestA, b:bestB, mid:mid, score:best, horiz:horiz, ang:Math.atan(bestB)*180/Math.PI, at:at, side:side};
+  }
+  var T=edge(true,E.y0,-1), B=edge(true,E.y1,1), Lf=edge(false,E.x0,-1), R=edge(false,E.x1,1);
+  // 名片是長方形:對邊應該差不多平行。歪太多的那條,用對邊角度 ±4° 重找,分數不差太多就換掉
+  function fix(e,o){
+    if(Math.abs(e.ang-o.ang)<=5) return null;
+    var f1=edge(e.horiz,e.at,e.side,o.ang), f2=edge(o.horiz,o.at,o.side,e.ang);
+    // 哪一條改了損失比較小,就改那條
+    return (e.score-f1.score)/e.score <= (o.score-f2.score)/o.score ? [f1,o] : [e,f2];
+  }
+  var fv=fix(Lf,R); if(fv){ Lf=fv[0]; R=fv[1]; }
+  var fh=fix(T,B); if(fh){ T=fh[0]; B=fh[1]; }
+  function meet(H,V){   // 水平線 y=Ha+Hb(x-Hm) 與 垂直線 x=Va+Vb(y-Vm) 交點
+    var X=V.a, Y=H.a;
+    for(var it=0;it<6;it++){ Y=H.a+H.b*(X-H.mid); X=V.a+V.b*(Y-V.mid); }
+    return {x:X/S, y:Y/S};
+  }
+  var q=[meet(T,Lf),meet(T,R),meet(B,R),meet(B,Lf)];
+  // 信心:每條邊的平均強度 + 形狀合理(面積、比例、凸)
+  var minS=Math.min(T.score,B.score,Lf.score,R.score)/48;
+  var area=Math.abs(polyArea(q)), eA=(exp.x1-exp.x0)*(exp.y1-exp.y0);
+  var D=function(a,b){return Math.hypot(a.x-b.x,a.y-b.y);};
+  var ww=(D(q[0],q[1])+D(q[3],q[2]))/2, hh=(D(q[0],q[3])+D(q[1],q[2]))/2, ar=Math.max(ww,hh)/Math.max(1,Math.min(ww,hh));
+  var ok = minS>6 && area>eA*0.45 && area<eA*1.6 && ar>1.2 && ar<2.3 && isConvex(q);
+  return { q:q, conf:ok?Math.min(1,minS/20):0, minS:minS, ar:ar, areaR:area/eA };
+}
+function isConvex(q){ var sg=0; for(var i=0;i<4;i++){ var a=q[i],b=q[(i+1)%4],c=q[(i+2)%4], cr=(b.x-a.x)*(c.y-b.y)-(b.y-a.y)*(c.x-b.x); if(!cr) return false; if(!sg) sg=Math.sign(cr); else if(Math.sign(cr)!==sg) return false; } return true; }
+/** 智慧抓邊:有預期位置(相機引導框)用引導式;沒把握時,舊方法結果要跟框差不多才用,否則直接用框 */
+function smartQuad(src, exp){
+  if(!exp) return detectQuad(src);
+  var r=detectQuadGuided(src,exp); if(r && r.conf>0) return r.q;
+  var q=detectQuad(src), ew=exp.x1-exp.x0, eh=exp.y1-exp.y0, E=[{x:exp.x0,y:exp.y0},{x:exp.x1,y:exp.y0},{x:exp.x1,y:exp.y1},{x:exp.x0,y:exp.y1}];
+  if(q && q.every(function(p,i){ return Math.abs(p.x-E[i].x)<ew*0.12 && Math.abs(p.y-E[i].y)<eh*0.12; })) return q;
+  return E;
+}
+/** 相機截圖時多留了 pad 的邊:回推引導框在截圖中的位置 */
+function expOf(c,pad){ var f=pad/(1+2*pad); return {x0:c.width*f, y0:c.height*f, x1:c.width*(1-f), y1:c.height*(1-f)}; }
 function polyArea(q){ var a=0; for(var i=0;i<q.length;i++){ var p=q[i], r=q[(i+1)%q.length]; a+=p.x*r.y-r.x*p.y; } return a/2; }
 function homography(from,to){   // 解 8 元一次方程:from(輸出座標) → to(原圖座標)
   var A=[],B=[];
@@ -1548,7 +1627,7 @@ function warpQuad(src,q,pre){
 var CROP={src:null, q:null, drag:-1, opt:null};
 function openCrop(src,opt){
   CROP.src=src; CROP.opt=opt||{}; CROP.drag=-1;
-  CROP.q = detectQuad(src) || insetQuad(src,0.04);
+  CROP.q = smartQuad(src, CROP.opt.exp) || insetQuad(src,0.04);
   $("btnCropRetake").classList.toggle("hide",!CROP.opt.retake);
   $("vCrop").classList.remove("hide");
   requestAnimationFrame(drawCrop);
@@ -3578,7 +3657,7 @@ freshVideo();
 $("btnCamZoom").onclick=cycleZoom;
 $("btnCropOk").onclick=cropOk;
 $("btnCropFull").onclick=function(){ if(CROP.src){ CROP.q=insetQuad(CROP.src,0); drawCrop(); } };
-$("btnCropAuto").onclick=function(){ if(!CROP.src) return; var q=detectQuad(CROP.src); if(q){ CROP.q=q; drawCrop(); } else toast("找不到明顯的名片邊緣,請手動拖曳四角"); };
+$("btnCropAuto").onclick=function(){ if(!CROP.src) return; var q=smartQuad(CROP.src, CROP.opt&&CROP.opt.exp); if(q){ CROP.q=q; drawCrop(); } else toast("找不到明顯的名片邊緣,請手動拖曳四角"); };
 $("btnCropRetake").onclick=function(){ var r=CROP.opt&&CROP.opt.retake; closeCrop(); if(r) r(); };
 $("btnCrop").onclick=recropCurrent;
 window.addEventListener("resize",function(){ if(CROP.src) drawCrop(); });
