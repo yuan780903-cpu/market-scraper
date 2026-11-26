@@ -453,6 +453,7 @@ header .ic svg{color:var(--acc2)}
     <button class="pill" id="btnCamOrient">橫式</button>
   </div>
   <div class="hint" id="camHint">把名片放進框內</div>
+  <div class="hint hide" id="camDbg" style="font-size:12px;font-weight:400;font-family:ui-monospace,Menlo,monospace;color:#d9b98a"></div>
   <div class="bot">
     <div class="side"><button class="pill on" id="btnCamAuto">自動拍 開</button></div>
     <button class="shutter" id="btnShutter" aria-label="拍照"></button>
@@ -465,7 +466,7 @@ header .ic svg{color:var(--acc2)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.7", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.8", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -850,7 +851,7 @@ function layoutGuide(){
   if(CAM.portrait){ h=Math.min(H*0.62, W*0.8*r); w=h/r; } else { w=Math.min(W*0.86, H*0.5*r); h=w/r; }
   var x=(W-w)/2, y=(H-h)/2-H*0.03, sh=$("camShade");
   sh.style.left=x+"px"; sh.style.top=y+"px"; sh.style.width=w+"px"; sh.style.height=h+"px";
-  $("camHint").style.top=(y+h+30)+"px";
+  $("camHint").style.top=(y+h+30)+"px"; $("camDbg").style.top=(y+h+58)+"px";
   CAM.g={x:x,y:y,w:w,h:h};
 }
 /** 螢幕上的引導框 → 影片原始像素座標(video 用 object-fit:cover) */
@@ -890,6 +891,10 @@ function camTick(){
   if(CAM.busy || $("vCam").classList.contains("hide")) return;
   var m=camMeasure(); if(!m) return;
   CAM.m=m;
+  if(CAM.debug){   // 診斷:點標題 3 下顯示(門檻:有名片 亮度差>14 或 對比>26|不動 晃動<4.5|清楚 清晰>60)
+    var v=$("camVideo");
+    $("camDbg").textContent="亮度差 "+m.inOut.toFixed(0)+"|對比 "+m.std.toFixed(0)+"|晃動 "+m.motion.toFixed(1)+"|清晰 "+m.sharp.toFixed(0)+"|"+v.videoWidth+"×"+v.videoHeight;
+  }
   // 拍過一張後,要等名片換掉(畫面明顯變化)才再拍,避免同一張連拍
   if(!CAM.armed){
     if(sigDiff(m.sig,CAM.lastSig)>18 || m.motion>12){ CAM.armed=true; }
@@ -904,6 +909,10 @@ function camTick(){
   if(!CAM.auto){ hint("可以按快門了"); return; }
   hint("拍攝中…");
   if(CAM.still>=CAM_NEED) camShoot();
+}
+function toggleCamDbg(){
+  var n=(toggleCamDbg.n||0)+1, now=Date.now(); if(now-(toggleCamDbg.t||0)>800) n=1; toggleCamDbg.n=n; toggleCamDbg.t=now;
+  if(n>=3){ toggleCamDbg.n=0; CAM.debug=!CAM.debug; $("camDbg").classList.toggle("hide",!CAM.debug); toast(CAM.debug?"已開啟診斷數值,截圖給我就能調整":"已關閉診斷數值"); }
 }
 function hint(t){ if($("camHint").textContent!==t) $("camHint").textContent=t; }
 function prog(p){ $("camProg").style.width=Math.min(100,p*100)+"%"; }
@@ -1680,6 +1689,7 @@ $("btnCamClose").onclick=function(){
   var batch=CAM.mode==="batch"; closeCam();
   if(batch){ openBatch(); if(CAM.count) toast("已拍 "+CAM.count+" 張,辨識中,好了按「全部儲存」"); }
 };
+$("camTitle").addEventListener("click",toggleCamDbg);
 $("btnShutter").onclick=function(){ if(CAM.stream) camShoot(); };
 $("btnCamAuto").onclick=function(){ CAM.auto=!CAM.auto; ls("sc_camauto",CAM.auto?"1":"0"); renderCamBtns(); };
 $("btnCamOrient").onclick=function(){ CAM.portrait=!CAM.portrait; ls("sc_camport",CAM.portrait?"1":"0"); renderCamBtns(); layoutGuide(); CAM.prev=null; };
