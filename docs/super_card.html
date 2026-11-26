@@ -168,7 +168,8 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 
 /* ===== v1.7 即時掃描相機 ===== */
 .cam{position:fixed;inset:0;z-index:30;background:#000;color:#fff;overflow:hidden;touch-action:none}
-.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam video{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.cam video.fit{object-fit:fill}
 .cam .shade{position:absolute;border-radius:16px;box-shadow:0 0 0 200vmax rgba(8,14,26,.58);pointer-events:none;transition:border-color .2s}
 .cam .shade i{position:absolute;width:30px;height:30px;border:4px solid var(--acc2)}
 .cam .shade i.a{left:-3px;top:-3px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
@@ -179,7 +180,9 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .cam .shade .prog{position:absolute;left:12%;right:12%;bottom:-16px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);overflow:hidden}
 .cam .shade .prog b{display:block;height:100%;width:0;background:var(--acc2);transition:width .15s}
 .cam .top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
-.cam .top .ttl{flex:1;font-family:"Noto Serif TC","Songti TC",serif;font-size:17px;letter-spacing:1px;text-align:center}
+.cam .top .ttl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"Noto Serif TC","Songti TC",serif;font-size:17px;letter-spacing:1px;text-align:center}
+.cam .top .pill{white-space:nowrap;flex:none;padding:7px 10px}
+@media (max-width:430px){.cam .top{gap:6px;padding-left:10px;padding-right:10px}.cam .top .pill.ico .lb{display:none}.cam .top .pill.ico{padding:7px 9px}.cam .top .ttl{font-size:15px;letter-spacing:0}}
 .cam .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:18px;padding:7px 12px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
 .cam .pill.on{background:var(--acc2);color:var(--pri);border-color:var(--acc2);font-weight:700}
 .cam .hint{position:absolute;left:0;right:0;text-align:center;font-size:16px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
@@ -195,6 +198,7 @@ details pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);bo
 .cam .ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .cam .modes{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 122px);display:flex;justify-content:center;gap:8px}
 .cam .modes button{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:16px;padding:6px 14px;font-size:14px}
+.cam .modes button.lang{margin-left:6px;border-style:dashed}
 .cam .modes button.on{background:var(--acc2);color:var(--pri);border-color:var(--acc2);font-weight:700}
 .cam .shade.multi{border-radius:18px}
 .cam .pill.on#btnCamTorch{background:#fde68a;color:#111}
@@ -411,6 +415,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnBooks" data-ic="stack">名片簿</button>
     <button id="btnTheme" data-ic="palette">風格模板</button>
     <button id="btnSound" data-ic="volume">音效:開</button>
+    <button id="btnLang" data-ic="globe">辨識語言:自動</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
@@ -756,16 +761,16 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <canvas id="camOv" class="ov"></canvas>
   <div id="camShade" class="shade"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="prog"><b id="camProg"></b></div></div>
   <div class="top">
-    <button class="pill" id="btnCamClose" data-ic="x">關閉</button>
+    <button class="pill ico" id="btnCamClose" data-ic="x">關閉</button>
     <div class="ttl" id="camTitle">掃描名片</div>
-    <button class="pill" id="btnCamAlbum" data-ic="image">相簿</button>
+    <button class="pill ico" id="btnCamAlbum" data-ic="image">相簿</button>
     <button class="pill hide" id="btnCamTorch">閃光燈</button>
     <button class="pill hide" id="btnCamZoom">1×</button>
     <button class="pill" id="btnCamOrient">橫式</button>
   </div>
   <div class="hint" id="camHint">把名片放進框內</div>
   <div class="hint hide" id="camDbg" style="font-size:12px;font-weight:400;font-family:ui-monospace,Menlo,monospace;color:#d9b98a"></div>
-  <div class="modes" id="camModes"><button type="button" data-cm="single">單張</button><button type="button" data-cm="batch">連續</button><button type="button" data-cm="multi">多張</button></div>
+  <div class="modes" id="camModes"><button type="button" data-cm="single">單張</button><button type="button" data-cm="batch">連續</button><button type="button" data-cm="multi">多張</button><button type="button" class="lang" id="btnCamLang">自動</button></div>
   <div class="bot">
     <div class="side"><button class="pill on" id="btnCamAuto">自動拍 開</button></div>
     <button class="shutter" id="btnShutter" aria-label="拍照"></button>
@@ -792,7 +797,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.20", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.21", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -803,6 +808,7 @@ var FIELDS = [
 
 /* ===== 線條圖示 ===== */
 var ICONS={
+ globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
  nav:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
@@ -1066,7 +1072,7 @@ function itemHtml(c){
 /* ===== 編輯頁 ===== */
 function openEdit(card, opts){
   opts=opts||{};
-  S.cur={ id: card&&card.ID||"", image: opts.image||"", thumb: opts.thumb||"", method: opts.method||"", raw: opts.raw||"",
+  S.cur={ id: card&&card.ID||"", image: opts.image||"", thumb: opts.thumb||"", method: opts.method||"", lang: opts.lang||"", raw: opts.raw||"",
            qid: opts.qid||0, dup: opts.dup||null,
            backImage: opts.backImage||"", backThumb: opts.backThumb||"",
            frontSrc: opts.preview || (card&&card["縮圖"]) || "", backSrc: opts.backPreview || (card&&card["背面縮圖"]) || "" };
@@ -1089,7 +1095,7 @@ function openEdit(card, opts){
   renderTagPick();
   renderQuick();
   var isNew=!(card&&card.ID);
-  $("method").textContent = isNew ? (S.cur.method==="AI"?"✨ AI 辨識":S.cur.method==="OCR"?"🔤 OCR 辨識(請核對)":"手動輸入")
+  $("method").textContent = isNew ? ((S.cur.method==="AI"?"✨ AI 辨識":S.cur.method==="OCR"?"🔤 OCR 辨識(請核對)":"手動輸入")+(S.cur.lang&&S.cur.lang!=="zh"&&S.cur.method?" · "+langName(S.cur.lang):""))
                                   : ("建立 "+(card["建立時間"]||"").slice(0,16)+" · "+(card["辨識方式"]||""));
   $("method").className = "badge"+(S.cur.method==="OCR"?" ocr":"");
   $("warn").classList.toggle("hide",!opts.warn); $("warn").textContent=opts.warn||"";
@@ -1121,9 +1127,9 @@ async function scanFile(file){
     var big=shrink(im,1600,0.85), thumb=shrink(im,240,0.6);
     $("photo").src=big; $("photo").classList.remove("hide");
     var b64=big.split(",")[1];
-    var r=await post({action:"scan", image:b64, mime:"image/jpeg"});
+    var r=await post({action:"scan", image:b64, mime:"image/jpeg", lang:curLang()});
     if(!r.ok) throw new Error(r.error);
-    openEdit(r.fields, {image:b64, thumb:thumb, preview:big, method:r.method, raw:r.raw, warn:r.warn, dup:findDup(r.fields)});
+    openEdit(r.fields, {image:b64, thumb:thumb, preview:big, method:r.method, lang:r.lang, raw:r.raw, warn:r.warn, dup:findDup(r.fields)});
     sfx("done");
   }catch(e){
     toast("辨識失敗:"+e.message);
@@ -1176,9 +1182,10 @@ async function openCam(mode){
   }catch(e){
     closeCam(); toast(e.name==="NotAllowedError" ? "沒有相機權限,改用拍照/選照片" : "相機無法開啟,改用拍照/選照片"); fallbackPick(mode); return;
   }
-  var v=$("camVideo"); v.srcObject=CAM.stream;
+  var v=freshVideo(); v.srcObject=CAM.stream;
   try{ await v.play(); }catch(e){}
-  layoutGuide(); initZoom();
+  fitVideo(); layoutGuide(); initZoom();
+  [300,1000].forEach(function(t){ setTimeout(function(){ if(!$("vCam").classList.contains("hide")){ fitVideo(); layoutGuide(); } },t); });
   clearInterval(CAM.timer); CAM.timer=setInterval(camTick,150);
 }
 function fallbackPick(mode){ if(mode==="back") $("fileBack").click(); else if(mode==="batch") $("fileCam").click(); else $("file").click(); }
@@ -1203,10 +1210,35 @@ function layoutGuide(){
   else{ $("camHint").style.top=(y+h+30)+"px"; $("camDbg").style.top=(y+h+58)+"px"; }
   CAM.g={x:x,y:y,w:w,h:h};
 }
-/** 螢幕上的引導框 → 影片原始像素座標(video 用 object-fit:cover) */
+/** 換一個全新的 video 元素(iOS 重複接相機時,舊元素偶爾會用錯的尺寸畫面) */
+function freshVideo(){
+  var o=$("camVideo"), v=document.createElement("video");
+  v.id="camVideo"; v.setAttribute("playsinline",""); v.setAttribute("muted",""); v.setAttribute("autoplay",""); v.muted=true; v.playsInline=true;
+  v.addEventListener("pointerdown",function(e){ focusAt(e.clientX,e.clientY); });
+  v.addEventListener("loadedmetadata",function(){ fitVideo(); layoutGuide(); });
+  v.addEventListener("resize",function(){ fitVideo(); layoutGuide(); CAM.prev=null; });
+  if(o){ try{ o.srcObject=null; }catch(e){} o.parentNode.replaceChild(v,o); }
+  return v;
+}
+/** 手動把影片鋪滿螢幕(等同 cover),元素比例=影片比例,不靠瀏覽器的 object-fit */
+function fitVideo(){
+  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight, W=innerWidth, H=innerHeight;
+  if(!vw||!vh){ v.classList.remove("fit"); v.style.cssText=""; return; }
+  var sc=Math.max(W/vw,H/vh), w=vw*sc, h=vh*sc;
+  v.classList.add("fit");
+  v.style.width=w+"px"; v.style.height=h+"px"; v.style.left=((W-w)/2)+"px"; v.style.top=((H-h)/2)+"px";
+}
+/** 影片像素 ↔ 螢幕座標:螢幕x = ox + 影片x × sc(依元素實際位置計算) */
+function vidMap(){
+  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight; if(!vw||!vh) return null;
+  var r=v.getBoundingClientRect(); if(!r.width||!r.height) return null;
+  var sc=Math.max(r.width/vw,r.height/vh);
+  return { vw:vw, vh:vh, sc:sc, ox:r.left+(r.width-vw*sc)/2, oy:r.top+(r.height-vh*sc)/2 };
+}
+/** 螢幕上的引導框 → 影片原始像素座標 */
 function guideInVideo(pad){
-  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight; if(!vw) return null;
-  var W=v.clientWidth, H=v.clientHeight, sc=Math.max(W/vw,H/vh), ox=(W-vw*sc)/2, oy=(H-vh*sc)/2, g=CAM.g;
+  var M=vidMap(); if(!M) return null;
+  var vw=M.vw, vh=M.vh, sc=M.sc, ox=M.ox, oy=M.oy, g=CAM.g;
   var px=g.w*(pad||0), py=g.h*(pad||0);
   var x=(g.x-px-ox)/sc, y=(g.y-py-oy)/sc, w=(g.w+2*px)/sc, h=(g.h+2*py)/sc;
   x=Math.max(0,x); y=Math.max(0,y); w=Math.min(vw-x,w); h=Math.min(vh-y,h);
@@ -1367,7 +1399,7 @@ function drawMultiOverlay(quads, r, scaleSmall){
   if(ov.width!==W*dpr){ ov.width=W*dpr; ov.height=H*dpr; }
   var x=ov.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H);
   if(!quads || !quads.length) return;
-  var v=$("camVideo"), vw=v.videoWidth, vh=v.videoHeight, sc=Math.max(v.clientWidth/vw,v.clientHeight/vh), ox=(v.clientWidth-vw*sc)/2, oy=(v.clientHeight-vh*sc)/2;
+  var M=vidMap(); if(!M) return; var sc=M.sc, ox=M.ox, oy=M.oy;
   quads.forEach(function(q,k){
     var P=q.map(function(p){ return {x:ox+(r.x+p.x/scaleSmall)*sc, y:oy+(r.y+p.y/scaleSmall)*sc}; });
     x.beginPath(); x.moveTo(P[0].x,P[0].y); for(var i=1;i<4;i++) x.lineTo(P[i].x,P[i].y); x.closePath();
@@ -1600,8 +1632,8 @@ async function focusAt(ex,ey){
   CAM.still=0;
   var t=camTrack(); if(!t) return;
   var caps={}; try{ caps=t.getCapabilities?t.getCapabilities():{}; }catch(e){}
-  var v=$("camVideo"), vw=v.videoWidth||1, vh=v.videoHeight||1, W=v.clientWidth, H=v.clientHeight, sc=Math.max(W/vw,H/vh);
-  var nx=Math.max(0,Math.min(1,((ex-(W-vw*sc)/2)/sc)/vw)), ny=Math.max(0,Math.min(1,((ey-(H-vh*sc)/2)/sc)/vh));
+  var M=vidMap()||{vw:1,vh:1,sc:1,ox:0,oy:0};
+  var nx=Math.max(0,Math.min(1,((ex-M.ox)/M.sc)/M.vw)), ny=Math.max(0,Math.min(1,((ey-M.oy)/M.sc)/M.vh));
   var adv={}, fm=caps.focusMode||[];
   if(fm.indexOf("single-shot")>=0) adv.focusMode="single-shot"; else if(fm.indexOf("continuous")>=0) adv.focusMode="continuous";
   if(caps.pointsOfInterest || fm.length) adv.pointsOfInterest=[{x:nx,y:ny}];
@@ -1647,7 +1679,7 @@ async function backFile(file){
     var im=await loadImg(file), big=shrink(im,1600,0.85);
     cur.backImage=big.split(",")[1]; cur.backThumb=shrink(im,240,0.6); cur.backSrc=big;
     renderSides("b");
-    var r=await post({action:"scan", image:cur.backImage, mime:"image/jpeg"});
+    var r=await post({action:"scan", image:cur.backImage, mime:"image/jpeg", lang:curLang()});
     if(!r.ok) throw new Error(r.error);
     if(S.cur!==cur) return;   // 已離開編輯頁
     var f=formData(), n=0;
@@ -2152,6 +2184,15 @@ function sfx(name){
   var now=Date.now(); if(now-(SFX.last[name]||0)<60) return; SFX.last[name]=now;   // 避免連發
   try{ SOUNDS[name](); }catch(e){}
   try{ if(navigator.vibrate && VIB[name]) navigator.vibrate(VIB[name]); }catch(e){}
+}
+/* ===== 多國語言辨識:自動 / 中文 / 英文 / 日文 / 韓文 ===== */
+var LANGS=[["auto","自動","自動判斷(中英為主,看到日文假名、韓文會自動改用該語言)"],["zh","中文","中文名片"],["en","英文","英文名片"],["ja","日文","日本名片"],["ko","韓文","韓國名片"]];
+function curLang(){ var v=ls("sc_lang")||"auto"; return LANGS.some(function(l){return l[0]===v;}) ? v : "auto"; }
+function langName(v){ return (LANGS.find(function(l){return l[0]===v;})||LANGS[0])[1]; }
+function renderLangBtns(){ var n=langName(curLang()); setLabel($("btnLang"),"辨識語言:"+n); $("btnCamLang").textContent="🌐 "+n; }
+function cycleLang(){
+  var i=LANGS.findIndex(function(l){return l[0]===curLang();}), nx=LANGS[(i+1)%LANGS.length];
+  ls("sc_lang",nx[0]); renderLangBtns(); toast("🌐 辨識語言:"+nx[1]+(nx[0]==="auto"?"(自動判斷)":""));
 }
 function renderSoundBtn(){ setLabel($("btnSound"), SFX.on ? "音效:開" : "音效:關"); }
 function toggleSound(){ SFX.on=!SFX.on; ls("sc_sound",SFX.on?"1":"0"); renderSoundBtn(); if(SFX.on){ sfxCtx(); sfx("success"); } toast(SFX.on?"🔊 音效已開啟":"🔇 音效已關閉"); }
@@ -2986,9 +3027,9 @@ async function qScan(it){
     if(!it.big){ var im=await loadImg(it.file); it.big=shrink(im,1600,0.85); it.thumb=shrink(im,240,0.6); }
     it.file=null;
     renderQ();
-    var r=await post({action:"scan", image:it.big.split(",")[1], mime:"image/jpeg"});
+    var r=await post({action:"scan", image:it.big.split(",")[1], mime:"image/jpeg", lang:curLang()});
     if(!r.ok) throw new Error(r.error);
-    it.fields=r.fields; it.method=r.method; it.raw=r.raw; it.warn=r.warn;
+    it.fields=r.fields; it.method=r.method; it.lang=r.lang; it.raw=r.raw; it.warn=r.warn;
   }catch(e){ it.err=e.message; it.fields=it.fields||{}; }
   if(it.backFile) await qScanBack(it);   // 雙面:正面辨識完接著辨識背面
   qFinish(it);
@@ -2999,7 +3040,7 @@ async function qScanBack(it){
     if(!it.backBig){ var im=await loadImg(it.backFile); it.backBig=shrink(im,1600,0.85); it.backThumb=shrink(im,240,0.6); }
     it.backFile=null;
     renderQ();
-    var r=await post({action:"scan", image:it.backBig.split(",")[1], mime:"image/jpeg"});
+    var r=await post({action:"scan", image:it.backBig.split(",")[1], mime:"image/jpeg", lang:curLang()});
     if(!r.ok) throw new Error(r.error);
     it.backN=fillBlankObj(it.fields, r.fields);
     it.raw=(it.raw?it.raw+"\n\n":"")+"【背面】\n"+(r.raw||"");
@@ -3060,7 +3101,7 @@ function openQItem(qid){
   if(it.dup && it.dup.q && S.q.indexOf(it.dup.q)<0) it.dup = findDup(it.fields) || null;
   if(it.st==="dup" && !it.dup) it.st="ok";
   if(it.st==="wait"||it.st==="scan"||it.st==="saving"){ toast("這張還在處理中,稍等一下"); return; }
-  openEdit(withQTag(Object.assign({},it.fields)), {image:it.big.split(",")[1], thumb:it.thumb, preview:it.big, method:it.method, raw:it.raw,
+  openEdit(withQTag(Object.assign({},it.fields)), {image:it.big.split(",")[1], thumb:it.thumb, preview:it.big, method:it.method, lang:it.lang, raw:it.raw,
     backImage: it.backBig ? it.backBig.split(",")[1] : "", backThumb: it.backThumb||"", backPreview: it.backBig||"",
     warn: it.st==="err" ? ("辨識失敗,可手動填寫後儲存。("+it.err+")") : it.warn, dup:it.dup, qid:qid});
 }
@@ -3533,7 +3574,7 @@ $("btnCamClose").onclick=function(){
   if(batch){ openBatch(); if(CAM.count) toast("已拍 "+CAM.count+" 張,辨識中,好了按「全部儲存」"); }
 };
 $("camTitle").addEventListener("click",toggleCamDbg);
-$("camVideo").addEventListener("pointerdown",function(e){ focusAt(e.clientX,e.clientY); });
+freshVideo();
 $("btnCamZoom").onclick=cycleZoom;
 $("btnCropOk").onclick=cropOk;
 $("btnCropFull").onclick=function(){ if(CROP.src){ CROP.q=insetQuad(CROP.src,0); drawCrop(); } };
@@ -3591,7 +3632,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -3657,6 +3698,7 @@ $("btnCvSave").onclick=function(){ if(MY.view) shareMyVcf(MY.view); };
 document.querySelectorAll("[data-vside]").forEach(function(b){ b.addEventListener("click",function(){ MY.vside=b.dataset.vside; drawCardView(); }); });
 $("cvMake").href=location.pathname;
 $("btnSound").onclick=toggleSound;
+$("btnLang").onclick=cycleLang; $("btnCamLang").onclick=cycleLang; renderLangBtns();
 document.addEventListener("pointerdown",function(e){
   var el=e.target.closest("button,a.btn,.qa a,.chip,.item,[data-q],label.opt");
   if(!el || el.id==="btnShutter" || el.disabled) return;
