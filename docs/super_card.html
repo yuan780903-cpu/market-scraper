@@ -252,6 +252,15 @@ header .ic svg{color:var(--acc2)}
 .vbar .ic svg,.vbar .sides svg{color:var(--acc2)}
 .ic svg,.btn svg,.fab svg,.fab2 svg,.menu svg,.quick svg,.qa svg,.act2 svg{display:block}
 
+/* ===== 匯入匯出 ===== */
+.ioprog{margin-top:10px;font-size:13px;color:var(--sub)}
+.ioprog .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:5px}
+.ioprog .bar b{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+.mrowi{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrowi:last-child{border-bottom:0}
+.mrowi .mh{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--ink);word-break:break-all}
+.mrowi .mh small{display:block;font-weight:400;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrowi select{flex:none;width:118px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
 /* ===== 群組管理 ===== */
 .gadd{display:flex;gap:8px}
 .gadd .inp{flex:1}
@@ -312,7 +321,7 @@ header .ic svg{color:var(--acc2)}
     <button class="ic" id="btnMenu" title="更多" data-ic="menu"></button>
   </header>
   <div id="menu" class="menu hide">
-    <button id="btnExport" data-ic="download">匯出 Excel / 通訊錄</button>
+    <button id="btnExport" data-ic="download">匯入 / 匯出</button>
     <button id="btnDups" data-ic="copy">找重複名片</button>
     <button id="btnReload" data-ic="refresh">重新整理</button>
     <button id="btnLogout" data-ic="logout">登出</button>
@@ -371,18 +380,32 @@ header .ic svg{color:var(--acc2)}
 <div id="vExport" class="sheet hide">
   <header>
     <button class="ic" id="btnExportBack" data-ic="back">返回</button>
-    <h1>匯出名片</h1>
+    <h1>匯入 / 匯出</h1>
   </header>
   <div class="wrap">
     <div class="exp">
-      <h3>範圍</h3>
+      <h3>📥 匯入名片</h3>
+      <p>支援 <b>Excel、CSV、vcf、ZIP</b>(含照片)。可以一次選多個檔,連同名片照片一起選;其他名片 App 匯出的檔案也可以。</p>
+      <button class="btn" id="btnImport" data-ic="download">選擇要匯入的檔案</button>
+      <input id="fileImport" type="file" multiple class="hide" accept=".xlsx,.xls,.csv,.vcf,.zip,text/csv,text/vcard,application/zip,image/*">
+    </div>
+    <div class="exp">
+      <h3>匯出範圍</h3>
       <label><input type="radio" name="xScope" value="all" checked> <span id="xAll">全部</span></label>
       <label id="xFiltRow"><input type="radio" name="xScope" value="filt"> <span id="xFilt">目前搜尋結果</span></label>
+    </div>
+    <div class="exp">
+      <h3>📦 完整備份(ZIP,含照片)</h3>
+      <p>一個檔包含 名片.xlsx、名片.csv、通訊錄.vcf 和所有名片照片(正反面)。換手機、換帳號或備份最方便,之後用上面「匯入」選這個 ZIP 就能連照片一起還原。</p>
+      <label><input type="checkbox" id="xFullPhoto" checked> 照片用原圖(較清楚;取消勾選改用縮圖,比較快)</label>
+      <button class="btn" id="btnZip" style="margin-top:6px" data-ic="download">下載完整備份 ZIP</button>
+      <div class="ioprog hide" id="xProg"><div class="bar"><b></b></div><span></span></div>
     </div>
     <div class="exp">
       <h3>📗 Excel 表格</h3>
       <p>一張名片一列,電話保留開頭 0,可直接用 Excel、Numbers、Google 試算表開啟。</p>
       <button class="btn" id="btnXlsx" data-ic="sheet">下載 Excel(.xlsx)</button>
+      <button class="btn sec" id="btnCsv" style="margin-top:8px" data-ic="sheet">下載 CSV</button>
     </div>
     <div class="exp">
       <h3>👤 手機通訊錄(.vcf)</h3>
@@ -396,6 +419,32 @@ header .ic svg{color:var(--acc2)}
       <a class="btn sec" id="btnSheet" data-ic="sheet" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開啟雲端試算表</a>
     </div>
     <p class="stat" style="margin-top:14px">※ 在 LINE 裡開這個網頁可能無法下載,請改用 Safari / Chrome 開啟。</p>
+  </div>
+</div>
+
+<!-- 匯入預覽 -->
+<div id="vImport" class="sheet hide" style="z-index:13">
+  <header>
+    <button class="ic" id="btnImpBack" data-ic="back">返回</button>
+    <h1>匯入名片</h1>
+  </header>
+  <div class="wrap">
+    <div class="exp"><div id="impSum" style="font-size:15px;line-height:1.7"></div></div>
+    <div class="exp" id="impMapBox">
+      <h3>欄位對應</h3>
+      <p>左邊是檔案裡的欄位(下面小字是第一筆資料),右邊選要放進哪個欄位;已自動對好,不對的再改。</p>
+      <div id="impMap"></div>
+    </div>
+    <div class="exp">
+      <h3>選項</h3>
+      <label><input type="checkbox" id="impSkipDup" checked> 略過已經有的名片(手機、Email 或 姓名+公司 相同)</label>
+      <input id="impGroup" class="inp" style="margin-top:8px;font-size:15px" placeholder="匯入的名片加入群組(選填,例:舊App匯入)" maxlength="20">
+    </div>
+    <div class="exp"><h3>預覽</h3><div id="impPrev" class="list"></div></div>
+    <div class="acts">
+      <button class="btn" id="btnImpGo" data-ic="check">開始匯入</button>
+      <div class="ioprog hide" id="impProg"><div class="bar"><b></b></div><span></span></div>
+    </div>
   </div>
 </div>
 
@@ -547,7 +596,7 @@ header .ic svg{color:var(--acc2)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.11", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.12", APP_DATE = "2026-11-26";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1335,6 +1384,295 @@ function pickTheme(id){
   var t=THEMES.find(function(x){return x.id===id;}); if(!t) return;
   ls("sc_theme",t.id); applyTheme(t); openThemes();
   toast("已換成「"+t.name+"」");
+}
+
+/* ===== 匯入 / 匯出(Excel、CSV、vcf、ZIP 含照片) ===== */
+function loadJSZip(){
+  if(window.JSZip) return Promise.resolve();
+  return new Promise(function(res,rej){
+    var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    sc.onload=res; sc.onerror=function(){rej(new Error("壓縮元件載入失敗,請確認網路"));}; document.head.appendChild(sc);
+  });
+}
+function safeName(s){ return String(s||"").replace(/[\\\/:*?"<>|\s]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40)||"名片"; }
+function photoNames(c){ var b=safeName((c["姓名"]||"")+"_"+(c["公司"]||""))+"_"+c.ID; return { f:"photos/"+b+"_正面.jpg", b:"photos/"+b+"_背面.jpg" }; }
+function bcols(){ return XCOLS.filter(function(k){return k!=="照片連結" && k!=="背面照片連結";}).concat(["照片檔名","背面照片檔名"]); }   // 用到時才算(XCOLS 定義在後面)
+function rowsFor(cs, withFiles){
+  var BC=bcols();
+  return [BC].concat(cs.map(function(c){
+    var pn=photoNames(c);
+    return BC.map(function(k){
+      if(k==="照片檔名") return withFiles && c["照片ID"] ? pn.f : "";
+      if(k==="背面照片檔名") return withFiles && c["背面照片ID"] ? pn.b : "";
+      return String(c[k]||"");
+    });
+  }));
+}
+function toCSV(rows){
+  return "﻿"+rows.map(function(r){ return r.map(function(v){ v=String(v==null?"":v); return /[",\n\r]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(","); }).join("\r\n");
+}
+function exportCsv(){
+  var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
+  download(new Blob([toCSV(rowsFor(cs,false))],{type:"text/csv;charset=utf-8"}), "超級名片_"+today()+".csv");
+  toast("✅ 已匯出 "+cs.length+" 張(CSV)");
+}
+function ioProg(id, p, t){ var el=$(id); el.classList.toggle("hide", p==null); if(p!=null){ el.querySelector("b").style.width=Math.round(p*100)+"%"; el.querySelector("span").textContent=t||""; } }
+/** 完整備份 ZIP:Excel+CSV+vcf+照片(原圖由後端分批取) */
+async function exportZip(){
+  var cs=exportCards(); if(!cs.length){ toast("沒有名片可以匯出"); return; }
+  var full=$("xFullPhoto").checked, b=$("btnZip"); b.disabled=true;
+  try{
+    ioProg("xProg",0.02,"準備中…");
+    await loadJSZip(); await loadXLSX();
+    var zip=new JSZip(), withFiles=true;
+    // 照片
+    var jobs=[]; cs.forEach(function(c){ if(c["照片ID"]) jobs.push({c:c,side:"f"}); if(c["背面照片ID"]) jobs.push({c:c,side:"b"}); });
+    var done=0, miss=0;
+    if(full){
+      for(var side of ["f","b"]){
+        var list=jobs.filter(function(j){return j.side===side;});
+        for(var i=0;i<list.length;i+=8){
+          var part=list.slice(i,i+8), r=await post({action:"photos", side:side, ids:part.map(function(j){return j.c.ID;})});
+          (r.photos||[]).forEach(function(p){
+            var c=cs.find(function(x){return x.ID===p.id;}); if(!c) return;
+            if(p.data) zip.file(side==="b"?photoNames(c).b:photoNames(c).f, p.data, {base64:true}); else miss++;
+          });
+          done+=part.length; ioProg("xProg", 0.05+0.8*done/Math.max(1,jobs.length), "下載照片 "+done+" / "+jobs.length);
+        }
+      }
+    }else{
+      jobs.forEach(function(j){ var t=String(j.c[j.side==="b"?"背面縮圖":"縮圖"]||""); var i=t.indexOf("base64,"); if(i>0) zip.file(j.side==="b"?photoNames(j.c).b:photoNames(j.c).f, t.slice(i+7), {base64:true}); else miss++; });
+    }
+    ioProg("xProg",0.88,"產生檔案中…");
+    var rows=rowsFor(cs,withFiles), ws=XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"]=bcols().map(function(k){return {wch:(k.length>3?16:12)};});
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"名片");
+    zip.file("名片.xlsx", XLSX.write(wb,{bookType:"xlsx",type:"array"}));
+    zip.file("名片.csv", toCSV(rows));
+    zip.file("通訊錄.vcf", cs.map(function(c){return toVcard(c,true);}).join("\r\n")+"\r\n");
+    zip.file("說明.txt", "超級名片完整備份 "+today()+"\r\n共 "+cs.length+" 張名片,照片 "+(jobs.length-miss)+" 張("+(full?"原圖":"縮圖")+")。\r\n"+
+      "名片.xlsx / 名片.csv 的「照片檔名」欄對應 photos 資料夾,用超級名片「匯入」選這個 ZIP 就能連照片一起還原。\r\n通訊錄.vcf 可直接匯入手機或 Google 通訊錄。\r\n");
+    var blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"},function(m){ ioProg("xProg",0.88+0.12*m.percent/100,"壓縮中 "+Math.round(m.percent)+"%"); });
+    download(blob, "超級名片_完整備份_"+today()+"_"+cs.length+"張.zip");
+    ioProg("xProg",1,"完成"); toast("✅ 已匯出 "+cs.length+" 張+照片 "+(jobs.length-miss)+" 張");
+  }catch(e){ toast("匯出失敗:"+e.message); }
+  b.disabled=false; setTimeout(function(){ ioProg("xProg",null); },2500);
+}
+
+/* ---------- 匯入:讀檔 ---------- */
+var IMP=null;
+var MAP_TARGETS=["(不匯入)","姓名","姓","名","公司","職稱","部門","手機","電話","傳真","Email","地址","縣市","網站","統編","LINE","標籤","備註","照片檔名","背面照片檔名"];
+var SYN={
+  "姓名":["姓名","名字","name","fullname","displayname","聯絡人","contact"],"姓":["姓","lastname","familyname","surname"],"名":["名","firstname","givenname"],
+  "公司":["公司","公司名稱","company","organization","organisation","org","companyname","單位"],"職稱":["職稱","title","jobtitle","position","職位"],
+  "部門":["部門","department","dept"],"手機":["手機","行動電話","mobile","cell","cellphone","mobilephone","手機號碼"],
+  "電話":["電話","市話","phone","tel","telephone","workphone","officephone","companyphone","businessphone","公司電話"],"傳真":["傳真","fax","workfax"],
+  "Email":["email","e-mail","mail","電子郵件","信箱","emailaddress"],"地址":["地址","address","companyaddress","workaddress","businessaddress","公司地址"],
+  "縣市":["縣市","city"],"網站":["網站","website","url","web","homepage"],"統編":["統編","統一編號","taxid","vat"],"LINE":["line","lineid"],
+  "標籤":["標籤","群組","分類","tags","tag","group","groups","category","categories"],"備註":["備註","note","notes","memo","remark","remarks"],
+  "照片檔名":["照片檔名","照片","photo","image","frontimage","front","正面"],"背面照片檔名":["背面照片檔名","背面","backphoto","backimage","back"]
+};
+function normH(h){ return String(h||"").toLowerCase().replace(/[\s_\-\.()（）:：]/g,""); }
+function guessField(h){
+  var n=normH(h); if(!n) return "(不匯入)";
+  for(var k in SYN) if(SYN[k].some(function(x){return normH(x)===n;})) return k;
+  for(k in SYN) if(SYN[k].some(function(x){var y=normH(x); return y.length>=3 && n.indexOf(y)>=0;})) return k;
+  return "(不匯入)";
+}
+function fileExt(n){ return String(n||"").toLowerCase().split(".").pop(); }
+function baseName(n){ return String(n||"").split("/").pop().toLowerCase(); }
+function readAsArrayBuffer(f){ return f.arrayBuffer ? f.arrayBuffer() : new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(r.result);}; r.readAsArrayBuffer(f); }); }
+function readAsText(f){ return f.text ? f.text() : new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(r.result);}; r.readAsText(f,"utf-8"); }); }
+function bufToText(buf){
+  var u8=new Uint8Array(buf);
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(u8); }catch(e){}
+  try{ return new TextDecoder("big5").decode(u8); }catch(e){ return new TextDecoder().decode(u8); }   // 舊版 Excel 存的中文 CSV 常是 Big5
+}
+/** 選檔後:整理成 {rows(表格) 或 cards(vcf), images{檔名:Blob}} */
+async function onImportFiles(ev){
+  var files=Array.prototype.slice.call(ev.target.files||[]); ev.target.value="";
+  if(!files.length) return;
+  toast("讀取檔案中…");
+  try{
+    var images={}, tables=[], vcards=[];
+    var addImg=function(name,blob){ images[baseName(name)]=blob; };
+    for(var f of files){
+      var ext=fileExt(f.name);
+      if(ext==="zip"){
+        await loadJSZip(); var z=await JSZip.loadAsync(await readAsArrayBuffer(f));
+        var ents=[]; z.forEach(function(path,ent){ if(!ent.dir) ents.push(ent); });
+        // 同一個 ZIP 有表格時就不讀 vcf(超級名片備份兩者內容相同,表格才有完整照片)
+        var zipHasTable=ents.some(function(en){ return /\.(xlsx|xls|csv)$/i.test(en.name); });
+        for(var ent of ents){
+          var e2=fileExt(ent.name), nm=ent.name;
+          if(/^(jpe?g|png|webp|heic|gif)$/.test(e2)) addImg(nm, await ent.async("blob"));
+          else if(e2==="vcf"){ if(!zipHasTable) vcards.push(bufToText(await ent.async("arraybuffer"))); }
+          else if(e2==="xlsx"||e2==="xls"||e2==="csv") tables.push({name:nm, buf:await ent.async("arraybuffer"), ext:e2});
+        }
+      }else if(/^(jpe?g|png|webp|heic|gif)$/.test(ext) || /^image\//.test(f.type)) addImg(f.name,f);
+      else if(ext==="vcf") vcards.push(bufToText(await readAsArrayBuffer(f)));
+      else if(ext==="xlsx"||ext==="xls"||ext==="csv") tables.push({name:f.name, buf:await readAsArrayBuffer(f), ext:ext});
+    }
+    // ZIP 備份裡 xlsx 跟 csv 內容一樣,有 xlsx 就只用 xlsx
+    if(tables.some(function(t){return t.ext!=="csv";})) tables=tables.filter(function(t){return t.ext!=="csv";});
+    var rows=[];
+    if(tables.length){
+      await loadXLSX();
+      tables.forEach(function(t){
+        var wb = t.ext==="csv" ? XLSX.read(bufToText(t.buf),{type:"string"}) : XLSX.read(t.buf,{type:"array"});
+        var a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:"",raw:false});
+        a=a.filter(function(r){ return r.some(function(v){return String(v).trim();}); });
+        if(!a.length) return;
+        if(!rows.length) rows=a; else rows=rows.concat(a.slice(1));   // 多個表格:表頭用第一個
+      });
+    }
+    var vc=[]; vcards.forEach(function(t){ vc=vc.concat(parseVcf(t)); });
+    if(!rows.length && !vc.length){ toast("檔案裡沒找到名片資料(支援 Excel、CSV、vcf、ZIP)"); return; }
+    IMP={ header: rows.length?rows[0].map(String):[], rows: rows.slice(1), vcards: vc, images: images, map:[] };
+    IMP.map=IMP.header.map(guessField);
+    openImport();
+  }catch(e){ toast("讀檔失敗:"+e.message); }
+}
+
+/* ---------- vCard 解析(2.1 / 3.0 / 4.0) ---------- */
+function qpDecode(s){
+  var bytes=[]; s=s.replace(/=\r?\n/g,"");
+  for(var i=0;i<s.length;i++){ if(s[i]==="=" && /^[0-9A-F]{2}$/i.test(s.substr(i+1,2))){ bytes.push(parseInt(s.substr(i+1,2),16)); i+=2; } else bytes.push(s.charCodeAt(i)&255); }
+  try{ return new TextDecoder("utf-8").decode(new Uint8Array(bytes)); }catch(e){ return s; }
+}
+function vUnesc(s){ return String(s||"").replace(/\\n/gi,"\n").replace(/\\([,;\\])/g,"$1"); }
+function parseVcf(text){
+  text=String(text||"").replace(/\r\n/g,"\n").replace(/=\n/g,"=");   // 先保護 quoted-printable 斷行
+  text=text.replace(/\n[ \t]/g,"").replace(/=/g,"=\n");             // 摺行還原
+  var out=[], cur=null;
+  text.split("\n").forEach(function(line){
+    if(/^BEGIN:VCARD/i.test(line)){ cur={tel:[],cell:[],fax:[],mail:[],f:{}}; return; }
+    if(/^END:VCARD/i.test(line)){ if(cur) out.push(vcToCard(cur)); cur=null; return; }
+    if(!cur) return;
+    var i=line.indexOf(":"); if(i<0) return;
+    var left=line.slice(0,i), val=line.slice(i+1), parts=left.split(";"), key=parts[0].toUpperCase().replace(/^ITEM\d+\./,""), params=parts.slice(1).join(";").toUpperCase();
+    if(/QUOTED-PRINTABLE/.test(params)) val=qpDecode(val);
+    if(key==="FN") cur.f.fn=vUnesc(val);
+    else if(key==="N"){ var n=val.split(";").map(vUnesc); cur.f.family=n[0]||""; cur.f.given=n[1]||""; }
+    else if(key==="ORG"){ var o=val.split(";").map(vUnesc); cur.f["公司"]=o[0]||""; cur.f["部門"]=o.slice(1).filter(Boolean).join(" "); }
+    else if(key==="TITLE") cur.f["職稱"]=vUnesc(val);
+    else if(key==="TEL"){ var t=vUnesc(val).replace(/^tel:/i,"").replace(/,(\d+)$/," #$1"); if(/FAX/.test(params)) cur.fax.push(t); else if(/CELL|MOBILE/.test(params)) cur.cell.push(t); else cur.tel.push(t); }
+    else if(key==="EMAIL") cur.mail.push(vUnesc(val));
+    else if(key==="ADR"){ var a=val.split(";").map(vUnesc); var tw=(a[6]||"").match(/台灣|臺灣|taiwan/i)||/[一-鿿]/.test(a.join(""));
+      cur.f["地址"] = tw ? [a[4],a[3],a[2]].filter(Boolean).join("") || a.join("").trim() : a.filter(Boolean).join(", "); }
+    else if(key==="URL") cur.f["網站"]=vUnesc(val);
+    else if(key==="CATEGORIES") cur.f["標籤"]=vUnesc(val).split(",").map(function(x){return x.trim();}).filter(Boolean).join(", ");
+    else if(key==="NOTE") cur.f.note=vUnesc(val);
+    else if(key==="PHOTO"){
+      var v=val.trim();
+      if(/^data:image/i.test(v)) cur.photo=v;
+      else if(/ENCODING=B|ENCODING=BASE64|BASE64/.test(params) || /^[A-Za-z0-9+/=\s]{200,}$/.test(v)){ var ty=(params.match(/TYPE=([A-Z]+)/)||[])[1]||"JPEG"; cur.photo="data:image/"+(ty==="PNG"?"png":"jpeg")+";base64,"+v.replace(/\s/g,""); }
+    }
+  });
+  return out;
+}
+function vcToCard(c){
+  var f=c.f, r={};
+  var nm=f.fn || ((/[A-Za-z]/.test(f.family+f.given)) ? [f.given,f.family].filter(Boolean).join(" ") : (f.family||"")+(f.given||""));
+  r["姓名"]=nm||""; ["公司","部門","職稱","地址","網站","標籤"].forEach(function(k){ if(f[k]) r[k]=f[k]; });
+  r["手機"]=c.cell.join(" / "); r["電話"]=c.tel.join(" / "); r["傳真"]=c.fax.join(" / "); r["Email"]=c.mail.join(" / ");
+  if(f.note){   // 我們自己匯出的 NOTE 會帶 統編 / LINE
+    var note=f.note.replace(/\n?\(來自超級名片[^)]*\)/,"");
+    var m=note.match(/統編\s*(\d{8})/); if(m){ r["統編"]=m[1]; note=note.replace(m[0],""); }
+    m=note.match(/LINE\s*[:：]?\s*([\w.@-]+)/i); if(m){ r["LINE"]=m[1]; note=note.replace(m[0],""); }
+    note=note.replace(/^\s+|\s+$/g,"").replace(/\n{2,}/g,"\n"); if(note) r["備註"]=note;
+  }
+  if(c.photo) r._photo=c.photo;
+  return r;
+}
+
+/* ---------- 匯入:對應欄位 + 預覽 ---------- */
+function impCards(){
+  var out=[];
+  IMP.rows.forEach(function(row){
+    var c={};
+    IMP.map.forEach(function(k,i){
+      var v=String(row[i]==null?"":row[i]).trim(); if(!v || k==="(不匯入)") return;
+      if(c[k] && (k==="手機"||k==="電話"||k==="傳真"||k==="Email")) c[k]+=" / "+v; else if(c[k] && (k==="標籤"||k==="備註")) c[k]+=(k==="標籤"?", ":"\n")+v; else c[k]=v;
+    });
+    if(!c["姓名"] && (c["姓"]||c["名"])) c["姓名"] = /[A-Za-z]/.test((c["姓"]||"")+(c["名"]||"")) ? [c["名"],c["姓"]].filter(Boolean).join(" ") : (c["姓"]||"")+(c["名"]||"");
+    delete c["姓"]; delete c["名"];
+    if(c["姓名"]||c["公司"]) out.push(c);
+  });
+  return out.concat(IMP.vcards.filter(function(c){return c["姓名"]||c["公司"];}));
+}
+function impPhotoOf(c, key){
+  var n=c[key]; if(n){ var b=IMP.images[baseName(n)]; if(b) return b; }
+  return null;
+}
+function openImport(){
+  var hasTable=IMP.header.length>0;
+  $("impMapBox").classList.toggle("hide",!hasTable);
+  if(hasTable){
+    $("impMap").innerHTML=IMP.header.map(function(h,i){
+      var sample=""; for(var r=0;r<IMP.rows.length && !sample;r++) sample=String(IMP.rows[r][i]||"").trim();
+      return '<div class="mrowi"><div class="mh">'+esc(h||("第"+(i+1)+"欄"))+'<small>'+esc(sample.slice(0,30))+'</small></div>'+
+        '<select data-mi="'+i+'">'+MAP_TARGETS.map(function(t){return '<option'+(IMP.map[i]===t?' selected':'')+'>'+t+'</option>';}).join("")+'</select></div>';
+    }).join("");
+  }
+  renderImpSummary();
+  $("vImport").classList.remove("hide"); $("vImport").scrollTop=0;
+}
+/** 跟現有名片重複,或跟同一批前面的重複 */
+function impDupFlags(cs){
+  return cs.map(function(c,i){
+    if(findDup(c)) return true;
+    for(var j=0;j<i;j++) if(dupReason(c,cs[j])) return true;
+    return false;
+  });
+}
+function renderImpSummary(){
+  var cs=impCards(), skip=$("impSkipDup").checked, dup=0, pics=0, fl=impDupFlags(cs);
+  cs.forEach(function(c,i){ if(fl[i]) dup++; if(c._photo || impPhotoOf(c,"照片檔名")) pics++; });
+  var n=skip ? cs.length-dup : cs.length;
+  $("impSum").innerHTML="讀到 <b>"+cs.length+"</b> 張名片,其中 <b>"+pics+"</b> 張有照片"+(dup?",<b>"+dup+"</b> 張重複(跟現有名片或同批檔案)":"")+"。"+
+    (Object.keys(IMP.images).length?"<br>另外選了 "+Object.keys(IMP.images).length+" 張圖片檔。":"");
+  $("impPrev").innerHTML=cs.slice(0,3).map(function(c){
+    return '<div class="item"><div class="t"><div class="n">'+esc(c["姓名"]||"(沒有姓名)")+'<small>'+esc(c["職稱"]||"")+'</small></div>'+
+      '<div class="c">'+esc(c["公司"]||"")+'</div><div class="p">'+esc([c["手機"],c["電話"],c["Email"]].filter(Boolean).join(" · "))+'</div></div></div>';
+  }).join("")+(cs.length>3?'<div class="stat">…以及其他 '+(cs.length-3)+' 張</div>':'');
+  setLabel($("btnImpGo"),"開始匯入 "+n+" 張"); $("btnImpGo").disabled=!n;
+}
+async function blobToCardImg(blob){
+  var im = typeof blob==="string" ? await loadSrc(blob) : await loadImg(blob);
+  var big=shrink(im,1600,0.85); return { image:big.split(",")[1], thumb:shrink(im,240,0.6) };
+}
+async function runImport(){
+  var cs=impCards(), skip=$("impSkipDup").checked, grp=cleanName($("impGroup").value);
+  if(skip){ var fl=impDupFlags(cs); cs=cs.filter(function(c,i){return !fl[i];}); }
+  if(!cs.length){ toast("沒有要匯入的名片"); return; }
+  var b=$("btnImpGo"); b.disabled=true; var ok=0, fail=0, sent=0;
+  try{
+    for(var i=0;i<cs.length;){
+      // 有照片的每批 6 張(檔案大),沒照片的每批 30 張
+      var batch=[], weight=0;
+      while(i<cs.length && batch.length<30 && weight<6){
+        var c=Object.assign({},cs[i++]), item={method:"匯入"};
+        var fp=c._photo || impPhotoOf(c,"照片檔名"), bp=impPhotoOf(c,"背面照片檔名");
+        delete c._photo; delete c["照片檔名"]; delete c["背面照片檔名"];
+        if(grp) c["標籤"]=joinVals("標籤",String(c["標籤"]||""),grp);
+        if(!c["縣市"] && c["地址"]) c["縣市"]=cityOf(c["地址"]);
+        if(fp){ try{ var x=await blobToCardImg(fp); item.image=x.image; item.thumb=x.thumb; weight++; }catch(e){} }
+        if(bp){ try{ var y=await blobToCardImg(bp); item.backImage=y.image; item.backThumb=y.thumb; weight++; }catch(e){} }
+        item.fields=c; batch.push(item); if(!fp && !bp) weight+=0.2;
+      }
+      ioProg("impProg", sent/cs.length, "匯入中 "+sent+" / "+cs.length);
+      var r=await post({action:"importBatch", cards:batch});
+      if(!r.ok) throw new Error(r.error);
+      r.results.forEach(function(x){ if(x.ok){ ok++; S.cards.unshift(x.card); } else fail++; });
+      sent+=batch.length; ioProg("impProg", sent/cs.length, "匯入中 "+sent+" / "+cs.length);
+    }
+    if(grp){ var g=myGroups(); if(g.indexOf(grp)<0){ g.push(grp); post({action:"groupsSave", groups:g}).then(function(r){ if(r.ok) S.groups=r.groups; }).catch(function(){}); } }
+    renderList(); $("vImport").classList.add("hide"); $("vExport").classList.add("hide");
+    toast("✅ 匯入完成:"+ok+" 張"+(fail?",失敗 "+fail+" 張":"")+(grp?"(已加入群組「"+grp+"」)":""));
+    IMP=null;
+  }catch(e){ toast("匯入中斷:"+e.message+"(已匯入 "+ok+" 張)"); renderList(); }
+  b.disabled=false; setTimeout(function(){ ioProg("impProg",null); },2000);
 }
 
 /* ===== ③ LINE / FB 內建瀏覽器提示 ===== */
@@ -2188,6 +2526,14 @@ $("nearList").addEventListener("click",function(e){
   var c=S.cards.find(function(x){return x.ID===it.dataset.id;}); if(c) openEdit(c,{method:c["辨識方式"]});
 });
 $("btnVer").onclick=showVer;
+$("btnCsv").onclick=exportCsv;
+$("btnZip").onclick=exportZip;
+$("btnImport").onclick=function(){ $("fileImport").click(); };
+$("fileImport").addEventListener("change",onImportFiles);
+$("btnImpBack").onclick=function(){ $("vImport").classList.add("hide"); };
+$("btnImpGo").onclick=runImport;
+$("impSkipDup").addEventListener("change",renderImpSummary);
+$("impMap").addEventListener("change",function(e){ var s2=e.target.closest("[data-mi]"); if(s2){ IMP.map[+s2.dataset.mi]=s2.value; renderImpSummary(); } });
 $("btnTheme").onclick=openThemes;
 $("btnThemeBack").onclick=function(){ $("vTheme").classList.add("hide"); };
 $("themeList").addEventListener("click",function(e){ var c=e.target.closest("[data-theme]"); if(c) pickTheme(c.dataset.theme); });
