@@ -1337,6 +1337,11 @@ footer .disc .sub{display:block;margin-top:12px}
      z-index:0 讓封面自成堆疊上下文——否則 .cv-bleed 的 z-index:-1 會沉到
      #reportPrint 白底之下被蓋掉（實測踩過，頁面變全白）。 */
   html.ios-dev #reportPrint .rp-cover,html.ios-dev #reportPrint .rp-back{height:230mm;min-height:0;background:none;z-index:0}
+  /* v.27.8 手機安全版面（iPhone／iPad／安卓；Mac Safari 有自己的 270mm 規則不受影響）：
+     站長 iPhone 實機（iOS 列印加印網址＋日期頁首頁尾）可印高只剩約 215mm → 230mm 封面溢出約 15mm 到第 2 頁，
+     且 297mm 的 cv-bleed 底色也整片溢到下一頁。改 200mm＋底色只鋪滿封面框內，任何 iOS 邊界都不溢頁。
+     安卓不套用：Chrome 安卓與桌機同為 Blink，遵守 @page 0 邊界，維持桌機滿版封面（模擬驗證 17 頁、滿版）。 */
+  html.ios-dev:not(.mac-safari) #reportPrint .rp-cover,html.ios-dev:not(.mac-safari) #reportPrint .rp-back{height:200mm}
   /* 滿版鋪底：.cv-bleed 是封面/封底第一個子元素（printHTML 內 <i class="cv-bleed">），
      絕對定位＋297mm 高＝「單體元素」，列印分頁時只會被裁切在當頁、不會撐出新頁——
      封面頁米金底因此越過 230mm 框一路鋪到可印區底邊（佈滿不留白）。
@@ -1347,6 +1352,9 @@ footer .disc .sub{display:block;margin-top:12px}
   /* iOS 230mm 版面較矮：題簽條縮短，避免印章貼到頁腳 */
   html.ios-dev #reportPrint .cv-slip{height:430px}
   html.ios-dev #reportPrint .cv-slip b{font-size:40px;letter-spacing:16px}
+  html.ios-dev:not(.mac-safari) #reportPrint .cv-bleed{height:auto;bottom:0}
+  html.ios-dev:not(.mac-safari) #reportPrint .cv-slip{height:370px;padding-top:18px}
+  html.ios-dev:not(.mac-safari) #reportPrint .cv-slip b{font-size:36px;letter-spacing:12px}
   /* v.25.17 Mac 桌機 Safari：實測它會套用 @page 上 11／下 13mm 邊界（內容區 273mm，不支援具名頁 0 邊界），
      封底是文件最後元素、230mm 以下不繪製 → 下方一大段白。Mac 版封面／封底改 270mm 撐滿內容區（留 3mm 餘裕），
      題簽條恢復桌機尺寸。iPhone／iPad（AirPrint 可印高約 235–240mm）維持 230mm，勿合併。 */
@@ -2842,9 +2850,9 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.7";
+const SITE_VERSION_DATE="2026.11.27.8";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
-try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
+try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1&&!/Android/.test(ua))||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
    原則：運算邏輯、資料表、後端參數一律維持繁體；只在「顯示層」把文字轉成簡體——
    DOM 文字節點／提示屬性、document.title、alert/confirm、canvas 繪字、分享／複製／下載文字。
@@ -7628,6 +7636,7 @@ async function runPdfExport(fromFab){
 function zwFitClosing(){
   const rp=document.getElementById('reportPrint');if(!rp)return 0;
   rp.style.setProperty('--zw-bless-push','0px');
+  if(document.documentElement.classList.contains('ios-dev')&&!document.documentElement.classList.contains('mac-safari')){rp.classList.add('rp-tight');return 0;}   // iOS 不做量測推移，但一律收緊結尾，降低頁尾溢出成近空白末頁
   if(document.documentElement.classList.contains('ios-dev'))return 0;
   const pages=[...rp.querySelectorAll('.rp-page:not(.rp-cover):not(.rp-back)')];
   const last=pages[pages.length-1],bless=last&&last.querySelector('.rp-bless');
