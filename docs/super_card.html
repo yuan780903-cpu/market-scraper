@@ -951,7 +951,7 @@ html.fest-day #vMain header{box-shadow:inset 0 -3px 0 rgba(255,205,110,.55)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.41", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.42", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1040,7 +1040,207 @@ function gasUrl(){return ls("sc_gas")||DEFAULT_GAS;}
 
 var S = { code: ls("sc_code")||"", cards: [], cur: null };
 
+/* ===== 客戶資料存手機(雲端帳號 = 付費/試用客戶):名片、照片、群組、接觸紀錄都放在這支手機的 IndexedDB =====
+   雲端只負責:登入/授權、文字辨識(照片辨識完即刪)、地址轉座標、我的數位名片(公開用)。
+   回傳格式跟雲端後端一模一樣,其他畫面完全不用改。 */
+var LOCAL_ACTIONS={list:1,save:1,"delete":1,merge:1,photo:1,photos:1,groupsSave:1,renameTag:1,deleteTag:1,importBatch:1,geofill:1,logList:1,logSave:1,logDelete:1,logMedia:1};
+function isLocalBook(){ var c=curBook(); return !!(c && c.host); }
+function localAcc(){ return ((curBook()||{}).account||"x").toLowerCase(); }
+var LDB=null;
+function ldb(){
+  if(LDB) return LDB;
+  LDB=new Promise(function(res,rej){
+    var r=indexedDB.open("sc_local",1);
+    r.onupgradeneeded=function(){ var d=r.result;
+      if(!d.objectStoreNames.contains("cards")) d.createObjectStore("cards",{keyPath:"k"}).createIndex("acc","acc");
+      if(!d.objectStoreNames.contains("logs")) d.createObjectStore("logs",{keyPath:"k"}).createIndex("acc","acc");
+      if(!d.objectStoreNames.contains("blobs")) d.createObjectStore("blobs");
+      if(!d.objectStoreNames.contains("kv")) d.createObjectStore("kv"); };
+    r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ LDB=null; rej(r.error||new Error("手機儲存空間無法開啟")); };
+  });
+  return LDB;
+}
+function ltx(store,mode,fn){
+  return ldb().then(function(d){ return new Promise(function(res,rej){
+    var t=d.transaction(store,mode), s=t.objectStore(store), out; out=fn(s);
+    t.oncomplete=function(){ res(out&&out.__v!==undefined?out.__v:out); }; t.onerror=function(){ rej(t.error); }; t.onabort=function(){ rej(t.error||new Error("寫入手機失敗(空間可能不足)")); };
+  }); });
+}
+function lreq(r){ var box={__v:undefined}; r.onsuccess=function(){ box.__v=r.result; }; return box; }
+function lAll(store){ var acc=localAcc(); return ltx(store,"readonly",function(s){ return lreq(s.index("acc").getAll(acc)); }); }
+function lPut(store,obj){ obj.acc=localAcc(); obj.k=obj.acc+"|"+obj.id; return ltx(store,"readwrite",function(s){ s.put(obj); }); }
+function lDel(store,id){ var k=localAcc()+"|"+id; return ltx(store,"readwrite",function(s){ s["delete"](k); }); }
+function lBlobPut(id,val){ var k=localAcc()+"|"+id; return ltx("blobs","readwrite",function(s){ s.put(val,k); }); }
+function lBlobGet(id){ var k=localAcc()+"|"+id; return ltx("blobs","readonly",function(s){ return lreq(s.get(k)); }); }
+function lBlobDel(ids){ var a=localAcc(); ids=(ids||[]).filter(Boolean); if(!ids.length) return Promise.resolve(); return ltx("blobs","readwrite",function(s){ ids.forEach(function(id){ s["delete"](a+"|"+id); }); }); }
+function lKvGet(key){ var k=localAcc()+"|"+key; return ltx("kv","readonly",function(s){ return lreq(s.get(k)); }); }
+function lKvPut(key,val){ var k=localAcc()+"|"+key; return ltx("kv","readwrite",function(s){ s.put(val,k); }); }
+function lNow(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+" "+pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds()); }
+function lId(p){ var d=new Date(); return p+String(d.getFullYear()).slice(2)+pad2(d.getMonth()+1)+pad2(d.getDate())+pad2(d.getHours())+pad2(d.getMinutes())+pad2(d.getSeconds())+Math.floor(Math.random()*90+10); }
+function lUid(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+var CARD_HEAD=["ID","建立時間","更新時間","姓名","公司","職稱","部門","手機","電話","傳真","Email","地址","網站","統編","LINE","縣市","標籤","備註","照片ID","縮圖","辨識方式","原始文字","緯度","經度","背面照片ID","背面縮圖"];
+var TW_CITIES=["臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","彰化縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
+/** 從地址判斷縣市(跟雲端 city_ 同規則) */
+function cityOf(addr){
+  addr=String(addr||"").replace(/台/g,"臺");
+  for(var i=0;i<TW_CITIES.length;i++) if(addr.indexOf(TW_CITIES[i])>=0) return TW_CITIES[i];
+  var m=addr.match(/^(臺北|新北|桃園|臺中|臺南|高雄|基隆|新竹|嘉義|苗栗|彰化|南投|雲林|屏東|宜蘭|花蓮|臺東|澎湖|金門|連江)/); if(m) return m[1];
+  var EN=[["new taipei","新北市"],["taipei","臺北市"],["taoyuan","桃園市"],["taichung","臺中市"],["tainan","臺南市"],["kaohsiung","高雄市"],["keelung","基隆市"],["hsinchu county","新竹縣"],["hsinchu","新竹市"],["chiayi county","嘉義縣"],["chiayi","嘉義市"],["miaoli","苗栗縣"],["changhua","彰化縣"],["nantou","南投縣"],["yunlin","雲林縣"],["pingtung","屏東縣"],["yilan","宜蘭縣"],["hualien","花蓮縣"],["taitung","臺東縣"],["penghu","澎湖縣"],["kinmen","金門縣"],["lienchiang","連江縣"],["matsu","連江縣"]];
+  var low=addr.toLowerCase(); for(var k=0;k<EN.length;k++) if(low.indexOf(EN[k][0])>=0) return EN[k][1];
+  var jp=addr.match(/(東京都|北海道|京都府|大阪府|[一-鿿]{2,3}県)/); if(jp||/〒\s?\d{3}-?\d{4}|japan/i.test(addr)) return "日本"+(jp?"·"+jp[1]:"");
+  if(/[가-힯]/.test(addr)||/korea/i.test(addr)) return "韓國";
+  return "";
+}
+/** 地址 → 座標:請雲端代查(只送地址,不存) */
+async function lGeo(addr){
+  if(!String(addr||"").trim()) return ["",""];
+  try{ var r=await postRemote({action:"geo", address:addr}); return r.ok&&r.ll ? r.ll : ["",""]; }catch(e){ return ["",""]; }
+}
+function lCardOut(rec){ var o={}; CARD_HEAD.forEach(function(h){ o[h]=String(rec.c[h]==null?"":rec.c[h]); }); return o; }
+async function lSave(d){
+  var f=d.fields||{}, all=await lAll("cards"), old=null;
+  if(d.id) old=all.filter(function(r){ return r.id===d.id; })[0]||null;
+  if(!old && S.plan==="試用" && S.limit && all.length>=S.limit) return {ok:false, error:"試用版最多 "+S.limit+" 張名片,升級終身版 NT$299 就能無限使用"};
+  var o=old?Object.assign({},old.c):{}, id=d.id||lId("C");
+  var photoId=o["照片ID"]||"", backId=o["背面照片ID"]||"", trash=[];
+  if(d.photoId) photoId=d.photoId; else if(d.image){ photoId=lUid("P"); await lBlobPut(photoId,"data:image/jpeg;base64,"+d.image); }
+  if(d.backPhotoId) backId=d.backPhotoId; else if(d.backImage){ backId=lUid("P"); await lBlobPut(backId,"data:image/jpeg;base64,"+d.backImage); }
+  if(o["照片ID"] && o["照片ID"]!==photoId) trash.push(o["照片ID"]);
+  if(o["背面照片ID"] && o["背面照片ID"]!==backId) trash.push(o["背面照片ID"]);
+  var addr=String(f["地址"]!=null?f["地址"]:(o["地址"]||"")).trim(), ll=[o["緯度"]||"",o["經度"]||""];
+  if(d.noGeo){ if(addr!==String(o["地址"]||"").trim()) ll=["",""]; }
+  else if(addr!==String(o["地址"]||"").trim() || !o["緯度"]) ll=addr?await lGeo(addr):["",""];
+  var c={};
+  CARD_HEAD.forEach(function(h){
+    if(h==="ID") c[h]=id; else if(h==="建立時間") c[h]=o["建立時間"]||lNow(); else if(h==="更新時間") c[h]=lNow();
+    else if(h==="照片ID") c[h]=photoId; else if(h==="背面照片ID") c[h]=backId;
+    else if(h==="縮圖") c[h]=d.thumb||o["縮圖"]||""; else if(h==="背面縮圖") c[h]=d.backThumb||o["背面縮圖"]||"";
+    else if(h==="辨識方式") c[h]=d.method||o["辨識方式"]||"手動";
+    else if(h==="緯度") c[h]=ll[0]; else if(h==="經度") c[h]=ll[1];
+    else if(h==="原始文字") c[h]=d.raw!=null?String(d.raw).slice(0,5000):(o["原始文字"]||"");
+    else c[h]=f[h]!=null?f[h]:(o[h]||"");
+  });
+  if(!c["縣市"]) c["縣市"]=cityOf(c["地址"]);
+  await lPut("cards",{id:id, c:c});
+  await lBlobDel(trash);
+  if(typeof backupSoon==="function") backupSoon();
+  return {ok:true, id:id, card:lCardOut({c:c})};
+}
+async function lDelete(d){
+  var all=await lAll("cards"), r=all.filter(function(x){ return x.id===d.id; })[0];
+  if(!r) return {ok:false, error:"找不到這張名片"};
+  if(!d.keepPhoto) await lBlobDel([r.c["照片ID"], r.c["背面照片ID"]]);
+  await lDel("cards",d.id);
+  var logs=(await lAll("logs")).filter(function(x){ return x.cardId===d.id; });
+  for(var i=0;i<logs.length;i++){
+    if(d.moveLogsTo){ logs[i].cardId=d.moveLogsTo; await lPut("logs",logs[i]); }
+    else{ await lBlobDel([logs[i].audio].concat(logs[i].imgs||[])); await lDel("logs",logs[i].id); }
+  }
+  if(typeof backupSoon==="function") backupSoon();
+  return {ok:true};
+}
+async function lMerge(d){
+  var all=await lAll("cards"), keep=all.filter(function(x){ return x.id===d.keepId; })[0], drop=d.dropId?all.filter(function(x){ return x.id===d.dropId; })[0]:null;
+  if(!keep) return {ok:false, error:"找不到要保留的名片"};
+  if(d.dropId && !drop) return {ok:false, error:"找不到要併掉的名片"};
+  var useDrop=!!(drop && d.useDropPhoto && drop.c["照片ID"]);
+  var r=await lSave({ id:d.keepId, fields:d.fields||{},
+    image: useDrop?"":(d.image||""), photoId: useDrop?drop.c["照片ID"]:"",
+    thumb: useDrop?drop.c["縮圖"]:(d.image?d.thumb:""),
+    backImage: useDrop?"":(d.image?(d.backImage||""):""),
+    backPhotoId: useDrop?(drop.c["背面照片ID"]||keep.c["背面照片ID"]||""):"",
+    backThumb: useDrop?(drop.c["背面縮圖"]||keep.c["背面縮圖"]||""):(d.image?(d.backThumb||""):""),
+    method:d.method||"", raw:d.raw!=null?d.raw:null });
+  if(!r.ok) return r;
+  if(drop) await lDelete({id:d.dropId, keepPhoto:useDrop, moveLogsTo:d.keepId});
+  return {ok:true, id:r.id, card:r.card, dropped:d.dropId||""};
+}
+async function lPhoto(id,side){
+  var r=(await lAll("cards")).filter(function(x){ return x.id===id; })[0];
+  var bid=r && (side==="b"?r.c["背面照片ID"]:r.c["照片ID"]);
+  if(!bid) return {ok:false, error: side==="b"?"這張沒有背面照片":"這張沒有照片"};
+  var u=await lBlobGet(bid); if(!u) return {ok:false, error:"手機上找不到這張照片"};
+  var m=String(u).match(/^data:([^;]+);base64,(.*)$/); return {ok:true, mime:m?m[1]:"image/jpeg", data:m?m[2]:""};
+}
+async function lGroups(){ return (await lKvGet("groups"))||[]; }
+function lSplitTags(s){ return String(s||"").split(/[,，、\s]+/).filter(String); }
+async function lRetag(from,to){
+  from=String(from||"").trim(); to=String(to||"").trim().replace(/[,，、\s]+/g,"");
+  if(!from) return {ok:false, error:"沒有指定群組"};
+  var all=await lAll("cards"), n=0;
+  for(var i=0;i<all.length;i++){
+    var t=lSplitTags(all[i].c["標籤"]); if(t.indexOf(from)<0) continue;
+    var out=[]; t.forEach(function(x){ var y=x===from?to:x; if(y&&out.indexOf(y)<0) out.push(y); });
+    all[i].c["標籤"]=out.join(", "); all[i].c["更新時間"]=lNow(); await lPut("cards",all[i]); n++;
+  }
+  var g=await lGroups(), k=g.indexOf(from);
+  if(k>=0){ if(to&&g.indexOf(to)<0) g[k]=to; else g.splice(k,1); } else if(to&&g.indexOf(to)<0) g.push(to);
+  await lKvPut("groups",g); if(typeof backupSoon==="function") backupSoon();
+  return {ok:true, changed:n, groups:g};
+}
+async function localPost(d){
+  try{
+    switch(d.action){
+      case "list":
+        var all=(await lAll("cards")).sort(function(a,b){ return String(b.c["建立時間"]).localeCompare(String(a.c["建立時間"])); });
+        var cards=all.map(lCardOut); cards.forEach(function(c){ delete c["原始文字"]; });
+        return {ok:true, cards:cards, ids:cards.map(function(c){return c.ID;}), now:lNow(), full:true, ver:APP_VER, groups:await lGroups(), local:true};
+      case "save": return await lSave(d);
+      case "delete": return await lDelete(d);
+      case "merge": return await lMerge(d);
+      case "photo": return await lPhoto(d.id,d.side);
+      case "photos":
+        var out=[]; for(var i=0;i<(d.ids||[]).length;i++){ var p=await lPhoto(d.ids[i],d.side); out.push({id:d.ids[i], mime:p.mime, data:p.ok?p.data:""}); }
+        return {ok:true, photos:out};
+      case "groupsSave":
+        var seen={}, g=(d.groups||[]).map(function(x){ return String(x).trim().replace(/[,，、\s]+/g,""); }).filter(function(x){ return x&&!seen[x]&&(seen[x]=1); }).slice(0,200);
+        await lKvPut("groups",g); if(typeof backupSoon==="function") backupSoon(); return {ok:true, groups:g};
+      case "renameTag": return await lRetag(d.from,d.to);
+      case "deleteTag": return await lRetag(d.name,"");
+      case "importBatch":
+        var res=[]; for(var j=0;j<(d.cards||[]).slice(0,40).length;j++){ var c=d.cards[j];
+          var r=await lSave({fields:c.fields||{}, image:c.image||"", thumb:c.thumb||"", backImage:c.backImage||"", backThumb:c.backThumb||"", method:c.method||"匯入", raw:c.raw||"", noGeo:true});
+          res.push(r.ok?{ok:true, card:r.card}:{ok:false, error:r.error}); }
+        return {ok:true, results:res};
+      case "geofill":
+        var todo=(await lAll("cards")).filter(function(r){ return String(r.c["地址"]||"").trim() && r.c["緯度"]===""; }), done=[];
+        for(var q=0;q<todo.length && q<15;q++){ var ll=await lGeo(todo[q].c["地址"]); if(ll[0]==="") break;
+          todo[q].c["緯度"]=String(ll[0]); todo[q].c["經度"]=String(ll[1]); todo[q].c["更新時間"]=lNow(); await lPut("cards",todo[q]); done.push({ID:todo[q].id, 緯度:String(ll[0]), 經度:String(ll[1])}); }
+        return {ok:true, done:done.length, left:todo.length-done.length, cards:done};
+      case "logList":
+        var logs=(await lAll("logs")).filter(function(x){ return x.cardId===String(d.cardId); }).map(function(x){ return {id:x.id, cardId:x.cardId, time:x.time, type:x.type, memo:x.memo, audio:x.audio||"", imgs:x.imgs||[], created:x.created, updated:x.updated}; });
+        logs.sort(function(a,b){ return a.time<b.time?1:a.time>b.time?-1:0; });
+        return {ok:true, logs:logs};
+      case "logSave":
+        if(!d.cardId) return {ok:false, error:"先把名片存檔,才能加接觸紀錄"};
+        var lg=d.id?(await lAll("logs")).filter(function(x){ return x.id===d.id; })[0]:null;
+        if(d.id && !lg) return {ok:false, error:"找不到這筆紀錄"};
+        var rec=lg?Object.assign({},lg):{id:lId("L"), created:lNow(), imgs:[], audio:""};
+        if(d.audio||d.audioDel){ if(rec.audio) await lBlobDel([rec.audio]); rec.audio=""; }
+        if(d.audio){ rec.audio=lUid("A"); await lBlobPut(rec.audio,d.audio); }
+        var keep=(d.imgsKeep||[]).map(String); await lBlobDel((rec.imgs||[]).filter(function(x){ return keep.indexOf(x)<0; }));
+        rec.imgs=(rec.imgs||[]).filter(function(x){ return keep.indexOf(x)>=0; });
+        for(var m2=0;m2<(d.imgsNew||[]).length;m2++){ var iid=lUid("I"); await lBlobPut(iid,d.imgsNew[m2]); rec.imgs.push(iid); }
+        rec.cardId=String(d.cardId); rec.time=String(d.time||"").replace("T"," ").slice(0,16); rec.type=String(d.type||""); rec.memo=String(d.memo||"").slice(0,2000); rec.updated=lNow();
+        await lPut("logs",rec); if(typeof backupSoon==="function") backupSoon();
+        return {ok:true, log:{id:rec.id, cardId:rec.cardId, time:rec.time, type:rec.type, memo:rec.memo, audio:rec.audio, imgs:rec.imgs, created:rec.created, updated:rec.updated}};
+      case "logDelete":
+        var x=(await lAll("logs")).filter(function(y){ return y.id===d.id; })[0]; if(!x) return {ok:false, error:"找不到這筆紀錄"};
+        await lBlobDel([x.audio].concat(x.imgs||[])); await lDel("logs",x.id); if(typeof backupSoon==="function") backupSoon(); return {ok:true};
+      case "logMedia":
+        var u=await lBlobGet(d.fileId); if(!u) return {ok:false, error:"手機上找不到這個檔案"};
+        var mm=String(u).match(/^data:([^;]+);base64,(.*)$/); return {ok:true, mime:mm?mm[1]:"application/octet-stream", data:mm?mm[2]:""};
+    }
+    return {ok:false, error:"未知動作"};
+  }catch(e){ return {ok:false, error:"手機儲存錯誤:"+(e&&e.message||e)}; }
+}
+
+/** 所有資料動作的入口:客戶帳號的名片資料走手機,其餘走雲端 */
 async function post(body){
+  if(isLocalBook() && LOCAL_ACTIONS[body.action]) return localPost(body);
+  return postRemote(body);
+}
+async function postRemote(body){
   body.code = S.code;
   var r = await fetch(gasUrl(), {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body)});
   var t = await r.text();
@@ -1231,7 +1431,7 @@ function logout(){
 /* ===== 列表 ===== */
 /* ===== ① 手機快取(IndexedDB)+ 增量同步 ===== */
 var CACHE_VER=1, FULL_EVERY=24*3600*1000;
-function cacheKey(){ return "cards|"+gasUrl(); }
+function cacheKey(){ var c=curBook(); return "cards|"+gasUrl()+(c&&c.host?"|"+c.account:""); }   // 雲端帳號共用同一個後端網址,要再分帳號
 function idb(){
   if(idb._p) return idb._p;
   idb._p=new Promise(function(res){
@@ -1283,7 +1483,7 @@ async function syncList(force){
       S.cards=(r.ids||[]).map(function(id){return m[id];}).filter(Boolean);   // 依雲端順序,別台刪掉的自動移除
     }
     S.syncAt=r.now||""; S.lastSync=Date.now();
-    S.syncMsg = "已同步 "+hhmm()+(full?"":(r.cards.length?"(更新 "+r.cards.length+" 張)":""));
+    S.syncMsg = r.local ? "📱 存在這支手機" : "已同步 "+hhmm()+(full?"":(r.cards.length?"(更新 "+r.cards.length+" 張)":""));
     renderList(); cacheSave(); qRecheck();
   }catch(e){
     if(/存取碼/.test(e.message)){ S.syncing=false; logout(); $("loginMsg").textContent="存取碼已變更,請重新輸入"; return; }
@@ -3806,7 +4006,7 @@ async function saveAll(){
   toast("✅ 已儲存 "+done+" 張"+(fail?",失敗 "+fail+" 張":"")+(left?",還有 "+left+" 張重複待你決定":""));
 }
 /* ===== ③ 批量佇列存手機(IndexedDB),重新整理/關掉 App 也不會丟 ===== */
-function qKey(){ return "queue|"+gasUrl(); }
+function qKey(){ var c=curBook(); return "queue|"+gasUrl()+(c&&c.host?"|"+c.account:""); }
 function qSer(x){
   return { qid:x.qid, st:(x.st==="scan"||x.st==="wait")?"wait":(x.st==="saving"?"ok":x.st),
     file:x.file||null, backFile:x.backFile||null, big:x.big||"", thumb:x.thumb||"", backBig:x.backBig||"", backThumb:x.backThumb||"",
