@@ -418,16 +418,22 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 <div id="vLogin" class="login hide">
   <div class="logo"><img src="super_card_logo.svg" alt="超級業務名片王"></div>
   <h2>超級業務名片王</h2>
-  <p>拍名片 → AI 自動分欄 → 存進你的 Google 雲端</p>
-  <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="current-password">
+  <p>拍名片 → 自動辨識分欄 → 雲端保存,換手機也不怕</p>
+  <input id="hAcc" class="inp" type="email" placeholder="帳號(Email)" autocomplete="username" autocapitalize="off">
+  <div style="height:8px"></div>
+  <input id="hPw" class="inp" type="password" placeholder="密碼" autocomplete="current-password">
   <div style="height:10px"></div>
-  <button id="btnLogin" class="btn" data-ic="check">進入</button>
+  <button id="btnHLogin" class="btn" data-ic="check">登入</button>
   <div id="loginMsg" class="msg"></div>
   <div id="loginBook" class="stat" style="margin-top:10px;color:var(--acc);font-weight:600"></div>
-  <button class="btn sec" id="btnLoginBooks" data-ic="stack" style="margin-top:14px">名片簿 / 新使用者建立自己的資料庫</button>
+  <button class="btn sec hide" id="btnBuy" data-ic="star" style="margin-top:14px">還沒有帳號?購買終身版 NT$299</button>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
-  <details><summary>後端網址設定</summary>
-    <input id="gasUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="https://script.google.com/macros/s/.../exec">
+  <details id="advLogin" style="margin-top:6px"><summary>自架資料庫 / 管理員登入</summary>
+    <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="off" style="margin-top:8px">
+    <div style="height:8px"></div>
+    <button id="btnLogin" class="btn sec" data-ic="check">用存取碼進入</button>
+    <button class="btn sec" id="btnLoginBooks" data-ic="stack" style="margin-top:8px">名片簿(切換 / 加入自架資料庫)</button>
+    <input id="gasUrl" class="inp" style="margin-top:8px;font-size:13px" placeholder="後端網址 https://script.google.com/macros/s/.../exec">
   </details>
 </div>
 
@@ -450,6 +456,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnSound" data-ic="volume">音效:開</button>
     <button id="btnLang" data-ic="globe">辨識語言:自動</button>
     <button id="btnAutoContact" data-ic="userplus">存檔後自動加入通訊錄:開</button>
+    <button id="btnChangePw" data-ic="user" class="hide">修改登入密碼</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
@@ -874,7 +881,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.28", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.29", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1000,6 +1007,45 @@ async function login(){
     enter();
   }catch(e){ $("loginMsg").textContent=e.message; S.code=""; }
   $("btnLogin").disabled=false;
+}
+/* ===== 雲端帳號登入(代管版:帳號 Email + 密碼,不用任何設定) ===== */
+var HOST_URL = "https://script.google.com/macros/s/AKfycbxwYyNtIG63ShVEEPPv6tjQzmW4j7MldqgxRvT9Hiv42425-WD79o5uTNt4uMlHZaQ0YQ/exec";
+function useHostToken(acc, tok, name){
+  var b=books().filter(function(x){ return !(x.host && x.account===acc); });
+  var nb={id:"h"+Date.now(), name:name||"我的名片簿", url:HOST_URL, code:tok, account:acc, host:true};
+  b.unshift(nb); saveBooks(b);
+  ls("sc_book",nb.id); ls("sc_gas",HOST_URL); ls("sc_code",tok); S.code=tok; ls("sc_sheet",null);
+  S.cards=[]; S.syncAt=""; S.fullAt=0; S.groups=[]; renderBookName();
+}
+async function hostLogin(){
+  var acc=$("hAcc").value.trim().toLowerCase(), pw=$("hPw").value;
+  if(!/@/.test(acc)){ $("loginMsg").textContent="請輸入帳號(購買時填的 Email)"; return; }
+  if(!pw){ $("loginMsg").textContent="請輸入密碼"; return; }
+  var b=$("btnHLogin"); b.disabled=true; $("loginMsg").textContent=""; setLabel(b,"登入中…");
+  try{
+    var r=await postTo(HOST_URL,"",{action:"login", account:acc, password:pw});
+    if(!r.ok) throw new Error(r.error);
+    useHostToken(r.account, r.token, "我的名片簿");
+    var p=await post({action:"ping"}); if(!p.ok) throw new Error(p.error);
+    ls("sc_ai",p.ai?"1":"0"); S.backVer=p.ver||""; $("hPw").value="";
+    enter(); toast("✅ 登入成功");
+  }catch(e){ $("loginMsg").textContent=e.message; }
+  b.disabled=false; setLabel(b,"登入");
+}
+async function changePw(){
+  var c=curBook(); if(!c||!c.host){ toast("只有雲端帳號可以改密碼"); return; }
+  var o=prompt("請輸入目前的密碼"); if(o===null) return;
+  var n=prompt("請輸入新密碼(至少 6 個字)"); if(n===null) return;
+  if(n.length<6){ toast("新密碼至少 6 個字"); return; }
+  if(prompt("再輸入一次新密碼")!==n){ toast("兩次輸入的新密碼不一樣"); return; }
+  try{ var r=await post({action:"changePw", oldPassword:o, newPassword:n}); if(!r.ok) throw new Error(r.error); toast("✅ 密碼已修改,下次登入用新密碼"); }
+  catch(e){ toast("修改失敗:"+e.message); }
+}
+function checkLoginLink(){   // 開通信的「開啟 App 登入」:#login=email 自動帶入帳號
+  var h=location.hash||""; if(h.indexOf("#login=")!==0) return false;
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  $("hAcc").value=decodeURIComponent(h.slice(7)); setTimeout(function(){ $("hPw").focus(); },300);
+  return true;
 }
 async function enter(){
   show("vMain"); renderVer();
@@ -4016,7 +4062,7 @@ async function geoFillMissing(){
 }
 
 /* ===== 事件 ===== */
-$("btnLogin").onclick=login;
+$("btnLogin").onclick=login; $("btnHLogin").onclick=hostLogin; $("hPw").addEventListener("keydown",function(e){ if(e.key==="Enter") hostLogin(); }); $("btnChangePw").onclick=changePw;
 $("code").addEventListener("keydown",function(e){if(e.key==="Enter")login();});
 $("btnLogout").onclick=logout;
 $("btnReload").onclick=loadList;
@@ -4083,11 +4129,12 @@ $("btnMergeOk").onclick=doMerge;
 function closeMenu(){ $("menu").classList.add("hide"); }
 $("btnMenu").onclick=function(e){
   e.stopPropagation(); var m=$("menu");
+  $("btnChangePw").classList.toggle("hide",!(curBook()||{}).host);
   m.style.top=(document.querySelector("#vMain header").getBoundingClientRect().bottom+4)+"px";
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnAutoContact","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnAutoContact","btnChangePw","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -4238,6 +4285,8 @@ if(curSort()==="zhuyin"||curSort()==="pinyin") loadPY().then(function(){ if(S.ca
 if(S.code && gasUrl()) enter(); else show("vLogin");
 checkJoinLink();
 checkCardLink();
+checkLoginLink();
+if(ls("sc_code") && !(curBook()||{}).host) $("advLogin").open=true;   // 原本用存取碼的使用者:進階區預設展開
 </script>
 </body>
 </html>
