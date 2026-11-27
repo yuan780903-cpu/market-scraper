@@ -280,6 +280,27 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.logbox{margin-top:12px}
+.logbox h3 span{font-weight:400;color:var(--sub);font-size:14px}
+.logbox .btn{width:100%;margin-bottom:8px}
+.logit{border-top:1px solid var(--line);padding:10px 2px;cursor:pointer}
+.logit .lt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.logit .ltype{background:var(--bg2,#f3eee6);border:1px solid var(--line);border-radius:10px;padding:1px 8px;font-size:12.5px}
+.logit .lplay{border:1px solid var(--line);background:#fff;border-radius:12px;padding:3px 10px;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.logit .limg{color:var(--sub);font-size:13px;display:inline-flex;align-items:center;gap:3px}
+.logit .lm{margin-top:4px;font-size:14.5px;line-height:1.55;color:var(--ink,#222)}
+#vLog textarea.inp{width:100%;box-sizing:border-box;font-size:16px;line-height:1.5}
+#vLog input.inp{width:100%;box-sizing:border-box;font-size:16px}
+#logRecBtn{width:100%}
+#logRecBtn.rec{background:#b42318;color:#fff;border-color:#b42318}
+.recnow{margin-top:8px;color:#b42318;font-weight:700;text-align:center}
+#logAudioBox{display:flex;align-items:center;gap:8px;margin-top:10px}
+#logAudioBox audio{flex:1;min-width:0}
+.limgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.limgw{position:relative;aspect-ratio:1}
+.limgw img,.limgw .ph2{width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--sub);background:#f5f3ef}
+.limgw button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:26px;padding:0}
+.limgadd{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--sub);font-size:13px}
 .myscan{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
 .myscan .btn{width:100%}
 .myph{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
@@ -721,6 +742,13 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
         <button type="button" data-q="mail">寄信</button><button type="button" data-q="share">分享</button>
       </div>
       <div class="form" id="form"></div>
+      <div class="exp logbox" id="logBox">
+        <h3>接觸紀錄 <span id="logCount"></span></h3>
+        <button class="btn sec" id="btnLogAdd" data-ic="plus">新增接觸紀錄</button>
+        <div id="logHint" class="stat hide">先按「儲存到雲端」,存好後就能記接觸紀錄。</div>
+        <div id="logList"></div>
+        <audio id="logPlayer" class="hide"></audio>
+      </div>
       <div class="acts">
         <button class="btn" id="btnSave" data-ic="save">儲存到雲端</button>
         <button class="btn sec" id="btnAddBack" data-ic="camera">加拍背面</button>
@@ -733,6 +761,33 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
         <button class="btn danger hide" id="btnDel" data-ic="trash">刪除這張名片</button>
       </div>
       <details id="rawBox" class="hide"><summary>辨識原始文字</summary><pre id="raw"></pre></details>
+    </div>
+  </div>
+</div>
+
+<!-- 接觸紀錄:新增 / 編輯一筆 -->
+<div id="vLog" class="sheet hide" style="z-index:15">
+  <header>
+    <button class="ic" id="btnLogBack" data-ic="back">返回</button>
+    <h1 id="logTitle">新增接觸紀錄</h1>
+  </header>
+  <div class="wrap">
+    <div class="exp">
+      <h3>時間</h3><input id="logTime" type="datetime-local" class="inp">
+      <h3 style="margin-top:12px">方式</h3><div class="chips" id="logTypes" style="flex-wrap:wrap"></div>
+      <h3 style="margin-top:4px">簡短備忘</h3>
+      <textarea id="logMemo" class="inp" rows="4" placeholder="例:談 522 試用,下週二再拜訪;對價格敏感"></textarea>
+    </div>
+    <div class="exp">
+      <h3>錄音</h3>
+      <button class="btn sec" id="logRecBtn" data-ic="mic">開始錄音</button>
+      <div id="logRecTime" class="recnow hide"></div>
+      <div id="logAudioBox" class="hide"><audio id="logAudio" controls></audio><button class="mini" id="btnLogAudioX">刪除錄音</button></div>
+    </div>
+    <div class="exp"><h3>圖片</h3><div class="limgs" id="logImgs"></div></div>
+    <div class="acts">
+      <button class="btn" id="btnLogSave" data-ic="save">儲存紀錄</button>
+      <button class="btn danger hide" id="btnLogDel" data-ic="trash">刪除這筆</button>
     </div>
   </div>
 </div>
@@ -819,7 +874,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.26", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.27", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -848,6 +903,8 @@ var ICONS={
  refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/>',
  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
  save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
@@ -1130,6 +1187,7 @@ function openEdit(card, opts){
   $("rawBox").classList.toggle("hide",!S.cur.raw); $("raw").textContent=S.cur.raw;
   $("scanning").classList.add("hide"); $("editBody").classList.remove("hide");
   $("vEdit").classList.remove("hide"); $("vEdit").scrollTop=0;
+  logLoad(S.cur.id);
 }
 function closeEdit(){ $("vEdit").classList.add("hide"); S.cur=null; }
 function formData(){
@@ -3652,6 +3710,135 @@ function addContact(){
   }else download(file,name);
 }
 
+/* ===== 接觸紀錄:時間 + 方式 + 備忘 + 錄音 + 圖片,每張名片可記很多筆 ===== */
+var LOG={cardId:"", list:[], cur:null, media:{}, rec:null};
+var LOG_TYPES=["拜訪","電話","LINE","會議","展覽","其他"];
+function pad2(n){ return (n<10?"0":"")+n; }
+function nowLocal(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+"T"+pad2(d.getHours())+":"+pad2(d.getMinutes()); }
+async function logLoad(cardId){
+  LOG.cardId=cardId||""; LOG.list=[];
+  $("logHint").classList.toggle("hide",!!cardId); $("btnLogAdd").classList.toggle("hide",!cardId);
+  $("logList").innerHTML=""; $("logCount").textContent="";
+  if(!cardId) return;
+  $("logList").innerHTML='<div class="stat">讀取中…</div>';
+  try{ var r=await post({action:"logList", cardId:cardId}); if(!r.ok) throw new Error(r.error); if(LOG.cardId!==cardId) return; LOG.list=r.logs||[]; }
+  catch(e){ $("logList").innerHTML='<div class="stat">讀取失敗:'+esc(e.message)+'</div>'; return; }
+  renderLogList();
+}
+function renderLogList(){
+  $("logCount").textContent = LOG.list.length ? "("+LOG.list.length+")" : "";
+  if(!LOG.list.length){ $("logList").innerHTML='<div class="stat">還沒有紀錄。拜訪、通話後按「新增接觸紀錄」記一下。</div>'; return; }
+  $("logList").innerHTML=LOG.list.map(function(x){
+    return '<div class="logit" data-log="'+esc(x.id)+'">'+
+      '<div class="lt"><b>'+esc(x.time.replace(/^(\d{4})-/,"$1/").replace("-","/"))+'</b>'+(x.type?'<span class="ltype">'+esc(x.type)+'</span>':'')+
+        (x.audio?'<button type="button" class="lplay" data-play="'+esc(x.audio)+'">'+ic("mic",15)+' 播放</button>':'')+
+        (x.imgs.length?'<span class="limg">'+ic("image",15)+' '+x.imgs.length+'</span>':'')+'</div>'+
+      (x.memo?'<div class="lm">'+esc(x.memo).replace(/\n/g,"<br>")+'</div>':'')+'</div>';
+  }).join("");
+}
+async function logMediaUrl(fid){
+  if(LOG.media[fid]) return LOG.media[fid];
+  var r=await post({action:"logMedia", fileId:fid}); if(!r.ok) throw new Error(r.error);
+  return (LOG.media[fid]="data:"+r.mime+";base64,"+r.data);
+}
+async function logPlay(fid, btn){
+  try{ if(btn){ btn.disabled=true; setLabel(btn,"載入中…"); }
+    var a=$("logPlayer"); a.src=await logMediaUrl(fid); await a.play();
+  }catch(e){ toast("播放失敗:"+e.message); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=ic("mic",15)+' 播放'; } }
+}
+/* ---------- 編輯一筆 ---------- */
+function openLog(id){
+  var x=id ? LOG.list.filter(function(y){return y.id===id;})[0] : null;
+  LOG.cur={ id:x?x.id:"", time:x?x.time.replace(" ","T"):nowLocal(), type:x?x.type:"拜訪", memo:x?x.memo:"",
+            audioId:x?x.audio:"", audioNew:"", audioDel:false, imgs:(x?x.imgs:[]).map(function(f){return {id:f};}) };
+  $("logTime").value=LOG.cur.time; $("logMemo").value=LOG.cur.memo;
+  $("logTitle").textContent = x ? "編輯接觸紀錄" : "新增接觸紀錄";
+  $("btnLogDel").classList.toggle("hide",!x);
+  renderLogTypes(); renderLogAudio(); renderLogImgs();
+  $("vLog").classList.remove("hide"); $("vLog").scrollTop=0;
+  LOG.cur.imgs.forEach(function(m){ logMediaUrl(m.id).then(function(u){ m.src=u; renderLogImgs(); }).catch(function(){}); });
+}
+function closeLog(){ logRecStop(true); $("vLog").classList.add("hide"); LOG.cur=null; }
+function renderLogTypes(){
+  $("logTypes").innerHTML=LOG_TYPES.map(function(t){ return '<button type="button" class="chip'+(LOG.cur.type===t?' on':'')+'" data-lt="'+t+'">'+t+'</button>'; }).join("");
+}
+function renderLogAudio(){
+  var c=LOG.cur, has=c.audioNew || (c.audioId && !c.audioDel), rec=!!LOG.rec;
+  $("logRecBtn").classList.toggle("rec",rec);
+  setLabel($("logRecBtn"), rec ? "停止錄音" : (has ? "重新錄音" : "開始錄音"));
+  $("logRecTime").classList.toggle("hide",!rec);
+  $("logAudioBox").classList.toggle("hide",!has || rec);
+  if(has && !rec){
+    var a=$("logAudio");
+    if(c.audioNew) a.src=c.audioNew;
+    else logMediaUrl(c.audioId).then(function(u){ if(LOG.cur===c && !c.audioNew) a.src=u; }).catch(function(){});
+  }
+}
+function renderLogImgs(){
+  $("logImgs").innerHTML=LOG.cur.imgs.map(function(m,i){
+    var src=m.data||m.src||"";
+    return '<div class="limgw">'+(src?'<img src="'+src+'" data-big="'+i+'" alt="">':'<div class="ph2">載入中</div>')+'<button type="button" data-delimg="'+i+'">✕</button></div>';
+  }).join("")+'<button type="button" class="limgadd" id="btnLogImg">'+ic("image",22)+'<span>加入圖片</span></button>';
+}
+/* 錄音:iPhone 錄成 m4a(audio/mp4),其他瀏覽器 webm;最長 5 分鐘 */
+async function logRecToggle(){
+  if(LOG.rec){ logRecStop(false); return; }
+  if(!window.MediaRecorder || !navigator.mediaDevices){ toast("這個瀏覽器不支援錄音"); return; }
+  try{
+    var st=await navigator.mediaDevices.getUserMedia({audio:true});
+    var mt=["audio/mp4","audio/webm;codecs=opus","audio/webm"].filter(function(t){ return MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t); })[0];
+    var mr=new MediaRecorder(st, mt?{mimeType:mt, audioBitsPerSecond:48000}:undefined), chunks=[], t0=Date.now();
+    LOG.rec={mr:mr, st:st, cancel:false};
+    mr.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+    mr.onstop=function(){
+      var r=LOG.rec; st.getTracks().forEach(function(t){t.stop();}); clearInterval(r&&r.tm); LOG.rec=null;
+      if(r && r.cancel || !LOG.cur){ return; }
+      var blob=new Blob(chunks,{type:(mr.mimeType||mt||"audio/mp4").split(";")[0]});
+      var fr=new FileReader(); fr.onload=function(){ LOG.cur.audioNew=fr.result; LOG.cur.audioDel=false; renderLogAudio(); toast("錄好了,可以先按播放聽聽看"); }; fr.readAsDataURL(blob);
+    };
+    mr.start(1000); sfx("ready");
+    LOG.rec.tm=setInterval(function(){ var s=Math.floor((Date.now()-t0)/1000); $("logRecTime").textContent="● 錄音中 "+pad2(Math.floor(s/60))+":"+pad2(s%60)+"(最長 5 分鐘)"; if(s>=300) logRecStop(false); },250);
+    renderLogAudio();
+  }catch(e){ LOG.rec=null; toast(e.name==="NotAllowedError"?"沒有麥克風權限:請到設定允許 Safari 使用麥克風":"無法錄音:"+e.message); renderLogAudio(); }
+}
+function logRecStop(cancel){ var r=LOG.rec; if(!r) return; r.cancel=!!cancel; try{ r.mr.stop(); }catch(e){} if(cancel){ try{ r.st.getTracks().forEach(function(t){t.stop();}); }catch(e){} clearInterval(r.tm); LOG.rec=null; } }
+function logPickImgs(){
+  var inp=document.createElement("input"); inp.type="file"; inp.accept="image/*"; inp.multiple=true;
+  inp.onchange=async function(){
+    var fs=[].slice.call(inp.files||[]); if(!fs.length || !LOG.cur) return;
+    for(var i=0;i<fs.length && LOG.cur.imgs.length<12;i++){ try{ var im=await loadImg(fs[i]); LOG.cur.imgs.push({data:shrink(im,1280,0.8)}); }catch(e){} }
+    if(LOG.cur.imgs.length>=12) toast("一筆最多 12 張圖");
+    renderLogImgs();
+  };
+  inp.click();
+}
+async function logSave(){
+  var c=LOG.cur; if(!c) return;
+  if(LOG.rec){ toast("先按「停止錄音」"); return; }
+  c.time=$("logTime").value||nowLocal(); c.memo=$("logMemo").value.trim();
+  if(!c.memo && !c.audioNew && !(c.audioId&&!c.audioDel) && !c.imgs.length){ toast("請至少寫一句備忘、錄音或加一張圖"); return; }
+  var b=$("btnLogSave"); b.disabled=true; setLabel(b,"儲存中…");
+  try{
+    var r=await post({action:"logSave", cardId:LOG.cardId, cardName:$("editTitle").textContent, id:c.id, time:c.time.replace("T"," "), type:c.type, memo:c.memo,
+      audio:c.audioNew||"", audioDel:c.audioDel, imgsKeep:c.imgs.filter(function(m){return m.id;}).map(function(m){return m.id;}),
+      imgsNew:c.imgs.filter(function(m){return m.data;}).map(function(m){return m.data;})});
+    if(!r.ok) throw new Error(r.error);
+    var i=LOG.list.findIndex(function(x){return x.id===r.log.id;}); if(i>=0) LOG.list[i]=r.log; else LOG.list.push(r.log);
+    LOG.list.sort(function(a,b){ return a.time<b.time?1:a.time>b.time?-1:0; });
+    if(c.audioNew && r.log.audio) LOG.media[r.log.audio]=c.audioNew;
+    renderLogList(); closeLog(); sfx("success"); toast("✅ 已記下接觸紀錄");
+  }catch(e){ toast("儲存失敗:"+e.message); }
+  b.disabled=false; setLabel(b,"儲存紀錄");
+}
+async function logDel(){
+  var c=LOG.cur; if(!c||!c.id) return;
+  if(!confirm("刪除這筆接觸紀錄?錄音和圖片會一起移到 Drive 垃圾桶。")) return;
+  try{ var r=await post({action:"logDelete", id:c.id}); if(!r.ok) throw new Error(r.error);
+    LOG.list=LOG.list.filter(function(x){return x.id!==c.id;}); renderLogList(); closeLog(); toast("已刪除"); }
+  catch(e){ toast("刪除失敗:"+e.message); }
+}
+
 /* ===== ④ 標籤 ===== */
 function allTags(){ return groupNames(); }
 /* ===== 群組管理(群組 = 名片上的標籤) ===== */
@@ -4000,6 +4187,15 @@ $("btnExportBack").onclick=function(){ $("vExport").classList.add("hide"); };
 $("btnXlsx").onclick=exportXlsx;
 $("btnVcf").onclick=exportVcf;
 $("btnContact").onclick=addContact;
+$("btnLogAdd").onclick=function(){ openLog(""); }; $("btnLogBack").onclick=closeLog; $("btnLogSave").onclick=logSave; $("btnLogDel").onclick=logDel;
+$("logRecBtn").onclick=logRecToggle; $("btnLogAudioX").onclick=function(){ if(!LOG.cur) return; LOG.cur.audioNew=""; LOG.cur.audioDel=!!LOG.cur.audioId; renderLogAudio(); };
+$("logList").addEventListener("click",function(e){ var p=e.target.closest("[data-play]"); if(p){ e.stopPropagation(); logPlay(p.dataset.play,p); return; } var it=e.target.closest("[data-log]"); if(it) openLog(it.dataset.log); });
+$("logTypes").addEventListener("click",function(e){ var b=e.target.closest("[data-lt]"); if(!b||!LOG.cur) return; LOG.cur.type=b.dataset.lt; renderLogTypes(); });
+$("logImgs").addEventListener("click",function(e){
+  if(e.target.closest("#btnLogImg")){ logPickImgs(); return; }
+  var d=e.target.closest("[data-delimg]"); if(d){ LOG.cur.imgs.splice(+d.dataset.delimg,1); renderLogImgs(); return; }
+  var g=e.target.closest("[data-big]"); if(g){ var m=LOG.cur.imgs[+g.dataset.big]; var w=window.open(); if(w) w.document.write('<img src="'+(m.data||m.src)+'" style="width:100%">'); }
+});
 $("btnDups").onclick=function(){ $("vDups").classList.remove("hide"); renderDups(); };
 $("btnDupsBack").onclick=function(){ $("vDups").classList.add("hide"); };
 $("dupList").addEventListener("click",function(e){
