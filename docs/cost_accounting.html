@@ -177,10 +177,10 @@ header.hero{position:relative}
     <button class="on" data-tab="t1" role="tab">① 名詞應用</button>
     <button data-tab="tG" role="tab">② 名詞大全</button>
     <button data-tab="tS" role="tab">③ 銷售×成本練習</button>
-    <button data-tab="t2" role="tab">④ 堆肥場科目表<span class="soon">製作中</span></button>
-    <button data-tab="t3" role="tab">⑤ 帳單歸類引導<span class="soon">製作中</span></button>
-    <button data-tab="t4" role="tab">⑥ 計算器<span class="soon">製作中</span></button>
-    <button data-tab="t5" role="tab">⑦ 小測驗<span class="soon">製作中</span></button>
+    <button data-tab="t2" role="tab">④ 堆肥場科目表</button>
+    <button data-tab="t3" role="tab">⑤ 帳單歸類引導</button>
+    <button data-tab="t4" role="tab">⑥ 計算器</button>
+    <button data-tab="t5" role="tab">⑦ 小測驗</button>
   </div>
 </nav>
 
@@ -312,14 +312,14 @@ header.hero{position:relative}
 </section>
 
 <!-- ============ 其他分頁（下一步製作） ============ -->
-<section class="panel" id="t2"><div class="placeholder"><div class="big">📒</div><p><b>堆肥場會計科目表</b><br>下一步製作：直接材料、直接人工、製造費用、推銷與管理費用、營業外收支、固定資產，每個科目都附堆肥場的實際例子。</p></div></section>
-<section class="panel" id="t3"><div class="placeholder"><div class="big">🧾</div><p><b>帳單歸類引導器</b><br>下一步製作：輸入「柴油」「太空袋」「檢驗費」就告訴你記哪個科目；不確定的單據會一題一題問你，帶你歸到正確科目。</p></div></section>
-<section class="panel" id="t4"><div class="placeholder"><div class="big">🧮</div><p><b>計算器</b><br>下一步製作：每噸成本分攤、毛利率與加成率換算、營業額目標。</p></div></section>
-<section class="panel" id="t5"><div class="placeholder"><div class="big">✏️</div><p><b>小測驗</b><br>下一步製作：用堆肥場的真實單據情境練習歸類。</p></div></section>
+<section class="panel" id="t2"><div id="pxAcct"></div></section>
+<section class="panel" id="t3"><div id="pxGuide"></div></section>
+<section class="panel" id="t4"><div id="pxCalc"></div></section>
+<section class="panel" id="t5"><div id="pxQuiz"></div></section>
 
 </main>
 
-<footer>做生意必學成本會計 · 堆肥場實戰版 v1.2 · 範例數字為教學用估算，實際入帳請依公司會計制度與記帳士意見</footer>
+<footer>做生意必學成本會計 · 堆肥場實戰版 v1.3 · 範例數字為教學用估算，實際入帳請依公司會計制度與記帳士意見</footer>
 
 <script>
 /* ---------- 範例基準數字（每噸、每月） ---------- */
@@ -926,5 +926,274 @@ const GL = [
   document.querySelectorAll('nav.tabs button[data-tab="tS"]').forEach(b=>b.addEventListener('click',()=>setTimeout(go,30)));
 })();
 /*SX-PUB-END*/</script>
+<script>/*PX-BEGIN*/
+/* ===== 公開版：④科目表 ⑤帳單歸類引導 ⑥計算器 ⑦小測驗（通用內容，不含任何公司資料） ===== */
+(function(){
+const css = document.createElement('style');
+css.textContent = `
+.px-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.px-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.px-cat{border-top:5px solid var(--pc)}
+.px-cat h3{margin:0;font-size:18px}
+.px-cat .meta{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+.px-row{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px dashed var(--line);padding:6px 0;font-size:14px}
+.px-row:last-child{border-bottom:0}
+.px-row small{display:block;color:var(--muted);font-size:12.5px}
+.px-beh{font-size:11.5px;border-radius:99px;padding:1px 8px;background:var(--bg);white-space:nowrap;align-self:start}
+.px-pill{display:inline-block;border-radius:99px;padding:1px 10px;font-size:12.5px;font-weight:700;color:#fff}
+.px-in{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--ink)}
+.px-res{display:grid;gap:8px;margin-top:10px}
+.px-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.px-two{grid-template-columns:1fr}}
+.px-q{font-size:17px;font-weight:700;margin:6px 0}
+.px-path{font-size:13px;color:var(--muted)}
+.px-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.px-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 16px;font:inherit;cursor:pointer}
+.px-btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.px-calc label{display:block;font-size:13.5px;font-weight:700;margin-top:10px}
+.px-calc input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--card);color:var(--ink);margin-top:3px}
+.px-out{margin-top:12px;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14.5px}
+.px-out b{font-size:18px}
+.px-bill{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);position:relative}
+.px-bill:before{content:"";position:absolute;left:0;right:0;top:0;height:6px;border-radius:12px 12px 0 0;background:repeating-linear-gradient(90deg,var(--var) 0 14px,transparent 14px 22px)}
+.px-bill .it{font-size:22px;font-weight:900;margin:4px 0}
+.px-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media (max-width:620px){.px-cats{grid-template-columns:repeat(2,1fr)}}
+.px-cb{border:2px solid var(--pc);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 4px;font:inherit;font-weight:700;cursor:pointer;line-height:1.3}
+.px-cb small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.px-cb.right{background:var(--pc);color:#fff}.px-cb.right small{color:rgba(255,255,255,.85)}
+.px-cb.wrong{background:var(--loss-soft);border-color:var(--loss)}
+.px-fb{margin-top:12px;border-radius:10px;padding:10px 14px}
+.px-fb.ok{background:var(--cm-soft)}.px-fb.no{background:var(--loss-soft)}
+.px-opt{display:block;width:100%;text-align:left;margin-top:8px}
+.px-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.px-prog{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;min-width:100px}
+.px-prog i{display:block;height:100%;background:var(--brand)}
+`;
+document.head.appendChild(css);
+
+const CAT = {
+  DM:{n:'直接材料',c:'#8c6d31',beh:'變動',g:'營業成本（製造成本）',h:'變成產品的一部分'},
+  DL:{n:'直接人工',c:'#e07b39',beh:'變動',g:'營業成本（製造成本）',h:'直接做產品的人'},
+  VOH:{n:'變動製造費用',c:'#d99a1e',beh:'變動',g:'營業成本（製造費用）',h:'工廠裡、跟產量走'},
+  FOH:{n:'固定製造費用',c:'#3b6ea8',beh:'固定',g:'營業成本（製造費用）',h:'工廠裡、每月差不多'},
+  SELL:{n:'推銷費用',c:'#8e5bb5',beh:'看項目',g:'營業費用',h:'為了把貨賣出去'},
+  ADM:{n:'管理費用',c:'#5b7d8e',beh:'固定',g:'營業費用',h:'為了管理公司'},
+  CAPEX:{n:'資本支出（固定資產）',c:'#2a9d8f',beh:'折舊',g:'資產負債表',h:'用好幾年的大筆設備'},
+  NONOP:{n:'營業外支出',c:'#c0392b',beh:'—',g:'營業外',h:'跟本業無關'},
+};
+const ORDER = ['DM','DL','VOH','FOH','SELL','ADM','CAPEX','NONOP'];
+const pill = c => `<span class="px-pill" style="background:${CAT[c].c}">${CAT[c].n}</span>`;
+const f0 = (n,d=0) => (n==null||!isFinite(n))?'—':Number(n).toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+// [品名關鍵字, 分類, 建議科目, 成本行為, 為什麼, 示範金額]
+const R = [
+ ['禽畜糞','DM','直接材料－禽畜糞','變動','雞糞、豬糞、牛糞是堆肥主原料，直接變成產品。如果畜牧場付你處理費，那筆錢另外記「處理費收入」。',180000],
+ ['菇包','DM','直接材料－副資材','變動','菇包是配方裡的副料，直接變成產品的一部分。',96000],
+ ['稻殼','DM','直接材料－副資材','變動','調整碳氮比和通氣用的副料，屬直接材料。',42000],
+ ['米糠','DM','直接材料－副資材','變動','配方副料，直接變成產品。',38000],
+ ['豆粕','DM','直接材料－副資材','變動','提高氮含量的配方原料。',65000],
+ ['木屑','DM','直接材料－副資材','變動','調整水分和通氣的副料。',28000],
+ ['翻堆作業員薪資','DL','直接人工－薪資','變動','開翻堆機、操作生產線的人，直接投入產品。',152000],
+ ['包裝作業員','DL','直接人工－薪資','變動','裝袋、封口、上棧板的人員，屬直接人工。',88000],
+ ['臨時包裝工','DL','直接人工－臨時工資','變動','旺季臨時找人包裝，隨產量增減。',36000],
+ ['計件工資','DL','直接人工－計件工資','變動','按包數或噸數計酬，是最典型的變動人工。',24000],
+ ['柴油','VOH','製造費用－燃料費','變動','鏟裝機、翻堆機燒的柴油，產量越大用越多。',41000],
+ ['流動電費','VOH','製造費用－動力費','變動','機器運轉用的電，跟著開機時數走。',86000],
+ ['包裝袋','VOH','製造費用－包裝費用','變動','每包產品一個袋子，產量多就用得多。',54000],
+ ['太空袋','VOH','製造費用－包裝費用','變動','散裝產品的包裝材料，跟著產量走。',27000],
+ ['縫線','VOH','製造費用－包裝費用','變動','封袋用的縫線，屬包裝材料。',6800],
+ ['稀硫酸','VOH','製造費用－工廠物料','變動','用來吸收氨氣、控制臭味，處理量越多用越多。',35000],
+ ['除臭液','VOH','製造費用－工廠物料','變動','除臭用量跟著堆肥量走。',24000],
+ ['菌種','VOH','製造費用－工廠物料','變動','醱酵用的菌種或酵素，投料越多用越多。',36000],
+ ['潤滑油','VOH','製造費用－修繕費','變動','機器潤滑油，運轉時數越多用越多。',8400],
+ ['機器零件','VOH','製造費用－修繕費','變動','翻堆機鍊條、軸承等耗損零件，跟使用強度有關。',45000],
+ ['篩網','VOH','製造費用－修繕費','變動','篩分機的篩網越篩越耗損。',5800],
+ ['生產廢料清運','VOH','製造費用－廢棄物清運','變動','生產產生的廢料、結塊料清運，產量越大越多。',60000],
+ ['折舊','FOH','製造費用－折舊','固定','廠房、翻堆機的折舊，不管做多少每月都一樣。',140000],
+ ['廠房租金','FOH','製造費用－租金支出','固定','生產場地的租金屬製造費用；如果記成營業費用，毛利會被高估。',50000],
+ ['保險費','FOH','製造費用－保險費','固定','廠房設備的保險，跟產量無關。',7600],
+ ['檢驗費','FOH','製造費用－檢驗費','固定','肥料品質、重金屬、異味的定期檢驗，屬固定製造費用。',52500],
+ ['地磅檢定','FOH','製造費用－檢驗費','固定','地磅依法定期檢定，跟產量無關。',31500],
+ ['清潔工','FOH','製造費用－間接人工','固定','為工廠服務但沒有直接做產品，屬間接人工。',9700],
+ ['廠長薪資','FOH','製造費用－間接人工','固定','現場主管負責管理，不直接做產品。',65000],
+ ['口罩手套','FOH','製造費用－勞工安全','固定','勞安用品依人數而非產量。',3400],
+ ['員工伙食','FOH','製造費用－職工福利','固定','現場員工伙食，依人數。',12000],
+ ['電費基本費','FOH','製造費用－動力費','固定','不開機也要付的基本電費。',15000],
+ ['生活垃圾清運','FOH','製造費用－清潔費','固定','每月固定的垃圾清運。',8400],
+ ['冷氣保養','FOH','製造費用－修繕費','固定','定期保養，跟產量無關。',8400],
+ ['小型抽水泵','FOH','製造費用－雜項購置','固定','單價 4 萬左右、未達資本化門檻，直接當費用。',41000],
+ ['業務薪資','SELL','推銷費用－薪資','固定','負責把產品賣出去的人。',90000],
+ ['出貨運費','SELL','推銷費用－運費','變動','把貨送到客戶手上的運費，跟銷量走。',70000],
+ ['經銷佣金','SELL','推銷費用－佣金','變動','依銷量支付給經銷商，屬變動推銷費用。',40000],
+ ['廣告','SELL','推銷費用－廣告費','固定','報紙、網路、農民曆廣告。',20000],
+ ['展覽','SELL','推銷費用－廣告費','固定','參加農業展的攤位費。',30000],
+ ['贊助','SELL','推銷費用－廣告贊助','固定','地方活動贊助，目的在打品牌。',15000],
+ ['試用包','SELL','推銷費用－樣品費','固定','送給農民試用的小包裝。',12000],
+ ['棧板','SELL','推銷費用－出貨包裝','變動','跟著貨送到客戶那裡、回不來的棧板，跟出貨量走。',45000],
+ ['代灑播','SELL','推銷費用－銷售服務','變動','幫客戶撒肥是銷售服務，跟銷量走。',25000],
+ ['會計薪資','ADM','管理費用－薪資','固定','會計、行政人員的薪水。',50000],
+ ['記帳士','ADM','管理費用－勞務費','固定','記帳、報稅的專業服務費。',8000],
+ ['肥料登記證','ADM','管理費用－規費','固定','肥料登記、展延的政府規費。',3000],
+ ['協會會費','ADM','管理費用－會費','固定','產業協會的入會費和年費。',20000],
+ ['交際費','ADM','管理費用－交際費','固定','宴請客戶、送禮。',10000],
+ ['文具','ADM','管理費用－文具用品','固定','辦公文具和印刷。',1500],
+ ['技術授權金','ADM','研究發展費用－權利金','固定','按月支付的技術授權金當期認列；一次買斷多年使用權則列無形資產。',69300],
+ ['翻堆機','CAPEX','機器設備','折舊','可用多年的主要設備，列固定資產，逐年折舊。',1800000],
+ ['鏟裝機','CAPEX','運輸設備','折舊','可用多年的大型機具，列固定資產。',2850000],
+ ['堆肥舍','CAPEX','房屋及建築','折舊','廠房建物，分 20 年左右折舊。',6000000],
+ ['加壓泵系統','CAPEX','機器設備','折舊','分期付款也要合併看，總價超過資本化門檻就列資產。',273000],
+ ['罰款','NONOP','營業外支出－罰款','—','跟本業經營無關，報稅時罰款不能列費用。',6000],
+ ['利息','NONOP','營業外支出－利息費用','—','借款利息屬財務成本，不是營業活動。',35000],
+ ['捐贈','NONOP','營業外支出－捐贈','—','沒有對價的捐款，列營業外。',10000],
+ ['出售設備損失','NONOP','營業外支出－處分資產損失','—','賣舊設備的價差，跟本業無關。',50000],
+];
+
+const TREE = {
+  q1:{q:'這筆錢買的東西可以用超過一年，而且金額超過約 8 萬元嗎？',hint:'例如翻堆機、鏟裝機、加壓泵、堆肥舍。',yes:'CAPEX',no:'q2'},
+  q2:{q:'這筆錢跟本業（做肥料、賣肥料）有關嗎？',hint:'罰款、借款利息、捐贈、出售資產損失都和本業無關。',yes:'q3',no:'NONOP'},
+  q3:{q:'這筆錢是在工廠、為了生產而花的嗎？',hint:'場內的人、機器、物料、水電、清運都算。',yes:'q4',no:'q7'},
+  q4:{q:'它會直接變成產品的一部分嗎？',hint:'禽畜糞、菇包、稻殼等配方原料。',yes:'DM',no:'q5'},
+  q5:{q:'這是直接動手做產品的人的薪資或工資嗎？',hint:'翻堆、包裝作業員、臨時包裝工。清潔工、主管不算。',yes:'DL',no:'q6'},
+  q6:{q:'如果這個月產量多一倍，這筆錢也會跟著多很多嗎？',hint:'柴油、電費、稀硫酸、包裝袋會；折舊、保險、檢驗、清潔工不會。',yes:'VOH',no:'FOH'},
+  q7:{q:'這筆錢是為了把產品賣出去嗎？',hint:'業務、廣告、展覽、贊助、出貨運費、棧板、代灑播。',yes:'SELL',no:'ADM'},
+};
+
+/* ---------- ④ 科目表 ---------- */
+function acct(){
+  const el = document.getElementById('pxAcct'); if(!el) return;
+  el.innerHTML = `<div class="note">📒 堆肥場常見支出依 8 大類整理，每類列出建議科目、實際例子和成本行為。正式科目代號請依公司會計制度與記帳士意見。</div>
+  <div class="px-grid">${ORDER.map(c=>{
+    const rows = R.filter(r=>r[1]===c);
+    const byAcct = {}; rows.forEach(r=>{(byAcct[r[2]] ??= []).push(r);});
+    return `<div class="px-card px-cat" style="--pc:${CAT[c].c}"><h3>${CAT[c].n}</h3><div class="meta">${CAT[c].g}・成本行為：${CAT[c].beh}・判斷重點：${CAT[c].h}</div>
+      ${Object.entries(byAcct).map(([a,rs])=>`<div class="px-row"><span><b>${a}</b><small>${rs.map(r=>r[0]).join('、')}</small></span><span class="px-beh">${rs[0][3]}</span></div>`).join('')}</div>`;
+  }).join('')}</div>`;
+}
+
+/* ---------- ⑤ 帳單歸類引導 ---------- */
+function guide(){
+  const el = document.getElementById('pxGuide'); if(!el) return;
+  el.innerHTML = `<div class="px-two">
+    <div class="px-card"><h3 style="margin-top:0">🔎 輸入品名直接查</h3><input class="px-in" id="pxIn" type="search" placeholder="例如：柴油、棧板、檢驗費、罰款、翻堆機"><div class="px-res" id="pxOut"></div></div>
+    <div class="px-card"><h3 style="margin-top:0">🧭 一題一題回答</h3><div id="pxTree"></div></div></div>`;
+  const inp = document.getElementById('pxIn');
+  const search = () => {
+    const q = inp.value.trim(); const out = document.getElementById('pxOut');
+    if(!q){ out.innerHTML = '<div style="color:var(--muted);font-size:13.5px">輸入關鍵字，會顯示建議科目和原因。找不到時，改用右邊的引導問答。</div>'; return; }
+    const hits = R.filter(r=>r[0].includes(q)||q.includes(r[0])||r[2].includes(q));
+    out.innerHTML = hits.length ? hits.slice(0,6).map(r=>`<div class="note" style="margin:0">${pill(r[1])} <b>${r[2]}</b>（${r[3]}）<br><span style="font-size:13.5px">「${r[0]}」：${r[4]}</span></div>`).join('') : '<div class="warn" style="margin:0">找不到這個品名，用右邊的引導問答判斷看看。</div>';
+  };
+  inp.oninput = search; search();
+  let node='q1', path=[];
+  const tree = () => {
+    const t = document.getElementById('pxTree'), n = TREE[node];
+    const trail = path.length?`<div class="px-path">${path.map(p=>p.q.replace(/？.*/,'？')+' <b>'+(p.a?'是':'否')+'</b>').join('<br>')}</div>`:'';
+    if(!n){ t.innerHTML = `${trail}<div class="note" style="font-size:16px">👉 建議歸到 ${pill(node)}<br><span style="font-size:14px">${CAT[node].g}・成本行為：${CAT[node].beh}</span><div style="font-size:13px;margin-top:4px">常見例子：${R.filter(r=>r[1]===node).slice(0,6).map(r=>r[0]).join('、')}</div></div><button class="px-btn" id="pxRe">重新判斷</button>`;
+      document.getElementById('pxRe').onclick=()=>{node='q1';path=[];tree();}; return; }
+    t.innerHTML = `${trail}<div class="px-q">${n.q}</div><div style="color:var(--muted);font-size:13.5px">${n.hint}</div><div class="px-btns"><button class="px-btn pri" id="pxY">是</button><button class="px-btn" id="pxN">否</button>${path.length?'<button class="px-btn" id="pxB">上一步</button>':''}</div>`;
+    document.getElementById('pxY').onclick=()=>{path.push({q:n.q,a:true,from:node});node=n.yes;tree();};
+    document.getElementById('pxN').onclick=()=>{path.push({q:n.q,a:false,from:node});node=n.no;tree();};
+    const b=document.getElementById('pxB'); if(b) b.onclick=()=>{const p=path.pop();node=p.from;tree();};
+  };
+  tree();
+}
+
+/* ---------- ⑥ 計算器 ---------- */
+function calc(){
+  const el = document.getElementById('pxCalc'); if(!el) return;
+  const inp = (id,lab,v,step=1)=>`<label>${lab}<input type="number" id="${id}" value="${v}" step="${step}" inputmode="decimal"></label>`;
+  el.innerHTML = `<div class="px-grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+    <div class="px-card px-calc"><h3 style="margin-top:0">① 毛利率 ↔ 加成率</h3>
+      ${inp('c1c','每噸成本（元）',4067)}${inp('c1m','想要的毛利率（%）',30,0.5)}<div class="px-out" id="c1o"></div></div>
+    <div class="px-card px-calc"><h3 style="margin-top:0">② 損益兩平與營業額目標</h3>
+      ${inp('c2p','每噸售價（元）',6000)}${inp('c2v','每噸變動成本（元）',3800)}${inp('c2f','每月固定成本（元）',590000,1000)}${inp('c2t','想每月賺（元）',200000,1000)}<div class="px-out" id="c2o"></div></div>
+    <div class="px-card px-calc"><h3 style="margin-top:0">③ 每噸成本分攤</h3>
+      ${inp('c3m','每月原料（元）',450000,1000)}${inp('c3l','每月直接人工（元）',60000,1000)}${inp('c3v','每月變動製造費用（元）',300000,1000)}${inp('c3f','每月固定製造費用（元）',410000,1000)}${inp('c3q','每月產量（噸）',300)}<div class="px-out" id="c3o"></div></div>
+    <div class="px-card px-calc"><h3 style="margin-top:0">④ 特價單要不要接</h3>
+      ${inp('c4p','特價（元/噸）',4500)}${inp('c4v','這張單真正會多花的變動成本（元/噸）',2700)}${inp('c4q','訂單噸數',100)}${inp('c4c','本月剩餘產能（噸）',150)}<div class="px-out" id="c4o"></div></div>
+  </div>`;
+  const v = id => +document.getElementById(id).value || 0;
+  const run = () => {
+    const c=v('c1c'), m=v('c1m')/100;
+    document.getElementById('c1o').innerHTML = m>=1?'毛利率要小於 100%':`建議售價 <b>${f0(c/(1-m))}</b> 元<br>等於成本加成 ${f0((1/(1-m)-1)*100,1)}%<br><span style="color:var(--muted);font-size:13px">如果直接用「成本 × ${f0(1+m,2)}」，售價 ${f0(c*(1+m))} 元，實際毛利率只有 ${f0(m/(1+m)*100,1)}%。</span>`;
+    const p=v('c2p'), vc=v('c2v'), f=v('c2f'), t=v('c2t'), cm=p-vc;
+    document.getElementById('c2o').innerHTML = cm<=0?'<span style="color:var(--loss)">售價低於變動成本，賣越多賠越多。</span>':`每噸邊際貢獻 <b>${f0(cm)}</b> 元（${f0(cm/p*100,1)}%）<br>損益兩平：每月 <b>${f0(Math.ceil(f/cm))}</b> 噸、營業額 ${f0(f/cm*p/1e4,1)} 萬<br>想賺 ${f0(t/1e4,1)} 萬：每月 <b>${f0(Math.ceil((f+t)/cm))}</b> 噸、營業額 ${f0((f+t)/cm*p/1e4,1)} 萬`;
+    const q=v('c3q'), tot=v('c3m')+v('c3l')+v('c3v')+v('c3f'), var_=v('c3m')+v('c3l')+v('c3v');
+    document.getElementById('c3o').innerHTML = q<=0?'請輸入產量':`每噸完全成本 <b>${f0(tot/q)}</b> 元<br>其中變動 ${f0(var_/q)}、固定分攤 ${f0(v('c3f')/q)}<br><span style="color:var(--muted);font-size:13px">產量增加到 ${f0(q*1.2)} 噸，固定分攤會降到 ${f0(v('c3f')/(q*1.2))} 元/噸。報價底線是變動成本 ${f0(var_/q)}，長期售價要能涵蓋完全成本。</span>`;
+    const sp=v('c4p'), sv=v('c4v'), sq=v('c4q'), cap=v('c4c'), take=Math.min(sq,cap), g=(sp-sv)*take;
+    document.getElementById('c4o').innerHTML = sp<=sv?`<b style="color:var(--loss)">不要接</b>：特價低於變動成本，每噸賠 ${f0(sv-sp)} 元。`:
+      `每噸邊際貢獻 ${f0(sp-sv)} 元；產能可接 ${f0(take)} 噸<br><b style="color:var(--cm)">建議接單，多賺 ${f0(g/1e4,1)} 萬</b>${take<sq?`<br><span style="color:var(--loss);font-size:13px">產能只夠做 ${f0(take)} 噸，多的會排擠原價訂單。</span>`:''}<br><span style="color:var(--muted);font-size:13px">注意：別讓老客戶知道特價、只當短期決策。</span>`;
+  };
+  el.querySelectorAll('input').forEach(i=>i.oninput=run); run();
+}
+
+/* ---------- ⑦ 小測驗 ---------- */
+const MCQ = [
+  ['成本 100 元，想要毛利率 30%，售價要訂多少？',['130 元','143 元','170 元'],1,'毛利率的分母是售價：100 ÷ (1 − 30%) ≈ 143。賣 130 元的毛利率只有 23%。'],
+  ['每噸售價 6,000、變動成本 3,800、每月固定成本 59 萬，損益兩平每月要賣幾噸？',['98 噸','155 噸','269 噸'],2,'每噸邊際貢獻 2,200，59 萬 ÷ 2,200 ≈ 269 噸。'],
+  ['雨季每月虧錢，但每噸邊際貢獻還是正的，最好怎麼做？',['停工省成本','繼續生產','把售價砍半衝量'],1,'停工時固定成本照付。邊際貢獻是正的，多做一噸就多付一點固定成本，比停工少虧。'],
+  ['去年花 200 萬買的造粒機一直用不順，現在要決定換不換，這 200 萬是？',['攸關成本','沉沒成本','機會成本'],1,'已經花掉、收不回來的錢是沉沒成本，不該影響未來的決定。'],
+  ['經銷商特價單：售價高於變動成本、產能也有空，應該？',['接','不接','看毛利率決定'],0,'有閒置產能時，只要特價高於增額成本就多賺；固定成本接不接都要付。'],
+  ['買一台 285 萬、可用 8 年的鏟裝機，要怎麼記帳？',['當月費用','固定資產，分年折舊','管理費用'],1,'可用多年、金額超過資本化門檻，要列固定資產，逐年提列折舊。'],
+  ['製粒機產能有限時，哪個產品該優先排？',['毛利率最高的','每機台小時邊際貢獻最高的','售價最高的'],1,'有瓶頸時，要比每單位瓶頸資源能賺多少，而不是毛利率。'],
+  ['出貨運費屬於哪一類？',['直接材料','推銷費用','固定製造費用'],1,'把貨送到客戶手上的運費是推銷費用，而且跟銷量走，是變動的。'],
+  ['堆肥場向畜牧場收的禽畜糞處理費，應該記成？',['收入','直接材料的減項','營業外收入'],0,'代處理是本業的一部分，記處理費收入（營業收入）。'],
+  ['固定成本比例很高的工廠，業績增加 10% 時，利潤會？',['也增加約 10%','增加遠超過 10%','不會變'],1,'這就是營運槓桿：固定成本不變，多出來的邊際貢獻幾乎全部變成利潤。'],
+];
+function quiz(){
+  const el = document.getElementById('pxQuiz'); if(!el) return;
+  let st=null;
+  const home = () => {
+    el.innerHTML = `<div class="px-card" style="max-width:760px;margin:0 auto"><h3 style="margin-top:0">✏️ 成本會計小測驗</h3>
+      <p style="color:var(--muted);margin-top:0">一共 12 題：8 張堆肥場單據歸類，加上 4 題觀念題。答錯會說明原因。單據金額為示意。</p>
+      <button class="px-btn pri" id="pxGo">開始測驗</button></div>`;
+    document.getElementById('pxGo').onclick=start;
+  };
+  const start = () => {
+    const bills = R.slice().sort(()=>Math.random()-.5).slice(0,8).map(r=>({t:'bill',r,amt:Math.round(r[5]*(0.8+Math.random()*0.4)/10)*10,m:1+Math.floor(Math.random()*10)}));
+    const mc = MCQ.slice().sort(()=>Math.random()-.5).slice(0,4).map(q=>({t:'mcq',q}));
+    st = {list:bills.concat(mc).sort(()=>Math.random()-.5), i:0, score:0, wrong:[]};
+    show();
+  };
+  const top = () => `<div class="px-top"><b>第 ${st.i+1} / ${st.list.length} 題</b><div class="px-prog"><i style="width:${st.i/st.list.length*100}%"></i></div><b>⭐ ${st.score}</b></div>`;
+  const next = () => `<div style="text-align:right;margin-top:10px"><button class="px-btn pri" id="pxNx">${st.i+1<st.list.length?'下一題 ▶':'看成績'}</button></div>`;
+  const bindNext = () => document.getElementById('pxNx').onclick=()=>{st.i++; show();};
+  const show = () => {
+    if(st.i>=st.list.length) return end();
+    const it = st.list[st.i];
+    if(it.t==='bill'){
+      el.innerHTML = `<div style="max-width:760px;margin:0 auto">${top()}<div class="px-bill"><div style="color:var(--muted);font-size:13px">好田堆肥場・${it.m} 月・付款單據</div><div class="it">${it.r[0]}</div><div style="font-size:19px">NT$ ${f0(it.amt)}</div></div>
+        <p style="font-weight:700;margin:12px 0 0">這筆錢應該記在哪個科目？</p>
+        <div class="px-cats">${ORDER.map(c=>`<button class="px-cb" style="--pc:${CAT[c].c}" data-c="${c}">${CAT[c].n}<small>${CAT[c].h}</small></button>`).join('')}</div><div id="pxFb"></div></div>`;
+      el.querySelectorAll('.px-cb').forEach(b=>b.onclick=()=>{
+        const ok = b.dataset.c===it.r[1]; if(ok) st.score+=10; else st.wrong.push(`<b>${it.r[0]}</b>：你選 ${CAT[b.dataset.c].n}，正確是 ${CAT[it.r[1]].n}（${it.r[2]}）。${it.r[4]}`);
+        el.querySelectorAll('.px-cb').forEach(x=>{x.disabled=true; if(x.dataset.c===it.r[1]) x.classList.add('right'); else if(x===b) x.classList.add('wrong');});
+        document.getElementById('pxFb').innerHTML = `<div class="px-fb ${ok?'ok':'no'}"><b>${ok?'✅ 答對了 +10':'❌ 答錯了'}</b><br>${pill(it.r[1])} <b>${it.r[2]}</b>（${it.r[3]}）<br>${it.r[4]}</div>${next()}`; bindNext();
+      });
+    } else {
+      const [q,opts,ans,why] = it.q;
+      el.innerHTML = `<div style="max-width:760px;margin:0 auto">${top()}<div class="px-card"><div class="px-q">💭 ${q}</div>${opts.map((o,i)=>`<button class="px-btn px-opt" data-o="${i}">${'ABC'[i]}. ${o}</button>`).join('')}<div id="pxFb"></div></div></div>`;
+      el.querySelectorAll('.px-opt').forEach(b=>b.onclick=()=>{
+        const ok = +b.dataset.o===ans; if(ok) st.score+=10; else st.wrong.push(`<b>${q}</b><br>正確答案：${opts[ans]}。${why}`);
+        el.querySelectorAll('.px-opt').forEach(x=>{x.disabled=true; if(+x.dataset.o===ans){x.style.background='var(--cm-soft)';x.style.borderColor='var(--cm)';} else if(x===b) {x.style.background='var(--loss-soft)';}});
+        document.getElementById('pxFb').innerHTML = `<div class="px-fb ${ok?'ok':'no'}"><b>${ok?'✅ 答對了 +10':'❌ 答錯了'}</b><br>${why}</div>${next()}`; bindNext();
+      });
+    }
+  };
+  const end = () => {
+    const n = st.list.length, r = st.score/10;
+    const title = r/n>=0.9?'🏆 成本會計達人':r/n>=0.7?'👍 合格的老闆':r/n>=0.5?'📘 再練一下':'🌱 新手上路';
+    el.innerHTML = `<div style="max-width:760px;margin:0 auto"><div class="px-card" style="text-align:center"><div style="font-size:40px;font-weight:900">${st.score} 分</div><div style="font-size:20px;font-weight:700">${title}</div><p style="color:var(--muted)">答對 ${r} / ${n} 題</p><button class="px-btn pri" id="pxAg">再玩一次</button></div>
+      ${st.wrong.length?`<div class="px-card" style="margin-top:12px"><h3 style="margin-top:0">答錯的題目複習</h3>${st.wrong.map(w=>`<p style="font-size:14px;border-bottom:1px dashed var(--line);padding-bottom:8px">${w}</p>`).join('')}</div>`:''}</div>`;
+    document.getElementById('pxAg').onclick=start;
+  };
+  home();
+}
+
+acct(); guide(); calc(); quiz();
+})();
+
+/*PX-END*/</script>
 </body>
 </html>
