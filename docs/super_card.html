@@ -932,7 +932,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.32", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.33", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1053,7 +1053,7 @@ async function login(){
   try{
     var r=await post({action:"ping"});
     if(!r.ok) throw new Error(r.error);
-    ls("sc_code",code); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl); S.backVer=r.ver||"";
+    ls("sc_code",code); ls("sc_admin","1"); ls("sc_ai", r.ai?"1":"0"); if(r.sheetUrl) ls("sc_sheet",r.sheetUrl); S.backVer=r.ver||"";
     if(!books().length) initBooks(); updateCurBook({url:gasUrl(), code:code});
     enter();
   }catch(e){ $("loginMsg").textContent=e.message; S.code=""; }
@@ -4423,7 +4423,14 @@ checkJoinLink();
 checkCardLink();
 checkLoginLink();
 checkBuyBack();
-/* 管理員入口隱藏:登入頁連點 logo 7 下(3 秒內)才出現「自架資料庫 / 管理員登入」 */
+/* 管理員自己的裝置(用過存取碼、或名片簿裡有自架資料庫):登入頁直接顯示存取碼登入,不用再點 logo */
+function isAdminDevice(){ return ls("sc_admin")==="1" || books().some(function(b){ return !b.host && b.url && b.code; }); }   // 要存過存取碼才算(新裝置的空白預設名片簿不算)
+if(isAdminDevice()){   // 你自己的裝置:存取碼登入放在最上面,客戶用的帳號登入在下面
+  var adv=$("advLogin"); adv.classList.remove("hide"); adv.open=true; ls("sc_admin","1");
+  $("hAcc").parentNode.insertBefore(adv,$("hAcc")); adv.style.margin="0 0 14px";
+  adv.querySelector("summary").textContent="我的資料庫(存取碼登入)";
+}
+/* 其他裝置:管理員入口隱藏,登入頁連點 logo 7 下(3 秒內)才出現「自架資料庫 / 管理員登入」 */
 (function(){ var n=0, t=0;
   $("loginLogo").addEventListener("click",function(){
     var now=Date.now(); if(now-t>3000) n=0; t=now; n++;
