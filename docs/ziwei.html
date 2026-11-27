@@ -307,6 +307,9 @@ header .meta b{color:var(--gold);font-weight:500}
 .grid-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px 22px}
 .field{display:flex;flex-direction:column;gap:8px}
 .field label{font-size:.82rem;color:var(--gold);letter-spacing:2px;font-weight:600}
+/* v.27.9 出生地點／產業／職務同列：標題換行時下拉選單仍貼齊欄底對齊 */
+.field.fld-end>select{margin-top:auto}
+.field.full.fld-end{margin-bottom:0}
 .field input,.field select{
   background:var(--surface);border:1px solid var(--line);color:var(--ink);
   padding:13px 14px;border-radius:11px;font-family:inherit;font-size:1rem;letter-spacing:1px;
@@ -1352,13 +1355,13 @@ footer .disc .sub{display:block;margin-top:12px}
   /* iOS 230mm 版面較矮：題簽條縮短，避免印章貼到頁腳 */
   html.ios-dev #reportPrint .cv-slip{height:430px}
   html.ios-dev #reportPrint .cv-slip b{font-size:40px;letter-spacing:16px}
-  html.ios-dev:not(.mac-safari) #reportPrint .cv-bleed{height:auto;bottom:0}
+  html.ios-dev #reportPrint .cv-bleed{height:auto;bottom:0}   /* iOS 與 Mac Safari：底色只鋪滿封面框內，不溢到下一頁 */
   html.ios-dev:not(.mac-safari) #reportPrint .cv-slip{height:370px;padding-top:18px}
   html.ios-dev:not(.mac-safari) #reportPrint .cv-slip b{font-size:36px;letter-spacing:12px}
   /* v.25.17 Mac 桌機 Safari：實測它會套用 @page 上 11／下 13mm 邊界（內容區 273mm，不支援具名頁 0 邊界），
      封底是文件最後元素、230mm 以下不繪製 → 下方一大段白。Mac 版封面／封底改 270mm 撐滿內容區（留 3mm 餘裕），
      題簽條恢復桌機尺寸。iPhone／iPad（AirPrint 可印高約 235–240mm）維持 230mm，勿合併。 */
-  html.mac-safari #reportPrint .rp-cover,html.mac-safari #reportPrint .rp-back{height:270mm}
+  html.mac-safari #reportPrint .rp-cover,html.mac-safari #reportPrint .rp-back{height:255mm}   /* v.27.9 270→255：勾頁首頁尾時可印高變小，270 會溢頁 */
   html.mac-safari #reportPrint .cv-slip{height:470px}
   html.mac-safari #reportPrint .cv-slip b{font-size:42px;letter-spacing:20px}
   /* v.25.18 桌機 Chrome／Edge 封面封底滿版（站長：底下還有空白希望完全佈滿）：原 292mm 底部留 5mm 白條。
@@ -1366,8 +1369,11 @@ footer .disc .sub{display:block;margin-top:12px}
      封面若 297mm 有進位溢出成空白頁的風險 → 維持 292mm，改用絕對定位 .cv-bleed 297mm 鋪底（單體元素只裁切不換頁）。
      iPhone／iPad、Mac Safari 各有自己的高度規則，排除。 */
   html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-back{height:297mm}
+  /* v.27.9 自動偵測列印環境：Chrome／Edge／安卓（Blink）列印時 100vh＝「當頁實際可印高」（實測邊界 0／20mm、具名頁 cover 皆剛好一頁），
+     不論使用者勾頁首頁尾或改邊界，封面封底都剛好填滿不溢頁；Safari（WebKit 的 vh 是視窗高，不能用）走下方 mac-safari／ios-dev 安全高度。 */
+  html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-cover,html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-back{height:100vh;max-height:297mm}
   html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-cover{z-index:0}
-  html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-cover>.cv-bleed{position:absolute;left:0;top:0;right:0;height:297mm;z-index:-1;
+  html:not(.ios-dev):not(.mac-safari) #reportPrint .rp-cover>.cv-bleed{position:absolute;left:0;top:0;right:0;height:100%;z-index:-1;
     background:radial-gradient(ellipse 95% 65% at 50% 26%,#c26757 0%,#a94a3e 45%,#8a332b 75%,#7a2a24 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   /* v.25.8：深析長卡（健康／財運／感情／親子／人際等，每張半頁到一頁）原本整張不可跨頁，
      放不下就整張跳到下一頁、前頁下半部空白。改為卡片可跨頁、跨頁處兩段都補上框線與內距；
@@ -2634,8 +2640,8 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
           <button type="button" data-g="女">坤造 · 女</button>
         </div>
       </div>
-      <div class="field full">
-        <label>出生地點（真太陽時校正・選填）</label>
+      <div class="field full fld-end">
+        <label>出生地點（真太陽時・選填）</label>
         <select id="city">
           <option value="">不校正 · 直接用時鐘時間</option>
           <optgroup label="── 臺灣 ──">
@@ -2699,11 +2705,11 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
           </optgroup>
         </select>
       </div>
-      <div class="field">
+      <div class="field fld-end">
         <label>現有工作 · 產業領域（選填）</label>
         <select id="jobInd"><option value="">尚未選擇</option></select>
       </div>
-      <div class="field">
+      <div class="field fld-end">
         <label>現有工作 · 職務性質（選填）</label>
         <select id="jobRole"><option value="">尚未選擇</option></select>
       </div>
@@ -2850,7 +2856,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.8";
+const SITE_VERSION_DATE="2026.11.27.9";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1&&!/Android/.test(ua))||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
