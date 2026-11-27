@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>農業客戶互動式儀表板 + CRM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -166,7 +167,7 @@ td.crm{background:#fbfdfc}
   <span class="s" id="subttl"></span>
   <span class="upd" id="upd"></span>
   <button id="btnUpd" onclick="openUpd()" title="更新全站農業資料(在你的 Mac 上執行)" style="margin-left:auto;font-size:12.5px;cursor:pointer;color:#0a7d3e;background:#e7f6ec;border:1px solid #bfe6cd;border-radius:999px;padding:4px 12px;white-space:nowrap;font-weight:600">🔄 更新資料</button>
-  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.4 · 2026/11/27 14:35</span>
+  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.7 · 2026/11/27 19:47</span>
 </header>
 <div id="updMask" onclick="if(event.target===this)closeUpd()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:520px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:22px 22px 18px;font-size:14px;line-height:1.7">
@@ -183,11 +184,63 @@ td.crm{background:#fbfdfc}
 </div>
 <div id="saveMask" onclick="if(event.target===this)closeSaveChoice()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:440px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:22px;font-size:14px;line-height:1.6">
-    <div style="font-size:17px;font-weight:700;margin-bottom:6px">💾 存檔到哪裡?</div>
-    <p style="margin:0 0 15px;color:var(--mut,#5b6b78);font-size:13px">CRM 裡有客戶聯絡人、電話等個資。選一個存法:</p>
+    <div style="font-size:17px;font-weight:700;margin-bottom:6px">💾 存檔</div>
+    <p style="margin:0 0 9px;color:var(--mut,#5b6b78);font-size:13px">CRM 裡有客戶聯絡人、電話等個資。先選檔案格式,再選存去哪:</p>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:5px">檔案格式</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="fmt_csv" onclick="setFmt('csv')" style="flex:1;cursor:pointer;border:1px solid #0a7d3e;background:#0a7d3e;color:#fff;border-radius:8px;padding:9px 6px;font-size:13px;font-weight:600">CSV</button>
+      <button id="fmt_excel" onclick="setFmt('excel')" style="flex:1;cursor:pointer;border:1px solid #cdd6dd;background:#fff;color:#55636e;border-radius:8px;padding:9px 6px;font-size:13px;font-weight:600">Excel</button>
+      <button id="fmt_json" onclick="setFmt('json')" style="flex:1;cursor:pointer;border:1px solid #cdd6dd;background:#fff;color:#55636e;border-radius:8px;padding:9px 6px;font-size:13px;font-weight:600">JSON(完整備份)</button>
+    </div>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:5px">存去哪</div>
     <button onclick="pickSave(false)" style="display:block;width:100%;text-align:left;cursor:pointer;background:#e7f6ec;color:#0a7d3e;border:1px solid #bfe6cd;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:600;margin-bottom:9px">💾 只存本機(下載到電腦)<br><span style="font-weight:400;font-size:12px;color:#4b8a63">客戶個資不上雲,最安全 ★推薦</span></button>
     <button id="saveCloudBtn" onclick="pickSave(true)" style="display:block;width:100%;text-align:left;cursor:pointer;background:#eef3f8;color:#2c5d86;border:1px solid #cdddea;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:600;margin-bottom:9px">☁️ 本機 + 雲端硬碟<br><span style="font-weight:400;font-size:12px;color:#5b7f9f">電腦存一份,另外也上傳你的 Google 雲端硬碟</span></button>
     <div style="text-align:right;margin-top:4px"><button onclick="closeSaveChoice()" style="cursor:pointer;background:none;border:0;color:var(--mut,#8795a1);font-size:13px;padding:6px 4px">取消</button></div>
+  </div>
+</div>
+<datalist id="dl_crop"><option>水稻</option><option>文旦</option><option>茶</option><option>芒果</option><option>鳳梨</option><option>蔬菜</option><option>葡萄</option><option>番石榴</option><option>香蕉</option><option>柑橘</option><option>木瓜</option><option>番茄</option></datalist>
+<datalist id="dl_brand"><option>台肥</option><option>碩成</option><option>福壽</option><option>興農</option><option>東洋</option><option>農友</option><option>其他</option></datalist>
+<datalist id="dl_form"><option>粒狀</option><option>粉狀</option><option>液態</option><option>有機質</option><option>有機質複合</option><option>其他</option></datalist>
+<datalist id="dl_spec"><option>20kg</option><option>25kg</option><option>40kg</option><option>1噸太空包</option><option>其他</option></datalist>
+<datalist id="dl_item"><option>有機質肥料</option><option>化學肥料</option><option>有機複合肥</option><option>台肥各號</option><option>雞糞肥</option><option>其他</option></datalist>
+<datalist id="dl_pay"><option>現金</option><option>月結30天</option><option>月結60天</option><option>月結90天</option><option>票30天</option><option>票60天</option><option>其他</option></datalist>
+<datalist id="dl_delivery"><option>自取</option><option>3.5噸車</option><option>5噸車</option><option>8噸車</option><option>11噸車</option><option>聯結車</option><option>其他</option></datalist>
+<datalist id="dl_warehouse"><option>有</option><option>無</option><option>不確定</option></datalist>
+<div id="custMask" onclick="if(event.target===this)closeAddCust()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto">
+  <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:540px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:20px 20px 16px;font-size:14px">
+    <div style="font-size:17px;font-weight:700;margin-bottom:2px">➕ 新增客戶 <span id="custCat" style="font-weight:400;font-size:13px;color:var(--mut,#5b6b78)"></span></div>
+    <p style="margin:2px 0 14px;color:var(--mut,#5b6b78);font-size:12.5px">自行陌生開發的客戶。存你本機、不上雲;會列在清單最上面標「自建」,可做完整 CRM、匯出同一份 CSV,一鍵更新重抓政府資料不會蓋掉。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <div style="grid-column:1/3"><label style="font-size:12px;color:var(--mut)">客戶/對象名稱 <span style="color:#d23">*必填</span></label><input id="nc_name" placeholder="例:王大明 / 後壁蔬菜產銷班" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">縣市</label><input id="nc_county" list="nc_counties" placeholder="例:臺南市" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">鄉鎮/區</label><input id="nc_town" placeholder="例:後壁區" style="width:100%"></div>
+      <div style="grid-column:1/3"><label style="font-size:12px;color:var(--mut)">地址</label><input id="nc_addr" placeholder="田區或聯絡地址" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">電話</label><input id="nc_phone" placeholder="0912-345-678" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">面積(公頃)</label><input id="nc_area" type="number" step="0.01" placeholder="例:3.5" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">主要作物</label><input id="nc_crop" list="dl_crop" placeholder="水稻 / 文旦 / 茶…" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">種植規模</label><input id="nc_scale" placeholder="例 8甲 / 3公頃" style="width:100%"></div>
+      <div style="grid-column:1/3;font-size:11.5px;color:var(--mut);margin-top:2px">目前使用肥料(下拉可自填)</div>
+      <div><label style="font-size:12px;color:var(--mut)">品牌</label><input id="nc_brand" list="dl_brand" placeholder="台肥 / 碩成…" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">性狀</label><input id="nc_form" list="dl_form" placeholder="粒狀 / 粉狀…" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">重量/規格</label><input id="nc_spec" list="dl_spec" placeholder="20kg / 40kg…" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">肥料品目</label><input id="nc_item" list="dl_item" placeholder="有機質肥料…" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">單價(元/包)</label><input id="nc_price" placeholder="例 650" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">肥料金額(年約)</label><input id="nc_fee" placeholder="例 一年約30萬" style="width:100%"></div>
+      <div style="grid-column:1/3;font-size:11.5px;color:var(--mut);margin-top:2px">交易條件</div>
+      <div><label style="font-size:12px;color:var(--mut)">票期/付款</label><input id="nc_pay" list="dl_pay" placeholder="月結60天 / 現金" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">運送方式(車噸數)</label><input id="nc_delivery" list="dl_delivery" placeholder="5噸車 / 自取" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">有無倉庫</label><input id="nc_warehouse" list="dl_warehouse" placeholder="有 / 無" style="width:100%"></div>
+      <div><label style="font-size:12px;color:var(--mut)">可屯空間(包數)</label><input id="nc_store" placeholder="例 300" style="width:100%"></div>
+      <div style="grid-column:1/3"><label style="font-size:12px;color:var(--mut)">其他優惠條件</label><input id="nc_offer" placeholder="滿10噸免運 / 贈試用包 / 旺季折扣" style="width:100%"></div>
+      <div style="grid-column:1/3"><label style="font-size:12px;color:var(--mut)">使用肥料月份(點選,可多選)</label><div id="nc_months_wrap"></div></div>
+      <div style="grid-column:1/3"><label style="font-size:12px;color:var(--mut)">備註</label><textarea id="nc_note" placeholder="需求、決策者、進貨時間…" style="width:100%;min-height:52px"></textarea></div>
+    </div>
+    <datalist id="nc_counties"></datalist>
+    <div style="display:flex;gap:9px;align-items:center;margin-top:14px">
+      <button onclick="saveAddCust()" style="cursor:pointer;background:#0a7d3e;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600">✓ 新增並建檔</button>
+      <button onclick="closeAddCust()" style="cursor:pointer;background:#eef2f4;color:#333;border:1px solid var(--bd,#d7dde2);border-radius:8px;padding:10px 16px;font-size:14px">取消</button>
+      <span id="nc_msg" style="color:#d23;font-size:12.5px"></span>
+    </div>
   </div>
 </div>
 <div class="wrap">
@@ -222,10 +275,11 @@ td.crm{background:#fbfdfc}
   <div class="tbar">
     <input id="q" type="search" placeholder="🔍 搜尋…">
     <button class="btn" id="addUnionBtn" onclick="newUnion()" style="display:none">＋ 新增聯誼會</button>
+    <button class="btn" id="addCustBtn" onclick="openAddCust()" style="background:#0a7d3e;color:#fff;border-color:#0a7d3e">➕ 新增客戶</button>
     <button class="btn" onclick="openSaveChoice()">💾 存檔</button>
-    <button class="btn sec" onclick="document.getElementById('imp').click()">📂 讀回存檔</button>
+    <button class="btn sec" onclick="document.getElementById('imp').click()" title="可讀回 CSV / Excel / JSON">📂 讀回存檔</button>
     <button class="btn sec" onclick="openCfg()" id="cfgbtn">⚙️ 雲端設定</button>
-    <input type="file" id="imp" accept=".csv" style="display:none" onchange="loadCSV(this)">
+    <input type="file" id="imp" accept=".csv,.xlsx,.xls,.json" style="display:none" onchange="loadFile(this)">
     <span class="cnt" id="tcnt"></span>
   </div>
   <div class="tw"><table class="main"><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div>
@@ -277,8 +331,18 @@ const TEA=(PAY.tea||[]).map(r=>({ds:"tea",id:String(r[5]),name:r[2],county:r[0],
 const TRACE=(PAY.trace||[]).map(r=>({ds:"trace",id:String(r[5]),name:r[2],county:r[0],town:r[1],
   addr:"",phone:"",inds:r[3],area:0,unit:"",ex:{prod:r[4]}}));
 const ALL={agr:AGR,organic:ORG,tap:TAP,youth:YOUTH,fa:FA,mat:MAT,farm:FARM,coop:COOP,friendly:FR,tea:TEA,trace:TRACE};
+// ── 自建客戶(自行陌生開發,各類別皆可新增;存本機,個資不上雲)──
+const CUKEY="agr_custom_v1";
+let CUSTOM={}; try{CUSTOM=JSON.parse(localStorage.getItem(CUKEY))||{}}catch(e){CUSTOM={}}
+function saveCustom(){try{localStorage.setItem(CUKEY,JSON.stringify(CUSTOM));}catch(e){}}
+function custRow(ds,o){return {ds,id:o.id,name:o.name||"(未命名)",county:o.county||"",town:o.town||"",
+  addr:o.addr||"",phone:o.phone||"",inds:(o.inds&&o.inds.length)?o.inds:(o.crop?[o.crop]:["自建客戶"]),
+  area:+o.area||0,unit:(+o.area>0)?"公頃":"",ex:{},_cust:true};}
+// 載入時把每個類別的自建客戶併到最前面(爬來的政府資料更新不會動到這些)
+Object.keys(CUSTOM).forEach(ds=>{if(ALL[ds]&&Array.isArray(CUSTOM[ds])&&CUSTOM[ds].length){
+  ALL[ds]=CUSTOM[ds].map(o=>custRow(ds,o)).concat(ALL[ds]);}});
 
-const sum=(l,f)=>l.reduce((s,r)=>s+f(r),0);
+const sum=(l,f)=>l.reduce((s,r)=>{const v=+f(r);return s+(isNaN(v)?0:v)},0);
 const yearOf=r=>{const m=/^(\d+)年|民國(\d+)/.exec(r.ex.date||"");const y=m?+(m[1]||m[2]):0;
   return y?(Math.floor(y/10)*10)+"年代":"(未填)"};
 
@@ -473,9 +537,9 @@ let CRM={}; try{CRM=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){CRM={}}
 const ck=r=>r.ds+"_"+r.id;
 const cget=r=>r.ds==="union"?(r.ex||{}):(CRM[ck(r)]||{});
 function cset(r,v){const k=ck(r);
-  const empty=!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡")&&!(v.tags&&v.tags.length)&&!(v.acts&&v.acts.length)&&!(v.comps&&v.comps.length)&&!v.crop&&!v.scale&&!v.usage&&!v.decider;
+  const empty=!v.leader&&!v.phone&&!v.note&&!v.next&&(!v.status||v.status==="未聯絡")&&!(v.tags&&v.tags.length)&&!(v.acts&&v.acts.length)&&!(v.comps&&v.comps.length)&&!v.crop&&!v.scale&&!v.brand&&!v.form&&!v.spec&&!v.item&&!v.price&&!v.usage&&!v.fee&&!v.pay&&!v.delivery&&!v.warehouse&&!v.store&&!v.offer&&!(v.months&&v.months.length)&&!v.decider;
   if(empty)delete CRM[k]; else CRM[k]=v; localStorage.setItem(KEY,JSON.stringify(CRM));}
-const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length)||(c.comps&&c.comps.length)||c.crop||c.scale||c.usage||c.decider)};
+const hasCRM=r=>{const c=cget(r);return !!(c.leader||c.phone||c.note||(c.status&&c.status!=="未聯絡")||(c.tags&&c.tags.length)||(c.acts&&c.acts.length)||(c.comps&&c.comps.length)||c.crop||c.scale||c.brand||c.form||c.spec||c.item||c.price||c.usage||c.fee||c.pay||c.delivery||c.warehouse||c.store||c.offer||(c.months&&c.months.length)||c.decider)};
 const todayStr=()=>new Date().toISOString().slice(0,10);
 // 🔄 更新資料彈窗(資料更新在本機 Mac 跑,網頁只提供可複製的指令)
 const UPD_CMD='open "/Users/yuanchuang/Desktop/claude code/農業資料爬蟲/產銷班更新腳本/全系統一鍵更新.command"';
@@ -484,7 +548,7 @@ function closeUpd(){document.getElementById('updMask').style.display='none';}
 function copyUpd(){const done=()=>{const m=document.getElementById('updCopyMsg');if(m){m.textContent='已複製 ✓ 貼到終端機按 Enter';setTimeout(()=>{if(m)m.textContent='';},4000);}};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(UPD_CMD).then(done).catch(()=>fallbackCopy(UPD_CMD,done));}else{fallbackCopy(UPD_CMD,done);}}
 function fallbackCopy(t,cb){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);cb&&cb();}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeUpd();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeUpd();try{closeSaveChoice();}catch(_){}try{closeAddCust();}catch(_){}}});
 const parseTags=str=>(str||"").split(/[、,，]/).map(x=>x.trim()).filter(Boolean);
 function recPatch(r,obj){
   if(r.ds==="union"){const u=UNIONS.find(x=>x.id===r.id);if(u){Object.assign(u,obj);saveU();ALL.union=unionRows();r.ex=u;}}
@@ -494,11 +558,34 @@ function crmExtraHTML(r){const c=cget(r);const tags=c.tags||[];const acts=c.acts
   const FORMS=["粒狀","粉狀","液態","有機質","其他"];
   return `<label>標籤(逗號分隔)</label>
     <input id="e_tags" value="${esc(tags.join("、"))}" placeholder="潛力客戶、大戶、已用本廠肥、競品客戶、種水稻">
-    <label style="margin-top:12px">客戶輪廓</label>
-    <input id="e_crop" value="${esc(c.crop||'')}" placeholder="主要作物:水稻、文旦、茶、蔬菜…">
+    <label style="margin-top:12px">客戶用肥輪廓</label>
+    <input id="e_crop" value="${esc(c.crop||'')}" list="dl_crop" placeholder="主要作物:水稻、文旦、茶、蔬菜…">
     <input id="e_scale" value="${esc(c.scale||'')}" placeholder="種植面積/規模:例 8 甲、3 公頃" style="margin-top:6px">
-    <input id="e_usage" value="${esc(c.usage||'')}" placeholder="目前用肥量:例 每季40包 / 年約20噸" style="margin-top:6px">
-    <textarea id="e_decider" placeholder="決策者與習慣:誰決定採購、何時進貨、付款習慣…" style="margin-top:6px">${esc(c.decider||'')}</textarea>
+    <div style="font-size:11.5px;color:var(--mut);margin-top:9px">目前使用肥料(下拉可自填)</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+      <input id="e_brand" value="${esc(c.brand||'')}" list="dl_brand" placeholder="品牌" style="flex:1;min-width:110px">
+      <input id="e_form" value="${esc(c.form||'')}" list="dl_form" placeholder="性狀" style="width:88px;flex:none">
+      <input id="e_spec" value="${esc(c.spec||'')}" list="dl_spec" placeholder="重量/規格" style="width:108px;flex:none">
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+      <input id="e_item" value="${esc(c.item||'')}" list="dl_item" placeholder="肥料品目" style="flex:1;min-width:110px">
+      <input id="e_price" value="${esc(c.price||'')}" placeholder="單價(元/包)" style="width:108px;flex:none">
+      <input id="e_fee" value="${esc(c.fee||'')}" placeholder="肥料金額(年約)" style="width:128px;flex:none">
+    </div>
+    <input id="e_usage" value="${esc(c.usage||'')}" placeholder="用量/其他現況:例 每季40包 / 年約20噸" style="margin-top:5px">
+    <div style="font-size:11.5px;color:var(--mut);margin-top:10px">使用肥料月份/時機(點選,可多選)</div>
+    ${monthsHTML(c.months,'e_months')}
+    <div style="font-size:11.5px;color:var(--mut);margin-top:10px">交易條件</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+      <input id="e_pay" value="${esc(c.pay||'')}" list="dl_pay" placeholder="票期/付款" style="flex:1;min-width:115px">
+      <input id="e_delivery" value="${esc(c.delivery||'')}" list="dl_delivery" placeholder="運送方式(車噸數)" style="flex:1;min-width:130px">
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+      <input id="e_warehouse" value="${esc(c.warehouse||'')}" list="dl_warehouse" placeholder="有無倉庫" style="width:110px;flex:none">
+      <input id="e_store" value="${esc(c.store||'')}" placeholder="可屯空間(包數)" style="flex:1;min-width:120px">
+    </div>
+    <input id="e_offer" value="${esc(c.offer||'')}" placeholder="其他優惠條件:例 滿10噸免運 / 贈試用包 / 旺季折扣" style="margin-top:5px">
+    <textarea id="e_decider" placeholder="決策者與習慣:誰決定採購、何時進貨、付款習慣…" style="margin-top:8px">${esc(c.decider||'')}</textarea>
     <label style="margin-top:12px">競品情報(現在用哪家,可記多筆)</label>
     <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
       <input id="cp_brand" placeholder="廠牌/品名" style="flex:1;min-width:100px">
@@ -534,7 +621,15 @@ function delAct(i){if(!cr)return;const acts=(cget(cr).acts||[]).slice();acts.spl
   document.getElementById('actList').innerHTML=actListHTML(cget(cr).acts||[]);renderTable();}
 /* ── 客戶輪廓 + 競品情報 ── */
 const gv=id=>{const e=document.getElementById(id);return e?String(e.value).trim():"";};
-function profilePatch(){return {crop:gv('e_crop'),scale:gv('e_scale'),usage:gv('e_usage'),decider:gv('e_decider'),tags:parseTags(gv('e_tags'))};}
+// 用肥月份 1-12 可點選(多選)
+function monthsHTML(sel,idp){sel=(sel||[]).map(Number);
+  return `<div id="${idp}" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">`+
+   Array.from({length:12},(_,i)=>i+1).map(m=>{const on=sel.includes(m);
+     return `<button type="button" data-m="${m}" data-on="${on?1:0}" onclick="tglMonth(this)" class="mchip" style="cursor:pointer;border:1px solid ${on?'#0a7d3e':'#cdd6dd'};background:${on?'#0a7d3e':'#fff'};color:${on?'#fff':'#55636e'};border-radius:7px;padding:4px 9px;font-size:12.5px;font-weight:600">${m}月</button>`;}).join("")+`</div>`;}
+function tglMonth(b){const on=b.getAttribute('data-on')==='1';b.setAttribute('data-on',on?'0':'1');
+  b.style.background=on?'#fff':'#0a7d3e';b.style.color=on?'#55636e':'#fff';b.style.borderColor=on?'#cdd6dd':'#0a7d3e';}
+function readMonths(idp){return [...document.querySelectorAll('#'+idp+' .mchip')].filter(b=>b.getAttribute('data-on')==='1').map(b=>+b.getAttribute('data-m'));}
+function profilePatch(){return {crop:gv('e_crop'),scale:gv('e_scale'),brand:gv('e_brand'),form:gv('e_form'),spec:gv('e_spec'),item:gv('e_item'),price:gv('e_price'),usage:gv('e_usage'),fee:gv('e_fee'),pay:gv('e_pay'),delivery:gv('e_delivery'),warehouse:gv('e_warehouse'),store:gv('e_store'),offer:gv('e_offer'),months:readMonths('e_months'),decider:gv('e_decider'),tags:parseTags(gv('e_tags'))};}
 function compListHTML(comps){if(!comps||!comps.length)return `<div style="color:var(--mut);font-size:11.5px;padding:5px 0">尚無競品紀錄,加一筆掌握對手產品/價格/條件</div>`;
   return comps.map((a,i)=>({a,i})).reverse().map(({a,i})=>`<div class="act" style="align-items:flex-start"><span class="ax" style="flex:1"><b>${esc(a.brand||"(未填品名)")}</b>${a.form?` <span class="tagchip">${esc(a.form)}</span>`:""}${a.spec?` · ${esc(a.spec)}`:""}${a.price?` · 單價 ${esc(a.price)}`:""}${a.ship?` · 運送:${esc(a.ship)}`:""}${a.terms?` · ${esc(a.terms)}`:""}${a.promo?` · 優惠:${esc(a.promo)}`:""}</span><span class="adel" onclick="delComp(${i})">✕</span></div>`).join("");
 }
@@ -788,7 +883,7 @@ function renderTable(){
       else if(typ==="num"){td.className="num";td.textContent=fmt(v)}
       else if(typ==="scale"){td.className="num";td.textContent=fmt(v,2);
         if(r.ex.fix){const s=document.createElement('span');s.className="fix";s.textContent=" ✎";s.title="官方原始資料登打錯誤,已人工校正";td.appendChild(s)}}
-      else if(typ==="name"){td.innerHTML=`<a class="lnk" href="${cfg.link(r)}" target="_blank" onclick="event.stopPropagation()">${esc(v)}</a>`}
+      else if(typ==="name"){td.innerHTML = r._cust ? `${esc(v)} <span class="tagchip" style="background:#e7f6ec;color:#0a7d3e">自建</span>` : `<a class="lnk" href="${cfg.link(r)}" target="_blank" onclick="event.stopPropagation()">${esc(v)}</a>`;}
       else td.textContent=v;
       td.title=String(v);tr.appendChild(td);});
     tr.onclick=()=>openDw(r);tb.appendChild(tr);});
@@ -801,12 +896,14 @@ let cr=null;
 function openDw(r){if(r.ds==="union"){openUnion(r);return;}cr=r;const cfg=DS[cur],c=cget(r);
   let h=`<button class="cls" onclick="closeDw()">✕</button><h2>${esc(r.name)}</h2>
    <div style="color:var(--mut);font-size:12px">${esc(cfg.short)} · ${esc(r.county)}${esc(r.town)}${r.inds.length?" · "+esc(r.inds.join("、")):""}</div>`;
-  cfg.detail(r).forEach(([k,v])=>{if(v)h+=`<div class="fx"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`});
+  if(r._cust)h+=`<div style="margin:6px 0 2px"><span class="tagchip" style="background:#e7f6ec;color:#0a7d3e;border:1px solid #bfe6cd">➕ 自行新增客戶</span></div>`;
+  if(!r._cust)cfg.detail(r).forEach(([k,v])=>{if(v)h+=`<div class="fx"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`});
   if(r.phone)h+=`<div class="fx"><div class="k">官方登錄電話</div><div class="v">${esc(r.phone)}</div></div>`;
   if(r.ex.fix)h+=`<div class="fx"><div class="k">⚠ 資料校正</div><div class="v" style="color:var(--c)">官方原始值有登打錯誤,已人工校正</div></div>`;
   h+=`<div class="fx" style="display:flex;gap:6px;flex-wrap:wrap">`;
   if(r.addr)h+=`<a class="btn sec" target="_blank" href="https://www.google.com/maps/search/${encodeURIComponent(r.addr)}">📍 地圖</a>`;
-  h+=`<a class="btn sec" target="_blank" href="${cfg.link(r)}">🔗 官網原始頁</a>`;
+  if(!r._cust)h+=`<a class="btn sec" target="_blank" href="${cfg.link(r)}">🔗 官網原始頁</a>`;
+  if(r._cust)h+=`<button class="btn sec" onclick="delCust(cr)" style="color:#c0392b;border-color:#e3b4ad">🗑 刪除這筆自建</button>`;
   if((cget(r).phone||r.phone))h+=`<a class="btn sec" href="tel:${esc((cget(r).phone||r.phone).split(/[、,\/]/)[0])}">📞 撥打</a>`;
   h+=`</div>`;
   h+=`<div class="box"><h3>📇 CRM 追蹤 <span class="ok" id="ok">已儲存 ✓</span></h3>
@@ -821,7 +918,7 @@ function openDw(r){if(r.ds==="union"){openUnion(r);return;}cr=r;const cfg=DS[cur
 }
 function closeDw(){document.getElementById('dw').classList.remove('on');document.getElementById('ov').classList.remove('on')}
 function saveCRM(){const g=id=>document.getElementById(id).value.trim();const c0=cget(cr);
-  cset(cr,{...c0,leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),tags:parseTags(g('e_tags')),crop:gv('e_crop'),scale:gv('e_scale'),usage:gv('e_usage'),decider:gv('e_decider'),ts:todayStr()});
+  cset(cr,{...c0,leader:g('e_leader'),phone:g('e_phone'),status:g('e_status'),next:g('e_next'),note:g('e_note'),tags:parseTags(g('e_tags')),crop:gv('e_crop'),scale:gv('e_scale'),brand:gv('e_brand'),form:gv('e_form'),spec:gv('e_spec'),item:gv('e_item'),price:gv('e_price'),usage:gv('e_usage'),fee:gv('e_fee'),pay:gv('e_pay'),delivery:gv('e_delivery'),warehouse:gv('e_warehouse'),store:gv('e_store'),offer:gv('e_offer'),months:readMonths('e_months'),decider:gv('e_decider'),ts:todayStr()});
   const o=document.getElementById('ok');o.classList.add('on');setTimeout(()=>o.classList.remove('on'),1400);renderKPI();renderTable();}
 
 /* ── 雲端設定 ── */
@@ -867,12 +964,20 @@ async function gasPost(url,token,filename,content){try{const res=await fetch(url
 
 /* ── 存檔 / 讀回 ── */
 const csvCell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-function crmCSV(){const cfg=DS[cur];
-  const head=["ds","id",cfg.nameLab,"縣市","區域",cfg.indLab,cfg.crmName,"電話","CRM狀態","下次跟進","備註","主要作物","種植規模","目前用肥量","決策者習慣","標籤","競品明細","更新日"];
-  const out=[head.join(",")];
-  ALL[cur].forEach(r=>{const c=cget(r);if(!hasCRM(r)&&!c.next)return;
-    out.push([r.ds,r.id,r.name,r.county,r.town,r.inds.join("、"),c.leader||"",c.phone||r.phone||"",c.status||"",c.next||"",c.note||"",c.crop||"",c.scale||"",c.usage||"",c.decider||"",(c.tags||[]).join("、"),compsEnc(c.comps),c.ts||""].map(csvCell).join(","))});
-  return out;}
+// 匯出欄位規格(CSV/Excel/JSON 共用一份);[標題, 取值(r,crm)]
+function crmCols(){const cfg=DS[cur];return [
+  ["ds",r=>r.ds],["id",r=>r.id],[cfg.nameLab,r=>r.name],["縣市",r=>r.county],["區域",r=>r.town],[cfg.indLab,r=>r.inds.join("、")],
+  [cfg.crmName,(r,c)=>c.leader||""],["電話",(r,c)=>c.phone||r.phone||""],["CRM狀態",(r,c)=>c.status||""],["下次跟進",(r,c)=>c.next||""],["備註",(r,c)=>c.note||""],
+  ["地址",r=>r.addr||""],["面積",r=>r.area||""],["主要作物",(r,c)=>c.crop||""],["種植規模",(r,c)=>c.scale||""],
+  ["品牌",(r,c)=>c.brand||""],["性狀",(r,c)=>c.form||""],["重量規格",(r,c)=>c.spec||""],["肥料品目",(r,c)=>c.item||""],["單價",(r,c)=>c.price||""],["目前用肥量",(r,c)=>c.usage||""],["肥料金額",(r,c)=>c.fee||""],
+  ["用肥月份",(r,c)=>(c.months||[]).map(m=>m+"月").join("、")],
+  ["票期",(r,c)=>c.pay||""],["運送方式",(r,c)=>c.delivery||""],["有無倉庫",(r,c)=>c.warehouse||""],["可屯包數",(r,c)=>c.store||""],["其他優惠",(r,c)=>c.offer||""],
+  ["決策者習慣",(r,c)=>c.decider||""],["標籤",(r,c)=>(c.tags||[]).join("、")],["競品明細",(r,c)=>compsEnc(c.comps)],["更新日",(r,c)=>c.ts||""],["自建",r=>r._cust?"自建":""]];}
+// 回傳 [表頭, ...資料列] 的二維陣列(Array of Arrays)
+function crmAOA(){const cols=crmCols();const aoa=[cols.map(x=>x[0])];
+  ALL[cur].forEach(r=>{const c=cget(r);if(!hasCRM(r)&&!c.next)return;aoa.push(cols.map(x=>x[1](r,c)));});
+  return aoa;}
+function crmCSV(){return crmAOA().map(row=>row.map(csvCell).join(","));}
 const compsEnc=cs=>!cs||!cs.length?"":cs.map(c=>[c.brand,c.form,c.spec,c.price,c.ship,c.terms,c.promo].map(x=>String(x||"").replace(/[~║]/g,"-")).join("~")).join(" ║ ");
 const compsDec=s=>!s?[]:s.split(" ║ ").map(x=>{const p=x.split("~");return {brand:p[0]||"",form:p[1]||"",spec:p[2]||"",price:p[3]||"",ship:p[4]||"",terms:p[5]||"",promo:p[6]||""}});
 // 下載到本機(電腦)
@@ -880,45 +985,101 @@ function dlLocal(name,body){const b=new Blob(["﻿"+body],{type:"text/csv;charse
 // 存檔選單:一顆「存檔」點了跳這個,選只存本機 / 本機+雲端
 function openSaveChoice(){const on=!!gasCfg().url;const cb=document.getElementById('saveCloudBtn');
   if(cb){cb.textContent=on?"☁️ 本機 + 雲端硬碟":"☁️ 本機 + 雲端(需先設定)";cb.style.opacity=on?"1":".6";}
+  setFmt(saveFmt);
   const m=document.getElementById('saveMask');if(m)m.style.display='flex';}
 function closeSaveChoice(){const m=document.getElementById('saveMask');if(m)m.style.display='none';}
-function pickSave(toCloud){closeSaveChoice();doSave(toCloud);}
+let saveFmt='csv';
+function setFmt(f){saveFmt=f;['csv','excel','json'].forEach(k=>{const b=document.getElementById('fmt_'+k);if(b){const on=k===f;b.style.background=on?'#0a7d3e':'#fff';b.style.color=on?'#fff':'#55636e';b.style.borderColor=on?'#0a7d3e':'#cdd6dd';}});}
+function pickSave(toCloud){closeSaveChoice();doSave(toCloud,saveFmt);}
 // toCloud=false 只下載到電腦(客戶個資建議用這個);true 才另外上雲
-async function doSave(toCloud){const cfg=DS[cur];
+function dlText(name,body,mime){const b=new Blob([body],{type:(mime||"text/plain")+";charset=utf-8"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
+// 目前類別的二維資料 + 檔名基底 + 筆數(union 跟一般通用)
+function saveAOA(){
   if(cur==="union"){
     const head=["id","縣市","區域","聯誼會名稱","職稱","會長姓名","電話","住址","所屬農會","聯絡狀況","備註"];
-    const out=[head.join(",")].concat(UNIONS.map(u=>[u.id,u.county,u.town,u.name,u.title,u.leader,u.phone,u.addr,u.assoc,u.status,u.note].map(csvCell).join(",")));
-    const d=new Date(),p=n=>String(n).padStart(2,'0');const name=`青農聯誼會_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.csv`,body=out.join("\r\n");
-    dlLocal(name,body);
-    if(toCloud){const cc=gasCfg();if(cc.url){const rr=await gasPost(cc.url,cc.token,name,body);alert(rr.ok?`已存到本機 + 雲端:${name}\n☁️ ${rr.msg}`:`已存到本機:${name}\n⚠️ 雲端失敗:${rr.msg}`);}
-      else alert(`已存到本機:${name}(${UNIONS.length}筆)\n⚠️ 還沒接雲端,請先按「⚙️ 雲端設定」。`);}
-    else alert(`已存到本機:${name}(${UNIONS.length}筆)\n📍 只存在你電腦,未上雲。`);
-    return;}
-  const out=crmCSV();
-  if(out.length<2){alert("目前這個類別還沒有任何 CRM 紀錄。\n點開任一筆、填資料後儲存,就會出現在存檔裡。");return}
-  const d=new Date(),p=n=>String(n).padStart(2,'0');
-  const name=`${cfg.short}CRM_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.csv`,body=out.join("\r\n");
-  dlLocal(name,body);
+    const aoa=[head].concat(UNIONS.map(u=>[u.id,u.county,u.town,u.name,u.title,u.leader,u.phone,u.addr,u.assoc,u.status,u.note]));
+    return {aoa,base:"青農聯誼會",count:UNIONS.length};}
+  const aoa=crmAOA();
+  return {aoa,base:DS[cur].short+"CRM",count:aoa.length-1};}
+// JSON 完整備份(連互動紀錄/競品/月份都保留,最適合當備份)
+function jsonExport(){
+  if(cur==="union")return {type:"agr-dashboard",fmt:"union",ds:"union",exportedAt:new Date().toISOString(),unions:UNIONS};
+  const recs=[];
+  ALL[cur].forEach(r=>{const c=cget(r);if(!hasCRM(r)&&!c.next)return;
+    recs.push({ds:r.ds,id:r.id,name:r.name,county:r.county,town:r.town,inds:r.inds,addr:r.addr||"",area:r.area||0,phone:r.phone||"",_cust:!!r._cust,crm:c});});
+  return {type:"agr-dashboard",fmt:"crm",ds:cur,exportedAt:new Date().toISOString(),records:recs};}
+// toCloud=false 只下載到電腦;fmt=csv|excel|json
+async function doSave(toCloud,fmt){fmt=fmt||'csv';
+  const {aoa,base,count}=saveAOA();
+  if(count<1){alert("目前這個類別還沒有任何可存的紀錄。\n點開任一筆填資料、或先「➕ 新增客戶」。");return;}
+  const d=new Date(),p=n=>String(n).padStart(2,'0');const nm=`${base}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+  const csvBody=aoa.map(row=>row.map(csvCell).join(",")).join("\r\n");
+  let name, cloudName, cloudBody;
+  if(fmt==='excel'){
+    if(!window.XLSX){alert("Excel 元件尚未載入(可能離線或 CDN 被擋)。請連上網重整再試,或改存 CSV / JSON。");return;}
+    const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"CRM");
+    XLSX.writeFile(wb,nm+".xlsx"); name=nm+".xlsx"; cloudName=nm+".csv"; cloudBody=csvBody; // 雲端存 CSV 版(Excel 二進位不適合文字上傳)
+  }else if(fmt==='json'){
+    const body=JSON.stringify(jsonExport(),null,2); dlText(nm+".json",body,"application/json");
+    name=nm+".json"; cloudName=name; cloudBody=body;
+  }else{
+    dlLocal(nm+".csv",csvBody); name=nm+".csv"; cloudName=name; cloudBody=csvBody;
+  }
   if(toCloud){const c=gasCfg();
-    if(c.url){const r=await gasPost(c.url,c.token,name,body);
-      alert(r.ok?`已存到本機 + 雲端:${name}(${out.length-1}筆)\n✓ 已下載到電腦\n☁️ ${r.msg}`:`已存到本機:${name}\n⚠️ 雲端上傳失敗:${r.msg}`);}
-    else alert(`已存到本機:${name}(${out.length-1}筆)\n⚠️ 還沒接雲端,請先按「⚙️ 雲端設定」接上 GAS。`);}
-  else alert(`已存到本機:${name}\n共 ${out.length-1} 筆。\n📍 只存在你電腦,客戶個資未上雲。`);}
-function loadCSV(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();
-  rd.onload=()=>{try{const lines=rd.result.replace(/^﻿/,'').split(/\r?\n/).filter(Boolean);
-    const parse=l=>{const o=[];let c="",qq=false;for(let i=0;i<l.length;i++){const ch=l[i];
-      if(qq){if(ch==='"'){if(l[i+1]==='"'){c+='"';i++}else qq=false}else c+=ch}else{if(ch==='"')qq=true;else if(ch===','){o.push(c);c=""}else c+=ch}}o.push(c);return o};
-    const H=parse(lines[0]),ix=n=>H.indexOf(n);let n=0;
-    if(ix("聯誼會名稱")>=0){ // 青農聯誼會存檔
-      const arr=lines.slice(1).map(parse).filter(c=>c[ix("id")]).map(c=>({id:c[ix("id")],county:c[ix("縣市")]||"",town:c[ix("區域")]||"",name:c[ix("聯誼會名稱")]||"",title:c[ix("職稱")]||"",leader:c[ix("會長姓名")]||"",phone:c[ix("電話")]||"",addr:c[ix("住址")]||"",assoc:c[ix("所屬農會")]||"",status:c[ix("聯絡狀況")]||"未聯絡",note:c[ix("備註")]||""}));
-      if(arr.length){UNIONS=arr;saveU();ALL.union=unionRows();alert(`已讀回 ${arr.length} 個聯誼會。`);render();inp.value="";return;}
+    if(c.url){const r=await gasPost(c.url,c.token,cloudName,cloudBody);
+      alert(r.ok?`已存到本機(${name})+ 雲端(${cloudName})\n☁️ ${r.msg}`:`已存到本機:${name}\n⚠️ 雲端上傳失敗:${r.msg}`);}
+    else alert(`已存到本機:${name}(${count}筆)\n⚠️ 還沒接雲端,請先按「⚙️ 雲端設定」接上 GAS。`);}
+  else alert(`已存到本機:${name}\n共 ${count} 筆。\n📍 只存在你電腦,客戶個資未上雲。`);}
+// 匯入:支援 CSV / Excel(xlsx) / JSON,依副檔名自動判斷
+function loadFile(inp){const f=inp.files[0];if(!f)return;const ext=(f.name.split('.').pop()||'').toLowerCase();const rd=new FileReader();
+  rd.onload=()=>{try{
+    if(ext==='json'){importJSON(JSON.parse(rd.result));}
+    else if(ext==='xlsx'||ext==='xls'){
+      if(!window.XLSX){alert("Excel 元件尚未載入,請連網重整後再匯入 Excel,或改用 CSV / JSON。");inp.value="";return;}
+      const wb=XLSX.read(new Uint8Array(rd.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:""}).filter(r=>r.length&&r.some(x=>x!==""));
+      importAOA(aoa.map(r=>r.map(x=>x==null?"":String(x))));
+    }else{
+      const lines=rd.result.replace(/^﻿/,'').split(/\r?\n/).filter(Boolean);
+      const parse=l=>{const o=[];let c="",qq=false;for(let i=0;i<l.length;i++){const ch=l[i];
+        if(qq){if(ch==='"'){if(l[i+1]==='"'){c+='"';i++}else qq=false}else c+=ch}else{if(ch==='"')qq=true;else if(ch===','){o.push(c);c=""}else c+=ch}}o.push(c);return o};
+      importAOA(lines.map(parse));
     }
-    lines.slice(1).forEach(l=>{const c=parse(l),ds=c[ix("ds")],id=c[ix("id")];if(!id)return;
-      const old=CRM[ds+"_"+id]||{};
-      CRM[ds+"_"+id]={...old,leader:c[ix(H[6])]||"",phone:c[ix("電話")]||"",status:c[ix("CRM狀態")]||"未聯絡",next:c[ix("下次跟進")]||"",note:c[ix("備註")]||"",crop:c[ix("主要作物")]||"",scale:c[ix("種植規模")]||"",usage:c[ix("目前用肥量")]||"",decider:c[ix("決策者習慣")]||"",tags:parseTags(c[ix("標籤")]||"")||old.tags,comps:compsDec(c[ix("競品明細")]||""),ts:c[ix("更新日")]||""};n++});
-    localStorage.setItem(KEY,JSON.stringify(CRM));alert(`已讀回 ${n} 筆 CRM 紀錄。`);render();
-  }catch(e){alert("讀取失敗:請用本系統「存檔」產生的 CSV。")}inp.value="";};
-  rd.readAsText(f);}
+  }catch(e){alert("讀取失敗:請用本系統「存檔」產生的 CSV / Excel / JSON 檔。");}inp.value="";};
+  if(ext==='xlsx'||ext==='xls')rd.readAsArrayBuffer(f);else rd.readAsText(f);}
+// 從二維陣列(表頭+資料)還原 CRM(CSV / Excel 共用)
+function importAOA(aoa){if(!aoa||aoa.length<2){alert("檔案沒有資料列。");return;}
+  const H=aoa[0],ix=n=>H.indexOf(n),has=n=>ix(n)>=0;let n=0,nc=0;
+  if(has("聯誼會名稱")){
+    const arr=aoa.slice(1).filter(c=>c[ix("id")]).map(c=>({id:c[ix("id")],county:c[ix("縣市")]||"",town:c[ix("區域")]||"",name:c[ix("聯誼會名稱")]||"",title:c[ix("職稱")]||"",leader:c[ix("會長姓名")]||"",phone:c[ix("電話")]||"",addr:c[ix("住址")]||"",assoc:c[ix("所屬農會")]||"",status:c[ix("聯絡狀況")]||"未聯絡",note:c[ix("備註")]||""}));
+    if(arr.length){UNIONS=arr;saveU();ALL.union=unionRows();alert(`已讀回 ${arr.length} 個聯誼會。`);render();return;}
+  }
+  const g=(c,k)=>has(k)?(c[ix(k)]||""):"";
+  aoa.slice(1).forEach(c=>{const ds=c[ix("ds")],id=c[ix("id")];if(!id)return;const old=CRM[ds+"_"+id]||{};
+    CRM[ds+"_"+id]={...old,
+      leader:c[ix(H[6])]||"",phone:g(c,"電話"),status:g(c,"CRM狀態")||"未聯絡",next:g(c,"下次跟進"),note:g(c,"備註"),
+      crop:g(c,"主要作物"),scale:g(c,"種植規模"),brand:g(c,"品牌"),form:g(c,"性狀"),spec:g(c,"重量規格"),item:g(c,"肥料品目"),price:g(c,"單價"),
+      usage:g(c,"目前用肥量"),fee:g(c,"肥料金額"),pay:g(c,"票期"),delivery:g(c,"運送方式"),warehouse:g(c,"有無倉庫"),store:g(c,"可屯包數"),offer:g(c,"其他優惠"),
+      months:has("用肥月份")?((c[ix("用肥月份")]||"").split(/[、,，]/).map(s=>parseInt(s,10)).filter(x=>x>=1&&x<=12)):(old.months||[]),
+      decider:g(c,"決策者習慣"),tags:parseTags(g(c,"標籤"))||old.tags,comps:compsDec(g(c,"競品明細")),ts:g(c,"更新日")};n++;
+    if(has("自建")&&c[ix("自建")]==="自建"&&ALL[ds]){const exists=(CUSTOM[ds]||[]).some(o=>o.id===id);
+      if(!exists){const o={id,name:c[ix(H[2])]||"(未命名)",county:g(c,"縣市"),town:g(c,"區域"),addr:g(c,"地址"),phone:g(c,"電話"),area:(+g(c,"面積")||0),inds:parseTags(c[ix(H[5])]||"")};
+        (CUSTOM[ds]=CUSTOM[ds]||[]).push(o);ALL[ds]=[custRow(ds,o)].concat(ALL[ds]);nc++;}}
+  });
+  localStorage.setItem(KEY,JSON.stringify(CRM));if(nc)saveCustom();
+  alert(`已讀回 ${n} 筆 CRM 紀錄${nc?`,其中 ${nc} 筆自建客戶已還原`:""}。`);render();}
+// JSON 完整還原(含互動紀錄/競品/月份)
+function importJSON(obj){
+  if(!obj||obj.type!=="agr-dashboard"){alert("這個 JSON 不是本系統匯出的備份檔。");return;}
+  if(obj.fmt==="union"&&Array.isArray(obj.unions)){UNIONS=obj.unions;saveU();ALL.union=unionRows();alert(`已讀回 ${obj.unions.length} 個聯誼會。`);render();return;}
+  const recs=obj.records||[];let n=0,nc=0;
+  recs.forEach(rec=>{if(!rec.id||!rec.ds)return;CRM[rec.ds+"_"+rec.id]=rec.crm||{};n++;
+    if(rec._cust&&ALL[rec.ds]){const exists=(CUSTOM[rec.ds]||[]).some(o=>o.id===rec.id);
+      if(!exists){const o={id:rec.id,name:rec.name,county:rec.county,town:rec.town,addr:rec.addr||"",phone:rec.phone||"",area:rec.area||0,inds:rec.inds||[]};
+        (CUSTOM[rec.ds]=CUSTOM[rec.ds]||[]).push(o);ALL[rec.ds]=[custRow(rec.ds,o)].concat(ALL[rec.ds]);nc++;}}
+  });
+  localStorage.setItem(KEY,JSON.stringify(CRM));if(nc)saveCustom();
+  alert(`已讀回 ${n} 筆(JSON 完整備份)${nc?`,其中 ${nc} 筆自建客戶已還原`:""}。`);render();}
 
 /* ── 青農聯誼會:新增/編輯/刪除 ── */
 function newUnion(){
@@ -962,10 +1123,44 @@ function saveUnion(id){const g=x=>document.getElementById(x).value.trim();
 function delUnion(id){if(!confirm("確定刪除這個聯誼會?"))return;
   UNIONS=UNIONS.filter(x=>x.id!==id);saveU();ALL.union=unionRows();closeDw();render();
 }
+/* ── 新增客戶(自行陌生開發,各類別)── */
+function openAddCust(){const cfg=DS[cur];
+  document.getElementById('custCat').textContent="· "+(cfg?cfg.name:"");
+  ["name","county","town","addr","phone","area","crop","scale","brand","form","spec","item","price","fee","pay","delivery","warehouse","store","offer","note"].forEach(k=>{const e=document.getElementById('nc_'+k);if(e)e.value="";});
+  document.getElementById('nc_msg').textContent="";
+  document.getElementById('nc_months_wrap').innerHTML=monthsHTML([],'nc_months');
+  // 縣市建議清單(用目前資料裡出現過的縣市)
+  const seen=[...new Set((ALL[cur]||[]).map(r=>r.county).filter(Boolean))].sort();
+  document.getElementById('nc_counties').innerHTML=seen.map(c=>`<option value="${esc(c)}">`).join("");
+  document.getElementById('custMask').style.display='flex';
+  setTimeout(()=>{const n=document.getElementById('nc_name');if(n)n.focus();},50);}
+function closeAddCust(){document.getElementById('custMask').style.display='none';}
+function saveAddCust(){const gv2=id=>{const e=document.getElementById('nc_'+id);return e?e.value.trim():"";};
+  const name=gv2('name');
+  if(!name){document.getElementById('nc_msg').textContent="請至少填客戶名稱";document.getElementById('nc_name').focus();return;}
+  const ds=cur, id="NEW"+Date.now();
+  const crop=gv2('crop');
+  const o={id,name,county:gv2('county'),town:gv2('town'),addr:gv2('addr'),phone:gv2('phone'),
+    area:+gv2('area')||0,inds:crop?parseTags(crop):[]};
+  (CUSTOM[ds]=CUSTOM[ds]||[]).push(o); saveCustom();
+  const row=custRow(ds,o); ALL[ds]=[row].concat(ALL[ds]);
+  // 寫入 CRM(讓它馬上算已建檔,輪廓也帶進去)
+  cset(row,{status:"未聯絡",phone:gv2('phone'),crop:crop,scale:gv2('scale'),brand:gv2('brand'),form:gv2('form'),spec:gv2('spec'),item:gv2('item'),price:gv2('price'),fee:gv2('fee'),
+    pay:gv2('pay'),delivery:gv2('delivery'),warehouse:gv2('warehouse'),store:gv2('store'),offer:gv2('offer'),months:readMonths('nc_months'),note:gv2('note'),ts:todayStr()});
+  closeAddCust();
+  // 清篩選確保看得到新客戶,並打開明細續填
+  F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";const qel=document.getElementById('q');if(qel)qel.value="";page=0;sortI=-1;
+  render(); openDw(row);}
+function delCust(r){if(!confirm("確定刪除這筆自建客戶「"+(r.name||"")+"」?(含它的 CRM 紀錄,無法復原)"))return;
+  const ds=r.ds; CUSTOM[ds]=(CUSTOM[ds]||[]).filter(o=>o.id!==r.id); saveCustom();
+  ALL[ds]=(ALL[ds]||[]).filter(x=>!(x._cust&&x.id===r.id));
+  try{delete CRM[ck(r)];localStorage.setItem(KEY,JSON.stringify(CRM));}catch(e){}
+  closeDw();render();}
 function clearAll(){F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;render()}
 function render(){if(DS.union)ALL.union=unionRows();
   document.getElementById('q').placeholder="🔍 搜尋"+DS[cur].nameLab+" / "+DS[cur].crmName+"…";
   document.getElementById('addUnionBtn').style.display=cur==="union"?"":"none";
+  document.getElementById('addCustBtn').style.display=cur==="union"?"none":"";
   renderTop();renderReminder();renderTagSlicer();renderKPI();renderCharts();renderTable();markCfg();}
 document.getElementById('q').oninput=e=>{q=e.target.value;page=0;renderKPI();renderCharts();renderTable()};
 function copyGAS(){var t=(document.getElementById('gascode').textContent||'').trim();var ok=function(){var m=document.getElementById('gasmsg');if(m)m.textContent='✓ 已複製,到 Apps Script 貼上';};
