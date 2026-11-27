@@ -1392,6 +1392,8 @@ footer .disc .sub{display:block;margin-top:12px}
   #reportPrint .rp-lifesum p{orphans:1;widows:1}
   /* v.25.14：結尾「敬祝」區塊置底——下載時由 zwFitClosing() 量出最後一頁剩餘高度，寫進 --zw-bless-push */
   #reportPrint .rp-bless{margin-top:calc(16px + var(--zw-bless-push,0px))}
+  #reportPrint.rp-tight .rp-bless{margin-top:calc(6px + var(--zw-bless-push,0px));margin-bottom:4px;padding:9px 14px}
+  #reportPrint.rp-tight .rp-foot{margin-top:6px;padding-top:4px;line-height:1.35}
 }
 /* ===== 一鍵 PDF 擷取用版面（rp-cap）：在螢幕上以「等同專業列印」的樣式渲染 #reportPrint，
    供 html2canvas 逐頁擷取；擷取時以 inline style 移到畫面外（left:-99999px），使用者看不到。
@@ -2840,7 +2842,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.5";
+const SITE_VERSION_DATE="2026.11.27.6";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
@@ -7637,15 +7639,20 @@ function zwFitClosing(){
   box.style.cssText='position:absolute;left:0;top:0;width:210mm;height:273mm;column-width:210mm;column-gap:0;column-fill:auto;overflow:visible;visibility:hidden';
   const parent=rp.parentNode,next=rp.nextSibling;
   let push=0;
+  rp.classList.remove('rp-tight');
   try{
     document.head.appendChild(st);document.body.appendChild(box);box.appendChild(rp);
-    const H=box.getBoundingClientRect().height, top=box.getBoundingClientRect().top;
-    const endEl=last.lastElementChild;
-    const er=[...endEl.getClientRects()].pop(), br=bless.getClientRects()[0];
-    if(er&&br&&Math.abs(er.left-br.left)<5){   // 敬祝與結尾同一頁（同一欄）才推
-      const remain=H-(er.bottom-top);
-      if(remain>8)push=Math.floor(remain-8);
-    }
+    const measure=function(){
+      const H=box.getBoundingClientRect().height, top=box.getBoundingClientRect().top;
+      const endEl=last.lastElementChild;
+      const er=[...endEl.getClientRects()].pop(), br=bless.getClientRects()[0];
+      return {same:!!(er&&br&&Math.abs(er.left-br.left)<5),remain:er?H-(er.bottom-top):0};
+    };
+    let m=measure();
+    // v.27.6：結尾太緊（剩不到約 13mm）或敬祝與頁尾已被擠到下一頁 → 收緊敬祝框與頁尾間距（rp-tight，約省 9mm），
+    // 避免實際列印時頁尾最後幾行溢出成一張幾乎空白的末頁（外語字多，模擬與實印常差 1–2 行）
+    if(!m.same||m.remain<50){rp.classList.add('rp-tight');m=measure();}
+    if(m.same&&m.remain>8)push=Math.floor(m.remain-8);   // 敬祝與結尾同一頁（同一欄）才推
   }catch(e){push=0;}
   finally{parent.insertBefore(rp,next);box.remove();st.remove();}
   rp.style.setProperty('--zw-bless-push',push+'px');
