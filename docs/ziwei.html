@@ -1902,6 +1902,8 @@ html[lang="en"] #reportPrint .rp-cjgrid,html[lang="ja"] #reportPrint .rp-cjgrid,
   background:rgba(20,12,30,.55);backdrop-filter:blur(4px);padding:18px}
 .zwmodal.on{display:flex;animation:zwfade .25s ease}
 @keyframes zwfade{from{opacity:0}to{opacity:1}}
+.pdfth-tip{margin:0 0 12px;padding:11px 14px;border:1.5px solid #d9b25f;border-left-width:5px;border-radius:10px;background:rgba(255,246,222,.9);color:#5a4210;font-size:.86rem;line-height:1.75}
+.pdfth-tip b{color:#9a3a1a}
 .pdfth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-top:6px}
 .pdfth{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px 12px;border:1.5px solid rgba(200,168,75,.45);border-radius:14px;background:rgba(255,255,255,.55);cursor:pointer;font:inherit;color:inherit;transition:transform .15s,border-color .15s}
 .pdfth:hover,.pdfth:focus-visible{transform:translateY(-2px);border-color:#c8a84b}
@@ -2856,7 +2858,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.9";
+const SITE_VERSION_DATE="2026.11.27.10";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1&&!/Android/.test(ua))||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
@@ -7691,7 +7693,13 @@ function zwPdfPick(fromFab){
   const inApp=(typeof isInAppBrowser==='function')?isInAppBrowser():false;
   if((z&&z.classList.contains('locked'))||!rp||!rp.innerHTML.trim()||!document.body.classList.contains('rp-on')||inApp||typeof window.print!=='function'){runPdfExport(fromFab);return;}
   let last='zhuhong';try{last=localStorage.getItem('zw_pdf_theme')||'zhuhong';}catch(e){}
-  let h='<div class="pdfth-grid">';
+  // v.27.10 依列印環境提示（Safari／iOS 量不到可印高度，封面封底採安全高度會留白邊）
+  const _de=document.documentElement;let tip='';
+  if(_de.classList.contains('mac-safari'))tip='<b>您正在使用 Safari 列印</b>：Safari 不支援滿版列印，封面與封底四周會保留約 1–2 公分白邊。'
+    +'想要滿版精裝效果，建議改用 <b>Chrome</b> 開啟本頁再下載；若繼續用 Safari，列印視窗請<b>取消勾選「列印頁首與頁尾」</b>，版面最完整。';
+  else if(_de.classList.contains('ios-dev'))tip='<b>您正在使用 iPhone／iPad 列印</b>：系統會自動加印網址與日期，封面與封底四周會留白，屬正常現象，內容完整不受影響。'
+    +'想要滿版精裝效果，建議用<b>電腦的 Chrome</b> 開啟本頁再下載。';
+  let h=(tip?'<div class="pdfth-tip">'+tip+'</div>':'')+'<div class="pdfth-grid">';
   ZW_PDF_THEMES.forEach(function(t){
     const c=t[3];
     h+='<button type="button" class="pdfth'+(t[0]===last?' last':'')+'" onclick="zwPdfGo(\''+t[0]+'\','+(fromFab?'true':'false')+')">'
