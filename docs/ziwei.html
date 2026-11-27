@@ -1418,6 +1418,12 @@ footer .disc .sub{display:block;margin-top:12px}
 #reportPrint .cv-en{font-size:8px;letter-spacing:4.5px;text-indent:4.5px;color:#c9a561;margin-top:7px;margin-bottom:30px}
 #reportPrint .cv-slip{width:116px;height:470px;margin:0 auto;background:linear-gradient(#fffdf4,#f7efd6);border:2.5px solid #b8933a;display:flex;align-items:flex-start;justify-content:center;padding-top:22px;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 #reportPrint .cv-slip b{writing-mode:vertical-rl;font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:42px;letter-spacing:20px;font-weight:700;color:#4a2c0c;line-height:1}
+/* v.27.5 英文／韓文封面題簽改橫書（直書會讓拉丁字母、韓文橫躺）：加寬題簽、逐詞換行置中；日文維持直書 */
+html[lang="en"] #reportPrint .cv-slip,html[lang="ko"] #reportPrint .cv-slip{width:200px;align-items:center;padding:24px 14px}
+html[lang="en"] #reportPrint .cv-slip b,html[lang="ko"] #reportPrint .cv-slip b{writing-mode:horizontal-tb;font-size:34px;letter-spacing:3px;line-height:1.5;text-align:center;word-break:keep-all;overflow-wrap:normal}
+html[lang="en"] #reportPrint .cv-slip b{font-family:"Noto Serif TC",Georgia,serif;text-transform:uppercase;font-size:30px;letter-spacing:5px}
+/* 外語字數較多：產業／職務契合度排行表允許跨頁（中文版維持整塊不拆），避免整張被推到下一頁留下大片空白 */
+html[lang="en"] #reportPrint .rp-cjgrid,html[lang="ja"] #reportPrint .rp-cjgrid,html[lang="ko"] #reportPrint .rp-cjgrid{break-inside:auto;page-break-inside:auto}
 #reportPrint .cv-sub{font-family:"LXGW WenKai TC","Noto Serif TC",serif;font-size:18px;letter-spacing:8px;text-indent:8px;color:#ecd9a8;margin-top:24px}
 #reportPrint .cv-tag{font-size:10.5px;letter-spacing:3px;color:#d4b476;margin-top:12px}
 #reportPrint .cv-meta{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#d9c190;margin-top:14px}
@@ -2081,9 +2087,14 @@ footer .ftlegal .ftsep{opacity:.5;margin:0 8px}
 footer .ftcopy{margin-top:10px;font-size:.78rem;color:var(--ink-faint,#9a93ad);letter-spacing:.6px}
 footer .ftver{margin-top:6px;font-size:.72rem;color:var(--ink-faint,#9a93ad);opacity:.8;letter-spacing:.8px}
 header .hdver{margin-top:10px;font-size:.7rem;letter-spacing:1.5px;color:var(--ink-faint,#9a93ad);opacity:.85}
-header .hdlang{margin-top:8px;display:flex;gap:8px;justify-content:center;align-items:center;font-size:.72rem;letter-spacing:1px;color:var(--ink-faint,#9a93ad)}
-header .hdlang select{font:inherit;font-size:.78rem;letter-spacing:.5px;color:var(--ink,#e9e4f5);background:rgba(255,255,255,.06);border:1px solid rgba(217,178,95,.45);border-radius:999px;padding:3px 10px;cursor:pointer}
-header .hdlang select option{color:#2a2318;background:#fff}
+/* v.27.5 語言選單加強辨識：金框膠囊＋地球圖示＋加大字級 */
+header .hdlang{margin:14px auto 0;display:inline-flex;gap:10px;justify-content:center;align-items:center;padding:6px 8px 6px 16px;border-radius:999px;background:linear-gradient(180deg,rgba(255,248,228,.96),rgba(248,232,190,.92));border:1.5px solid #c9a24a;box-shadow:0 4px 14px rgba(150,110,30,.22),inset 0 1px 0 rgba(255,255,255,.7)}
+header .hdlang label{display:inline-flex;align-items:center;gap:7px;font-size:.92rem;font-weight:700;letter-spacing:1.5px;color:#7a5410;cursor:pointer;white-space:nowrap}
+header .hdlang label svg{width:20px;height:20px;flex:none}
+header .hdlang select{font:inherit;font-size:1.02rem;font-weight:700;letter-spacing:.5px;color:#fff;background:linear-gradient(180deg,#c0392b,#962d22);border:none;border-radius:999px;padding:8px 34px 8px 18px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:0 2px 6px rgba(120,30,20,.3);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E"),linear-gradient(180deg,#c0392b,#962d22);background-repeat:no-repeat,no-repeat;background-position:right 13px center,0 0;background-size:12px 8px,100% 100%}
+header .hdlang select:focus-visible{outline:2px solid #e0b64f;outline-offset:2px}
+header .hdlang select option{color:#2a2318;background:#fff;font-weight:500}
+@media(max-width:420px){header .hdlang{padding:5px 6px 5px 12px;gap:8px}header .hdlang label{font-size:.84rem;letter-spacing:1px}header .hdlang select{font-size:.96rem;padding:7px 30px 7px 14px}}
 header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
 /* 路線B：個人收款 + 手動發碼 的付款說明區 */
 .paywall .pwpay{margin:14px auto 4px;max-width:460px;text-align:left;
@@ -2829,7 +2840,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.4";
+const SITE_VERSION_DATE="2026.11.27.5";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
@@ -2840,7 +2851,7 @@ try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS
    卦名「乾」不轉（乾為天、乾造）；轉換結果已驗證重複轉換不變（idempotent）。
    日本語／English／한국어：選單先列出、標示準備中，待逐模組預譯完成後開放。 */
 const ZW_LANGS=[['zh-Hant','繁體中文'],['zh-Hans','简体中文'],['ja','日本語'],['en','English'],['ko','한국어']];
-const ZW_LANG_READY={'zh-Hant':1,'zh-Hans':1};
+const ZW_LANG_READY={'zh-Hant':1,'zh-Hans':1,en:1,ja:1,ko:1};   // v.27.5 英日韓正式開放
 const ZW_LANG_FOREIGN={en:1,ja:1,ko:1};   // 外語：字典檔 /i18n/<lang>.json，預覽可用 ?lang=en；正式開放時加進 ZW_LANG_READY
 const ZW_LANG_SOON={ja:'準備中',en:'coming soon',ko:'준비 중'};
 const ZW_LANG=(function(){
@@ -2892,7 +2903,65 @@ function __xBuild(obj){
     if(k.length>1&&k[0]==='='){ex.set(k.slice(1),v);continue;}   // =X：只在整個文字節點恰好是 X 時才翻（易誤傷的單字）
     m.set(k,v);const c=k[0];let a=idx.get(c);if(!a){a=new Set();idx.set(c,a);}a.add(k.length);}
   const idx2=new Map();idx.forEach(function(set,c){idx2.set(c,Array.from(set).sort(function(a,b){return b-a;}));});
-  __xDict={m:m,idx:idx2,ex:ex};__xCache.clear();
+  // 句型 __pat：[[中文句型, 譯文], …]，以最長固定字串當錨點建索引
+  const pats=[],aMap=new Map(),aIdx=new Map();
+  (obj.__pat||[]).forEach(function(pr){
+    try{
+      const src=pr[0],tr=pr[1];if(!src||!tr)return;
+      // 分組：連續佔位（中間無任何字）合併成一段；只有空白隔開的佔位，空白視為必要分隔
+      const parts=src.split(/(\{\d+\})/).filter(function(x){return x!=='';});
+      const groups=[];
+      parts.forEach(function(p){const mm=/^\{(\d+)\}$/.exec(p);const last=groups[groups.length-1];
+        if(mm){if(last&&last.ph)last.ph.push(+mm[1]);else groups.push({ph:[+mm[1]]});}
+        else groups.push({lit:p});});
+      let tr2=tr,ok=true;
+      groups.forEach(function(g){if(!ok||!g.ph||g.ph.length<2)return;
+        const r2=new RegExp(g.ph.map(function(k){return '\\{'+k+'\\}';}).join('\\s*'));
+        if(!r2.test(tr2)){ok=false;return;}tr2=tr2.replace(r2,'{'+g.ph[0]+'}');});
+      if(!ok)return;
+      // 原文兩組佔位之間只有空白 → 譯文若把它們黏在一起，補回空白（避免 2026Bing Wu）
+      groups.forEach(function(g,gi){if(g.ph||g.lit.trim()||gi===0||gi===groups.length-1)return;
+        const a=groups[gi-1],b=groups[gi+1];if(!a.ph||!b.ph)return;
+        tr2=tr2.replace('{'+a.ph[0]+'}{'+b.ph[0]+'}','{'+a.ph[0]+'} {'+b.ph[0]+'}');});
+      const order=[];
+      const re=new RegExp('^\\s*'+groups.map(function(g,gi){
+        if(g.ph){order.push(g.ph[0]);return '([\\s\\S]+?)';}
+        const esc=g.lit.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const between=gi>0&&gi<groups.length-1&&groups[gi-1].ph&&groups[gi+1].ph&&!g.lit.trim();
+        return between?'\\s+':esc.replace(/ /g,'\\s*');
+      }).join('')+'\\s*$');
+      const chunks=src.split(/\{\d+\}/).map(function(c){return c.trim();}).filter(function(c){return c.length>=2;});
+      if(!chunks.length)return;
+      const anc=chunks.reduce(function(a,b){return b.length>a.length?b:a;});
+      const litCJK=(src.replace(/\{\d+\}/g,'').match(/[\u3400-\u9fff]/g)||[]).length;
+      if(litCJK<3)return;   // 太短的通用句型（如「{0}星座」）會誤搶固定文字，不收
+      const P={re:re,order:order,tr:tr2,lc:litCJK};pats.push(P);
+      let a=aMap.get(anc);if(!a){a=[];aMap.set(anc,a);}a.push(P);
+      let z=aIdx.get(anc[0]);if(!z){z=new Set();aIdx.set(anc[0],z);}z.add(anc.length);
+    }catch(e){}
+  });
+  const aIdx2=new Map();aIdx.forEach(function(set,c){aIdx2.set(c,Array.from(set).sort(function(a,b){return b-a;}));});
+  __xDict={m:m,idx:idx2,ex:ex,pat:{map:aMap,idx:aIdx2,n:pats.length}};__xCache.clear();
+}
+/* 句型比對：整個文字節點符合句型 → 回傳譯文（動態值遞迴翻譯），否則 null */
+function __xPattern(t){
+  const P=__xDict&&__xDict.pat;if(!P||!P.n||t.length>1500)return null;
+  const tried=new Set();const nCJK=(t.match(/[\u3400-\u9fff]/g)||[]).length||1;
+  for(let i=0;i<t.length;i++){
+    const lens=P.idx.get(t[i]);if(!lens)continue;
+    for(let q=0;q<lens.length;q++){
+      const l=lens[q];if(l>t.length-i)continue;const anc=t.substr(i,l);
+      if(tried.has(anc))continue;const cands=P.map.get(anc);if(!cands)continue;tried.add(anc);
+      for(let c=0;c<cands.length;c++){
+        if(cands[c].lc/nCJK<0.3)continue;   // 固定文字佔比太低＝多半是誤配
+        const mm=cands[c].re.exec(t);if(!mm)continue;
+        const vals=[];cands[c].order.forEach(function(k,idx){vals[k]=mm[idx+1];});
+        let out=cands[c].tr.replace(/\{(\d+)\}/g,function(_,k){const v=vals[+k];return v==null?'':zwTr(v.trim());});
+        return (/^\s/.test(t)?' ':'')+__xPunct(out).trim()+(/\s$/.test(t)?' ':'');
+      }
+    }
+  }
+  return null;
 }
 function __xPunct(o){
   if(ZW_LANG==='ja'){return o.replace(/，/g,'、').replace(/；/g,'；');}
@@ -2922,6 +2991,8 @@ function zwTr(t){
   if(ZW_LANG==='ja'&&/[ぁ-ゖァ-ヺ]/.test(t))return t;   // 含平假名／片假名＝已是日文（不含中點・與長音ー）
   const short=t.length<=200;if(short&&__xCache.has(t))return __xCache.get(t);
   {const tt=t.trim();if(__xDict.ex.has(tt))return t.replace(tt,__xDict.ex.get(tt));}
+  {const tt=t.trim();const v0=__xDict.m.get(tt);if(v0!==undefined){const r0=(/^\s/.test(t)?' ':'')+__xPunct(v0).trim()+(/\s$/.test(t)?' ':'');if(short)__xCache.set(t,r0);return r0;}}   // 整段就是字典句 → 直接用
+  {const pr=__xPattern(t);if(pr!==null){if(short){__xCache.set(t,pr);}return pr;}}
   const m=__xDict.m,idx=__xDict.idx,n=t.length,en=(ZW_LANG!=='ja');
   const names=__xNameList();
   let o='',i=0;
@@ -2931,6 +3002,7 @@ function zwTr(t){
     if(hit===null&&lens){for(let q=0;q<lens.length;q++){const l=lens[q];if(l>n-i)continue;const v=m.get(t.substr(i,l));if(v!==undefined){hit=v;L=l;break;}}}
     if(hit!==null){
       if(en&&o&&/[A-Za-z0-9À-ɏ가-힯)\]”]$/.test(o)&&/^[A-Za-z0-9À-ɏ가-힯(“]/.test(hit))o+=' ';
+      else if(en&&o&&/[.,;:!?]$/.test(o)&&/^[A-Za-z\u00c0-\u024f\uac00-\ud7af(\u201c"]/.test(hit))o+=' ';   // 句點後緊接字母 → 補空格
       o+=hit;i+=L;
     }else{
       const c=t[i];
@@ -3020,7 +3092,7 @@ function zwLangMount(){
   try{
     const hd=document.querySelector('header');if(!hd||document.getElementById('zwLangSel'))return;
     const box=document.createElement('div');box.className='hdlang';box.setAttribute('data-noconv','1');
-    let h='<label for="zwLangSel">語言 / Language</label><select id="zwLangSel" aria-label="Language">';
+    let h='<label for="zwLangSel"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#9a6a12" stroke-width="1.8"><circle cx="12" cy="12" r="9.2"/><ellipse cx="12" cy="12" rx="4.2" ry="9.2"/><path d="M3 12h18M4.6 7.2h14.8M4.6 16.8h14.8"/></svg>語言 / Language</label><select id="zwLangSel" aria-label="Language">';
     ZW_LANGS.forEach(function(x){const ok=!!ZW_LANG_READY[x[0]];
       h+='<option value="'+x[0]+'"'+(x[0]===ZW_LANG?' selected':'')+(ok?'':' disabled')+'>'+x[1]+(ok?'':'（'+ZW_LANG_SOON[x[0]]+'）')+'</option>';});
     box.innerHTML=h+'</select>';
@@ -7977,9 +8049,7 @@ function todayFortuneHTML(ctx,opt){
       +'</div>'
       +'<div class="zdf-bh">白話：今天是'+(ZW_JC_BAIHUA[I.jc.n]||"")+(I.hdx.ji?'且值黃道，行事較順。':'但值黑道，宜低調、避免硬碰。')+'</div>'
       +'<div class="zdf-week">'+week+'</div>'
-      +'<div class="zdf-act"><button type="button" class="zdf-btn" onclick="zwLineBind(this)">綁定 LINE・每天問運勢</button>'
-      +'<span class="zdf-note">'+(home?'依您上次解鎖的命盤每日更新；要看完整命書，請於下方輸入生辰重新排盤。':'每天回來這裡都會更新；綁定 LINE 後，在 LINE 輸入「今日運勢」即可隨時查看。')+'</span></div>'
-      +'<div class="zdf-bind"></div>'
+      +'<div class="zdf-act"><span class="zdf-note">'+(home?'依您上次解鎖的命盤每日更新；要看完整命書，請於下方輸入生辰重新排盤。':'每天回來這裡都會更新。')+'</span></div>'
       +'</div>';
   }catch(e){return "";}
 }
@@ -8002,39 +8072,8 @@ function zwHomeDaily(){
     box.innerHTML=todayFortuneHTML({xi:p.xi||[],ji:p.ji||[],meZhi:p.mz,name:p.n},{home:true});
   }catch(e){}
 }
-/* LINE 每日運勢單日文字（綁定時預先算好一整年交給後端查表，後端不需曆法引擎、結果與網站完全一致） */
-function zwLineDayText(I){
-  return I.m+"/"+I.d+"（"+ZW_WEEK[I.wd]+"）"+I.dg+I.dz+"日｜"+I.level+"・"+I.score+"分\n"
-    +"宜："+String(I.jc.yi).split("、").slice(0,3).join("・")+"\n"
-    +"忌："+String(I.jc.ji).split("、").slice(0,3).join("・")+"\n"
-    +"沖"+I.chongSx+"・煞"+I.sha+"方｜財神"+I.cs+"・喜神"+I.xs+"\n"
-    +"貴人方位："+I.gdir+"\n"
-    +(I.isXi?"今日屬"+I.dwx+"，是您的喜用神，適合主動出擊、辦要事。":I.isJi?"今日屬"+I.dwx+"，是您的忌神，宜守不宜攻、早點休息。":"今日屬"+I.dwx+"，與您命局平和，平常心行事即可。")
-    +(I.hitMe?"\n今天正沖您的生肖，重大決定與簽約建議改天。":"");
-}
-async function zwLineBind(btn){
-  const card=btn&&btn.closest?btn.closest('.zdf-card'):null;
-  const box=card?card.querySelector('.zdf-bind'):null;
-  const ctx=window.__zwDailyCtx;
-  if(!box||!ctx)return;
-  box.className='zdf-bind show';box.textContent='正在準備您的一年份運勢資料…';
-  try{
-    const t0=new Date(),days=[];
-    for(let i=0;i<370;i++){const I=zwDayInfo(new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i),ctx);days.push(I?zwLineDayText(I):"");}
-    const start=t0.getFullYear()+"-"+String(t0.getMonth()+1).padStart(2,"0")+"-"+String(t0.getDate()).padStart(2,"0");
-    const r=await fetch(LC_API.replace(/\/+$/,"")+"/line/bindcode",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({n:ctx.name||"",start:start,days:days})});
-    const j=await r.json();
-    if(!j||!j.ok||!j.code)throw new Error("fail");
-    const msg="綁定"+j.code;
-    const url="https://line.me/R/oaMessage/%40910imdmw/?"+encodeURIComponent(msg);
-    box.innerHTML='綁定碼 <b>'+j.code+'</b>（15 分鐘內有效）<br>'
-      +'<a href="'+url+'" target="_blank" rel="noopener">點這裡開啟 LINE 並送出綁定訊息</a><br>'
-      +'或手動加入官方帳號 <b>@910imdmw</b>，傳送「<b>'+msg+'</b>」。綁定後在 LINE 輸入「今日運勢」「明日運勢」「本週運勢」隨時查看。';
-  }catch(e){
-    box.textContent='暫時無法取得綁定碼，請確認網路後再試一次。';
-  }
-}
-
+/* v.27.5：網站端「綁定 LINE・每天問運勢」已移除（站長決定：LINE@ 每日運勢是官方帳號自己的互動功能，未付費者在 LINE 輸入生辰即可使用，不放網站）。
+   後端 /line/bindcode 與 webhook 未動。 */
 function buildICS(){
   const D=window.__ZW;if(!D)return "";
   const zw=D.zw,adv=D.adv,bz=D.bz,dm=D.dm,name=D.name,lk=D.lk,st=adv.strength,by=D.birthYear;
@@ -11114,7 +11153,6 @@ function render(name,gender,sol,lunar,bz,zw,wx,adv,scores,fam,subText){
       </ul></div>
       <div class="pwvol"><div class="pwvol-h"><span>貳</span>年運・每日</div><ul>
         <li>今日運勢：宜忌、財神貴人方位、一週吉凶</li>
-        <li>綁定 LINE，每天輸入「今日運勢」就回覆</li>
         <li>${curLN().year} 流年精批・十二個月逐月運勢</li>
         <li>${curLN().year+1} 明年流年預覽</li>
         <li>個人農民曆 .ics：365 天宜忌匯入手機</li>
