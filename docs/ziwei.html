@@ -2829,7 +2829,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.3";
+const SITE_VERSION_DATE="2026.11.27.4";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
@@ -2841,6 +2841,7 @@ try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS
    日本語／English／한국어：選單先列出、標示準備中，待逐模組預譯完成後開放。 */
 const ZW_LANGS=[['zh-Hant','繁體中文'],['zh-Hans','简体中文'],['ja','日本語'],['en','English'],['ko','한국어']];
 const ZW_LANG_READY={'zh-Hant':1,'zh-Hans':1};
+const ZW_LANG_FOREIGN={en:1,ja:1,ko:1};   // 外語：字典檔 /i18n/<lang>.json，預覽可用 ?lang=en；正式開放時加進 ZW_LANG_READY
 const ZW_LANG_SOON={ja:'準備中',en:'coming soon',ko:'준비 중'};
 const ZW_LANG=(function(){
   /* v.27.3 站長決定：進站一律預設繁體中文。語言只記在本分頁（sessionStorage，付款跳轉回來仍保留），
@@ -2848,12 +2849,15 @@ const ZW_LANG=(function(){
   const norm=function(v){v=String(v||'').toLowerCase();
     if(/^(zh-hans|zh-cn|zh-sg|cn|sc|hans)$/.test(v))return 'zh-Hans';
     if(/^(zh-hant|zh-tw|zh-hk|zh-mo|tw|tc|hant)$/.test(v))return 'zh-Hant';
+    if(/^(en|en-[a-z]+)$/.test(v))return 'en';
+    if(/^(ja|jp|ja-jp)$/.test(v))return 'ja';
+    if(/^(ko|kr|ko-kr)$/.test(v))return 'ko';
     return null;};
   try{localStorage.removeItem('zw_lang');}catch(e){}
   try{
     const q=norm((location.search.match(/[?&]lang=([\w-]+)/)||[])[1]);
     if(q){try{sessionStorage.setItem('zw_lang',q);}catch(e){}return q;}
-    const s=sessionStorage.getItem('zw_lang');if(s&&ZW_LANG_READY[s])return s;
+    const s=sessionStorage.getItem('zw_lang');if(s&&(ZW_LANG_READY[s]||ZW_LANG_FOREIGN[s]))return s;
   }catch(e){}
   return 'zh-Hant';
 })();
@@ -2863,7 +2867,7 @@ let __zhT=null;const __zhCache=new Map();
 function __zhBuild(){const mk=function(s){const m=new Map();let mx=1;s.split('|').forEach(function(p){const i=p.indexOf(' ');if(i<1)return;const k=p.slice(0,i);m.set(k,p.slice(i+1));if(k.length>mx)mx=k.length;});return [m,mx];};__zhT=[mk(__ZH_S1),mk(__ZH_S2)];}
 /* zhS：繁→簡（只有選簡體時才轉；其餘語言原樣回傳） */
 function zhS(t){
-  if(ZW_LANG!=='zh-Hans'||t==null)return t;
+  if(ZW_LANG!=='zh-Hans'){return (ZW_LANG==='zh-Hant'||t==null)?t:zwTr(t);}
   t=String(t);if(!/[㐀-鿿豈-﫿]/.test(t))return t;
   const short=t.length<=160;if(short&&__zhCache.has(t))return __zhCache.get(t);
   if(!__zhT)__zhBuild();
@@ -2876,25 +2880,112 @@ function zhS(t){
   if(short){if(__zhCache.size>6000)__zhCache.clear();__zhCache.set(t,s);}
   return s;
 }
+
+/* ===== 外語顯示翻譯引擎（en／ja／ko）=====
+   字典 {中文片段→外文}，由 scratchpad/i18n 抽出全站顯示片段後預先翻好（build_dict），放 /i18n/<lang>.json。
+   每個文字節點做「最長匹配」替換（依首字建長度索引，快）；英文相鄰片段自動補空格，殘留中文標點轉該語言標點。
+   日文輸出含假名者視為已翻過，不再重翻（避免漢字被二次匹配）。 */
+let __xDict=null;const __xCache=new Map();
+function __xBuild(obj){
+  const m=new Map(),idx=new Map(),ex=new Map();
+  for(const k in obj){const v=obj[k];if(typeof v!=='string'||!k)continue;
+    if(k.length>1&&k[0]==='='){ex.set(k.slice(1),v);continue;}   // =X：只在整個文字節點恰好是 X 時才翻（易誤傷的單字）
+    m.set(k,v);const c=k[0];let a=idx.get(c);if(!a){a=new Set();idx.set(c,a);}a.add(k.length);}
+  const idx2=new Map();idx.forEach(function(set,c){idx2.set(c,Array.from(set).sort(function(a,b){return b-a;}));});
+  __xDict={m:m,idx:idx2,ex:ex};__xCache.clear();
+}
+function __xPunct(o){
+  if(ZW_LANG==='ja'){return o.replace(/，/g,'、').replace(/；/g,'；');}
+  o=o.replace(/——/g,' — ').replace(/，/g,', ').replace(/。/g,'. ').replace(/、/g,', ').replace(/：/g,': ').replace(/；/g,'; ')
+     .replace(/！/g,'! ').replace(/？/g,'? ').replace(/（/g,' (').replace(/）/g,') ').replace(/[「『《〈]/g,'“').replace(/[」』》〉]/g,'”')
+     .replace(/～/g,'~').replace(/　/g,' ').replace(/[【〔]/g,' [').replace(/[】〕]/g,'] ');
+  const lead=/^\s/.test(o),trail=/\s$/.test(o);
+  o=o.replace(/[ \t]{2,}/g,' ').replace(/ ([,.;:!?)\]”])/g,'$1').replace(/([(\[“]) /g,'$1').replace(/\.\s*\./g,'.').trim();
+  return (lead?' ':'')+o+(trail?' ':'');
+}
+let __xNames=[],__xNamesAt=0;
+function __xNameList(){
+  const now=Date.now();if(now-__xNamesAt<400)return __xNames;__xNamesAt=now;
+  const set=new Set();const add=function(v){v=String(v||'').trim();if(v&&/[\u3400-\u9fff]/.test(v)&&v.length<=12)set.add(v);};
+  try{document.querySelectorAll('input[type=text],input:not([type])').forEach(function(e){add(e.value);});}catch(e){}
+  try{if(window.__ZW)add(window.__ZW.name);}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem('zw_daily')||'null');if(d)add(d.n);}catch(e){}
+  try{const h=JSON.parse(localStorage.getItem('zw_hehun_last')||'null');if(h)add(h.n);}catch(e){}
+  const arr=Array.from(set).sort(function(a,b){return b.length-a.length;});
+  if(arr.join('|')!==__xNames.join('|')){__xNames=arr;__xCache.clear();}
+  return __xNames;
+}
+function zwTr(t){
+  if(!__xDict||t==null)return t;
+  t=String(t);
+  if(!/[㐀-鿿豈-﫿　-〿！-｠]/.test(t))return t;
+  if(ZW_LANG==='ja'&&/[ぁ-ゖァ-ヺ]/.test(t))return t;   // 含平假名／片假名＝已是日文（不含中點・與長音ー）
+  const short=t.length<=200;if(short&&__xCache.has(t))return __xCache.get(t);
+  {const tt=t.trim();if(__xDict.ex.has(tt))return t.replace(tt,__xDict.ex.get(tt));}
+  const m=__xDict.m,idx=__xDict.idx,n=t.length,en=(ZW_LANG!=='ja');
+  const names=__xNameList();
+  let o='',i=0;
+  while(i<n){
+    const lens=idx.get(t[i]);let hit=null,L=0;
+    for(let q=0;q<names.length;q++){const nm=names[q];if(t.startsWith(nm,i)){hit=nm;L=nm.length;break;}}
+    if(hit===null&&lens){for(let q=0;q<lens.length;q++){const l=lens[q];if(l>n-i)continue;const v=m.get(t.substr(i,l));if(v!==undefined){hit=v;L=l;break;}}}
+    if(hit!==null){
+      if(en&&o&&/[A-Za-z0-9À-ɏ가-힯)\]”]$/.test(o)&&/^[A-Za-z0-9À-ɏ가-힯(“]/.test(hit))o+=' ';
+      o+=hit;i+=L;
+    }else{
+      const c=t[i];
+      if(en&&o&&/[A-Za-z가-힯]$/.test(o)&&/[A-Za-z0-9]/.test(c)&&false)o+=' ';
+      o+=c;i++;
+    }
+  }
+  o=__xPunct(o);
+  if(short){if(__xCache.size>8000)__xCache.clear();__xCache.set(t,o);}
+  return o;
+}
+function zwLoadDict(){
+  try{const st=document.createElement('style');st.id='zwI18nHide';st.textContent='body{visibility:hidden!important}';document.head.appendChild(st);}catch(e){}
+  const done=function(){try{const h=document.getElementById('zwI18nHide');if(h)h.remove();}catch(e){}};
+  fetch('/i18n/'+ZW_LANG+'.json?v='+SITE_VERSION_DATE,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(obj){
+    __xBuild(obj);
+    zhConvertNode(document.body);
+    try{document.title=document.title;}catch(e){}
+    done();
+  }).catch(function(){
+    done();
+    try{sessionStorage.setItem('zw_lang','zh-Hant');}catch(e){}
+    location.replace(location.pathname);
+  });
+  setTimeout(done,6000);   // 保險：最多藏 6 秒
+}
 const __ZH_ATTR=['placeholder','title','aria-label','alt'];
 function __zhSkip(el){return !el||el.nodeName==='SCRIPT'||el.nodeName==='STYLE'||el.nodeName==='TEXTAREA'||(el.closest&&el.closest('[data-noconv]'));}
+function __xSpace(t,c){
+  if(ZW_LANG!=='en'&&ZW_LANG!=='ko')return c;
+  const ps=t.previousSibling,ns=t.nextSibling;
+  if(ns&&ns.nodeType===1&&/[A-Za-z0-9\u00c0-\u024f\uac00-\ud7af,.;:!?)\]”'’]$/.test(c))c+=' ';
+  if(ps&&ps.nodeType===1&&/^[A-Za-z0-9\u00c0-\u024f\uac00-\ud7af(\[“‘—–]/.test(c))c=' '+c;
+  return c;
+}
+const __xDone=new WeakMap(),__xDoneA=new WeakMap();
+function __xReady(){return ZW_LANG==='zh-Hans'||!!__xDict;}   // 已翻過的節點／屬性：值沒變就不再翻（譯文含中文時避免重翻、無限放大）
 function zhConvertNode(root){
-  if(ZW_LANG!=='zh-Hans'||!root)return;
+  if(ZW_LANG==='zh-Hant'||!root)return;
   try{
-    if(root.nodeType===3){if(__zhSkip(root.parentNode))return;const v=root.nodeValue,c=zhS(v);if(c!==v)root.nodeValue=c;return;}
+    if(root.nodeType===3){if(__zhSkip(root.parentNode))return;const v=root.nodeValue;if(__xDone.get(root)===v)return;let c=zhS(v);if(c!==v)c=__xSpace(root,c);if(c!==v)root.nodeValue=c;if(__xReady())__xDone.set(root,c);return;}
     if(root.nodeType!==1&&root.nodeType!==9&&root.nodeType!==11)return;
     if(root.nodeType===1&&__zhSkip(root))return;
     const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){return __zhSkip(n.parentNode)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT;}});
     const list=[];let n;while((n=tw.nextNode()))list.push(n);
-    for(const t of list){const v=t.nodeValue,c=zhS(v);if(c!==v)t.nodeValue=c;}
+    for(const t of list){const v=t.nodeValue;if(__xDone.get(t)===v)continue;let c=zhS(v);if(c!==v)c=__xSpace(t,c);if(c!==v)t.nodeValue=c;if(__xReady())__xDone.set(t,c);}
     const els=root.querySelectorAll?root.querySelectorAll('[placeholder],[title],[aria-label],[alt],input[type=button],input[type=submit]'):[];
-    const doEl=function(el){if(__zhSkip(el))return;for(const a of __ZH_ATTR){const v=el.getAttribute&&el.getAttribute(a);if(v){const c=zhS(v);if(c!==v)el.setAttribute(a,c);}}
+    const doEl=function(el){if(__zhSkip(el))return;let dn=__xDoneA.get(el);if(!dn){dn={};__xDoneA.set(el,dn);}for(const a of __ZH_ATTR){const v=el.getAttribute&&el.getAttribute(a);if(v&&dn[a]!==v){const c=zhS(v);if(c!==v)el.setAttribute(a,c);if(__xReady())dn[a]=c;}}
       if(el.nodeName==='INPUT'&&(el.type==='button'||el.type==='submit')&&el.value){const c=zhS(el.value);if(c!==el.value)el.value=c;}};
     if(root.nodeType===1)doEl(root);els.forEach(doEl);
   }catch(e){}
 }
 if(ZW_LANG!=='zh-Hant'){try{document.documentElement.setAttribute('lang',ZW_LANG);}catch(e){}}
-if(ZW_LANG==='zh-Hans'){
+if(ZW_LANG!=='zh-Hant'){
+  if(ZW_LANG!=='zh-Hans')zwLoadDict();
   /* 顯示層掛鉤：各輸出口一律先過 zhS（繁體模式完全不掛，零影響） */
   try{const d=Object.getOwnPropertyDescriptor(Document.prototype,'title');
     if(d&&d.set)Object.defineProperty(document,'title',{configurable:true,get:function(){return d.get.call(document);},set:function(v){d.set.call(document,zhS(v));}});
@@ -2919,7 +3010,7 @@ if(ZW_LANG==='zh-Hans'){
   try{new MutationObserver(function(ms){
     for(const m of ms){
       if(m.type==='characterData'){zhConvertNode(m.target);continue;}
-      if(m.type==='attributes'){const el=m.target,v=el.getAttribute(m.attributeName);if(v&&!__zhSkip(el)){const c=zhS(v);if(c!==v)el.setAttribute(m.attributeName,c);}continue;}
+      if(m.type==='attributes'){const el=m.target,v=el.getAttribute(m.attributeName);let dn=__xDoneA.get(el);if(!dn){dn={};__xDoneA.set(el,dn);}if(v&&dn[m.attributeName]!==v&&!__zhSkip(el)){const c=zhS(v);if(c!==v)el.setAttribute(m.attributeName,c);if(__xReady())dn[m.attributeName]=c;}continue;}
       for(const n of m.addedNodes)zhConvertNode(n);
     }
   }).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:__ZH_ATTR});}catch(e){}
@@ -7288,6 +7379,10 @@ function payConsentGate(){
 }
 function expTimeStr(){
   const d=new Date(),p=n=>String(n).padStart(2,'0');
+  if(typeof ZW_LANG!=='undefined'&&ZW_LANG_FOREIGN[ZW_LANG]){   // 外語：依該國慣用日期格式（避免逐字翻成 Year/Month/Day）
+    const loc={en:'en-US',ja:'ja-JP',ko:'ko-KR'}[ZW_LANG],lab={en:'Exported ',ja:'出力日時 ',ko:'출력 시각 '}[ZW_LANG];
+    try{return lab+d.toLocaleString(loc,{year:'numeric',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});}catch(e){}
+  }
   const ampm=d.getHours()<12?'上午':'下午';let h=d.getHours()%12;if(h===0)h=12;
   return `輸出時間 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${ampm}${h}時${p(d.getMinutes())}分${p(d.getSeconds())}秒`;
 }
