@@ -280,6 +280,22 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.festchip{border:1px solid rgba(255,220,140,.55);background:rgba(255,215,120,.16);color:#ffe3a3;border-radius:14px;padding:3px 7px;font-size:16px;font-weight:700;margin:0 2px;white-space:nowrap;cursor:pointer;flex:none;line-height:1.2}
+.festchip.onlight{color:#8a5a12;background:#fff4dc;border-color:#f0d9a8;margin:6px auto 0;display:inline-block;font-size:13px;padding:3px 10px}
+html.fest-day #vMain header{box-shadow:inset 0 -3px 0 rgba(255,205,110,.55)}
+#festive{position:fixed;inset:0;z-index:9998;pointer-events:none;overflow:hidden}
+#festive .fx-tint{position:absolute;inset:0;opacity:0;animation:fxTint 5.2s ease-in-out forwards}
+#festive .fx-p{position:absolute;opacity:0;will-change:transform,opacity;user-select:none;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+#festive .fx-greet{position:absolute;left:0;right:0;top:34%;text-align:center;opacity:0;padding:0 16px;animation:fxGreet 5.2s ease-in-out forwards}
+#festive .fx-greet b{display:inline-block;font-size:clamp(28px,7vw,52px);font-weight:900;color:#fff;letter-spacing:.06em;font-family:"Noto Serif TC","Songti TC",serif;text-shadow:0 2px 20px rgba(0,0,0,.6),0 0 2px rgba(0,0,0,.45)}
+#festive .fx-greet i{display:block;font-style:normal;margin-top:8px;font-size:clamp(13px,3.2vw,18px);font-weight:700;color:rgba(255,255,255,.94);letter-spacing:.18em;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+@keyframes fxTint{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
+@keyframes fxGreet{0%{opacity:0;transform:translateY(16px) scale(.95)}14%{opacity:1;transform:translateY(0) scale(1)}72%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-10px) scale(1.03)}}
+@keyframes fxFall{0%{opacity:0;transform:translateY(-10vh) translateX(0) rotate(0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translateY(118vh) translateX(var(--dx,0)) rotate(var(--rot,180deg))}}
+@keyframes fxRise{0%{opacity:0;transform:translateY(0) translateX(0) rotate(0)}12%{opacity:1}88%{opacity:1}100%{opacity:0;transform:translateY(-128vh) translateX(var(--dx,0)) rotate(var(--rot,0))}}
+@keyframes fxFloat{0%{opacity:0;transform:translate(0,0)}12%{opacity:1}50%{transform:translate(var(--dx,20px),-16px)}88%{opacity:1}100%{opacity:0;transform:translate(0,10px)}}
+@keyframes fxBurst{0%{opacity:0;transform:scale(.2)}20%{opacity:1;transform:scale(1.25)}55%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+@media (prefers-reduced-motion: reduce){ #festive .fx-p{display:none} }
 .trialbar{background:#fff7e8;border:1px solid #f0d9a8;color:#8a5a12;border-radius:12px;padding:9px 12px;margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
 .trialbar b{flex:1}
 .trialbar button{border:0;background:var(--acc);color:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;font-weight:700}
@@ -428,6 +444,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <div class="logo" id="loginLogo"><img src="super_card_logo.svg" alt="超級業務名片王"></div>
   <h2>超級業務名片王</h2>
   <p>拍名片 → 自動辨識分欄 → 雲端保存,換手機也不怕</p>
+  <div style="text-align:center"><span class="festchip onlight hide" id="festChipLogin"></span></div>
   <input id="hAcc" class="inp" type="email" placeholder="帳號(Email)" autocomplete="username" autocapitalize="off">
   <div style="height:8px"></div>
   <input id="hPw" class="inp" type="password" placeholder="密碼" autocomplete="current-password">
@@ -451,6 +468,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 <div id="vMain" class="hide">
   <header>
     <h1><img class="brand" src="super_card_logo.svg" alt="">超級業務名片王<span class="ver" id="verBadge"></span></h1>
+    <span class="festchip hide" id="festChip"></span>
     <button class="ic" id="btnMap" title="地圖" data-ic="map">地圖</button>
     <button class="ic" id="btnMenu" title="更多" data-ic="menu"></button>
   </header>
@@ -464,6 +482,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnBooks" data-ic="stack">名片簿</button>
     <button id="btnTheme" data-ic="palette">風格模板</button>
     <button id="btnSound" data-ic="volume">音效:開</button>
+    <button id="btnFest" data-ic="star">節日動畫:開</button>
     <button id="btnLang" data-ic="globe">辨識語言:自動</button>
     <button id="btnAutoContact" data-ic="userplus">存檔後自動加入通訊錄:開</button>
     <button id="btnChangePw" data-ic="user" class="hide">修改登入密碼</button>
@@ -932,7 +951,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.34", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.35", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1079,7 +1098,7 @@ async function hostLogin(){
     useHostToken(r.account, r.token, "我的名片簿");
     var p=await post({action:"ping"}); if(!p.ok) throw new Error(p.error);
     ls("sc_ai",p.ai?"1":"0"); S.backVer=p.ver||""; $("hPw").value="";
-    enter(); toast("✅ 登入成功");
+    enter(); toast("登入成功"); sfx("welcome");
   }catch(e){ $("loginMsg").textContent=e.message; }
   b.disabled=false; setLabel(b,"登入");
 }
@@ -1160,7 +1179,7 @@ async function checkBuyBack(){
       var r=await (await fetch(PAY_API+"/ecpay/state?order="+encodeURIComponent(order)+"&gt="+pend.gt)).json();
       if(r.paid && r.sc && (r.sc.acc || r.sc.err)){
         if(r.sc.err){ box.innerHTML='<div style="font-size:40px">⚠️</div><h3>付款成功,但開通遇到問題</h3><p>'+esc(r.sc.exists?"這個 Email 已經有帳號了,請直接用原本的密碼登入;若忘記密碼請聯絡我們重設。":r.sc.err)+'</p><p style="color:#888;font-size:13px">訂單編號:'+esc(order)+'</p><button class="btn" onclick="$(\'vBuyDone\').classList.add(\'hide\')">回登入頁</button>'; return true; }
-        sfx("success"); ls("sc_buy",null);
+        sfx("welcome"); ls("sc_buy",null);
         box.innerHTML='<div class="buydone"><div style="font-size:48px">🎉</div><h3>付款成功,帳號已開通!</h3>'+
           '<div class="acc">帳號:<b>'+esc(r.sc.acc)+'</b><br>'+(r.sc.pw?'密碼:<b style="letter-spacing:2px">'+esc(r.sc.pw)+'</b>':'已升級終身版,<b>密碼和資料都不變</b>')+'</div>'+
           '<p style="font-size:13.5px;color:#666">請截圖或記下密碼'+(r.sc.mailed?',我們也已寄到你的 Email':'')+'。之後換手機,用這組帳號密碼登入即可。</p>'+
@@ -2491,48 +2510,203 @@ function checkJoinLink(){
 }
 
 /* ===== 互動音效(Web Audio 即時合成,不用下載音檔)+ 震動回饋 ===== */
-var SFX={ ctx:null, on: ls("sc_sound")!=="0", last:{} };
+var SFX={ ctx:null, on: ls("sc_sound")!=="0", last:{}, out:null };
+/** 音效總線:所有聲音先經過暖色低通 + 壓縮器,聽起來圓潤、不刺耳(現代商務 App 風格) */
 function sfxCtx(){
-  if(!SFX.ctx){ var A=window.AudioContext||window.webkitAudioContext; if(!A) return null; SFX.ctx=new A(); }
+  if(!SFX.ctx){
+    var A=window.AudioContext||window.webkitAudioContext; if(!A) return null;
+    SFX.ctx=new A();
+    var c=SFX.ctx, lp=c.createBiquadFilter(), comp=c.createDynamicsCompressor(), mg=c.createGain();
+    lp.type="lowpass"; lp.frequency.value=7200; lp.Q.value=0.3;
+    comp.threshold.value=-18; comp.knee.value=12; comp.ratio.value=4; comp.attack.value=0.003; comp.release.value=0.18;
+    mg.gain.value=0.9; lp.connect(comp); comp.connect(mg); mg.connect(c.destination); SFX.out=lp;
+  }
   if(SFX.ctx.state==="suspended") SFX.ctx.resume();
   return SFX.ctx;
 }
-/** 一個音:頻率 f(可滑到 f2)、長度 d 秒、音色 type、音量 v、延遲 t0 */
+/** 單一純音(可滑音) */
 function tone(f,d,o){
   o=o||{}; var c=sfxCtx(); if(!c) return;
   var t=c.currentTime+(o.t0||0), os=c.createOscillator(), g=c.createGain();
   os.type=o.type||"sine"; os.frequency.setValueAtTime(f,t);
   if(o.f2) os.frequency.exponentialRampToValueAtTime(o.f2,t+d);
   var v=o.v||0.12;
-  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v,t+Math.min(0.012,d/4)); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
-  os.connect(g); g.connect(c.destination); os.start(t); os.stop(t+d+0.02);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v,t+Math.min(0.006,d/5)); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  os.connect(g); g.connect(SFX.out); os.start(t); os.stop(t+d+0.03);
+}
+/** 鐘聲/木琴音色:基頻 + 2 倍、3 倍泛音(泛音衰減更快),乾淨有質感 */
+function bell(f,d,o){
+  o=o||{}; var v=o.v||0.1, t0=o.t0||0;
+  tone(f,d,{v:v,t0:t0});
+  tone(f*2,d*0.55,{v:v*0.28,t0:t0});
+  tone(f*3.01,d*0.3,{v:v*0.09,t0:t0});
 }
 function noise(d,o){
   o=o||{}; var c=sfxCtx(); if(!c) return;
-  var t=c.currentTime+(o.t0||0), n=Math.round(c.sampleRate*d), b=c.createBuffer(1,n,c.sampleRate), ch=b.getChannelData(0);
+  var t=c.currentTime+(o.t0||0), n=Math.max(1,Math.round(c.sampleRate*d)), b=c.createBuffer(1,n,c.sampleRate), ch=b.getChannelData(0);
   for(var i=0;i<n;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,o.decay||3);
   var s=c.createBufferSource(); s.buffer=b;
   var fl=c.createBiquadFilter(); fl.type=o.ftype||"bandpass"; fl.frequency.value=o.freq||3000; fl.Q.value=o.q||0.8;
   var g=c.createGain(); g.gain.value=o.v||0.18;
-  s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(t);
+  s.connect(fl); fl.connect(g); g.connect(SFX.out); s.start(t);
 }
 var SOUNDS={
-  tap:    function(){ tone(1650,0.035,{v:0.05,type:"sine",f2:1300}); },
-  ready:  function(){ tone(880,0.07,{v:0.06}); tone(1320,0.09,{v:0.05,t0:0.06}); },
-  shutter:function(){ noise(0.05,{freq:4200,q:0.7,v:0.22,decay:4}); noise(0.07,{freq:1800,q:0.9,v:0.16,decay:3,t0:0.055}); tone(180,0.05,{v:0.05,type:"triangle",t0:0.05}); },
-  done:   function(){ tone(1046.5,0.12,{v:0.07}); tone(1318.5,0.12,{v:0.07,t0:0.08}); tone(1568,0.22,{v:0.07,t0:0.16}); },
-  success:function(){ tone(784,0.11,{v:0.08}); tone(1175,0.24,{v:0.08,t0:0.09}); },
-  del:    function(){ noise(0.22,{ftype:"lowpass",freq:900,q:0.5,v:0.14,decay:1.5}); tone(330,0.18,{v:0.05,f2:160,type:"triangle"}); },
-  error:  function(){ tone(440,0.13,{v:0.08,type:"triangle"}); tone(311,0.2,{v:0.08,type:"triangle",t0:0.12}); },
-  swish:  function(){ noise(0.16,{freq:2400,q:0.6,v:0.1,decay:2}); tone(660,0.12,{v:0.04,f2:990}); }
+  // 一般點按:極短、柔和的「嗒」
+  tap:    function(){ tone(2100,0.028,{v:0.035,f2:1700}); noise(0.012,{freq:6500,q:0.9,v:0.03,decay:5}); },
+  // 對準完成、可以拍了:兩聲清亮提示
+  ready:  function(){ bell(1318.5,0.16,{v:0.06}); bell(1975.5,0.22,{v:0.05,t0:0.08}); },
+  // 快門:清脆機械快門 + 低頻回彈
+  shutter:function(){ noise(0.035,{freq:5200,q:0.8,v:0.2,decay:5}); noise(0.05,{freq:2200,q:1,v:0.14,decay:4,t0:0.045}); tone(150,0.06,{v:0.06,type:"triangle",t0:0.04,f2:90}); },
+  // 辨識完成:上行三和弦
+  done:   function(){ bell(1046.5,0.18,{v:0.07}); bell(1318.5,0.18,{v:0.065,t0:0.07}); bell(1568,0.34,{v:0.07,t0:0.14}); },
+  // 存檔成功:溫暖的大三度「叮~」+ 細微光暈
+  success:function(){ bell(783.99,0.22,{v:0.08}); bell(987.77,0.24,{v:0.07,t0:0.05}); bell(1567.98,0.42,{v:0.05,t0:0.1}); },
+  // 刪除:柔和下滑 + 空氣聲
+  del:    function(){ noise(0.2,{ftype:"lowpass",freq:1100,q:0.4,v:0.1,decay:1.6}); tone(520,0.2,{v:0.05,f2:220}); },
+  // 錯誤:兩聲低沉、不刺耳
+  error:  function(){ tone(392,0.12,{v:0.07,type:"triangle"}); tone(330,0.2,{v:0.07,type:"triangle",t0:0.1}); },
+  // 切換/轉場:輕盈氣流
+  swish:  function(){ noise(0.14,{freq:2600,q:0.5,v:0.07,decay:2}); tone(700,0.12,{v:0.03,f2:1100}); },
+  // 開啟面板
+  open:   function(){ tone(880,0.07,{v:0.035,f2:1175}); },
+  // 登入/購買成功:收銀般的成功和弦
+  welcome:function(){ bell(659.25,0.2,{v:0.06}); bell(830.61,0.2,{v:0.06,t0:0.06}); bell(987.77,0.22,{v:0.06,t0:0.12}); bell(1318.5,0.5,{v:0.06,t0:0.18}); }
 };
-var VIB={ tap:8, ready:15, shutter:30, done:[20,40,20], success:[15,30,25], del:25, error:[40,60,40], swish:10 };
+var VIB={ tap:6, ready:12, shutter:25, done:[15,35,15], success:[12,25,20], del:20, error:[35,50,35], swish:8, open:5, welcome:[10,30,10,30,20] };
 function sfx(name){
   if(typeof SFX==="undefined" || !SFX || !SFX.on || !SOUNDS[name]) return;
   var now=Date.now(); if(now-(SFX.last[name]||0)<60) return; SFX.last[name]=now;   // 避免連發
   try{ SOUNDS[name](); }catch(e){}
   try{ if(navigator.vibrate && VIB[name]) navigator.vibrate(VIB[name]); }catch(e){}
 }
+/* 全域互動回饋:按鈕、標籤、選項點下去都有極輕的「嗒」(已有專屬音效的動作會被節流蓋過) */
+document.addEventListener("pointerdown",function(e){
+  var el=e.target.closest && e.target.closest("button,.chip,.mini,.pill,a.btn,[data-sort],[data-cm],[data-lt],summary");
+  if(!el || el.disabled) return;
+  var now=Date.now(); if(now-(SFX.lastAny||0)<120) return; SFX.lastAny=now;
+  sfx("tap");
+},true);
+
+/* ===== 節日偵測模式(同棧板系統):當天第一次開 App 播約 5 秒氛圍動畫+節日旋律,整天標題列有節日徽章,點一下重播 ===== */
+var FEST_THEMES = {
+  cny:{g:"新年快樂",s:"恭喜發財 · 生意興隆",chip:"🧧 新年快樂",e:["🏮","🧧","✨","🎊","💰"],motion:"fall",n:26,
+    tint:"radial-gradient(60% 50% at 50% 28%,rgba(235,170,50,.42),transparent 70%),linear-gradient(180deg,rgba(150,22,16,.26),rgba(90,12,8,.4))",
+    snd:{gap:.17,dur:.34,notes:[523.25,587.33,659.25,783.99,880,1046.5]}},
+  lantern:{g:"元宵節快樂",s:"月圓人團圓",chip:"🏮 元宵快樂",e:["🏮","✨","🏮"],motion:"rise",n:18,
+    tint:"radial-gradient(60% 60% at 50% 62%,rgba(240,155,45,.4),transparent 72%)",
+    snd:{gap:.24,dur:.5,notes:[659.25,783.99,880,783.99,659.25]}},
+  qingming:{g:"清明",s:"慎終追遠 · 春意盎然",chip:"🌿 清明",e:["🌿","🍃","🌸","🍃"],motion:"fall",n:22,
+    tint:"linear-gradient(180deg,rgba(120,170,120,.2),rgba(60,110,70,.3))",
+    snd:{gap:.34,dur:.6,notes:[880,783.99,659.25,587.33,523.25]}},
+  dragonboat:{g:"端午安康",s:"龍舟競渡 · 粽葉飄香",chip:"🐉 端午安康",e:["🐉","🛶","🎋","🐲"],motion:"float",n:16,
+    tint:"linear-gradient(180deg,rgba(40,120,140,.26),rgba(20,70,90,.36))",
+    snd:{gap:.2,dur:.3,notes:[293.66,0,587.33,587.33,783.99,880]}},
+  midautumn:{g:"中秋團圓",s:"花好月圓 · 業績圓滿",chip:"🌕 中秋快樂",e:["🌕","🐰","🏮","✨"],motion:"rise",n:18,
+    tint:"radial-gradient(55% 45% at 50% 24%,rgba(250,232,165,.5),transparent 70%),linear-gradient(180deg,rgba(20,30,70,.32),rgba(10,15,45,.42))",
+    snd:{gap:.5,dur:1.1,notes:[261.63,659.25,783.99,880]}},
+  national:{g:"國慶快樂",s:"普天同慶",chip:"🎆 國慶快樂",e:["🎆","🎇","✨","🎊"],motion:"burst",n:20,
+    tint:"linear-gradient(180deg,rgba(180,30,40,.2),rgba(30,40,120,.3))",
+    snd:{gap:.16,dur:.32,notes:[523.25,659.25,783.99,1046.5,0,783.99,1046.5]}},
+  xmas:{g:"聖誕快樂",s:"Merry Christmas",chip:"🎄 聖誕快樂",e:["❄️","🎄","🎁","⛄","❄️"],motion:"fall",n:30,
+    tint:"radial-gradient(60% 50% at 50% 42%,rgba(40,120,70,.28),transparent 72%),linear-gradient(180deg,rgba(160,30,40,.24),rgba(20,60,40,.34))",
+    snd:{gap:.2,dur:.34,notes:[659.25,659.25,659.25,0,659.25,659.25,659.25,0,659.25,783.99,523.25,587.33,659.25]}},
+  newyear:{g:"跨年快樂",s:"新年倒數 · HAPPY NEW YEAR",chip:"🥂 跨年快樂",e:["🎆","🎇","✨","🎊","🥂"],motion:"burst",n:22,
+    tint:"linear-gradient(180deg,rgba(210,170,60,.24),rgba(20,25,60,.42))",
+    snd:{gap:.15,dur:.3,notes:[523.25,659.25,783.99,1046.5,1318.51]}},
+  valentine:{g:"情人節快樂",s:"Happy Valentine's",chip:"💕 情人節快樂",e:["💕","🌹","💗","💞"],motion:"rise",n:18,
+    tint:"radial-gradient(60% 60% at 50% 60%,rgba(240,120,160,.32),transparent 72%)",
+    snd:{gap:.26,dur:.5,notes:[523.25,659.25,783.99,987.77,1046.5]}},
+  halloween:{g:"萬聖節快樂",s:"Trick or Treat",chip:"🎃 萬聖節",e:["🎃","👻","🦇","🍬"],motion:"float",n:16,
+    tint:"linear-gradient(180deg,rgba(220,120,30,.24),rgba(60,30,80,.4))",
+    snd:{gap:.3,dur:.5,notes:[440,523.25,622.25,440,415.3]}},
+  mothersday:{g:"母親節快樂",s:"媽媽辛苦了",chip:"💐 母親節快樂",e:["🌸","💐","💗","🌷"],motion:"rise",n:18,
+    tint:"radial-gradient(60% 60% at 50% 60%,rgba(240,150,180,.3),transparent 72%)",
+    snd:{gap:.26,dur:.5,notes:[523.25,659.25,783.99,880,783.99]}},
+  fathersday:{g:"父親節快樂",s:"88節 · 爸爸辛苦了",chip:"👔 父親節快樂",e:["👔","🎁","💙","🏆"],motion:"rise",n:16,
+    tint:"radial-gradient(60% 60% at 50% 60%,rgba(80,130,200,.28),transparent 72%)",
+    snd:{gap:.26,dur:.5,notes:[392,523.25,659.25,783.99]}}
+};
+// 農曆節日的國曆日期(2026–2031;春節=除夕~初五)
+var FEST_LUNAR = {
+  cny:["2026-02-16/2026-02-21","2027-02-05/2027-02-10","2028-01-25/2028-01-30","2029-02-12/2029-02-17","2030-02-02/2030-02-07","2031-01-22/2031-01-27"],
+  lantern:["2026-03-03","2027-02-20","2028-02-09","2029-02-27","2030-02-17","2031-02-06"],
+  dragonboat:["2026-06-19","2027-06-09","2028-05-28","2029-06-16","2030-06-05","2031-06-24"],
+  midautumn:["2026-09-25","2027-09-15","2028-10-03","2029-09-22","2030-09-12","2031-10-01"]
+};
+function festIso(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+function festThemeId(d){
+  var y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate(), iso=festIso(d);
+  if(FEST_LUNAR.cny.some(function(x){ var a=x.split("/"); return iso>=a[0]&&iso<=a[1]; })) return "cny";
+  if(FEST_LUNAR.lantern.indexOf(iso)>=0) return "lantern";
+  if(FEST_LUNAR.dragonboat.indexOf(iso)>=0) return "dragonboat";
+  if(FEST_LUNAR.midautumn.indexOf(iso)>=0) return "midautumn";
+  if(m===12&&day>=24&&day<=25) return "xmas";
+  if((m===12&&day===31)||(m===1&&day===1)) return "newyear";
+  if(m===4&&day>=3&&day<=5) return "qingming";
+  if(m===10&&day===10) return "national";
+  if(m===10&&day===31) return "halloween";
+  if(m===2&&day===14) return "valentine";
+  if(m===8&&day===8) return "fathersday";
+  if(m===5){ var f=new Date(y,4,1).getDay(); if(day===1+((7-f)%7)+7) return "mothersday"; }   // 5 月第 2 個週日
+  return null;
+}
+function festOn(){ return ls("sc_fest")!=="0"; }
+/** 節日旋律:用鐘聲音色演奏,尊重音效開關;瀏覽器擋自動播放時,等第一次點擊再響 */
+function festJingle(snd){
+  if(!snd || !SFX.on) return;
+  function play(){ var gap=snd.gap||0.24, dur=snd.dur||0.4; snd.notes.forEach(function(f,i){ if(f) bell(f,dur,{v:0.07,t0:0.05+i*gap}); }); }
+  var c=sfxCtx(); if(!c) return;
+  if(c.state==="running"){ play(); return; }
+  var fired=false;
+  function once(){ if(fired) return; fired=true; ["pointerdown","keydown","touchstart"].forEach(function(ev){ document.removeEventListener(ev,once,true); });
+    c.resume().then(play).catch(play); }
+  ["pointerdown","keydown","touchstart"].forEach(function(ev){ document.addEventListener(ev,once,true); });
+}
+function runFestive(id){
+  var t=FEST_THEMES[id]; if(!t) return;
+  try{
+    var old=$("festive"); if(old) old.remove();
+    var wrap=document.createElement("div"); wrap.id="festive";
+    var tint=document.createElement("div"); tint.className="fx-tint"; tint.style.background=t.tint; wrap.appendChild(tint);
+    if(!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)){
+      for(var i=0;i<(t.n||20);i++){
+        var p=document.createElement("span"); p.className="fx-p"; p.textContent=t.e[i%t.e.length];
+        var dur=3.2+Math.random()*2.2, delay=Math.random()*1.6,
+            kf=t.motion==="rise"?"fxRise":t.motion==="float"?"fxFloat":t.motion==="burst"?"fxBurst":"fxFall";
+        p.style.left=(Math.random()*100)+"%"; p.style.fontSize=(16+Math.random()*26)+"px";
+        p.style.top=(t.motion==="fall"?-8:t.motion==="rise"?108:(8+Math.random()*78))+"%";
+        p.style.setProperty("--dx",(Math.random()*80-40)+"px"); p.style.setProperty("--rot",(Math.random()*360-180)+"deg");
+        p.style.animation=kf+" "+dur+"s ease-in-out "+delay+"s forwards";
+        wrap.appendChild(p);
+      }
+    }
+    var gr=document.createElement("div"); gr.className="fx-greet"; gr.innerHTML="<b>"+t.g+"</b><i>"+t.s+"</i>"; wrap.appendChild(gr);
+    document.body.appendChild(wrap);
+    festJingle(t.snd);
+    setTimeout(function(){ if(wrap.parentNode) wrap.remove(); },5400);
+  }catch(e){}
+}
+/** 開 App 時:今天是節日 → 標題列掛節日徽章;今天第一次 → 播動畫。?festive=xmas 可預覽、?festive=off 關閉 */
+function initFestive(){
+  try{
+    var forced=new URLSearchParams(location.search).get("festive");
+    if(forced==="off") return;
+    var id=(forced&&FEST_THEMES[forced]) ? forced : festThemeId(new Date());
+    var chip=$("festChip"), chip2=$("festChipLogin");
+    [chip,chip2].forEach(function(c){ if(!c) return; c.classList.toggle("hide",!id); if(id){
+      c.textContent = c===chip ? FEST_THEMES[id].chip.split(" ")[0] : FEST_THEMES[id].chip;   // 標題列空間小:只放節日圖示
+      c.title=FEST_THEMES[id].chip+"(點一下重播)"; c.onclick=function(){ runFestive(id); }; } });
+    document.documentElement.classList.toggle("fest-day",!!id);
+    if(!id || !festOn()) return;
+    var key=id+"|"+festIso(new Date());
+    if(!forced && ls("sc_fest_seen")===key) return;   // 同一天只自動播一次,之後點徽章重播
+    ls("sc_fest_seen",key);
+    setTimeout(function(){ runFestive(id); },600);
+  }catch(e){}
+}
+function renderFestBtn(){ setLabel($("btnFest"),"節日動畫:"+(festOn()?"開":"關")); }
+function toggleFest(){ ls("sc_fest",festOn()?"0":"1"); renderFestBtn(); toast(festOn()?"🎉 節日動畫已開啟":"已關閉節日動畫(節日徽章仍會顯示)"); if(festOn()){ var id=festThemeId(new Date()); if(id) runFestive(id); } }
+
 /* ===== 多國語言辨識:自動 / 中文 / 英文 / 日文 / 韓文 ===== */
 var LANGS=[["auto","自動","自動判斷(中英為主,看到日文假名、韓文會自動改用該語言)"],["zh","中文","中文名片"],["en","英文","英文名片"],["ja","日文","日本名片"],["ko","韓文","韓國名片"]];
 function curLang(){ var v=ls("sc_lang")||"auto"; return LANGS.some(function(l){return l[0]===v;}) ? v : "auto"; }
@@ -4270,7 +4444,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnAutoContact","btnChangePw","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnFest","btnLang","btnAutoContact","btnChangePw","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -4341,6 +4515,7 @@ $("btnCvSave").onclick=function(){ if(MY.view) shareMyVcf(MY.view); };
 document.querySelectorAll("[data-vside]").forEach(function(b){ b.addEventListener("click",function(){ MY.vside=b.dataset.vside; drawCardView(); }); });
 $("cvMake").href=location.pathname;
 $("btnSound").onclick=toggleSound;
+$("btnFest").onclick=toggleFest; renderFestBtn(); initFestive();
 $("btnAutoContact").onclick=function(){ ls("sc_autocontact",autoContactOn()?"0":"1"); renderAutoContactBtn(); toast(autoContactOn()?"新名片存好後會自動跳出「新增聯絡人」(iPhone)":"已關閉自動加入通訊錄"); }; renderAutoContactBtn();
 $("btnLang").onclick=cycleLang; $("btnCamLang").onclick=cycleLang; renderLangBtns();
 document.addEventListener("pointerdown",function(e){
