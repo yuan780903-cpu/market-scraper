@@ -874,7 +874,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.27", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.28", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -2251,7 +2251,7 @@ function switchBook(id){
 }
 function openBooks(prefill){
   renderBooks();
-  $("bkName").value=(prefill&&prefill.name)||""; $("bkUrl").value=(prefill&&prefill.url)||""; $("bkCode").value="";
+  $("bkName").value=(prefill&&prefill.name)||""; $("bkUrl").value=(prefill&&prefill.url)||""; $("bkCode").value=(prefill&&prefill.code)||"";
   $("bkGuide").open=!!(prefill&&prefill.guide);
   $("vBooks").classList.remove("hide"); $("vBooks").scrollTop=0;
   if(prefill&&prefill.url) setTimeout(function(){ $("bkCode").focus(); },300);
@@ -2300,8 +2300,11 @@ function checkJoinLink(){
   try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
   if(!q.join) return false;
   var name=String(q.name||"").replace(/^(業務)?超級(業務)?名片王?_?/,"").replace(/的副本$|^副本 ?|^Copy of /,"")||"新名片簿";
-  openBooks({url:q.join, name:name});
-  toast("輸入存取碼就能加入這本名片簿");
+  openBooks({url:q.join, name:name, code:q.code||""});
+  if(q.code){   // 開通完成頁帶了存取碼 → 直接自動加入,不用再打字
+    if(books().some(function(b){return b.url===q.join;})){ toast("這本名片簿已經在清單裡了"); return true; }
+    toast("連線中,馬上好…"); setTimeout(addBook,400);
+  } else toast("輸入存取碼就能加入這本名片簿");
   return true;
 }
 
