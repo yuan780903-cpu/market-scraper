@@ -284,9 +284,9 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .festchip.onlight{color:#8a5a12;background:#fff4dc;border-color:#f0d9a8;margin:6px auto 0;display:inline-block;font-size:13px;padding:3px 10px}
 html.fest-day #vMain header{box-shadow:inset 0 -3px 0 rgba(255,205,110,.55)}
 #festive{position:fixed;inset:0;z-index:9998;pointer-events:none;overflow:hidden}
-#festive .fx-tint{position:absolute;inset:0;opacity:0;animation:fxTint 5.2s ease-in-out forwards}
+#festive .fx-tint{position:absolute;inset:0;opacity:0;animation:fxTint 5s ease-in-out forwards}
 #festive .fx-p{position:absolute;opacity:0;will-change:transform,opacity;user-select:none;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
-#festive .fx-greet{position:absolute;left:0;right:0;top:34%;text-align:center;opacity:0;padding:0 16px;animation:fxGreet 5.2s ease-in-out forwards}
+#festive .fx-greet{position:absolute;left:0;right:0;top:34%;text-align:center;opacity:0;padding:0 16px;animation:fxGreet 5s ease-in-out forwards}
 #festive .fx-greet b{display:inline-block;font-size:clamp(28px,7vw,52px);font-weight:900;color:#fff;letter-spacing:.06em;font-family:"Noto Serif TC","Songti TC",serif;text-shadow:0 2px 20px rgba(0,0,0,.6),0 0 2px rgba(0,0,0,.45)}
 #festive .fx-greet i{display:block;font-style:normal;margin-top:8px;font-size:clamp(13px,3.2vw,18px);font-weight:700;color:rgba(255,255,255,.94);letter-spacing:.18em;text-shadow:0 2px 14px rgba(0,0,0,.6)}
 @keyframes fxTint{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
@@ -951,7 +951,7 @@ html.fest-day #vMain header{box-shadow:inset 0 -3px 0 rgba(255,205,110,.55)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.35", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.36", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -2683,7 +2683,7 @@ function runFestive(id){
     var gr=document.createElement("div"); gr.className="fx-greet"; gr.innerHTML="<b>"+t.g+"</b><i>"+t.s+"</i>"; wrap.appendChild(gr);
     document.body.appendChild(wrap);
     festJingle(t.snd);
-    setTimeout(function(){ if(wrap.parentNode) wrap.remove(); },5400);
+    setTimeout(function(){ if(wrap.parentNode) wrap.remove(); },5000);   // 節日動畫統一 5 秒
   }catch(e){}
 }
 /** 開 App 時:今天是節日 → 標題列掛節日徽章;今天第一次 → 播動畫。?festive=xmas 可預覽、?festive=off 關閉 */
