@@ -321,7 +321,7 @@ header.hero{position:relative}
 
 </main>
 
-<footer>做生意必學成本會計 · 堆肥場實戰版 v1.4 · 範例數字為教學用估算，實際入帳請依公司會計制度與記帳士意見</footer>
+<footer>做生意必學成本會計 · 堆肥場實戰版 v1.5 · 範例數字為教學用估算，實際入帳請依公司會計制度與記帳士意見</footer>
 
 <script>
 /* ---------- 範例基準數字（每噸、每月） ---------- */
@@ -994,6 +994,77 @@ const GL = [
 })();
 /*SX-PUB-END*/</script>
 <script>/*PX-BEGIN*/
+/* ===== 科目白話字典（公開版與本機版共用，不含公司資料） =====
+   ACCT_PLAIN[科目] = [白話一句話, 堆肥場常見例子]
+   acctPlain(名稱) 會先去掉括號說明再查。 */
+window.ACCT_PLAIN = {
+ // 直接材料
+ '直接材料－禽畜糞':['做肥料的主原料，直接變成產品的一部分。','雞糞、豬糞、牛糞、羊糞'],
+ '直接材料－副資材':['配方裡除了主原料以外的輔助原料，用來調整碳氮比、水分和養分。','菇包、稻殼、米糠、粗糠、豆粕、木屑、蔗渣'],
+ '直接材料－菇包':['種完香菇剩下的太空包，打碎後當副料，屬於直接材料。','廢菇包、菇渣'],
+ // 直接人工
+ '直接人工－薪資':['直接動手做產品的員工月薪，含勞健保和勞退。','翻堆機操作員、包裝線作業員'],
+ '直接人工－臨時工資':['臨時找來做產品的人的工資，忙才請、閒就不請。','旺季臨時包裝工、搬運粗工'],
+ '直接人工－計件工資':['做一包算一包、做一噸算一噸的工資，最標準的變動人工。','按包數計酬的裝袋工'],
+ // 變動製造費用
+ '製造費用－燃料費':['工廠機具燒的油，機器開越久用越多。','鏟裝機、翻堆機、堆高機的柴油'],
+ '製造費用－動力費':['工廠用的電。流動電費跟開機時數走（變動）；基本電費不開機也要付（固定）。','抽風機、篩分機、造粒機的電費'],
+ '製造費用－包裝費用':['把產品裝起來的材料，每多做一包就多用一份。','20kg 包裝袋、太空袋、封口縫線'],
+ '製造費用－工廠物料':['生產會用到、但不會變成產品的消耗品。','稀硫酸、除臭液、菌種、酵素、太空包'],
+ '製造費用－修繕費':['機器和廠房的維修保養。零件耗損跟使用量有關；定期保養則比較固定。','翻堆機鍊條軸承、篩網、潤滑油、冷氣保養'],
+ '製造費用－廢棄物清運':['把生產剩下的廢料、垃圾載走的費用。','結塊料、廢太空包、廢塑膠、生活垃圾清運'],
+ // 固定製造費用
+ '製造費用－折舊':['把買機器、蓋廠房的錢，分攤到能用的每一年。不用付現金，但是真實的成本。','廠房、翻堆機、鏟裝機、醱酵槽的折舊'],
+ '製造費用－租金支出':['生產場地或機具的租金。廠房租金屬於製造費用，不是管理費用。','堆肥場土地租金、廠房租金'],
+ '製造費用－保險費':['工廠和設備的保險，跟產量無關，每年固定付。','火險、設備險、公共意外險'],
+ '製造費用－檢驗費':['依法規或品管要做的檢驗和校正。','肥料成分檢驗、重金屬檢驗、異味檢測、地磅檢定'],
+ '製造費用－間接人工':['在工廠工作、但沒有直接做產品的人的薪水。','廠長、現場主管、清潔工、倉管、修護人員'],
+ '製造費用－勞工安全':['保護現場員工的安全用品和措施。','口罩、手套、護目鏡、安全鞋'],
+ '製造費用－職工福利':['照顧現場員工的支出，跟人數有關，不跟產量。','伙食、飲料、健康檢查、慰勞餐'],
+ '製造費用－清潔費':['工廠的日常清潔用品和清潔服務。','清潔劑、垃圾袋、環境清潔'],
+ '製造費用－雜項購置':['買來給工廠用、但金額太小不值得列成資產的器具。','小型泵浦、電鍋、鐵架、工具'],
+ '製造費用－文具印刷':['工廠現場用的單據和文具。','過磅單、出貨單、標籤'],
+ '製造費用－車輛費用':['工廠用車的驗車、保險、檢測。','清運車驗車、行車紀錄器檢測'],
+ // 推銷費用
+ '推銷費用－薪資':['負責把產品賣出去的人的薪水。','業務員、業務助理'],
+ '推銷費用－運費':['把貨送到客戶手上的運費，賣越多越多。有些公司的 MIS 把它放在銷貨減項。','貨運費、自有車隊油資'],
+ '推銷費用－佣金':['依業績付給經銷商或仲介的抽成。','經銷佣金、介紹獎金'],
+ '推銷費用－廣告費':['讓更多人知道產品的宣傳費用。','報紙、網路、農民曆廣告、展覽攤位'],
+ '推銷費用－廣告宣傳':['推廣品牌形象的活動支出。','食農教育活動、參展、宣傳品'],
+ '推銷費用－廣告贊助':['贊助地方活動換取曝光。完全沒有回饋時改列捐贈。','廟會、運動會、農會活動贊助'],
+ '推銷費用－樣品費':['免費送給客戶試用的產品成本。','試用包、展示樣品'],
+ '推銷費用－出貨包裝':['跟著貨一起送給客戶、回收不了的包材。','隨貨出去的棧板'],
+ '推銷費用－銷售服務':['為了賣產品而提供的附加服務。','幫客戶代灑播、田間施肥指導'],
+ '推銷費用－代灑播服務費':['幫客戶把肥料撒到田裡的服務費用，跟銷量走。','代灑播機具、代灑播工資'],
+ // 管理費用
+ '管理費用－薪資':['讓公司運作的行政人員薪水。','會計、出納、行政、人資'],
+ '管理費用－勞務費':['請外部專業人士幫忙的費用。','記帳士、會計師、律師'],
+ '管理費用－規費':['向政府繳的各種申請和登記費用。','肥料登記證、商標申請、營業登記'],
+ '管理費用－會費':['加入產業團體的入會費和年費。','肥料公會、資源再利用協會'],
+ '管理費用－交際費':['招待客戶、送禮、應酬的支出，報稅有限額。','宴客、送禮、花籃'],
+ '管理費用－會議／交際費':['開會或接待的餐費。','產銷會議餐費、接待主管機關餐點'],
+ '管理費用－文具用品':['辦公室的文具和印刷品。','紙、筆、名片、印表機耗材'],
+ '管理費用－職工福利':['照顧內勤員工的支出。','茶點、員工旅遊、生日禮金'],
+ '管理費用－雜費':['金額小、不好歸類的管理支出。','油卡手續費、小額雜支'],
+ // 研發
+ '研究發展費用－權利金':['使用別人技術或專利所付的費用。一次買斷多年的要列無形資產分年攤銷。','菌種技術授權金'],
+ '研究發展費用－技術授權金':['使用別人技術所付的授權費。按月付的當月認列；一次買斷多年的列無形資產。','木黴菌、菌種技術授權'],
+ '研究發展費用－差旅':['為了研究開發而出差、拜訪的費用。','拜訪教授討論除臭技術的交通停車費'],
+ // 資產
+ '機器設備':['工廠用來生產、可以用好幾年的機器，先列資產，再每年折舊。','翻堆機、造粒機、篩分機、加壓泵系統'],
+ '運輸設備':['可以用好幾年的車輛和搬運機具，列資產後每年折舊。','鏟裝機、堆高機、貨車'],
+ '房屋及建築':['廠房和建物，使用年限最長，通常分 20 年以上折舊。','堆肥舍、醱酵場、倉庫'],
+ // 營業外
+ '營業外支出－罰款':['因違規被罰的錢，跟本業無關，報稅時不能當費用扣除。','環保罰款、交通罰單'],
+ '營業外支出－利息費用':['借錢要付的利息，屬於財務成本。','銀行借款利息'],
+ '營業外支出－捐贈':['沒有任何回饋的捐款，報稅有限額。','慈善捐款'],
+ '營業外支出－處分資產損失':['賣掉舊設備時，賣價比帳面價值低的差額。','舊卡車便宜賣掉的損失'],
+};
+window.acctPlain = name => {
+  const k = String(name).replace(/（[^）]*）/g,'').trim();
+  return window.ACCT_PLAIN[k] || window.ACCT_PLAIN[name] || null;
+};
+
 /* ===== 公開版：④科目表 ⑤帳單歸類引導 ⑥計算器 ⑦小測驗（通用內容，不含任何公司資料） ===== */
 (function(){
 const css = document.createElement('style');
@@ -1006,6 +1077,7 @@ css.textContent = `
 .px-row{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px dashed var(--line);padding:6px 0;font-size:14px}
 .px-row:last-child{border-bottom:0}
 .px-row small{display:block;color:var(--muted);font-size:12.5px}
+.px-plain{display:block;font-size:13.5px;margin:2px 0 1px}
 .px-beh{font-size:11.5px;border-radius:99px;padding:1px 8px;background:var(--bg);white-space:nowrap;align-self:start}
 .px-pill{display:inline-block;border-radius:99px;padding:1px 10px;font-size:12.5px;font-weight:700;color:#fff}
 .px-in{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--ink)}
@@ -1129,12 +1201,12 @@ const TREE = {
 /* ---------- ④ 科目表 ---------- */
 function acct(){
   const el = document.getElementById('pxAcct'); if(!el) return;
-  el.innerHTML = `<div class="note">📒 堆肥場常見支出依 8 大類整理，每類列出建議科目、實際例子和成本行為。正式科目代號請依公司會計制度與記帳士意見。</div>
+  el.innerHTML = `<div class="note">📒 堆肥場常見支出依 8 大類整理，每個科目都有一句白話說明、實際例子和成本行為。正式科目代號請依公司會計制度與記帳士意見。</div>
   <div class="px-grid">${ORDER.map(c=>{
     const rows = R.filter(r=>r[1]===c);
     const byAcct = {}; rows.forEach(r=>{(byAcct[r[2]] ??= []).push(r);});
     return `<div class="px-card px-cat" style="--pc:${CAT[c].c}"><h3>${CAT[c].n}</h3><div class="meta">${CAT[c].g}・成本行為：${CAT[c].beh}・判斷重點：${CAT[c].h}</div>
-      ${Object.entries(byAcct).map(([a,rs])=>`<div class="px-row"><span><b>${a}</b><small>${rs.map(r=>r[0]).join('、')}</small></span><span class="px-beh">${rs[0][3]}</span></div>`).join('')}</div>`;
+      ${Object.entries(byAcct).map(([a,rs])=>`<div class="px-row"><span><b>${a}</b>${acctPlain(a)?`<span class="px-plain">${acctPlain(a)[0]}</span>`:''}<small>例：${rs.map(r=>r[0]).join('、')}</small></span><span class="px-beh">${rs[0][3]}</span></div>`).join('')}</div>`;
   }).join('')}</div>`;
 }
 
@@ -1149,7 +1221,7 @@ function guide(){
     const q = inp.value.trim(); const out = document.getElementById('pxOut');
     if(!q){ out.innerHTML = '<div style="color:var(--muted);font-size:13.5px">輸入關鍵字，會顯示建議科目和原因。找不到時，改用右邊的引導問答。</div>'; return; }
     const hits = R.filter(r=>r[0].includes(q)||q.includes(r[0])||r[2].includes(q));
-    out.innerHTML = hits.length ? hits.slice(0,6).map(r=>`<div class="note" style="margin:0">${pill(r[1])} <b>${r[2]}</b>（${r[3]}）<br><span style="font-size:13.5px">「${r[0]}」：${r[4]}</span></div>`).join('') : '<div class="warn" style="margin:0">找不到這個品名，用右邊的引導問答判斷看看。</div>';
+    out.innerHTML = hits.length ? hits.slice(0,6).map(r=>`<div class="note" style="margin:0">${pill(r[1])} <b>${r[2]}</b>（${r[3]}）<br><span style="font-size:13.5px">「${r[0]}」：${r[4]}</span>${acctPlain(r[2])?`<br><span style="font-size:13.5px">📘 這個科目是：${acctPlain(r[2])[0]}</span>`:''}</div>`).join('') : '<div class="warn" style="margin:0">找不到這個品名，用右邊的引導問答判斷看看。</div>';
   };
   inp.oninput = search; search();
   let node='q1', path=[];
@@ -1236,7 +1308,7 @@ function quiz(){
       el.querySelectorAll('.px-cb').forEach(b=>b.onclick=()=>{
         const ok = b.dataset.c===it.r[1]; if(ok) st.score+=10; else st.wrong.push(`<b>${it.r[0]}</b>：你選 ${CAT[b.dataset.c].n}，正確是 ${CAT[it.r[1]].n}（${it.r[2]}）。${it.r[4]}`);
         el.querySelectorAll('.px-cb').forEach(x=>{x.disabled=true; if(x.dataset.c===it.r[1]) x.classList.add('right'); else if(x===b) x.classList.add('wrong');});
-        document.getElementById('pxFb').innerHTML = `<div class="px-fb ${ok?'ok':'no'}"><b>${ok?'✅ 答對了 +10':'❌ 答錯了'}</b><br>${pill(it.r[1])} <b>${it.r[2]}</b>（${it.r[3]}）<br>${it.r[4]}</div>${next()}`; bindNext();
+        document.getElementById('pxFb').innerHTML = `<div class="px-fb ${ok?'ok':'no'}"><b>${ok?'✅ 答對了 +10':'❌ 答錯了'}</b><br>${pill(it.r[1])} <b>${it.r[2]}</b>（${it.r[3]}）<br>${it.r[4]}${acctPlain(it.r[2])?`<br>📘 這個科目是：${acctPlain(it.r[2])[0]}`:''}</div>${next()}`; bindNext();
       });
     } else {
       const [q,opts,ans,why] = it.q;
