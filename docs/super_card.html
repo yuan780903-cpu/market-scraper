@@ -951,7 +951,7 @@ html.fest-day #vMain header{box-shadow:inset 0 -3px 0 rgba(255,205,110,.55)}
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.36", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.37", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -4048,9 +4048,17 @@ function exportVcf(){
 function autoContactOn(){ return ls("sc_autocontact")!=="0"; }
 function renderAutoContactBtn(){ setLabel($("btnAutoContact"), "存檔後自動加入通訊錄:"+(autoContactOn()?"開":"關")); }
 function isIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+/** iPhone 上是不是 Safari(含「加入主畫面」的 App);Chrome、LINE、FB 等內建瀏覽器都不是 */
+function iosSafari(){ return isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent); }
 function openContactSheet(txt){
   if(!isIOS()) return false;
-  location.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(txt);
+  if(iosSafari()){ location.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(txt); return true; }
+  // Chrome 等不吃 data: 網址 → 先把聯絡人暫存到自己的後端(10 分鐘、只能用一次),再用真正的網址打開
+  if(!S.code) return false;   // 沒登入(例如對方看我的公開名片)→ 交給原本的分享方式
+  post({action:"vcfPut", vcf:txt}).then(function(r){
+    if(!r.ok) throw new Error(r.error);
+    location.href=gasUrl()+"?vcf="+r.token;
+  }).catch(function(e){ toast("加入通訊錄失敗:"+e.message+"(可改用 Safari 開啟名片王)"); });
   return true;
 }
 /** 編輯頁:目前畫面上的這張加入通訊錄 */
