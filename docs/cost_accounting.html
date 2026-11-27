@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>做生意必學成本會計</title>
+<meta name="description" content="以堆肥場經營為例，學會變動成本、固定成本、管銷費用、邊際貢獻、毛利率與損益兩平，並把每張帳單歸到正確科目。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ee; --card:#ffffff; --ink:#1f2a1f; --muted:#5d6a5d; --line:#e3e0d6;
+  --brand:#2f6b3a; --brand-soft:#e4efe2;
+  --var:#c9821b; --var-soft:#fbf0dc;      /* 變動 */
+  --fix:#3d6a9e; --fix-soft:#e3ecf6;      /* 固定 */
+  --sga:#7a4fa0; --sga-soft:#efe6f6;      /* 管銷 */
+  --cm:#2f8a4a;  --cm-soft:#e1f2e5;       /* 邊際貢獻 */
+  --loss:#c0392b; --loss-soft:#fbe5e2;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141a15; --card:#1d251e; --ink:#e8ede6; --muted:#a3b0a2; --line:#2e3a2f;
+    --brand:#7cc48a; --brand-soft:#23382a;
+    --var:#f0b25a; --var-soft:#3a2e1a; --fix:#86b1e3; --fix-soft:#1f2d3d;
+    --sga:#c39be3; --sga-soft:#30243c; --cm:#6fd08c; --cm-soft:#1d3a26;
+    --loss:#f08a7e; --loss-soft:#3d2220; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141a15; --card:#1d251e; --ink:#e8ede6; --muted:#a3b0a2; --line:#2e3a2f;
+  --brand:#7cc48a; --brand-soft:#23382a;
+  --var:#f0b25a; --var-soft:#3a2e1a; --fix:#86b1e3; --fix-soft:#1f2d3d;
+  --sga:#c39be3; --sga-soft:#30243c; --cm:#6fd08c; --cm-soft:#1d3a26;
+  --loss:#f08a7e; --loss-soft:#3d2220; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7;font-size:16px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.hero{background:var(--brand);color:#fff;padding:28px 0 22px}
+:root[data-theme="dark"] header.hero{background:#21452a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header.hero{background:#21452a}}
+.hero h1{margin:0;font-size:clamp(24px,5vw,34px);font-weight:900;letter-spacing:.02em}
+.hero p{margin:6px 0 0;opacity:.9}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.18);border-radius:99px;padding:2px 12px;font-size:13px;margin-bottom:8px}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .wrap::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:12px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+nav.tabs button .soon{font-size:11px;color:var(--muted);margin-left:4px}
+main{padding:24px 0 60px}
+section.panel{display:none}
+section.panel.on{display:block}
+h2{font-size:22px;margin:36px 0 6px;font-weight:900}
+h2 .no{display:inline-block;background:var(--brand);color:#fff;border-radius:8px;padding:0 9px;margin-right:8px;font-size:17px;vertical-align:2px}
+:root[data-theme="dark"] h2 .no{color:#132015}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) h2 .no{color:#132015}}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.note{background:var(--brand-soft);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15px}
+.warn{background:var(--loss-soft);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15px}
+.num{font-variant-numeric:tabular-nums}
+b.v{color:var(--var)} b.f{color:var(--fix)} b.s{color:var(--sga)} b.c{color:var(--cm)} b.l{color:var(--loss)}
+
+/* 一噸錢去哪 */
+.ton-bar{display:flex;height:54px;border-radius:10px;overflow:hidden;margin:14px 0 8px;font-size:13px;font-weight:700;color:#fff}
+.ton-bar div{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.25;padding:0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* 名詞卡 */
+.terms{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.term{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.term .head{padding:14px 16px 10px;border-left:6px solid var(--c)}
+.term .head h3{margin:0;font-size:19px;font-weight:900}
+.term .head .en{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
+.term .head .one{margin:4px 0 0;font-weight:700;color:var(--c)}
+.term dl{margin:0;padding:4px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:14.5px}
+.term dt{font-weight:700;color:var(--muted);white-space:nowrap}
+.term dd{margin:0}
+.term .formula{margin:0 16px 14px;background:var(--bg);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700}
+
+/* 試算 */
+.sim{display:grid;grid-template-columns:300px 1fr;gap:16px}
+@media (max-width:820px){.sim{grid-template-columns:1fr}}
+.ctrl label{display:block;font-weight:700;font-size:14px;margin-top:12px}
+.ctrl label:first-child{margin-top:0}
+.ctrl .val{float:right;color:var(--brand);font-variant-numeric:tabular-nums}
+.ctrl input[type=range]{width:100%;accent-color:var(--brand)}
+.ctrl small{color:var(--muted);display:block;font-size:12.5px;line-height:1.5}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
+.kpi{background:var(--bg);border-radius:10px;padding:8px 10px}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .n{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+.pls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:620px){.pls{grid-template-columns:1fr}}
+.pl{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pl h4{margin:0 0 2px;font-size:16px}
+.pl .sub{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.pl table{width:100%;border-collapse:collapse;font-size:14px}
+.pl td{padding:5px 0;border-bottom:1px dashed var(--line)}
+.pl td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl tr.ind td:first-child{padding-left:14px;color:var(--muted);font-size:13px}
+.pl tr.ind td:last-child{color:var(--muted);font-size:13px}
+.pl tr.tot td{font-weight:900;border-bottom:0;border-top:2px solid var(--ink)}
+.pl tr.key td{font-weight:700}
+.pl tr.key.cm td{color:var(--cm)}
+.pl tr.key.gp td{color:var(--fix)}
+.chart{margin-top:12px}
+.chart svg{width:100%;height:auto;display:block}
+.chart .cap{font-size:12.5px;color:var(--muted)}
+
+/* 決策 */
+.cases{display:grid;gap:14px}
+.case{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.case h3{margin:0 0 6px;font-size:18px}
+.case .q{font-weight:700}
+.case .wrong{color:var(--loss)}
+.case .right{color:var(--cm);font-weight:700}
+.case table{border-collapse:collapse;font-size:14px;margin:8px 0;width:100%;max-width:560px}
+.case th,.case td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+.case th:first-child,.case td:first-child{text-align:left}
+.case th{color:var(--muted);font-weight:500;font-size:13px}
+
+/* 速記表 */
+.tblwrap{overflow-x:auto}
+table.cheat{border-collapse:collapse;width:100%;min-width:640px;font-size:14.5px;background:var(--card);border-radius:12px;overflow:hidden}
+table.cheat th{background:var(--brand);color:#fff;text-align:left;padding:10px;font-weight:700}
+:root[data-theme="dark"] table.cheat th{color:#132015}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) table.cheat th{color:#132015}}
+table.cheat td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+
+/* 名詞大全 */
+.gq{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--ink);margin:6px 0 10px}
+.gchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.gchips::-webkit-scrollbar{display:none}
+.gchips button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:99px;padding:4px 12px;font:inherit;font-size:13.5px;cursor:pointer}
+.gchips button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.gcount{font-size:13px;color:var(--muted);margin:8px 0}
+.glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+@media (max-width:420px){.glist{grid-template-columns:1fr}}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.gh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.gh h3{margin:0;font-size:18px;font-weight:900}
+.gen{font-size:12px;color:var(--muted)}
+.gcat{margin-left:auto;font-size:11.5px;background:var(--brand-soft);color:var(--brand);border-radius:99px;padding:1px 9px;font-weight:700}
+.gplain{margin:8px 0 6px;font-weight:700}
+.gstory{background:var(--bg);border-radius:8px;padding:8px 12px;font-size:14.5px}
+.gf{margin-top:8px;font-size:13.5px;font-weight:700;color:var(--fix)}
+.grel{margin-top:8px;font-size:13px;color:var(--muted)}
+.grel button{border:0;background:var(--var-soft);color:var(--ink);border-radius:6px;padding:1px 8px;margin:2px 4px 2px 0;font:inherit;font-size:12.5px;cursor:pointer}
+
+.placeholder{text-align:center;padding:60px 16px;color:var(--muted)}
+.placeholder .big{font-size:42px}
+footer{color:var(--muted);font-size:13px;text-align:center;padding:30px 16px 40px;border-top:1px solid var(--line)}
+.theme-btn{position:absolute;right:16px;top:16px;background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:99px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
+header.hero{position:relative}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <button class="theme-btn" id="themeBtn" type="button">🌓 深淺色</button>
+  <div class="wrap">
+    <span class="tag">堆肥場實戰版</span>
+    <h1>做生意必學成本會計</h1>
+    <p>看懂每一塊錢花去哪、賣多少才不賠、哪張單據該記哪個科目</p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="章節">
+  <div class="wrap" role="tablist">
+    <button class="on" data-tab="t1" role="tab">① 名詞應用</button>
+    <button data-tab="tG" role="tab">② 名詞大全</button>
+    <button data-tab="t2" role="tab">③ 堆肥場科目表<span class="soon">製作中</span></button>
+    <button data-tab="t3" role="tab">④ 帳單歸類引導<span class="soon">製作中</span></button>
+    <button data-tab="t4" role="tab">⑤ 計算器<span class="soon">製作中</span></button>
+    <button data-tab="t5" role="tab">⑥ 小測驗<span class="soon">製作中</span></button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ ① 名詞應用 ============ -->
+<section class="panel on" id="t1">
+
+  <div class="note">📖 想查任何成本會計名詞？到上方「② 名詞大全」，94 個名詞都有白話和故事解釋。</div>
+  <div class="note">📍 <b>本課範例：「好田堆肥場」</b>（虛構，數字為教學用的合理估算）—— 主力產品為粉狀有機質肥料，20kg 一包賣 120 元，等於<b>每噸 6,000 元</b>；每月產銷約 <b>300 噸</b>，產能上限 450 噸。</div>
+
+  <h2><span class="no">1</span>先看一噸堆肥賣 6,000 元，錢去了哪裡</h2>
+  <p class="lead">每多賣一噸都會跟著花掉的錢叫<b class="v">變動成本</b>，剩下的叫<b class="c">邊際貢獻</b>。邊際貢獻要先拿去付每個月不管賣多少都要付的<b class="f">固定成本</b>，付完還有剩，才是真正賺到的錢。</p>
+  <div class="card">
+    <div class="ton-bar" id="tonBar"></div>
+    <div class="legend">
+      <span><i style="background:var(--var)"></i>變動製造成本 2,700</span>
+      <span><i style="background:var(--sga)"></i>變動管銷費用 1,100</span>
+      <span><i style="background:var(--cm)"></i>邊際貢獻 2,200（先拿去付固定成本）</span>
+    </div>
+    <div class="note" style="margin-bottom:0">每月固定成本 59 萬 ÷ 每噸邊際貢獻 2,200 = <b>約 269 噸</b>。也就是每個月前 269 噸賺的邊際貢獻都拿去付固定成本，第 270 噸起每賣一噸才真的多賺 2,200 元。</div>
+  </div>
+
+  <h2><span class="no">2</span>八個一定要懂的名詞</h2>
+  <p class="lead">每個名詞都用「白話、堆肥場例子、用在哪、常犯錯」四格說明。</p>
+  <div class="terms" id="terms"></div>
+
+  <h2><span class="no">3</span>動手玩：同一座堆肥場，兩種損益表</h2>
+  <p class="lead">拉動下面的滑桿，看銷量、售價、原料價變化時，兩種損益表怎麼跟著動。兩張表的<b>營業利益一定相同</b>，差別只在「怎麼分類」。左邊是會計師報稅用的格式，右邊是老闆做決策用的格式。</p>
+  <div class="sim">
+    <div class="card ctrl">
+      <label>每月銷量 <span class="val" id="vQ"></span></label>
+      <input type="range" id="q" min="0" max="450" step="10" value="300">
+      <small>產能上限 450 噸／月</small>
+      <label>每噸售價 <span class="val" id="vP"></span></label>
+      <input type="range" id="p" min="4500" max="8000" step="100" value="6000">
+      <small>20kg 一包 = 售價 ÷ 50</small>
+      <label>每噸原料成本 <span class="val" id="vR"></span></label>
+      <input type="range" id="r" min="800" max="2600" step="50" value="1500">
+      <small>禽畜糞、菇包、稻殼、米糠等，扣除向畜牧場收的代處理費後的淨額</small>
+      <div class="kpis">
+        <div class="kpi"><div class="k">每噸邊際貢獻</div><div class="n" id="kCM"></div></div>
+        <div class="kpi"><div class="k">邊際貢獻率</div><div class="n" id="kCMR"></div></div>
+        <div class="kpi"><div class="k">損益兩平銷量</div><div class="n" id="kBEQ"></div></div>
+        <div class="kpi"><div class="k">損益兩平營業額</div><div class="n" id="kBES"></div></div>
+        <div class="kpi"><div class="k">每噸分攤固定成本</div><div class="n" id="kFPT"></div></div>
+        <div class="kpi"><div class="k">安全邊際率</div><div class="n" id="kMOS"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="pls">
+        <div class="pl">
+          <h4>傳統損益表</h4>
+          <div class="sub">報稅、財報用：先分「製造」和「管銷」</div>
+          <table id="plA"></table>
+        </div>
+        <div class="pl">
+          <h4>邊際貢獻損益表</h4>
+          <div class="sub">做決策用：先分「變動」和「固定」</div>
+          <table id="plB"></table>
+        </div>
+      </div>
+      <div class="card chart">
+        <svg id="cvp" viewBox="0 0 640 300" role="img" aria-label="損益兩平圖"></svg>
+        <div class="cap">損益兩平圖：綠線是營業收入，橘線是總成本（固定 + 變動），兩線交叉點就是損益兩平。直虛線是你目前設定的銷量。</div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">※ 試算假設當月生產量等於銷售量（沒有累積庫存）。有庫存時傳統損益表的固定製造費用會有一部分留在存貨裡，兩表利益會出現差異，這部分之後在計算器分頁再說明。</p>
+
+  <h2><span class="no">4</span>老闆常遇到的三個決策，名詞這樣用</h2>
+  <div class="cases" id="cases"></div>
+
+  <h2><span class="no">5</span>影片重點：毛利率不是用成本去加</h2>
+  <div class="card">
+    <p style="margin-top:0">很多人以為「成本加三成」就是「毛利率三成」，其實不是。<b>毛利率的分母是售價，不是成本。</b></p>
+    <div class="pls">
+      <div class="pl">
+        <h4 class="wrong" style="color:var(--loss)">❌ 常見算法：成本 × 1.3</h4>
+        <table>
+          <tr><td>每噸營業成本</td><td>4,067</td></tr>
+          <tr><td>× 1.3 = 售價</td><td>5,287</td></tr>
+          <tr><td>毛利</td><td>1,220</td></tr>
+          <tr class="tot"><td>實際毛利率 = 1,220 ÷ 5,287</td><td style="color:var(--loss)">23.1%</td></tr>
+        </table>
+      </div>
+      <div class="pl">
+        <h4 style="color:var(--cm)">✅ 正確算法：成本 ÷ (1 − 30%)</h4>
+        <table>
+          <tr><td>每噸營業成本</td><td>4,067</td></tr>
+          <tr><td>÷ 0.7 = 售價</td><td>5,810</td></tr>
+          <tr><td>毛利</td><td>1,743</td></tr>
+          <tr class="tot"><td>毛利率 = 1,743 ÷ 5,810</td><td style="color:var(--cm)">30.0%</td></tr>
+        </table>
+      </div>
+    </div>
+    <p>每噸營業成本 4,067 元的算法：300 噸的營業成本 122 萬（變動製造 81 萬 + 固定製造 41 萬）÷ 300 噸。</p>
+    <div class="note"><b>速算表</b>：想要毛利率 20% → 成本 × 1.25；25% → × 1.33；30% → × 1.43；40% → × 1.67；50% → × 2。</div>
+    <p style="margin-bottom:0"><b>營業額目標怎麼訂？</b>影片用「固定費用 ÷ 毛利率」估算，方向是對的。但更精準的做法是用<b class="c">邊際貢獻率</b>：<br>
+    營業額目標 =（固定成本 + 想賺的錢）÷ 邊際貢獻率<br>
+    好田堆肥場想每月淨賺 20 萬：（59 萬 + 20 萬）÷ 36.7% ≈ <b>215 萬</b>，約 <b>359 噸</b>。<br>
+    <span style="font-size:14px;color:var(--muted)">為什麼不用毛利率？因為毛利已經扣掉固定製造費用，但沒扣運費、佣金這些變動管銷費用。用毛利率去除會重複扣到固定成本，又漏算變動管銷費用，算出來的目標會失真。</span></p>
+  </div>
+
+  <h2><span class="no">6</span>一頁速記表</h2>
+  <div class="tblwrap">
+  <table class="cheat">
+    <tr><th>名詞</th><th>一句話</th><th>公式</th><th>最常用在</th></tr>
+    <tr><td><b class="v">變動成本</b></td><td>多做一噸就多花</td><td>每噸單價 × 噸數</td><td>報價底線、接不接特價單</td></tr>
+    <tr><td><b class="f">固定成本</b></td><td>沒做也要付</td><td>每月固定金額</td><td>算損益兩平、淡季要不要停工</td></tr>
+    <tr><td><b class="s">管銷費用</b></td><td>賣東西和管公司的錢</td><td>推銷費用 + 管理費用</td><td>看毛利夠不夠養公司</td></tr>
+    <tr><td>毛利率</td><td>扣掉生產成本還剩幾成</td><td>(售價 − 營業成本) ÷ 售價</td><td>跟同業比、訂售價</td></tr>
+    <tr><td><b class="c">邊際貢獻</b></td><td>每賣一噸能拿去付固定成本的錢</td><td>售價 − 全部變動成本</td><td>短期決策、產品取捨</td></tr>
+    <tr><td><b class="c">邊際貢獻率</b></td><td>每賣 100 元能貢獻幾元</td><td>邊際貢獻 ÷ 售價</td><td>算營業額目標</td></tr>
+    <tr><td>損益兩平點</td><td>不賺不賠的銷量</td><td>固定成本 ÷ 每噸邊際貢獻</td><td>訂每月最低業績</td></tr>
+    <tr><td>安全邊際</td><td>業績掉多少還不會賠</td><td>(目前銷量 − 兩平銷量) ÷ 目前銷量</td><td>評估經營風險</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ============ ② 名詞大全 ============ -->
+<section class="panel" id="tG"></section>
+
+<!-- ============ 其他分頁（下一步製作） ============ -->
+<section class="panel" id="t2"><div class="placeholder"><div class="big">📒</div><p><b>堆肥場會計科目表</b><br>下一步製作：直接材料、直接人工、製造費用、推銷與管理費用、營業外收支、固定資產，每個科目都附堆肥場的實際例子。</p></div></section>
+<section class="panel" id="t3"><div class="placeholder"><div class="big">🧾</div><p><b>帳單歸類引導器</b><br>下一步製作：輸入「柴油」「太空袋」「檢驗費」就告訴你記哪個科目；不確定的單據會一題一題問你，帶你歸到正確科目。</p></div></section>
+<section class="panel" id="t4"><div class="placeholder"><div class="big">🧮</div><p><b>計算器</b><br>下一步製作：每噸成本分攤、毛利率與加成率換算、營業額目標。</p></div></section>
+<section class="panel" id="t5"><div class="placeholder"><div class="big">✏️</div><p><b>小測驗</b><br>下一步製作：用堆肥場的真實單據情境練習歸類。</p></div></section>
+
+</main>
+
+<footer>做生意必學成本會計 · 堆肥場實戰版 v1.1 · 範例數字為教學用估算，實際入帳請依公司會計制度與記帳士意見</footer>
+
+<script>
+/* ---------- 範例基準數字（每噸、每月） ---------- */
+const B = {
+  price: 6000,
+  raw: 1500,               // 原料淨額
+  vmOther: { 菌種與添加物:250, 包裝袋:400, 柴油:200, 電費用量部分:150, 計件裝袋工資:200 }, // 其他變動製造
+  vs: { 出貨運費:700, 經銷佣金:400 },   // 變動管銷
+  fm: { 廠房與機械折舊:140000, 現場固定人員薪資與勞健保:200000, 電費基本費:15000, 保險與檢驗費:25000, 維修保養:30000 }, // 固定製造
+  fs: { 業務薪資:90000, 行政會計薪資:50000, 記帳與登記證雜支:20000, 廣告與試用包:20000 },                // 固定管銷
+  cap: 450
+};
+const sum = o => Object.values(o).reduce((a,b)=>a+b,0);
+const VMO = sum(B.vmOther), VS = sum(B.vs), FM = sum(B.fm), FS = sum(B.fs), F = FM+FS;
+const fmt = n => Math.round(n).toLocaleString('zh-TW');
+const wan = n => (n/10000).toLocaleString('zh-TW',{maximumFractionDigits:1})+' 萬';
+const pct = n => isFinite(n) ? (n*100).toFixed(1)+'%' : '—';
+
+/* ---------- 一噸錢去哪 ---------- */
+(function(){
+  const vm = B.raw+VMO, cm = B.price-vm-VS;
+  const segs = [[vm,'var(--var)','變動製造<br>2,700'],[VS,'var(--sga)','變動管銷<br>1,100'],[cm,'var(--cm)','邊際貢獻<br>2,200']];
+  document.getElementById('tonBar').innerHTML = segs.map(([v,c,t])=>`<div style="flex:${v};background:${c}">${t}</div>`).join('');
+})();
+
+/* ---------- 名詞卡 ---------- */
+const TERMS = [
+ {c:'var(--var)',t:'變動成本',en:'Variable Cost',one:'多做一噸，就多花一筆',
+  plain:'跟著產量或銷量一起增減的成本。不生產就不會發生。',
+  ex:'禽畜糞、菇包、稻殼等原料；菌種；20kg 包裝袋（每噸 50 個）；鏟裝機和翻堆機的柴油；計件裝袋工資；出貨運費；經銷佣金。',
+  use:'報價底線：售價再低都不能低於變動成本，否則賣越多虧越多。',
+  err:'把「每噸原料」當成全部成本報價，忘了還有包裝袋、運費、佣金。',
+  f:'變動成本總額 = 每噸變動成本 × 噸數'},
+ {c:'var(--fix)',t:'固定成本',en:'Fixed Cost',one:'沒做也要付',
+  plain:'在一定產能範圍內，不管這個月做 100 噸還是 400 噸都差不多的成本。',
+  ex:'堆肥舍和翻堆機折舊、廠房租金、現場固定員工月薪和勞健保、設備保險、電費基本費、業務和會計月薪。',
+  use:'產量越大，每噸分攤越少：月固定 59 萬，做 200 噸每噸分攤 2,950 元，做 400 噸只剩 1,475 元。這就是「量大成本低」的原因。',
+  err:'淡季停產以為就「省下成本」，其實固定成本一毛都沒少，停產反而沒有邊際貢獻可以付它。',
+  f:'每噸分攤固定成本 = 固定成本總額 ÷ 噸數'},
+ {c:'var(--muted)',t:'半變動成本',en:'Mixed Cost',one:'一半固定、一半跟著量走',
+  plain:'有基本費、超過的部分再依用量計費。分析時要拆成固定和變動兩部分。',
+  ex:'電費（基本費 + 流動電費）、行動電話費、機具維修（定期保養固定、超時使用的耗損變動）、加班費。',
+  use:'拆法：拿最高產量月和最低產量月比較，電費差額 ÷ 噸數差 = 每噸變動電費，剩下的就是固定部分（高低點法）。',
+  err:'整筆電費都當變動或都當固定，損益兩平會算偏。',
+  f:'總額 = 固定部分 + 每噸變動 × 噸數'},
+ {c:'var(--sga)',t:'管銷費用',en:'SG&A（營業費用）',one:'把東西賣出去和管公司的錢',
+  plain:'不屬於「生產」的費用，分兩種：<b>推銷費用</b>（為了賣）和<b>管理費用</b>（為了管）。會計上又叫期間費用，發生當期就認列，不會變成存貨成本。',
+  ex:'推銷費用：業務薪資、出貨運費、經銷佣金、廣告、試用包、展覽。管理費用：會計和行政薪資、記帳士費、肥料登記證費、辦公室水電、交際費。',
+  use:'判斷毛利夠不夠養公司：毛利 − 管銷費用 = 營業利益。毛利率 32% 看起來不錯，扣完管銷可能只剩 4%。',
+  err:'把出貨運費算進生產成本（它是推銷費用），或把現場主管薪資算進管理費用（它是製造費用），毛利率就失真。',
+  f:'營業費用 = 推銷費用 + 管理費用（+ 研發費用）'},
+ {c:'var(--fix)',t:'毛利 / 毛利率',en:'Gross Profit',one:'扣掉生產成本還剩多少',
+  plain:'營業收入扣掉營業成本（直接材料 + 直接人工 + 製造費用，包含固定的製造費用）。',
+  ex:'300 噸營收 180 萬，營業成本 122 萬 → 毛利 58 萬，毛利率 32.2%。',
+  use:'跟同業比較、訂售價、看生產效率有沒有變差。',
+  err:'用「成本 × 1.3」當成毛利率 30%，實際只有 23%（見第 5 節）。',
+  f:'毛利率 = (營收 − 營業成本) ÷ 營收'},
+ {c:'var(--cm)',t:'邊際貢獻',en:'Contribution Margin',one:'每賣一噸，能拿去付固定成本的錢',
+  plain:'售價扣掉<b>所有</b>變動成本（含變動的生產成本，也含運費、佣金等變動管銷費用）。',
+  ex:'每噸售價 6,000 − 變動成本 3,800 = 每噸邊際貢獻 2,200 元；邊際貢獻率 36.7%。',
+  use:'短期決策的核心：接不接特價單、哪個品項優先做、要不要停產。只要邊際貢獻大於 0，而且有閒置產能，多做就多賺。',
+  err:'跟毛利搞混。毛利扣了固定製造費用但沒扣運費和佣金；邊際貢獻剛好相反。',
+  f:'邊際貢獻 = 售價 − 變動成本；邊際貢獻率 = 邊際貢獻 ÷ 售價'},
+ {c:'var(--brand)',t:'損益兩平點',en:'Break-even Point',one:'不賺也不賠的那條線',
+  plain:'邊際貢獻總額剛好等於固定成本時的銷量。',
+  ex:'固定成本 59 萬 ÷ 每噸邊際貢獻 2,200 = 268.2 噸，約 269 噸；營業額約 161 萬。',
+  use:'訂每月最低業績目標；評估漲價、降價或新增固定支出（例如買新的翻堆機）會讓兩平點移動多少。',
+  err:'買了一台每月折舊 3 萬的機器，卻沒想到兩平點要多賣 14 噸才打平。',
+  f:'兩平銷量 = 固定成本 ÷ 每噸邊際貢獻；兩平營業額 = 固定成本 ÷ 邊際貢獻率'},
+ {c:'var(--brand)',t:'營業額目標 / 安全邊際',en:'Target & Margin of Safety',one:'要賺多少就要賣多少，以及離賠錢還有多遠',
+  plain:'把想賺的錢當成另一筆「固定成本」加進去，就能反推業績目標。安全邊際表示業績掉幾成還不會虧錢。',
+  ex:'想每月淨賺 20 萬：(59 萬 + 20 萬) ÷ 36.7% ≈ 215 萬，約 359 噸。目前 300 噸的安全邊際 = (300 − 269) ÷ 300 ≈ 10.6%。',
+  use:'安全邊際低於 15% 就是警訊：碰到雨季或缺工，業績一掉就會虧錢，要嘛降固定成本，要嘛提高單價。',
+  err:'只訂營業額目標，不管產品組合。賣一堆低邊際貢獻的品項，營業額達標了，利潤卻沒到。',
+  f:'目標營業額 = (固定成本 + 目標利潤) ÷ 邊際貢獻率'}
+];
+document.getElementById('terms').innerHTML = TERMS.map(x=>`
+ <article class="term" style="--c:${x.c}">
+  <div class="head"><h3>${x.t}<span class="en">${x.en}</span></h3><p class="one">${x.one}</p></div>
+  <dl>
+   <dt>白話</dt><dd>${x.plain}</dd>
+   <dt>堆肥場</dt><dd>${x.ex}</dd>
+   <dt>用在哪</dt><dd>${x.use}</dd>
+   <dt>常犯錯</dt><dd>${x.err}</dd>
+  </dl>
+  <div class="formula">📐 ${x.f}</div>
+ </article>`).join('');
+
+/* ---------- 互動試算 ---------- */
+const $ = id => document.getElementById(id);
+function row(label,val,cls=''){ return `<tr class="${cls}"><td>${label}</td><td>${val}</td></tr>`; }
+function money(n){ return n<0 ? `<span style="color:var(--loss)">−${fmt(-n)}</span>` : fmt(n); }
+
+function calc(){
+  const q=+$('q').value, p=+$('p').value, r=+$('r').value;
+  $('vQ').textContent = q+' 噸';
+  $('vP').textContent = fmt(p)+' 元（每包 '+fmt(p/50)+'）';
+  $('vR').textContent = fmt(r)+' 元';
+  const vm = r+VMO, v = vm+VS, cm = p-v;
+  const rev=p*q, VMt=vm*q, VSt=VS*q, cogs=VMt+FM, gp=rev-cogs, sga=VSt+FS, op=gp-sga;
+  const cmT=cm*q;
+  // 傳統
+  $('plA').innerHTML =
+    row('營業收入',fmt(rev),'key') +
+    row('− 營業成本',fmt(cogs)) +
+    row('變動製造（原料、包材、柴油…）',fmt(VMt),'ind') +
+    row('固定製造（折舊、現場薪資…）',fmt(FM),'ind') +
+    row('= 毛利　毛利率 '+pct(gp/rev),money(gp),'key gp') +
+    row('− 管銷費用',fmt(sga)) +
+    row('變動管銷（運費、佣金）',fmt(VSt),'ind') +
+    row('固定管銷（業務、行政薪資…）',fmt(FS),'ind') +
+    row('= 營業利益　'+pct(op/rev),money(op),'tot');
+  // 邊際貢獻
+  $('plB').innerHTML =
+    row('營業收入',fmt(rev),'key') +
+    row('− 變動成本',fmt(VMt+VSt)) +
+    row('變動製造',fmt(VMt),'ind') +
+    row('變動管銷',fmt(VSt),'ind') +
+    row('= 邊際貢獻　貢獻率 '+pct(cm/p),money(cmT),'key cm') +
+    row('− 固定成本',fmt(F)) +
+    row('固定製造',fmt(FM),'ind') +
+    row('固定管銷',fmt(FS),'ind') +
+    row('= 營業利益　'+pct(op/rev),money(op),'tot');
+  // KPI
+  const beq = cm>0 ? F/cm : Infinity;
+  $('kCM').innerHTML = money(cm)+' 元';
+  $('kCMR').textContent = pct(cm/p);
+  $('kBEQ').textContent = cm>0 ? Math.ceil(beq)+' 噸' : '永遠賠';
+  $('kBES').textContent = cm>0 ? wan(beq*p) : '—';
+  $('kFPT').textContent = q>0 ? fmt(F/q)+' 元' : '—';
+  const mos = q>0 && cm>0 ? (q-beq)/q : NaN;
+  $('kMOS').innerHTML = isFinite(mos) ? (mos<0?`<span style="color:var(--loss)">${pct(mos)}</span>`:pct(mos)) : '—';
+  if(cm>0 && beq>B.cap) $('kBEQ').innerHTML = `<span style="color:var(--loss)">${Math.ceil(beq)} 噸（超過產能）</span>`;
+  drawCVP(p,v,q,beq);
+}
+
+function drawCVP(p,v,q,beq){
+  const W=640,H=300,L=62,R=16,T=14,Bm=36, X=500, Ymax=Math.max(3.6e6, p*X*1.02);
+  const x=t=>L+(t/X)*(W-L-R), y=m=>H-Bm-(m/Ymax)*(H-T-Bm);
+  const css=getComputedStyle(document.documentElement);
+  const c=k=>css.getPropertyValue(k).trim();
+  let s='';
+  // grid
+  for(let m=0;m<=Ymax;m+=500000){ s+=`<line x1="${L}" x2="${W-R}" y1="${y(m)}" y2="${y(m)}" stroke="${c('--line')}"/>`+
+    `<text x="${L-6}" y="${y(m)+4}" text-anchor="end" font-size="11" fill="${c('--muted')}">${m/10000}萬</text>`; }
+  for(let t=0;t<=X;t+=100){ s+=`<text x="${x(t)}" y="${H-Bm+16}" text-anchor="middle" font-size="11" fill="${c('--muted')}">${t}</text>`; }
+  s+=`<text x="${W-R}" y="${H-4}" text-anchor="end" font-size="11" fill="${c('--muted')}">每月噸數</text>`;
+  // capacity
+  s+=`<rect x="${x(B.cap)}" y="${T}" width="${x(X)-x(B.cap)}" height="${H-T-Bm}" fill="${c('--line')}" opacity=".5"/>`+
+     `<text x="${(x(B.cap)+x(X))/2}" y="${T+14}" text-anchor="middle" font-size="11" fill="${c('--muted')}">超過產能</text>`;
+  // fixed
+  s+=`<line x1="${x(0)}" x2="${x(X)}" y1="${y(F)}" y2="${y(F)}" stroke="${c('--fix')}" stroke-width="2" stroke-dasharray="6 4"/>`+
+     `<text x="${x(8)}" y="${y(F)-6}" font-size="11.5" fill="${c('--fix')}">固定成本 ${wan(F)}</text>`;
+  // total cost
+  s+=`<line x1="${x(0)}" y1="${y(F)}" x2="${x(X)}" y2="${y(F+v*X)}" stroke="${c('--var')}" stroke-width="2.5"/>`;
+  s+=`<text x="${x(X)-4}" y="${y(F+v*X)+16}" text-anchor="end" font-size="11.5" fill="${c('--var')}">總成本</text>`;
+  // revenue
+  s+=`<line x1="${x(0)}" y1="${y(0)}" x2="${x(X)}" y2="${y(p*X)}" stroke="${c('--cm')}" stroke-width="2.5"/>`;
+  s+=`<text x="${x(X)-4}" y="${y(p*X)-6}" text-anchor="end" font-size="11.5" fill="${c('--cm')}">營業收入</text>`;
+  // current q
+  s+=`<line x1="${x(q)}" x2="${x(q)}" y1="${T}" y2="${H-Bm}" stroke="${c('--ink')}" stroke-dasharray="3 3" opacity=".6"/>`;
+  // BEP
+  if(isFinite(beq) && beq<=X){
+    s+=`<circle cx="${x(beq)}" cy="${y(p*beq)}" r="6" fill="${c('--card')}" stroke="${c('--ink')}" stroke-width="2.5"/>`+
+       `<text x="${x(beq)-10}" y="${y(p*beq)-12}" text-anchor="end" font-size="12" font-weight="700" fill="${c('--ink')}">損益兩平 ${Math.ceil(beq)} 噸</text>`;
+  }
+  // axis
+  s+=`<line x1="${L}" x2="${W-R}" y1="${H-Bm}" y2="${H-Bm}" stroke="${c('--muted')}"/>`;
+  $('cvp').innerHTML=s;
+}
+['q','p','r'].forEach(id=>$(id).addEventListener('input',calc));
+
+/* ---------- 決策案例 ---------- */
+const CASES = [
+ {t:'決策一：經銷商要每噸 4,500 元的特價單 100 噸，接不接？',
+  q:'經銷商自己派車來載，所以不用付運費，也不用付佣金。目前每月做 300 噸，產能還有 150 噸空著。',
+  wrong:'❌ 直覺判斷：每噸營業成本 4,067，再加管銷費用，總成本超過 5,700，賣 4,500 一定虧，不接。',
+  body:`<table><tr><th>這張單真正會多花的錢</th><th>每噸</th></tr>
+    <tr><td>變動製造（原料 1,500 + 菌種、袋子、柴油、電、計件工資 1,200）</td><td>2,700</td></tr>
+    <tr><td>運費、佣金（自載，免付）</td><td>0</td></tr>
+    <tr><td><b>每噸邊際貢獻 = 4,500 − 2,700</b></td><td><b>1,800</b></td></tr>
+    <tr><td><b>這張單多賺 = 1,800 × 100 噸</b></td><td><b>180,000</b></td></tr></table>`,
+  right:'✅ 用邊際貢獻判斷：固定成本接不接都要付，這張單每月多賺 18 萬，營業利益從 7 萬變 25 萬。',
+  tip:'⚠️ 三個前提：① 有閒置產能，不會排擠原價訂單；② 不會讓原本的客戶知道而要求降價（最好用不同品名或包裝）；③ 只是短期，長期報價還是要能涵蓋全部成本。'},
+ {t:'決策二：雨季訂單少，要不要乾脆停工一個月？',
+  q:'雨季只接得到 120 噸的單，老闆想乾脆停工，省得「做越多虧越多」。',
+  wrong:'❌ 直覺：120 噸的營業利益是 −32.6 萬，停工就不會虧了。',
+  body:`<table><tr><th>方案</th><th>邊際貢獻</th><th>固定成本</th><th>營業利益</th></tr>
+    <tr><td>照常做 120 噸</td><td>264,000</td><td>590,000</td><td style="color:var(--loss)">−326,000</td></tr>
+    <tr><td>停工</td><td>0</td><td>約 590,000*</td><td style="color:var(--loss)">−590,000</td></tr></table>
+    <div style="font-size:13px;color:var(--muted)">* 折舊、保險、月薪、基本電費停工照樣發生</div>`,
+  right:'✅ 只要售價高於變動成本（邊際貢獻大於 0），做一噸就能多付一點固定成本，照常做反而少虧 26.4 萬。',
+  tip:'💡 更好的做法：雨季先生產備貨（堆肥本來就需要醱酵時間），把固定成本攤到旺季的銷量；或趁雨季做設備保養，把原本旺季才做的維修移過來。'},
+ {t:'決策三：粒狀和粉狀，業務該先推哪一個？',
+  q:'粒狀每噸賣 7,000，但多了造粒的電費和黏結劑。造粒機一個月最多只能做 150 噸。',
+  wrong:'❌ 只看「率」：粉狀邊際貢獻率 36.7%，比粒狀的 34.3% 高，所以主推粉狀。',
+  body:`<table><tr><th>品項</th><th>售價</th><th>變動成本</th><th>每噸邊際貢獻</th><th>貢獻率</th></tr>
+    <tr><td>粉狀</td><td>6,000</td><td>3,800</td><td>2,200</td><td>36.7%</td></tr>
+    <tr><td>粒狀</td><td>7,000</td><td>4,600</td><td><b>2,400</b></td><td>34.3%</td></tr></table>`,
+  right:'✅ 產能夠的時候，看每噸賺多少：粒狀每噸多賺 200 元，造粒機的 150 噸要優先排滿粒狀單，剩下的產能再做粉狀。',
+  tip:'💡 規則：有瓶頸時，比的是「每單位瓶頸資源能賺多少邊際貢獻」，例如每小時造粒機賺多少，而不是比貢獻率高低。貢獻率適合用來算營業額目標，不適合用來做產品取捨。'}
+];
+$('cases').innerHTML = CASES.map(c=>`
+ <article class="case"><h3>${c.t}</h3>
+  <p class="q">${c.q}</p>
+  <p class="wrong">${c.wrong}</p>
+  ${c.body}
+  <p class="right">${c.right}</p>
+  <div class="note" style="margin-bottom:0">${c.tip}</div>
+ </article>`).join('');
+
+/* ---------- 分頁 ---------- */
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section.panel').forEach(s=>s.classList.toggle('on',s.id===b.dataset.tab));
+  window.scrollTo({top:document.querySelector('nav.tabs').offsetTop,behavior:'smooth'});
+}));
+
+/* ---------- 深淺色 ---------- */
+$('themeBtn').addEventListener('click',()=>{
+  const r=document.documentElement, dark = r.dataset.theme ? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+  try{localStorage.setItem('ca-theme',r.dataset.theme)}catch(e){}
+  calc();
+});
+try{const t=localStorage.getItem('ca-theme'); if(t) document.documentElement.dataset.theme=t;}catch(e){}
+
+calc();
+</script>
+<script>
+/* ---------- 名詞大全 ---------- */
+const GCATS = ['基本觀念','製造成本三要素','成本習性','損益表','本量利','成本制度','成本法與存貨','經營決策','資產與折舊','管理與預算','現金','堆肥場特有'];
+const GL = [
+// 基本觀念
+['基本觀念','成本','Cost','為了得到某樣東西而付出的代價，不一定已經變成費用。','阿田老闆買了 100 噸稻殼，花了 30 萬。稻殼還堆在倉庫裡，這 30 萬是「成本」，但還沒變成「費用」，要等做成肥料賣掉才算。','','費用、存貨'],
+['基本觀念','費用','Expense','已經用掉、而且這個月就要從收入扣掉的錢。','稻殼做成肥料、肥料賣出去的那個月，稻殼的 30 萬才從倉庫「走」到損益表，變成費用。辦公室電費則是一用掉就算費用。','','成本、期間成本'],
+['基本觀念','成本標的','Cost Object','你想知道「它花了多少錢」的那個對象。','阿田想知道「一噸粉狀肥」花多少錢，粉狀肥就是成本標的；想知道「北場一個月」花多少錢，北場就是成本標的。先決定要算誰，才知道哪些錢要算進來。','','直接成本、間接成本'],
+['基本觀念','直接成本','Direct Cost','可以清楚算出「是為了這個產品花的」的錢。','包裝袋一個 8 元，一噸要 50 個，這 400 元直接看得出是為了這一噸花的，就是直接成本。','','間接成本、成本標的'],
+['基本觀念','間接成本','Indirect Cost','好幾個產品一起用、沒辦法直接說是誰的錢，只能用某種方式分攤。','廠房一個月折舊 8 萬，粉狀和粒狀都在裡面做。這 8 萬要用產量或機器時數分給兩個產品，就是間接成本。','','成本分攤、製造費用'],
+['基本觀念','產品成本','Product Cost','做出產品要花的錢（材料、人工、製造費用），產品賣掉前都算存貨。','還在醱酵場裡的 200 噸堆肥，裡面的材料、工資、折舊都先「存」在堆肥裡，賣出去才變成銷貨成本。','直接材料 + 直接人工 + 製造費用','期間成本、存貨'],
+['基本觀念','期間成本','Period Cost','跟生產無關、發生的那個月就直接認列的費用。','業務的薪水、廣告費、會計師費用，不管這個月有沒有賣出肥料，都直接算在這個月，不會存進存貨。','','管銷費用、產品成本'],
+// 製造成本三要素
+['製造成本三要素','直接材料','Direct Material','直接變成產品一部分的原料。','禽畜糞、菇包、稻殼、米糠，經過醱酵就變成堆肥。它們就是好田堆肥場的直接材料。','','間接材料、產成率'],
+['製造成本三要素','直接人工','Direct Labor','直接動手做產品的人的薪水。','開翻堆機的師傅、裝袋的作業員，他們的時間直接花在產品上，屬直接人工。','','間接人工'],
+['製造成本三要素','製造費用','Manufacturing Overhead','工廠裡除了直接材料、直接人工以外的所有生產成本。','電費、柴油、機器折舊、維修、清潔工、廠長薪水、檢驗費。這些都是為了生產，但沒辦法直接歸到某一包肥料上。','','變動製造費用、固定製造費用'],
+['製造成本三要素','間接材料','Indirect Material','生產會用到、但不會變成產品一部分（或金額小到不值得追）的材料。','稀硫酸用來吸收臭味，不會變成肥料；機器潤滑油、篩網也是。它們算在製造費用裡。','','製造費用'],
+['製造成本三要素','間接人工','Indirect Labor','在工廠工作、但沒有直接做產品的人。','清潔工、倉管、現場主管、修機器的師傅。他們讓工廠能運作，但不是直接做肥料，屬於製造費用。','','直接人工、製造費用'],
+['製造成本三要素','主要成本','Prime Cost','直接材料加直接人工，最「看得見」的兩塊。','一噸肥料用了 1,500 元原料、200 元裝袋工資，主要成本就是 1,700 元。','直接材料 + 直接人工','加工成本'],
+['製造成本三要素','加工成本','Conversion Cost','把原料「變成」產品所花的錢。','禽畜糞本身不值錢，翻堆、醱酵、篩分、包裝把它變成肥料。直接人工加上製造費用，就是加工成本。','直接人工 + 製造費用','主要成本'],
+// 成本習性
+['成本習性','變動成本','Variable Cost','產量多，它就多；不生產就不會發生。','多做一噸肥料，就多用 50 個袋子、多燒柴油、多付計件工資。好田每噸變動成本 3,800 元。','總額 = 每單位變動成本 × 數量','固定成本、邊際貢獻'],
+['成本習性','固定成本','Fixed Cost','不管做多做少，每個月都要付差不多的錢。','颱風月停工兩週，廠房折舊、保險、月薪員工的薪水一毛都沒少。好田每月固定成本 59 萬。','每單位固定成本 = 固定成本總額 ÷ 數量','變動成本、攸關範圍'],
+['成本習性','半變動成本','Mixed Cost','有一部分固定、一部分跟著量走。','電費有基本費，不開機也要付；機器開越久，流動電費越多。分析時要拆開。','總額 = 固定部分 + 單位變動 × 數量','高低點法'],
+['成本習性','階梯式成本','Step Cost','在一個範圍內固定，超過就跳一階。','一位裝袋工一個月最多裝 150 噸。產量從 140 噸變 160 噸，就要多請一個人，人事成本一下子跳上去。','','攸關範圍'],
+['成本習性','攸關範圍','Relevant Range','成本習性成立的產量區間，超出就不準了。','好田在 100～450 噸之間，固定成本都是 59 萬。要做到 600 噸就要加蓋醱酵槽，固定成本會變，原本的公式就不適用。','','固定成本、階梯式成本'],
+['成本習性','高低點法','High-Low Method','用最高產量和最低產量那兩個月，把半變動成本拆成固定和變動兩部分。','3 月做 400 噸，電費 11 萬；7 月做 200 噸，電費 7 萬。多 200 噸多 4 萬，所以每噸變動電費 200 元，固定部分 = 11 萬 − 400×200 = 3 萬。','單位變動 = 成本差 ÷ 數量差','半變動成本'],
+// 損益表
+['損益表','營業收入','Revenue','賣產品、提供服務拿到的錢。','好田賣肥料收 180 萬，幫畜牧場處理禽畜糞收 30 萬，兩個都是營業收入。','','銷貨淨額、處理費收入'],
+['損益表','銷貨退回與折讓','Sales Returns & Allowances','客人退貨，或因為品質、量大給的折扣，要從收入扣掉。','經銷商反應一批肥料結塊，退回 5 噸、另外 3 噸給 9 折。這些都會讓收入變少，而且常常被忽略。','','銷貨淨額'],
+['損益表','銷貨淨額','Net Sales','收入扣掉退回、折讓（有些公司也扣運費）之後真正拿到的錢。','帳面賣了 200 萬，退回 5 萬、折讓 3 萬、運費 8 萬，銷貨淨額只有 184 萬。算毛利率要用這個數字。','銷貨收入 − 退回 − 折讓（− 運費）','營業收入'],
+['損益表','銷貨成本','Cost of Goods Sold','賣掉的那些產品，當初做的時候花的錢。','這個月賣了 300 噸，每噸製造成本 4,067 元，銷貨成本就是 122 萬。還沒賣的不算。','期初存貨 + 本期製造 − 期末存貨','毛利、存貨'],
+['損益表','毛利','Gross Profit','賣東西賺的錢，扣掉生產成本後剩多少。','收 180 萬、銷貨成本 122 萬，毛利 58 萬。這 58 萬還要拿去付業務薪水、辦公室、廣告。','銷貨淨額 − 銷貨成本','毛利率、營業利益'],
+['損益表','毛利率','Gross Margin','每賣 100 元，扣掉生產成本還剩幾元。分母是售價。','58 萬 ÷ 180 萬 = 32.2%。很多人用「成本加三成」當成毛利率三成，其實只有 23%。','毛利 ÷ 銷貨淨額','加成率'],
+['損益表','加成率','Markup','在成本上加幾成當售價。分母是成本，常被誤當成毛利率。','成本 100 元加 30% 賣 130 元，加成率 30%，毛利率卻只有 30 ÷ 130 = 23%。想要毛利率 30%，售價要 100 ÷ 0.7 = 143 元。','(售價 − 成本) ÷ 成本','毛利率'],
+['損益表','營業費用（管銷費用）','Operating Expenses / SG&A','把產品賣出去、把公司管好要花的錢，包含推銷、管理、研發費用。','業務薪水、廣告、會計、總公司分攤，好田每月 18 萬固定管銷，加上每噸運費和佣金。','推銷費用 + 管理費用 + 研發費用','期間成本'],
+['損益表','推銷費用','Selling Expense','為了把東西賣出去而花的錢。','業務薪水、出貨運費、經銷佣金、展覽、贊助地方活動、試用包、隨貨出去回不來的棧板。','','管理費用'],
+['損益表','管理費用','Administrative Expense','為了讓公司運作而花的錢，跟生產、銷售都沒有直接關係。','會計和行政人員薪水、記帳士費用、肥料登記證規費、協會會費、交際費。','','推銷費用'],
+['損益表','研究發展費用','R&D Expense','為了開發新產品、新技術花的錢。','跟大學合作研究除臭方法、試驗新菌種配方、技術授權金。','','無形資產'],
+['損益表','營業利益','Operating Income','本業賺的錢：毛利扣掉營業費用。','毛利 58 萬 − 管銷 51 萬 = 營業利益 7 萬。毛利率 32% 看起來不錯，扣完只剩 3.9%。','毛利 − 營業費用','稅前淨利'],
+['損益表','營業外收支','Non-operating Items','跟本業無關的收入或支出。','銀行利息、賣掉舊卡車的賺賠、環保罰款、匯兌損益。看公司本業好不好，要先把它拿掉。','','營業利益'],
+['損益表','稅前淨利','Profit Before Tax（PBT）','營業利益加減營業外收支，還沒扣所得稅。','營業利益 7 萬，賣舊卡車賺 20 萬，稅前淨利 27 萬。但明年沒有舊卡車可以賣，看趨勢要看營業利益。','營業利益 ± 營業外收支','營業利益'],
+['損益表','EBITDA','EBITDA','扣利息、稅、折舊、攤銷之前的利潤，大致代表本業產生現金的能力。','好田營業利益 7 萬，加回折舊 14 萬，EBITDA 21 萬。雖然帳上小賺，現金其實每月多進 21 萬左右（還沒算還貸款和買新機器）。','營業利益 + 折舊 + 攤銷','折舊、利潤 vs 現金'],
+// 本量利
+['本量利','邊際貢獻','Contribution Margin','每多賣一單位，扣掉所有變動成本後剩下、可以拿去付固定成本的錢。','每噸賣 6,000、變動成本 3,800，每噸邊際貢獻 2,200 元。這 2,200 先付固定成本，付完才是利潤。','售價 − 變動成本','毛利、損益兩平點'],
+['本量利','邊際貢獻率','Contribution Margin Ratio','每賣 100 元，有幾元能拿去付固定成本。','2,200 ÷ 6,000 = 36.7%，每賣 100 元，有 36.7 元能用來付固定成本和賺錢。','邊際貢獻 ÷ 售價','目標利潤'],
+['本量利','損益兩平點','Break-even Point','不賺也不賠的銷量或營業額。','固定成本 59 萬 ÷ 每噸邊際貢獻 2,200 = 269 噸。好田每月要賣到 269 噸才開始賺錢。','固定成本 ÷ 單位邊際貢獻','安全邊際'],
+['本量利','目標利潤銷量','Target Profit Volume','想賺多少，就把它當成另一筆固定成本，反推要賣多少。','阿田想每月賺 20 萬：（59 萬 + 20 萬）÷ 2,200 = 359 噸。','(固定成本 + 目標利潤) ÷ 單位邊際貢獻','損益兩平點'],
+['本量利','安全邊際','Margin of Safety','業績掉多少還不會虧錢。','目前賣 300 噸，兩平點 269 噸，安全邊際 31 噸、約 10%。雨季業績一掉一成就開始賠，這是警訊。','(實際銷量 − 兩平銷量) ÷ 實際銷量','營運槓桿'],
+['本量利','營運槓桿','Operating Leverage','固定成本比例越高，業績變動對利潤的影響越大。','好田固定成本高，銷量從 300 噸增加 10% 到 330 噸，利潤從 7 萬跳到 13.6 萬，增加將近一倍。反過來，銷量掉 10% 就直接虧錢。','營運槓桿度 = 邊際貢獻 ÷ 營業利益','固定成本'],
+['本量利','產品組合','Sales Mix','各種產品各賣多少的比例，會影響整體利潤和兩平點。','粒狀肥每噸邊際貢獻 2,400，粉狀 2,200。多賣粒狀，同樣噸數可以賺更多，兩平點也會下降。','','邊際貢獻、瓶頸資源'],
+// 成本制度
+['成本制度','分批成本制','Job Order Costing','每一批訂單分開算成本，適合客製化生產。','農會訂了 50 噸特殊配方（加了海藻粉），這批的原料、工時單獨記帳，算出這批到底賺多少。','','分步成本制'],
+['成本制度','分步成本制','Process Costing','連續大量生產同一種產品，按製程步驟累積成本，再平均到每單位。','堆肥經過進料、醱酵、翻堆、篩分、包裝五個步驟，每月把各步驟的成本加總，除以產量，得到每噸成本。','','約當產量'],
+['成本制度','實際成本制','Actual Costing','用實際發生的金額算成本。','月底等所有帳單到齊才知道成本，比較準但比較慢，報價時常常來不及用。','','標準成本制'],
+['成本制度','標準成本制','Standard Costing','事先訂好「應該花多少」，再拿實際花的來比。','好田訂標準：每噸用電 80 度、柴油 6 公升、人工 1.5 小時。月底對照，就知道哪裡多花了。','','成本差異'],
+['成本制度','成本差異','Cost Variance','實際成本和標準成本的差額。','標準每噸製造費用 1,200 元，實際花了 1,500 元，每噸多 300 元。300 噸就多花 9 萬，要追是電費、維修還是加班造成的。','實際成本 − 標準成本','價格差異、數量差異'],
+['成本制度','價格差異','Price Variance','因為買的價格跟標準不同造成的差異。','標準菇包每公斤 0.4 元，今年漲到 0.5 元，用了 100 噸就多花 1 萬。這是採購要負責的。','(實際單價 − 標準單價) × 實際用量','數量差異'],
+['成本制度','數量差異（效率差異）','Quantity / Efficiency Variance','因為用量跟標準不同造成的差異。','標準每噸用柴油 6 公升，現場因為翻堆機老舊用了 9 公升，多出來的就是數量差異。這是生產單位要負責的。','(實際用量 − 標準用量) × 標準單價','價格差異'],
+['成本制度','有利差異與不利差異','Favorable / Unfavorable Variance','實際比標準省就是有利，花更多就是不利。','電費比標準省 2 萬是有利差異；但如果是因為機器停工沒開，省下來的不一定是好事，要看原因。','','成本差異'],
+['成本制度','約當產量','Equivalent Units','把做到一半的產品，換算成「相當於幾個完成品」。','月底有 100 噸堆肥醱酵到一半，算成 50 噸完成品的工，這樣才能公平分攤當月的人工和製造費用。','未完工數量 × 完工程度','在製品'],
+['成本制度','正常損耗與異常損耗','Normal / Abnormal Spoilage','生產本來就會有的耗損叫正常損耗，算進成本；意外造成的叫異常損耗，要另外認列損失。','堆肥醱酵本來就會失去水分和重量，這是正常損耗。暴雨淹進醱酵場，泡壞 20 噸，是異常損耗，不能偷偷攤進產品成本。','','產成率'],
+['成本制度','聯產品與副產品','Joint Products / By-products','同一個製程同時產出的多種產品。價值高的叫聯產品，價值低的叫副產品。','篩分後的細料做成粉狀肥、粗料做成土壤改良劑，兩個都有價值，是聯產品。篩下來只能當墊料便宜賣的，是副產品。','','成本分攤'],
+['成本制度','成本分攤','Cost Allocation','把共用的成本，用某個合理的基礎分給各產品或部門。','總公司會計部一個月 30 萬，按各廠營業額比例分攤。分攤基礎選得不好，會讓某個廠看起來特別賠。','','成本動因'],
+['成本制度','成本動因','Cost Driver','讓成本增加的真正原因，是分攤時最好的依據。','製粒機的電費跟「製粒時數」有關，不是跟「總噸數」有關。用製粒時數分攤，粒狀肥的成本才會準。','','作業基礎成本法'],
+['成本制度','作業基礎成本法','Activity-Based Costing（ABC）','先把成本歸到各個作業，再依各產品用了多少作業來分攤。','把成本分成進料、翻堆、製粒、包裝、出貨五個作業，各自用自己的動因分攤。結果發現小包裝產品其實很耗人工，原本被低估了。','','成本動因'],
+['成本制度','預計分攤率','Predetermined Overhead Rate','年初就先訂好每單位要分攤多少製造費用，平常先用它算成本。','預估今年製造費用 600 萬、產量 4,000 噸，每噸先分攤 1,500 元，報價時就能用。','預估製造費用 ÷ 預估產量（或工時）','多分攤與少分攤'],
+['成本制度','多分攤與少分攤','Over / Under-applied Overhead','用預計分攤率分出去的，和實際發生的製造費用之間的差額。','預計每噸分 1,500，今年只做 3,000 噸，只分出 450 萬，實際卻花了 600 萬，少分攤 150 萬。年底要一次調整，帳面會突然變差。','','年底成本調整'],
+// 成本法與存貨
+['成本法與存貨','完全成本法','Absorption Costing','把固定製造費用也算進產品成本（報稅、對外財報用）。','做了 400 噸只賣 300 噸，有 100 噸的固定製造費用會跟著庫存留到下個月，這個月利潤看起來比較好。','','變動成本法'],
+['成本法與存貨','變動成本法','Variable Costing','只把變動成本算進產品成本，固定製造費用當期全部認列（內部決策用）。','不管做多少，每月 41 萬固定製造費用都在當月扣掉。利潤只跟賣多少有關，不會因為多生產就變好看。','','邊際貢獻、完全成本法'],
+['成本法與存貨','存貨','Inventory','還沒賣出去的原料、在製品和成品。','倉庫裡的稻殼、醱酵中的堆肥、包好還沒出貨的肥料，都是存貨。存貨不是錢，是「卡住的錢」。','','產品成本'],
+['成本法與存貨','在製品','Work in Process','已經開始生產、還沒完成的產品。','醱酵場裡第 3 週的堆肥，已經投入原料、人工和電費，但還不能賣。堆肥醱酵期長，在製品特別多。','','約當產量'],
+['成本法與存貨','存貨評價','Inventory Valuation','年底檢查存貨值多少錢，如果賣不到成本價，就要認列跌價損失。','有 50 噸放太久、結塊的肥料，成本每噸 4,000，現在只能賣 2,000，就要認列 10 萬的跌價損失。','成本與淨變現價值孰低','存貨'],
+['成本法與存貨','年底成本調整','Year-end Adjustment','年底盤點、結算實際成本後，一次修正之前用估計數記的帳。','前 11 個月都用標準成本記帳，12 月結算發現原料少算了，一次補記。所以看月報時要記得：12 月常常會有大調整。','','多分攤與少分攤'],
+// 經營決策
+['經營決策','攸關成本','Relevant Cost','會因為你的決定而改變的成本，做決策只看它。','要不要接一張特價單？廠房折舊接不接都要付，不攸關；多用的原料和袋子會因為接單而增加，才是攸關成本。','','沉沒成本'],
+['經營決策','沉沒成本','Sunk Cost','已經花掉、收不回來的錢，不應該影響未來的決定。','去年花 200 萬買的造粒機一直用不順。要不要換新的，該比的是未來的成本和效益，不是「已經花了 200 萬捨不得」。','','攸關成本'],
+['經營決策','機會成本','Opportunity Cost','選了 A，就放棄了 B 能帶來的好處。','醱酵槽拿去代工別人的料，每月收 10 萬；但如果拿來做自家粒狀肥，每月可以賺 15 萬。代工的機會成本是 15 萬。','','攸關成本'],
+['經營決策','增額成本','Incremental Cost','因為多做某件事而多出來的成本。','每月多做 50 噸，要多付原料、袋子、柴油和一個臨時工。這些加起來就是增額成本，拿去跟增額收入比。','','攸關成本'],
+['經營決策','特殊訂單決策','Special Order Decision','用低於平常的價格接一張單，划不划算？','經銷商要 100 噸、每噸 4,500 元、自己載。變動成本 2,700 元，每噸還有 1,800 元的邊際貢獻。只要產能有空、不影響原價客戶，就該接。','接單條件：售價 > 增額成本，且有閒置產能','邊際貢獻'],
+['經營決策','自製或外購','Make or Buy','自己做還是買現成的？比增額成本加上機會成本。','菌種自己擴培每公斤 30 元，外購 45 元。但自己擴培要占用一個人半天，這個人本來可以去顧製粒機。把這個機會成本算進來再比較。','','機會成本'],
+['經營決策','停產或繼續','Shutdown Decision','虧錢的產品或月份，要不要停？','雨季每月虧 20 萬，但停工後固定成本 59 萬照付，反而虧 59 萬。只要邊際貢獻大於 0，繼續做比停工少虧。','','固定成本、邊際貢獻'],
+['經營決策','瓶頸資源','Constraint / Bottleneck','限制整體產量的那一關。產能有限時，要比「每單位瓶頸資源能賺多少」。','製粒機一個月只能跑 300 小時，粒狀 A 每小時賺 6,000、粒狀 B 每小時賺 8,000。就算 A 每噸賺比較多，也要先排 B。','單位瓶頸資源的邊際貢獻','產品組合'],
+['經營決策','產能利用率（稼動率）','Capacity Utilization','實際產量占最大產能的比例。','醱酵場最多做 450 噸，這個月做 300 噸，稼動率 67%。另外 33% 的折舊和人力是白付的。','實際產量 ÷ 最大產能','閒置產能成本'],
+['經營決策','閒置產能成本','Idle Capacity Cost','產能沒用到，但固定成本照付，那一部分就是閒置的浪費。','固定製造費用 41 萬，稼動率 67%，大約有 13.5 萬是為了沒用到的產能在付錢。','固定製造費用 × (1 − 稼動率)','產能利用率'],
+// 資產與折舊
+['資產與折舊','資本支出','Capital Expenditure（CapEx）','買來可以用很多年的東西，先記成資產，之後慢慢折舊。','買一台 285 萬的鏟裝機，可以用 8 年，不能在這個月一次當費用，要記成「運輸設備」。','','收益支出、折舊'],
+['資產與折舊','收益支出','Revenue Expenditure','只對當期有幫助的支出，直接當費用。','鏟裝機換機油、換輪胎是維持正常運作，直接算修繕費。但如果是大修讓它多用 5 年，就要改列資本支出。','','資本支出'],
+['資產與折舊','資本化門檻','Capitalization Threshold','公司訂的金額標準，超過才列資產，低於就直接當費用。','好田訂 8 萬：4 萬的抽水泵直接當費用；分 4 期付款、總價 27 萬的加壓泵，要合併看，列成資產。','','資本支出'],
+['資產與折舊','折舊','Depreciation','把設備的成本，分攤到它能用的每一年。不用付現金，但是真實的成本。','285 萬的鏟裝機用 8 年、殘值 5 萬，每年折舊 35 萬，每月 2.9 萬。就算這個月沒開它，折舊照算。','(成本 − 殘值) ÷ 耐用年限','直線法、固定成本'],
+['資產與折舊','直線法','Straight-line Method','每年攤一樣多的折舊，最常用。','堆肥舍 600 萬、用 20 年，每年 30 萬，每月 2.5 萬，年年一樣。','','折舊'],
+['資產與折舊','耐用年限與殘值','Useful Life / Salvage Value','設備預計能用幾年，用完還能賣多少錢。','翻堆機預計用 10 年，報廢時鐵料還能賣 10 萬。這 10 萬不用折舊。','','折舊'],
+['資產與折舊','無形資產與攤銷','Intangible Asset / Amortization','看不見但有價值、能用很多年的權利，像專利、技術授權、商標，分年攤銷。','花 120 萬買新菌種 5 年的技術授權，每年攤銷 24 萬。如果是按月付授權金，就直接當月費用。','','研究發展費用'],
+// 管理與預算
+['管理與預算','預算','Budget','事先規劃好的收入和支出目標，月底拿實際數字來比。','好田訂明年每月賣 330 噸、固定成本控制在 55 萬。每月對照，差太多就要找原因。','','彈性預算'],
+['管理與預算','彈性預算','Flexible Budget','依照實際產量，重新算「這個量應該花多少」，再跟實際比。','預算以 330 噸編，實際只做 280 噸，變動成本當然比較少。要用 280 噸的彈性預算比較，才知道效率好不好。','','預算、成本差異'],
+['管理與預算','責任中心','Responsibility Center','依照能控制什麼，把部門分成成本中心、利潤中心、投資中心。','北場長只能控制成本，是成本中心，看成本有沒有超標；業務部要負責賺錢，是利潤中心，看毛利和營業利益。','','共同費用分攤'],
+['管理與預算','內部轉撥價格','Transfer Price','公司內部部門之間「買賣」的價格。','飼料廠把下腳料轉給堆肥場，算每公斤 1 元還是 0 元，會讓兩個部門的獲利看起來完全不同，但全公司的總利潤不變。','','責任中心'],
+['管理與預算','共同費用分攤','Common Cost Allocation','總公司的費用（會計、人資、主管）分給各部門。','總公司把管銷費用按營業額分給各事業部。部門自己控制不了這筆錢，評估部門經營能力時，要分開看分攤前和分攤後。','','成本分攤'],
+['管理與預算','關鍵績效指標','KPI','每月追蹤、最能反映經營好壞的幾個數字。','好田只追四個：每噸邊際貢獻、每噸固定成本、稼動率、處理費收入。數字少，才看得出問題。','','預算'],
+// 現金
+['現金','利潤不等於現金','Profit vs Cash','帳上賺錢不代表戶頭有錢；帳上虧錢也不代表沒現金。','好田這個月賺 7 萬，但經銷商三個月後才付款，又剛買一台機器付了 50 萬現金。帳上賺錢，戶頭卻少了。','','EBITDA、應收帳款'],
+['現金','應收帳款','Accounts Receivable','貨已經賣出、錢還沒收回來。','賣給農會 100 萬，對方月結 90 天。這 100 萬算營收，但三個月內收不到，要準備周轉金。','','利潤不等於現金'],
+['現金','營運資金','Working Capital','日常營運需要卡住的錢：存貨加應收，減應付。','雨季先生產備貨 500 噸、經銷商帳期 60 天，就要先準備好幾百萬的資金。業績成長太快也可能把現金燒光。','流動資產 − 流動負債','存貨、應收帳款'],
+// 堆肥場特有
+['堆肥場特有','處理費收入（代處理收入）','Tipping Fee','幫畜牧場、食品廠處理廢棄物所收的錢，是堆肥場的第二份收入。','蛋雞場每送來 1 公斤雞糞，付好田 1.5 元處理費。原料不用買還倒收錢，等於一份原料賺兩次。處理費每公斤多 0.1 元，影響可能比售價還大。','','營業收入、直接材料'],
+['堆肥場特有','產成率','Yield','投入的原料重量，最後變成多少成品。','投入 2.4 噸原料（含水分），醱酵乾燥後剩 1 噸成品，產成率約 42%。產成率越低，每噸成品要吃掉的原料越多。','成品重量 ÷ 投入原料重量','正常損耗'],
+['堆肥場特有','配方成本','Formula Cost','依配方比例算出每噸成品的原料成本（扣掉處理費收入）。','A 配方用 76% 禽畜糞加 7% 廢飼料（收處理費），B 配方用 27% 買來的粗糠雞糞。B 配方每噸原料淨成本可能高出 1 元以上。','Σ(原料用量 × 單價) − Σ(廢棄物量 × 處理費)','處理費收入'],
+['堆肥場特有','醱酵週期','Composting Cycle','從進料到可以出貨的時間，決定在製品多寡和資金壓力。','好田醱酵加熟成要 60 天，等於隨時有兩個月的產量壓在場內，雨季前要提早備貨。','','在製品、營運資金'],
+];
+
+(function(){
+  const el = document.getElementById('tG'); if(!el) return;
+  let cat = '全部', q = '', nameOnly = false;
+  el.innerHTML = `
+    <div class="note">📖 共收錄 <b>${GL.length}</b> 個成本會計名詞，每個都用一句白話加上「好田堆肥場」的小故事說明（虛構數字）。可以搜尋，或點分類篩選；點「相關」的名詞可以直接跳過去。</div>
+    <input id="gq" class="gq" placeholder="搜尋名詞，例如：邊際貢獻、折舊、沉沒成本" type="search">
+    <div class="gchips" id="gchips"></div>
+    <div class="gcount" id="gcount"></div>
+    <div class="glist" id="glist"></div>`;
+  const chips = document.getElementById('gchips');
+  chips.innerHTML = ['全部',...GCATS].map(c=>`<button data-c="${c}" class="${c==='全部'?'on':''}">${c}</button>`).join('');
+  chips.querySelectorAll('button').forEach(b=>b.onclick=()=>{cat=b.dataset.c; chips.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); draw();});
+  document.getElementById('gq').oninput=e=>{q=e.target.value.trim(); nameOnly=false; draw();};
+  function draw(){
+    const list = GL.filter(g=>(cat==='全部'||g[0]===cat)&&(!q||(nameOnly?g[1]:g.slice(1).join(' ')).toLowerCase().includes(q.toLowerCase())));
+    document.getElementById('gcount').textContent = `顯示 ${list.length} 個名詞`;
+    document.getElementById('glist').innerHTML = list.map(([c,t,en,plain,story,f,rel])=>`
+      <article class="gcard" id="g-${t}">
+        <div class="gh"><h3>${t}</h3><span class="gen">${en}</span><span class="gcat">${c}</span></div>
+        <p class="gplain">💬 ${plain}</p>
+        <div class="gstory">📖 ${story}</div>
+        ${f?`<div class="gf">📐 ${f}</div>`:''}
+        ${rel?`<div class="grel">相關：${rel.split('、').map(r=>`<button data-r="${r}">${r}</button>`).join('')}</div>`:''}
+      </article>`).join('') || '<p style="color:var(--muted)">找不到這個名詞，換個關鍵字試試。</p>';
+    document.querySelectorAll('.grel button').forEach(b=>b.onclick=()=>{
+      const r=b.dataset.r; const base=g=>g[1].split('（')[0];
+      const hit=GL.find(g=>g[1]===r||base(g)===r)||GL.find(g=>g[1].includes(r))||GL.find(g=>r.includes(base(g)));
+      q = hit?base(hit):r; nameOnly = true; cat='全部'; document.getElementById('gq').value=q;
+      chips.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.c==='全部')); draw();
+      window.scrollTo({top:document.getElementById('gq').getBoundingClientRect().top+scrollY-70,behavior:'smooth'});
+    });
+  }
+  draw();
+})();
+
+</script>
+</body>
+</html>
