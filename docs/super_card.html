@@ -280,6 +280,12 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.myscan{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.myscan .btn{width:100%}
+.myph{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.myph>div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:13px;color:var(--sub)}
+.myph img{width:100%;aspect-ratio:1.7;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.myph .mini{width:100%}
 .mytabs{margin:-2px 0 10px}
 .mytabs .chips{padding-bottom:6px}
 .mytabs .chip.add{border-style:dashed;color:var(--acc)}
@@ -556,6 +562,11 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <div class="wrap">
     <div class="mytabs"><div class="chips" id="myTabs"></div>
       <div class="mytools"><button class="mini" id="btnMyCopy">複製成新名片</button><button class="mini" id="btnMyMain">設為主要名片</button><button class="mini danger" id="btnMyDel">刪除這張</button></div></div>
+    <div class="myscan">
+      <button class="btn" id="btnMyScan" data-ic="camera">掃描我的實體名片(正面+背面)</button>
+      <div class="myph"><div><img id="myFrontPrev" class="hide" alt=""><span>正面</span><button class="mini" id="btnMyScanF">拍正面</button><button class="mini hide" id="btnMyFrontX">移除</button></div>
+        <div><img id="myBackPrev" class="hide" alt=""><span>背面</span><button class="mini" id="btnMyScanB">拍背面</button><button class="mini hide" id="btnMyBackX">移除</button></div></div>
+    </div>
     <canvas id="myCv" class="mycv"></canvas>
     <div class="sides" style="margin-top:10px"><button type="button" data-side2="zh" class="on">中文面</button><button type="button" data-side2="en">英文面</button></div>
     <div class="chips" id="myDesigns" style="margin-top:10px;flex-wrap:wrap"></div>
@@ -565,6 +576,8 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
       <button class="btn" id="btnMyLink" data-ic="share">分享連結</button>
       <button class="btn sec" id="btnMyImg" data-ic="image">存成圖片</button>
       <button class="btn sec" id="btnMyVcf" data-ic="userplus">聯絡人卡片</button>
+      <button class="btn sec" id="btnMyDl" data-ic="download">下載到手機</button>
+      <button class="btn sec" id="btnMyImp" data-ic="upload">從手機檔案匯入</button>
     </div>
     <label class="pubsw"><input type="checkbox" id="myPub"> <span><b>公開我的名片</b><br><small>開啟後,掃 QR Code 或點連結的人才看得到這一張(只有這張,看不到你的其他名片)</small></span></label>
     <div id="myStat" class="stat" style="margin-top:8px"></div>
@@ -805,7 +818,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.24", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.25", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -828,6 +841,7 @@ var ICONS={
  share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/>',
  line:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3-.5L3 21l1.6-4.3A8 8 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>',
  message:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/>',
  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
  refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
@@ -1196,7 +1210,7 @@ async function openCam(mode){
   [300,1000].forEach(function(t){ setTimeout(function(){ if(!$("vCam").classList.contains("hide")){ fitVideo(); layoutGuide(); } },t); });
   clearInterval(CAM.timer); CAM.timer=setInterval(camTick,150);
 }
-function fallbackPick(mode){ if(mode==="back") $("fileBack").click(); else if(mode==="batch") $("fileCam").click(); else $("file").click(); }
+function fallbackPick(mode){ if(mode==="myf"||mode==="myb"){ myPickPhoto(mode==="myb"?"b":"f"); return; } if(mode==="back") $("fileBack").click(); else if(mode==="batch") $("fileCam").click(); else $("file").click(); }
 function closeCam(){
   clearInterval(CAM.timer); CAM.timer=null;
   if(CAM.stream){ CAM.stream.getTracks().forEach(function(t){t.stop();}); CAM.stream=null; }
@@ -1329,7 +1343,7 @@ async function camShoot(){
   }else{
     var mode=CAM.mode; closeCam(); CAM.busy=false;
     openCrop(c,{ exp:expOf(c,0.12), retake:function(){ openCam(mode); },
-      done:async function(out){ var f=await canvasFile(out); if(mode==="back") backFile(f); else scanFile(f); } });
+      done:async function(out){ if(mode==="myf"||mode==="myb"){ myScanDone(mode==="myb"?"b":"f", out); return; } var f=await canvasFile(out); if(mode==="back") backFile(f); else scanFile(f); } });
   }
 }
 /** 存檔前:長邊太小放大到 1400(小字較好辨識)、太大縮到 1800 */
@@ -1474,9 +1488,9 @@ async function onMultiPhoto(ev){
 function setCamMode(mode){
   CAM.mode=mode; CAM.still=0; CAM.armed=true; CAM.prev=null; CAM.lastN=0; clearMultiOverlay();
   document.querySelectorAll("[data-cm]").forEach(function(b){ b.classList.toggle("on",b.dataset.cm===mode); });
-  $("camTitle").textContent = mode==="multi" ? "一次拍多張" : mode==="batch" ? ("連續拍攝"+($("qDual").checked?"・雙面":"")) : mode==="back" ? "拍背面" : "掃描名片";
+  $("camTitle").textContent = mode==="multi" ? "一次拍多張" : mode==="batch" ? ("連續拍攝"+($("qDual").checked?"・雙面":"")) : mode==="back" ? "拍背面" : mode==="myf" ? "我的名片・正面" : mode==="myb" ? "我的名片・背面" : "掃描名片";
+  $("camModes").classList.toggle("hide", mode==="back"||mode==="myf"||mode==="myb");
   $("btnCamOrient").classList.toggle("hide", mode==="multi");
-  $("camModes").classList.toggle("hide", mode==="back");
   $("camShade").classList.toggle("multi", mode==="multi");
   layoutGuide();
 }
@@ -2292,7 +2306,7 @@ var MYF=[
  ["據點一",[["loc1name","名稱(例:有機肥料廠)"],["loc1ename","英文名稱(例:Head Office)"],["loc1addr","地址"],["loc1eaddr","英文地址"],["loc1tel","電話"],["loc1fax","傳真"]]],
  ["據點二(選填)",[["loc2name","名稱(例:總公司)"],["loc2ename","英文名稱"],["loc2addr","地址"],["loc2eaddr","英文地址"],["loc2tel","電話"],["loc2fax","傳真"]]]
 ];
-var DESIGNS=[["print","印刷經典"],["classic","經典"],["modern","現代"],["minimal","極簡"],["business","商務"]];
+var DESIGNS=[["photo","實體照片"],["print","印刷經典"],["classic","經典"],["modern","現代"],["minimal","極簡"],["business","商務"]];
 var MY={card:null, cards:[], saved:"", side:"zh", imgs:{}};
 function myLink(c){ c=c||MY.card||{}; return APP_URL_PUBLIC+"#card="+gasUrl()+(c.id?"&mid="+encodeURIComponent(c.id):""); }
 var APP_URL_PUBLIC=location.origin+location.pathname;
@@ -2348,6 +2362,13 @@ async function renderMyCard(cv,c,side,k){
   var x=cv.getContext("2d"); x.setTransform(k,0,0,k,0,0); x.textBaseline="alphabetic";
   try{ await document.fonts.ready; }catch(e){}
   var C=cardColors(c), zh=side!=="en", d=c.design||"print";
+  if(d==="photo"){   // 直接用掃描的實體名片照片(中文面=正面、英文面=背面)
+    var ph=await imgOf(zh?c.frontImg:c.backImg);
+    x.fillStyle="#f4f2ee"; x.fillRect(0,0,W,H);
+    if(ph){ var rr=Math.min(W/ph.width,H/ph.height), pw=ph.width*rr, phh=ph.height*rr; x.drawImage(ph,(W-pw)/2,(H-phh)/2,pw,phh); }
+    else{ x.fillStyle="#8a8f98"; x.font='600 34px -apple-system,"PingFang TC",sans-serif'; x.textAlign="center"; x.fillText(zh?"還沒掃描正面":"還沒掃描背面",W/2,H/2-8); x.font='24px -apple-system,"PingFang TC",sans-serif'; x.fillText("按上方「拍"+(zh?"正":"背")+"面」",W/2,H/2+34); x.textAlign="left"; }
+    return cv;
+  }
   var serif='"Noto Serif TC","Songti TC",serif', sans='-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif';
   var name=zh?(c.name||""):(c.ename||c.name||""), title=zh?(c.title||""):(c.etitle||c.title||""), dept=zh?(c.dept||""):(c.edept||c.dept||"");
   var comp=zh?(c.company||""):(c.ecompany||c.company||""), ecomp=c.ecompany||"";
@@ -2444,6 +2465,98 @@ async function openMyCard(){
   }catch(e){ $("myStat").textContent="讀取失敗:"+e.message; MY.card=MY.card||{}; }
   showMy(MY.card);
 }
+/* ---------- 掃描我的實體名片(正面+背面)→ 自動填欄位,照片也存起來 ---------- */
+function renderMyPhotos(c){
+  c=c||MY.card||{};
+  [["f","myFrontPrev","btnMyFrontX","btnMyScanF","frontImg"],["b","myBackPrev","btnMyBackX","btnMyScanB","backImg"]].forEach(function(a){
+    var src=c[a[4]]||""; $(a[1]).src=src; $(a[1]).classList.toggle("hide",!src); $(a[2]).classList.toggle("hide",!src);
+    $(a[3]).textContent = src ? (a[0]==="f"?"重拍正面":"重拍背面") : (a[0]==="f"?"拍正面":"拍背面");
+  });
+}
+function myScan(side){ MY.scanChain = side==="both"; openCam(side==="b"?"myb":"myf"); }
+function myPickPhoto(side){
+  var inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange=async function(){ var f=inp.files[0]; if(!f) return;
+    try{ var im=await loadImg(f); openCrop(imgToCanvas(im,2400),{ done:function(out){ myScanDone(side,out); } }); }catch(e){ toast("讀不到這張照片"); } };
+  inp.click();
+}
+/** 前端:欄位對應(正面填中文欄;背面若是英文就填英文欄,其餘只補空欄) */
+var MY_MAP_ZH={"姓名":"name","職稱":"title","部門":"dept","公司":"company","手機":"mobile","電話":"loc1tel","傳真":"loc1fax","Email":"email","地址":"loc1addr","網站":"website","統編":"taxid","LINE":"line"};
+var MY_MAP_EN={"姓名":"ename","職稱":"etitle","部門":"edept","公司":"ecompany","地址":"loc1eaddr","手機":"mobile","電話":"loc1tel","傳真":"loc1fax","Email":"email","網站":"website","LINE":"line"};
+async function myScanDone(side, out){
+  var c=myCollect(), img=finalCanvas(out), store=shrinkCanvas(out,1100).toDataURL("image/jpeg",0.82);
+  if(side==="b"){ c.backImg=store; c.backNew=true; } else { c.frontImg=store; c.frontNew=true; }
+  if(!c.updated && (c.design||"print")==="print"){   // 還沒存過的新名片:預設用實體照片樣式
+    c.design="photo"; document.querySelectorAll("#myDesigns .chip").forEach(function(x){ x.classList.toggle("on",x.dataset.design==="photo"); });
+  }
+  MY.card=c; renderMyPhotos(c); renderMyPreview(); $("vMyCard").scrollTop=0;
+  toast("辨識"+(side==="b"?"背面":"正面")+"中…");
+  try{
+    var r=await post({action:"scan", image:img.toDataURL("image/jpeg",0.85).split(",")[1], mime:"image/jpeg", lang:curLang()});
+    if(!r.ok) throw new Error(r.error);
+    var en = side==="b" && (r.lang==="en" || !/[一-鿿぀-ヿ가-힯]/.test(r.fields["姓名"]+r.fields["公司"]));
+    var map = en ? MY_MAP_EN : MY_MAP_ZH, filled=[];
+    Object.keys(map).forEach(function(k){
+      var v=String(r.fields[k]||"").trim(), key=map[k], el=document.querySelector('[data-my="'+key+'"]');
+      if(!v || !el || el.value.trim()) return;      // 只補空的欄位,不蓋掉已經填的
+      el.value=v; filled.push(k);
+    });
+    MY.card=myCollect(); renderMyPreview();
+    toast(filled.length ? "✅ "+(side==="b"?"背面":"正面")+"已填入 "+filled.length+" 欄:"+filled.join("、")+"(請核對)" : "照片已加入;欄位都已有資料,沒有覆蓋");
+  }catch(e){ toast("照片已加入,但文字辨識失敗:"+e.message); }
+  if(side==="f" && MY.scanChain){ MY.scanChain=false; setTimeout(function(){ if(confirm("正面好了。要接著拍背面嗎?")) openCam("myb"); },400); }
+}
+function shrinkCanvas(c,max){ var L=Math.max(c.width,c.height); if(L<=max) return c; var k=max/L, o=document.createElement("canvas"); o.width=Math.round(c.width*k); o.height=Math.round(c.height*k); var x=o.getContext("2d"); x.imageSmoothingQuality="high"; x.drawImage(c,0,0,o.width,o.height); return o; }
+function myDelPhoto(side){ var c=myCollect(); if(side==="b"){ c.backImg=""; c.backDel=true; c.backNew=false; } else { c.frontImg=""; c.frontDel=true; c.frontNew=false; } MY.card=c; renderMyPhotos(c); renderMyPreview(); }
+
+/* ---------- 下載到手機 / 從手機檔案匯入 ---------- */
+function dataUrlBlob(u){ var m=String(u||"").match(/^data:([^;]+);base64,(.*)$/); if(!m) return null; var b=atob(m[2]), a=new Uint8Array(b.length); for(var i=0;i<b.length;i++) a[i]=b.charCodeAt(i); return new Blob([a],{type:m[1]}); }
+async function myDownload(){
+  var c=myCollect(), nm=(myLabel(c)||"我的名片").replace(/[\\/:*?"<>|]/g,"_");
+  var bt=$("btnMyDl"); bt.disabled=true; setLabel(bt,"打包中…");
+  try{
+    await loadJSZip(); var z=new JSZip(), data=Object.assign({},c);
+    delete data.id; delete data.frontId; delete data.backId; delete data.frontNew; delete data.backNew; delete data.main; delete data.published;
+    z.file("名片資料.json", JSON.stringify({app:"超級業務名片王", type:"mycard", ver:APP_VER, card:data},null,1));
+    if(c.frontImg) z.file("實體名片_正面.jpg", dataUrlBlob(c.frontImg));
+    if(c.backImg) z.file("實體名片_背面.jpg", dataUrlBlob(c.backImg));
+    var a=document.createElement("canvas"); await renderMyCard(a,Object.assign({},c,{design:c.design==="photo"?"print":c.design}),"zh",2);
+    z.file("數位名片_中文面.png", await new Promise(function(r){ a.toBlob(r,"image/png"); }));
+    if(c.ename||c.ecompany){ var b2=document.createElement("canvas"); await renderMyCard(b2,Object.assign({},c,{design:c.design==="photo"?"print":c.design}),"en",2); z.file("數位名片_英文面.png", await new Promise(function(r){ b2.toBlob(r,"image/png"); })); }
+    z.file((c.name||"名片")+".vcf", toVcard(myToCardFields(c),true)+"\r\n");
+    z.file("說明.txt","這是「"+myLabel(c)+"」的備份。\n要還原:超級業務名片王 → 我的數位名片 → 從手機檔案匯入 → 選這個 zip。\n");
+    var blob=await z.generateAsync({type:"blob"}), fname="我的名片_"+nm+".zip", file=new File([blob],fname,{type:"application/zip"});
+    try{ if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){ await navigator.share({files:[file], title:fname}); toast("在分享選單選「儲存到檔案」就會存在手機"); return; } }catch(e){ if(e.name==="AbortError") return; }
+    download(file,fname); toast("已下載 "+fname);
+  }catch(e){ toast("打包失敗:"+e.message); }
+  finally{ bt.disabled=false; setLabel(bt,"下載到手機"); }
+}
+function myImport(){
+  var inp=document.createElement("input"); inp.type="file"; inp.accept=".zip,.json,application/zip,application/json";
+  inp.onchange=async function(){
+    var f=inp.files[0]; if(!f) return;
+    try{
+      var j=null, fr="", bk="";
+      if(/\.json$/i.test(f.name)) j=JSON.parse(await f.text());
+      else{
+        await loadJSZip(); var z=await JSZip.loadAsync(await readAsArrayBuffer(f)), jf=z.file(/名片資料\.json$/)[0];
+        if(!jf) throw new Error("這個 zip 裡沒有「名片資料.json」");
+        j=JSON.parse(await jf.async("string"));
+        var ff=z.file(/實體名片_正面\.jpg$/)[0], bf=z.file(/實體名片_背面\.jpg$/)[0];
+        if(ff) fr="data:image/jpeg;base64,"+await ff.async("base64");
+        if(bf) bk="data:image/jpeg;base64,"+await bf.async("base64");
+      }
+      var c=(j&&j.card)||j; if(!c || !(c.name||c.company)) throw new Error("看不懂這個檔案");
+      if(!myLeaveOk()) return;
+      c=Object.assign({},c); delete c.id; delete c.main; c.published=false;
+      if(fr) c.frontImg=fr; if(bk) c.backImg=bk; if(c.frontImg) c.frontNew=true; if(c.backImg) c.backNew=true;
+      c.label=(c.label||c.company||c.name)+"(匯入)";
+      showMy(c); $("vMyCard").scrollTop=0; toast("已匯入成新名片,確認後按「儲存我的名片」");
+    }catch(e){ toast("匯入失敗:"+e.message); }
+  };
+  inp.click();
+}
+
 /* ---------- 多張名片:切換 / 新增 / 複製 / 主要 / 刪除 ---------- */
 function myLabel(c){ return c.label || c.company || c.name || "未命名名片"; }
 function showMy(c){ MY.card=Object.assign({},c||{}); renderMyForm(); MY.saved=JSON.stringify(myCollect()); renderMyTabs(); renderMyPreview(); }
@@ -2468,7 +2581,8 @@ function myPick(id){
 function myAdd(copy){
   if(!myLeaveOk()) return;
   var c = copy ? Object.assign({},myCollect()) : {design:(MY.card&&MY.card.design)||"print"};
-  delete c.id; delete c.updated; c.main=false; c.published=false;
+  delete c.id; delete c.updated; delete c.frontId; delete c.backId; c.main=false; c.published=false;
+  if(c.frontImg) c.frontNew=true; if(c.backImg) c.backNew=true;   // 複本的照片要另存一份
   c.label = copy ? myLabel(c)+"(複本)" : "";
   showMy(c); $("vMyCard").scrollTop=0;
   toast(copy ? "已複製,改好後按「儲存我的名片」" : "填好新名片後按「儲存我的名片」");
@@ -2497,6 +2611,7 @@ function renderMyForm(){
   $("myPub").checked=!!c.published;
   $("myAvatarPrev").src=c.avatar||""; $("myAvatarPrev").classList.toggle("hide",!c.avatar);
   $("myLogoPrev").src=c.logo||""; $("myLogoPrev").classList.toggle("hide",!c.logo);
+  renderMyPhotos(c);
   $("myStat").textContent = c.updated ? "上次儲存 "+String(c.updated).slice(0,16) : "還沒建立,填好後按「儲存我的名片」";
   renderMySide();
 }
@@ -2516,7 +2631,8 @@ function renderMyPreview(){
 async function saveMyCard(){
   var c=myCollect(); if(!c.name){ toast("請至少填姓名"); return; }
   var b=$("btnMySave"); b.disabled=true; setLabel(b,"儲存中…");
-  try{ var r=await post({action:"mySave", card:c}); if(!r.ok) throw new Error(r.error); MY.cards=r.cards||MY.cards; showMy(r.card); toast("✅ 已儲存「"+myLabel(r.card)+"」"+(c.published?"(已公開)":"")); $("myStat").textContent="上次儲存 "+String(r.card.updated||"").slice(0,16); }
+  var send=Object.assign({},c); if(!send.frontNew) delete send.frontImg; if(!send.backNew) delete send.backImg; delete send.frontNew; delete send.backNew;
+  try{ var r=await post({action:"mySave", card:send}); if(!r.ok) throw new Error(r.error); MY.cards=r.cards||MY.cards; showMy(r.card); toast("✅ 已儲存「"+myLabel(r.card)+"」"+(c.published?"(已公開)":"")); $("myStat").textContent="上次儲存 "+String(r.card.updated||"").slice(0,16); }
   catch(e){ toast("儲存失敗:"+e.message); }
   b.disabled=false; setLabel(b,"儲存我的名片");
 }
@@ -3718,7 +3834,7 @@ document.querySelectorAll("[data-cm]").forEach(function(b){ b.addEventListener("
 $("btnCamAlbum").onclick=function(){
   var m=CAM.mode;
   if(m==="multi"){ $("fileMultiCards").click(); return; }
-  closeCam(); if(m==="batch"){ openBatch(); $("fileMulti").click(); } else if(m==="back") $("fileBack").click(); else $("file").click();
+  closeCam(); if(m==="myf"||m==="myb"){ myPickPhoto(m==="myb"?"b":"f"); return; } if(m==="batch"){ openBatch(); $("fileMulti").click(); } else if(m==="back") $("fileBack").click(); else $("file").click();
 };
 $("fileMultiCards").addEventListener("change",onMultiPhoto);
 $("btnCamTorch").onclick=toggleTorch;
@@ -3817,7 +3933,10 @@ $("nmOut").addEventListener("click",function(e){ var b=e.target.closest("[data-k
 $("btnMyCard").onclick=openMyCard;
 $("btnMyBack").onclick=function(){ if(!myLeaveOk()) return; $("vMyCard").classList.add("hide"); };
 $("myTabs").addEventListener("click",function(e){ if(e.target.closest("#btnMyAdd")){ myAdd(false); return; } var b=e.target.closest("[data-myid]"); if(b) myPick(b.dataset.myid); });
-$("btnMyCopy").onclick=function(){ myAdd(true); }; $("btnMyMain").onclick=mySetMain; $("btnMyDel").onclick=myDel;
+$("btnMyCopy").onclick=function(){ myAdd(true); };
+$("btnMyScan").onclick=function(){ myScan("both"); }; $("btnMyScanF").onclick=function(){ myScan("f"); }; $("btnMyScanB").onclick=function(){ myScan("b"); };
+$("btnMyFrontX").onclick=function(){ myDelPhoto("f"); }; $("btnMyBackX").onclick=function(){ myDelPhoto("b"); };
+$("btnMyDl").onclick=myDownload; $("btnMyImp").onclick=myImport; $("btnMyMain").onclick=mySetMain; $("btnMyDel").onclick=myDel;
 $("myForm").addEventListener("input",renderMyPreview);
 $("myDesigns").addEventListener("click",function(e){ var b=e.target.closest("[data-design]"); if(!b) return; MY.card=myCollect(); MY.card.design=b.dataset.design; document.querySelectorAll("#myDesigns .chip").forEach(function(x){x.classList.toggle("on",x===b);}); renderMyPreview(); });
 document.querySelectorAll("[data-side2]").forEach(function(b){ b.addEventListener("click",function(){ MY.side=b.dataset.side2; renderMySide(); renderMyPreview(); }); });
