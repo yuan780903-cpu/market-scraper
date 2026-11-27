@@ -162,12 +162,13 @@ td.crm{background:#fbfdfc}
 </style>
 </head>
 <body>
+<div style="text-align:right;font-size:11.5px;color:var(--mut);padding:2px 2px 0">網站製作:莊政遠</div>
 <header>
   <h1 id="ttl" style="display:inline-flex;align-items:center;gap:8px"><span id="siteLogo" style="display:inline-flex;line-height:0"></span><span>農業客戶儀表板 <span style="font-weight:400;font-size:13px;color:var(--mut)">＋ CRM</span></span></h1>
   <span class="s" id="subttl"></span>
   <span class="upd" id="upd"></span>
   <button id="btnUpd" onclick="openUpd()" title="更新全站農業資料(在你的 Mac 上執行)" style="margin-left:auto;font-size:12.5px;cursor:pointer;color:#0a7d3e;background:#e7f6ec;border:1px solid #bfe6cd;border-radius:999px;padding:4px 12px;white-space:nowrap;font-weight:600">🔄 更新資料</button>
-  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.8 · 2026/11/27 20:21</span>
+  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.9 · 2026/11/27 20:24</span>
 </header>
 <div id="updMask" onclick="if(event.target===this)closeUpd()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:520px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:22px 22px 18px;font-size:14px;line-height:1.7">
