@@ -1880,6 +1880,17 @@ footer .disc .sub{display:block;margin-top:12px}
   background:rgba(20,12,30,.55);backdrop-filter:blur(4px);padding:18px}
 .zwmodal.on{display:flex;animation:zwfade .25s ease}
 @keyframes zwfade{from{opacity:0}to{opacity:1}}
+.pdfth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-top:6px}
+.pdfth{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px 12px;border:1.5px solid rgba(200,168,75,.45);border-radius:14px;background:rgba(255,255,255,.55);cursor:pointer;font:inherit;color:inherit;transition:transform .15s,border-color .15s}
+.pdfth:hover,.pdfth:focus-visible{transform:translateY(-2px);border-color:#c8a84b}
+.pdfth.last{border-color:#b8933a;box-shadow:0 0 0 2px rgba(184,147,58,.35)}
+.pdfth i{display:block;width:62px;height:86px;border-radius:5px;position:relative;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.pdfth i::before{content:"";position:absolute;inset:5px;border:1.5px solid #d9b25f;border-radius:2px}
+.pdfth i::after{content:"";position:absolute;left:50%;top:17px;width:11px;height:38px;margin-left:-6px;background:#fbf2db;border:1px solid #d9b25f}
+.pdfth b{font-size:1.02rem;letter-spacing:2px}
+.pdfth small{font-size:.74rem;opacity:.75;letter-spacing:1px}
+.pdfth em{font-style:normal;font-size:.68rem;color:#9a7420}
+.pdfth-note{font-size:.8rem;opacity:.8;margin:12px 2px 0;line-height:1.7}
 .zwmcard{position:relative;width:min(560px,94vw);max-height:86vh;overflow-y:auto;
   background:#fffdf8;border:2px solid var(--gold);
   border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.4);padding:26px 26px 28px;animation:zwpop .3s cubic-bezier(.2,1,.36,1)}
@@ -2197,6 +2208,305 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 .paywall .pwor span{position:relative;background:#fdf6e6;padding:0 12px}
 .toolbar.lockpdf .pdfbtn{opacity:.6}
 @media print{.paywall{display:none!important}#premZone.locked{display:none!important}}
+/* ZW-THEMES-BEGIN */
+/* PDF 報告五款模板（themes.py 自動產生：封面漸層換色、內頁金棕色系換色相；化祿綠／化忌紅等語意色不動；勿手改，改 themes.py 重跑） */
+#reportPrint.th-ziqi .rp-head2{border-bottom-color:#9063b0}
+#reportPrint.th-ziqi .rp-page+.rp-page{border-top-color:#e1d5e9}
+#reportPrint.th-ziqi .rp-time{color:#92819f}
+#reportPrint.th-ziqi .rp-head .b{color:#4a305c}
+#reportPrint.th-ziqi .rp-head .s{color:#806296}
+#reportPrint.th-ziqi .rp-head2{color:#8a6ca0}
+#reportPrint.th-ziqi .rp-head2::after{background-image:linear-gradient(90deg,transparent,#8c61ab,transparent)}
+#reportPrint.th-ziqi .rp-id span{background-color:#eae0f1;color:#4f395f}
+#reportPrint.th-ziqi .rp-id b{color:#533668}
+#reportPrint.th-ziqi .rp-sec{color:#4a305c;border-bottom-color:#c1a7d3}
+#reportPrint.th-ziqi .rp-sec::before{background-image:linear-gradient(135deg,#a072c1,#533668)}
+#reportPrint.th-ziqi .pp{border-color:#bfabce;background-color:#fffdf8}
+#reportPrint.th-ziqi .pp.mg{border-color:#774f94;background-color:#ede1f5}
+#reportPrint.th-ziqi .pp.lm{box-shadow:inset 0 0 0 2px #8c61ab}
+#reportPrint.th-ziqi .ppn{color:#533668}
+#reportPrint.th-ziqi .ppc{border-color:#8c61ab;background-color:#f5effa}
+#reportPrint.th-ziqi .ppcn{color:#533668}
+#reportPrint.th-ziqi .rp-grade{border-color:#8c61ab;background-color:#ede1f5}
+#reportPrint.th-ziqi .rp-grade .g{color:#533668}
+#reportPrint.th-ziqi .dbn{color:#443150}
+#reportPrint.th-ziqi .dbt i{background-image:linear-gradient(90deg,#a072c1,#533668)}
+#reportPrint.th-ziqi .dbv{color:#533668}
+#reportPrint.th-ziqi .fp{border-color:#bfabce}
+#reportPrint.th-ziqi .fpg{color:#533668}
+#reportPrint.th-ziqi .rp-wx{color:#443150}
+#reportPrint.th-ziqi .wxc{border-color:#bfabce}
+#reportPrint.th-ziqi .rp-row{color:#281a32}
+#reportPrint.th-ziqi .rp-curlim{background-color:rgba(100,54,132,.12);border-left-color:#8c61ab}
+#reportPrint.th-ziqi .rp-curlim b{color:#533668}
+#reportPrint.th-ziqi .rp-pcard .pj{color:#523e60}
+#reportPrint.th-ziqi .rp-pcard .pb{color:#281a32}
+#reportPrint.th-ziqi .rp-pcard.empty .pb{color:#281a32}
+#reportPrint.th-ziqi .rp-pcard .px{border-top-color:rgba(84,55,105,.45);color:#463652}
+#reportPrint.th-ziqi .rp-pcard .px b{color:#56396b}
+#reportPrint.th-ziqi .rp-fcard .fh .fhg{color:#523e60}
+#reportPrint.th-ziqi .rp-fcard .fbd .fxr{color:#281a32}
+#reportPrint.th-ziqi .fxb.quan{background-color:#8c51b7}
+#reportPrint.th-ziqi .gc{background-color:#e2d6eb;color:#533668}
+#reportPrint.th-ziqi .rp-adv li{color:#281a32}
+#reportPrint.th-ziqi .rp-syn{background-color:#f0e8f6;border-color:#c8b2d7;color:#281a32}
+#reportPrint.th-ziqi .rp-lifesum b{color:#4a305c}
+#reportPrint.th-ziqi .rp-bless{border-color:#5e3a8c;background-image:linear-gradient(180deg,#fffdf9,#fcefe9)}
+#reportPrint.th-ziqi .rp-bless .bt{color:#683f85}
+#reportPrint.th-ziqi .rp-bless .bw{color:#5e3a8c}
+#reportPrint.th-ziqi .rp-bless .bs{color:#683f85}
+#reportPrint.th-ziqi .rp-kv2 span{border-color:#c8b2d7;color:#443150;background-color:#f8f4fb}
+#reportPrint.th-ziqi .rp-fbadge{border-color:#8c61ab;color:#533668;background-color:#ede1f5}
+#reportPrint.th-ziqi .rp-frole{color:#443150;border-left-color:#bfabce}
+#reportPrint.th-ziqi .rp-fsum .fr{color:#281a32}
+#reportPrint.th-ziqi .rp-tbl th{color:#533668;border-bottom-color:#a072c1}
+#reportPrint.th-ziqi .rp-tbl td{border-bottom-color:#dfd2e8;color:#281a32}
+#reportPrint.th-ziqi .rp-tbl tr.cur td{background-color:#ede1f5}
+#reportPrint.th-ziqi .rp-tbl tr.cur td:first-child,#reportPrint.th-ziqi .rp-tbl tr.cur b{color:#533668}
+#reportPrint.th-ziqi .rp-kv span{border-color:#c2abd3;color:#443150;background-color:#f8f4fb}
+#reportPrint.th-ziqi .rp-kv b{color:#533668}
+#reportPrint.th-ziqi .rp-cjh{color:#533668;border-bottom-color:#d0bcde}
+#reportPrint.th-ziqi .rp-cjrow{color:#372842}
+#reportPrint.th-ziqi .rp-cjrow .bar{background-color:#e3d8eb}
+#reportPrint.th-ziqi .rp-cjrow .bar i{background-image:linear-gradient(90deg,#b08dc9,#8052a0)}
+#reportPrint.th-ziqi .rp-cjrow.top .bar i{background-image:linear-gradient(90deg,#8052a0,#432b54)}
+#reportPrint.th-ziqi .rp-cjrow .v{color:#533668}
+#reportPrint.th-ziqi .rp-cjband{color:#4f395f}
+#reportPrint.th-ziqi .rp-cjana{color:#372842}
+#reportPrint.th-ziqi .rp-cjana b{color:#4a305c}
+#reportPrint.th-ziqi .rp-hpfigwrap .hp-sil{fill:#eae1f1;stroke:#aa8dbe}
+#reportPrint.th-ziqi .rp-hpdot.amber circle{fill:#8040ae}
+#reportPrint.th-ziqi .rp-hpdot text.lbl{fill:#4f395f}
+#reportPrint.th-ziqi .rp-hplegend{color:#715d7f}
+#reportPrint.th-ziqi .rp-hpitem{color:#372842}
+#reportPrint.th-ziqi .rp-hpitem .no.amber{background-color:#8040ae}
+#reportPrint.th-ziqi .rp-hpitem .t b{color:#4a305c}
+#reportPrint.th-ziqi .rcard{background-color:#fff;border-color:#d0bcde}
+#reportPrint.th-ziqi .rcard h3{color:#432b54;border-bottom-color:#9164b1}
+#reportPrint.th-ziqi .rcard h3 .ic{background-color:#533668;color:#fff}
+#reportPrint.th-ziqi .rcard p{color:#372842}
+#reportPrint.th-ziqi .cjcard .cj-sec{color:#533668}
+#reportPrint.th-ziqi .cj-ul li{color:#372842}
+#reportPrint.th-ziqi .cj-verdict{color:#4a305c}
+#reportPrint.th-ziqi .cj-cur{color:#372842}
+#reportPrint.th-ziqi .cj-note{color:#715d7f;border-top-color:#c7b3d5}
+#reportPrint.th-ziqi .rcard b{color:#4a305c}
+#reportPrint.th-ziqi .rp-head2{color:#4a305c}
+@media print{#reportPrint.th-ziqi .pp.lm{box-shadow:inset 0 0 0 2px #8c61ab !important}}
+@media print{html.ios-dev #reportPrint.th-ziqi .cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#8a62b0 0%,#6c4796 45%,#53347a 75%,#432865 100%)}}
+@media print{html:not(.ios-dev):not(.mac-safari) #reportPrint.th-ziqi .rp-cover>.cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#8a62b0 0%,#6c4796 45%,#53347a 75%,#432865 100%)}}
+#reportPrint.th-ziqi.rp-cap .pp.lm{box-shadow:inset 0 0 0 2px #8c61ab}
+#reportPrint.th-ziqi .rp-cover,#reportPrint.th-ziqi .rp-back{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#8a62b0 0%,#6c4796 45%,#53347a 75%,#432865 100%)}
+#reportPrint.th-ziqi .bk-big{color:#d0b5e4}
+#reportPrint.th-ziqi .bk-quote{color:#ceb5df}
+#reportPrint.th-ziqi .bk-dia{background-image:linear-gradient(135deg,#bf9bd9,#8052a0)}
+#reportPrint.th-ziqi .bk-brand{color:#bf9bd9}
+#reportPrint.th-ziqi .bk-brand2{color:#aa88c2}
+#reportPrint.th-ziqi .bk-note{color:#9a75b5}
+#reportPrint.th-ziqi .rp-ln{color:#2e2535}
+#reportPrint.th-ziqi .rp-ln .zwsec{color:#533668}
+#reportPrint.th-ziqi .rp-ln .zwkv{color:#4f395f}
+#reportPrint.th-ziqi .rp-ln .zwkv b{color:#402951}
+#reportPrint.th-qingyun .rp-head2{border-bottom-color:#64af93}
+#reportPrint.th-qingyun .rp-page+.rp-page{border-top-color:#d5e9e2}
+#reportPrint.th-qingyun .rp-time{color:#829e94}
+#reportPrint.th-qingyun .rp-head .b{color:#305c4c}
+#reportPrint.th-qingyun .rp-head .s{color:#639583}
+#reportPrint.th-qingyun .rp-head2{color:#6d9f8d}
+#reportPrint.th-qingyun .rp-head2::after{background-image:linear-gradient(90deg,transparent,#62aa90,transparent)}
+#reportPrint.th-qingyun .rp-id span{background-color:#e0f1eb;color:#3a5e51}
+#reportPrint.th-qingyun .rp-id b{color:#366856}
+#reportPrint.th-qingyun .rp-sec{color:#305c4c;border-bottom-color:#a8d2c3}
+#reportPrint.th-qingyun .rp-sec::before{background-image:linear-gradient(135deg,#73c0a4,#366856)}
+#reportPrint.th-qingyun .pp{border-color:#abcec1;background-color:#fffdf8}
+#reportPrint.th-qingyun .pp.mg{border-color:#50937a;background-color:#e1f5ee}
+#reportPrint.th-qingyun .pp.lm{box-shadow:inset 0 0 0 2px #62aa90}
+#reportPrint.th-qingyun .ppn{color:#366856}
+#reportPrint.th-qingyun .ppc{border-color:#62aa90;background-color:#effaf6}
+#reportPrint.th-qingyun .ppcn{color:#366856}
+#reportPrint.th-qingyun .rp-grade{border-color:#62aa90;background-color:#e1f5ee}
+#reportPrint.th-qingyun .rp-grade .g{color:#366856}
+#reportPrint.th-qingyun .dbn{color:#325045}
+#reportPrint.th-qingyun .dbt i{background-image:linear-gradient(90deg,#73c0a4,#366856)}
+#reportPrint.th-qingyun .dbv{color:#366856}
+#reportPrint.th-qingyun .fp{border-color:#abcec1}
+#reportPrint.th-qingyun .fpg{color:#366856}
+#reportPrint.th-qingyun .rp-wx{color:#325045}
+#reportPrint.th-qingyun .wxc{border-color:#abcec1}
+#reportPrint.th-qingyun .rp-row{color:#1a3229}
+#reportPrint.th-qingyun .rp-curlim{background-color:rgba(55,131,103,.12);border-left-color:#62aa90}
+#reportPrint.th-qingyun .rp-curlim b{color:#366856}
+#reportPrint.th-qingyun .rp-pcard .pj{color:#3e6053}
+#reportPrint.th-qingyun .rp-pcard .pb{color:#1a3229}
+#reportPrint.th-qingyun .rp-pcard.empty .pb{color:#1a3229}
+#reportPrint.th-qingyun .rp-pcard .px{border-top-color:rgba(56,104,86,.45);color:#375148}
+#reportPrint.th-qingyun .rp-pcard .px b{color:#3a6a58}
+#reportPrint.th-qingyun .rp-fcard .fh .fhg{color:#3e6053}
+#reportPrint.th-qingyun .rp-fcard .fbd .fxr{color:#1a3229}
+#reportPrint.th-qingyun .fxb.quan{background-color:#53b591}
+#reportPrint.th-qingyun .gc{background-color:#d6ebe3;color:#366856}
+#reportPrint.th-qingyun .rp-adv li{color:#1a3229}
+#reportPrint.th-qingyun .rp-syn{background-color:#e8f6f1;border-color:#b2d7c9;color:#1a3229}
+#reportPrint.th-qingyun .rp-lifesum b{color:#305c4c}
+#reportPrint.th-qingyun .rp-bless{border-color:#1f6b4f;background-image:linear-gradient(180deg,#fffdf9,#fcefe9)}
+#reportPrint.th-qingyun .rp-bless .bt{color:#40846b}
+#reportPrint.th-qingyun .rp-bless .bw{color:#1f6b4f}
+#reportPrint.th-qingyun .rp-bless .bs{color:#40846b}
+#reportPrint.th-qingyun .rp-kv2 span{border-color:#b2d7c9;color:#325045;background-color:#f4fbf8}
+#reportPrint.th-qingyun .rp-fbadge{border-color:#62aa90;color:#366856;background-color:#e1f5ee}
+#reportPrint.th-qingyun .rp-frole{color:#325045;border-left-color:#abcec1}
+#reportPrint.th-qingyun .rp-fsum .fr{color:#1a3229}
+#reportPrint.th-qingyun .rp-tbl th{color:#366856;border-bottom-color:#73c0a4}
+#reportPrint.th-qingyun .rp-tbl td{border-bottom-color:#d3e7e0;color:#1a3229}
+#reportPrint.th-qingyun .rp-tbl tr.cur td{background-color:#e1f5ee}
+#reportPrint.th-qingyun .rp-tbl tr.cur td:first-child,#reportPrint.th-qingyun .rp-tbl tr.cur b{color:#366856}
+#reportPrint.th-qingyun .rp-kv span{border-color:#abd3c4;color:#325045;background-color:#f4fbf8}
+#reportPrint.th-qingyun .rp-kv b{color:#366856}
+#reportPrint.th-qingyun .rp-cjh{color:#366856;border-bottom-color:#bdddd1}
+#reportPrint.th-qingyun .rp-cjrow{color:#284238}
+#reportPrint.th-qingyun .rp-cjrow .bar{background-color:#d8ebe4}
+#reportPrint.th-qingyun .rp-cjrow .bar i{background-image:linear-gradient(90deg,#8ec8b3,#539f83)}
+#reportPrint.th-qingyun .rp-cjrow.top .bar i{background-image:linear-gradient(90deg,#539f83,#2b5445)}
+#reportPrint.th-qingyun .rp-cjrow .v{color:#366856}
+#reportPrint.th-qingyun .rp-cjband{color:#3a5e51}
+#reportPrint.th-qingyun .rp-cjana{color:#284238}
+#reportPrint.th-qingyun .rp-cjana b{color:#305c4c}
+#reportPrint.th-qingyun .rp-hpfigwrap .hp-sil{fill:#e1f1eb;stroke:#8ebdac}
+#reportPrint.th-qingyun .rp-hpdot.amber circle{fill:#42ac85}
+#reportPrint.th-qingyun .rp-hpdot text.lbl{fill:#3a5e51}
+#reportPrint.th-qingyun .rp-hplegend{color:#5d7f72}
+#reportPrint.th-qingyun .rp-hpitem{color:#284238}
+#reportPrint.th-qingyun .rp-hpitem .no.amber{background-color:#42ac85}
+#reportPrint.th-qingyun .rp-hpitem .t b{color:#305c4c}
+#reportPrint.th-qingyun .rcard{background-color:#fff;border-color:#bdddd1}
+#reportPrint.th-qingyun .rcard h3{color:#2b5445;border-bottom-color:#65b094}
+#reportPrint.th-qingyun .rcard h3 .ic{background-color:#366856;color:#fff}
+#reportPrint.th-qingyun .rcard p{color:#284238}
+#reportPrint.th-qingyun .cjcard .cj-sec{color:#366856}
+#reportPrint.th-qingyun .cj-ul li{color:#284238}
+#reportPrint.th-qingyun .cj-verdict{color:#305c4c}
+#reportPrint.th-qingyun .cj-cur{color:#284238}
+#reportPrint.th-qingyun .cj-note{color:#5d7f72;border-top-color:#b3d5c8}
+#reportPrint.th-qingyun .rcard b{color:#305c4c}
+#reportPrint.th-qingyun .rp-head2{color:#305c4c}
+@media print{#reportPrint.th-qingyun .pp.lm{box-shadow:inset 0 0 0 2px #62aa90 !important}}
+@media print{html.ios-dev #reportPrint.th-qingyun .cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#4e9a7a 0%,#357f61 45%,#26654c 75%,#1d543f 100%)}}
+@media print{html:not(.ios-dev):not(.mac-safari) #reportPrint.th-qingyun .rp-cover>.cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#4e9a7a 0%,#357f61 45%,#26654c 75%,#1d543f 100%)}}
+#reportPrint.th-qingyun.rp-cap .pp.lm{box-shadow:inset 0 0 0 2px #62aa90}
+#reportPrint.th-qingyun .rp-cover,#reportPrint.th-qingyun .rp-back{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#4e9a7a 0%,#357f61 45%,#26654c 75%,#1d543f 100%)}
+#reportPrint.th-qingyun .bk-big{color:#b5e4d3}
+#reportPrint.th-qingyun .bk-quote{color:#b6decf}
+#reportPrint.th-qingyun .bk-dia{background-image:linear-gradient(135deg,#9cd8c2,#539f83)}
+#reportPrint.th-qingyun .bk-brand{color:#9cd8c2}
+#reportPrint.th-qingyun .bk-brand2{color:#89c1ad}
+#reportPrint.th-qingyun .bk-note{color:#76b49d}
+#reportPrint.th-qingyun .rp-ln{color:#25352f}
+#reportPrint.th-qingyun .rp-ln .zwsec{color:#366856}
+#reportPrint.th-qingyun .rp-ln .zwkv{color:#3a5e51}
+#reportPrint.th-qingyun .rp-ln .zwkv b{color:#295142}
+#reportPrint.th-fuze .rp-head2{border-bottom-color:#6484af}
+#reportPrint.th-fuze .rp-page+.rp-page{border-top-color:#d5dee9}
+#reportPrint.th-fuze .rp-time{color:#828e9e}
+#reportPrint.th-fuze .rp-head .b{color:#30435c}
+#reportPrint.th-fuze .rp-head .s{color:#637995}
+#reportPrint.th-fuze .rp-head2{color:#6d839f}
+#reportPrint.th-fuze .rp-head2::after{background-image:linear-gradient(90deg,transparent,#6281aa,transparent)}
+#reportPrint.th-fuze .rp-id span{background-color:#e0e7f1;color:#3a4a5e}
+#reportPrint.th-fuze .rp-id b{color:#364c68}
+#reportPrint.th-fuze .rp-sec{color:#30435c;border-bottom-color:#a8bad2}
+#reportPrint.th-fuze .rp-sec::before{background-image:linear-gradient(135deg,#7394c0,#364c68)}
+#reportPrint.th-fuze .pp{border-color:#abbace;background-color:#fffdf8}
+#reportPrint.th-fuze .pp.mg{border-color:#506d93;background-color:#e1eaf5}
+#reportPrint.th-fuze .pp.lm{box-shadow:inset 0 0 0 2px #6281aa}
+#reportPrint.th-fuze .ppn{color:#364c68}
+#reportPrint.th-fuze .ppc{border-color:#6281aa;background-color:#eff4fa}
+#reportPrint.th-fuze .ppcn{color:#364c68}
+#reportPrint.th-fuze .rp-grade{border-color:#6281aa;background-color:#e1eaf5}
+#reportPrint.th-fuze .rp-grade .g{color:#364c68}
+#reportPrint.th-fuze .dbn{color:#323f50}
+#reportPrint.th-fuze .dbt i{background-image:linear-gradient(90deg,#7394c0,#364c68)}
+#reportPrint.th-fuze .dbv{color:#364c68}
+#reportPrint.th-fuze .fp{border-color:#abbace}
+#reportPrint.th-fuze .fpg{color:#364c68}
+#reportPrint.th-fuze .rp-wx{color:#323f50}
+#reportPrint.th-fuze .wxc{border-color:#abbace}
+#reportPrint.th-fuze .rp-row{color:#1a2432}
+#reportPrint.th-fuze .rp-curlim{background-color:rgba(55,88,131,.12);border-left-color:#6281aa}
+#reportPrint.th-fuze .rp-curlim b{color:#364c68}
+#reportPrint.th-fuze .rp-pcard .pj{color:#3e4d60}
+#reportPrint.th-fuze .rp-pcard .pb{color:#1a2432}
+#reportPrint.th-fuze .rp-pcard.empty .pb{color:#1a2432}
+#reportPrint.th-fuze .rp-pcard .px{border-top-color:rgba(56,77,104,.45);color:#374251}
+#reportPrint.th-fuze .rp-pcard .px b{color:#3a4f6a}
+#reportPrint.th-fuze .rp-fcard .fh .fhg{color:#3e4d60}
+#reportPrint.th-fuze .rp-fcard .fbd .fxr{color:#1a2432}
+#reportPrint.th-fuze .fxb.quan{background-color:#537db5}
+#reportPrint.th-fuze .gc{background-color:#d6dfeb;color:#364c68}
+#reportPrint.th-fuze .rp-adv li{color:#1a2432}
+#reportPrint.th-fuze .rp-syn{background-color:#e8eef6;border-color:#b2c2d7;color:#1a2432}
+#reportPrint.th-fuze .rp-lifesum b{color:#30435c}
+#reportPrint.th-fuze .rp-bless{border-color:#244a86;background-image:linear-gradient(180deg,#fffdf9,#fcefe9)}
+#reportPrint.th-fuze .rp-bless .bt{color:#405e84}
+#reportPrint.th-fuze .rp-bless .bw{color:#244a86}
+#reportPrint.th-fuze .rp-bless .bs{color:#405e84}
+#reportPrint.th-fuze .rp-kv2 span{border-color:#b2c2d7;color:#323f50;background-color:#f4f7fb}
+#reportPrint.th-fuze .rp-fbadge{border-color:#6281aa;color:#364c68;background-color:#e1eaf5}
+#reportPrint.th-fuze .rp-frole{color:#323f50;border-left-color:#abbace}
+#reportPrint.th-fuze .rp-fsum .fr{color:#1a2432}
+#reportPrint.th-fuze .rp-tbl th{color:#364c68;border-bottom-color:#7394c0}
+#reportPrint.th-fuze .rp-tbl td{border-bottom-color:#d3dce7;color:#1a2432}
+#reportPrint.th-fuze .rp-tbl tr.cur td{background-color:#e1eaf5}
+#reportPrint.th-fuze .rp-tbl tr.cur td:first-child,#reportPrint.th-fuze .rp-tbl tr.cur b{color:#364c68}
+#reportPrint.th-fuze .rp-kv span{border-color:#abbcd3;color:#323f50;background-color:#f4f7fb}
+#reportPrint.th-fuze .rp-kv b{color:#364c68}
+#reportPrint.th-fuze .rp-cjh{color:#364c68;border-bottom-color:#bdcbdd}
+#reportPrint.th-fuze .rp-cjrow{color:#283342}
+#reportPrint.th-fuze .rp-cjrow .bar{background-color:#d8e0eb}
+#reportPrint.th-fuze .rp-cjrow .bar i{background-image:linear-gradient(90deg,#8ea7c8,#53749f)}
+#reportPrint.th-fuze .rp-cjrow.top .bar i{background-image:linear-gradient(90deg,#53749f,#2b3d54)}
+#reportPrint.th-fuze .rp-cjrow .v{color:#364c68}
+#reportPrint.th-fuze .rp-cjband{color:#3a4a5e}
+#reportPrint.th-fuze .rp-cjana{color:#283342}
+#reportPrint.th-fuze .rp-cjana b{color:#30435c}
+#reportPrint.th-fuze .rp-hpfigwrap .hp-sil{fill:#e1e8f1;stroke:#8ea2bd}
+#reportPrint.th-fuze .rp-hpdot.amber circle{fill:#4270ac}
+#reportPrint.th-fuze .rp-hpdot text.lbl{fill:#3a4a5e}
+#reportPrint.th-fuze .rp-hplegend{color:#5d6c7f}
+#reportPrint.th-fuze .rp-hpitem{color:#283342}
+#reportPrint.th-fuze .rp-hpitem .no.amber{background-color:#4270ac}
+#reportPrint.th-fuze .rp-hpitem .t b{color:#30435c}
+#reportPrint.th-fuze .rcard{background-color:#fff;border-color:#bdcbdd}
+#reportPrint.th-fuze .rcard h3{color:#2b3d54;border-bottom-color:#6585b0}
+#reportPrint.th-fuze .rcard h3 .ic{background-color:#364c68;color:#fff}
+#reportPrint.th-fuze .rcard p{color:#283342}
+#reportPrint.th-fuze .cjcard .cj-sec{color:#364c68}
+#reportPrint.th-fuze .cj-ul li{color:#283342}
+#reportPrint.th-fuze .cj-verdict{color:#30435c}
+#reportPrint.th-fuze .cj-cur{color:#283342}
+#reportPrint.th-fuze .cj-note{color:#5d6c7f;border-top-color:#b3c2d5}
+#reportPrint.th-fuze .rcard b{color:#30435c}
+#reportPrint.th-fuze .rp-head2{color:#30435c}
+@media print{#reportPrint.th-fuze .pp.lm{box-shadow:inset 0 0 0 2px #6281aa !important}}
+@media print{html.ios-dev #reportPrint.th-fuze .cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#5378b0 0%,#3b5f96 45%,#2c4a7a 75%,#223c66 100%)}}
+@media print{html:not(.ios-dev):not(.mac-safari) #reportPrint.th-fuze .rp-cover>.cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#5378b0 0%,#3b5f96 45%,#2c4a7a 75%,#223c66 100%)}}
+#reportPrint.th-fuze.rp-cap .pp.lm{box-shadow:inset 0 0 0 2px #6281aa}
+#reportPrint.th-fuze .rp-cover,#reportPrint.th-fuze .rp-back{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#5378b0 0%,#3b5f96 45%,#2c4a7a 75%,#223c66 100%)}
+#reportPrint.th-fuze .bk-big{color:#b5c9e4}
+#reportPrint.th-fuze .bk-quote{color:#b6c7de}
+#reportPrint.th-fuze .bk-dia{background-image:linear-gradient(135deg,#9cb6d8,#53749f)}
+#reportPrint.th-fuze .bk-brand{color:#9cb6d8}
+#reportPrint.th-fuze .bk-brand2{color:#89a1c1}
+#reportPrint.th-fuze .bk-note{color:#7691b4}
+#reportPrint.th-fuze .rp-ln{color:#252c35}
+#reportPrint.th-fuze .rp-ln .zwsec{color:#364c68}
+#reportPrint.th-fuze .rp-ln .zwkv{color:#3a4a5e}
+#reportPrint.th-fuze .rp-ln .zwkv b{color:#293a51}
+#reportPrint.th-jinyu .rp-bless{border-color:#2b2824;background-image:linear-gradient(180deg,#fffdf9,#fcefe9)}
+#reportPrint.th-jinyu .rp-bless .bw{color:#2b2824}
+@media print{html.ios-dev #reportPrint.th-jinyu .cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#55504a 0%,#3c3833 45%,#2b2824 75%,#1f1c19 100%)}}
+@media print{html:not(.ios-dev):not(.mac-safari) #reportPrint.th-jinyu .rp-cover>.cv-bleed{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#55504a 0%,#3c3833 45%,#2b2824 75%,#1f1c19 100%)}}
+#reportPrint.th-jinyu .rp-cover,#reportPrint.th-jinyu .rp-back{background-image:radial-gradient(ellipse 95% 65% at 50% 26%,#55504a 0%,#3c3833 45%,#2b2824 75%,#1f1c19 100%)}
+/* ZW-THEMES-END */
 </style>
 </head>
 <body>
@@ -2519,7 +2829,7 @@ header .hdver b{font-weight:600;color:inherit;font-family:ui-monospace,Menlo,mon
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 /* ================= 站台版本（改版只需改這裡） ================= */
 const SITE_VERSION="v2.3.2";
-const SITE_VERSION_DATE="2026.11.27.2";
+const SITE_VERSION_DATE="2026.11.27.3";
 /* iOS 裝置標記（含偽裝成 Mac 的 iPad）：列印 CSS 用它把封面/封底改成 AirPrint 安全版面 */
 try{const ua=navigator.userAgent;if(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android|iPad|iPhone|iPod/.test(ua)&&!(navigator.maxTouchPoints>1))document.documentElement.classList.add('mac-safari');if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Firefox|Android/.test(ua)))document.documentElement.classList.add('ios-dev');}catch(e){}
 /* ================= 多語系 v1（2026.11.28）：語言選擇＋簡體中文 =================
@@ -2533,16 +2843,17 @@ const ZW_LANGS=[['zh-Hant','繁體中文'],['zh-Hans','简体中文'],['ja','日
 const ZW_LANG_READY={'zh-Hant':1,'zh-Hans':1};
 const ZW_LANG_SOON={ja:'準備中',en:'coming soon',ko:'준비 중'};
 const ZW_LANG=(function(){
+  /* v.27.3 站長決定：進站一律預設繁體中文。語言只記在本分頁（sessionStorage，付款跳轉回來仍保留），
+     新開網頁回到繁體；網址 ?lang=zh-Hans 可直連。不再依瀏覽器語言自動切換。 */
   const norm=function(v){v=String(v||'').toLowerCase();
     if(/^(zh-hans|zh-cn|zh-sg|cn|sc|hans)$/.test(v))return 'zh-Hans';
     if(/^(zh-hant|zh-tw|zh-hk|zh-mo|tw|tc|hant)$/.test(v))return 'zh-Hant';
     return null;};
+  try{localStorage.removeItem('zw_lang');}catch(e){}
   try{
     const q=norm((location.search.match(/[?&]lang=([\w-]+)/)||[])[1]);
-    if(q){try{localStorage.setItem('zw_lang',q);}catch(e){}return q;}
-    const s=localStorage.getItem('zw_lang');if(s&&ZW_LANG_READY[s])return s;
-    const nl=String((navigator.languages&&navigator.languages[0])||navigator.language||'').toLowerCase();
-    if(/^zh-(cn|sg|hans)/.test(nl))return 'zh-Hans';
+    if(q){try{sessionStorage.setItem('zw_lang',q);}catch(e){}return q;}
+    const s=sessionStorage.getItem('zw_lang');if(s&&ZW_LANG_READY[s])return s;
   }catch(e){}
   return 'zh-Hant';
 })();
@@ -2628,7 +2939,7 @@ function zwLangMount(){
 }
 function zwSetLang(l){
   if(!ZW_LANG_READY[l]||l===ZW_LANG)return;
-  try{localStorage.setItem('zw_lang',l);}catch(e){}
+  try{sessionStorage.setItem('zw_lang',l);}catch(e){}
   try{
     if(window.__ZW&&window.__ZW.name){
       const f={gender:typeof gender!=='undefined'?gender:'',timeMode:typeof timeMode!=='undefined'?timeMode:''};
@@ -7173,8 +7484,40 @@ function zwFitClosing(){
   rp.style.setProperty('--zw-bless-push',push+'px');
   return push;
 }
-document.getElementById("pdfBtn").addEventListener("click",()=>runPdfExport(false));
-document.getElementById("pdfFabBtn").addEventListener("click",()=>runPdfExport(true));
+
+/* ===== PDF 報告五款模板（v.27.3）=====
+   按「下載 PDF」先選模板 → #reportPrint 掛 th-<key> → 照原流程列印。配色由 themes.py 依原樣式自動產生
+   （封面漸層換色、內頁金棕色系換色相；化祿綠／化忌紅等語意色不動），版面尺寸完全不變（五款實測皆 17 頁）。
+   上次選擇記在 localStorage zw_pdf_theme。未解鎖／無報告／App 內建瀏覽器 → 直接走原流程的提示，不跳選單。 */
+const ZW_PDF_THEMES=[["zhuhong", "鴻運當頭", "朱紅", ["#c26757", "#a94a3e", "#8a332b", "#7a2a24"]], ["ziqi", "紫氣東來", "紫金", ["#8a62b0", "#6c4796", "#53347a", "#432865"]], ["qingyun", "青雲直上", "翠綠", ["#4e9a7a", "#357f61", "#26654c", "#1d543f"]], ["fuze", "福澤綿長", "靛藍", ["#5378b0", "#3b5f96", "#2c4a7a", "#223c66"]], ["jinyu", "金玉滿堂", "墨金", ["#55504a", "#3c3833", "#2b2824", "#1f1c19"]]];
+function zwPdfThemeApply(key){
+  const rp=document.getElementById('reportPrint');if(!rp)return;
+  ZW_PDF_THEMES.forEach(function(t){rp.classList.remove('th-'+t[0]);});
+  if(key&&key!=='zhuhong')rp.classList.add('th-'+key);
+}
+function zwPdfPick(fromFab){
+  const z=document.getElementById('premZone'),rp=document.getElementById('reportPrint');
+  const inApp=(typeof isInAppBrowser==='function')?isInAppBrowser():false;
+  if((z&&z.classList.contains('locked'))||!rp||!rp.innerHTML.trim()||!document.body.classList.contains('rp-on')||inApp||typeof window.print!=='function'){runPdfExport(fromFab);return;}
+  let last='zhuhong';try{last=localStorage.getItem('zw_pdf_theme')||'zhuhong';}catch(e){}
+  let h='<div class="pdfth-grid">';
+  ZW_PDF_THEMES.forEach(function(t){
+    const c=t[3];
+    h+='<button type="button" class="pdfth'+(t[0]===last?' last':'')+'" onclick="zwPdfGo(\''+t[0]+'\','+(fromFab?'true':'false')+')">'
+      +'<i style="background:radial-gradient(ellipse 95% 65% at 50% 26%,'+c[0]+' 0%,'+c[1]+' 45%,'+c[2]+' 75%,'+c[3]+' 100%)"></i>'
+      +'<b>'+t[1]+'</b><small>'+t[2]+'</small>'+(t[0]===last?'<em>上次使用</em>':'')+'</button>';
+  });
+  h+='</div><p class="pdfth-note">五款內容與頁數完全相同，只換封面與內頁主色。選好後會開啟列印視窗，請選「另存為 PDF」。</p>';
+  zwOpenModal('下載報告','選擇報告模板','五款吉祥配色，挑一款最喜歡的',h);
+}
+function zwPdfGo(key,fromFab){
+  try{localStorage.setItem('zw_pdf_theme',key);}catch(e){}
+  zwPdfThemeApply(key);
+  zwCloseModal();
+  runPdfExport(fromFab);
+}
+document.getElementById("pdfBtn").addEventListener("click",()=>zwPdfPick(false));
+document.getElementById("pdfFabBtn").addEventListener("click",()=>zwPdfPick(true));
 
 /* ===== 一鍵輸出 AI 結構化命盤文本 ===== */
 const _AIHUA={lu:"祿",quan:"權",ke:"科",ji:"忌"};
