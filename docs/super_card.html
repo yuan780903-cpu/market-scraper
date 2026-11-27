@@ -422,7 +422,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <!-- 登入 -->
 <div id="vLogin" class="login hide">
-  <div class="logo"><img src="super_card_logo.svg" alt="超級業務名片王"></div>
+  <div class="logo" id="loginLogo"><img src="super_card_logo.svg" alt="超級業務名片王"></div>
   <h2>超級業務名片王</h2>
   <p>拍名片 → 自動辨識分欄 → 雲端保存,換手機也不怕</p>
   <input id="hAcc" class="inp" type="email" placeholder="帳號(Email)" autocomplete="username" autocapitalize="off">
@@ -434,7 +434,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <div id="loginBook" class="stat" style="margin-top:10px;color:var(--acc);font-weight:600"></div>
   <button class="btn sec" id="btnBuy" data-ic="star" style="margin-top:14px">還沒有帳號?購買終身版 NT$299</button>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
-  <details id="advLogin" style="margin-top:6px"><summary>自架資料庫 / 管理員登入</summary>
+  <details id="advLogin" class="hide" style="margin-top:6px"><summary>自架資料庫 / 管理員登入</summary>
     <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="off" style="margin-top:8px">
     <div style="height:8px"></div>
     <button id="btnLogin" class="btn sec" data-ic="check">用存取碼進入</button>
@@ -914,7 +914,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.30", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.31", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -4369,7 +4369,13 @@ checkJoinLink();
 checkCardLink();
 checkLoginLink();
 checkBuyBack();
-if(ls("sc_code") && !(curBook()||{}).host) $("advLogin").open=true;   // 原本用存取碼的使用者:進階區預設展開
+/* 管理員入口隱藏:登入頁連點 logo 7 下(3 秒內)才出現「自架資料庫 / 管理員登入」 */
+(function(){ var n=0, t=0;
+  $("loginLogo").addEventListener("click",function(){
+    var now=Date.now(); if(now-t>3000) n=0; t=now; n++;
+    if(n>=7){ n=0; var a=$("advLogin"), open=a.classList.contains("hide"); a.classList.toggle("hide",!open); a.open=open; sfx(open?"ready":"swish"); toast(open?"🔐 已開啟管理員登入":"已隱藏管理員登入"); if(open) setTimeout(function(){ $("code").focus(); },200); }
+  });
+})();
 </script>
 </body>
 </html>
