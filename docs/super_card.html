@@ -280,6 +280,9 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.trialbar{background:#fff7e8;border:1px solid #f0d9a8;color:#8a5a12;border-radius:12px;padding:9px 12px;margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.trialbar b{flex:1}
+.trialbar button{border:0;background:var(--acc);color:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;font-weight:700}
 .buyhero{text-align:center}
 .buyhero .bp{font-size:44px;font-weight:800;color:var(--pri);font-family:"Noto Serif TC","Songti TC",serif}
 .buyhero .bp small{font-size:18px;margin-right:2px}
@@ -432,7 +435,8 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <button id="btnHLogin" class="btn" data-ic="check">登入</button>
   <div id="loginMsg" class="msg"></div>
   <div id="loginBook" class="stat" style="margin-top:10px;color:var(--acc);font-weight:600"></div>
-  <button class="btn sec" id="btnBuy" data-ic="star" style="margin-top:14px">還沒有帳號?購買終身版 NT$299</button>
+  <button class="btn sec" id="btnTrial" data-ic="user" style="margin-top:14px">免費試用(限 5 張名片)</button>
+  <button class="btn sec" id="btnBuy" data-ic="star" style="margin-top:8px">購買終身版 NT$299</button>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
   <details id="advLogin" class="hide" style="margin-top:6px"><summary>自架資料庫 / 管理員登入</summary>
     <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="off" style="margin-top:8px">
@@ -468,6 +472,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <div class="wrap">
     <div class="search"><input id="q" class="inp" type="search" placeholder="搜尋姓名、公司、電話…"><select id="fCity" aria-label="縣市"></select><button class="sortbtn" id="btnSort" data-ic="sort">排序</button></div>
     <div id="chips" class="chips"></div>
+    <div id="trialBar" class="trialbar hide"></div>
     <div id="stat" class="stat"></div>
     <div id="list" class="list"></div>
     <div id="idxBar" class="idxbar hide"></div>
@@ -799,6 +804,19 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <div class="stat" style="text-align:center">付款由綠界科技 ECPay 處理,支援信用卡、ATM、超商。</div>
   </div>
 </div>
+<!-- 免費試用 -->
+<div id="vTrial" class="sheet hide" style="z-index:40">
+  <header><button class="ic" id="btnTrialBack" data-ic="back">返回</button><h1>免費試用</h1></header>
+  <div class="wrap">
+    <div class="exp buyhero"><div class="bp" style="font-size:30px">免費試用</div><ul><li>可存 5 張名片,所有功能都能用</li><li>滿意再用同一個 Email 購買終身版 NT$299,資料全部保留、自動升級</li></ul></div>
+    <div class="exp"><h3>試用資料</h3>
+      <input id="trName" class="inp" placeholder="姓名" autocomplete="name"><div style="height:8px"></div>
+      <input id="trEmail" class="inp" type="email" placeholder="Email(就是登入帳號)" autocomplete="email" autocapitalize="off">
+    </div>
+    <div class="acts"><button class="btn" id="btnTrialGo" data-ic="check">開始免費試用</button></div>
+    <div class="exp hide buydone" id="trDone" style="text-align:center;line-height:1.8"></div>
+  </div>
+</div>
 <!-- 付款完成 -->
 <div id="vBuyDone" class="sheet hide" style="z-index:41">
   <header><h1>購買完成</h1></header>
@@ -914,7 +932,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.31", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.32", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1074,6 +1092,40 @@ async function changePw(){
   try{ var r=await post({action:"changePw", oldPassword:o, newPassword:n}); if(!r.ok) throw new Error(r.error); toast("✅ 密碼已修改,下次登入用新密碼"); }
   catch(e){ toast("修改失敗:"+e.message); }
 }
+/* ===== 免費試用(限 5 張)===== */
+function openTrial(){ $("vTrial").classList.remove("hide"); $("trDone").classList.add("hide"); $("btnTrialGo").disabled=false; if(!$("trEmail").value) $("trEmail").value=$("hAcc").value||""; }
+async function trialGo(){
+  var nm=$("trName").value.trim(), em=$("trEmail").value.trim().toLowerCase();
+  if(!nm){ toast("請填姓名"); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ toast("Email 格式不對"); return; }
+  var b=$("btnTrialGo"); b.disabled=true; setLabel(b,"開通中…");
+  try{
+    var r=await postTo(HOST_URL,"",{action:"trial", name:nm, email:em});
+    if(!r.ok) throw new Error(r.error);
+    var d=$("trDone"); d.classList.remove("hide"); sfx("success");
+    d.innerHTML='<div style="font-size:42px">🎉</div><h3>試用帳號開好了!</h3><div class="acc">帳號:<b>'+esc(r.account)+'</b><br>密碼:<b style="letter-spacing:2px">'+esc(r.password)+'</b></div>'+
+      '<p style="font-size:13.5px;color:#666">請截圖或記下密碼'+(r.mailed?',也已寄到你的 Email':'')+'。</p><button class="btn" id="btnTrialStart">開始使用</button>';
+    $("btnTrialStart").onclick=function(){ useHostToken(r.account, r.token, "我的名片簿"); S.plan="試用"; S.limit=5; $("vTrial").classList.add("hide"); enter(); };
+    setLabel(b,"已開通"); d.scrollIntoView({block:"center"});
+  }catch(e){ toast(e.message); b.disabled=false; setLabel(b,"開始免費試用"); }
+}
+/** 雲端帳號的方案(試用/終身):試用顯示額度列,到上限引導升級 */
+function renderTrialBar(){
+  var on = S.plan==="試用" && S.limit>0;
+  $("trialBar").classList.toggle("hide",!on); if(!on) return;
+  var n=S.cards.length, full=n>=S.limit;
+  $("trialBar").innerHTML='<b>'+(full?'試用額度已用完('+n+'/'+S.limit+' 張)':'免費試用中:'+n+'/'+S.limit+' 張')+'</b><button type="button" id="btnUpgrade">升級終身版 299</button>';
+  $("btnUpgrade").onclick=openUpgrade;
+}
+function openUpgrade(){ openBuy(); var a=(curBook()||{}).account||""; if(a){ $("buyEmail").value=a; $("buyEmail2").value=a; } }
+function trialFull(){ return S.plan==="試用" && S.limit>0 && S.cards.length>=S.limit; }
+function askUpgrade(msg){ if(confirm((msg||"試用版最多 "+S.limit+" 張名片。")+"\n\n要升級終身版 NT$299 嗎?(資料全部保留)")) openUpgrade(); }
+async function refreshPlan(){
+  var c=curBook(); if(!c||!c.host){ S.plan=""; S.limit=0; renderTrialBar(); return; }
+  try{ var p=await post({action:"ping"}); if(p.ok){ S.plan=p.plan||""; S.limit=p.limit||0; ls("sc_ai",p.ai?"1":"0"); } }catch(e){}
+  renderTrialBar();
+}
+
 /* ===== 購買終身版(綠界)→ 付款完成自動開帳號、直接登入 ===== */
 var PAY_API = "https://ziwei-lic.yuan780903.workers.dev";
 function openBuy(){ $("vBuy").classList.remove("hide"); $("vBuy").scrollTop=0; if(!$("buyEmail").value) $("buyEmail").value=$("hAcc").value||""; }
@@ -1110,10 +1162,10 @@ async function checkBuyBack(){
         if(r.sc.err){ box.innerHTML='<div style="font-size:40px">⚠️</div><h3>付款成功,但開通遇到問題</h3><p>'+esc(r.sc.exists?"這個 Email 已經有帳號了,請直接用原本的密碼登入;若忘記密碼請聯絡我們重設。":r.sc.err)+'</p><p style="color:#888;font-size:13px">訂單編號:'+esc(order)+'</p><button class="btn" onclick="$(\'vBuyDone\').classList.add(\'hide\')">回登入頁</button>'; return true; }
         sfx("success"); ls("sc_buy",null);
         box.innerHTML='<div class="buydone"><div style="font-size:48px">🎉</div><h3>付款成功,帳號已開通!</h3>'+
-          '<div class="acc">帳號:<b>'+esc(r.sc.acc)+'</b><br>密碼:<b style="letter-spacing:2px">'+esc(r.sc.pw||"(已寄到 Email)")+'</b></div>'+
+          '<div class="acc">帳號:<b>'+esc(r.sc.acc)+'</b><br>'+(r.sc.pw?'密碼:<b style="letter-spacing:2px">'+esc(r.sc.pw)+'</b>':'已升級終身版,<b>密碼和資料都不變</b>')+'</div>'+
           '<p style="font-size:13.5px;color:#666">請截圖或記下密碼'+(r.sc.mailed?',我們也已寄到你的 Email':'')+'。之後換手機,用這組帳號密碼登入即可。</p>'+
           '<button class="btn" id="btnBuyStart">開始使用</button></div>';
-        $("btnBuyStart").onclick=function(){ useHostToken(r.sc.acc, r.sc.tok, "我的名片簿"); $("vBuyDone").classList.add("hide"); post({action:"ping"}).then(function(p){ if(p.ok){ ls("sc_ai",p.ai?"1":"0"); } enter(); }).catch(function(){ enter(); }); };
+        $("btnBuyStart").onclick=function(){ useHostToken(r.sc.acc, r.sc.tok, "我的名片簿"); S.plan="終身"; S.limit=0; $("vBuyDone").classList.add("hide"); post({action:"ping"}).then(function(p){ if(p.ok){ ls("sc_ai",p.ai?"1":"0"); } enter(); }).catch(function(){ enter(); }); };
         return true;
       }
       if(r.paid===false && i>=20){ break; }
@@ -1139,6 +1191,7 @@ async function enter(){
   }
   await qRestore();
   syncList(false);
+  refreshPlan();
 }
 /* ===== 版本 ===== */
 function renderVer(){
@@ -1254,6 +1307,7 @@ function renderFilters(){
   $("fCity").innerHTML='<option value="">全部縣市</option>'+cs.map(function(c){return '<option value="'+esc(c)+'"'+(S.fcity===c?' selected':'')+'>'+esc(c)+'('+city[c]+')</option>';}).join("");
 }
 function renderList(){
+  if(S.plan==="試用") renderTrialBar();
   renderFilters();
   var arr=filtered(), fd=filterDesc();
   $("stat").textContent = (S.bookLabel?"📒 "+S.bookLabel+" · ":"")+(fd ? (fd+":"+arr.length+" 張 / 共 "+S.cards.length+" 張") : ("共 "+S.cards.length+" 張名片"))+(S.syncMsg?" · "+S.syncMsg:"");
@@ -1362,7 +1416,7 @@ async function save(){
     var vc = (!S.cur.id && autoContactOn() && isIOS()) ? (function(){ var g=Object.assign({},f); g["縮圖"]=(S.cur.thumb&&String(S.cur.thumb).indexOf("data:")===0)?S.cur.thumb:""; return toVcard(g,true)+"\r\n"; })() : "";
     renderList(); closeEdit(); toast(vc ? "✅ 已存到雲端,接著確認聯絡人後按 ✓" : "✅ 已存到 Google 雲端");
     if(vc) setTimeout(function(){ openContactSheet(vc); },350);
-  }catch(e){ toast("儲存失敗:"+e.message); }
+  }catch(e){ if(/試用版最多/.test(e.message)) askUpgrade(e.message); else toast("儲存失敗:"+e.message); }
   b.disabled=false; setLabel(b,"儲存到雲端");
 }
 
@@ -4144,12 +4198,12 @@ async function geoFillMissing(){
 }
 
 /* ===== 事件 ===== */
-$("btnLogin").onclick=login; $("btnHLogin").onclick=hostLogin; $("btnBuy").onclick=openBuy; $("btnBuyBack").onclick=function(){ $("vBuy").classList.add("hide"); }; $("btnBuyPay").onclick=buyPay; $("hPw").addEventListener("keydown",function(e){ if(e.key==="Enter") hostLogin(); }); $("btnChangePw").onclick=changePw;
+$("btnLogin").onclick=login; $("btnHLogin").onclick=hostLogin; $("btnBuy").onclick=openBuy; $("btnTrial").onclick=openTrial; $("btnTrialBack").onclick=function(){ $("vTrial").classList.add("hide"); }; $("btnTrialGo").onclick=trialGo; $("btnBuyBack").onclick=function(){ $("vBuy").classList.add("hide"); }; $("btnBuyPay").onclick=buyPay; $("hPw").addEventListener("keydown",function(e){ if(e.key==="Enter") hostLogin(); }); $("btnChangePw").onclick=changePw;
 $("code").addEventListener("keydown",function(e){if(e.key==="Enter")login();});
 $("btnLogout").onclick=logout;
 $("btnReload").onclick=loadList;
 $("q").addEventListener("input",renderList);
-$("btnScan").onclick=function(){ openCam("single"); };
+$("btnScan").onclick=function(){ if(trialFull()){ askUpgrade(); return; } openCam("single"); };
 $("btnRescan").onclick=function(){ openCam("single"); };
 $("btnAddBack").onclick=function(){ openCam("back"); };
 $("btnCamClose").onclick=function(){
@@ -4198,7 +4252,7 @@ $("qDual").addEventListener("change",function(){ if(!this.checked) S.q.forEach(f
 $("file").addEventListener("change",onFile);
 $("btnBack").onclick=backFromEdit;
 $("dupBar").addEventListener("click",onDupBar);
-$("btnBatch").onclick=openBatch;
+$("btnBatch").onclick=function(){ if(trialFull()){ askUpgrade(); return; } openBatch(); };
 $("btnBatchBack").onclick=function(){ $("vBatch").classList.add("hide"); };
 $("btnShot").onclick=function(){ openCam("batch"); };
 $("btnPick").onclick=function(){ $("fileMulti").click(); };
