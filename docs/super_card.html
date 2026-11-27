@@ -428,6 +428,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
     <button id="btnTheme" data-ic="palette">風格模板</button>
     <button id="btnSound" data-ic="volume">音效:開</button>
     <button id="btnLang" data-ic="globe">辨識語言:自動</button>
+    <button id="btnAutoContact" data-ic="userplus">存檔後自動加入通訊錄:開</button>
     <button id="btnVer" data-ic="info">版本</button>
   </div>
   <div class="wrap">
@@ -818,7 +819,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.25", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.26", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1171,7 +1172,10 @@ async function save(){
     var i=S.cards.findIndex(function(c){return c.ID===r.id;});
     if(i>=0) S.cards[i]=r.card; else S.cards.unshift(r.card);
     if(qid) qRemove(qid);
-    renderList(); closeEdit(); toast("✅ 已存到 Google 雲端");
+    // 新名片存好 → iPhone 自動跳「新增聯絡人」,確認後按 ✓ 即可(☰ 可關閉)
+    var vc = (!S.cur.id && autoContactOn() && isIOS()) ? (function(){ var g=Object.assign({},f); g["縮圖"]=(S.cur.thumb&&String(S.cur.thumb).indexOf("data:")===0)?S.cur.thumb:""; return toVcard(g,true)+"\r\n"; })() : "";
+    renderList(); closeEdit(); toast(vc ? "✅ 已存到雲端,接著確認聯絡人後按 ✓" : "✅ 已存到 Google 雲端");
+    if(vc) setTimeout(function(){ openContactSheet(vc); },350);
   }catch(e){ toast("儲存失敗:"+e.message); }
   b.disabled=false; setLabel(b,"儲存到雲端");
 }
@@ -2699,7 +2703,9 @@ function myToCardFields(c){
     "縮圖": c.avatar||c.logo||"" };
 }
 async function shareMyVcf(c){
+  var viewer=!!c;   // 對方看我的名片時按「存到通訊錄」→ iPhone 直接跳新增聯絡人
   c=c||myCollect(); var f=myToCardFields(c), name=(c.name||"名片")+".vcf";
+  if(viewer && openContactSheet(toVcard(f,true)+"\r\n")) return;
   var file=new File([toVcard(f,true)+"\r\n"],name,{type:"text/vcard"});
   try{ if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){ await navigator.share({files:[file], title:name}); return; } }catch(e){ if(e.name==="AbortError") return; }
   download(file,name);
@@ -3620,6 +3626,16 @@ function exportVcf(){
   download(new Blob([txt],{type:"text/vcard;charset=utf-8"}), "超級業務名片王_"+today()+"_"+cs.length+"人.vcf");
   toast("✅ 已匯出 "+cs.length+" 位聯絡人");
 }
+/** iPhone / iPad:直接打開系統的「新增聯絡人」畫面(欄位、照片都帶好,只要按 ✓ 儲存)。
+ *  已在 iOS 模擬器實測:data: URL 在 Safari 與「加入主畫面」的 App 都會跳出聯絡人預覽;blob: 不會 */
+function autoContactOn(){ return ls("sc_autocontact")!=="0"; }
+function renderAutoContactBtn(){ setLabel($("btnAutoContact"), "存檔後自動加入通訊錄:"+(autoContactOn()?"開":"關")); }
+function isIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+function openContactSheet(txt){
+  if(!isIOS()) return false;
+  location.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(txt);
+  return true;
+}
 /** 編輯頁:目前畫面上的這張加入通訊錄 */
 function addContact(){
   var f=formData();
@@ -3628,8 +3644,9 @@ function addContact(){
   if(f["縮圖"].indexOf("data:")!==0) f["縮圖"]="";
   var old=S.cur&&S.cur.id&&S.cards.find(function(c){return c.ID===S.cur.id;}); if(old) f["建立時間"]=old["建立時間"];
   var txt=toVcard(f,true)+"\r\n", name=(f["姓名"]||f["公司"]).replace(/[\\\/:*?"<>|]/g,"")+".vcf";
+  if(openContactSheet(txt)){ toast("確認資料後按右上角 ✓ 就存進通訊錄"); return; }
   var file=new File([txt],name,{type:"text/vcard"});
-  // 手機優先用「分享」,可直接選「聯絡人」;不支援就下載
+  // Android:用「分享」,可直接選「聯絡人」;不支援就下載
   if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
     navigator.share({files:[file], title:name}).catch(function(e){ if(e.name!=="AbortError") download(file,name); });
   }else download(file,name);
@@ -3880,7 +3897,7 @@ $("btnMenu").onclick=function(e){
   m.classList.toggle("hide");
 };
 document.addEventListener("click",function(e){ if(!e.target.closest("#menu")) closeMenu(); });
-["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
+["btnExport","btnDups","btnReload","btnLogout","btnVer","btnTheme","btnBooks","btnSound","btnLang","btnAutoContact","btnMyCard","btnNameMenu"].forEach(function(id){ $(id).addEventListener("click",closeMenu); });
 $("chips").addEventListener("click",function(e){
   if(e.target.closest("[data-gadd]")){ openGroups(); return; }
   var b=e.target.closest("[data-tag]"); if(!b) return; S.ftag=b.dataset.tag; renderList();
@@ -3951,6 +3968,7 @@ $("btnCvSave").onclick=function(){ if(MY.view) shareMyVcf(MY.view); };
 document.querySelectorAll("[data-vside]").forEach(function(b){ b.addEventListener("click",function(){ MY.vside=b.dataset.vside; drawCardView(); }); });
 $("cvMake").href=location.pathname;
 $("btnSound").onclick=toggleSound;
+$("btnAutoContact").onclick=function(){ ls("sc_autocontact",autoContactOn()?"0":"1"); renderAutoContactBtn(); toast(autoContactOn()?"新名片存好後會自動跳出「新增聯絡人」(iPhone)":"已關閉自動加入通訊錄"); }; renderAutoContactBtn();
 $("btnLang").onclick=cycleLang; $("btnCamLang").onclick=cycleLang; renderLangBtns();
 document.addEventListener("pointerdown",function(e){
   var el=e.target.closest("button,a.btn,.qa a,.chip,.item,[data-q],label.opt");
