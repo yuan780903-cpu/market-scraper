@@ -280,6 +280,12 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 .myrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:#fff}
 .shareg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .shareg .btn{padding:11px 8px;font-size:15px}
+.buyhero{text-align:center}
+.buyhero .bp{font-size:44px;font-weight:800;color:var(--pri);font-family:"Noto Serif TC","Songti TC",serif}
+.buyhero .bp small{font-size:18px;margin-right:2px}
+.buyhero .bp span{display:block;font-size:14px;font-weight:600;color:var(--acc);font-family:inherit;letter-spacing:1px}
+.buyhero ul{text-align:left;margin:10px 0 0;padding-left:20px;line-height:1.9;font-size:14.5px}
+.buydone .acc{font-size:18px;background:#f6efe3;border-radius:10px;padding:10px;margin:10px 0;text-align:left}
 .logbox{margin-top:12px}
 .logbox h3 span{font-weight:400;color:var(--sub);font-size:14px}
 .logbox .btn{width:100%;margin-bottom:8px}
@@ -426,7 +432,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   <button id="btnHLogin" class="btn" data-ic="check">登入</button>
   <div id="loginMsg" class="msg"></div>
   <div id="loginBook" class="stat" style="margin-top:10px;color:var(--acc);font-weight:600"></div>
-  <button class="btn sec hide" id="btnBuy" data-ic="star" style="margin-top:14px">還沒有帳號?購買終身版 NT$299</button>
+  <button class="btn sec" id="btnBuy" data-ic="star" style="margin-top:14px">還沒有帳號?購買終身版 NT$299</button>
   <div id="loginVer" class="stat" style="margin-top:18px"></div>
   <details id="advLogin" style="margin-top:6px"><summary>自架資料庫 / 管理員登入</summary>
     <input id="code" class="inp" type="password" inputmode="numeric" placeholder="輸入存取碼" autocomplete="off" style="margin-top:8px">
@@ -772,6 +778,33 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
   </div>
 </div>
 
+<!-- 購買終身版 -->
+<div id="vBuy" class="sheet hide" style="z-index:40">
+  <header><button class="ic" id="btnBuyBack" data-ic="back">返回</button><h1>購買終身版</h1></header>
+  <div class="wrap">
+    <div class="exp buyhero">
+      <div class="bp"><small>NT$</small>299<span>一次買斷・終身使用</span></div>
+      <ul><li>拍名片自動辨識、雙面、一次拍多張</li><li>接觸紀錄(錄音、照片)、地圖、群組、姓名學</li><li>我的數位名片、iPhone 一鍵加入通訊錄</li><li>資料雲端保存,換手機登入就回來,免任何設定</li></ul>
+    </div>
+    <div class="exp">
+      <h3>購買資料</h3>
+      <input id="buyName" class="inp" placeholder="姓名" autocomplete="name">
+      <div style="height:8px"></div>
+      <input id="buyEmail" class="inp" type="email" placeholder="Email(就是登入帳號)" autocomplete="email" autocapitalize="off">
+      <div style="height:8px"></div>
+      <input id="buyEmail2" class="inp" type="email" placeholder="再輸入一次 Email" autocapitalize="off">
+      <label class="myrow" style="margin-top:12px;align-items:flex-start"><input type="checkbox" id="buyAgree" style="margin-top:3px"> <span style="font-size:13.5px;line-height:1.6">我了解:299 元一次買斷、終身使用;付款後帳號密碼會顯示在畫面上,並寄到上面的 Email。名片資料由賣方代管保存於 Google 雲端,不會提供給第三方。</span></label>
+    </div>
+    <div class="acts"><button class="btn" id="btnBuyPay" data-ic="check">前往綠界付款 NT$299</button></div>
+    <div class="stat" style="text-align:center">付款由綠界科技 ECPay 處理,支援信用卡、ATM、超商。</div>
+  </div>
+</div>
+<!-- 付款完成 -->
+<div id="vBuyDone" class="sheet hide" style="z-index:41">
+  <header><h1>購買完成</h1></header>
+  <div class="wrap"><div class="exp" id="buyDoneBody" style="text-align:center;line-height:1.8"></div></div>
+</div>
+
 <!-- 接觸紀錄:新增 / 編輯一筆 -->
 <div id="vLog" class="sheet hide" style="z-index:15">
   <header>
@@ -881,7 +914,7 @@ header h1 .bk{font-family:-apple-system,sans-serif;font-size:11px;font-weight:60
 
 <script>
 /* ===== 設定 ===== */
-var APP_VER = "1.29", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
+var APP_VER = "1.30", APP_DATE = "2026-11-27";   // 版本:由 更新.sh 自動改,不要手改
 var DEFAULT_GAS = "https://script.google.com/macros/s/AKfycbysxACwneErLV81VTAE6BykqrPvoHHiBOkUbovdbncIRHIXVed5DVmOgzLW78Egte6s/exec";   // 部署後填入 /exec 網址
 var FIELDS = [
   ["姓名","text"],["公司","text"],["職稱","text"],["部門","text"],
@@ -1040,6 +1073,55 @@ async function changePw(){
   if(prompt("再輸入一次新密碼")!==n){ toast("兩次輸入的新密碼不一樣"); return; }
   try{ var r=await post({action:"changePw", oldPassword:o, newPassword:n}); if(!r.ok) throw new Error(r.error); toast("✅ 密碼已修改,下次登入用新密碼"); }
   catch(e){ toast("修改失敗:"+e.message); }
+}
+/* ===== 購買終身版(綠界)→ 付款完成自動開帳號、直接登入 ===== */
+var PAY_API = "https://ziwei-lic.yuan780903.workers.dev";
+function openBuy(){ $("vBuy").classList.remove("hide"); $("vBuy").scrollTop=0; if(!$("buyEmail").value) $("buyEmail").value=$("hAcc").value||""; }
+async function buyPay(){
+  var nm=$("buyName").value.trim(), em=$("buyEmail").value.trim().toLowerCase(), em2=$("buyEmail2").value.trim().toLowerCase();
+  if(!nm){ toast("請填姓名"); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ toast("Email 格式不對"); return; }
+  if(em!==em2){ toast("兩次輸入的 Email 不一樣"); return; }
+  if(!$("buyAgree").checked){ toast("請勾選「我了解」"); return; }
+  var b=$("btnBuyPay"); b.disabled=true; setLabel(b,"建立訂單中…");
+  try{
+    var gt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function(x){return ("0"+x.toString(16)).slice(-2);}).join("");
+    var ret=location.origin+location.pathname;
+    var r=await (await fetch(PAY_API+"/ecpay/request?product=supercard&gt="+gt+"&name="+encodeURIComponent(nm)+"&email="+encodeURIComponent(em)+"&ret="+encodeURIComponent(ret))).json();
+    if(!r.ok) throw new Error(r.reason==="bademail"?"Email 格式不對":r.reason==="ratelimited"?"操作太頻繁,請稍後再試":"建立訂單失敗("+(r.reason||"")+")");
+    ls("sc_buy",JSON.stringify({gt:gt, order:r.orderId, email:em, ts:Date.now()}));
+    var f=document.createElement("form"); f.method="POST"; f.action=r.action;
+    Object.keys(r.params).forEach(function(k){ var i=document.createElement("input"); i.type="hidden"; i.name=k; i.value=r.params[k]; f.appendChild(i); });
+    document.body.appendChild(f); f.submit();
+  }catch(e){ toast(e.message); b.disabled=false; setLabel(b,"前往綠界付款 NT$299"); }
+}
+/** 從綠界回來(?ecback=訂單):輪詢付款結果,拿到帳號密碼就自動登入 */
+async function checkBuyBack(){
+  var q=new URLSearchParams(location.search), order=q.get("ecback"); if(!order) return false;
+  try{ history.replaceState(null,"",location.pathname); }catch(e){}
+  var pend={}; try{ pend=JSON.parse(ls("sc_buy")||"{}"); }catch(e){}
+  if(!pend.gt || pend.order!==order){ return false; }
+  var box=$("buyDoneBody"); $("vBuyDone").classList.remove("hide");
+  box.innerHTML='<div class="spin" style="margin:20px auto"></div><div>付款確認中,請稍候…</div>';
+  for(var i=0;i<40;i++){
+    try{
+      var r=await (await fetch(PAY_API+"/ecpay/state?order="+encodeURIComponent(order)+"&gt="+pend.gt)).json();
+      if(r.paid && r.sc && (r.sc.acc || r.sc.err)){
+        if(r.sc.err){ box.innerHTML='<div style="font-size:40px">⚠️</div><h3>付款成功,但開通遇到問題</h3><p>'+esc(r.sc.exists?"這個 Email 已經有帳號了,請直接用原本的密碼登入;若忘記密碼請聯絡我們重設。":r.sc.err)+'</p><p style="color:#888;font-size:13px">訂單編號:'+esc(order)+'</p><button class="btn" onclick="$(\'vBuyDone\').classList.add(\'hide\')">回登入頁</button>'; return true; }
+        sfx("success"); ls("sc_buy",null);
+        box.innerHTML='<div class="buydone"><div style="font-size:48px">🎉</div><h3>付款成功,帳號已開通!</h3>'+
+          '<div class="acc">帳號:<b>'+esc(r.sc.acc)+'</b><br>密碼:<b style="letter-spacing:2px">'+esc(r.sc.pw||"(已寄到 Email)")+'</b></div>'+
+          '<p style="font-size:13.5px;color:#666">請截圖或記下密碼'+(r.sc.mailed?',我們也已寄到你的 Email':'')+'。之後換手機,用這組帳號密碼登入即可。</p>'+
+          '<button class="btn" id="btnBuyStart">開始使用</button></div>';
+        $("btnBuyStart").onclick=function(){ useHostToken(r.sc.acc, r.sc.tok, "我的名片簿"); $("vBuyDone").classList.add("hide"); post({action:"ping"}).then(function(p){ if(p.ok){ ls("sc_ai",p.ai?"1":"0"); } enter(); }).catch(function(){ enter(); }); };
+        return true;
+      }
+      if(r.paid===false && i>=20){ break; }
+    }catch(e){}
+    await new Promise(function(res){ setTimeout(res,3000); });
+  }
+  box.innerHTML='<div style="font-size:40px">⏳</div><h3>還沒收到付款結果</h3><p>如果你已經付款(例如 ATM 轉帳要等入帳),開通後帳號密碼會寄到 Email。也可以稍後重新整理這個頁面。</p><p style="color:#888;font-size:13px">訂單編號:'+esc(order)+'</p><button class="btn sec" onclick="location.href=location.pathname+\'?ecback='+encodeURIComponent(order)+'\'">重新查詢</button>';
+  return true;
 }
 function checkLoginLink(){   // 開通信的「開啟 App 登入」:#login=email 自動帶入帳號
   var h=location.hash||""; if(h.indexOf("#login=")!==0) return false;
@@ -4062,7 +4144,7 @@ async function geoFillMissing(){
 }
 
 /* ===== 事件 ===== */
-$("btnLogin").onclick=login; $("btnHLogin").onclick=hostLogin; $("hPw").addEventListener("keydown",function(e){ if(e.key==="Enter") hostLogin(); }); $("btnChangePw").onclick=changePw;
+$("btnLogin").onclick=login; $("btnHLogin").onclick=hostLogin; $("btnBuy").onclick=openBuy; $("btnBuyBack").onclick=function(){ $("vBuy").classList.add("hide"); }; $("btnBuyPay").onclick=buyPay; $("hPw").addEventListener("keydown",function(e){ if(e.key==="Enter") hostLogin(); }); $("btnChangePw").onclick=changePw;
 $("code").addEventListener("keydown",function(e){if(e.key==="Enter")login();});
 $("btnLogout").onclick=logout;
 $("btnReload").onclick=loadList;
@@ -4286,6 +4368,7 @@ if(S.code && gasUrl()) enter(); else show("vLogin");
 checkJoinLink();
 checkCardLink();
 checkLoginLink();
+checkBuyBack();
 if(ls("sc_code") && !(curBook()||{}).host) $("advLogin").open=true;   // 原本用存取碼的使用者:進階區預設展開
 </script>
 </body>
