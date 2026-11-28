@@ -168,7 +168,7 @@ td.crm{background:#fbfdfc}
   <span class="s" id="subttl"></span>
   <span class="upd" id="upd"></span>
   <button id="btnUpd" onclick="openUpd()" title="更新全站農業資料(在你的 Mac 上執行)" style="margin-left:auto;font-size:12.5px;cursor:pointer;color:#0a7d3e;background:#e7f6ec;border:1px solid #bfe6cd;border-radius:999px;padding:4px 12px;white-space:nowrap;font-weight:600">🔄 更新資料</button>
-  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.9 · 2026/11/27 20:24</span>
+  <span id="ver" title="網站版本(每次更新遞增,方便識別線上版本)" style="margin-left:8px;font-size:12px;color:var(--mut);background:#eef2f4;border:1px solid var(--bd);border-radius:999px;padding:2px 9px;white-space:nowrap">v1.11 · 2026/11/28 08:34</span>
 </header>
 <div id="updMask" onclick="if(event.target===this)closeUpd()" style="display:none;position:fixed;inset:0;background:rgba(15,23,32,.5);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card,#fff);color:var(--ink,#1a2630);max-width:520px;width:100%;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);padding:22px 22px 18px;font-size:14px;line-height:1.7">
@@ -339,9 +339,9 @@ function saveCustom(){try{localStorage.setItem(CUKEY,JSON.stringify(CUSTOM));}ca
 function custRow(ds,o){return {ds,id:o.id,name:o.name||"(未命名)",county:o.county||"",town:o.town||"",
   addr:o.addr||"",phone:o.phone||"",inds:(o.inds&&o.inds.length)?o.inds:(o.crop?[o.crop]:["自建客戶"]),
   area:+o.area||0,unit:(+o.area>0)?"公頃":"",ex:{},_cust:true};}
-// 載入時把每個類別的自建客戶併到最前面(爬來的政府資料更新不會動到這些)
-Object.keys(CUSTOM).forEach(ds=>{if(ALL[ds]&&Array.isArray(CUSTOM[ds])&&CUSTOM[ds].length){
-  ALL[ds]=CUSTOM[ds].map(o=>custRow(ds,o)).concat(ALL[ds]);}});
+// 自建客戶集中在「自建客戶」類別,不混進政府資料類別(gatherCustoms 匯總所有來源)
+function gatherCustoms(){const out=[];Object.keys(CUSTOM).forEach(ds=>{(CUSTOM[ds]||[]).forEach(o=>out.push(custRow(ds,o)));});return out;}
+ALL.mine=gatherCustoms();
 
 const sum=(l,f)=>l.reduce((s,r)=>{const v=+f(r);return s+(isNaN(v)?0:v)},0);
 const yearOf=r=>{const m=/^(\d+)年|民國(\d+)/.exec(r.ex.date||"");const y=m?+(m[1]||m[2]):0;
@@ -500,6 +500,18 @@ const DS={
    cols:[["產地",r=>r.county+r.town],["登錄產品",r=>r.ex.prod]],
    detail:r=>[["產地",r.county+r.town],["作物類別",r.inds.join("、")],["登錄全部產品",r.ex.prod],
               ["說明","溯源系統僅公開到鄉鎮,街道/電話未公開;可循溯源碼或在地農會接洽"]],
+ },
+ mine:{name:"自建客戶查詢", short:"自建客戶", src:"你自行新增的客戶(陌生開發,集中檢視)", ts:"",
+   crmName:"聯絡人", nameLab:"客戶名稱", indLab:"作物/產業", blkHd:"作物/產業",
+   link:r=>"#",
+   kpis:l=>{const A=[["自建客戶",fmt(l.length),"",""]];
+     A.push(["涵蓋縣市",fmt(new Set(l.map(r=>r.county).filter(Boolean)).size),"縣市",""]);
+     A.push(["有電話",fmt(l.filter(r=>cget(r).phone||r.phone).length),"位","已留電話"]);
+     A.push(["已建檔",fmt(l.filter(r=>hasCRM(r)).length),"位","已填聯絡或輪廓"]);return A;},
+   dims:{county:"縣市",town:"區域(鄉鎮)",ind:"作物/產業",status:"聯絡狀況"},
+   meas:{cnt:"人數",crm:"已建檔"},
+   cols:[["作物/產業",r=>r.inds.join("、")],["來源類別",r=>(DS[r.ds]&&DS[r.ds].short)||r.ds]],
+   detail:r=>[],
  },
 };
 const DIM_GET={county:r=>r.county||"(未填)",town:r=>r.town||"(未填)",
@@ -676,7 +688,7 @@ function renderTop(){
   document.getElementById('subttl').textContent=cfg.src+" · "+fmt(ALL[cur].length)+" 筆";
   document.getElementById('upd').textContent="📅 資料更新："+cfg.ts;
   const cs=document.getElementById('f_cat');
-  cs.innerHTML=Object.entries(DS).filter(([k])=>k==="union"||(ALL[k]&&ALL[k].length)).map(([k,v])=>`<option value="${k}"${k===cur?' selected':''}>${v.name}</option>`).join("");
+  cs.innerHTML=Object.entries(DS).filter(([k])=>k==="union"||k==="mine"||(ALL[k]&&ALL[k].length)).map(([k,v])=>`<option value="${k}"${k===cur?' selected':''}>${v.name}</option>`).join("");
   cs.onchange=()=>{cur=cs.value;localStorage.setItem("agr_cur",cur);F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;sortI=-1;render()};
   const list=ALL[cur];
   sel('f_county',[...new Set(list.map(r=>r.county))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'zh')),F.county,'全部縣市',
@@ -754,7 +766,8 @@ const DEFAULTS={agr:[{t:"bar",d:"county",m:"cnt"},{t:"bar",d:"ind",m:"cnt"}],
                 friendly:[{t:"bar",d:"ind",m:"cnt"},{t:"bar",d:"group",m:"cnt"}],
                 tea:[{t:"bar",d:"county",m:"cnt"},{t:"bar",d:"town",m:"cnt"}],
                 trace:[{t:"bar",d:"county",m:"cnt"},{t:"donut",d:"ind",m:"cnt"}],
-                union:[{t:"bar",d:"county",m:"cnt"},{t:"bar",d:"title",m:"cnt"}]};
+                union:[{t:"bar",d:"county",m:"cnt"},{t:"bar",d:"title",m:"cnt"}],
+                mine:[{t:"bar",d:"county",m:"cnt"},{t:"donut",d:"ind",m:"cnt"}]};
 let CHARTSALL={}; try{CHARTSALL=JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){CHARTSALL={}}
 function charts(){if(!CHARTSALL[cur])CHARTSALL[cur]=DEFAULTS[cur].slice();return CHARTSALL[cur]}
 const saveCharts=()=>localStorage.setItem(CKEY,JSON.stringify(CHARTSALL));
@@ -1065,7 +1078,7 @@ function importAOA(aoa){if(!aoa||aoa.length<2){alert("檔案沒有資料列。")
       decider:g(c,"決策者習慣"),tags:parseTags(g(c,"標籤"))||old.tags,comps:compsDec(g(c,"競品明細")),ts:g(c,"更新日")};n++;
     if(has("自建")&&c[ix("自建")]==="自建"&&ALL[ds]){const exists=(CUSTOM[ds]||[]).some(o=>o.id===id);
       if(!exists){const o={id,name:c[ix(H[2])]||"(未命名)",county:g(c,"縣市"),town:g(c,"區域"),addr:g(c,"地址"),phone:g(c,"電話"),area:(+g(c,"面積")||0),inds:parseTags(c[ix(H[5])]||"")};
-        (CUSTOM[ds]=CUSTOM[ds]||[]).push(o);ALL[ds]=[custRow(ds,o)].concat(ALL[ds]);nc++;}}
+        (CUSTOM[ds]=CUSTOM[ds]||[]).push(o);nc++;}}
   });
   localStorage.setItem(KEY,JSON.stringify(CRM));if(nc)saveCustom();
   alert(`已讀回 ${n} 筆 CRM 紀錄${nc?`,其中 ${nc} 筆自建客戶已還原`:""}。`);render();}
@@ -1077,7 +1090,7 @@ function importJSON(obj){
   recs.forEach(rec=>{if(!rec.id||!rec.ds)return;CRM[rec.ds+"_"+rec.id]=rec.crm||{};n++;
     if(rec._cust&&ALL[rec.ds]){const exists=(CUSTOM[rec.ds]||[]).some(o=>o.id===rec.id);
       if(!exists){const o={id:rec.id,name:rec.name,county:rec.county,town:rec.town,addr:rec.addr||"",phone:rec.phone||"",area:rec.area||0,inds:rec.inds||[]};
-        (CUSTOM[rec.ds]=CUSTOM[rec.ds]||[]).push(o);ALL[rec.ds]=[custRow(rec.ds,o)].concat(ALL[rec.ds]);nc++;}}
+        (CUSTOM[rec.ds]=CUSTOM[rec.ds]||[]).push(o);nc++;}}
   });
   localStorage.setItem(KEY,JSON.stringify(CRM));if(nc)saveCustom();
   alert(`已讀回 ${n} 筆(JSON 完整備份)${nc?`,其中 ${nc} 筆自建客戶已還原`:""}。`);render();}
@@ -1126,7 +1139,7 @@ function delUnion(id){if(!confirm("確定刪除這個聯誼會?"))return;
 }
 /* ── 新增客戶(自行陌生開發,各類別)── */
 function openAddCust(){const cfg=DS[cur];
-  document.getElementById('custCat').textContent="· "+(cfg?cfg.name:"");
+  document.getElementById('custCat').textContent="· 會存進「自建客戶」類別";
   ["name","county","town","addr","phone","area","crop","scale","brand","form","spec","item","price","fee","pay","delivery","warehouse","store","offer","note"].forEach(k=>{const e=document.getElementById('nc_'+k);if(e)e.value="";});
   document.getElementById('nc_msg').textContent="";
   document.getElementById('nc_months_wrap').innerHTML=monthsHTML([],'nc_months');
@@ -1139,17 +1152,18 @@ function closeAddCust(){document.getElementById('custMask').style.display='none'
 function saveAddCust(){const gv2=id=>{const e=document.getElementById('nc_'+id);return e?e.value.trim():"";};
   const name=gv2('name');
   if(!name){document.getElementById('nc_msg').textContent="請至少填客戶名稱";document.getElementById('nc_name').focus();return;}
-  const ds=cur, id="NEW"+Date.now();
+  const ds="mine", id="NEW"+Date.now();   // 自建客戶一律進「自建客戶」類別,不混入政府資料
   const crop=gv2('crop');
   const o={id,name,county:gv2('county'),town:gv2('town'),addr:gv2('addr'),phone:gv2('phone'),
     area:+gv2('area')||0,inds:crop?parseTags(crop):[]};
   (CUSTOM[ds]=CUSTOM[ds]||[]).push(o); saveCustom();
-  const row=custRow(ds,o); ALL[ds]=[row].concat(ALL[ds]);
+  const row=custRow(ds,o);
   // 寫入 CRM(讓它馬上算已建檔,輪廓也帶進去)
   cset(row,{status:"未聯絡",phone:gv2('phone'),crop:crop,scale:gv2('scale'),brand:gv2('brand'),form:gv2('form'),spec:gv2('spec'),item:gv2('item'),price:gv2('price'),fee:gv2('fee'),
     pay:gv2('pay'),delivery:gv2('delivery'),warehouse:gv2('warehouse'),store:gv2('store'),offer:gv2('offer'),months:readMonths('nc_months'),note:gv2('note'),ts:todayStr()});
   closeAddCust();
-  // 清篩選確保看得到新客戶,並打開明細續填
+  // 切到「自建客戶」類別、清篩選,讓新客戶看得到,並打開明細續填
+  cur="mine";localStorage.setItem("agr_cur","mine");
   F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";const qel=document.getElementById('q');if(qel)qel.value="";page=0;sortI=-1;
   render(); openDw(row);}
 function delCust(r){if(!confirm("確定刪除這筆自建客戶「"+(r.name||"")+"」?(含它的 CRM 紀錄,無法復原)"))return;
@@ -1158,7 +1172,7 @@ function delCust(r){if(!confirm("確定刪除這筆自建客戶「"+(r.name||"")
   try{delete CRM[ck(r)];localStorage.setItem(KEY,JSON.stringify(CRM));}catch(e){}
   closeDw();render();}
 function clearAll(){F={county:"",town:"",inds:new Set(),st:"",area:"",due:"",tag:""};q="";document.getElementById('q').value="";page=0;render()}
-function render(){if(DS.union)ALL.union=unionRows();
+function render(){if(DS.union)ALL.union=unionRows();if(DS.mine)ALL.mine=gatherCustoms();
   document.getElementById('q').placeholder="🔍 搜尋"+DS[cur].nameLab+" / "+DS[cur].crmName+"…";
   document.getElementById('addUnionBtn').style.display=cur==="union"?"":"none";
   document.getElementById('addCustBtn').style.display=cur==="union"?"none":"";
